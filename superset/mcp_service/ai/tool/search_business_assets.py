@@ -30,7 +30,7 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 try:
     from fastmcp import Context
 except ModuleNotFoundError:
-    Context = Any  # type: ignore[misc, assignment]
+    Context = Any
 
 from superset.mcp_service.ai.asset_search import search_assets
 from superset.mcp_service.ai.schemas import AssetSearchRequest, AssetSearchResponse

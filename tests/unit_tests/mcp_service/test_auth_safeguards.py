@@ -26,6 +26,7 @@ enforce that invariant:
    function when registration errors.
 """
 
+import inspect
 import logging
 from types import SimpleNamespace
 from typing import Any, Callable
@@ -64,6 +65,31 @@ def test_mcp_auth_hook_stamps_protection_marker() -> None:
 
     wrapped = mcp_auth_hook(sample_tool)
     assert getattr(wrapped, "_mcp_auth_protected", False) is True
+
+
+def test_mcp_auth_hook_removes_string_context_annotation_from_schema() -> None:
+    """Stringified ``ctx: Context`` annotations must be hidden from FastMCP.
+
+    Tools using ``from __future__ import annotations`` expose ``Context`` as a
+    string. ``mcp_auth_hook`` still needs to remove it from the public tool
+    schema or Pydantic raises ``KeyError: 'ctx'`` during registration.
+    """
+    from fastmcp import Context
+    from fastmcp.tools import Tool
+
+    assert Context.__name__ == "Context"
+
+    async def sample_tool(
+        request: dict[str, Any],
+        ctx: "Context",
+    ) -> dict[str, Any]:
+        return request
+
+    wrapped = mcp_auth_hook(sample_tool)
+
+    assert "ctx" not in inspect.signature(wrapped).parameters
+    assert "ctx" not in wrapped.__annotations__
+    Tool.from_function(wrapped, name="sample_tool")
 
 
 def test_assert_all_tools_protected_passes_when_every_tool_is_marked() -> None:

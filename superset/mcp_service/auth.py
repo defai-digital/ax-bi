@@ -937,10 +937,24 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
     from fastmcp import Context as FMContext
 
     _tool_sig = inspect.signature(tool_func)
+    try:
+        _tool_type_hints = inspect.get_annotations(tool_func, eval_str=True)
+    except Exception:  # noqa: BLE001 - fallback for unresolved forward references
+        _tool_type_hints = getattr(tool_func, "__annotations__", {})
+
+    def _is_context_parameter(name: str, param: inspect.Parameter) -> bool:
+        annotation = _tool_type_hints.get(name, param.annotation)
+        if annotation is FMContext:
+            return True
+        if getattr(annotation, "__name__", None) == "Context":
+            return True
+        if isinstance(annotation, str):
+            return annotation == "Context" or annotation.endswith(".Context")
+        return False
+
     _needs_ctx = any(
-        p.annotation is FMContext
-        or (hasattr(p.annotation, "__name__") and p.annotation.__name__ == "Context")
-        for p in _tool_sig.parameters.values()
+        _is_context_parameter(name, param)
+        for name, param in _tool_sig.parameters.items()
     )
 
     def _inject_ctx(kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -1071,10 +1085,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
     new_params = []
     for _name, param in _tool_sig.parameters.items():
         # Skip ctx parameter - FastMCP tools don't expose it to clients
-        if param.annotation is FMContext or (
-            hasattr(param.annotation, "__name__")
-            and param.annotation.__name__ == "Context"
-        ):
+        if _is_context_parameter(_name, param):
             continue
         new_params.append(param)
     new_wrapper.__signature__ = _tool_sig.replace(  # type: ignore[attr-defined]
