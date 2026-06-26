@@ -25,8 +25,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
+
+try:
+    from fastmcp import Context
+except ModuleNotFoundError:
+    Context = Any  # type: ignore[misc, assignment]
 
 from superset.mcp_service.ai.asset_search import search_assets
 from superset.mcp_service.ai.schemas import AssetSearchRequest, AssetSearchResponse

@@ -25,9 +25,13 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastmcp import Context
 from sqlalchemy.orm import joinedload, subqueryload
 from superset_core.mcp.decorators import tool, ToolAnnotations
+
+try:
+    from fastmcp import Context
+except ModuleNotFoundError:
+    Context = Any  # type: ignore[misc, assignment]
 
 from superset.mcp_service.ai.schemas import (
     ColumnDescription,

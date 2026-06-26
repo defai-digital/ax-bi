@@ -18,12 +18,54 @@
 
 from __future__ import annotations
 
+import sys
+import types
+from collections.abc import Callable
+from typing import Any
 from unittest.mock import MagicMock
 
-from superset.mcp_service.ai.tool.describe_dataset_for_ai import (
-    _describe_dataset,
-    _get_aliases_for_object,
-)
+
+def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
+    """Import tool helpers without requiring MCP startup registration."""
+
+    def _passthrough_tool(
+        func: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> Callable[..., Any]:
+        del kwargs
+        if func is not None:
+            return func
+        return lambda f: f
+
+    mock_decorators = MagicMock()
+    mock_decorators.tool = _passthrough_tool
+    mock_decorators.ToolAnnotations = dict
+
+    saved_modules: dict[str, types.ModuleType] = {}
+    for key in ("superset_core.mcp", "superset_core.mcp.decorators"):
+        if key in sys.modules:
+            saved_modules[key] = sys.modules[key]
+
+    sys.modules["superset_core.mcp"] = MagicMock()
+    sys.modules["superset_core.mcp.decorators"] = mock_decorators
+    return saved_modules
+
+
+def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
+    for key in list(sys.modules.keys()):
+        if key.startswith("superset_core.mcp"):
+            del sys.modules[key]
+    sys.modules.update(saved_modules)
+
+
+_saved_modules = _force_passthrough_decorators()
+try:
+    from superset.mcp_service.ai.tool.describe_dataset_for_ai import (
+        _describe_dataset,
+        _get_aliases_for_object,
+    )
+finally:
+    _restore_modules(_saved_modules)
 
 
 def test_describe_dataset_basic() -> None:

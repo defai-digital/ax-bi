@@ -21,7 +21,7 @@ Creates three tables for the GenAI BI foundation:
 - ``ai_semantic_aliases``: business synonyms for AI semantic resolution.
 - ``ai_evaluation_runs``: repeatable prompt-to-dashboard evaluation records.
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: 17a4dfa2f9ab
 Revises: 78a40c08b4be
 Create Date: 2026-06-26 10:00:00.000000
 
@@ -32,7 +32,7 @@ from alembic import op
 from sqlalchemy_utils import UUIDType
 
 # revision identifiers, used by Alembic.
-revision = "a1b2c3d4e5f6"
+revision = "17a4dfa2f9ab"
 down_revision = "78a40c08b4be"
 
 

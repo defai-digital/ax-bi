@@ -119,8 +119,8 @@ def test_ai_evaluation_run_pk_is_uuid() -> None:
 def test_uuid_generation_on_instances() -> None:
     """Verify that the UUID default callable produces unique UUIDs."""
     default_fn = AIGeneratedArtifact.__table__.c.uuid.default.arg
-    u1 = default_fn()
-    u2 = default_fn()
+    u1 = default_fn(None)
+    u2 = default_fn(None)
     assert isinstance(u1, uuid.UUID)
     assert isinstance(u2, uuid.UUID)
     assert u1 != u2
