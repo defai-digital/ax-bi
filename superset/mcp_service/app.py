@@ -672,6 +672,10 @@ warnings.filterwarnings(
 # NOTE: Always add new prompt/resource imports here when creating new prompts/resources.
 # Prompts use @mcp.prompt decorators and resources use @mcp.resource decorators.
 # They register automatically on import, similar to tools.
+from superset.mcp_service.ai.tool import (  # noqa: F401, E402
+    describe_dataset_for_ai,
+    search_business_assets,
+)
 from superset.mcp_service.annotation_layer.tool import (  # noqa: F401, E402
     get_annotation_layer_info,
     get_layer_annotation_info,
