@@ -427,7 +427,7 @@ APP_NAME = "AX-BI"
 # NOTE: This variable is used to populate THEME_DEFAULT. If you override this in
 # superset_config.py, you must also override THEME_DEFAULT to see the change,
 # or set THEME_DEFAULT["token"]["brandLogoUrl"] directly.
-APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png"
+APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png?v=20260626-4"
 
 # Specify where clicking the logo would take the user
 # Default value of None will take you to '/superset/welcome'
@@ -1061,7 +1061,7 @@ _THEME_DEFAULT_BASE: Theme = {
         "brandAppName": APP_NAME,
         "brandLogoAlt": "AX-BI",
         "brandLogoUrl": APP_ICON,
-        "brandLogoMargin": "18px 0",
+        "brandLogoMargin": "4px 0 0 -8px",
         "brandLogoHref": LOGO_TARGET_PATH or "/",
         "brandLogoHeight": "34px",
         # Spinner - Set this to use a custom GIF/image loader
