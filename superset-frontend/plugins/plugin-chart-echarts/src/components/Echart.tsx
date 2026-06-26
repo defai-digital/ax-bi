@@ -73,6 +73,8 @@ import {
 import { DEFAULT_LOCALE } from '../constants';
 import { mergeEchartsThemeOverrides } from '../utils/themeOverrides';
 
+type LocaleModule = { default: Parameters<typeof registerLocale>[1] };
+
 // Define this interface here to avoid creating a dependency back to superset-frontend,
 // TODO: to move the type to @superset-ui/core
 interface ExplorePageState {
@@ -121,14 +123,40 @@ use([
   LabelLayout,
 ]);
 
+const localeLoaders: Record<string, () => Promise<LocaleModule>> = {
+  AR: () => import('echarts/i18n/langAR-obj.js'),
+  CS: () => import('echarts/i18n/langCS-obj.js'),
+  DE: () => import('echarts/i18n/langDE-obj.js'),
+  EN: () => import('echarts/i18n/langEN-obj.js'),
+  ES: () => import('echarts/i18n/langES-obj.js'),
+  FA: () => import('echarts/i18n/langFA-obj.js'),
+  FI: () => import('echarts/i18n/langFI-obj.js'),
+  FR: () => import('echarts/i18n/langFR-obj.js'),
+  HU: () => import('echarts/i18n/langHU-obj.js'),
+  IT: () => import('echarts/i18n/langIT-obj.js'),
+  JA: () => import('echarts/i18n/langJA-obj.js'),
+  KO: () => import('echarts/i18n/langKO-obj.js'),
+  NL: () => import('echarts/i18n/langNL-obj.js'),
+  PL: () => import('echarts/i18n/langPL-obj.js'),
+  'PT-BR': () => import('echarts/i18n/langPT-br-obj.js'),
+  RO: () => import('echarts/i18n/langRO-obj.js'),
+  RU: () => import('echarts/i18n/langRU-obj.js'),
+  SI: () => import('echarts/i18n/langSI-obj.js'),
+  SV: () => import('echarts/i18n/langSV-obj.js'),
+  TH: () => import('echarts/i18n/langTH-obj.js'),
+  TR: () => import('echarts/i18n/langTR-obj.js'),
+  UK: () => import('echarts/i18n/langUK-obj.js'),
+  VI: () => import('echarts/i18n/langVI-obj.js'),
+  ZH: () => import('echarts/i18n/langZH-obj.js'),
+};
+
 const loadLocale = async (locale: string) => {
-  let lang;
-  try {
-    lang = await import(`echarts/lib/i18n/lang${locale}`);
-  } catch {
-    // Locale not supported in ECharts
-  }
-  return lang?.default;
+  const normalizedLocale = locale.replace(/_/g, '-').toUpperCase();
+  const language = normalizedLocale.split('-')[0];
+  const loader = localeLoaders[normalizedLocale] || localeLoaders[language];
+  return loader?.()
+    .then(lang => lang.default)
+    .catch(() => undefined);
 };
 
 function Echart(

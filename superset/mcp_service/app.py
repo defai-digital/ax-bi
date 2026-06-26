@@ -28,6 +28,11 @@ from typing import Any, Callable, Dict, List, Sequence, Set
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
 
+from superset.mcp_service.utils.config_utils import (
+    get_mcp_disabled_tools,
+    get_superset_app_name,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -906,7 +911,7 @@ def init_fastmcp_server(
     from superset.mcp_service.flask_singleton import app as flask_app  # noqa: PLC0415
 
     # Derive branding from Superset's APP_NAME config (defaults to "Superset")
-    app_name = flask_app.config.get("APP_NAME", "Superset")
+    app_name = get_superset_app_name(flask_app.config)
     branding = app_name
     default_name = f"{app_name} MCP Server"
 
@@ -916,7 +921,7 @@ def init_fastmcp_server(
 
     # Remove disabled tools BEFORE generating instructions so that the
     # instructions never advertise tools that clients cannot actually call.
-    disabled_tools: set[str] = flask_app.config.get("MCP_DISABLED_TOOLS", set())
+    disabled_tools: set[str] = get_mcp_disabled_tools(flask_app.config)
     _remove_disabled_tools(disabled_tools)
     config_guard_removed = _apply_config_guards(flask_app)
 

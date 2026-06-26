@@ -110,9 +110,10 @@ class ChartWarmUpCacheCommand(BaseCommand):
     def run(self) -> dict[str, Any]:
         self.validate()
         chart = cast(Slice, self._chart_or_id)
+        chart_id = chart.id
 
         try:
-            form_data = get_form_data(chart.id, use_slice_data=True)[0]
+            form_data = get_form_data(chart_id, use_slice_data=True)[0]
 
             if form_data.get("viz_type") in viz_types:
                 error, status = self._warm_up_legacy_cache(chart, form_data)
@@ -122,7 +123,7 @@ class ChartWarmUpCacheCommand(BaseCommand):
             error = error_msg_from_exception(ex)
             status = None
 
-        return {"chart_id": chart.id, "viz_error": error, "viz_status": status}
+        return {"chart_id": chart_id, "viz_error": error, "viz_status": status}
 
     def validate(self) -> None:
         if isinstance(self._chart_or_id, Slice):

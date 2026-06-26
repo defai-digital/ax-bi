@@ -23,8 +23,11 @@ from flask import current_app
 
 from superset.mcp_service.utils.permissions_utils import (
     apply_field_permissions_to_columns,
+    current_user_can_access,
+    current_user_can_access_database,
     filter_sensitive_data,
     get_allowed_fields,
+    user_can_access_dataset_permission,
     user_has_permission,
 )
 
@@ -59,6 +62,32 @@ def test_user_has_permission_admin_uses_configured_role_name():
         has_access.assert_called_once_with("can_read", "Chart", not_admin)
     finally:
         current_app.config["AUTH_ROLE_ADMIN"] = original
+
+
+def test_user_can_access_dataset_permission_uses_dataset_resource():
+    with patch("superset.security_manager.can_access", return_value=True) as can_access:
+        assert user_can_access_dataset_permission("can_write") is True
+
+    can_access.assert_called_once_with("can_write", "Dataset")
+
+
+def test_current_user_can_access_delegates_to_security_manager():
+    with patch(
+        "superset.security_manager.can_access", return_value=False
+    ) as can_access:
+        assert current_user_can_access("can_read", "Dashboard") is False
+
+    can_access.assert_called_once_with("can_read", "Dashboard")
+
+
+def test_current_user_can_access_database_delegates_to_security_manager():
+    database = Mock()
+    with patch(
+        "superset.security_manager.can_access_database", return_value=True
+    ) as can_access_database:
+        assert current_user_can_access_database(database) is True
+
+    can_access_database.assert_called_once_with(database)
 
 
 def test_get_allowed_fields_always_denies_user_directory_fields():

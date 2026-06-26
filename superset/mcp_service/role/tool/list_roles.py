@@ -23,8 +23,11 @@ from typing import Any
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
 from superset.mcp_service.role.schemas import (
     DEFAULT_ROLE_COLUMNS,
     ListRolesRequest,
@@ -36,6 +39,8 @@ from superset.mcp_service.role.schemas import (
     RoleList,
     serialize_role_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import finalize_list_response
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +69,7 @@ async def list_roles(
     if ctx is None:
         raise RuntimeError("FastMCP context is required for list_roles")
 
-    request = request or _DEFAULT_LIST_ROLES_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_ROLES_REQUEST)
 
     await ctx.info(
         "Listing roles: page=%s, page_size=%s, search=%s"
@@ -95,37 +100,18 @@ async def list_roles(
             logger=logger,
         )
 
-        with event_logger.log_context(action="mcp.list_roles.query"):
+        with mcp_event_log_context(action="mcp.list_roles.query"):
             result = list_tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=request.select_columns,
                 order_column=request.order_column or "id",
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 
-        count = len(result.roles) if hasattr(result, "roles") else 0
-        await ctx.info(
-            "Roles listed successfully: count=%s, total_count=%s, total_pages=%s"
-            % (
-                count,
-                getattr(result, "total_count", None),
-                getattr(result, "total_pages", None),
-            )
-        )
-
-        columns_to_filter = result.columns_requested
-        await ctx.debug(
-            "Applying field filtering via serialization context: columns=%s"
-            % (columns_to_filter,)
-        )
-        with event_logger.log_context(action="mcp.list_roles.serialization"):
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": columns_to_filter},
-            )
+        return await finalize_list_response(result, "roles", "Roles", ctx)
 
     except Exception as e:
         await ctx.error(

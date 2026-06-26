@@ -57,9 +57,12 @@ Usage example::
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 
 import humanize
+
+from superset.mcp_service.privacy import filter_user_directory_fields
+from superset.mcp_service.utils.logging_utils import mcp_list_serialization_log_context
 
 
 def humanize_timestamp(dt: datetime | None) -> str | None:
@@ -68,6 +71,98 @@ def humanize_timestamp(dt: datetime | None) -> str | None:
         return None
     now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
     return humanize.naturaltime(now - dt)
+
+
+def filter_serialized_response_fields(
+    data: dict[str, Any],
+    info: Any,
+) -> dict[str, Any]:
+    """Apply MCP response privacy filtering and select-column projection."""
+    data = filter_user_directory_fields(data)
+    return select_serialized_response_fields(data, info)
+
+
+def select_serialized_response_fields(
+    data: dict[str, Any],
+    info: Any,
+) -> dict[str, Any]:
+    """Apply MCP select-column projection to serialized response data."""
+    if info.context and isinstance(info.context, dict):
+        select_columns = info.context.get("select_columns")
+        if select_columns:
+            requested_fields = set(select_columns)
+            return {k: v for k, v in data.items() if k in requested_fields}
+
+    return data
+
+
+def dump_model_with_select_columns(
+    model: Any,
+    select_columns: Any,
+    *,
+    by_alias: bool = False,
+    extra_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Dump a Pydantic model with the MCP select-column serialization context."""
+    context = {"select_columns": select_columns}
+    if extra_context:
+        context.update(extra_context)
+    return model.model_dump(
+        mode="json",
+        by_alias=by_alias,
+        context=context,
+    )
+
+
+async def finalize_list_response(
+    result: Any,
+    items_attr: str,
+    resource_name: str,
+    ctx: Any,
+    *,
+    by_alias: bool = False,
+) -> dict[str, Any]:
+    """Common post-query pipeline for MCP list tools.
+
+    Logs count/total_pages, extracts columns_requested, and dumps with
+    event_logger context. This centralizes the repeated 3-step tail that
+    all list tools perform after calling tool.run_tool().
+
+    Parameters
+    ----------
+    result:
+        The result object from tool.run_tool()
+    items_attr:
+        The attribute name containing the list of items (e.g., "charts", "dashboards")
+    resource_name:
+        The resource name for logging (e.g., "Charts", "Dashboards")
+    ctx:
+        The FastMCP Context object for logging
+    by_alias:
+        Whether to serialize using field aliases (default: False)
+
+    Returns
+    -------
+    dict[str, Any]
+        The dumped model with select-column serialization context applied
+    """
+    count = len(getattr(result, items_attr, []))
+    total_pages = getattr(result, "total_pages", None)
+    await ctx.info(
+        "%s listed successfully: count=%s, total_pages=%s"
+        % (resource_name, count, total_pages)
+    )
+
+    columns_to_filter = result.columns_requested
+    await ctx.debug(
+        "Applying field filtering via serialization context: columns=%s"
+        % (columns_to_filter,)
+    )
+
+    with mcp_list_serialization_log_context(resource_name):
+        return dump_model_with_select_columns(
+            result, columns_to_filter, by_alias=by_alias
+        )
 
 
 def _byte_size_label(value: str | None) -> str:

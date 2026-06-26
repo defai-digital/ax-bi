@@ -17,7 +17,6 @@
  * under the License.
  */
 import '@cypress/code-coverage/support';
-import { expect } from 'chai';
 import rison from 'rison';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -41,6 +40,12 @@ const { getConfig, setConfig } = failOnConsoleError({
   includeConsoleTypes: ['error'],
 });
 */
+
+let consoleErrorConfig: { consoleMessages?: (string | RegExp)[] } = {};
+const getConfig = () => consoleErrorConfig;
+const setConfig = (config: typeof consoleErrorConfig) => {
+  consoleErrorConfig = config;
+};
 
 // Set individual tests to allow certain console errors to NOT fail, e.g
 // cy.allowConsoleErrors(['foo', /^some bar-regex.*/]);
@@ -185,7 +190,7 @@ Cypress.Commands.add('login', () => {
   }).then(response => {
     if (response.status === 302) {
       // If there's a redirect, follow it manually
-      const redirectUrl = response.headers.location;
+      const redirectUrl = String(response.headers.location);
       cy.request({
         method: 'GET',
         url: redirectUrl,

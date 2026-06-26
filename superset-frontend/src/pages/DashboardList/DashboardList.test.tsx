@@ -169,8 +169,11 @@ test('shows delete confirmation', async () => {
 test('renders an "Import Dashboard" tooltip', async () => {
   renderDashboardList(mockAdminUser);
 
-  const importButton = await screen.findByTestId('import-button');
-  fireEvent.mouseOver(importButton);
+  const importButton = await screen.findByRole('button', {
+    name: /import dashboards/i,
+  });
+  expect(importButton).toBeInTheDocument();
+  fireEvent.mouseOver(screen.getByTestId('import-button'));
 
   expect(
     await screen.findByRole('tooltip', {

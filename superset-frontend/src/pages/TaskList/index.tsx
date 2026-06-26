@@ -36,6 +36,7 @@ import {
 } from 'src/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu from 'src/features/home/SubMenu';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { createErrorHandler, createFetchRelated } from 'src/views/CRUD/utils';
@@ -55,7 +56,7 @@ import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import type { RootState } from 'src/views/store';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 /**
  * Typed cell props for react-table columns.
@@ -77,35 +78,40 @@ interface TaskListProps {
   };
 }
 
-function TaskList({ addDangerToast, addSuccessToast, user }: TaskListProps) {
+function TaskListDisabled() {
+  const theme = useTheme();
+
+  return (
+    <>
+      <SubMenu name={t('Tasks')} />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '50vh',
+          color: theme.colorTextSecondary,
+        }}
+      >
+        <h3>{t('Feature Not Enabled')}</h3>
+        <p>
+          {t(
+            'The Global Task Framework is not enabled. Please contact your administrator to enable the GLOBAL_TASK_FRAMEWORK feature flag.',
+          )}
+        </p>
+      </div>
+    </>
+  );
+}
+
+function TaskListContent({
+  addDangerToast,
+  addSuccessToast,
+  user,
+}: TaskListProps) {
   const theme = useTheme();
   const locale = useSelector((state: RootState) => state.common?.locale);
-
-  // Check if GTF feature flag is enabled
-  if (!isFeatureEnabled(FeatureFlag.GlobalTaskFramework)) {
-    return (
-      <>
-        <SubMenu name={t('Tasks')} />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '50vh',
-            color: theme.colorTextSecondary,
-          }}
-        >
-          <h3>{t('Feature Not Enabled')}</h3>
-          <p>
-            {t(
-              'The Global Task Framework is not enabled. Please contact your administrator to enable the GLOBAL_TASK_FRAMEWORK feature flag.',
-            )}
-          </p>
-        </div>
-      </>
-    );
-  }
 
   const {
     state: { loading, resourceCount: tasksCount, resourceCollection: tasks },
@@ -657,6 +663,14 @@ function TaskList({ addDangerToast, addSuccessToast, user }: TaskListProps) {
       </Modal>
     </>
   );
+}
+
+function TaskList(props: TaskListProps) {
+  if (!isFeatureEnabled(FeatureFlag.GlobalTaskFramework)) {
+    return <TaskListDisabled />;
+  }
+
+  return <TaskListContent {...props} />;
 }
 
 export default withToasts(TaskList);

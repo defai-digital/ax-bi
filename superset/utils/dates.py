@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytz
 
@@ -30,5 +30,10 @@ def datetime_to_epoch(dttm: datetime) -> float:
     return (dttm - EPOCH).total_seconds() * 1000
 
 
+def naive_utcnow() -> datetime:
+    """Return current UTC time without tzinfo for naive UTC DB columns."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def now_as_float() -> float:
-    return datetime_to_epoch(datetime.utcnow())
+    return datetime_to_epoch(datetime.now(timezone.utc))

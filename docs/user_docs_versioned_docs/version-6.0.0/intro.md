@@ -2,6 +2,7 @@
 hide_title: true
 sidebar_position: 1
 ---
+
 <!--
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -101,11 +102,11 @@ Superset provides:
 
 ## Supported Databases
 
-Superset can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/docs/configuration/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
+Superset can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/user-docs/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
 
 Here are some of the major database solutions that are supported:
 
-<p align="center">
+<div align="center">
   <img src="https://superset.apache.org/img/databases/redshift.png" alt="redshift" border="0" width="200"/>
   <img src="https://superset.apache.org/img/databases/google-biquery.png" alt="google-bigquery" border="0" width="200"/>
   <img src="https://superset.apache.org/img/databases/snowflake.png" alt="snowflake" border="0" width="200"/>
@@ -143,15 +144,15 @@ Here are some of the major database solutions that are supported:
   <img src="https://superset.apache.org/img/databases/denodo.png" alt="denodo" border="0" width="200" />
   <img src="https://superset.apache.org/img/databases/ydb.svg" alt="ydb" border="0" width="200" />
   <img src="https://superset.apache.org/img/databases/tdengine.png" alt="TDengine" border="0" width="200" />
-</p>
+</div>
 
-**A more comprehensive list of supported databases** along with the configuration instructions can be found [here](https://superset.apache.org/docs/configuration/databases).
+**A more comprehensive list of supported databases** along with the configuration instructions can be found [here](https://superset.apache.org/user-docs/databases).
 
-Want to add support for your datastore or data engine? Read more [here](https://superset.apache.org/docs/frequently-asked-questions#does-superset-work-with-insert-database-engine-here) about the technical requirements.
+Want to add support for your datastore or data engine? Read more [here](https://superset.apache.org/user-docs/faq#does-superset-work-with-insert-database-engine-here) about the technical requirements.
 
 ## Installation and Configuration
 
-Try out Superset's [quickstart](https://superset.apache.org/docs/quickstart/) guide or learn about [the options for production deployments](https://superset.apache.org/docs/installation/architecture/).
+Try out Superset's [quickstart](https://superset.apache.org/user-docs/quickstart) guide or learn about [the options for production deployments](https://superset.apache.org/admin-docs/installation/architecture).
 
 ## Get Involved
 
@@ -183,10 +184,10 @@ Understanding the Superset Points of View
 - [Understanding the Superset Semantic Layer](https://preset.io/blog/understanding-superset-semantic-layer/)
 
 - Getting Started with Superset
-  - [Superset in 2 Minutes using Docker Compose](https://superset.apache.org/docs/installation/docker-compose#installing-superset-locally-using-docker-compose)
-  - [Installing Database Drivers](https://superset.apache.org/docs/configuration/databases#installing-database-drivers)
+  - [Superset in 2 Minutes using Docker Compose](https://superset.apache.org/admin-docs/installation/docker-compose)
+  - [Installing Database Drivers](https://superset.apache.org/user-docs/databases/#installing-database-drivers)
   - [Building New Database Connectors](https://preset.io/blog/building-database-connector/)
-  - [Create Your First Dashboard](https://superset.apache.org/docs/using-superset/creating-your-first-dashboard/)
+  - [Create Your First Dashboard](https://superset.apache.org/user-docs/using-superset/creating-your-first-dashboard)
   - [Comprehensive Tutorial for Contributing Code to Apache Superset
     ](https://preset.io/blog/tutorial-contributing-code-to-apache-superset/)
 - [Resources to master Superset by Preset](https://preset.io/resources/)
@@ -206,11 +207,11 @@ Understanding the Superset Points of View
 
 - Visualizations
 
-  - [Creating Viz Plugins](https://superset.apache.org/docs/contributing/creating-viz-plugins/)
+  - [Creating Viz Plugins](https://superset.apache.org/developer-docs/contributing/howtos#creating-visualization-plugins)
   - [Managing and Deploying Custom Viz Plugins](https://medium.com/nmc-techblog/apache-superset-manage-custom-viz-plugins-in-production-9fde1a708e55)
   - [Why Apache Superset is Betting on Apache ECharts](https://preset.io/blog/2021-4-1-why-echarts/)
 
-- [Superset API](https://superset.apache.org/docs/rest-api)
+- [Superset API](https://superset.apache.org/developer-docs/api)
 
 ## Repo Activity
 

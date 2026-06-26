@@ -32,7 +32,11 @@ from superset.databases.utils import (
     get_foreign_keys_metadata,
     get_indexes_metadata,
 )
-from superset.db_engine_specs.base import BaseEngineSpec, BasicParametersMixin
+from superset.db_engine_specs.base import (
+    BaseEngineSpec,
+    BasicParametersMixin,
+    DatabaseCategory,
+)
 from superset.sql.parse import Partition, SQLScript, Table
 from superset.superset_typing import ResultSetColumnType
 
@@ -64,6 +68,22 @@ class OdpsEngineSpec(BasicParametersMixin, OdpsBaseEngineSpec):
     engine = "odps"
     engine_name = "ODPS (MaxCompute)"
     default_driver = "odps"
+    metadata = {
+        "description": (
+            "Alibaba Cloud MaxCompute, formerly ODPS, is a managed large-scale "
+            "data warehousing and batch analytics platform."
+        ),
+        "logo": "odps.png",
+        "homepage_url": "https://www.alibabacloud.com/product/maxcompute",
+        "categories": [
+            DatabaseCategory.CLOUD_DATA_WAREHOUSES,
+            DatabaseCategory.PROPRIETARY,
+        ],
+        "pypi_packages": ["pyodps"],
+        "connection_string": (
+            "odps://{access_id}:{access_key}@{project}?endpoint={endpoint}"
+        ),
+    }
 
     @classmethod
     def get_table_metadata(

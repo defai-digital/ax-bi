@@ -32,12 +32,14 @@ from pydantic import (
 )
 
 from superset.daos.base import ColumnOperator, ColumnOperatorEnum
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from superset.mcp_service.system.schemas import PaginationInfo
 from superset.mcp_service.utils import sanitize_for_llm_context
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
-    parse_json_or_model_list,
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
 )
 from superset.utils import json as json_utils
 
@@ -149,17 +151,16 @@ class ListAnnotationLayersRequest(BaseModel):
     @field_validator("filters", mode="before")
     @classmethod
     def parse_filters(cls, v: Any) -> list[AnnotationLayerFilter]:
-        return parse_json_or_model_list(v, AnnotationLayerFilter, "filters")
+        return parse_filters(v, AnnotationLayerFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> list[str]:
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListAnnotationLayersRequest":
-        if self.search and self.filters:
-            raise ValueError("Cannot use both 'search' and 'filters' simultaneously.")
+        ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 
 
@@ -250,17 +251,16 @@ class ListLayerAnnotationsRequest(BaseModel):
     @field_validator("filters", mode="before")
     @classmethod
     def parse_filters(cls, v: Any) -> list[AnnotationFilter]:
-        return parse_json_or_model_list(v, AnnotationFilter, "filters")
+        return parse_filters(v, AnnotationFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> list[str]:
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListLayerAnnotationsRequest":
-        if self.search and self.filters:
-            raise ValueError("Cannot use both 'search' and 'filters' simultaneously.")
+        ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 
 
@@ -271,21 +271,8 @@ class GetLayerAnnotationInfoRequest(BaseModel):
     annotation_id: Annotated[int, Field(description="Annotation ID.")]
 
 
-class AnnotationLayerError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "AnnotationLayerError":
-        from datetime import timezone
-
-        return cls(
-            error=error,
-            error_type=error_type,
-            timestamp=datetime.now(timezone.utc),
-        )
+class AnnotationLayerError(MCPResourceError):
+    pass
 
 
 def _sanitize_annotation_layer_for_llm_context(

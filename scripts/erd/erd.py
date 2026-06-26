@@ -29,8 +29,6 @@ from typing import Any, Optional
 import click
 import jinja2
 
-from superset import db
-
 GROUPINGS: dict[str, Iterable[str]] = {
     "Core": [
         "css_templates",
@@ -148,6 +146,8 @@ def introspect_models() -> dict[str, list[dict[str, Any]]]:
     --------
     Dict[str, List[Dict[str, Any]]]: data structure for jinja2 template
     """
+    from superset import db
+
     data: dict[str, list[dict[str, Any]]] = defaultdict(list)
     seen_models: set[str] = set()
     for model in db.Model.registry.mappers:

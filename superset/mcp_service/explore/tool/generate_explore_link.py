@@ -28,7 +28,6 @@ from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.daos.dataset import DatasetDAO
-from superset.extensions import event_logger
 from superset.mcp_service.auth import has_dataset_access
 from superset.mcp_service.chart.chart_helpers import extract_form_data_key_from_url
 from superset.mcp_service.chart.chart_utils import (
@@ -43,6 +42,7 @@ from superset.mcp_service.chart.schemas import (
 from superset.mcp_service.chart.validation.dataset_validator import DatasetValidator
 from superset.mcp_service.common.error_schemas import ChartGenerationError
 from superset.mcp_service.explore.schemas import GenerateExploreLinkResponse
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.url_utils import (
     extract_permalink_key_from_url,
     get_superset_base_url,
@@ -119,7 +119,9 @@ async def generate_explore_link(
 
     try:
         await ctx.report_progress(1, 4, "Validating dataset exists")
-        with event_logger.log_context(action="mcp.generate_explore_link.dataset_check"):
+        with mcp_event_log_context(
+            action="mcp.generate_explore_link.dataset_check"
+        ):
             dataset = None
             if isinstance(request.dataset_id, int) or (
                 isinstance(request.dataset_id, str) and request.dataset_id.isdigit()
@@ -219,7 +221,7 @@ async def generate_explore_link(
             )
 
         await ctx.report_progress(2, 4, "Converting configuration to form data")
-        with event_logger.log_context(action="mcp.generate_explore_link.form_data"):
+        with mcp_event_log_context(action="mcp.generate_explore_link.form_data"):
             # config is already a typed ChartConfig (validated by Pydantic)
             config = request.config
 
@@ -272,7 +274,7 @@ async def generate_explore_link(
         # Tier-1 schema validation against the dataset (no DB roundtrip).
         # Catches references to non-existent columns/metrics with fuzzy
         # suggestions so the LLM can self-correct ("did you mean sum_boys?").
-        with event_logger.log_context(action="mcp.generate_explore_link.validation"):
+        with mcp_event_log_context(action="mcp.generate_explore_link.validation"):
             compile_result = validate_and_compile(
                 normalized_config,
                 form_data,
@@ -303,7 +305,7 @@ async def generate_explore_link(
             )
 
         await ctx.report_progress(3, 4, "Generating explore URL")
-        with event_logger.log_context(
+        with mcp_event_log_context(
             action="mcp.generate_explore_link.url_generation"
         ):
             # Generate explore link using shared utilities

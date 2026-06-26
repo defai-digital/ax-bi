@@ -34,13 +34,13 @@ from superset.commands.dataset.exceptions import (
     DatasetCreateFailedError,
     DatasetInvalidError,
 )
-from superset.extensions import event_logger
 from superset.mcp_service.dataset.schemas import (
     CreateDatasetRequest,
     DatasetError,
     DatasetInfo,
     serialize_dataset_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ async def create_dataset(
         if request.owners is not None:
             dataset_properties["owners"] = request.owners
 
-        with event_logger.log_context(action="mcp.create_dataset.create"):
+        with mcp_event_log_context(action="mcp.create_dataset.create"):
             dataset = CreateDatasetCommand(dataset_properties).run()
 
         result = serialize_dataset_object(dataset)

@@ -272,7 +272,8 @@ msgid "%(suggestion)s instead of \"%(undefinedParameter)s?\""
 msgid_plural ""
 "%(firstSuggestions)s or %(lastSuggestion)s instead of "
 "\"%(undefinedParameter)s\"?"
-msgstr[0] "%(suggestion)s en lloc de \"%(undefinedParameter)s?\""
+msgstr[0] ""
+"%(firstSuggestions)s%(lastSuggestion)s en lloc de \"%(undefinedParameter)s?\""
 msgstr[1] ""
 "%(firstSuggestions)s o %(lastSuggestion)s en lloc de "
 "\"%(undefinedParameter)s\"?"
@@ -1301,13 +1302,13 @@ msgstr "Afegit"
 #, python-format
 msgid "Added 1 new column to the virtual dataset"
 msgid_plural "Added %s new columns to the virtual dataset"
-msgstr[0] "Afegida 1 nova columna al conjunt de dades virtual"
+msgstr[0] "Afegida %s nova columna al conjunt de dades virtual"
 msgstr[1] "Afegides %s noves columnes al conjunt de dades virtual"
 
 #, python-format
 msgid "Added to 1 dashboard"
 msgid_plural "Added to %s dashboards"
-msgstr[0] "Afegit a 1 dashboard"
+msgstr[0] "Afegit a %s dashboard"
 msgstr[1] "Afegit a %s dashboards"
 
 msgid "Additional Parameters"
@@ -8979,7 +8980,7 @@ msgstr "Modificat %s"
 #, python-format
 msgid "Modified 1 column in the virtual dataset"
 msgid_plural "Modified %s columns in the virtual dataset"
-msgstr[0] "Modificada 1 columna al conjunt de dades virtual"
+msgstr[0] "Modificada %s columna al conjunt de dades virtual"
 msgstr[1] "Modificades %s columnes al conjunt de dades virtual"
 
 msgid "Modified by"
@@ -10881,7 +10882,7 @@ msgstr "Eliminar vista prèvia de taula"
 #, python-format
 msgid "Removed 1 column from the virtual dataset"
 msgid_plural "Removed %s columns from the virtual dataset"
-msgstr[0] "Eliminada 1 columna del dataset virtual"
+msgstr[0] "Eliminada %s columna del dataset virtual"
 msgstr[1] "Eliminades %s columnes del dataset virtual"
 
 msgid "Rename tab"

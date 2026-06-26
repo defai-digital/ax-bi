@@ -29,7 +29,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError, SupersetException
-from superset.extensions import event_logger
 from superset.mcp_service.auth import has_dataset_access
 from superset.mcp_service.chart.chart_helpers import extract_form_data_key_from_url
 from superset.mcp_service.chart.chart_utils import (
@@ -50,6 +49,7 @@ from superset.mcp_service.chart.schemas import (
     PerformanceMetadata,
     UpdateChartPreviewRequest,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
@@ -137,7 +137,7 @@ def update_chart_preview(  # noqa: C901
         config = request.config
 
         # Validate dataset exists and user has access
-        with event_logger.log_context(action="mcp.update_chart_preview.dataset_lookup"):
+        with mcp_event_log_context(action="mcp.update_chart_preview.dataset_lookup"):
             dataset = _find_dataset(request.dataset_id)
 
             if not dataset:
@@ -163,7 +163,7 @@ def update_chart_preview(  # noqa: C901
                     "api_version": "v1",
                 }
 
-        with event_logger.log_context(action="mcp.update_chart_preview.form_data"):
+        with mcp_event_log_context(action="mcp.update_chart_preview.form_data"):
             # Map the new config to form_data format
             # Pass dataset_id to enable column type checking
             new_form_data = map_config_to_form_data(
@@ -261,7 +261,7 @@ def update_chart_preview(  # noqa: C901
                 "api_version": "v1",
             }
 
-        with event_logger.log_context(action="mcp.update_chart_preview.metadata"):
+        with mcp_event_log_context(action="mcp.update_chart_preview.metadata"):
             # Generate semantic analysis
             capabilities = analyze_chart_capabilities(None, config)
             semantics = analyze_chart_semantics(None, config)
@@ -285,7 +285,7 @@ def update_chart_preview(  # noqa: C901
         previews: Dict[str, Any] = {}
         if request.generate_preview:
             try:
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.update_chart_preview.preview"
                 ):
                     for format_type in request.preview_formats:

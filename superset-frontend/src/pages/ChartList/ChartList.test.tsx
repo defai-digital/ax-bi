@@ -95,7 +95,9 @@ describe('ChartList', () => {
     await screen.findByTestId('chart-list-view');
 
     // Verify New Chart button exists
-    const newChartButton = screen.getByRole('button', { name: /chart/i });
+    const newChartButton = screen.getByRole('button', {
+      name: /^(?:plus\s*)?Chart$/i,
+    });
     expect(newChartButton).toBeInTheDocument();
     expect(screen.getByTestId('plus')).toBeInTheDocument();
 
@@ -116,7 +118,9 @@ describe('ChartList', () => {
     await screen.findByTestId('chart-list-view');
 
     // Verify Import button exists
-    const importButton = screen.getByTestId('import-button');
+    const importButton = screen.getByRole('button', {
+      name: /import charts/i,
+    });
     expect(importButton).toBeInTheDocument();
 
     // Click the Import button

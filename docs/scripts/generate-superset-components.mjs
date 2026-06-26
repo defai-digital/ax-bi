@@ -64,6 +64,16 @@ const TYPES_OUTPUT_DIR = path.join(DOCS_DIR, 'src/types/apache-superset-core');
 const TYPES_OUTPUT_PATH = path.join(TYPES_OUTPUT_DIR, 'index.d.ts');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'superset-frontend');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/generate-superset-components.mjs
+
+Generate Superset component documentation from Storybook stories.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 // Source configurations with import paths and categories
 const SOURCES = [
   {
@@ -1701,4 +1711,7 @@ async function main() {
   console.log(`Tracked ${disabledFiles.length} components for future implementation.`);
 }
 
-main().catch(console.error);
+main().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -28,7 +28,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 if TYPE_CHECKING:
     from superset.models.slice import Slice
 
-from superset.extensions import event_logger
 from superset.mcp_service.chart.schemas import (
     ChartError,
     ChartFilter,
@@ -38,13 +37,19 @@ from superset.mcp_service.chart.schemas import (
     ListChartsRequest,
     serialize_chart_object,
 )
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
 from superset.mcp_service.privacy import (
     DATA_MODEL_METADATA_ERROR_TYPE,
     remove_chart_data_model_columns,
     request_uses_chart_data_model_filter,
     user_can_view_data_model_metadata,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import finalize_list_response
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +120,7 @@ async def list_charts(
     then pass it as a filter: filters=[{"col": "created_by_fk", "opr": "eq",
     "value": <id>}] (or "changed_by_fk"). Do not pass the name as search.
     """
-    request = request or _DEFAULT_LIST_CHARTS_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_CHARTS_REQUEST)
     await ctx.info(
         "Listing charts: page=%s, page_size=%s, search=%s"
         % (
@@ -185,37 +190,19 @@ async def list_charts(
     )
 
     try:
-        with event_logger.log_context(action="mcp.list_charts.query"):
+        with mcp_event_log_context(action="mcp.list_charts.query"):
             result = tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
                 created_by_me=request.created_by_me,
                 owned_by_me=request.owned_by_me,
             )
-        count = len(result.charts) if hasattr(result, "charts") else 0
-        total_pages = getattr(result, "total_pages", None)
-        await ctx.info(
-            "Charts listed successfully: count=%s, total_pages=%s"
-            % (count, total_pages)
-        )
-
-        # Apply field filtering via serialization context
-        # Always use columns_requested (either explicit select_columns or defaults)
-        # This triggers ChartInfo._filter_fields_by_context for each chart
-        columns_to_filter = result.columns_requested
-        await ctx.debug(
-            "Applying field filtering via serialization context: columns=%s"
-            % (columns_to_filter,)
-        )
-        with event_logger.log_context(action="mcp.list_charts.serialization"):
-            return result.model_dump(
-                mode="json", context={"select_columns": columns_to_filter}
-            )
+        return await finalize_list_response(result, "charts", "Charts", ctx)
     except Exception as e:
         await ctx.error("Failed to list charts: %s" % (str(e),))
         raise

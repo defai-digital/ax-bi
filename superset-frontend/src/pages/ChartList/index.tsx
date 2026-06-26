@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { SupersetTheme, css, styled } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
 import {
   isFeatureEnabled,
@@ -26,7 +26,6 @@ import {
   SupersetClient,
   isMatrixifyEnabled,
 } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
 import { useState, useMemo, useCallback } from 'react';
 import rison from 'rison';
 import { uniqBy } from 'lodash';
@@ -81,6 +80,7 @@ import ChartCard from 'src/features/charts/ChartCard';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import { findPermission } from 'src/utils/findPermission';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 import { Tag } from 'src/components/Tag';
 import { datasetLabel } from 'src/features/semanticLayers/label';
@@ -103,7 +103,7 @@ const FlexRowContainer = styled.div`
   }
 `;
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const PASSWORDS_NEEDED_MESSAGE = t(
   'The passwords for the databases below are needed in order to ' +
     'import them together with the charts. Please note that the ' +
@@ -839,6 +839,7 @@ function ChartList(props: ChartListProps) {
         </Tooltip>
       ),
       buttonStyle: 'link',
+      'aria-label': t('Import charts'),
       onClick: openChartImportModal,
     });
   }

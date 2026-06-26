@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from superset import db
 from superset.commands.importers.exceptions import IncorrectVersionError
+from superset.constants import PASSWORD_MASK
 from superset.databases.ssh_tunnel.models import SSHTunnel
 from superset.extensions import feature_flag_manager
 from superset.models.core import Database
@@ -125,21 +126,25 @@ def load_configs(
     # load existing ssh_tunnels so we can apply the password validation
     db_ssh_tunnel_passwords: dict[str, str] = {
         str(uuid): password
-        for uuid, password in db.session.query(SSHTunnel.uuid, SSHTunnel.password).all()
+        for uuid, password in db.session.query(Database.uuid, SSHTunnel.password)
+        .join(SSHTunnel, SSHTunnel.database_id == Database.id)
+        .all()
     }
     # load existing ssh_tunnels so we can apply the private_key validation
     db_ssh_tunnel_private_keys: dict[str, str] = {
         str(uuid): private_key
-        for uuid, private_key in db.session.query(
-            SSHTunnel.uuid, SSHTunnel.private_key
-        ).all()
+        for uuid, private_key in db.session.query(Database.uuid, SSHTunnel.private_key)
+        .join(SSHTunnel, SSHTunnel.database_id == Database.id)
+        .all()
     }
     # load existing ssh_tunnels so we can apply the private_key_password validation
     db_ssh_tunnel_priv_key_passws: dict[str, str] = {
         str(uuid): private_key_password
         for uuid, private_key_password in db.session.query(
-            SSHTunnel.uuid, SSHTunnel.private_key_password
-        ).all()
+            Database.uuid, SSHTunnel.private_key_password
+        )
+        .join(SSHTunnel, SSHTunnel.database_id == Database.id)
+        .all()
     }
     for file_name, content in contents.items():
         # skip directories
@@ -162,41 +167,49 @@ def load_configs(
                 elif prefix == "databases" and config["uuid"] in db_passwords:
                     config["password"] = db_passwords[config["uuid"]]
 
-                # populate ssh_tunnel_passwords from the request or from existing DBs
-                if file_name in ssh_tunnel_passwords:
-                    config["ssh_tunnel"]["password"] = ssh_tunnel_passwords[file_name]
-                elif (
-                    prefix == "databases" and config["uuid"] in db_ssh_tunnel_passwords
-                ):
-                    config["ssh_tunnel"]["password"] = db_ssh_tunnel_passwords[
-                        config["uuid"]
-                    ]
+                ssh_tunnel = config.get("ssh_tunnel") or {}
+                config_uuid = str(config["uuid"])
 
-                # populate ssh_tunnel_private_keys from the request or from existing DBs
-                if file_name in ssh_tunnel_private_keys:
-                    config["ssh_tunnel"]["private_key"] = ssh_tunnel_private_keys[
-                        file_name
-                    ]
-                elif (
-                    prefix == "databases"
-                    and config["uuid"] in db_ssh_tunnel_private_keys
-                ):
-                    config["ssh_tunnel"]["private_key"] = db_ssh_tunnel_private_keys[
-                        config["uuid"]
-                    ]
+                # populate masked ssh_tunnel_passwords from the request or from
+                # the same existing database. Do not add credentials absent from
+                # the import file; the SSH schema uses field presence to
+                # determine the selected auth method.
+                if ssh_tunnel.get("password") == PASSWORD_MASK:
+                    if file_name in ssh_tunnel_passwords:
+                        ssh_tunnel["password"] = ssh_tunnel_passwords[file_name]
+                    elif (
+                        prefix == "databases"
+                        and db_ssh_tunnel_passwords.get(config_uuid) is not None
+                    ):
+                        ssh_tunnel["password"] = db_ssh_tunnel_passwords[config_uuid]
 
-                # populate ssh_tunnel_passwords from the request or from existing DBs
-                if file_name in ssh_tunnel_priv_key_passwords:
-                    config["ssh_tunnel"]["private_key_password"] = (
-                        ssh_tunnel_priv_key_passwords[file_name]
-                    )
-                elif (
-                    prefix == "databases"
-                    and config["uuid"] in db_ssh_tunnel_priv_key_passws
-                ):
-                    config["ssh_tunnel"]["private_key_password"] = (
-                        db_ssh_tunnel_priv_key_passws[config["uuid"]]
-                    )
+                # populate masked ssh_tunnel_private_keys from the request or from
+                # the same existing database
+                if ssh_tunnel.get("private_key") == PASSWORD_MASK:
+                    if file_name in ssh_tunnel_private_keys:
+                        ssh_tunnel["private_key"] = ssh_tunnel_private_keys[file_name]
+                    elif (
+                        prefix == "databases"
+                        and db_ssh_tunnel_private_keys.get(config_uuid) is not None
+                    ):
+                        ssh_tunnel["private_key"] = db_ssh_tunnel_private_keys[
+                            config_uuid
+                        ]
+
+                # populate masked ssh_tunnel_private_key_passwords from the
+                # request or from the same existing database
+                if ssh_tunnel.get("private_key_password") == PASSWORD_MASK:
+                    if file_name in ssh_tunnel_priv_key_passwords:
+                        ssh_tunnel["private_key_password"] = (
+                            ssh_tunnel_priv_key_passwords[file_name]
+                        )
+                    elif (
+                        prefix == "databases"
+                        and db_ssh_tunnel_priv_key_passws.get(config_uuid) is not None
+                    ):
+                        ssh_tunnel["private_key_password"] = (
+                            db_ssh_tunnel_priv_key_passws[config_uuid]
+                        )
 
                 # populate encrypted_extra secrets from the request
                 # The secrets dict maps JSONPath -> value

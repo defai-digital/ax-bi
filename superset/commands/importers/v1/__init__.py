@@ -145,7 +145,7 @@ class ImportModelsCommand(BaseCommand):
             for file_name, config in self._configs.items():
                 if (
                     file_name.startswith(self.prefix)
-                    and config["uuid"] in existing_uuids
+                    and str(config["uuid"]) in existing_uuids
                 ):
                     exceptions.append(
                         ValidationError(

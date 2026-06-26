@@ -23,7 +23,6 @@ about a specific dashboard.
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
 from fastmcp import Context
@@ -33,7 +32,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.dashboards.permalink.exceptions import DashboardPermalinkGetFailedError
 from superset.dashboards.permalink.types import DashboardPermalinkValue
-from superset.extensions import event_logger
 from superset.mcp_service.auth import load_user_with_relationships
 from superset.mcp_service.dashboard.schemas import (
     dashboard_serializer,
@@ -46,6 +44,8 @@ from superset.mcp_service.dashboard.schemas import (
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.privacy import user_can_view_data_model_metadata
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import dump_model_with_select_columns
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ async def get_dashboard_info(
             subqueryload(Dashboard.tags),
         ]
 
-        with event_logger.log_context(action="mcp.get_dashboard_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_dashboard_info.lookup"):
             tool = ModelGetInfoCore(
                 dao_class=DashboardDAO,
                 output_schema=DashboardInfo,
@@ -258,10 +258,7 @@ async def get_dashboard_info(
             ):
                 effective_select_columns.append("filter_state")
 
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": effective_select_columns},
-            )
+            return dump_model_with_select_columns(result, effective_select_columns)
         else:
             await ctx.warning(
                 "Dashboard retrieval failed: error_type=%s, error=%s"
@@ -275,8 +272,7 @@ async def get_dashboard_info(
             "Dashboard information retrieval failed: identifier=%s, error=%s, "
             "error_type=%s" % (request.identifier, str(e), type(e).__name__)
         )
-        return DashboardError(
+        return DashboardError.create(
             error=f"Failed to get dashboard info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

@@ -70,6 +70,7 @@ import {
   Dashboard as CRUDDashboard,
   QueryObjectColumns,
 } from 'src/views/CRUD/types';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
 import { loadTags } from 'src/components/Tag/utils';
 import DashboardCard from 'src/features/dashboards/DashboardCard';
@@ -79,7 +80,7 @@ import { findPermission } from 'src/utils/findPermission';
 import { navigateTo } from 'src/utils/navigationUtils';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const PASSWORDS_NEEDED_MESSAGE = t(
   'The passwords for the databases below are needed in order to ' +
     'import them together with the dashboards. Please note that the ' +
@@ -743,6 +744,7 @@ function DashboardList(props: DashboardListProps) {
         </Tooltip>
       ),
       buttonStyle: 'link',
+      'aria-label': t('Import dashboards'),
       onClick: openDashboardImportModal,
     });
   }

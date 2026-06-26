@@ -17,6 +17,8 @@
 
 """Tests for MCP privacy helpers."""
 
+from unittest.mock import call, patch
+
 import pytest
 
 from superset.mcp_service.chart.schemas import ChartInfo
@@ -26,6 +28,7 @@ from superset.mcp_service.dataset.schemas import DatasetInfo
 from superset.mcp_service.privacy import (
     is_data_model_metadata_error,
     redact_chart_data_model_fields,
+    user_can_view_data_model_metadata,
 )
 
 
@@ -71,6 +74,29 @@ def test_redact_chart_data_model_fields_removes_restricted_fields() -> None:
     assert redacted.datasource_type is None
     assert redacted.filters is None
     assert redacted.form_data is None
+
+
+def test_user_can_view_data_model_metadata_checks_dataset_permissions() -> None:
+    with patch(
+        "superset.mcp_service.utils.permissions_utils."
+        "user_can_access_dataset_permission",
+        side_effect=[False, True],
+    ) as can_access_dataset_permission:
+        assert user_can_view_data_model_metadata() is True
+
+    assert can_access_dataset_permission.mock_calls == [
+        call("can_get_drill_info"),
+        call("can_get_or_create_dataset"),
+    ]
+
+
+def test_user_can_view_data_model_metadata_fails_closed() -> None:
+    with patch(
+        "superset.mcp_service.utils.permissions_utils."
+        "user_can_access_dataset_permission",
+        side_effect=RuntimeError("permission backend unavailable"),
+    ):
+        assert user_can_view_data_model_metadata() is False
 
 
 @pytest.mark.parametrize(

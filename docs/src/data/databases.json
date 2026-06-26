@@ -1,22 +1,26 @@
 {
-  "generated": "2026-04-17T17:08:35.132Z",
+  "generated": "2026-06-25T15:44:18.845Z",
   "statistics": {
-    "totalDatabases": 80,
-    "withDocumentation": 80,
-    "withConnectionString": 80,
-    "withDrivers": 28,
+    "totalDatabases": 81,
+    "withDocumentation": 81,
+    "withConnectionString": 81,
+    "withDrivers": 25,
     "withAuthMethods": 5,
-    "supportsJoins": 74,
-    "supportsSubqueries": 77,
-    "supportsDynamicSchema": 29,
+    "supportsJoins": 75,
+    "supportsSubqueries": 78,
+    "supportsDynamicSchema": 30,
     "supportsCatalog": 20,
-    "averageScore": 54,
+    "averageScore": 53,
     "maxScore": 201,
     "byCategory": {
       "Cloud - AWS": [
         "Amazon Athena",
         "Amazon DynamoDB",
-        "Amazon Redshift"
+        "Amazon Redshift",
+        "Aurora MySQL",
+        "Aurora MySQL (Data API)",
+        "Aurora PostgreSQL",
+        "Aurora PostgreSQL (Data API)"
       ],
       "Query Engines": [
         "Amazon Athena",
@@ -24,7 +28,6 @@
         "Apache Hive",
         "Apache Impala",
         "Apache Spark SQL",
-        "Databricks Interactive Cluster",
         "Denodo",
         "Dremio",
         "Presto",
@@ -36,8 +39,10 @@
         "Amazon Redshift",
         "Arc",
         "Azure Data Explorer",
+        "Azure Data Explorer (KQL)",
         "Azure Synapse",
         "Databend",
+        "Databend (legacy)",
         "Denodo",
         "Dremio",
         "Exasol",
@@ -50,6 +55,7 @@
         "IBM Netezza Performance Server",
         "Microsoft SQL Server",
         "MongoDB",
+        "ODPS (MaxCompute)",
         "Ocient",
         "Oracle",
         "SAP HANA",
@@ -66,6 +72,7 @@
         "Elasticsearch",
         "Google Datastore",
         "MongoDB",
+        "OpenSearch (OpenDistro)",
         "Parseable"
       ],
       "Analytical Databases": [
@@ -75,10 +82,16 @@
         "Apache Phoenix",
         "Ascend",
         "Azure Data Explorer",
+        "Azure Data Explorer (KQL)",
         "Azure Synapse",
         "ClickHouse",
+        "ClickHouse (sqlalchemy)",
         "Databend",
+        "Databend (legacy)",
         "Databricks",
+        "Databricks (legacy)",
+        "Databricks Interactive Cluster",
+        "Databricks SQL Endpoint",
         "DuckDB",
         "Exasol",
         "Firebolt",
@@ -104,8 +117,7 @@
         "Apache Phoenix",
         "Apache Pinot",
         "Apache Solr",
-        "Apache Spark SQL",
-        "Databricks Interactive Cluster"
+        "Apache Spark SQL"
       ],
       "Open Source": [
         "Apache Doris",
@@ -119,15 +131,11 @@
         "Apache Pinot",
         "Apache Solr",
         "Apache Spark SQL",
-        "Aurora MySQL",
-        "Aurora MySQL (Data API)",
-        "Aurora PostgreSQL",
-        "Aurora PostgreSQL (Data API)",
         "ClickHouse",
+        "ClickHouse (sqlalchemy)",
         "CockroachDB",
         "Couchbase",
         "CrateDB",
-        "Databricks Interactive Cluster",
         "DuckDB",
         "Elasticsearch",
         "Firebird",
@@ -136,6 +144,7 @@
         "MonetDB",
         "MySQL",
         "OceanBase",
+        "OpenSearch (OpenDistro)",
         "Parseable",
         "PostgreSQL",
         "Presto",
@@ -158,12 +167,6 @@
       ],
       "Other Databases": [
         "Arc",
-        "Azure Data Explorer (KQL)",
-        "ClickHouse (sqlalchemy)",
-        "Databend (legacy)",
-        "Databricks (legacy)",
-        "Databricks SQL Endpoint",
-        "OpenSearch (OpenDistro)",
         "Shillelagh",
         "Superset meta database",
         "base"
@@ -173,17 +176,29 @@
         "Azure Synapse",
         "Cloudflare D1",
         "Databend",
+        "Databend (legacy)",
         "Databricks",
+        "Databricks (legacy)",
+        "Databricks Interactive Cluster",
+        "Databricks SQL Endpoint",
         "Firebolt",
         "Hologres",
         "MotherDuck",
+        "ODPS (MaxCompute)",
         "Snowflake",
         "YugabyteDB"
       ],
       "Hosted Open Source": [
         "Ascend",
+        "Aurora MySQL",
+        "Aurora MySQL (Data API)",
+        "Aurora PostgreSQL",
+        "Aurora PostgreSQL (Data API)",
         "Cloudflare D1",
         "Databricks",
+        "Databricks (legacy)",
+        "Databricks Interactive Cluster",
+        "Databricks SQL Endpoint",
         "Google Sheets",
         "MotherDuck"
       ],
@@ -214,7 +229,8 @@
         "YugabyteDB"
       ],
       "Cloud - Azure": [
-        "Azure Data Explorer"
+        "Azure Data Explorer",
+        "Azure Data Explorer (KQL)"
       ],
       "Cloud - Google": [
         "Google BigQuery",
@@ -1749,11 +1765,11 @@
         "pypi_packages": [
           "pyhive"
         ],
-        "connection_string": "hive://hive@{hostname}:{port}/{database}",
+        "connection_string": "spark://hive@{hostname}:{port}/{database}",
         "default_port": 10000,
         "category": "Apache Projects"
       },
-      "engine": "hive",
+      "engine": "spark",
       "engine_name": "Apache Spark SQL",
       "engine_aliases": [],
       "default_driver": null,
@@ -2007,96 +2023,19 @@
       "score": 59,
       "max_score": 201,
       "documentation": {
-        "description": "MySQL is a popular open-source relational database.",
-        "logo": "mysql.png",
-        "homepage_url": "https://www.mysql.com/",
+        "description": "Amazon Aurora MySQL is a fully managed, MySQL-compatible relational database service on AWS.",
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
         "categories": [
+          "Cloud - AWS",
           "Traditional RDBMS",
-          "Open Source"
+          "Hosted Open Source"
         ],
         "pypi_packages": [
           "mysqlclient"
         ],
-        "connection_string": "mysql://{username}:{password}@{host}/{database}",
+        "connection_string": "mysql://{username}:{password}@{host}:{port}/{database}",
         "default_port": 3306,
-        "parameters": {
-          "username": "Database username",
-          "password": "Database password",
-          "host": "localhost, 127.0.0.1, IP address, or hostname",
-          "database": "Database name"
-        },
-        "host_examples": [
-          {
-            "platform": "Localhost",
-            "host": "localhost or 127.0.0.1"
-          },
-          {
-            "platform": "Docker on Linux",
-            "host": "172.18.0.1"
-          },
-          {
-            "platform": "Docker on macOS",
-            "host": "docker.for.mac.host.internal"
-          },
-          {
-            "platform": "On-premise",
-            "host": "IP address or hostname"
-          }
-        ],
-        "drivers": [
-          {
-            "name": "mysqlclient",
-            "pypi_package": "mysqlclient",
-            "connection_string": "mysql://{username}:{password}@{host}/{database}",
-            "is_recommended": true,
-            "notes": "Recommended driver. May fail with caching_sha2_password auth."
-          },
-          {
-            "name": "mysql-connector-python",
-            "pypi_package": "mysql-connector-python",
-            "connection_string": "mysql+mysqlconnector://{username}:{password}@{host}/{database}",
-            "is_recommended": false,
-            "notes": "Required for newer MySQL databases using caching_sha2_password authentication."
-          }
-        ],
-        "compatible_databases": [
-          {
-            "name": "MariaDB",
-            "description": "MariaDB is a community-developed fork of MySQL, fully compatible with MySQL.",
-            "logo": "mariadb.png",
-            "homepage_url": "https://mariadb.org/",
-            "pypi_packages": [
-              "mysqlclient"
-            ],
-            "connection_string": "mysql://{username}:{password}@{host}:{port}/{database}",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "Amazon Aurora MySQL",
-            "description": "Amazon Aurora MySQL is a fully managed, MySQL-compatible relational database with up to 5x the throughput of standard MySQL.",
-            "logo": "aws-aurora.jpg",
-            "homepage_url": "https://aws.amazon.com/rds/aurora/",
-            "pypi_packages": [
-              "sqlalchemy-aurora-data-api"
-            ],
-            "connection_string": "mysql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
-            "parameters": {
-              "aws_access_id": "AWS Access Key ID",
-              "aws_secret_access_key": "AWS Secret Access Key",
-              "database_name": "Database name",
-              "aurora_cluster_arn": "Aurora cluster ARN",
-              "secret_arn": "Secrets Manager ARN for credentials",
-              "region_name": "AWS region (e.g., us-east-1)"
-            },
-            "notes": "Uses the Data API for serverless access. Standard MySQL connections also work with mysqlclient.",
-            "categories": [
-              "Cloud - AWS",
-              "Hosted Open Source"
-            ]
-          }
-        ],
         "category": "Traditional RDBMS"
       },
       "engine": "mysql",
@@ -2168,96 +2107,18 @@
       "score": 59,
       "max_score": 201,
       "documentation": {
-        "description": "MySQL is a popular open-source relational database.",
-        "logo": "mysql.png",
-        "homepage_url": "https://www.mysql.com/",
+        "description": "Amazon Aurora MySQL via the RDS Data API, a serverless API for connecting to Aurora clusters without managing persistent database connections.",
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
         "categories": [
+          "Cloud - AWS",
           "Traditional RDBMS",
-          "Open Source"
+          "Hosted Open Source"
         ],
         "pypi_packages": [
-          "mysqlclient"
+          "sqlalchemy-aurora-data-api"
         ],
-        "connection_string": "mysql://{username}:{password}@{host}/{database}",
-        "default_port": 3306,
-        "parameters": {
-          "username": "Database username",
-          "password": "Database password",
-          "host": "localhost, 127.0.0.1, IP address, or hostname",
-          "database": "Database name"
-        },
-        "host_examples": [
-          {
-            "platform": "Localhost",
-            "host": "localhost or 127.0.0.1"
-          },
-          {
-            "platform": "Docker on Linux",
-            "host": "172.18.0.1"
-          },
-          {
-            "platform": "Docker on macOS",
-            "host": "docker.for.mac.host.internal"
-          },
-          {
-            "platform": "On-premise",
-            "host": "IP address or hostname"
-          }
-        ],
-        "drivers": [
-          {
-            "name": "mysqlclient",
-            "pypi_package": "mysqlclient",
-            "connection_string": "mysql://{username}:{password}@{host}/{database}",
-            "is_recommended": true,
-            "notes": "Recommended driver. May fail with caching_sha2_password auth."
-          },
-          {
-            "name": "mysql-connector-python",
-            "pypi_package": "mysql-connector-python",
-            "connection_string": "mysql+mysqlconnector://{username}:{password}@{host}/{database}",
-            "is_recommended": false,
-            "notes": "Required for newer MySQL databases using caching_sha2_password authentication."
-          }
-        ],
-        "compatible_databases": [
-          {
-            "name": "MariaDB",
-            "description": "MariaDB is a community-developed fork of MySQL, fully compatible with MySQL.",
-            "logo": "mariadb.png",
-            "homepage_url": "https://mariadb.org/",
-            "pypi_packages": [
-              "mysqlclient"
-            ],
-            "connection_string": "mysql://{username}:{password}@{host}:{port}/{database}",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "Amazon Aurora MySQL",
-            "description": "Amazon Aurora MySQL is a fully managed, MySQL-compatible relational database with up to 5x the throughput of standard MySQL.",
-            "logo": "aws-aurora.jpg",
-            "homepage_url": "https://aws.amazon.com/rds/aurora/",
-            "pypi_packages": [
-              "sqlalchemy-aurora-data-api"
-            ],
-            "connection_string": "mysql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
-            "parameters": {
-              "aws_access_id": "AWS Access Key ID",
-              "aws_secret_access_key": "AWS Secret Access Key",
-              "database_name": "Database name",
-              "aurora_cluster_arn": "Aurora cluster ARN",
-              "secret_arn": "Secrets Manager ARN for credentials",
-              "region_name": "AWS region (e.g., us-east-1)"
-            },
-            "notes": "Uses the Data API for serverless access. Standard MySQL connections also work with mysqlclient.",
-            "categories": [
-              "Cloud - AWS",
-              "Hosted Open Source"
-            ]
-          }
-        ],
+        "connection_string": "mysql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
         "category": "Traditional RDBMS"
       },
       "engine": "mysql",
@@ -2329,193 +2190,19 @@
       "score": 104,
       "max_score": 201,
       "documentation": {
-        "description": "PostgreSQL is an advanced open-source relational database.",
-        "logo": "postgresql.svg",
-        "homepage_url": "https://www.postgresql.org/",
+        "description": "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL-compatible relational database service on AWS.",
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
         "categories": [
+          "Cloud - AWS",
           "Traditional RDBMS",
-          "Open Source"
+          "Hosted Open Source"
         ],
         "pypi_packages": [
           "psycopg2"
         ],
         "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
         "default_port": 5432,
-        "parameters": {
-          "username": "Database username",
-          "password": "Database password",
-          "host": "For localhost: localhost or 127.0.0.1. For AWS: endpoint URL",
-          "port": "Default 5432",
-          "database": "Database name"
-        },
-        "notes": "The psycopg2 library comes bundled with Superset Docker images.",
-        "connection_examples": [
-          {
-            "description": "Basic connection",
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}"
-          },
-          {
-            "description": "With SSL required",
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=require"
-          }
-        ],
-        "docs_url": "https://www.postgresql.org/docs/",
-        "sqlalchemy_docs_url": "https://docs.sqlalchemy.org/en/13/dialects/postgresql.html",
-        "compatible_databases": [
-          {
-            "name": "Hologres",
-            "description": "Alibaba Cloud real-time interactive analytics service, fully compatible with PostgreSQL 11.",
-            "logo": "hologres.png",
-            "homepage_url": "https://www.alibabacloud.com/product/hologres",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-            "parameters": {
-              "username": "AccessKey ID of your Alibaba Cloud account",
-              "password": "AccessKey secret of your Alibaba Cloud account",
-              "host": "Public endpoint of the Hologres instance",
-              "port": "Port number of the Hologres instance",
-              "database": "Name of the Hologres database"
-            },
-            "categories": [
-              "Proprietary"
-            ]
-          },
-          {
-            "name": "TimescaleDB",
-            "description": "Open-source relational database for time-series and analytics, built on PostgreSQL.",
-            "logo": "timescale.png",
-            "homepage_url": "https://www.timescale.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "connection_examples": [
-              {
-                "description": "Timescale Cloud (SSL required)",
-                "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=require"
-              }
-            ],
-            "notes": "psycopg2 comes bundled with Superset Docker images.",
-            "docs_url": "https://docs.timescale.com/",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "YugabyteDB",
-            "description": "Distributed SQL database built on top of PostgreSQL.",
-            "logo": "yugabyte.png",
-            "homepage_url": "https://www.yugabyte.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "notes": "psycopg2 comes bundled with Superset Docker images.",
-            "docs_url": "https://www.yugabyte.com/",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "Supabase",
-            "description": "Open-source Firebase alternative built on top of PostgreSQL, providing a full backend-as-a-service with a hosted Postgres database.",
-            "logo": "supabase.svg",
-            "homepage_url": "https://supabase.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "connection_examples": [
-              {
-                "description": "Supabase project (connection pooler)",
-                "connection_string": "postgresql://{username}.{project_ref}:{password}@aws-0-{region}.pooler.supabase.com:6543/{database}"
-              }
-            ],
-            "parameters": {
-              "username": "Database user (default: postgres)",
-              "password": "Database password",
-              "host": "Supabase project host (from project settings)",
-              "port": "Default 5432 (direct) or 6543 (pooler)",
-              "database": "Database name (default: postgres)",
-              "project_ref": "Supabase project reference (from project settings)",
-              "region": "Supabase project region (e.g., us-east-1)"
-            },
-            "notes": "Find connection details in your Supabase project dashboard under Settings > Database. Use the connection pooler (port 6543) for better connection management.",
-            "docs_url": "https://supabase.com/docs/guides/database/connecting-to-postgres",
-            "categories": [
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Google AlloyDB",
-            "description": "Google Cloud's PostgreSQL-compatible database service for demanding transactional and analytical workloads.",
-            "logo": "alloydb.png",
-            "homepage_url": "https://cloud.google.com/alloydb",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "parameters": {
-              "username": "Database user (default: postgres)",
-              "password": "Database password",
-              "host": "AlloyDB instance IP or Auth Proxy address",
-              "port": "Default 5432",
-              "database": "Database name"
-            },
-            "notes": "For public IP connections, use the AlloyDB Auth Proxy for secure access. Private IP connections can connect directly.",
-            "docs_url": "https://cloud.google.com/alloydb/docs",
-            "categories": [
-              "Cloud - Google",
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Neon",
-            "description": "Serverless PostgreSQL with branching, scale-to-zero, and bottomless storage.",
-            "logo": "neon.png",
-            "homepage_url": "https://neon.tech/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}/{database}?sslmode=require",
-            "parameters": {
-              "username": "Neon role name",
-              "password": "Neon role password",
-              "host": "Neon hostname (e.g., ep-cool-name-123456.us-east-2.aws.neon.tech)",
-              "database": "Database name (default: neondb)"
-            },
-            "notes": "SSL is required for all connections. Find connection details in the Neon console under Connection Details.",
-            "docs_url": "https://neon.tech/docs/connect/connect-from-any-app",
-            "categories": [
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Amazon Aurora PostgreSQL",
-            "description": "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL-compatible relational database with up to 5x the throughput of standard PostgreSQL.",
-            "logo": "aws-aurora.jpg",
-            "homepage_url": "https://aws.amazon.com/rds/aurora/",
-            "pypi_packages": [
-              "sqlalchemy-aurora-data-api"
-            ],
-            "connection_string": "postgresql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
-            "parameters": {
-              "aws_access_id": "AWS Access Key ID",
-              "aws_secret_access_key": "AWS Secret Access Key",
-              "database_name": "Database name",
-              "aurora_cluster_arn": "Aurora cluster ARN",
-              "secret_arn": "Secrets Manager ARN for credentials",
-              "region_name": "AWS region (e.g., us-east-1)"
-            },
-            "notes": "Uses the Data API for serverless access. Standard PostgreSQL connections also work with psycopg2.",
-            "categories": [
-              "Cloud - AWS",
-              "Hosted Open Source"
-            ]
-          }
-        ],
         "category": "Traditional RDBMS"
       },
       "engine": "postgresql",
@@ -2589,193 +2276,18 @@
       "score": 104,
       "max_score": 201,
       "documentation": {
-        "description": "PostgreSQL is an advanced open-source relational database.",
-        "logo": "postgresql.svg",
-        "homepage_url": "https://www.postgresql.org/",
+        "description": "Amazon Aurora PostgreSQL via the RDS Data API, a serverless API for connecting to Aurora clusters without managing persistent database connections.",
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
         "categories": [
+          "Cloud - AWS",
           "Traditional RDBMS",
-          "Open Source"
+          "Hosted Open Source"
         ],
         "pypi_packages": [
-          "psycopg2"
+          "sqlalchemy-aurora-data-api"
         ],
-        "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-        "default_port": 5432,
-        "parameters": {
-          "username": "Database username",
-          "password": "Database password",
-          "host": "For localhost: localhost or 127.0.0.1. For AWS: endpoint URL",
-          "port": "Default 5432",
-          "database": "Database name"
-        },
-        "notes": "The psycopg2 library comes bundled with Superset Docker images.",
-        "connection_examples": [
-          {
-            "description": "Basic connection",
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}"
-          },
-          {
-            "description": "With SSL required",
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=require"
-          }
-        ],
-        "docs_url": "https://www.postgresql.org/docs/",
-        "sqlalchemy_docs_url": "https://docs.sqlalchemy.org/en/13/dialects/postgresql.html",
-        "compatible_databases": [
-          {
-            "name": "Hologres",
-            "description": "Alibaba Cloud real-time interactive analytics service, fully compatible with PostgreSQL 11.",
-            "logo": "hologres.png",
-            "homepage_url": "https://www.alibabacloud.com/product/hologres",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}",
-            "parameters": {
-              "username": "AccessKey ID of your Alibaba Cloud account",
-              "password": "AccessKey secret of your Alibaba Cloud account",
-              "host": "Public endpoint of the Hologres instance",
-              "port": "Port number of the Hologres instance",
-              "database": "Name of the Hologres database"
-            },
-            "categories": [
-              "Proprietary"
-            ]
-          },
-          {
-            "name": "TimescaleDB",
-            "description": "Open-source relational database for time-series and analytics, built on PostgreSQL.",
-            "logo": "timescale.png",
-            "homepage_url": "https://www.timescale.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "connection_examples": [
-              {
-                "description": "Timescale Cloud (SSL required)",
-                "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}?sslmode=require"
-              }
-            ],
-            "notes": "psycopg2 comes bundled with Superset Docker images.",
-            "docs_url": "https://docs.timescale.com/",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "YugabyteDB",
-            "description": "Distributed SQL database built on top of PostgreSQL.",
-            "logo": "yugabyte.png",
-            "homepage_url": "https://www.yugabyte.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "notes": "psycopg2 comes bundled with Superset Docker images.",
-            "docs_url": "https://www.yugabyte.com/",
-            "categories": [
-              "Open Source"
-            ]
-          },
-          {
-            "name": "Supabase",
-            "description": "Open-source Firebase alternative built on top of PostgreSQL, providing a full backend-as-a-service with a hosted Postgres database.",
-            "logo": "supabase.svg",
-            "homepage_url": "https://supabase.com/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "connection_examples": [
-              {
-                "description": "Supabase project (connection pooler)",
-                "connection_string": "postgresql://{username}.{project_ref}:{password}@aws-0-{region}.pooler.supabase.com:6543/{database}"
-              }
-            ],
-            "parameters": {
-              "username": "Database user (default: postgres)",
-              "password": "Database password",
-              "host": "Supabase project host (from project settings)",
-              "port": "Default 5432 (direct) or 6543 (pooler)",
-              "database": "Database name (default: postgres)",
-              "project_ref": "Supabase project reference (from project settings)",
-              "region": "Supabase project region (e.g., us-east-1)"
-            },
-            "notes": "Find connection details in your Supabase project dashboard under Settings > Database. Use the connection pooler (port 6543) for better connection management.",
-            "docs_url": "https://supabase.com/docs/guides/database/connecting-to-postgres",
-            "categories": [
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Google AlloyDB",
-            "description": "Google Cloud's PostgreSQL-compatible database service for demanding transactional and analytical workloads.",
-            "logo": "alloydb.png",
-            "homepage_url": "https://cloud.google.com/alloydb",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-            "parameters": {
-              "username": "Database user (default: postgres)",
-              "password": "Database password",
-              "host": "AlloyDB instance IP or Auth Proxy address",
-              "port": "Default 5432",
-              "database": "Database name"
-            },
-            "notes": "For public IP connections, use the AlloyDB Auth Proxy for secure access. Private IP connections can connect directly.",
-            "docs_url": "https://cloud.google.com/alloydb/docs",
-            "categories": [
-              "Cloud - Google",
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Neon",
-            "description": "Serverless PostgreSQL with branching, scale-to-zero, and bottomless storage.",
-            "logo": "neon.png",
-            "homepage_url": "https://neon.tech/",
-            "pypi_packages": [
-              "psycopg2"
-            ],
-            "connection_string": "postgresql://{username}:{password}@{host}/{database}?sslmode=require",
-            "parameters": {
-              "username": "Neon role name",
-              "password": "Neon role password",
-              "host": "Neon hostname (e.g., ep-cool-name-123456.us-east-2.aws.neon.tech)",
-              "database": "Database name (default: neondb)"
-            },
-            "notes": "SSL is required for all connections. Find connection details in the Neon console under Connection Details.",
-            "docs_url": "https://neon.tech/docs/connect/connect-from-any-app",
-            "categories": [
-              "Hosted Open Source"
-            ]
-          },
-          {
-            "name": "Amazon Aurora PostgreSQL",
-            "description": "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL-compatible relational database with up to 5x the throughput of standard PostgreSQL.",
-            "logo": "aws-aurora.jpg",
-            "homepage_url": "https://aws.amazon.com/rds/aurora/",
-            "pypi_packages": [
-              "sqlalchemy-aurora-data-api"
-            ],
-            "connection_string": "postgresql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
-            "parameters": {
-              "aws_access_id": "AWS Access Key ID",
-              "aws_secret_access_key": "AWS Secret Access Key",
-              "database_name": "Database name",
-              "aurora_cluster_arn": "Aurora cluster ARN",
-              "secret_arn": "Secrets Manager ARN for credentials",
-              "region_name": "AWS region (e.g., us-east-1)"
-            },
-            "notes": "Uses the Data API for serverless access. Standard PostgreSQL connections also work with psycopg2.",
-            "categories": [
-              "Cloud - AWS",
-              "Hosted Open Source"
-            ]
-          }
-        ],
+        "connection_string": "postgresql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/{database_name}?aurora_cluster_arn={aurora_cluster_arn}&secret_arn={secret_arn}&region_name={region_name}",
         "category": "Traditional RDBMS"
       },
       "engine": "postgresql",
@@ -2955,8 +2467,18 @@
       "score": 40,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "engine+driver://user:password@host:port/dbname[?key=value&key=value...]",
+        "description": "Azure Data Explorer using native Kusto Query Language (KQL) for log and telemetry analytics.",
+        "logo": "kusto.png",
+        "homepage_url": "https://azure.microsoft.com/en-us/products/data-explorer/",
+        "categories": [
+          "Cloud - Azure",
+          "Analytical Databases",
+          "Proprietary"
+        ],
+        "pypi_packages": [
+          "sqlalchemy-kusto"
+        ],
+        "connection_string": "kustokql+https://{cluster}.kusto.windows.net/{database}?msi=False&azure_ad_client_id={client_id}&azure_ad_client_secret={client_secret}&azure_ad_tenant_id={tenant_id}",
         "category": "Cloud - Azure"
       },
       "engine": "kustokql",
@@ -3304,8 +2826,18 @@
       "score": 51,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "engine+driver://user:password@host:port/dbname[?key=value&key=value...]",
+        "description": "ClickHouse legacy SQLAlchemy connector for existing deployments using clickhouse-sqlalchemy.",
+        "logo": "clickhouse.png",
+        "homepage_url": "https://clickhouse.com/",
+        "categories": [
+          "Analytical Databases",
+          "Open Source"
+        ],
+        "pypi_packages": [
+          "clickhouse-sqlalchemy"
+        ],
+        "connection_string": "clickhouse://{username}:{password}@{host}:{port}/{database}",
+        "default_port": 8123,
         "category": "Analytical Databases"
       },
       "engine": "clickhouse",
@@ -3839,8 +3371,19 @@
       "score": 51,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "engine+driver://user:password@host:port/dbname[?key=value&key=value...]",
+        "description": "Databend legacy SQLAlchemy connector for existing deployments using databend-sqlalchemy.",
+        "logo": "databend.png",
+        "homepage_url": "https://www.databend.com/",
+        "categories": [
+          "Cloud Data Warehouses",
+          "Analytical Databases",
+          "Proprietary"
+        ],
+        "pypi_packages": [
+          "databend-sqlalchemy"
+        ],
+        "connection_string": "databend://{username}:{password}@{host}:{port}/{database}?secure=true",
+        "default_port": 443,
         "category": "Other Databases"
       },
       "engine": "databend",
@@ -4032,8 +3575,19 @@
       "score": 70,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "databricks+connector://token:{access_token}@{host}:{port}/{database_name}",
+        "description": "Legacy Databricks connector using databricks-dbapi for existing all-purpose cluster connections.",
+        "logo": "databricks.png",
+        "homepage_url": "https://www.databricks.com/",
+        "categories": [
+          "Cloud Data Warehouses",
+          "Analytical Databases",
+          "Hosted Open Source"
+        ],
+        "pypi_packages": [
+          "databricks-dbapi[sqlalchemy]"
+        ],
+        "connection_string": "databricks+connector://token:{access_token}@{host}:{port}/{database}",
+        "default_port": 443,
         "category": "Cloud Data Warehouses"
       },
       "engine": "databricks",
@@ -4105,19 +3659,19 @@
       "score": 140,
       "max_score": 201,
       "documentation": {
-        "description": "Apache Hive is a data warehouse infrastructure built on Hadoop.",
-        "logo": "apache-hive.svg",
-        "homepage_url": "https://hive.apache.org/",
+        "description": "Databricks Interactive Cluster connector using the Hive driver for backwards-compatible cluster connections.",
+        "logo": "databricks.png",
+        "homepage_url": "https://www.databricks.com/",
         "categories": [
-          "Apache Projects",
-          "Query Engines",
-          "Open Source"
+          "Cloud Data Warehouses",
+          "Analytical Databases",
+          "Hosted Open Source"
         ],
         "pypi_packages": [
-          "pyhive"
+          "databricks-dbapi[sqlalchemy]"
         ],
-        "connection_string": "hive://hive@{hostname}:{port}/{database}",
-        "default_port": 10000,
+        "connection_string": "databricks+pyhive://token:{access_token}@{host}:{port}/{database}",
+        "default_port": 443,
         "category": "Cloud Data Warehouses"
       },
       "engine": "databricks",
@@ -4189,8 +3743,19 @@
       "score": 30,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "engine+driver://user:password@host:port/dbname[?key=value&key=value...]",
+        "description": "Databricks SQL Endpoint connector using ODBC for backwards-compatible SQL warehouse connections.",
+        "logo": "databricks.png",
+        "homepage_url": "https://www.databricks.com/",
+        "categories": [
+          "Cloud Data Warehouses",
+          "Analytical Databases",
+          "Hosted Open Source"
+        ],
+        "pypi_packages": [
+          "pyodbc"
+        ],
+        "connection_string": "databricks+pyodbc://token:{access_token}@{host}:{port}/{database}",
+        "default_port": 443,
         "category": "Cloud Data Warehouses"
       },
       "engine": "databricks",
@@ -5125,7 +4690,7 @@
       "get_extra_table_metadata": true,
       "dbapi_exception_mapping": true,
       "custom_errors": false,
-      "dynamic_schema": false,
+      "dynamic_schema": true,
       "catalog": true,
       "dynamic_catalog": true,
       "ssh_tunneling": false,
@@ -5135,7 +4700,7 @@
       "expand_data": false,
       "query_cost_estimation": true,
       "sql_validation": false,
-      "score": 83,
+      "score": 93,
       "max_score": 201,
       "documentation": {
         "description": "Google BigQuery is a serverless, highly scalable data warehouse.",
@@ -5236,7 +4801,7 @@
       "engine_aliases": [],
       "default_driver": "bigquery",
       "supports_file_upload": true,
-      "supports_dynamic_schema": false,
+      "supports_dynamic_schema": true,
       "supports_catalog": true,
       "supports_dynamic_catalog": true
     },
@@ -5861,54 +5426,17 @@
       "score": 38,
       "max_score": 201,
       "documentation": {
-        "description": "IBM Db2 is a family of data management products for enterprise workloads, available on-premises, in containers, and across cloud platforms.",
+        "description": "IBM Db2 for i is the integrated relational database for IBM i (AS/400) systems.",
         "logo": "ibm-db2.svg",
-        "homepage_url": "https://www.ibm.com/db2",
+        "homepage_url": "https://www.ibm.com/products/db2-for-i",
         "categories": [
           "Traditional RDBMS",
           "Proprietary"
         ],
         "pypi_packages": [
-          "ibm_db_sa"
+          "sqlalchemy-ibmi"
         ],
-        "connection_string": "db2+ibm_db://{username}:{password}@{hostname}:{port}/{database}",
-        "default_port": 50000,
-        "drivers": [
-          {
-            "name": "ibm_db_sa (with LIMIT)",
-            "connection_string": "db2+ibm_db://{username}:{password}@{hostname}:{port}/{database}",
-            "is_recommended": true
-          },
-          {
-            "name": "ibm_db_sa (without LIMIT syntax)",
-            "connection_string": "ibm_db_sa://{username}:{password}@{hostname}:{port}/{database}",
-            "is_recommended": false,
-            "notes": "Use for older DB2 versions without LIMIT [n] syntax. Recommended for SQL Lab."
-          }
-        ],
-        "compatible_databases": [
-          {
-            "name": "IBM Db2 for i (AS/400)",
-            "description": "Db2 for i is a fully integrated database engine on IBM i (AS/400) systems. Uses a different SQLAlchemy driver optimized for IBM i.",
-            "logo": "ibm-db2.svg",
-            "homepage_url": "https://www.ibm.com/products/db2-for-i",
-            "pypi_packages": [
-              "sqlalchemy-ibmi"
-            ],
-            "connection_string": "ibmi://{username}:{password}@{host}/{database}",
-            "parameters": {
-              "username": "IBM i username",
-              "password": "IBM i password",
-              "host": "IBM i system host",
-              "database": "Library/schema name"
-            },
-            "docs_url": "https://github.com/IBM/sqlalchemy-ibmi",
-            "categories": [
-              "Proprietary"
-            ]
-          }
-        ],
-        "docs_url": "https://github.com/ibmdb/python-ibmdbsa",
+        "connection_string": "ibmi://{username}:{password}@{host}/{database}",
         "category": "Other Databases"
       },
       "engine": "ibmi",
@@ -6770,6 +6298,88 @@
       "supports_catalog": false,
       "supports_dynamic_catalog": false
     },
+    "ODPS (MaxCompute)": {
+      "time_grains": {
+        "SECOND": false,
+        "FIVE_SECONDS": false,
+        "THIRTY_SECONDS": false,
+        "MINUTE": false,
+        "FIVE_MINUTES": false,
+        "TEN_MINUTES": false,
+        "FIFTEEN_MINUTES": false,
+        "THIRTY_MINUTES": false,
+        "HALF_HOUR": false,
+        "HOUR": false,
+        "SIX_HOURS": false,
+        "DAY": false,
+        "WEEK": false,
+        "WEEK_STARTING_SUNDAY": false,
+        "WEEK_STARTING_MONDAY": false,
+        "WEEK_ENDING_SATURDAY": false,
+        "WEEK_ENDING_SUNDAY": false,
+        "MONTH": false,
+        "QUARTER": false,
+        "QUARTER_YEAR": false,
+        "YEAR": false
+      },
+      "module": "superset.db_engine_specs.odps",
+      "limit_method": 1,
+      "limit_clause": true,
+      "joins": true,
+      "subqueries": true,
+      "alias_in_select": true,
+      "alias_in_orderby": true,
+      "time_groupby_inline": false,
+      "alias_to_source_column": false,
+      "order_by_not_in_select": true,
+      "expressions_in_orderby": false,
+      "cte_in_subquery": true,
+      "max_column_name": null,
+      "sql_comments": true,
+      "escaped_colons": true,
+      "masked_encrypted_extra": false,
+      "column_type_mapping": false,
+      "function_names": false,
+      "user_impersonation": false,
+      "file_upload": true,
+      "get_extra_table_metadata": false,
+      "dbapi_exception_mapping": false,
+      "custom_errors": false,
+      "dynamic_schema": false,
+      "catalog": false,
+      "dynamic_catalog": false,
+      "ssh_tunneling": true,
+      "query_cancelation": false,
+      "get_metrics": false,
+      "where_latest_partition": false,
+      "expand_data": false,
+      "query_cost_estimation": false,
+      "sql_validation": false,
+      "score": 20,
+      "max_score": 201,
+      "documentation": {
+        "description": "Alibaba Cloud MaxCompute, formerly ODPS, is a managed large-scale data warehousing and batch analytics platform.",
+        "logo": "odps.png",
+        "homepage_url": "https://www.alibabacloud.com/product/maxcompute",
+        "categories": [
+          "Cloud Data Warehouses",
+          "Proprietary"
+        ],
+        "pypi_packages": [
+          "pyodps"
+        ],
+        "connection_string": "odps://{access_id}:{access_key}@{project}?endpoint={endpoint}",
+        "category": "Other Databases"
+      },
+      "engine": "odps",
+      "engine_name": "ODPS (MaxCompute)",
+      "engine_aliases": [],
+      "default_driver": "odps",
+      "supports_file_upload": true,
+      "supports_dynamic_schema": false,
+      "supports_catalog": false,
+      "supports_dynamic_catalog": false
+    },
     "OceanBase": {
       "time_grains": {
         "SECOND": true,
@@ -6913,8 +6523,8 @@
       "engine": "oceanbase",
       "engine_name": "OceanBase",
       "engine_aliases": [
-        "oceanbase",
-        "oceanbase_py"
+        "oceanbase_py",
+        "oceanbase"
       ],
       "default_driver": "oceanbase",
       "supports_file_upload": true,
@@ -7152,8 +6762,18 @@
       "score": 26,
       "max_score": 201,
       "documentation": {
-        "pypi_packages": [],
-        "connection_string": "engine+driver://user:password@host:port/dbname[?key=value&key=value...]",
+        "description": "OpenSearch and OpenDistro SQL connector for querying search and analytics indexes through the Elasticsearch DB API.",
+        "logo": "elasticsearch.png",
+        "homepage_url": "https://opensearch.org/",
+        "categories": [
+          "Search & NoSQL",
+          "Open Source"
+        ],
+        "pypi_packages": [
+          "elasticsearch-dbapi"
+        ],
+        "connection_string": "odelasticsearch+https://{user}:{password}@{host}:9200/",
+        "default_port": 9200,
         "category": "Other Databases"
       },
       "engine": "odelasticsearch",
@@ -7840,6 +7460,17 @@
           {
             "regex_name": "CONNECTION_ACCESS_DENIED_REGEX",
             "message_template": "Either the username \"%(username)s\" or the password is incorrect.",
+            "error_type": "CONNECTION_ACCESS_DENIED_ERROR",
+            "category": "Authentication",
+            "description": "Access denied",
+            "issue_codes": [
+              1014,
+              1015
+            ]
+          },
+          {
+            "regex_name": "CONNECTION_ACCESS_DENIED_401_REGEX",
+            "message_template": "Unexpected HTTP 401 response. Check your credentials.",
             "error_type": "CONNECTION_ACCESS_DENIED_ERROR",
             "category": "Authentication",
             "description": "Access denied",
@@ -9393,7 +9024,8 @@
           "Open Source"
         ],
         "pypi_packages": [
-          "ydb-sqlalchemy"
+          "ydb-sqlalchemy",
+          "ydb-sqlglot-plugin"
         ],
         "connection_string": "ydb://{host}:{port}/{database_name}",
         "default_port": 2135,
@@ -9445,8 +9077,8 @@
       "engine": "yql",
       "engine_name": "YDB",
       "engine_aliases": [
-        "yql+ydb",
-        "ydb"
+        "ydb",
+        "yql+ydb"
       ],
       "default_driver": "ydb",
       "supports_file_upload": false,
@@ -9640,6 +9272,17 @@
           {
             "regex_name": "CONNECTION_ACCESS_DENIED_REGEX",
             "message_template": "Either the username \"%(username)s\" or the password is incorrect.",
+            "error_type": "CONNECTION_ACCESS_DENIED_ERROR",
+            "category": "Authentication",
+            "description": "Access denied",
+            "issue_codes": [
+              1014,
+              1015
+            ]
+          },
+          {
+            "regex_name": "CONNECTION_ACCESS_DENIED_401_REGEX",
+            "message_template": "Unexpected HTTP 401 response. Check your credentials.",
             "error_type": "CONNECTION_ACCESS_DENIED_ERROR",
             "category": "Authentication",
             "description": "Access denied",

@@ -99,6 +99,7 @@ interface SectionHeaderProps {
   subtitle?: string | ReactNode;
   dark?: boolean;
   link?: string;
+  id?: string;
 }
 
 const SectionHeader = ({
@@ -107,6 +108,7 @@ const SectionHeader = ({
   subtitle,
   dark,
   link,
+  id,
 }: SectionHeaderProps) => {
   const Heading = level;
 
@@ -123,7 +125,9 @@ const SectionHeader = ({
 
   return (
     <StyledRoot dark={!!dark}>
-      <Heading className="title">{titleContent}</Heading>
+      <Heading id={id} className="title">
+        {titleContent}
+      </Heading>
       <img className="line" src="/img/community/line.png" alt="line" />
       {subtitle && <div className="subtitle">{subtitle}</div>}
     </StyledRoot>

@@ -16,7 +16,6 @@
 #
 include NOTICE
 include LICENSE.txt
-graft licenses/
 include README.md
 include superset-frontend/package.json
 recursive-include superset/examples *
@@ -25,3 +24,4 @@ recursive-include superset/templates *
 recursive-include superset/translations *
 recursive-include superset/static *
 recursive-exclude tests *
+global-exclude *.py[cod]

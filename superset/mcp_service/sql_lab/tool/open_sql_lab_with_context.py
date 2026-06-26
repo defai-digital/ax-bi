@@ -27,12 +27,13 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import db, event_logger
+from superset.extensions import db
 from superset.mcp_service.sql_lab.schemas import (
     OpenSqlLabRequest,
     SqlLabResponse,
 )
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.url_utils import get_superset_base_url
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ def open_sql_lab_with_context(
     try:
         from superset.daos.database import DatabaseDAO
 
-        with event_logger.log_context(action="mcp.open_sql_lab.db_validation"):
+        with mcp_event_log_context(action="mcp.open_sql_lab.db_validation"):
             # Validate database exists and is accessible
             database = DatabaseDAO.find_by_id(request.database_connection_id)
         if not database:

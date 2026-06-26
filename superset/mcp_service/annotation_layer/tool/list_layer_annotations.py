@@ -23,7 +23,6 @@ from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.daos.base import ColumnOperator, ColumnOperatorEnum
-from superset.extensions import event_logger
 from superset.mcp_service.annotation_layer.schemas import (
     AnnotationFilter,
     AnnotationInfo,
@@ -33,7 +32,8 @@ from superset.mcp_service.annotation_layer.schemas import (
     ListLayerAnnotationsRequest,
     serialize_annotation,
 )
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import ModelListCore, to_zero_based_page
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -113,14 +113,14 @@ async def list_layer_annotations(
             logger=logger,
         )
 
-        with event_logger.log_context(action="mcp.list_layer_annotations.query"):
+        with mcp_event_log_context(action="mcp.list_layer_annotations.query"):
             result = list_tool.run_tool(
                 filters=combined_filters,
                 search=request.search,
                 select_columns=request.select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 

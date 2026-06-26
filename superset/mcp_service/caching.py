@@ -23,6 +23,10 @@ import logging
 from typing import Any, Dict
 
 from superset.mcp_service.storage import get_mcp_store
+from superset.mcp_service.utils.config_utils import (
+    get_mcp_cache_config,
+    get_mcp_store_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +99,8 @@ def create_response_caching_middleware() -> Any | None:
     flask_app = get_flask_app()
 
     def _create_middleware() -> Any | None:
-        cache_config = flask_app.config.get("MCP_CACHE_CONFIG", {})
-        store_config = flask_app.config.get("MCP_STORE_CONFIG", {})
+        cache_config = get_mcp_cache_config(flask_app.config)
+        store_config = get_mcp_store_config(flask_app.config)
 
         if not cache_config.get("enabled", False):
             logger.debug("MCP response caching disabled")

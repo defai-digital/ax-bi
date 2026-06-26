@@ -31,10 +31,13 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import SupersetErrorException, SupersetSecurityException
-from superset.extensions import event_logger
 from superset.mcp_service.sql_lab.schemas import (
     SaveSqlQueryRequest,
     SaveSqlQueryResponse,
+)
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.permissions_utils import (
+    current_user_can_access_database,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,13 +70,13 @@ async def save_sql_query(
     try:
         from flask import g
 
-        from superset import db, security_manager
+        from superset import db
         from superset.daos.query import SavedQueryDAO
         from superset.mcp_service.utils.url_utils import get_superset_base_url
         from superset.models.core import Database
 
         # 1. Validate database exists and user has access
-        with event_logger.log_context(action="mcp.save_sql_query.db_validation"):
+        with mcp_event_log_context(action="mcp.save_sql_query.db_validation"):
             database = (
                 db.session.query(Database).filter_by(id=request.database_id).first()
             )
@@ -86,7 +89,7 @@ async def save_sql_query(
                     )
                 )
 
-            if not security_manager.can_access_database(database):
+            if not current_user_can_access_database(database):
                 raise SupersetSecurityException(
                     SupersetError(
                         message=(f"Access denied to database {database.database_name}"),
@@ -96,7 +99,7 @@ async def save_sql_query(
                 )
 
         # 2. Create the saved query
-        with event_logger.log_context(action="mcp.save_sql_query.create"):
+        with mcp_event_log_context(action="mcp.save_sql_query.create"):
             saved_query = SavedQueryDAO.create(
                 attributes={
                     "user_id": g.user.id,

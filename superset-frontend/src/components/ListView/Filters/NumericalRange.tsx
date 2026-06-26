@@ -56,13 +56,14 @@ interface NumericalRangeFilterProps extends BaseFilter {
 }
 
 function NumericalRangeFilter(
-  { Header, initialValue, onSubmit }: NumericalRangeFilterProps,
+  { Header, initialValue, onSubmit, name, min, max }: NumericalRangeFilterProps,
   ref: RefObject<FilterHandler>,
 ) {
   const [value, setValue] = useState<[number | null, number | null]>(
     initialValue ?? [null, null],
   );
   const [hasError, setHasError] = useState(false);
+  const accessibleName = typeof Header === 'string' ? Header : name;
 
   const handleMinChange = (newMin: number | null) => {
     const newValue: [number | null, number | null] = [newMin, value[1]];
@@ -110,16 +111,22 @@ function NumericalRangeFilter(
         <InputNumber
           value={value[0]}
           onChange={handleMinChange}
+          min={min}
+          max={max}
           placeholder={t('Value greater than')}
           style={{ width: '100%' }}
+          aria-label={t('%s minimum', accessibleName)}
           data-test="numerical-filter-min-input"
         />
         <StyledDivider>-</StyledDivider>
         <InputNumber
           value={value[1]}
           onChange={handleMaxChange}
+          min={min}
+          max={max}
           placeholder={t('Value less than')}
           style={{ width: '100%' }}
+          aria-label={t('%s maximum', accessibleName)}
           data-test="numerical-filter-max-input"
         />
         {hasError && (

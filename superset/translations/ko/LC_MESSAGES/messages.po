@@ -1664,7 +1664,7 @@ msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였
 
 #, python-format
 msgid "An error occurred while fetching dashboard owner values: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching dashboards"
@@ -1672,23 +1672,23 @@ msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였
 
 #, python-format
 msgid "An error occurred while fetching dashboards: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 #, python-format
 msgid "An error occurred while fetching database related data: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 #, python-format
 msgid "An error occurred while fetching database values: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset datasource values: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset related data: %s"
-msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다."
+msgstr "데이터 베이스 목록을 가져오는 도중 에러가 발생하였습니다: %s"
 
 msgid "An error occurred while fetching function names."
 msgstr ""
@@ -4900,7 +4900,7 @@ msgstr "삭제"
 
 #, python-format
 msgid "Delete %s?"
-msgstr "삭제"
+msgstr "%s 삭제?"
 
 msgid "Delete Annotation?"
 msgstr "주석"
@@ -5020,7 +5020,7 @@ msgstr[0] ""
 #, python-format
 msgid "Deleted %(num)d dataset"
 msgid_plural "Deleted %(num)d datasets"
-msgstr[0] "데이터베이스 선택"
+msgstr[0] "%(num)d 데이터세트 삭제됨"
 
 #, python-format
 msgid "Deleted %(num)d report schedule"
@@ -5085,7 +5085,7 @@ msgstr "삭제"
 
 #, python-format
 msgid "Deleted: %s"
-msgstr "삭제"
+msgstr "삭제됨: %s"
 
 msgid ""
 "Deleting a tab will remove all content within it and will deactivate any "
@@ -7334,7 +7334,7 @@ msgstr ""
 
 #, python-format
 msgid "Import %s"
-msgstr "대시보드 가져오기"
+msgstr "%s 가져오기"
 
 #, fuzzy
 msgid "Import Error"

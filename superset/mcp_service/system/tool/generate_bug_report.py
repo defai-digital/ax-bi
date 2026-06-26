@@ -33,14 +33,17 @@ import re
 from typing import Any, Callable
 
 import flask
-from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.system.schemas import (
     GenerateBugReportRequest,
     GenerateBugReportResponse,
 )
+from superset.mcp_service.utils.config_utils import (
+    get_mcp_bug_report_contact,
+    get_superset_app_name,
+)
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.utils.version import get_version_metadata
 
 logger = logging.getLogger(__name__)
@@ -162,7 +165,7 @@ def _collect_environment() -> dict[str, str]:
         logger.warning("bug_report: unable to read Superset version", exc_info=True)
 
     try:
-        app_name = current_app.config.get("APP_NAME", "Superset")
+        app_name = get_superset_app_name()
         env["service"] = f"{app_name} MCP Service"
     except Exception:  # noqa: BLE001
         # current_app may be unavailable outside a Flask context
@@ -198,9 +201,9 @@ def _collect_user_context() -> dict[str, Any]:
 def _resolve_support_contact() -> str:
     """Read MCP_BUG_REPORT_CONTACT from app config or fall back to default."""
     try:
-        configured = current_app.config.get("MCP_BUG_REPORT_CONTACT")
+        configured = get_mcp_bug_report_contact()
     except Exception:  # noqa: BLE001
-        # current_app unavailable outside a Flask context — fall through
+        # Flask app config unavailable outside a Flask context — fall through
         configured = None
     if isinstance(configured, str) and configured.strip():
         return configured
@@ -290,7 +293,7 @@ async def generate_bug_report(
     All request fields are optional — the tool still produces a useful
     report when the user only remembers part of what happened.
     """
-    with event_logger.log_context(action="mcp.generate_bug_report"):
+    with mcp_event_log_context(action="mcp.generate_bug_report"):
         redactions: set[str] = set()
         # Every user-supplied free-text field goes through the redactor —
         # even tool_name and llm_used, where secrets are unlikely but cheap

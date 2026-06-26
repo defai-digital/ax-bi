@@ -239,7 +239,7 @@ msgstr "Sicurezza"
 
 #, python-format
 msgid "%s Error"
-msgstr "Errore..."
+msgstr "%s Errore"
 
 #, fuzzy, python-format
 msgid "%s PASSWORD"
@@ -263,7 +263,7 @@ msgstr ""
 
 #, python-format
 msgid "%s Selected"
-msgstr "Seleziona data finale"
+msgstr "%s selezionato"
 
 #, fuzzy, python-format
 msgid "%s Selected (%s)"
@@ -300,7 +300,7 @@ msgstr[0] "Visualizza colonne"
 
 #, python-format
 msgid "%s column(s)"
-msgstr "Visualizza colonne"
+msgstr "%s colonne"
 
 #, python-format
 msgid "%s day ago"
@@ -343,7 +343,7 @@ msgstr[0] "mese"
 
 #, python-format
 msgid "%s operator(s)"
-msgstr "Seleziona operatore"
+msgstr "%s operatori"
 
 #, fuzzy, python-format
 msgid "%s option"
@@ -1665,7 +1665,7 @@ msgstr "Errore nel recupero dei metadati della tabella"
 
 #, python-format
 msgid "An error occurred while fetching chart owners values: %s"
-msgstr "Errore nel creare il datasource"
+msgstr "Errore nel creare il datasource: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching connections"
@@ -1677,30 +1677,30 @@ msgstr "Errore nel rendering della visualizzazione: %s"
 
 #, python-format
 msgid "An error occurred while fetching dashboard owner values: %s"
-msgstr "Errore nel creare il datasource"
+msgstr "Errore nel creare il datasource: %s"
 
 msgid "An error occurred while fetching dashboards"
 msgstr "Errore nel creare il datasource"
 
 #, python-format
 msgid "An error occurred while fetching dashboards: %s"
-msgstr "Errore nel creare il datasource"
+msgstr "Errore nel creare il datasource: %s"
 
 #, python-format
 msgid "An error occurred while fetching database related data: %s"
-msgstr "Errore nel recupero dei metadati della tabella"
+msgstr "Errore nel recupero dei metadati della tabella: %s"
 
 #, python-format
 msgid "An error occurred while fetching database values: %s"
-msgstr "Errore nel creare il datasource"
+msgstr "Errore nel creare il datasource: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset datasource values: %s"
-msgstr "Errore nel creare il datasource"
+msgstr "Errore nel creare il datasource: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset related data: %s"
-msgstr "Errore nel recupero dei metadati della tabella"
+msgstr "Errore nel recupero dei metadati della tabella: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching function names."
@@ -4932,7 +4932,7 @@ msgstr "Cancella"
 
 #, python-format
 msgid "Delete %s?"
-msgstr "Cancella"
+msgstr "Cancellare %s?"
 
 msgid "Delete Annotation?"
 msgstr ""
@@ -5048,12 +5048,12 @@ msgstr[0] ""
 #, python-format
 msgid "Deleted %(num)d dashboard"
 msgid_plural "Deleted %(num)d dashboards"
-msgstr[0] "Seleziona una dashboard"
+msgstr[0] "Eliminate %(num)d dashboard"
 
 #, python-format
 msgid "Deleted %(num)d dataset"
 msgid_plural "Deleted %(num)d datasets"
-msgstr[0] "Seleziona data finale"
+msgstr[0] "Eliminati %(num)d dataset"
 
 #, python-format
 msgid "Deleted %(num)d report schedule"
@@ -5118,7 +5118,7 @@ msgstr "Cancella"
 
 #, python-format
 msgid "Deleted: %s"
-msgstr "Cancella"
+msgstr "Cancellato: %s"
 
 msgid ""
 "Deleting a tab will remove all content within it and will deactivate any "
@@ -7390,7 +7390,7 @@ msgstr "Importa"
 
 #, python-format
 msgid "Import %s"
-msgstr "Importa"
+msgstr "Importa %s"
 
 #, fuzzy
 msgid "Import Error"

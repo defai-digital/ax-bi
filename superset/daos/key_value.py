@@ -33,6 +33,7 @@ from superset.key_value.models import KeyValueEntry
 from superset.key_value.types import Key, KeyValueCodec, KeyValueResource
 from superset.key_value.utils import get_filter
 from superset.utils.core import get_user_id
+from superset.utils.dates import naive_utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ class KeyValueDAO(BaseDAO[KeyValueEntry]):
             .filter(
                 and_(
                     KeyValueEntry.resource == resource.value,
-                    KeyValueEntry.expires_on <= datetime.now(),
+                    KeyValueEntry.expires_on <= naive_utcnow(),
                 )
             )
             .delete()
@@ -117,7 +118,7 @@ class KeyValueDAO(BaseDAO[KeyValueEntry]):
         entry = KeyValueEntry(
             resource=resource.value,
             value=encoded_value,
-            created_on=datetime.now(),
+            created_on=naive_utcnow(),
             created_by_fk=get_user_id(),
             expires_on=expires_on,
         )
@@ -149,7 +150,7 @@ class KeyValueDAO(BaseDAO[KeyValueEntry]):
         if entry := KeyValueDAO.get_entry(resource, key):
             entry.value = codec.encode(value)
             entry.expires_on = expires_on
-            entry.changed_on = datetime.now()
+            entry.changed_on = naive_utcnow()
             entry.changed_by_fk = get_user_id()
             return entry
 
@@ -170,7 +171,7 @@ class KeyValueDAO(BaseDAO[KeyValueEntry]):
         if entry := KeyValueDAO.get_entry(resource, key):
             entry.value = codec.encode(value)
             entry.expires_on = expires_on
-            entry.changed_on = datetime.now()
+            entry.changed_on = naive_utcnow()
             entry.changed_by_fk = get_user_id()
             return entry
 

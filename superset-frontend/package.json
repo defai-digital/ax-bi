@@ -84,8 +84,8 @@
     "test-storybook": "test-storybook",
     "test-storybook:ci": "concurrently --kill-others --success first --names \"SB,TEST\" --prefix-colors \"magenta,blue\" \"npx http-server storybook-static --port 6006 --silent\" \"npx wait-on tcp:127.0.0.1:6006 && npm run test-storybook -- --maxWorkers=2\"",
     "tdd": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" jest --watch",
-    "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" jest --max-workers=80% --silent",
-    "test-loud": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" jest --max-workers=80%",
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" node scripts/jest.js --silent",
+    "test-loud": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" node scripts/jest.js",
     "type": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" tsc --noEmit",
     "update-maps": "cd plugins/legacy-plugin-chart-country-map/scripts && jupyter nbconvert --to notebook --execute --inplace --allow-errors --ExecutePreprocessor.timeout=1200 'Country Map GeoJSON Generator.ipynb'",
     "validate-release": "../RELEASING/validate_this_release.sh"
@@ -337,7 +337,6 @@
     "jest-environment-jsdom": "^30.4.1",
     "jest-html-reporter": "^4.4.0",
     "jest-websocket-mock": "^2.5.0",
-    "js-yaml-loader": "^1.2.2",
     "jsdom": "^29.1.1",
     "lerna": "^9.0.4",
     "lightningcss": "^1.32.0",
@@ -372,7 +371,8 @@
     "webpack-dev-server": "^5.2.5",
     "webpack-manifest-plugin": "^6.0.1",
     "webpack-sources": "^3.5.0",
-    "webpack-visualizer-plugin2": "^2.0.0"
+    "webpack-visualizer-plugin2": "^2.0.0",
+    "yaml-loader": "^0.9.0"
   },
   "peerDependencies": {
     "ace-builds": "^1.41.0",
@@ -393,6 +393,8 @@
     "underscore": "^1.13.7",
     "jspdf": "^4.2.0",
     "nwsapi": "^2.2.13",
+    "js-yaml": "^4.2.0",
+    "tar": "^7.5.16",
     "@deck.gl/aggregation-layers": "~9.2.5",
     "@deck.gl/core": "~9.2.5",
     "@deck.gl/extensions": "~9.2.5",

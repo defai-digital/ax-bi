@@ -18,6 +18,7 @@
 """Tests for MCP schema discovery helpers."""
 
 from superset.mcp_service.common.schema_discovery import (
+    build_schema_resource,
     CHART_EXTRA_COLUMNS,
     ColumnMetadata,
     get_columns_from_model,
@@ -41,3 +42,23 @@ def test_get_columns_from_model_excludes_matching_extra_columns():
     assert "id" in column_names
     assert "url" in column_names
     assert "owners" not in column_names
+
+
+def test_build_schema_resource_uses_common_schema_metadata():
+    resource = build_schema_resource("chart")
+
+    assert resource["model_type"] == "chart"
+    assert "slice_name" in resource["all_column_names"]
+    assert "slice_name" in resource["default_columns"]
+    assert "changed_on" in resource["sortable_columns"]
+    assert resource["search_columns"] == ["slice_name", "description"]
+    assert resource["default_sort"] == "changed_on"
+    assert resource["default_sort_direction"] == "desc"
+    assert all(
+        {"name", "description", "type"} <= set(column)
+        for column in resource["select_columns"]
+    )
+
+
+def test_build_schema_resource_returns_empty_for_unsupported_model():
+    assert build_schema_resource("unsupported") == {}

@@ -18,9 +18,14 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any
 
 import yaml
+
+if __name__ == "__main__":
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    sys.path.insert(0, repo_root)
 
 from superset.constants import TimeGrain
 from superset.db_engine_specs import load_engine_specs

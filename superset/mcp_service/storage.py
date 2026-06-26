@@ -31,6 +31,8 @@ from urllib.parse import urlparse
 
 from redis.asyncio import Redis
 
+from superset.mcp_service.utils.config_utils import get_mcp_store_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +68,7 @@ def get_mcp_store(
     flask_app = get_flask_app()
 
     def _get_store() -> Any | None:
-        store_config = flask_app.config.get("MCP_STORE_CONFIG", {})
+        store_config = get_mcp_store_config(flask_app.config)
 
         # Check if store is enabled
         if not store_config.get("enabled", False):

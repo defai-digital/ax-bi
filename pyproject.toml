@@ -16,7 +16,7 @@
 # under the License.
 
 [build-system]
-requires = ["setuptools>=40.9.0", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,7 +25,8 @@ description = "A modern, enterprise-ready business intelligence web application"
 readme = "README.md"
 dynamic = ["version", "scripts", "entry-points"]
 requires-python = ">=3.10"
-license = { file="LICENSE.txt" }
+license = "Apache-2.0"
+license-files = ["LICENSE.txt"]
 authors = [
     { name = "Apache Software Foundation", email = "dev@superset.apache.org" },
 ]

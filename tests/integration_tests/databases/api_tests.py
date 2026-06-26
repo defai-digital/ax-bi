@@ -18,6 +18,7 @@
 """Unit tests for Superset"""
 
 import dataclasses
+from copy import deepcopy
 from collections import defaultdict
 from io import BytesIO
 from unittest import mock
@@ -2728,7 +2729,7 @@ class TestDatabaseApi(SupersetTestCase):
         uri = "api/v1/database/import/"
         mock_schema_is_feature_enabled.return_value = True
 
-        masked_database_config = database_with_ssh_tunnel_config_password.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_password)
         buf = self.create_import_v1_zip_file(
             "database",
             databases=[masked_database_config],
@@ -2764,7 +2765,7 @@ class TestDatabaseApi(SupersetTestCase):
         uri = "api/v1/database/import/"
         mock_schema_is_feature_enabled.return_value = True
 
-        masked_database_config = database_with_ssh_tunnel_config_password.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_password)
 
         buf = self.create_import_v1_zip_file(
             "database",
@@ -2808,7 +2809,7 @@ class TestDatabaseApi(SupersetTestCase):
         uri = "api/v1/database/import/"
         mock_schema_is_feature_enabled.return_value = True
 
-        masked_database_config = database_with_ssh_tunnel_config_private_key.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_private_key)
         buf = self.create_import_v1_zip_file(
             "database",
             databases=[masked_database_config],
@@ -2844,7 +2845,7 @@ class TestDatabaseApi(SupersetTestCase):
         uri = "api/v1/database/import/"
         mock_schema_is_feature_enabled.return_value = True
 
-        masked_database_config = database_with_ssh_tunnel_config_private_key.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_private_key)
         buf = self.create_import_v1_zip_file(
             "database",
             databases=[masked_database_config],
@@ -2890,7 +2891,7 @@ class TestDatabaseApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         uri = "api/v1/database/import/"
 
-        masked_database_config = database_with_ssh_tunnel_config_private_key.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_private_key)
         buf = self.create_import_v1_zip_file(
             "database",
             databases=[masked_database_config],

@@ -29,7 +29,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError
-from superset.extensions import event_logger
 from superset.mcp_service.chart.chart_helpers import (
     extract_form_data_key_from_url,
     find_chart_by_identifier,
@@ -49,6 +48,7 @@ from superset.mcp_service.chart.schemas import (
     wrap_sql_adhoc_metrics,
 )
 from superset.mcp_service.utils import escape_llm_context_delimiters
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
@@ -415,7 +415,7 @@ async def update_chart(  # noqa: C901
     start_time = time.time()
 
     try:
-        with event_logger.log_context(action="mcp.update_chart.chart_lookup"):
+        with mcp_event_log_context(action="mcp.update_chart.chart_lookup"):
             chart = find_chart_by_identifier(request.identifier)
 
         if not chart:
@@ -487,7 +487,7 @@ async def update_chart(  # noqa: C901
             # Renames (no parsed_config and no dataset_id) skip validation since
             # form_data is untouched and no rebind is requested.
             if parsed_config is not None and new_form_data is not None:
-                with event_logger.log_context(action="mcp.update_chart.validation"):
+                with mcp_event_log_context(action="mcp.update_chart.validation"):
                     validation_error = _validate_update_against_dataset(
                         parsed_config,
                         new_form_data,
@@ -500,7 +500,7 @@ async def update_chart(  # noqa: C901
                 # Dataset-only rebind: verify the target dataset exists before
                 # writing. Skip compile check — there is no new chart config to
                 # execute against the new dataset.
-                with event_logger.log_context(action="mcp.update_chart.validation"):
+                with mcp_event_log_context(action="mcp.update_chart.validation"):
                     validation_error = _validate_update_against_dataset(
                         None,
                         {},
@@ -511,7 +511,7 @@ async def update_chart(  # noqa: C901
                 if validation_error is not None:
                     return validation_error
 
-            with event_logger.log_context(action="mcp.update_chart.db_write"):
+            with mcp_event_log_context(action="mcp.update_chart.db_write"):
                 command = UpdateChartCommand(chart.id, payload_or_error)
                 updated_chart = command.run()
             saved = True
@@ -525,7 +525,7 @@ async def update_chart(  # noqa: C901
 
             # Validate before caching the form_data — same rationale as above.
             if parsed_config is not None:
-                with event_logger.log_context(action="mcp.update_chart.validation"):
+                with mcp_event_log_context(action="mcp.update_chart.validation"):
                     validation_error = _validate_update_against_dataset(
                         parsed_config,
                         preview_or_error,
@@ -537,7 +537,7 @@ async def update_chart(  # noqa: C901
             elif request.dataset_id is not None:
                 # Dataset-only rebind: verify the target dataset exists before
                 # caching. Skip compile check — no new config to execute.
-                with event_logger.log_context(action="mcp.update_chart.validation"):
+                with mcp_event_log_context(action="mcp.update_chart.validation"):
                     validation_error = _validate_update_against_dataset(
                         None,
                         {},
@@ -548,7 +548,7 @@ async def update_chart(  # noqa: C901
                 if validation_error is not None:
                     return validation_error
 
-            with event_logger.log_context(action="mcp.update_chart.preview_link"):
+            with mcp_event_log_context(action="mcp.update_chart.preview_link"):
                 explore_url, form_data_key, warnings = _create_preview_url(
                     chart, preview_or_error, datasource_id=request.dataset_id
                 )
@@ -592,7 +592,7 @@ async def update_chart(  # noqa: C901
         previews: dict[str, Any] = {}
         if saved and updated_chart and request.preview_formats:
             try:
-                with event_logger.log_context(action="mcp.update_chart.preview"):
+                with mcp_event_log_context(action="mcp.update_chart.preview"):
                     from superset.mcp_service.chart.tool.get_chart_preview import (
                         _get_chart_preview_internal,
                         GetChartPreviewRequest,

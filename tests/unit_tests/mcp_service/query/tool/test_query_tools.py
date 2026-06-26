@@ -149,6 +149,8 @@ async def test_list_queries_basic(mock_list, mcp_server):
         assert data["queries"] is not None
         assert len(data["queries"]) == 1
         assert data["queries"][0]["id"] == 1
+        assert data["queries"][0]["schema"] == "public"
+        assert "schema_name" not in data["queries"][0]
         assert data["queries"][0]["status"] == "success"
 
 
@@ -303,6 +305,26 @@ async def test_list_queries_select_columns_projects_fields(mock_list, mcp_server
         assert set(q.keys()) == {"id", "status"}
         assert q["id"] == 1
         assert q["status"] == "success"
+
+
+@patch("superset.daos.query.QueryDAO.list")
+@pytest.mark.asyncio
+async def test_list_queries_select_columns_keeps_schema_alias(mock_list, mcp_server):
+    """select_columns uses the public schema field name, not the internal alias."""
+    query = create_mock_query()
+    query._mapping = {"id": query.id, "schema": query.schema}
+    mock_list.return_value = ([query], 1)
+    async with Client(mcp_server) as client:
+        request = ListQueriesRequest(
+            page=1, page_size=10, select_columns=["id", "schema"]
+        )
+        result = await client.call_tool(
+            "list_queries", {"request": request.model_dump()}
+        )
+        data = json.loads(result.content[0].text)
+        q = data["queries"][0]
+        assert set(q.keys()) == {"id", "schema"}
+        assert q["schema"] == "public"
 
 
 @pytest.mark.asyncio

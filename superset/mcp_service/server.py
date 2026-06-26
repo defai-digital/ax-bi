@@ -46,6 +46,17 @@ from superset.mcp_service.middleware import (
     StructuredContentStripperMiddleware,
 )
 from superset.mcp_service.storage import _create_redis_store
+from superset.mcp_service.utils.config_utils import (
+    get_fab_api_key_enabled,
+    get_mcp_api_key_enabled_flag,
+    get_mcp_auth_enabled,
+    get_mcp_auth_factory,
+    get_mcp_hello_page_config,
+    get_mcp_tool_search_config,
+    get_superset_app_icon,
+    get_superset_app_name,
+    get_superset_webserver_address,
+)
 from superset.utils import json
 
 logger = logging.getLogger(__name__)
@@ -733,7 +744,7 @@ def _create_auth_provider(flask_app: Any) -> Any | None:
     ``CompositeTokenVerifier`` that handles either or both auth modes.
     """
     auth_provider = None
-    if auth_factory := flask_app.config.get("MCP_AUTH_FACTORY"):
+    if auth_factory := get_mcp_auth_factory(flask_app.config):
         try:
             auth_provider = auth_factory(flask_app)
             logger.info(
@@ -744,9 +755,9 @@ def _create_auth_provider(flask_app: Any) -> Any | None:
             # Do not log the exception — it may contain secrets
             logger.error("Failed to create auth provider from MCP_AUTH_FACTORY")
     elif (
-        flask_app.config.get("MCP_AUTH_ENABLED", False)
-        or flask_app.config.get("MCP_API_KEY_ENABLED", False)
-        or flask_app.config.get("FAB_API_KEY_ENABLED", False)
+        get_mcp_auth_enabled(flask_app.config)
+        or get_mcp_api_key_enabled_flag(flask_app.config)
+        or get_fab_api_key_enabled(flask_app.config)
     ):
         from superset.mcp_service.mcp_config import (
             create_default_mcp_auth_factory,
@@ -806,8 +817,8 @@ def _build_starlette_middleware(
     # Config-flag presence is not sufficient — MCP_AUTH_FACTORY may return
     # None, and use_factory_config auth lives outside Flask config entirely.
     auth_enabled = auth_provider is not None
-    app_name: str = flask_app.config.get("APP_NAME", "Superset")
-    app_icon: str = flask_app.config.get("APP_ICON", "")
+    app_name = get_superset_app_name(flask_app.config)
+    app_icon = get_superset_app_icon(flask_app.config)
     base_page_config: dict[str, Any] = {
         "title": f"{app_name} MCP Server",
         "server_key": app_name.lower().replace(" ", "-"),
@@ -818,12 +829,10 @@ def _build_starlette_middleware(
             base_page_config["logo_url"] = app_icon
         elif app_icon.startswith("/"):
             # Relative path — combine with Superset webserver address if configured
-            superset_addr = flask_app.config.get(
-                "SUPERSET_WEBSERVER_ADDRESS", ""
-            ).rstrip("/")
+            superset_addr = get_superset_webserver_address(flask_app.config).rstrip("/")
             if superset_addr:
                 base_page_config["logo_url"] = f"{superset_addr}{app_icon}"
-    mcp_hello_page = flask_app.config.get("MCP_HELLO_PAGE")
+    mcp_hello_page = get_mcp_hello_page_config(flask_app.config)
     if mcp_hello_page is not None and not isinstance(mcp_hello_page, dict):
         logger.warning(
             "MCP_HELLO_PAGE must be a dict, ignoring value of type %s",
@@ -906,8 +915,9 @@ def run_server(
         )
 
         # Apply tool search transform if configured
-        tool_search_config = flask_app.config.get(
-            "MCP_TOOL_SEARCH_CONFIG", MCP_TOOL_SEARCH_CONFIG
+        tool_search_config = get_mcp_tool_search_config(
+            flask_app.config,
+            default=MCP_TOOL_SEARCH_CONFIG,
         )
         if tool_search_config.get("enabled", False):
             _apply_tool_search_transform(mcp_instance, tool_search_config)

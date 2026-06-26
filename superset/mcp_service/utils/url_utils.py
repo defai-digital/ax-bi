@@ -22,7 +22,10 @@ URL utilities for MCP service
 import logging
 from urllib.parse import urlparse
 
-from flask import current_app
+from superset.mcp_service.utils.config_utils import (
+    get_mcp_service_url_config,
+    get_webdriver_baseurl_user_friendly,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +52,7 @@ def get_superset_base_url() -> str:
     default_url = "http://localhost:9001"
 
     try:
-        config = current_app.config
-        if user_friendly_url := config["WEBDRIVER_BASEURL_USER_FRIENDLY"]:
+        if user_friendly_url := get_webdriver_baseurl_user_friendly():
             return user_friendly_url.rstrip("/")
         return default_url
     except Exception:
@@ -85,17 +87,15 @@ def get_mcp_service_url() -> str:
         Base URL for MCP service endpoints
     """
     try:
-        config = current_app.config
-
         # Check for explicit MCP_SERVICE_URL first (allows override)
-        mcp_service_url = config.get("MCP_SERVICE_URL")
+        mcp_service_url = get_mcp_service_url_config()
         if mcp_service_url:
             return mcp_service_url
 
         # In production, MCP service is accessed via main URL with /mcp prefix
         # WEBDRIVER_BASEURL_USER_FRIENDLY is the user-facing URL for the instance
         if (
-            user_friendly_url := config["WEBDRIVER_BASEURL_USER_FRIENDLY"]
+            user_friendly_url := get_webdriver_baseurl_user_friendly()
         ) and not _is_local_url(user_friendly_url):
             base_url = user_friendly_url.rstrip("/")
             return f"{base_url}/mcp"

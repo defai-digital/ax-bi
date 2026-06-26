@@ -70,7 +70,7 @@ export const isStringOperatorColumn = (
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: t('Query'),
+      label: () => t('Query'),
       expanded: true,
       controlSetRows: [
         [
@@ -78,7 +78,7 @@ const config: ControlPanelConfig = {
             name: 'groupby',
             config: {
               ...sharedControls.groupby,
-              label: t('Column'),
+              label: () => t('Column'),
               required: true,
             },
           },
@@ -86,7 +86,7 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: t('UI Configuration'),
+      label: () => t('UI Configuration'),
       expanded: true,
       controlSetRows: [
         [

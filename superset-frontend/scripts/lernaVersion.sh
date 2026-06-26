@@ -18,10 +18,21 @@
 rootDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 
 lernaVersionArg="$1"
+if [[ "$lernaVersionArg" == "--help" || "$lernaVersionArg" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/lernaVersion.sh <lerna-version-arg>
+
+Run lerna version for frontend packages, then create and push the release tag.
+EOF
+  exit 0
+fi
+
 if [[ -z $lernaVersionArg ]]; then
   echo '[ERROR] Please provide argument for "lerna version".'
   exit 1
 fi
+
+cd "$rootDir"
 
 currentNpm=$(npm --version)
 npmVersion=$(node -e "process.stdout.write(require('./package.json').engines.npm)");

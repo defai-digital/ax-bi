@@ -989,6 +989,23 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         )
 
     def on_user_logout(self, user: Any) -> None:
+        user_id = getattr(user, "id", None)
+        if user_id is not None:
+            try:
+                from superset.extensions import db
+                from superset.security.session_invalidation import (
+                    invalidate_user_sessions,
+                )
+
+                invalidate_user_sessions(
+                    db.session.connection(), user_id, round_up=False
+                )
+                db.session.commit()
+            except Exception:  # noqa: BLE001  # pylint: disable=broad-except
+                logger.warning(
+                    "Failed to invalidate user sessions on logout", exc_info=True
+                )
+
         _log_audit_event(
             "UserLoggedOut",
             {

@@ -29,6 +29,7 @@ from sqlalchemy import func
 
 from superset.daos.base import BaseDAO, ColumnOperator, ColumnOperatorEnum
 from superset.extensions import db
+from superset.mcp_service.common.error_schemas import mcp_error_timestamp
 from superset.mcp_service.constants import MAX_PAGE_SIZE, ModelType
 from superset.mcp_service.privacy import (
     filter_user_directory_columns,
@@ -40,8 +41,8 @@ from superset.mcp_service.system.schemas import PaginationInfo
 from superset.mcp_service.utils import _is_uuid
 from superset.mcp_service.utils.permissions_utils import get_current_user
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
     parse_json_or_passthrough,
+    parse_select_columns,
 )
 from superset.utils import json
 
@@ -67,6 +68,17 @@ T = TypeVar("T")  # For model objects
 S = TypeVar("S", bound=BaseModel)  # For Pydantic schemas
 F = TypeVar("F", bound=BaseModel)  # For filter types
 L = TypeVar("L", bound=BaseModel)  # For list response schemas
+R = TypeVar("R", bound=BaseModel)  # For request schemas
+
+
+def to_zero_based_page(page: int) -> int:
+    """Convert public 1-based MCP request pages to 0-based core pages."""
+    return max(page - 1, 0)
+
+
+def request_or_default(request: R | None, default_request: R) -> R:
+    """Return the provided request or an isolated copy of the default request."""
+    return request if request is not None else default_request.model_copy(deep=True)
 
 
 class BaseCore(ABC):
@@ -188,7 +200,7 @@ class ModelListCore(BaseCore, Generic[L]):
         if not select_columns:
             return self.default_columns, list(self.default_columns)
 
-        parsed_columns = parse_json_or_list(select_columns, param_name="select_columns")
+        parsed_columns = parse_select_columns(select_columns)
         columns_to_load = filter_user_directory_columns(parsed_columns)
 
         # Restrict to the declared allowlist so callers cannot probe for columns
@@ -377,7 +389,7 @@ class ModelListCore(BaseCore, Generic[L]):
                 not in SELF_REFERENCING_FILTER_COLUMNS
             ],
             "pagination": pagination_info,
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": mcp_error_timestamp(),
         }
         response = self.output_list_schema(**response_kwargs)
         self._log_info(
@@ -557,13 +569,12 @@ class ModelGetInfoCore(BaseCore):
         try:
             obj = self._find_object(identifier)
             if obj is None:
-                error_data = self.error_schema(
+                error_data = self.error_schema.create(
                     error=(
                         f"{self.output_schema.__name__} with identifier "
                         f"'{identifier}' not found"
                     ),
                     error_type="not_found",
-                    timestamp=datetime.now(timezone.utc),
                 )
                 self._log_warning(
                     f"{self.output_schema.__name__} {identifier} error: "
@@ -733,7 +744,7 @@ class InstanceInfoCore(BaseCore):
                 **base_counts,
                 **time_metrics,
                 **custom_metrics,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": mcp_error_timestamp().isoformat(),
             }
 
             # Create response using the configured schema

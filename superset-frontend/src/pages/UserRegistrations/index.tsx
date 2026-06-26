@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { SupersetClient } from '@superset-ui/core';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import {
   ListViewFilters,
@@ -31,7 +32,7 @@ import { DeleteModal } from '@superset-ui/core/components';
 import { ActionProps, ActionsBar } from 'src/components/ListView/ActionsBar';
 import SubMenu from 'src/features/home/SubMenu';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 export type UserRegistration = {
   id: number;

@@ -30,7 +30,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
-from superset.extensions import event_logger
 from superset.mcp_service.dashboard.constants import (
     generate_id,
     GRID_COLUMN_COUNT,
@@ -43,6 +42,7 @@ from superset.mcp_service.dashboard.schemas import (
     serialize_chart_summary,
 )
 from superset.mcp_service.privacy import user_can_view_data_model_metadata
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.url_utils import get_superset_base_url
 from superset.utils import json
 
@@ -440,7 +440,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
         from superset.commands.dashboard.update import UpdateDashboardCommand
 
         # Validate dashboard exists and user has edit permission
-        with event_logger.log_context(action="mcp.add_chart_to_dashboard.validation"):
+        with mcp_event_log_context(action="mcp.add_chart_to_dashboard.validation"):
             dashboard, auth_error = _find_and_authorize_dashboard(request.dashboard_id)
             if auth_error is not None:
                 return auth_error
@@ -493,7 +493,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
                 )
 
         # Calculate layout position
-        with event_logger.log_context(action="mcp.add_chart_to_dashboard.layout"):
+        with mcp_event_log_context(action="mcp.add_chart_to_dashboard.layout"):
             # Parse current layout
             try:
                 current_layout = json.loads(dashboard.position_json or "{}")
@@ -523,7 +523,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
             _ensure_layout_structure(current_layout, row_key, parent_id)
 
         # Update the dashboard
-        with event_logger.log_context(action="mcp.add_chart_to_dashboard.db_write"):
+        with mcp_event_log_context(action="mcp.add_chart_to_dashboard.db_write"):
             # Get existing chart objects
             existing_chart_objects = dashboard.slices
 

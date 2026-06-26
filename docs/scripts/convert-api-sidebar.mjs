@@ -31,6 +31,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const sidebarTsPath = path.join(__dirname, '..', 'developer_docs', 'api', 'sidebar.ts');
 const sidebarJsPath = path.join(__dirname, '..', 'developer_docs', 'api', 'sidebar.js');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/convert-api-sidebar.mjs
+
+Convert the generated TypeScript API sidebar to CommonJS.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 if (!fs.existsSync(sidebarTsPath)) {
   console.log('No sidebar.ts found, skipping conversion');
   process.exit(0);

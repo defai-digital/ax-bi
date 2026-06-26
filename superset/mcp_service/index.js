@@ -41,8 +41,41 @@ class SupersetMCPServer {
     }
 
     start() {
-        const runner = require('./bin/superset-mcp.js');
-        // The bin script handles the execution
+        const args =
+            this.options.transport === 'stdio'
+                ? ['--stdio']
+                : [
+                      '--http',
+                      '--host',
+                      String(this.options.host),
+                      '--port',
+                      String(this.options.port),
+                  ];
+        const env = { ...process.env };
+
+        if (this.options.debug) {
+            args.push('--debug');
+            env.MCP_DEBUG = '1';
+        }
+        if (this.options.pythonPath) {
+            env.PYTHONPATH = this.options.pythonPath;
+        } else if (this.options.supersetRoot) {
+            env.PYTHONPATH = this.options.supersetRoot;
+        }
+        if (this.options.configPath) {
+            env.SUPERSET_CONFIG_PATH = this.options.configPath;
+        }
+
+        this.process = spawn(
+            process.execPath,
+            [path.join(__dirname, 'bin', 'superset-mcp.js'), ...args],
+            {
+                env,
+                cwd: this.options.supersetRoot || process.cwd(),
+                stdio: 'inherit',
+            },
+        );
+        return this.process;
     }
 
     stop() {

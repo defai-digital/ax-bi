@@ -213,15 +213,12 @@ msgstr "\"%s\" tagad ir sistēmas tumšais motīvs"
 msgid "\"%s\" is now the system default theme"
 msgstr "\"%s\" tagad ir sistēmas noklusējuma motīvs"
 
-#, python-format
 msgid "% calculation"
 msgstr "% aprēķins"
 
-#, python-format
 msgid "% of parent"
 msgstr "% no vecāka"
 
-#, python-format
 msgid "% of total"
 msgstr "% no kopējā"
 
@@ -274,7 +271,8 @@ msgid "%(suggestion)s instead of \"%(undefinedParameter)s?\""
 msgid_plural ""
 "%(firstSuggestions)s or %(lastSuggestion)s instead of "
 "\"%(undefinedParameter)s\"?"
-msgstr[0] "%(suggestion)s, nevis \"%(undefinedParameter)s\"?"
+msgstr[0] ""
+"%(firstSuggestions)s%(lastSuggestion)s, nevis \"%(undefinedParameter)s\"?"
 msgstr[1] ""
 "%(firstSuggestions)s vai %(lastSuggestion)s vietā "
 "\"%(undefinedParameter)s\"?"

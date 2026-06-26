@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -23,18 +25,12 @@ from graphlib import TopologicalSorter
 from inspect import getsource
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import click
-from flask import current_app
-from flask_appbuilder import Model
-from flask_migrate import downgrade, upgrade
-from progress.bar import ChargingBar
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.ext.automap import automap_base
 
-from superset import db
-from superset.utils.mock_data import add_sample_rows
+if TYPE_CHECKING:
+    from flask_appbuilder import Model
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +70,10 @@ def find_models(module: ModuleType) -> list[type[Model]]:  # noqa: C901
     """
     Find all models in a migration script.
     """
+    from flask import current_app
+    from sqlalchemy import create_engine, inspect
+    from sqlalchemy.ext.automap import automap_base
+
     models: list[type[Model]] = []
     tables = extract_modified_tables(module)
 
@@ -141,6 +141,29 @@ def find_models(module: ModuleType) -> list[type[Model]]:  # noqa: C901
 def main(  # noqa: C901
     filepath: str, limit: int = 1000, force: bool = False, no_auto_cleanup: bool = False
 ) -> None:
+    from flask import has_app_context
+
+    if has_app_context():
+        benchmark_migration(filepath, limit, force, no_auto_cleanup)
+        return
+
+    from superset.app import create_app
+
+    app = create_app()
+    with app.app_context():
+        benchmark_migration(filepath, limit, force, no_auto_cleanup)
+
+
+def benchmark_migration(  # noqa: C901
+    filepath: str, limit: int = 1000, force: bool = False, no_auto_cleanup: bool = False
+) -> None:
+    from flask_migrate import downgrade, upgrade
+    from progress.bar import ChargingBar
+    from sqlalchemy import text
+
+    from superset import db
+    from superset.utils.mock_data import add_sample_rows
+
     auto_cleanup = not no_auto_cleanup
     print(f"Importing migration script: {filepath}")
     module = import_migration_script(Path(filepath))
@@ -236,9 +259,5 @@ def main(  # noqa: C901
 
 
 if __name__ == "__main__":
-    from superset.app import create_app
-
-    app = create_app()
-    with app.app_context():
-        # pylint: disable=no-value-for-parameter
-        main()
+    # pylint: disable=no-value-for-parameter
+    main()

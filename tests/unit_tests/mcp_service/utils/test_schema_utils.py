@@ -23,12 +23,28 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from superset.mcp_service.utils.schema_utils import (
+    ensure_search_and_filters_not_combined,
     JSONParseError,
+    parse_filters,
     parse_json_or_list,
     parse_json_or_model,
     parse_json_or_model_list,
     parse_json_or_passthrough,
 )
+
+
+def test_ensure_search_and_filters_not_combined_allows_single_mode():
+    ensure_search_and_filters_not_combined("needle", [])
+    ensure_search_and_filters_not_combined(None, [{"col": "name"}])
+
+
+def test_ensure_search_and_filters_not_combined_rejects_mixed_modes():
+    with pytest.raises(ValueError, match="custom message"):
+        ensure_search_and_filters_not_combined(
+            "needle",
+            [{"col": "name"}],
+            "custom message",
+        )
 
 
 class TestParseJsonOrPassthrough:
@@ -254,6 +270,24 @@ class TestParseJsonOrModelList:
         result = parse_json_or_model_list(input_list, self.ItemModel, "items")
         assert len(result) == 2
         assert all(isinstance(item, self.ItemModel) for item in result)
+
+
+def test_parse_filters_uses_standard_filters_parameter() -> None:
+    class FilterModel(BaseModel):
+        col: str
+        value: int
+
+    result = parse_filters('[{"col": "id", "value": 42}]', FilterModel)
+
+    assert len(result) == 1
+    assert isinstance(result[0], FilterModel)
+    assert result[0].col == "id"
+    assert result[0].value == 42
+
+    assert parse_filters(None, FilterModel) == []
+
+    with pytest.raises(ValidationError):
+        parse_filters("{not valid json", FilterModel)
 
 
 class TestPydanticIntegration:

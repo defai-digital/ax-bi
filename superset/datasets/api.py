@@ -99,7 +99,10 @@ class DatasetRestApi(BaseSupersetModelRestApi):
     resource_name = "dataset"
     allow_browser_login = True
     class_permission_name = "Dataset"
-    method_permission_name = MODEL_API_RW_METHOD_PERMISSION_MAP
+    method_permission_name = {
+        **MODEL_API_RW_METHOD_PERMISSION_MAP,
+        "get_drill_info": "get_drill_info",
+    }
     include_route_methods = RouteMethod.REST_MODEL_VIEW_CRUD_SET | {
         RouteMethod.EXPORT,
         RouteMethod.IMPORT,
@@ -1348,6 +1351,11 @@ class DatasetRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         dashboard_id = kwargs["rison"].get("dashboard_id")
+        if not security_manager.can_access(
+            "can_get_drill_info", self.class_permission_name
+        ):
+            return self.response_403()
+
         drill_info_select_columns = [
             "id",
             "table_name",

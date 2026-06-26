@@ -18,6 +18,16 @@
 #
 set -e
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/python_tests.sh [pytest args...]
+
+Upgrade the test database, initialize Superset, load test users, and run
+integration tests. Extra arguments are passed through to pytest.
+EOF
+  exit 0
+fi
+
 # Temporary fix, probably related with https://bugs.launchpad.net/ubuntu/+source/opencv/+bug/1890170
 # MySQL was failing with:
 # from . import _mysql

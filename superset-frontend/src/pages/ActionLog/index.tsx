@@ -21,6 +21,7 @@ import { t } from '@apache-superset/core/translation';
 import { css } from '@apache-superset/core/theme';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import {
   ListView,
@@ -46,7 +47,7 @@ export type ActionLogObject = {
   referrer?: string;
 };
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 function ActionLogList() {
   const { addDangerToast, addSuccessToast } = useToasts();

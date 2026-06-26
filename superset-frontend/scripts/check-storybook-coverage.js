@@ -25,6 +25,18 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/check-storybook-coverage.js [--fix] [--verbose]
+
+Check that UI components and plugins have Storybook stories.
+
+Options:
+  --fix, -f      Show suggestions for missing stories
+  --verbose, -v  Show covered and skipped entries
+  --help, -h     Show this help message`);
+  process.exit(0);
+}
+
 const ROOT = path.resolve(__dirname, '..');
 
 // Directories to check for storybook coverage

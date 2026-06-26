@@ -106,7 +106,7 @@ def print_files(files: List[str]) -> None:
 
 
 def is_int(s: str) -> bool:
-    return bool(re.match(r"^-?\d+$", s))
+    return bool(re.match(r"^\d+$", s))
 
 
 def main(event_type: str, sha: str, repo: str) -> None:
@@ -115,11 +115,16 @@ def main(event_type: str, sha: str, repo: str) -> None:
     print("EVENT_TYPE", event_type)
     files: Optional[List[str]] = []
     if event_type == "pull_request":
-        pr_number = os.getenv("GITHUB_REF", "").split("/")[-2]
-        if is_int(pr_number):
-            files = fetch_changed_files_pr(repo, pr_number)
-            print("PR files:")
-            print_files(files)
+        github_ref = os.getenv("GITHUB_REF", "")
+        pr_number = github_ref.split("/")[-2] if "/" in github_ref else ""
+        if not is_int(pr_number):
+            raise ValueError(
+                "GITHUB_REF must be a pull request ref like "
+                "'refs/pull/<number>/merge'"
+            )
+        files = fetch_changed_files_pr(repo, pr_number)
+        print("PR files:")
+        print_files(files)
 
     elif event_type == "push":
         files = fetch_changed_files_push(repo, sha)
@@ -182,4 +187,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(args.event_type, args.sha, args.repo)
+    try:
+        main(args.event_type, args.sha, args.repo)
+    except ValueError as ex:
+        parser.error(str(ex))

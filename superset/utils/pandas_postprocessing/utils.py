@@ -48,7 +48,7 @@ NUMPY_FUNCTIONS: dict[str, Callable[..., Any]] = {
     "min": np.min,
     "percentile": np.percentile,
     "prod": np.prod,
-    "product": np.product,
+    "product": np.prod,
     "std": np.std,
     "sum": np.sum,
     "var": np.var,
@@ -206,6 +206,22 @@ def _append_columns(
     if all(key == value for key, value in columns.items()):
         # make sure to return a new DataFrame instead of changing the `base_df`.
         _base_df = base_df.copy()
+        # Upcast integer target columns to float when the incoming values
+        # contain NaN. pandas 2.x silently upcast int->float here (derived
+        # columns like rolling/diff/cum can produce NaN), but pandas 3.x
+        # rejects assigning NaN into an integer column. Upcasting only when a
+        # NaN is actually present keeps lossless int results (e.g. rolling
+        # with min_periods covering every row) as int, matching prior output.
+        # Iterate the actual leaf column labels so MultiIndex columns are
+        # handled too.
+        for label in append_df.columns:
+            if label not in _base_df.columns:
+                continue
+            current = _base_df[label]
+            if pd.api.types.is_integer_dtype(current) and bool(
+                append_df[label].isna().any()
+            ):
+                _base_df[label] = current.astype("float64")
         _base_df.loc[:, columns.keys()] = append_df
         return _base_df
     append_df = append_df.rename(columns=columns)

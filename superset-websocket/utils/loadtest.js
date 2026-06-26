@@ -17,14 +17,24 @@
  * under the License.
  */
 const Redis = require('ioredis');
-const config = require('../config.json');
 const { randomUUID } = require('crypto');
-const redis = new Redis(config.redis);
 
 const numClients = 256;
-const globalEventStreamName = `${config.redisStreamPrefix}full`;
 
-function pushData() {
+function loadConfig() {
+  try {
+    return require('../config.json');
+  } catch (error) {
+    if (error.code !== 'MODULE_NOT_FOUND') {
+      throw error;
+    }
+    return require('../config.example.json');
+  }
+}
+
+function pushData(redis, config) {
+  const globalEventStreamName = `${config.redisStreamPrefix}full`;
+
   for (let i = 0; i < numClients; i++) {
     const channelId = String(i);
     const streamId = `${config.redisStreamPrefix}${channelId}`;
@@ -57,5 +67,29 @@ function pushData() {
   }
 }
 
-pushData();
-setInterval(pushData, 1000);
+function start() {
+  const config = loadConfig();
+  const redis = new Redis(config.redis);
+  pushData(redis, config);
+  return setInterval(() => pushData(redis, config), 1000);
+}
+
+function printUsage() {
+  console.log('Usage: node utils/loadtest.js');
+  console.log('Writes async event test data to the configured Redis streams.');
+}
+
+if (require.main === module) {
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    printUsage();
+  } else {
+    start();
+  }
+}
+
+module.exports = {
+  loadConfig,
+  printUsage,
+  pushData,
+  start,
+};

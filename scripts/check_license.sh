@@ -18,6 +18,15 @@
 #
 
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/check_license.sh
+
+Run Apache RAT license checks for the repository.
+EOF
+  exit 0
+fi
+
 acquire_rat_jar () {
 
   URL="https://repo1.maven.org/maven2/org/apache/rat/apache-rat/${RAT_VERSION}/apache-rat-${RAT_VERSION}.jar"

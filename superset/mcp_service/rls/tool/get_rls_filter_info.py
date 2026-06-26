@@ -20,12 +20,10 @@ Get RLS filter info FastMCP tool.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.rls.schemas import (
     GetRlsFilterInfoRequest,
@@ -33,6 +31,7 @@ from superset.mcp_service.rls.schemas import (
     RlsFilterInfo,
     serialize_rls_filter_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ async def get_rls_filter_info(
     try:
         from superset.daos.security import RLSDAO
 
-        with event_logger.log_context(action="mcp.get_rls_filter_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_rls_filter_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=RLSDAO,
                 output_schema=RlsFilterInfo,
@@ -94,8 +93,7 @@ async def get_rls_filter_info(
             "RLS filter info retrieval failed: identifier=%s, error=%s"
             % (request.identifier, str(e))
         )
-        return RlsFilterError(
+        return RlsFilterError.create(
             error=f"Failed to get RLS filter info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

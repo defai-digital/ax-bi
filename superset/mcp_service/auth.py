@@ -60,9 +60,19 @@ from superset.mcp_service.mcp_config import (
     default_user_resolver,
     get_mcp_api_key_enabled,
 )
+from superset.mcp_service.utils.config_utils import (
+    get_mcp_api_key_create_url,
+    get_mcp_auth_enabled,
+    get_mcp_dev_username,
+    get_mcp_jwt_issuer,
+    get_mcp_rbac_enabled,
+    get_mcp_user_resolver,
+    is_mcp_jwt_configured,
+)
 from superset.mcp_service.utils.error_sanitization import (
     sanitize_for_log as _sanitize_for_log,
 )
+from superset.mcp_service.utils.permissions_utils import current_user_can_access
 
 if TYPE_CHECKING:
     from superset.connectors.sqla.models import SqlaTable
@@ -247,7 +257,7 @@ def check_tool_permission(func: Callable[..., Any], *, log_denial: bool = True) 
         True if user has permission or no permission is required.
     """
     try:
-        if not current_app.config.get("MCP_RBAC_ENABLED", True):
+        if not get_mcp_rbac_enabled():
             return True
 
         if not hasattr(g, "user") or not g.user:
@@ -280,9 +290,7 @@ def check_tool_permission(func: Callable[..., Any], *, log_denial: bool = True) 
         method_permission_name = getattr(func, METHOD_PERMISSION_ATTR, "read")
         permission_str = f"{PERMISSION_PREFIX}{method_permission_name}"
 
-        has_permission = security_manager.can_access(
-            permission_str, class_permission_name
-        )
+        has_permission = current_user_can_access(permission_str, class_permission_name)
 
         # Scope-aware authorization: enforce the INTERSECTION of token scopes
         # and DB RBAC. A tool is allowed only if the user has the RBAC
@@ -344,7 +352,7 @@ def is_tool_visible_to_current_user(tool: Any) -> bool:
         True if the tool is visible to the current user, False otherwise.
     """
     try:
-        if not current_app.config.get("MCP_RBAC_ENABLED", True):
+        if not get_mcp_rbac_enabled():
             return True
 
         tool_func = getattr(tool, "fn", None)
@@ -452,9 +460,9 @@ def _resolve_user_from_jwt_context(app: Any) -> User | None:
     # that derives a compound (iss + sub) identity. This is the least-breaking
     # correct option (warn, don't change the key out from under existing
     # single-issuer deployments).
-    configured_issuer = app.config.get("MCP_JWT_ISSUER")
+    configured_issuer = get_mcp_jwt_issuer(app.config)
     if isinstance(configured_issuer, (list, tuple, set)) and len(configured_issuer) > 1:
-        if not app.config.get("MCP_USER_RESOLVER"):
+        if not get_mcp_user_resolver(app.config):
             token_iss = claims.get("iss") if isinstance(claims, dict) else None
             logger.warning(
                 "Multiple JWT issuers are trusted (MCP_JWT_ISSUER is a list) but "
@@ -468,7 +476,7 @@ def _resolve_user_from_jwt_context(app: Any) -> User | None:
 
     # Use configurable resolver or default
 
-    resolver = app.config.get("MCP_USER_RESOLVER", default_user_resolver)
+    resolver = get_mcp_user_resolver(app.config, default=default_user_resolver)
     username = resolver(app, access_token)
 
     if not username:
@@ -534,7 +542,7 @@ def _validate_api_key_fallback(app: Any, api_key_string: str | None) -> User:
 
     user = sm.validate_api_key(api_key_string)
     if not user:
-        create_url = app.config.get("MCP_API_KEY_CREATE_URL", "/profile/")
+        create_url = get_mcp_api_key_create_url(app.config)
         raise PermissionError(
             f"Invalid or expired API key. Create a new key at {create_url}."
         )
@@ -637,7 +645,7 @@ def get_user_from_request() -> User:
         return api_key_user
 
     # Priority 3: Configured dev username for development/single-user deployments
-    if username := current_app.config.get("MCP_DEV_USERNAME"):
+    if username := get_mcp_dev_username():
         user = load_user_with_relationships(username)
         if not user:
             raise ValueError(
@@ -653,12 +661,8 @@ def get_user_from_request() -> User:
     # No auth source available. Keep the configuration diagnostics in the
     # server logs only -- the message returned to the (unauthenticated) client
     # must not reveal which auth mechanisms are configured.
-    auth_enabled = current_app.config.get("MCP_AUTH_ENABLED", False)
-    jwt_configured = bool(
-        current_app.config.get("MCP_JWKS_URI")
-        or current_app.config.get("MCP_JWT_PUBLIC_KEY")
-        or current_app.config.get("MCP_JWT_SECRET")
-    )
+    auth_enabled = get_mcp_auth_enabled()
+    jwt_configured = is_mcp_jwt_configured()
     details = [
         f"No JWT access token in MCP request context "
         f"(MCP_AUTH_ENABLED={auth_enabled}, "

@@ -20,12 +20,10 @@ Get report info FastMCP tool.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.report.schemas import (
     GetReportInfoRequest,
@@ -33,6 +31,7 @@ from superset.mcp_service.report.schemas import (
     ReportInfo,
     serialize_report_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +79,7 @@ async def get_report_info(
                 error_type="FeatureDisabled",
             )
 
-        with event_logger.log_context(action="mcp.get_report_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_report_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=ReportScheduleDAO,
                 output_schema=ReportInfo,
@@ -120,8 +119,7 @@ async def get_report_info(
                 type(exc).__name__,
             )
         )
-        return ReportError(
+        return ReportError.create(
             error=f"Failed to get report info: {str(exc)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

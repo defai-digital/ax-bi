@@ -23,12 +23,10 @@ about a specific saved SQL query.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.saved_query.schemas import (
     GetSavedQueryInfoRequest,
@@ -36,6 +34,7 @@ from superset.mcp_service.saved_query.schemas import (
     SavedQueryInfo,
     serialize_saved_query_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ async def get_saved_query_info(
     try:
         from superset.daos.query import SavedQueryDAO
 
-        with event_logger.log_context(action="mcp.get_saved_query_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_saved_query_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=SavedQueryDAO,
                 output_schema=SavedQueryInfo,
@@ -122,8 +121,7 @@ async def get_saved_query_info(
                 type(e).__name__,
             )
         )
-        return SavedQueryError(
+        return SavedQueryError.create(
             error="Failed to get saved query info",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from superset.db_engine_specs.base import DatabaseCategory
 from superset.db_engine_specs.mysql import MySQLEngineSpec
 from superset.db_engine_specs.postgres import PostgresEngineSpec
 
@@ -35,6 +36,26 @@ class AuroraMySQLDataAPI(MySQLEngineSpec):
         "secret_arn={secret_arn}&"
         "region_name={region_name}"
     )
+    metadata = {
+        "description": (
+            "Amazon Aurora MySQL via the RDS Data API, a serverless API for "
+            "connecting to Aurora clusters without managing persistent database "
+            "connections."
+        ),
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
+        "categories": [
+            DatabaseCategory.CLOUD_AWS,
+            DatabaseCategory.TRADITIONAL_RDBMS,
+            DatabaseCategory.HOSTED_OPEN_SOURCE,
+        ],
+        "pypi_packages": ["sqlalchemy-aurora-data-api"],
+        "connection_string": (
+            "mysql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/"
+            "{database_name}?aurora_cluster_arn={aurora_cluster_arn}&"
+            "secret_arn={secret_arn}&region_name={region_name}"
+        ),
+    }
 
 
 class AuroraPostgresDataAPI(PostgresEngineSpec):
@@ -54,6 +75,26 @@ class AuroraPostgresDataAPI(PostgresEngineSpec):
         "secret_arn={secret_arn}&"
         "region_name={region_name}"
     )
+    metadata = {
+        "description": (
+            "Amazon Aurora PostgreSQL via the RDS Data API, a serverless API "
+            "for connecting to Aurora clusters without managing persistent "
+            "database connections."
+        ),
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
+        "categories": [
+            DatabaseCategory.CLOUD_AWS,
+            DatabaseCategory.TRADITIONAL_RDBMS,
+            DatabaseCategory.HOSTED_OPEN_SOURCE,
+        ],
+        "pypi_packages": ["sqlalchemy-aurora-data-api"],
+        "connection_string": (
+            "postgresql+auroradataapi://{aws_access_id}:{aws_secret_access_key}@/"
+            "{database_name}?aurora_cluster_arn={aurora_cluster_arn}&"
+            "secret_arn={secret_arn}&region_name={region_name}"
+        ),
+    }
 
 
 class AuroraMySQLEngineSpec(MySQLEngineSpec):
@@ -67,6 +108,22 @@ class AuroraMySQLEngineSpec(MySQLEngineSpec):
     engine = "mysql"
     engine_name = "Aurora MySQL"
     default_driver = "mysqldb"
+    metadata = {
+        "description": (
+            "Amazon Aurora MySQL is a fully managed, MySQL-compatible "
+            "relational database service on AWS."
+        ),
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
+        "categories": [
+            DatabaseCategory.CLOUD_AWS,
+            DatabaseCategory.TRADITIONAL_RDBMS,
+            DatabaseCategory.HOSTED_OPEN_SOURCE,
+        ],
+        "pypi_packages": ["mysqlclient"],
+        "connection_string": "mysql://{username}:{password}@{host}:{port}/{database}",
+        "default_port": 3306,
+    }
 
 
 class AuroraPostgresEngineSpec(PostgresEngineSpec):
@@ -80,3 +137,21 @@ class AuroraPostgresEngineSpec(PostgresEngineSpec):
     engine = "postgresql"
     engine_name = "Aurora PostgreSQL"
     default_driver = "psycopg2"
+    metadata = {
+        "description": (
+            "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL-compatible "
+            "relational database service on AWS."
+        ),
+        "logo": "aws-aurora.jpg",
+        "homepage_url": "https://aws.amazon.com/rds/aurora/",
+        "categories": [
+            DatabaseCategory.CLOUD_AWS,
+            DatabaseCategory.TRADITIONAL_RDBMS,
+            DatabaseCategory.HOSTED_OPEN_SOURCE,
+        ],
+        "pypi_packages": ["psycopg2"],
+        "connection_string": (
+            "postgresql://{username}:{password}@{host}:{port}/{database}"
+        ),
+        "default_port": 5432,
+    }

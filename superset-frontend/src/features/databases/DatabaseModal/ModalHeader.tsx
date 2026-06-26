@@ -56,7 +56,7 @@ const documentationLink = (engine: string | undefined) => {
       engine as keyof typeof irregularDocumentationLinks
     ]
   ) {
-    return `https://superset.apache.org/docs/databases/${engine}`;
+    return `https://superset.apache.org/user-docs/databases/supported/${engine}`;
   }
   return irregularDocumentationLinks[
     engine as keyof typeof irregularDocumentationLinks

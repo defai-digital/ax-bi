@@ -21,7 +21,7 @@
 
 // @ts-check
 const { exit } = require("node:process");
-const { join, dirname, normalize, sep } = require("node:path");
+const { join, dirname, isAbsolute, normalize, sep } = require("node:path");
 const { readdir, stat } = require("node:fs/promises");
 const { existsSync } = require("node:fs");
 const { chdir, cwd } = require("node:process");
@@ -43,6 +43,12 @@ const BATCH_SIZE = 10; // Process files in batches of this size
 
 void (async () => {
   const args = process.argv.slice(2);
+
+  if (args.includes("--help") || args.includes("-h")) {
+    printHelp();
+    exit(0);
+  }
+
   const {
     matchedArgs: [packageArg, excludeDeclarationDirArg],
     remainingArgs,
@@ -54,7 +60,10 @@ void (async () => {
   }
 
   const packageRootDir = await getPackage(packageArg);
-  const changedFiles = removePackageSegment(remainingArgs, packageRootDir);
+  const changedFiles = filterExistingFiles(
+    removePackageSegment(remainingArgs, packageRootDir),
+    packageRootDir
+  );
 
   // Filter to only TypeScript files
   const tsFiles = changedFiles.filter(file =>
@@ -77,6 +86,20 @@ void (async () => {
     await runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationDirArg);
   }
 })();
+
+function printHelp() {
+  console.log(`Usage: node scripts/check-type.js package=<dir> [excludeDeclarationDir=<dirs>] [files...]
+
+Run TypeScript checks for changed files in a package.
+
+Arguments:
+  package=<dir>                  Package directory to type check.
+  excludeDeclarationDir=<dirs>   Comma-separated directories to skip while collecting .d.ts files.
+  files...                       Changed files to check; missing files are skipped.
+
+Options:
+  -h, --help                     Show this help message and exit.`);
+}
 
 /**
  * Run full type check on the entire project
@@ -302,6 +325,45 @@ function removePackageSegment(args, package) {
     }
     return arg;
   });
+}
+
+/**
+ * Resolve a changed file argument against the package root unless it is already
+ * absolute. Pre-commit hooks can pass deleted files, so callers should skip
+ * missing paths before invoking TypeScript.
+ *
+ * @param {string} file
+ * @param {string} packageRootDir
+ */
+function resolveChangedFile(file, packageRootDir) {
+  return isAbsolute(file) ? file : join(SUPERSET_ROOT, packageRootDir, file);
+}
+
+/**
+ *
+ * @param {string[]} files
+ * @param {string} packageRootDir
+ * @returns {string[]}
+ */
+function filterExistingFiles(files, packageRootDir) {
+  const existingFiles = [];
+  const missingFiles = [];
+
+  files.forEach((file) => {
+    if (existsSync(resolveChangedFile(file, packageRootDir))) {
+      existingFiles.push(file);
+    } else {
+      missingFiles.push(file);
+    }
+  });
+
+  if (missingFiles.length > 0) {
+    const fileLabel = missingFiles.length === 1 ? "file" : "files";
+    console.log(`Skipping ${missingFiles.length} missing changed ${fileLabel}:`);
+    missingFiles.forEach((file) => console.log(`  ${file}`));
+  }
+
+  return existingFiles;
 }
 
 /**

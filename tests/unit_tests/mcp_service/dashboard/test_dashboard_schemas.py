@@ -21,6 +21,7 @@ Unit tests for dashboard schema serialization.
 Tests that serialize_dashboard_object correctly handles slug and other fields.
 """
 
+from datetime import timezone
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -31,6 +32,7 @@ from superset.mcp_service.dashboard.schemas import (
     _extract_cross_filters_enabled,
     _extract_native_filters,
     dashboard_serializer,
+    DashboardError,
     GenerateDashboardRequest,
     serialize_chart_summary,
     serialize_dashboard_object,
@@ -45,6 +47,13 @@ from superset.utils.json import dumps as json_dumps
 def _wrapped(value: str) -> str:
     """Return the expected LLM-context wrapper for assertions."""
     return f"{LLM_CONTEXT_OPEN_DELIMITER}\n{value}\n{LLM_CONTEXT_CLOSE_DELIMITER}"
+
+
+def test_dashboard_error_create_uses_aware_utc_timestamp():
+    err = DashboardError.create(error="missing dashboard", error_type="not_found")
+
+    assert err.timestamp is not None
+    assert err.timestamp.tzinfo is timezone.utc
 
 
 def _mock_dashboard(

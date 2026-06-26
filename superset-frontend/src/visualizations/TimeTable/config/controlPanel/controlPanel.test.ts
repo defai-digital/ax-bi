@@ -18,6 +18,9 @@
  */
 import { controlPanel as controlPanelConfig } from './controlPanel';
 
+const resolveLabel = (label: unknown) =>
+  typeof label === 'function' ? label() : label;
+
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('TimeTable Control Panel', () => {
   test('should have required control panel structure', () => {
@@ -38,7 +41,7 @@ describe('TimeTable Control Panel', () => {
     const { controlSetRows } = querySection!;
 
     expect(querySection).toBeDefined();
-    expect(querySection!.label).toBe('Query');
+    expect(resolveLabel(querySection!.label)).toBe('Query');
     expect(querySection!.expanded).toBe(true);
     expect(querySection!.controlSetRows).toBeDefined();
     expect(controlSetRows).toContainEqual(['metrics']);
@@ -61,7 +64,7 @@ describe('TimeTable Control Panel', () => {
     expect((columnCollectionRow as any)![0].config.type).toBe(
       'CollectionControl',
     );
-    expect((columnCollectionRow as any)![0].config.label).toBe(
+    expect(resolveLabel((columnCollectionRow as any)![0].config.label)).toBe(
       'Time series columns',
     );
     expect((columnCollectionRow as any)![0].config.controlName).toBe(
@@ -78,7 +81,7 @@ describe('TimeTable Control Panel', () => {
 
     expect(urlRow).toBeDefined();
     expect((urlRow as any)![0].config.type).toBe('TextControl');
-    expect((urlRow as any)![0].config.label).toBe('URL');
+    expect(resolveLabel((urlRow as any)![0].config.label)).toBe('URL');
   });
 
   test('should have control overrides for groupby', () => {

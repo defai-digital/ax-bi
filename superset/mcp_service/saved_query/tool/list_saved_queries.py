@@ -27,9 +27,13 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
 from superset.mcp_service.saved_query.schemas import (
+    ALL_SAVED_QUERY_COLUMNS,
     DEFAULT_SAVED_QUERY_COLUMNS,
     ListSavedQueriesRequest,
     SavedQueryError,
@@ -39,6 +43,8 @@ from superset.mcp_service.saved_query.schemas import (
     serialize_saved_query_object,
     SORTABLE_SAVED_QUERY_COLUMNS,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import finalize_list_response
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +75,7 @@ async def list_saved_queries(
     if ctx is None:
         raise RuntimeError("FastMCP context is required for list_saved_queries")
 
-    request = request or _DEFAULT_LIST_SAVED_QUERIES_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_SAVED_QUERIES_REQUEST)
 
     await ctx.info(
         "Listing saved queries: page=%s, page_size=%s, search=%s"
@@ -107,42 +113,25 @@ async def list_saved_queries(
             search_columns=["label", "description", "sql"],
             list_field_name="saved_queries",
             output_list_schema=SavedQueryList,
-            all_columns=list(SavedQueryInfo.model_fields.keys()),
+            all_columns=ALL_SAVED_QUERY_COLUMNS,
             sortable_columns=SORTABLE_SAVED_QUERY_COLUMNS,
             logger=logger,
         )
 
-        with event_logger.log_context(action="mcp.list_saved_queries.query"):
+        with mcp_event_log_context(action="mcp.list_saved_queries.query"):
             result = list_tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=request.select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 
-        await ctx.info(
-            "Saved queries listed successfully: count=%s, total_count=%s, "
-            "total_pages=%s"
-            % (
-                len(result.saved_queries) if hasattr(result, "saved_queries") else 0,
-                getattr(result, "total_count", None),
-                getattr(result, "total_pages", None),
-            )
+        return await finalize_list_response(
+            result, "saved_queries", "Saved queries", ctx, by_alias=True
         )
-
-        columns_to_filter = result.columns_requested
-        await ctx.debug(
-            "Applying field filtering via serialization context: columns=%s"
-            % (columns_to_filter,)
-        )
-        with event_logger.log_context(action="mcp.list_saved_queries.serialization"):
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": columns_to_filter},
-            )
 
     except Exception as e:
         await ctx.error(

@@ -635,6 +635,55 @@ def get_all_column_names(columns: list[ColumnMetadata]) -> list[str]:
     return [col.name for col in columns]
 
 
+def _schema_resource_column(column: ColumnMetadata) -> dict[str, str]:
+    """Serialize schema column metadata for MCP static resources."""
+    return {
+        "name": str(column.name),
+        "description": str(column.description or ""),
+        "type": str(column.type or ""),
+    }
+
+
+def build_schema_resource(model_type: str) -> dict[str, Any]:
+    """Build static MCP schema resource data for supported model types."""
+    schemas = {
+        "chart": (
+            get_chart_columns,
+            CHART_DEFAULT_COLUMNS,
+            CHART_SORTABLE_COLUMNS,
+            CHART_SEARCH_COLUMNS,
+        ),
+        "dataset": (
+            get_dataset_columns,
+            DATASET_DEFAULT_COLUMNS,
+            DATASET_SORTABLE_COLUMNS,
+            DATASET_SEARCH_COLUMNS,
+        ),
+        "dashboard": (
+            get_dashboard_columns,
+            DASHBOARD_DEFAULT_COLUMNS,
+            DASHBOARD_SORTABLE_COLUMNS,
+            DASHBOARD_SEARCH_COLUMNS,
+        ),
+    }
+    schema = schemas.get(model_type)
+    if schema is None:
+        return {}
+
+    columns_fn, default_columns, sortable_columns, search_columns = schema
+    columns = columns_fn()
+    return {
+        "model_type": model_type,
+        "select_columns": [_schema_resource_column(column) for column in columns],
+        "all_column_names": get_all_column_names(columns),
+        "default_columns": default_columns,
+        "sortable_columns": sortable_columns,
+        "search_columns": search_columns,
+        "default_sort": "changed_on",
+        "default_sort_direction": "desc",
+    }
+
+
 # For backwards compatibility with existing code that imports these
 # These will be populated lazily when needed
 CHART_ALL_COLUMNS: list[str] = []

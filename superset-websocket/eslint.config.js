@@ -26,12 +26,14 @@ const js = require('@eslint/js');
 const globals = require('globals');
 
 module.exports = [
+  {
+    ignores: ['*.min.js', 'node_modules/**', 'dist/**', 'coverage/**'],
+  },
   js.configs.recommended,
   ...typescriptEslint.configs.recommended,
   eslintConfigPrettier,
   {
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
-    ignores: ['*.min.js', 'node_modules', 'dist', 'coverage'],
     languageOptions: {
       parser: typescriptEslintParser,
       globals: {

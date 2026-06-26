@@ -106,7 +106,9 @@ class EmailNotification(BaseNotification):  # pylint: disable=too-few-public-met
 
     @staticmethod
     def _get_smtp_domain() -> str:
-        return parseaddr(current_app.config["SMTP_MAIL_FROM"])[1].split("@")[1]
+        email_addr = parseaddr(current_app.config["SMTP_MAIL_FROM"])[1]
+        parts = email_addr.split("@")
+        return parts[1] if len(parts) > 1 else ""
 
     def _error_template(self, text: str) -> str:
         call_to_action = self._get_call_to_action()

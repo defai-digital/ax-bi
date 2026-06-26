@@ -234,7 +234,8 @@ msgstr "%(rows)d Zeilen zurückgegeben"
 #, python-format
 msgid "%(suggestion)s instead of \"%(undefinedParameter)s?\""
 msgid_plural "%(firstSuggestions)s or %(lastSuggestion)s instead of \"%(undefinedParameter)s\"?"
-msgstr[0] "%(suggestion)s anstelle von \"%(undefinedParameter)s\"?"
+msgstr[0] ""
+"%(firstSuggestions)s%(lastSuggestion)s anstelle von \"%(undefinedParameter)s\"?"
 msgstr[1] "%(firstSuggestions)s oder %(lastSuggestion)s anstelle von \"%(undefinedParameter)s\"?"
 
 #, python-format
@@ -1213,13 +1214,13 @@ msgstr "Hinzugefügt"
 #, python-format
 msgid "Added 1 new column to the virtual dataset"
 msgid_plural "Added %s new columns to the virtual dataset"
-msgstr[0] "Dem virtuellen Datensatz wurde 1 neue Spalte hinzugefügt"
+msgstr[0] "Dem virtuellen Datensatz wurde %s neue Spalte hinzugefügt"
 msgstr[1] "Dem virtuellen Datensatz wurden %s neue Spalten hinzugefügt"
 
 #, python-format
 msgid "Added to 1 dashboard"
 msgid_plural "Added to %s dashboards"
-msgstr[0] "Zu 1 Dashboard hinzugefügt"
+msgstr[0] "Zu %s Dashboard hinzugefügt"
 msgstr[1] "Zu %s Dashboards hinzugefügt"
 
 msgid "Additional Parameters"
@@ -8466,7 +8467,7 @@ msgstr "Geändert %s"
 #, python-format
 msgid "Modified 1 column in the virtual dataset"
 msgid_plural "Modified %s columns in the virtual dataset"
-msgstr[0] "Eine Spalte im virtuellen Datensatz geändert"
+msgstr[0] "%s Spalte im virtuellen Datensatz geändert"
 msgstr[1] "%s Spalten im virtuellen Datensatz geändert"
 
 msgid "Modified by"
@@ -10263,7 +10264,7 @@ msgstr "Tabellenvorschau entfernen"
 #, python-format
 msgid "Removed 1 column from the virtual dataset"
 msgid_plural "Removed %s columns from the virtual dataset"
-msgstr[0] "Eine Spalte aus dem virtuellen Datensatz entfernt"
+msgstr[0] "%s Spalte aus dem virtuellen Datensatz entfernt"
 msgstr[1] "%s Spalten aus dem virtuellen Datensatz entfernt"
 
 msgid "Rename tab"

@@ -22,7 +22,6 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.role.schemas import (
     GetRoleInfoRequest,
@@ -30,6 +29,7 @@ from superset.mcp_service.role.schemas import (
     RoleInfo,
     serialize_role_object,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ async def get_role_info(
         def _serializer(obj: object) -> RoleInfo | None:
             return serialize_role_object(obj, include_permissions=True)
 
-        with event_logger.log_context(action="mcp.get_role_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_role_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=RoleDAO,
                 output_schema=RoleInfo,

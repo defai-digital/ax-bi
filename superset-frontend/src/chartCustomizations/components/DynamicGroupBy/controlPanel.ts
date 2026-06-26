@@ -22,7 +22,7 @@ import { t } from '@apache-superset/core/translation';
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: t('Query'),
+      label: () => t('Query'),
       expanded: true,
       controlSetRows: [
         [
@@ -30,8 +30,8 @@ const config: ControlPanelConfig = {
             name: 'groupby',
             config: {
               type: 'SelectControl',
-              label: t('Column'),
-              description: t('Column to group by'),
+              label: () => t('Column'),
+              description: () => t('Column to group by'),
               default: null,
               clearable: true,
               required: true,
@@ -41,7 +41,7 @@ const config: ControlPanelConfig = {
       ],
     },
     {
-      label: t('UI Configuration'),
+      label: () => t('UI Configuration'),
       expanded: true,
       controlSetRows: [
         [

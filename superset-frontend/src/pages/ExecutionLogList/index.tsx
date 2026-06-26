@@ -34,10 +34,11 @@ import {
   useListViewResource,
   useSingleViewResource,
 } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { AlertObject, LogObject } from 'src/features/alerts/types';
 import { AnnotationObject } from 'src/features/annotations/types';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 const StyledHeader = styled.div`
   ${({ theme }) => css`

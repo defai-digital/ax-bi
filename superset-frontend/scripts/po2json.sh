@@ -22,6 +22,15 @@
 
 set -e
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/po2json.sh
+
+Generate frontend JSON translation files from Superset .po catalogs.
+EOF
+  exit 0
+fi
+
 export NODE_NO_WARNINGS=1
 
 for file in $( find ../superset/translations/** -name '*.po' );

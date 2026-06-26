@@ -28,6 +28,7 @@ Output: JSON mapping of engine spec module names to their custom errors
 import ast
 import json  # noqa: TID251 - standalone docs script, not part of superset
 import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
 from typing import Any
 
@@ -265,6 +266,13 @@ def extract_errors_from_dict(dict_node: ast.Dict, source: str) -> list[dict[str,
 
 def main() -> None:
     """Main function to extract custom_errors from all engine specs."""
+    parser = ArgumentParser(
+        description="Extract custom_errors from database engine specs.",
+        epilog=__doc__,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.parse_args()
+
     # Find the superset root directory
     script_dir = Path(__file__).parent
     root_dir = script_dir.parent.parent

@@ -27,7 +27,6 @@ export default defineConfig({
   numTestsKeptInMemory: 3,
   // Disabled after realizing this MESSES UP rison encoding in intricate ways
   experimentalFetchPolyfill: false,
-  experimentalMemoryManagement: true,
   requestTimeout: 10000,
   video: false,
   viewportWidth: 1280,

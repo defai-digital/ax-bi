@@ -27,8 +27,11 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
 from superset.mcp_service.tag.schemas import (
     ListTagsRequest,
     serialize_tag_object,
@@ -37,6 +40,8 @@ from superset.mcp_service.tag.schemas import (
     TagInfo,
     TagList,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import finalize_list_response
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +86,7 @@ async def list_tags(
     if ctx is None:
         raise RuntimeError("FastMCP context is required for list_tags")
 
-    request = request or _DEFAULT_LIST_TAGS_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_TAGS_REQUEST)
 
     await ctx.info(
         "Listing tags: page=%s, page_size=%s, search=%s"
@@ -118,36 +123,18 @@ async def list_tags(
             logger=logger,
         )
 
-        with event_logger.log_context(action="mcp.list_tags.query"):
+        with mcp_event_log_context(action="mcp.list_tags.query"):
             result = list_tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=request.select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 
-        await ctx.info(
-            "Tags listed successfully: count=%s, total_count=%s, total_pages=%s"
-            % (
-                len(result.tags) if hasattr(result, "tags") else 0,
-                getattr(result, "total_count", None),
-                getattr(result, "total_pages", None),
-            )
-        )
-
-        columns_to_filter = result.columns_requested
-        await ctx.debug(
-            "Applying field filtering via serialization context: columns=%s"
-            % (columns_to_filter,)
-        )
-        with event_logger.log_context(action="mcp.list_tags.serialization"):
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": columns_to_filter},
-            )
+        return await finalize_list_response(result, "tags", "Tags", ctx)
 
     except Exception as e:
         await ctx.error(

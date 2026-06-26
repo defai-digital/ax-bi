@@ -38,6 +38,16 @@ const SPEC_PATH = path.join(__dirname, '..', 'static', 'resources', 'openapi.jso
 const SIDEBAR_PATH = path.join(__dirname, '..', 'developer_docs', 'api', 'sidebar.js');
 const OUTPUT_PATH = path.join(__dirname, '..', 'developer_docs', 'api.mdx');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/generate-api-index.mjs
+
+Generate the API overview MDX page from the OpenAPI spec.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 // Category groupings for better organization
 const CATEGORY_GROUPS = {
   'Authentication': ['Security'],

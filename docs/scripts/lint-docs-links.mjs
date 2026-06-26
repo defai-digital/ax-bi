@@ -64,6 +64,20 @@ const docsRoot = path.join(__dirname, '..');
 
 const ROOTS = ['docs', 'admin_docs', 'developer_docs', 'components'];
 
+function printHelp() {
+  console.log(`Usage: node scripts/lint-docs-links.mjs [--help]
+
+Check internal markdown links in docs source files.
+
+Options:
+  -h, --help  Show this help message and exit.`);
+}
+
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  printHelp();
+  process.exit(0);
+}
+
 const NON_DOC_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico',
   '.json', '.yaml', '.yml', '.txt', '.csv',

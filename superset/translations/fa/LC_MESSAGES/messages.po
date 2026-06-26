@@ -45,6 +45,7 @@ msgid ""
 "                original data, it just changes the way the histogram is "
 "displayed."
 msgstr ""
+"\n"
 "گزینه تجمعی به شما اجازه می دهد تا ببینید چگونه داده های شما بر روی "
 "مقادیر مختلف تجمع پیدا می کند. وقتی فعال می شود، نوارهای هیستوگرام "
 "نمایانگر مجموع در حال اجرا فرکانس ها تا هر سطل است. این کمک می کند تا شما"
@@ -65,6 +66,7 @@ msgid ""
 "                clearer understanding of the proportion of data points "
 "within each bin."
 msgstr ""
+"\n"
 "گزینه نرمال سازی، مقادیر هیستوگرام را با تقسیم کردن تعداد هر دسته به "
 "تعداد کل نقاط داده به سهم یا احتمال تبدیل می کند.\n"
 "این فرآیند نرمال سازی اطمینان می دهد که مقادیر نهایی به ۱ می رسد،\n"
@@ -77,6 +79,7 @@ msgid ""
 "                It won't be saved when saving the chart.\n"
 "              "
 msgstr ""
+"\n"
 "این فیلتر از زمینه داشبورد ارث برده شده است.\n"
 "هنگام ذخیره سازی نمودار ذخیره نمی شود."
 
@@ -108,7 +111,7 @@ msgstr "یکی جدید"
 
 #, python-format
 msgid " at line %(line)d"
-msgstr "در خط %(line)"
+msgstr "در خط %(line)d"
 
 msgid " expression which needs to adhere to the "
 msgstr "عبارتی که باید به دستور العمل‌ها پایبند باشد"
@@ -119,7 +122,7 @@ msgstr "جزئیات"
 
 #, python-format
 msgid " near '%(highlight)s'"
-msgstr " نزدیک '%(highlight)ها'"
+msgstr " نزدیک '%(highlight)s'"
 
 msgid " source code of Superset's sandboxed parser"
 msgstr "کد منبع تجزیه‌کننده‌ی محافظت‌شده‌ی Superset"
@@ -186,15 +189,12 @@ msgstr ""
 msgid "\"%s\" is now the system default theme"
 msgstr ""
 
-#, python-format
 msgid "% calculation"
 msgstr "% محاسبه"
 
-#, python-format
 msgid "% of parent"
 msgstr "% از والد"
 
-#, python-format
 msgid "% of total"
 msgstr "% از کل"
 
@@ -517,7 +517,7 @@ msgstr ""
 "\n"
 "<%(url)s|در سوپرست کاوش کنید>\n"
 "\n"
-"%(table)s"
+"%(table)s\n"
 
 #, python-format
 msgid "+ %s more"
@@ -532,7 +532,8 @@ msgid ""
 "\n"
 msgstr ""
 "-- توجه: مگر اینکه کوئریی خود را ذخیره کنید، این زبانه ها اگر کوکی های "
-"خود را پاک کنید یا مرورگر را تغییر دهید، پایدار نخواهند ماند."
+"خود را پاک کنید یا مرورگر را تغییر دهید، پایدار نخواهند ماند.\n"
+"\n"
 
 #, python-format
 msgid "... and %d more"
@@ -15068,7 +15069,7 @@ msgid ""
 "associate one dataset with a table.\n"
 msgstr ""
 "این جدول از قبل یک مجموعه داده مرتبط با خود دارد. شما فقط می‌توانید یک "
-"مجموعه داده را با یک جدول مرتبط کنید."
+"مجموعه داده را با یک جدول مرتبط کنید.\n"
 
 msgid "This theme is set locally"
 msgstr ""
@@ -16473,6 +16474,8 @@ msgstr[0] ""
 "در بارگذاری این نتایج مشکلی پیش آمده است. درخواست‌ها بعد از %s ثانیه زمان"
 " تمام می‌شوند."
 msgstr[1] ""
+"در بارگذاری این نتایج مشکلی پیش آمده است. درخواست‌ها بعد از %s ثانیه زمان"
+" تمام می‌شوند."
 
 #, python-format
 msgid ""
@@ -16485,6 +16488,8 @@ msgstr[0] ""
 "در بارگذاری این تصویرسازی مشکلی پیش آمده است. درخواست‌ها بعد از %s ثانیه "
 "زمان تمام می‌شوند."
 msgstr[1] ""
+"در بارگذاری این تصویرسازی مشکلی پیش آمده است. درخواست‌ها بعد از %s ثانیه "
+"زمان تمام می‌شوند."
 
 msgid "What should be shown as the label"
 msgstr "چه چیزی باید به عنوان برچسب نمایش داده شود"
@@ -17166,7 +17171,7 @@ msgid ""
 "fully undo subsequent actions. You may save your current state to reset "
 "the history."
 msgstr ""
-"شما از تمام % (historyLength)s فضای لغو استفاده کرده‌اید و قادر به لغو "
+"شما از تمام %(historyLength)s فضای لغو استفاده کرده‌اید و قادر به لغو "
 "کامل اقدامات بعدی نخواهید بود. می‌توانید وضعیت فعلی خود را ذخیره کنید تا "
 "تاریخچه را تنظیم مجدد کنید."
 

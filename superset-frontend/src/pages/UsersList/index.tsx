@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { ActionsBar, ActionProps } from 'src/components/ListView/ActionsBar';
 import {
@@ -44,7 +45,7 @@ import { deleteUser } from 'src/features/users/utils';
 import { fetchPaginatedData } from 'src/utils/fetchOptions';
 import type { UsersListProps, Group, Role, UserObject } from './types';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 enum ModalType {
   ADD = 'add',
@@ -496,6 +497,8 @@ function UsersList({ user }: UsersListProps) {
         id: 'fail_login_count',
         input: 'numerical_range',
         operator: ListViewFilterOperator.Between,
+        min: failLoginCountStats.min,
+        max: failLoginCountStats.max,
       },
     ],
     [

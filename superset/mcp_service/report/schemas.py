@@ -21,7 +21,7 @@ Pydantic schemas for report (alerts & reports) related responses.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Annotated, Any, Dict, List, Literal
 
 from pydantic import (
@@ -40,14 +40,18 @@ from superset.mcp_service.common.cache_schemas import (
     MetadataCacheControl,
     OwnedByMeMixin,
 )
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from superset.mcp_service.privacy import filter_user_directory_fields
 from superset.mcp_service.system.schemas import PaginationInfo
 from superset.mcp_service.utils import sanitize_for_llm_context
-from superset.mcp_service.utils.response_utils import humanize_timestamp
+from superset.mcp_service.utils.response_utils import (
+    filter_serialized_response_fields,
+    humanize_timestamp,
+)
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
-    parse_json_or_model_list,
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
 )
 
 
@@ -126,20 +130,7 @@ class ReportInfo(BaseModel):
 
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
-        """Filter fields based on serialization context.
-
-        If context contains 'select_columns', only include those fields.
-        Otherwise, include all fields (default behavior).
-        """
-        data = filter_user_directory_fields(serializer(self))
-
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                requested_fields = set(select_columns)
-                return {k: v for k, v in data.items() if k in requested_fields}
-
-        return data
+        return filter_serialized_response_fields(serializer(self), info)
 
 
 class ReportList(BaseModel):
@@ -231,44 +222,29 @@ class ListReportsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl)
     @classmethod
     def parse_filters(cls, v: Any) -> List[ReportFilter]:
         """Accept both JSON string and list of objects."""
-        return parse_json_or_model_list(v, ReportFilter, "filters")
+        return parse_filters(v, ReportFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> List[str]:
         """Accept JSON array, list, or comma-separated string."""
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListReportsRequest":
         """Prevent using both search and filters simultaneously."""
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' parameters simultaneously. "
-                "Use either 'search' for text-based searching across multiple fields, "
-                "or 'filters' for precise column-based filtering, but not both."
-            )
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching across multiple fields, "
+            "or 'filters' for precise column-based filtering, but not both.",
+        )
         return self
 
 
-class ReportError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @field_validator("error")
-    @classmethod
-    def sanitize_error_for_llm_context(cls, value: str) -> str:
-        """Wrap error text before it is exposed to LLM context."""
-        return sanitize_for_llm_context(value, field_path=("error",))
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "ReportError":
-        """Create a standardized ReportError with timestamp."""
-        return cls(
-            error=error, error_type=error_type, timestamp=datetime.now(timezone.utc)
-        )
+class ReportError(MCPResourceError):
+    pass
 
 
 class GetReportInfoRequest(MetadataCacheControl):

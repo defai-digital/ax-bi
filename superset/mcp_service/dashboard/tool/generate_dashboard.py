@@ -28,7 +28,6 @@ from fastmcp import Context
 from flask import g
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.dashboard.constants import (
     generate_id,
     GRID_COLUMN_COUNT,
@@ -40,6 +39,7 @@ from superset.mcp_service.dashboard.schemas import (
     GenerateDashboardResponse,
 )
 from superset.mcp_service.privacy import user_can_view_data_model_metadata
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.url_utils import get_superset_base_url
 from superset.utils import json
 
@@ -215,7 +215,7 @@ def generate_dashboard(  # noqa: C901
         from superset import db
         from superset.models.slice import Slice
 
-        with event_logger.log_context(action="mcp.generate_dashboard.chart_validation"):
+        with mcp_event_log_context(action="mcp.generate_dashboard.chart_validation"):
             chart_objects = (
                 db.session.query(Slice)
                 .filter(Slice.id.in_(request.chart_ids))
@@ -254,7 +254,7 @@ def generate_dashboard(  # noqa: C901
                     )
 
         # Create dashboard layout with chart objects
-        with event_logger.log_context(action="mcp.generate_dashboard.layout"):
+        with mcp_event_log_context(action="mcp.generate_dashboard.layout"):
             layout = _create_dashboard_layout(chart_objects)
 
         # Resolve dashboard title: use provided title or derive from chart names
@@ -275,7 +275,7 @@ def generate_dashboard(  # noqa: C901
 
         from superset.models.dashboard import Dashboard
 
-        with event_logger.log_context(action="mcp.generate_dashboard.db_write"):
+        with mcp_event_log_context(action="mcp.generate_dashboard.db_write"):
             json_metadata = json.dumps(
                 {
                     "filter_scopes": {},

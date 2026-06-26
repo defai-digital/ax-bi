@@ -58,6 +58,7 @@ function SearchFilter(
 ) {
   const theme = useTheme();
   const [value, setValue] = useState(initialValue || '');
+  const inputId = `list-view-search-${name}`;
   const handleSubmit = () => {
     if (value) {
       onSubmit(value.trim());
@@ -86,12 +87,13 @@ function SearchFilter(
       align="start"
     >
       <Flex>
-        <FormLabel>{Header}</FormLabel>
+        <FormLabel htmlFor={inputId}>{Header}</FormLabel>
         {toolTipDescription && <InfoTooltip tooltip={toolTipDescription} />}
       </Flex>
       <Input
         allowClear
         data-test="filters-search"
+        id={inputId}
         placeholder={t('Type a value')}
         autoComplete={autoComplete}
         name={name}

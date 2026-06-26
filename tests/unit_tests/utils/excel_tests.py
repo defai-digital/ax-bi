@@ -37,7 +37,7 @@ def test_timezone_conversion() -> None:
     df = pd.DataFrame({"dt": [datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc)]})
     apply_column_types(df, [GenericDataType.TEMPORAL])
     contents = df_to_excel(df)
-    assert pd.read_excel(contents)["dt"][0] == "2023-01-01 00:00:00+00:00"
+    assert pd.read_excel(io.BytesIO(contents))["dt"][0] == "2023-01-01 00:00:00+00:00"
 
 
 def test_quote_formulas() -> None:
@@ -46,7 +46,7 @@ def test_quote_formulas() -> None:
     """
     df = pd.DataFrame({"formula": ["=SUM(A1:A2)", "normal", "@SUM(A1:A2)"]})
     contents = df_to_excel(df)
-    assert pd.read_excel(contents)["formula"].tolist() == [
+    assert pd.read_excel(io.BytesIO(contents))["formula"].tolist() == [
         "'=SUM(A1:A2)",
         "normal",
         "'@SUM(A1:A2)",

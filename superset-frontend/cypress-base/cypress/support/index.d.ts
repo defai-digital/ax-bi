@@ -35,17 +35,19 @@ declare namespace Cypress {
      * Utils
      */
 
-    getBySel(selector: string): cy;
-    getBySelLike(selector: string): cy;
-    cleanCharts(): cy;
-    cleanDashboards(): cy;
-    loadChartFixtures(): cy;
-    loadDashboardFixtures(): cy;
-    allowConsoleErrors(consoleMessages: (string | RegExp)[]): cy;
+    getBySel(selector: string): Chainable<JQuery<HTMLElement>>;
+    getBySelLike(selector: string): Chainable<JQuery<HTMLElement>>;
+    cleanCharts(): Chainable<unknown>;
+    cleanDashboards(): Chainable<unknown>;
+    loadChartFixtures(): Chainable<unknown>;
+    loadDashboardFixtures(): Chainable<unknown>;
+    allowConsoleErrors(
+      consoleMessages: (string | RegExp)[],
+    ): Chainable<unknown>;
 
-    visitChartByParams(params: string | Record<string, unknown>): cy;
-    visitChartByName(name: string): cy;
-    visitChartById(id: number): cy;
+    visitChartByParams(params: Record<string, unknown>): Chainable<unknown>;
+    visitChartByName(name: string): Chainable<unknown>;
+    visitChartById(id: number): Chainable<AUTWindow>;
 
     /**
      * Verify slice container renders.
@@ -58,15 +60,15 @@ declare namespace Cypress {
     verifySliceSuccess(options: {
       waitAlias: string;
       querySubstring?: string | RegExp;
-      chartSelector?: JQuery.Selector;
+      chartSelector: JQuery.Selector;
     }): cy;
 
     /**
      * Get
      */
-    getDashboards(): cy;
-    getDashboard(dashboardId: string | number): Record<string, any>;
-    getCharts(): cy;
+    getDashboards(): Chainable<Record<string, any>[]>;
+    getDashboard(dashboardId: string | number): Chainable<Record<string, any>>;
+    getCharts(): Chainable<Record<string, any>[]>;
 
     /**
      * Create
@@ -77,15 +79,27 @@ declare namespace Cypress {
     /**
      * Delete
      */
-    deleteDashboard(id: number, failOnStatusCode: boolean): cy;
-    deleteDashboardByName(dashboardName: string, failOnStatusCode: boolean): cy;
-    deleteChartByName(name: string, failOnStatusCode: boolean): cy;
-    deleteChart(id: number, failOnStatusCode: boolean): cy;
+    deleteDashboard(
+      id: number,
+      failOnStatusCode?: boolean,
+    ): Chainable<Response<any>>;
+    deleteDashboardByName(
+      dashboardName: string,
+      failOnStatusCode?: boolean,
+    ): Chainable<any>;
+    deleteChartByName(name: string, failOnStatusCode?: boolean): Chainable<any>;
+    deleteChart(
+      id: number,
+      failOnStatusCode?: boolean,
+    ): Chainable<Response<any>>;
 
     /**
      * Update
      */
-    updateDashboard(dashboardId: number, body: Record<string, any>): cy;
+    updateDashboard(
+      dashboardId: number,
+      body: Record<string, any>,
+    ): Chainable<Record<string, any>>;
   }
 }
 

@@ -25,6 +25,7 @@ import io
 import logging
 import os
 import sys
+from argparse import ArgumentParser
 from typing import Any, Callable
 
 # Must redirect click output BEFORE importing anything that uses it
@@ -57,11 +58,6 @@ if os.environ.get("FASTMCP_TRANSPORT", "stdio") == "stdio":
     click.echo = echo_to_stderr
     click.secho = secho_to_stderr
 
-from superset.mcp_service.app import init_fastmcp_server, mcp
-from superset.mcp_service.middleware import create_response_size_guard_middleware
-from superset.mcp_service.server import build_middleware_list
-
-
 def _add_default_middlewares() -> None:
     """Add the standard middleware stack to the MCP instance.
 
@@ -74,6 +70,10 @@ def _add_default_middlewares() -> None:
     ``build_middleware_list()`` already returns middlewares in the correct
     outermost-first order.
     """
+    from superset.mcp_service.app import mcp
+    from superset.mcp_service.middleware import create_response_size_guard_middleware
+    from superset.mcp_service.server import build_middleware_list
+
     for middleware in build_middleware_list():
         mcp.add_middleware(middleware)
 
@@ -88,6 +88,13 @@ def main() -> None:
     """
     Run the MCP service in stdio mode with proper output suppression.
     """
+    parser = ArgumentParser(
+        description="Run the Superset MCP service.",
+    )
+    parser.parse_args()
+
+    from superset.mcp_service.app import init_fastmcp_server, mcp
+
     # Determine if we're running in stdio mode
     transport = os.environ.get("FASTMCP_TRANSPORT", "stdio")
 
@@ -140,8 +147,10 @@ def main() -> None:
             _add_default_middlewares()
 
         # Log captured output to stderr for debugging (optional)
+        from superset.mcp_service.utils.config_utils import get_mcp_debug_enabled
+
         captured = captured_output.getvalue()
-        if captured and flask_app.config.get("MCP_DEBUG"):
+        if captured and get_mcp_debug_enabled(flask_app.config):
             sys.stderr.write(f"[MCP] Suppressed initialization output:\n{captured}\n")
 
         # Run in Flask app context

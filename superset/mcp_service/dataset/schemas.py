@@ -21,7 +21,7 @@ Pydantic schemas for dataset-related responses
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Annotated, Any, Dict, List, Literal
 
 from pydantic import (
@@ -43,6 +43,7 @@ from superset.mcp_service.common.cache_schemas import (
     OwnedByMeMixin,
     QueryCacheControl,
 )
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from superset.mcp_service.privacy import filter_user_directory_fields
 from superset.mcp_service.system.schemas import (
@@ -53,7 +54,10 @@ from superset.mcp_service.utils import (
     escape_llm_context_delimiters,
     sanitize_for_llm_context,
 )
-from superset.mcp_service.utils.response_utils import humanize_timestamp
+from superset.mcp_service.utils.response_utils import (
+    humanize_timestamp,
+    select_serialized_response_fields,
+)
 from superset.utils import json
 
 
@@ -202,17 +206,7 @@ class DatasetInfo(BaseModel):
         if "schema_name" in data:
             data["schema"] = data.pop("schema_name")
 
-        # Check if we have a context with select_columns
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                requested_fields = set(select_columns)
-
-                # Filter to only requested fields
-                return {k: v for k, v in data.items() if k in requested_fields}
-
-        # No filtering - return all fields
-        return data
+        return select_serialized_response_fields(data, info)
 
 
 class DatasetList(BaseModel):
@@ -303,35 +297,22 @@ class ListDatasetsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListDatasetsRequest":
         """Prevent using both search and filters simultaneously."""
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' parameters simultaneously. "
-                "Use either 'search' for text-based searching across multiple fields, "
-                "or 'filters' for precise column-based filtering, but not both."
-            )
+        from superset.mcp_service.utils.schema_utils import (
+            ensure_search_and_filters_not_combined,
+        )
+
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching across multiple fields, "
+            "or 'filters' for precise column-based filtering, but not both.",
+        )
         return self
 
 
-class DatasetError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @field_validator("error")
-    @classmethod
-    def sanitize_error_for_llm_context(cls, value: str) -> str:
-        """Wrap error text before it is exposed to LLM context."""
-        return sanitize_for_llm_context(value, field_path=("error",))
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "DatasetError":
-        """Create a standardized DatasetError with timestamp."""
-        return cls(
-            error=error,
-            error_type=error_type,
-            timestamp=datetime.now(timezone.utc),
-        )
+class DatasetError(MCPResourceError):
+    pass
 
 
 DEFAULT_GET_DATASET_INFO_COLUMNS: List[str] = [
@@ -392,12 +373,11 @@ class GetDatasetInfoRequest(MetadataCacheControl):
     @field_validator("select_columns", mode="before")
     @classmethod
     def _parse_select_columns(cls, value: Any) -> Any:
-        from superset.mcp_service.utils.schema_utils import parse_json_or_list
+        from superset.mcp_service.utils.schema_utils import (
+            parse_select_columns_or_default,
+        )
 
-        if value is None:
-            return list(DEFAULT_GET_DATASET_INFO_COLUMNS)
-        parsed = parse_json_or_list(value, "select_columns")
-        return parsed if parsed else list(DEFAULT_GET_DATASET_INFO_COLUMNS)
+        return parse_select_columns_or_default(value, DEFAULT_GET_DATASET_INFO_COLUMNS)
 
     @field_validator("column_fields", mode="before")
     @classmethod

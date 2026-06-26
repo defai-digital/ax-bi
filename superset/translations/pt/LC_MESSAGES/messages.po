@@ -238,7 +238,7 @@ msgstr "Segurança"
 
 #, python-format
 msgid "%s Error"
-msgstr "Erro"
+msgstr "%s Erro"
 
 #, fuzzy, python-format
 msgid "%s PASSWORD"
@@ -262,7 +262,7 @@ msgstr ""
 
 #, python-format
 msgid "%s Selected"
-msgstr "Executar a query selecionada"
+msgstr "%s selecionado"
 
 #, fuzzy, python-format
 msgid "%s Selected (%s)"
@@ -300,7 +300,7 @@ msgstr[1] ""
 
 #, python-format
 msgid "%s column(s)"
-msgstr "Lista de Colunas"
+msgstr "%s colunas"
 
 #, python-format
 msgid "%s day ago"
@@ -348,7 +348,7 @@ msgstr[1] ""
 
 #, python-format
 msgid "%s operator(s)"
-msgstr "Selecione operador"
+msgstr "%s operadores"
 
 #, fuzzy, python-format
 msgid "%s option"
@@ -358,7 +358,7 @@ msgstr[1] ""
 
 #, python-format
 msgid "%s option(s)"
-msgstr "Opções"
+msgstr "%s opções"
 
 #, fuzzy, python-format
 msgid "%s out of %s column"
@@ -883,7 +883,7 @@ msgstr ""
 
 #, fuzzy
 msgid "A timeout occurred while executing the query."
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, fuzzy
 msgid "A timeout occurred while generating a csv."
@@ -891,7 +891,7 @@ msgstr "Ocorreu um erro ao carregar os metadados da tabela"
 
 #, fuzzy
 msgid "A timeout occurred while generating a dataframe."
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, fuzzy
 msgid "A timeout occurred while taking a screenshot."
@@ -1570,7 +1570,7 @@ msgstr "Coluna Datahora principal"
 
 #, fuzzy
 msgid "An Error Occurred"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, fuzzy, python-format
 msgid "An alert named \"%(name)s\" already exists"
@@ -1670,7 +1670,7 @@ msgstr "Ocorreu um erro ao criar a origem dos dados"
 
 #, fuzzy, python-format
 msgid "An error occurred while fetching %s related data"
-msgstr "Ocorreu um erro ao carregar os metadados da tabela"
+msgstr "Ocorreu um erro ao carregar os metadados da tabela: %s"
 
 #, fuzzy, python-format
 msgid "An error occurred while fetching %s values: %s"
@@ -1678,14 +1678,14 @@ msgstr "Ocorreu um erro ao renderizar a visualização: %s"
 
 #, fuzzy, python-format
 msgid "An error occurred while fetching %s: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, fuzzy, python-format
 msgid "An error occurred while fetching %ss: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 msgid "An error occurred while fetching available CSS templates"
-msgstr "Ocorreu um erro ao carregar os metadados da tabela"
+msgstr "Ocorreu um erro ao carregar os metadados da tabela: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching available themes"
@@ -1697,7 +1697,7 @@ msgstr "Ocorreu um erro ao carregar os metadados da tabela"
 
 #, python-format
 msgid "An error occurred while fetching chart owners values: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching connections"
@@ -1709,30 +1709,30 @@ msgstr "Ocorreu um erro ao renderizar a visualização: %s"
 
 #, python-format
 msgid "An error occurred while fetching dashboard owner values: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 msgid "An error occurred while fetching dashboards"
 msgstr "Ocorreu um erro ao criar a origem dos dados"
 
 #, python-format
 msgid "An error occurred while fetching dashboards: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, python-format
 msgid "An error occurred while fetching database related data: %s"
-msgstr "Ocorreu um erro ao carregar os metadados da tabela"
+msgstr "Ocorreu um erro ao carregar os metadados da tabela: %s"
 
 #, python-format
 msgid "An error occurred while fetching database values: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset datasource values: %s"
-msgstr "Ocorreu um erro ao criar a origem dos dados"
+msgstr "Ocorreu um erro ao criar a origem dos dados: %s"
 
 #, python-format
 msgid "An error occurred while fetching dataset related data: %s"
-msgstr "Ocorreu um erro ao carregar os metadados da tabela"
+msgstr "Ocorreu um erro ao carregar os metadados da tabela: %s"
 
 #, fuzzy
 msgid "An error occurred while fetching function names."
@@ -4999,15 +4999,15 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "Delete"
-msgstr "Eliminar"
+msgstr "Eliminar %s?"
 
 #, fuzzy, python-format
 msgid "Delete %s"
-msgstr "Eliminar"
+msgstr "Eliminar %s"
 
 #, python-format
 msgid "Delete %s?"
-msgstr "Eliminar"
+msgstr "Eliminar %s?"
 
 msgid "Delete Annotation?"
 msgstr "Anotações"
@@ -5103,14 +5103,14 @@ msgstr "Eliminar"
 #, python-format
 msgid "Deleted %(num)d annotation"
 msgid_plural "Deleted %(num)d annotations"
-msgstr[0] "Selecione uma camada de anotação"
-msgstr[1] "Selecione uma camada de anotação"
+msgstr[0] "%(num)d anotação eliminada"
+msgstr[1] "%(num)d anotações eliminadas"
 
 #, python-format
 msgid "Deleted %(num)d annotation layer"
 msgid_plural "Deleted %(num)d annotation layers"
-msgstr[0] "Selecione uma camada de anotação"
-msgstr[1] "Selecione uma camada de anotação"
+msgstr[0] "%(num)d camada de anotação eliminada"
+msgstr[1] "%(num)d camadas de anotação eliminadas"
 
 #, python-format
 msgid "Deleted %(num)d chart"
@@ -5127,14 +5127,14 @@ msgstr[1] ""
 #, python-format
 msgid "Deleted %(num)d dashboard"
 msgid_plural "Deleted %(num)d dashboards"
-msgstr[0] "Por favor selecione um dashboard"
-msgstr[1] "Por favor selecione um dashboard"
+msgstr[0] "%(num)d dashboard eliminado"
+msgstr[1] "%(num)d dashboards eliminados"
 
 #, python-format
 msgid "Deleted %(num)d dataset"
 msgid_plural "Deleted %(num)d datasets"
-msgstr[0] "Selecione uma base de dados"
-msgstr[1] "Selecione uma base de dados"
+msgstr[0] "%(num)d conjunto de dados eliminado"
+msgstr[1] "%(num)d conjuntos de dados eliminados"
 
 #, python-format
 msgid "Deleted %(num)d report schedule"
@@ -5204,7 +5204,7 @@ msgstr "Eliminar"
 
 #, python-format
 msgid "Deleted: %s"
-msgstr "Eliminar"
+msgstr "Eliminado: %s"
 
 msgid ""
 "Deleting a tab will remove all content within it and will deactivate any "
@@ -7506,11 +7506,11 @@ msgid "Impersonate logged in user (Presto, Trino, Drill, Hive, and Google Sheets
 msgstr "Personificar o utilizador conectado"
 
 msgid "Import"
-msgstr "Importar"
+msgstr "Importar %s"
 
 #, python-format
 msgid "Import %s"
-msgstr "Importar"
+msgstr "Importar %s"
 
 #, fuzzy
 msgid "Import Error"
@@ -9348,7 +9348,7 @@ msgstr "Filtros"
 
 #, fuzzy
 msgid "No filters are currently added to this dashboard."
-msgstr "Desculpe, houve um erro ao gravar este dashbard: "
+msgstr "Desculpe, houve um erro ao obter informações da base de dados: %s"
 
 msgid "No filters or customizations created yet"
 msgstr ""
@@ -12900,7 +12900,7 @@ msgstr ""
 
 #, python-format
 msgid "Sorry there was an error fetching database information: %s"
-msgstr "Desculpe, houve um erro ao gravar este dashbard: "
+msgstr "Desculpe, houve um erro ao obter informações da base de dados: %s"
 
 msgid "Sorry there was an error fetching saved charts: "
 msgstr "Desculpe, houve um erro ao gravar este dashbard: "
@@ -13440,7 +13440,7 @@ msgstr "Tabela"
 
 #, python-format
 msgid "Table %(table)s wasn't found in the database %(db)s"
-msgstr "A tabela %(t)s não foi encontrada na base de dados %(d)s"
+msgstr "A tabela %(table)s não foi encontrada na base de dados %(db)s"
 
 msgid "Table Name"
 msgstr "Nome da Tabela"

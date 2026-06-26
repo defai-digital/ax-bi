@@ -624,7 +624,7 @@ Alternatively, there are other NPM commands you may find useful:
 
 #### Docker (docker compose)
 
-See docs [here](https://superset.apache.org/docs/installation/docker-compose)
+See docs [here](https://superset.apache.org/admin-docs/installation/docker-compose)
 
 #### Updating NPM packages
 

@@ -46,6 +46,35 @@ const MDX_OUTPUT_DIR = path.join(DOCS_DIR, 'docs/databases');
 const MDX_SUPPORTED_DIR = path.join(MDX_OUTPUT_DIR, 'supported');
 const IMAGES_DIR = path.join(DOCS_DIR, 'static/img/databases');
 
+function getPythonExecutable() {
+  if (process.env.PYTHON) {
+    return process.env.PYTHON;
+  }
+  if (process.env.VIRTUAL_ENV) {
+    return path.join(process.env.VIRTUAL_ENV, 'bin/python');
+  }
+
+  const repoVenvPython = path.join(ROOT_DIR, 'venv/bin/python');
+  if (fs.existsSync(repoVenvPython)) {
+    return repoVenvPython;
+  }
+
+  return 'python3';
+}
+
+const PYTHON = getPythonExecutable();
+
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/generate-database-docs.mjs [--update-readme]
+
+Generate database documentation data and MDX pages from engine spec metadata.
+
+Options:
+  --update-readme  Also update README.md database logos
+  --help, -h       Show this help message`);
+  process.exit(0);
+}
+
 /**
  * Try to run the full lib.py script with Flask context
  */
@@ -63,7 +92,7 @@ with app.app_context():
     docs = generate_yaml_docs()
     print(json.dumps(docs, default=str))
 `;
-    const result = spawnSync('python', ['-c', pythonCode], {
+    const result = spawnSync(PYTHON, ['-c', pythonCode], {
       cwd: ROOT_DIR,
       encoding: 'utf-8',
       timeout: 60000,
@@ -80,7 +109,8 @@ with app.app_context():
     return JSON.parse(result.stdout);
   } catch (error) {
     console.log('Full script execution failed, using fallback mode...');
-    console.log('  Reason:', error.message?.split('\n')[0] || 'Unknown error');
+    const reason = error.message || error.toString?.() || 'Unknown error';
+    console.log('  Reason:', reason.split('\n')[0]);
     return null;
   }
 }
@@ -542,7 +572,7 @@ print(json.dumps(debug_info), file=sys.stderr)
 
 print(json.dumps(databases, default=str))
 `;
-    const result = spawnSync('python3', ['-c', pythonCode], {
+    const result = spawnSync(PYTHON, ['-c', pythonCode], {
       cwd: ROOT_DIR,
       encoding: 'utf-8',
       timeout: 30000,
@@ -896,7 +926,7 @@ function generateReadmeLogos(databases) {
   const MAX_HEIGHT = 40;
   const MIN_HEIGHT = 24;
 
-  const DOCS_BASE = 'https://superset.apache.org/docs/databases/supported';
+  const DOCS_BASE = 'https://superset.apache.org/user-docs/databases/supported';
 
   // Generate linked logo tags with aspect-ratio-preserving dimensions
   const logoTags = dbsWithLogos.map(([name, db]) => {
@@ -919,9 +949,9 @@ function generateReadmeLogos(databases) {
   });
 
   // Use &nbsp; between logos for spacing (GitHub strips style/class attributes)
-  return `<p align="center">
+  return `<div align="center">
 ${logoTags.join(' &nbsp;\n')}
-</p>`;
+</div>`;
 }
 
 /**
@@ -1264,4 +1294,7 @@ async function main() {
   console.log('\nDone!');
 }
 
-main().catch(console.error);
+main().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

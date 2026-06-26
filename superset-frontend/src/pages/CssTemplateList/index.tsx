@@ -23,6 +23,7 @@ import { SupersetClient } from '@superset-ui/core';
 
 import rison from 'rison';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { createErrorHandler, createFetchRelated } from 'src/views/CRUD/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -42,7 +43,7 @@ import { TemplateObject } from 'src/features/cssTemplates/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import { Icons } from '@superset-ui/core/components/Icons';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 interface CssTemplatesListProps {
   addDangerToast: (msg: string) => void;

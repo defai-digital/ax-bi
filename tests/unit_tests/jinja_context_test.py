@@ -1762,7 +1762,7 @@ def test_get_time_filter(
     )
 
     with (
-        freeze_time("2024-09-03"),
+        freeze_time("2024-09-03 12:00:00"),
         current_app.test_request_context(
             json={"queries": queries},
         ),

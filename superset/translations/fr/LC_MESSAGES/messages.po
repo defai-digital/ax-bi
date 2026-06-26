@@ -1292,7 +1292,7 @@ msgstr[1] ""
 #, python-format
 msgid "Added to 1 dashboard"
 msgid_plural "Added to %s dashboards"
-msgstr[0] "Ajouté à 1 tableau de bord"
+msgstr[0] "Ajouté à %s tableau de bord"
 msgstr[1] "Ajouté à %s tableaux de bord"
 
 msgid "Additional Parameters"
@@ -9087,7 +9087,7 @@ msgstr "%s modifié"
 #, python-format
 msgid "Modified 1 column in the virtual dataset"
 msgid_plural "Modified %s columns in the virtual dataset"
-msgstr[0] "1 colonne modifiée dans le jeu de données virtuel"
+msgstr[0] "%s colonne modifiée dans le jeu de données virtuel"
 msgstr[1] "%s colonnes modifiées dans le jeu de données virtuel"
 
 msgid "Modified by"
@@ -11068,7 +11068,7 @@ msgstr "Supprimer la prévisualisation du tableau"
 #, python-format
 msgid "Removed 1 column from the virtual dataset"
 msgid_plural "Removed %s columns from the virtual dataset"
-msgstr[0] "1 colonne supprimée du jeu de données virtuel"
+msgstr[0] "%s colonne supprimée du jeu de données virtuel"
 msgstr[1] "%s colonnes supprimées du jeu de données virtuel"
 
 msgid "Rename tab"

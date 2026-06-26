@@ -25,6 +25,15 @@
 
 # The name of the file/artifact to sign ${RELEASE}-source.tar.gz
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/sign.sh <FILE_NAME> [GPG_KEY]
+
+Create a detached GPG signature and SHA-512 checksum for a release artifact.
+EOF
+  exit 0
+fi
+
 if [ -z "${1}" ]; then
     echo "Missing first parameter, usage: sign <FILE_NAME> <GPG KEY>"
     exit 1

@@ -23,7 +23,6 @@ import logging
 import time
 from typing import Any
 
-from flask import current_app
 from flask_appbuilder.security.sqla.models import User
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
@@ -32,6 +31,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from superset.extensions import machine_auth_provider_factory
 from superset.mcp_service.screenshot.webdriver_pool import get_webdriver_pool
+from superset.mcp_service.utils.config_utils import (
+    get_screenshot_animation_wait,
+    get_screenshot_load_wait,
+    get_screenshot_locate_wait,
+    get_screenshot_replace_unexpected_errors,
+    get_screenshot_selenium_headstart,
+)
 from superset.mcp_service.utils.retry_utils import retry_screenshot_operation
 from superset.utils.screenshots import BaseScreenshot, WindowSize
 
@@ -160,12 +166,12 @@ class PooledChartScreenshot(PooledBaseScreenshot):
         """Take screenshot of chart with standard Superset chart handling"""
         try:
             # Wait for page to load
-            selenium_headstart = current_app.config["SCREENSHOT_SELENIUM_HEADSTART"]
+            selenium_headstart = get_screenshot_selenium_headstart()
             logger.debug("Sleeping for %s seconds", selenium_headstart)
             time.sleep(selenium_headstart)
 
             # Wait for chart container
-            wait = WebDriverWait(driver, current_app.config["SCREENSHOT_LOCATE_WAIT"])
+            wait = WebDriverWait(driver, get_screenshot_locate_wait())
             element = wait.until(
                 expected_conditions.presence_of_element_located(
                     (By.CLASS_NAME, self.element)
@@ -180,19 +186,19 @@ class PooledChartScreenshot(PooledBaseScreenshot):
             )
 
             # Wait for loading to complete
-            WebDriverWait(driver, current_app.config["SCREENSHOT_LOAD_WAIT"]).until_not(
+            WebDriverWait(driver, get_screenshot_load_wait()).until_not(
                 expected_conditions.presence_of_all_elements_located(
                     (By.CLASS_NAME, "loading")
                 )
             )
 
             # Wait for animations
-            animation_wait = current_app.config["SCREENSHOT_SELENIUM_ANIMATION_WAIT"]
+            animation_wait = get_screenshot_animation_wait()
             logger.debug("Wait %s seconds for chart animation", animation_wait)
             time.sleep(animation_wait)
 
             # Handle unexpected errors if configured
-            if current_app.config.get("SCREENSHOT_REPLACE_UNEXPECTED_ERRORS"):
+            if get_screenshot_replace_unexpected_errors():
                 from superset.utils.webdriver import WebDriverSelenium
 
                 unexpected_errors = WebDriverSelenium.find_unexpected_errors(driver)
@@ -416,11 +422,11 @@ class PooledDashboardScreenshot(PooledBaseScreenshot):
         """Take screenshot of dashboard with standard Superset dashboard handling"""
         try:
             # Wait for page to load
-            selenium_headstart = current_app.config["SCREENSHOT_SELENIUM_HEADSTART"]
+            selenium_headstart = get_screenshot_selenium_headstart()
             time.sleep(selenium_headstart)
 
             # Wait for dashboard element
-            wait = WebDriverWait(driver, current_app.config["SCREENSHOT_LOCATE_WAIT"])
+            wait = WebDriverWait(driver, get_screenshot_locate_wait())
             element = wait.until(
                 expected_conditions.presence_of_element_located(
                     (By.CLASS_NAME, self.element)
@@ -447,18 +453,18 @@ class PooledDashboardScreenshot(PooledBaseScreenshot):
                     raise
 
             # Wait for loading to complete
-            WebDriverWait(driver, current_app.config["SCREENSHOT_LOAD_WAIT"]).until_not(
+            WebDriverWait(driver, get_screenshot_load_wait()).until_not(
                 expected_conditions.presence_of_all_elements_located(
                     (By.CLASS_NAME, "loading")
                 )
             )
 
             # Wait for animations
-            animation_wait = current_app.config["SCREENSHOT_SELENIUM_ANIMATION_WAIT"]
+            animation_wait = get_screenshot_animation_wait()
             time.sleep(animation_wait)
 
             # Handle unexpected errors if configured
-            if current_app.config.get("SCREENSHOT_REPLACE_UNEXPECTED_ERRORS"):
+            if get_screenshot_replace_unexpected_errors():
                 from superset.utils.webdriver import WebDriverSelenium
 
                 unexpected_errors = WebDriverSelenium.find_unexpected_errors(driver)

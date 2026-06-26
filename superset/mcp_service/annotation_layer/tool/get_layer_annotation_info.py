@@ -18,18 +18,17 @@
 """Get a single annotation within a layer FastMCP tool."""
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.annotation_layer.schemas import (
     AnnotationInfo,
     AnnotationLayerError,
     GetLayerAnnotationInfoRequest,
     serialize_annotation,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ async def get_layer_annotation_info(
         from superset.daos.annotation_layer import AnnotationDAO, AnnotationLayerDAO
 
         # Verify the layer exists
-        with event_logger.log_context(
+        with mcp_event_log_context(
             action="mcp.get_layer_annotation_info.layer_lookup"
         ):
             layer = AnnotationLayerDAO.find_by_id(request.layer_id)
@@ -79,7 +78,7 @@ async def get_layer_annotation_info(
             )
 
         # Fetch the annotation
-        with event_logger.log_context(
+        with mcp_event_log_context(
             action="mcp.get_layer_annotation_info.annotation_lookup"
         ):
             annotation = AnnotationDAO.find_by_id(request.annotation_id)
@@ -123,8 +122,7 @@ async def get_layer_annotation_info(
             "error=%s, error_type=%s"
             % (request.layer_id, request.annotation_id, str(e), type(e).__name__)
         )
-        return AnnotationLayerError(
+        return AnnotationLayerError.create(
             error=f"Failed to get annotation info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

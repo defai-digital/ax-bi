@@ -41,6 +41,19 @@ const DOCS_DIR = path.resolve(__dirname, '..');
 const ROOT_DIR = path.resolve(DOCS_DIR, '..');
 const CACHE_FILE = path.join(DOCS_DIR, '.docusaurus', 'generator-hashes.json');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage:
+  node scripts/generate-if-changed.mjs          # smart mode (default)
+  node scripts/generate-if-changed.mjs --force  # force regenerate all
+
+Run only documentation generators whose inputs have changed.
+
+Options:
+  --force    Regenerate all docs outputs
+  --help, -h Show this help message`);
+  process.exit(0);
+}
+
 const FORCE = process.argv.includes('--force');
 
 // Ensure local node_modules/.bin is on PATH (needed for docusaurus CLI)
@@ -103,7 +116,8 @@ const GENERATORS = [
       { type: 'file', path: path.join(DOCS_DIR, 'scripts/generate-api-tag-pages.mjs') },
     ],
     outputs: [
-      path.join(DOCS_DIR, 'docs/api.mdx'),
+      path.join(DOCS_DIR, 'developer_docs/api.mdx'),
+      path.join(DOCS_DIR, 'developer_docs/api'),
     ],
   },
 ];

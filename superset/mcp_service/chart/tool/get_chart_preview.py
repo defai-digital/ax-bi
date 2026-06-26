@@ -28,7 +28,7 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError, SupersetException
-from superset.extensions import db, event_logger
+from superset.extensions import db
 from superset.mcp_service.chart.ascii_charts import (
     generate_ascii_chart,
     generate_ascii_table,
@@ -54,6 +54,7 @@ from superset.mcp_service.utils import (
     escape_llm_context_delimiters,
     sanitize_for_llm_context,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
@@ -1067,12 +1068,12 @@ async def _get_chart_preview_internal(  # noqa: C901
         await ctx.report_progress(1, 3, "Looking up chart")
 
         # Find the chart
-        with event_logger.log_context(action="mcp.get_chart_preview.chart_lookup"):
+        with mcp_event_log_context(action="mcp.get_chart_preview.chart_lookup"):
             chart: Any = None
 
             # Handle unsaved chart (form_data_key only, no identifier)
             if not request.identifier and request.form_data_key:
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.get_chart_preview.unsaved_chart_from_cache"
                 ):
                     await ctx.info(
@@ -1264,7 +1265,7 @@ async def _get_chart_preview_internal(  # noqa: C901
         # If form_data_key is provided, override chart.params with cached
         # form_data so the preview reflects what the user actually sees
         if request.form_data_key and getattr(chart, "id", None) is not None:
-            with event_logger.log_context(
+            with mcp_event_log_context(
                 action="mcp.get_chart_preview.unsaved_state_override"
             ):
                 await ctx.info(
@@ -1321,7 +1322,7 @@ async def _get_chart_preview_internal(  # noqa: C901
         )
 
         # Handle different preview formats using strategy pattern
-        with event_logger.log_context(
+        with mcp_event_log_context(
             action="mcp.get_chart_preview.preview_generation"
         ):
             preview_generator = PreviewFormatGenerator(chart, request)
@@ -1343,7 +1344,7 @@ async def _get_chart_preview_internal(  # noqa: C901
         await ctx.report_progress(3, 3, "Building response")
 
         # Create performance and accessibility metadata
-        with event_logger.log_context(action="mcp.get_chart_preview.metadata"):
+        with mcp_event_log_context(action="mcp.get_chart_preview.metadata"):
             execution_time = int((time.time() - start_time) * 1000)
             performance = PerformanceMetadata(
                 query_duration_ms=execution_time,

@@ -20,10 +20,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import datetime, timezone
 from typing import Any, Callable, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from superset.mcp_service.common.error_schemas import (
+    mcp_error_timestamp,
+    MCPResourceError,
+)
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -88,14 +92,14 @@ CHART_DATA_MODEL_COLUMNS = frozenset(
 )
 
 
-class PrivacyError(BaseModel):
-    """Structured privacy/permission denial for MCP tool responses."""
+class PrivacyError(MCPResourceError):
+    """Structured privacy/permission denial for MCP tool responses.
 
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
+    Inherits ``error``, ``error_type``, ``timestamp``, ``model_config``, and
+    LLM error-text sanitization from :class:`MCPResourceError`.
+    """
+
     privacy_scope: str = Field(..., description="Privacy scope for the denial")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
 
     @classmethod
     def create_data_model_metadata_denied(cls) -> "PrivacyError":
@@ -103,7 +107,7 @@ class PrivacyError(BaseModel):
             error=DATA_MODEL_METADATA_ERROR_MESSAGE,
             error_type=DATA_MODEL_METADATA_ERROR_TYPE,
             privacy_scope=DATA_MODEL_METADATA_PRIVACY_SCOPE,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=mcp_error_timestamp(),
         )
 
 
@@ -128,10 +132,12 @@ def user_can_view_data_model_metadata() -> bool:
     than per dashboard chart.
     """
     try:
-        from superset import security_manager
+        from superset.mcp_service.utils.permissions_utils import (
+            user_can_access_dataset_permission,
+        )
 
         return any(
-            security_manager.can_access(permission_name, "Dataset")
+            user_can_access_dataset_permission(permission_name)
             for permission_name in (
                 "can_get_drill_info",
                 "can_get_or_create_dataset",

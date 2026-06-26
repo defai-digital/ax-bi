@@ -19,6 +19,14 @@
 
 set -e
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: ./scripts/uv-pip-compile.sh [uv pip compile options]"
+  echo
+  echo "Compile base, development, and translation requirement lock files."
+  echo "When run outside Docker, the script re-executes inside the configured Python image."
+  exit 0
+fi
+
 # If not already running in Docker, run this script inside Docker
 if [ -z "$RUNNING_IN_DOCKER" ]; then
   # Extract "current" Python version from CI config (single source of truth)
@@ -57,24 +65,24 @@ if [ -z "$RUNNING_IN_DOCKER" ]; then
     -w /app \
     -e RUNNING_IN_DOCKER=1 \
     "$IMAGE" \
-    bash -c "pip install uv && ./scripts/uv-pip-compile.sh $*"
+    bash -c 'pip install uv && ./scripts/uv-pip-compile.sh "$@"' bash "$@"
 
   exit $?
 fi
 
-ADDITIONAL_ARGS="$@"
+ADDITIONAL_ARGS=("$@")
 
 # Generate the requirements/base.txt file
-uv pip compile pyproject.toml requirements/base.in -o requirements/base.txt $ADDITIONAL_ARGS
+uv pip compile pyproject.toml requirements/base.in -o requirements/base.txt "${ADDITIONAL_ARGS[@]}"
 
 # Hack to remove "Unnamed requirements are not allowed as constraints" error from base requirements
 grep --invert-match "./superset-core" requirements/base.txt > requirements/base-constraint.txt
 
 # Generate the requirements/development.txt file, making sure the base requirements are used as a constraint to keep the versions in sync. Note that `development.txt` is a Superset of `base.txt` where version for the shared libs should match their version.
-uv pip compile requirements/development.in -c requirements/base-constraint.txt -o requirements/development.txt $ADDITIONAL_ARGS
+uv pip compile requirements/development.in -c requirements/base-constraint.txt -o requirements/development.txt "${ADDITIONAL_ARGS[@]}"
 
 # Remove temporary base requirement file
 rm requirements/base-constraint.txt
 
 # NOTE translation is intended as a "supplemental" set of pins that can be combined with either base or dev as needed
-uv pip compile requirements/translations.in -o requirements/translations.txt $ADDITIONAL_ARGS
+uv pip compile requirements/translations.in -o requirements/translations.txt "${ADDITIONAL_ARGS[@]}"

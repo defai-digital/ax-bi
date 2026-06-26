@@ -182,15 +182,12 @@ msgstr "「%s」がシステムのダークテーマに設定されました"
 msgid "\"%s\" is now the system default theme"
 msgstr "「%s」がシステムの既定テーマに設定されました"
 
-#, python-format
 msgid "% calculation"
 msgstr "% 計算"
 
-#, python-format
 msgid "% of parent"
 msgstr "親に対する %"
 
-#, python-format
 msgid "% of total"
 msgstr "合計に対する %"
 

@@ -25,12 +25,10 @@ was stripped and structured layout data is needed for analysis.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.dashboard.schemas import (
     dashboard_layout_serializer,
     DashboardError,
@@ -38,6 +36,7 @@ from superset.mcp_service.dashboard.schemas import (
     GetDashboardLayoutRequest,
 )
 from superset.mcp_service.mcp_core import ModelGetInfoCore
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ async def get_dashboard_layout(
 
         # No eager loading: the layout serializer only reads position_json
         # (plus id/title/uuid), so Dashboard.slices is never accessed.
-        with event_logger.log_context(action="mcp.get_dashboard_layout.lookup"):
+        with mcp_event_log_context(action="mcp.get_dashboard_layout.lookup"):
             core = ModelGetInfoCore(
                 dao_class=DashboardDAO,
                 output_schema=DashboardLayout,
@@ -112,8 +111,7 @@ async def get_dashboard_layout(
             "Dashboard layout retrieval failed: identifier=%s, error=%s, "
             "error_type=%s" % (request.identifier, str(e), type(e).__name__)
         )
-        return DashboardError(
+        return DashboardError.create(
             error=f"Failed to get dashboard layout: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

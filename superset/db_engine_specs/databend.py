@@ -164,6 +164,24 @@ class DatabendEngineSpec(DatabendBaseEngineSpec):
 
     # Note: Primary metadata is in DatabendConnectEngineSpec which provides
     # the native connection UI. This spec exists for backwards compatibility.
+    metadata = {
+        "description": (
+            "Databend legacy SQLAlchemy connector for existing deployments "
+            "using databend-sqlalchemy."
+        ),
+        "logo": "databend.png",
+        "homepage_url": "https://www.databend.com/",
+        "categories": [
+            DatabaseCategory.CLOUD_DATA_WAREHOUSES,
+            DatabaseCategory.ANALYTICAL_DATABASES,
+            DatabaseCategory.PROPRIETARY,
+        ],
+        "pypi_packages": ["databend-sqlalchemy"],
+        "connection_string": (
+            "databend://{username}:{password}@{host}:{port}/{database}?secure=true"
+        ),
+        "default_port": 443,
+    }
 
     @classmethod
     def get_dbapi_exception_mapping(cls) -> dict[type[Exception], type[Exception]]:

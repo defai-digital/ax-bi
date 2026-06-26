@@ -19,14 +19,15 @@
 System prompts for general guidance
 """
 
-from flask import current_app
 from superset_core.mcp.decorators import prompt
+
+from superset.mcp_service.utils.config_utils import get_superset_app_name
 
 
 def _get_app_name() -> str:
     """Get the application name from Flask config."""
     try:
-        return current_app.config.get("APP_NAME", "Superset")
+        return get_superset_app_name()
     except RuntimeError:
         # Outside of Flask application context
         return "Superset"

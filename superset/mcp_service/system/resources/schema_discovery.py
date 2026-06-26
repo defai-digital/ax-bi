@@ -25,79 +25,12 @@ without making API calls.
 """
 
 import logging
-from typing import Any
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.auth import mcp_auth_hook
+from superset.mcp_service.common.schema_discovery import build_schema_resource
 
 logger = logging.getLogger(__name__)
-
-
-def _build_schema_resource(model_type: str) -> dict[str, Any]:
-    """Build schema resource data for a model type."""
-    from superset.mcp_service.common.schema_discovery import (
-        CHART_DEFAULT_COLUMNS,
-        CHART_SEARCH_COLUMNS,
-        CHART_SORTABLE_COLUMNS,
-        DASHBOARD_DEFAULT_COLUMNS,
-        DASHBOARD_SEARCH_COLUMNS,
-        DASHBOARD_SORTABLE_COLUMNS,
-        DATASET_DEFAULT_COLUMNS,
-        DATASET_SEARCH_COLUMNS,
-        DATASET_SORTABLE_COLUMNS,
-        get_all_column_names,
-        get_chart_columns,
-        get_dashboard_columns,
-        get_dataset_columns,
-    )
-
-    def _safe_col_dict(col: Any) -> dict[str, Any]:
-        """Safely extract column metadata for JSON serialization."""
-        return {
-            "name": str(getattr(col, "name", "")),
-            "description": str(getattr(col, "description", "") or ""),
-            "type": str(getattr(col, "type", "") or ""),
-        }
-
-    # Get columns dynamically from models
-    chart_columns = get_chart_columns()
-    dataset_columns = get_dataset_columns()
-    dashboard_columns = get_dashboard_columns()
-
-    schemas = {
-        "chart": {
-            "model_type": "chart",
-            "select_columns": [_safe_col_dict(col) for col in chart_columns],
-            "all_column_names": get_all_column_names(chart_columns),
-            "default_columns": CHART_DEFAULT_COLUMNS,
-            "sortable_columns": CHART_SORTABLE_COLUMNS,
-            "search_columns": CHART_SEARCH_COLUMNS,
-            "default_sort": "changed_on",
-            "default_sort_direction": "desc",
-        },
-        "dataset": {
-            "model_type": "dataset",
-            "select_columns": [_safe_col_dict(col) for col in dataset_columns],
-            "all_column_names": get_all_column_names(dataset_columns),
-            "default_columns": DATASET_DEFAULT_COLUMNS,
-            "sortable_columns": DATASET_SORTABLE_COLUMNS,
-            "search_columns": DATASET_SEARCH_COLUMNS,
-            "default_sort": "changed_on",
-            "default_sort_direction": "desc",
-        },
-        "dashboard": {
-            "model_type": "dashboard",
-            "select_columns": [_safe_col_dict(col) for col in dashboard_columns],
-            "all_column_names": get_all_column_names(dashboard_columns),
-            "default_columns": DASHBOARD_DEFAULT_COLUMNS,
-            "sortable_columns": DASHBOARD_SORTABLE_COLUMNS,
-            "search_columns": DASHBOARD_SEARCH_COLUMNS,
-            "default_sort": "changed_on",
-            "default_sort_direction": "desc",
-        },
-    }
-
-    return schemas.get(model_type, {})
 
 
 @mcp.resource("superset://schema/chart")
@@ -116,7 +49,7 @@ def get_chart_schema_resource() -> str:
     """
     from superset.utils import json
 
-    return json.dumps(_build_schema_resource("chart"), indent=2)
+    return json.dumps(build_schema_resource("chart"), indent=2)
 
 
 @mcp.resource("superset://schema/dataset")
@@ -135,7 +68,7 @@ def get_dataset_schema_resource() -> str:
     """
     from superset.utils import json
 
-    return json.dumps(_build_schema_resource("dataset"), indent=2)
+    return json.dumps(build_schema_resource("dataset"), indent=2)
 
 
 @mcp.resource("superset://schema/dashboard")
@@ -154,7 +87,7 @@ def get_dashboard_schema_resource() -> str:
     """
     from superset.utils import json
 
-    return json.dumps(_build_schema_resource("dashboard"), indent=2)
+    return json.dumps(build_schema_resource("dashboard"), indent=2)
 
 
 @mcp.resource("superset://schema/all")
@@ -175,9 +108,9 @@ def get_all_schemas_resource() -> str:
     from superset.utils import json
 
     all_schemas = {
-        "chart": _build_schema_resource("chart"),
-        "dataset": _build_schema_resource("dataset"),
-        "dashboard": _build_schema_resource("dashboard"),
+        "chart": build_schema_resource("chart"),
+        "dataset": build_schema_resource("dataset"),
+        "dashboard": build_schema_resource("dashboard"),
         "metadata": {
             "description": "Schema discovery metadata for Superset MCP service",
             "usage": {

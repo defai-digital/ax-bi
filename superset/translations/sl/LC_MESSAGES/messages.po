@@ -198,15 +198,12 @@ msgstr ""
 msgid "\"%s\" is now the system default theme"
 msgstr ""
 
-#, python-format
 msgid "% calculation"
 msgstr "% cizračun"
 
-#, python-format
 msgid "% of parent"
 msgstr "% nadrejenega"
 
-#, python-format
 msgid "% of total"
 msgstr "% celote"
 
@@ -260,7 +257,8 @@ msgid "%(suggestion)s instead of \"%(undefinedParameter)s?\""
 msgid_plural ""
 "%(firstSuggestions)s or %(lastSuggestion)s instead of "
 "\"%(undefinedParameter)s\"?"
-msgstr[0] "%(suggestion)s namesto \"%(undefinedParameter)s?\""
+msgstr[0] ""
+"%(firstSuggestions)s%(lastSuggestion)s namesto \"%(undefinedParameter)s?\""
 msgstr[1] ""
 "%(firstSuggestions)s ali %(lastSuggestion)s namesto "
 "\"%(undefinedParameter)s\"?"
@@ -1325,7 +1323,7 @@ msgstr[3] ""
 #, python-format
 msgid "Added to 1 dashboard"
 msgid_plural "Added to %s dashboards"
-msgstr[0] "Dodano na 1 nadzorno ploščo"
+msgstr[0] "Dodano na %s nadzorno ploščo"
 msgstr[1] "Dodano na %s nadzorni plošči"
 msgstr[2] "Dodano na %s nadzorne plošče"
 msgstr[3] "Dodano na %s nadzornih plošč"

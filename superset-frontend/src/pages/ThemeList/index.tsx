@@ -53,6 +53,7 @@ import {
 import ThemeModal from 'src/features/themes/ThemeModal';
 import { ThemeObject } from 'src/features/themes/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { Icons } from '@superset-ui/core/components/Icons';
 import { useConfirmModal } from 'src/hooks/useConfirmModal';
 import {
@@ -62,7 +63,7 @@ import {
   unsetSystemDarkTheme,
 } from 'src/features/themes/api';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 const FlexRowContainer = styled.div`
   align-items: center;
@@ -566,6 +567,7 @@ function ThemesList({
         </Tooltip>
       ),
       buttonStyle: 'link',
+      'aria-label': t('Import themes'),
       onClick: openThemeImportModal,
     });
   }

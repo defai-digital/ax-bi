@@ -148,6 +148,23 @@ class ClickHouseEngineSpec(ClickHouseBaseEngineSpec):
     # Note: Primary metadata is in ClickHouseConnectEngineSpec which consolidates
     # both drivers. This spec exists for backwards compatibility with existing
     # connections using the clickhouse-sqlalchemy driver.
+    metadata = {
+        "description": (
+            "ClickHouse legacy SQLAlchemy connector for existing deployments "
+            "using clickhouse-sqlalchemy."
+        ),
+        "logo": "clickhouse.png",
+        "homepage_url": "https://clickhouse.com/",
+        "categories": [
+            DatabaseCategory.ANALYTICAL_DATABASES,
+            DatabaseCategory.OPEN_SOURCE,
+        ],
+        "pypi_packages": ["clickhouse-sqlalchemy"],
+        "connection_string": (
+            "clickhouse://{username}:{password}@{host}:{port}/{database}"
+        ),
+        "default_port": 8123,
+    }
 
     @classmethod
     def get_dbapi_exception_mapping(cls) -> dict[type[Exception], type[Exception]]:

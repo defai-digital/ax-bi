@@ -68,7 +68,7 @@ class Requirement:
 
         if ideal_min <= version_number <= ideal_max:
             return "✅ Ideal"
-        elif supported_min <= version_number:
+        elif supported_min <= version_number <= supported_max:
             return "🟡 Supported"
         else:
             return "❌ Unsupported"
@@ -136,19 +136,19 @@ def main(docker: bool, frontend: bool, backend: bool) -> None:  # noqa: C901
             (Version("3.10.0"), Version("3.10.999")),
             (Version("3.9.0"), Version("3.11.999")),
             "backend",
-            "python --version",
+            f'"{sys.executable}" --version',
         ),
         Requirement(
             "npm",
-            (Version("10.0.0"), Version("999.999.999")),
-            (Version("10.0.0"), Version("999.999.999")),
+            (Version("11.13.0"), Version("11.999.999")),
+            (Version("11.13.0"), Version("11.999.999")),
             "frontend",
             "npm -v",
         ),
         Requirement(
             "node",
-            (Version("20.0.0"), Version("20.999.999")),
-            (Version("20.0.0"), Version("20.999.999")),
+            (Version("24.16.0"), Version("24.999.999")),
+            (Version("24.16.0"), Version("24.999.999")),
             "frontend",
             "node -v",
         ),
@@ -173,6 +173,7 @@ def main(docker: bool, frontend: bool, backend: bool) -> None:  # noqa: C901
             (Version("2.20.0"), Version("999.999.999")),
             "backend",
             "git --version",
+            lambda v: v.split()[2],
         ),
     ]
 

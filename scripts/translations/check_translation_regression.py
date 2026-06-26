@@ -332,6 +332,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.compare and not Path(args.compare).is_file():
+        parser.error(f"--compare baseline does not exist: {args.compare}")
+    if not args.translations_dir.is_dir():
+        parser.error(f"--translations-dir does not exist: {args.translations_dir}")
+
     if args.count:
         cmd_count(args.translations_dir)
     else:

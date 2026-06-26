@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { init, registerLocale } from 'echarts/core';
 import { render, waitFor } from '../../../../spec/helpers/testing-library';
 import type { EChartsCoreOption } from 'echarts/core';
 import Echart from './Echart';
@@ -106,6 +107,10 @@ jest.mock('echarts/renderers', () => ({
   CanvasRenderer: 'CanvasRenderer',
 }));
 
+jest.mock('echarts/i18n/langTH-obj.js', () => {
+  throw new Error('Locale chunk failed to load');
+});
+
 const initialState = {
   common: {
     locale: 'en',
@@ -133,6 +138,11 @@ const trigger = (name: string) => {
 beforeEach(() => {
   Object.keys(listeners).forEach(name => {
     delete listeners[name];
+  });
+  [init, registerLocale].forEach(value => {
+    if (jest.isMockFunction(value)) {
+      value.mockClear();
+    }
   });
   Object.values(mockChart).forEach(value => {
     if (jest.isMockFunction(value)) {
@@ -220,4 +230,54 @@ test('replaces stale query event handlers without clearing regular event handler
   expect(regularClickHandler).toHaveBeenCalledTimes(1);
   expect(firstQueryHandler).not.toHaveBeenCalled();
   expect(secondQueryHandler).not.toHaveBeenCalled();
+});
+
+test('loads and registers regional ECharts locales', async () => {
+  render(renderEchart(), {
+    initialState: {
+      ...initialState,
+      common: {
+        locale: 'pt_BR',
+      },
+    },
+    useRedux: true,
+  });
+
+  await waitFor(() => expect(registerLocale).toHaveBeenCalled());
+  expect(registerLocale).toHaveBeenCalledWith(
+    'PT_BR',
+    expect.objectContaining({
+      time: expect.any(Object),
+    }),
+  );
+  expect(init).toHaveBeenCalledWith(
+    expect.any(HTMLDivElement),
+    null,
+    expect.objectContaining({
+      locale: 'PT_BR',
+    }),
+  );
+});
+
+test('initializes when an ECharts locale fails to load', async () => {
+  render(renderEchart(), {
+    initialState: {
+      ...initialState,
+      common: {
+        locale: 'th',
+      },
+    },
+    useRedux: true,
+  });
+
+  await waitFor(() =>
+    expect(init).toHaveBeenCalledWith(
+      expect.any(HTMLDivElement),
+      null,
+      expect.objectContaining({
+        locale: 'TH',
+      }),
+    ),
+  );
+  expect(registerLocale).not.toHaveBeenCalled();
 });

@@ -192,7 +192,11 @@ def cancel_github_workflows(  # noqa: C901
         user = None
         branch = branch_or_pull
         if branch and ":" in branch:
-            [user, branch] = branch.split(":", 2)
+            user, branch = branch.split(":", 1)
+            if not user or not branch or ":" in branch:
+                raise ClickException(
+                    "Branch filters must use the format '<user>:<branch>'"
+                )
         runs = get_runs(
             repo,
             branch=branch,

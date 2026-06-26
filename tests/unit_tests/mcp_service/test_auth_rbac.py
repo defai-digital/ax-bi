@@ -120,13 +120,14 @@ def test_check_tool_permission_granted(app_context) -> None:
     g.user = MagicMock(username="admin")
     func = _make_tool_func(class_perm="Chart", method_perm="read")
 
-    mock_sm = MagicMock()
-    mock_sm.can_access = MagicMock(return_value=True)
-    with patch("superset.mcp_service.auth.security_manager", mock_sm):
+    with patch(
+        "superset.mcp_service.auth.current_user_can_access",
+        return_value=True,
+    ) as can_access:
         result = check_tool_permission(func)
 
     assert result is True
-    mock_sm.can_access.assert_called_once_with("can_read", "Chart")
+    can_access.assert_called_once_with("can_read", "Chart")
 
 
 def test_check_tool_permission_denied(app_context) -> None:
@@ -134,13 +135,14 @@ def test_check_tool_permission_denied(app_context) -> None:
     g.user = MagicMock(username="viewer")
     func = _make_tool_func(class_perm="Dashboard", method_perm="write")
 
-    mock_sm = MagicMock()
-    mock_sm.can_access = MagicMock(return_value=False)
-    with patch("superset.mcp_service.auth.security_manager", mock_sm):
+    with patch(
+        "superset.mcp_service.auth.current_user_can_access",
+        return_value=False,
+    ) as can_access:
         result = check_tool_permission(func)
 
     assert result is False
-    mock_sm.can_access.assert_called_once_with("can_write", "Dashboard")
+    can_access.assert_called_once_with("can_write", "Dashboard")
 
 
 def test_check_tool_permission_default_method_is_read(app_context) -> None:
@@ -149,13 +151,14 @@ def test_check_tool_permission_default_method_is_read(app_context) -> None:
     func = _make_tool_func(class_perm="Dataset")
     # No method_perm set - should default to "read"
 
-    mock_sm = MagicMock()
-    mock_sm.can_access = MagicMock(return_value=True)
-    with patch("superset.mcp_service.auth.security_manager", mock_sm):
+    with patch(
+        "superset.mcp_service.auth.current_user_can_access",
+        return_value=True,
+    ) as can_access:
         result = check_tool_permission(func)
 
     assert result is True
-    mock_sm.can_access.assert_called_once_with("can_read", "Dataset")
+    can_access.assert_called_once_with("can_read", "Dataset")
 
 
 def test_check_tool_permission_disabled_via_config(app_context, app) -> None:

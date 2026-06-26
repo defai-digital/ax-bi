@@ -35,11 +35,14 @@ from pydantic import (
 )
 
 from superset.daos.base import ColumnOperator, ColumnOperatorEnum
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from superset.mcp_service.system.schemas import PaginationInfo
+from superset.mcp_service.utils.response_utils import select_serialized_response_fields
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
-    parse_json_or_model_list,
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
 )
 
 DEFAULT_RLS_COLUMNS = ["id", "name", "filter_type", "clause"]
@@ -108,13 +111,7 @@ class RlsFilterInfo(BaseModel):
 
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
-        data = serializer(self)
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                requested_fields = set(select_columns)
-                return {k: v for k, v in data.items() if k in requested_fields}
-        return data
+        return select_serialized_response_fields(serializer(self), info)
 
 
 class RlsFilterList(BaseModel):
@@ -185,33 +182,21 @@ class ListRlsFiltersRequest(BaseModel):
     @field_validator("filters", mode="before")
     @classmethod
     def parse_filters(cls, v: Any) -> List[RlsColumnFilter]:
-        return parse_json_or_model_list(v, RlsColumnFilter, "filters")
+        return parse_filters(v, RlsColumnFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> List[str]:
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListRlsFiltersRequest":
-        if self.search and self.filters:
-            raise ValueError("Cannot use both 'search' and 'filters' simultaneously.")
+        ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 
 
-class RlsFilterError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "RlsFilterError":
-        from datetime import timezone
-
-        return cls(
-            error=error, error_type=error_type, timestamp=datetime.now(timezone.utc)
-        )
+class RlsFilterError(MCPResourceError):
+    pass
 
 
 class GetRlsFilterInfoRequest(BaseModel):

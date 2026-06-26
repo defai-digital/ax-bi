@@ -299,6 +299,16 @@ def initialize_core_mcp_dependencies() -> None:
     superset_core.mcp.decorators.tool = create_tool_decorator
     superset_core.mcp.decorators.prompt = create_prompt_decorator
 
+    try:
+        from flask import current_app, has_app_context
+
+        if has_app_context():
+            from superset.mcp_service.flask_singleton import register_flask_app
+
+            register_flask_app(current_app._get_current_object())
+    except Exception as e:
+        logger.debug("Unable to register MCP Flask app singleton: %s", e)
+
     logger.info("MCP dependency injection initialized successfully")
 
     try:

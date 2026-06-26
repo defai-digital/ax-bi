@@ -34,6 +34,7 @@ Annotations supported:
 import json
 import re
 import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
 from typing import TypedDict
 
@@ -159,6 +160,13 @@ def parse_comment_lines(
 
 
 def main() -> None:
+    parser = ArgumentParser(
+        description="Extract feature flag metadata from superset/config.py.",
+        epilog=__doc__,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.parse_args()
+
     # Find config.py relative to this script
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent

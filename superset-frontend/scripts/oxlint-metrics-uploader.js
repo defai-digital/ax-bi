@@ -20,6 +20,17 @@ const { execSync } = require('child_process');
 const { GoogleAuth } = require('google-auth-library');
 const googleSheets = require('@googleapis/sheets');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/oxlint-metrics-uploader.js
+
+Collect OXC and custom ESLint rule metrics, then upload them to Google Sheets
+when SERVICE_ACCOUNT_KEY and SPREADSHEET_ID are configured.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 const { SPREADSHEET_ID } = process.env;
 const SERVICE_ACCOUNT_KEY = JSON.parse(process.env.SERVICE_ACCOUNT_KEY || '{}');
 
@@ -38,7 +49,7 @@ const DATETIME = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 async function writeToGoogleSheet(data, range, headers, append = false) {
   if (!sheets) {
     console.log('No Google Sheets credentials, skipping upload');
-    return;
+    return false;
   }
 
   const request = {
@@ -50,6 +61,7 @@ async function writeToGoogleSheet(data, range, headers, append = false) {
 
   const method = append ? 'append' : 'update';
   await sheets.spreadsheets.values[method](request);
+  return true;
 }
 
 // Run OXC and get JSON output
@@ -224,20 +236,24 @@ async function runOxlintAndProcess() {
       `Found ${Object.keys(metricsByRule).length} unique rules with ${occurrencesData.length} total occurrences`,
     );
 
-    await writeToGoogleSheet(
+    const uploadedAggregatedHistory = await writeToGoogleSheet(
       metricsData,
       'Aggregated History!A:E',
       aggregatedHistoryHeaders,
       true,
     );
 
-    await writeToGoogleSheet(
+    const uploadedEslintBacklog = await writeToGoogleSheet(
       occurrencesData,
       'ESLint Backlog!A:G',
       eslintBacklogHeaders,
     );
 
-    console.log('Successfully uploaded metrics to Google Sheets');
+    if (uploadedAggregatedHistory && uploadedEslintBacklog) {
+      console.log('Successfully uploaded metrics to Google Sheets');
+    } else {
+      console.log('Generated metrics locally; Google Sheets upload skipped');
+    }
   } catch (error) {
     console.error('Error processing lint results:', error);
     process.exit(1);
@@ -245,4 +261,7 @@ async function runOxlintAndProcess() {
 }
 
 // Run the process
-runOxlintAndProcess().catch(console.error);
+runOxlintAndProcess().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

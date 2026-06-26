@@ -29,6 +29,7 @@ import {
 } from 'src/views/CRUD/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { Popover, Label, Tooltip } from '@superset-ui/core/components';
 import { commonMenuData } from 'src/features/home/commonMenuData';
@@ -50,7 +51,7 @@ import { addSuccessToast } from 'src/components/MessageToasts/actions';
 import getOwnerName from 'src/utils/getOwnerName';
 import { extendedDayjs } from '@superset-ui/core/utils/dates';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const SQL_PREVIEW_MAX_LINES = 4;
 
 const TopAlignedListView = styled(ListView)<ListViewProps<QueryObject>>`

@@ -26,7 +26,7 @@ from fastmcp import Context
 from sqlalchemy.exc import OperationalError
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import db, event_logger
+from superset.extensions import db
 from superset.mcp_service.mcp_core import InstanceInfoCore
 from superset.mcp_service.privacy import user_can_view_data_model_metadata
 from superset.mcp_service.system.schemas import (
@@ -42,6 +42,7 @@ from superset.mcp_service.system.system_utils import (
     calculate_popular_content,
     calculate_recent_activity,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,7 @@ def _run_instance_info() -> InstanceInfo:
         "tags": TagDAO,
     }
 
-    with event_logger.log_context(action="mcp.get_instance_info.metrics"):
+    with mcp_event_log_context(action="mcp.get_instance_info.metrics"):
         result = _instance_info_core.run_tool()
 
     if not user_can_view_data_model_metadata():

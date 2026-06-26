@@ -33,6 +33,7 @@ import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import rison from 'rison';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import RowLevelSecurityModal from 'src/features/rls/RowLevelSecurityModal';
 import { RLSObject } from 'src/features/rls/types';
 import { createErrorHandler, createFetchRelated } from 'src/views/CRUD/utils';
@@ -315,7 +316,7 @@ function RowLevelSecurityList(props: RLSProps) {
   );
 
   const initialSort = [{ id: 'changed_on_delta_humanized', desc: true }];
-  const PAGE_SIZE = 25;
+  const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
   const subMenuButtons: SubMenuProps['buttons'] = [];
 

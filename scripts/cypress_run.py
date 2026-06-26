@@ -26,6 +26,30 @@ GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME") or "push"
 CYPRESS_RECORD_KEY = os.getenv("CYPRESS_RECORD_KEY") or ""
 
 
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    if args.parallelism < 1:
+        parser.error("--parallelism must be at least 1")
+    if args.parallelism_id < 0 or args.parallelism_id >= args.parallelism:
+        parser.error(
+            "--parallelism-id must be between 0 and "
+            f"{args.parallelism - 1} for --parallelism {args.parallelism}"
+        )
+    if args.retries < 1:
+        parser.error("--retries must be at least 1")
+
+
+def filter_test_files(test_files: list[str], filter_value: str | None) -> list[str]:
+    sorted_test_files = sorted(test_files)
+    if not filter_value:
+        return sorted_test_files
+
+    filtered_test_files = [
+        test_file for test_file in sorted_test_files if filter_value in test_file
+    ]
+    print(f"Filtered to {len(filtered_test_files)} test files matching {filter_value}.")
+    return filtered_test_files
+
+
 def generate_build_id() -> str:
     """Generates a build ID based on the current timestamp."""
     now = datetime.now()
@@ -131,6 +155,7 @@ def main() -> None:
         help="Print the command instead of executing it",
     )
     args = parser.parse_args()
+    validate_args(args, parser)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     cypress_base_path = "superset-frontend/cypress-base/"
@@ -157,7 +182,7 @@ def main() -> None:
     groups: dict[int, list[str]] = {i: [] for i in range(args.parallelism)}
 
     # Sort test files to ensure deterministic distribution
-    sorted_test_files = sorted(test_files)
+    sorted_test_files = filter_test_files(test_files, args.filter)
 
     # Distribute test files in a round-robin manner
     for index, test_file in enumerate(sorted_test_files):

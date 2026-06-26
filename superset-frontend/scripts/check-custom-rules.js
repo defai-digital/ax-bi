@@ -29,6 +29,16 @@ const glob = require('glob');
 const parser = require('@babel/parser');
 const traverse = require('@babel/traverse').default;
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/check-custom-rules.js [files...]
+
+Run Superset-specific custom lint checks.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 // ANSI color codes
 const RED = '\x1B[31m';
 const YELLOW = '\x1B[33m';
@@ -661,6 +671,14 @@ function checkTypeScriptOnlySource(candidateFiles) {
   });
 }
 
+function normalizeCliFile(file) {
+  return file.replace(/^superset-frontend\//, '');
+}
+
+function cliFileExists(file) {
+  return fs.existsSync(path.resolve(file)) || fs.existsSync(file);
+}
+
 /**
  * Main function
  */
@@ -708,7 +726,7 @@ function main() {
             '**/dist/**',
           ],
         })
-      : args.map(f => f.replace(/^superset-frontend\//, ''));
+      : args.map(normalizeCliFile).filter(cliFileExists);
   checkTypeScriptOnlySource(tsOnlyCandidates);
 
   // If no files specified, check all
@@ -744,7 +762,8 @@ function main() {
     // Filter to only JS/TS files and remove superset-frontend prefix
     files = files
       .filter(f => /\.(ts|tsx|js|jsx)$/.test(f))
-      .map(f => f.replace(/^superset-frontend\//, ''))
+      .map(normalizeCliFile)
+      .filter(cliFileExists)
       .filter(f => !ignorePatterns.some(pattern => pattern.test(f)));
   }
 

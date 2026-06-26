@@ -326,3 +326,18 @@ test('displays empty state when no tasks', async () => {
     response: { result: mockTasks, count: 3 },
   });
 });
+
+test('renders disabled state without fetching tasks when feature flag is off', () => {
+  window.featureFlags = { GLOBAL_TASK_FRAMEWORK: false };
+
+  try {
+    renderTaskList();
+
+    expect(screen.getByText('Feature Not Enabled')).toBeInTheDocument();
+    expect(screen.queryByTestId('task-list-view')).not.toBeInTheDocument();
+    expect(fetchMock.callHistory.calls(/task\/_info/)).toHaveLength(0);
+    expect(fetchMock.callHistory.calls(/task\/\?q/)).toHaveLength(0);
+  } finally {
+    window.featureFlags = { GLOBAL_TASK_FRAMEWORK: true };
+  }
+});

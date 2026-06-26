@@ -37,6 +37,16 @@ const SPEC_PATH = path.join(__dirname, '..', 'static', 'resources', 'openapi.jso
 const API_DOCS_DIR = path.join(__dirname, '..', 'developer_docs', 'api');
 const SIDEBAR_PATH = path.join(API_DOCS_DIR, 'sidebar.js');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/generate-api-tag-pages.mjs
+
+Replace generated API tag pages with endpoint tables.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 function slugify(text) {
   return text
     .toLowerCase()
@@ -153,7 +163,7 @@ function main() {
     let table = '| Method | Endpoint | Path |\n';
     table += '|--------|----------|------|\n';
     for (const ep of endpoints) {
-      table += `| \`${ep.method}\` | [${ep.summary}](./${ep.slug}) | \`${ep.path}\` |\n`;
+      table += `| \`${ep.method}\` | [${ep.summary}](./${ep.slug}.api.mdx) | \`${ep.path}\` |\n`;
     }
 
     // Generate the new MDX content

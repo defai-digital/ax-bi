@@ -28,10 +28,13 @@ from dataclasses import dataclass
 from queue import Empty, Full, Queue
 from typing import Any, Dict, Generator
 
-from flask import current_app
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
+from superset.mcp_service.utils.config_utils import (
+    get_webdriver_pool_config,
+    get_webdriver_type,
+)
 from superset.utils.webdriver import WebDriverSelenium, WindowSize
 
 logger = logging.getLogger(__name__)
@@ -127,7 +130,7 @@ class WebDriverPool:
             old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
             signal.alarm(self.creation_timeout_seconds)
 
-            driver_type = current_app.config.get("WEBDRIVER_TYPE", "firefox")
+            driver_type = get_webdriver_type()
             selenium_driver = WebDriverSelenium(driver_type, window_size)
 
             # Create the actual WebDriver with timeout protection
@@ -410,9 +413,7 @@ def get_webdriver_pool() -> WebDriverPool:
     if _global_pool is None:
         with _pool_lock:
             if _global_pool is None:
-                # Get pool configuration from Flask config
-                config = current_app.config
-                pool_config = config.get("WEBDRIVER_POOL", {})
+                pool_config = get_webdriver_pool_config()
 
                 _global_pool = WebDriverPool(
                     max_pool_size=pool_config.get("MAX_POOL_SIZE", 5),

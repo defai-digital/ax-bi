@@ -29,7 +29,6 @@ from typing import Callable
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.auth import MCPPermissionDeniedError
 from superset.mcp_service.common.schema_discovery import (
     CHART_DEFAULT_COLUMNS,
@@ -65,6 +64,9 @@ from superset.mcp_service.privacy import (
     SELF_REFERENCING_FILTER_COLUMNS,
     user_can_view_data_model_metadata,
 )
+from superset.mcp_service.utils.config_utils import get_mcp_rbac_enabled
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.permissions_utils import current_user_can_access
 
 logger = logging.getLogger(__name__)
 
@@ -231,12 +233,10 @@ async def get_schema(
     # which wrongly gated all schema types behind Dataset permission).
     class_permission = _MODEL_TYPE_CLASS_PERMISSION.get(request.model_type)
     if class_permission:
-        from flask import current_app, g
+        from flask import g
 
-        from superset import security_manager
-
-        if current_app.config.get("MCP_RBAC_ENABLED", True) and not (
-            security_manager.can_access("can_read", class_permission)
+        if get_mcp_rbac_enabled() and not current_user_can_access(
+            "can_read", class_permission
         ):
             user_str = getattr(getattr(g, "user", None), "username", None)
             logger.warning(
@@ -281,7 +281,7 @@ async def get_schema(
         )
 
     # Create core instance and run (columns extracted dynamically)
-    with event_logger.log_context(action="mcp.get_schema.discovery"):
+    with mcp_event_log_context(action="mcp.get_schema.discovery"):
         core = factory()
         schema_info = core.run_tool()
 

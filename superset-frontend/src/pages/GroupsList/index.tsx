@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { ActionsBar, ActionProps } from 'src/components/ListView/ActionsBar';
 import { ListView, ListViewProps } from 'src/components/ListView';
@@ -40,7 +41,7 @@ import {
 } from '@superset-ui/core/components';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 interface GroupsListProps {
   user: {

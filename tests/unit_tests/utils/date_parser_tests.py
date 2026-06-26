@@ -347,7 +347,7 @@ def test_previous_calendar_quarter():
         expected = (datetime(2023, 7, 1), datetime(2023, 10, 1))
         assert result == expected
 
-    with freezegun.freeze_time("2024, 1, 1"):
+    with freezegun.freeze_time("2024-01-01 12:00:00"):
         result = get_since_until("previous calendar quarter")
         expected = (datetime(2023, 10, 1), datetime(2024, 1, 1))
         assert result == expected

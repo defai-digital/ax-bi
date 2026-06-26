@@ -480,8 +480,9 @@ class TestSqlLabApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
 
         database = get_example_database()
+        client_id = f"test_export_{random.getrandbits(64)}"
         query_obj = Query(
-            client_id="test",
+            client_id=client_id,
             database=database,
             tab_name="test_tab",
             sql_editor_id="test_editor_id",
@@ -492,7 +493,7 @@ class TestSqlLabApi(SupersetTestCase):
             select_as_cta=False,
             rows=104,
             error_message="none",
-            results_key="test_abc",
+            results_key=None,
         )
 
         db.session.add(query_obj)
@@ -507,7 +508,7 @@ class TestSqlLabApi(SupersetTestCase):
             }
         )
 
-        resp = self.get_resp("/api/v1/sqllab/export/test/")
+        resp = self.get_resp(f"/api/v1/sqllab/export/{client_id}/")
 
         # Check for UTF-8 BOM
         assert resp.startswith("\ufeff"), "Missing UTF-8 BOM at beginning of CSV"

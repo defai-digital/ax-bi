@@ -24,8 +24,11 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
 from superset.mcp_service.privacy import USER_DIRECTORY_FIELDS
 from superset.mcp_service.rls.schemas import (
     ALL_RLS_COLUMNS,
@@ -38,6 +41,8 @@ from superset.mcp_service.rls.schemas import (
     serialize_rls_filter_object,
     SORTABLE_RLS_COLUMNS,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import dump_model_with_select_columns
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +71,7 @@ async def list_rls_filters(
     if ctx is None:
         raise RuntimeError("FastMCP context is required for list_rls_filters")
 
-    request = request or _DEFAULT_LIST_RLS_FILTERS_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_RLS_FILTERS_REQUEST)
 
     await ctx.info(
         "Listing RLS filters: page=%s, page_size=%s, search=%s"
@@ -103,14 +108,14 @@ async def list_rls_filters(
             ]
             run_select_columns = filtered or None
 
-        with event_logger.log_context(action="mcp.list_rls_filters.query"):
+        with mcp_event_log_context(action="mcp.list_rls_filters.query"):
             result = list_tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=run_select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 
@@ -133,11 +138,8 @@ async def list_rls_filters(
         else:
             columns_to_filter = list(DEFAULT_RLS_COLUMNS)
 
-        with event_logger.log_context(action="mcp.list_rls_filters.serialization"):
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": columns_to_filter},
-            )
+        with mcp_event_log_context(action="mcp.list_rls_filters.serialization"):
+            return dump_model_with_select_columns(result, columns_to_filter)
 
     except Exception as e:
         await ctx.error(

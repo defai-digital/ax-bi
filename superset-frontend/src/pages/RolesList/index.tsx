@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { SupersetClient } from '@superset-ui/core';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import RoleListAddModal from 'src/features/roles/RoleListAddModal';
 import RoleListEditModal from 'src/features/roles/RoleListEditModal';
 import RoleListDuplicateModal from 'src/features/roles/RoleListDuplicateModal';
@@ -45,7 +46,7 @@ import {
 } from 'src/features/roles/utils';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 interface RolesListProps {
   addDangerToast: (msg: string) => void;

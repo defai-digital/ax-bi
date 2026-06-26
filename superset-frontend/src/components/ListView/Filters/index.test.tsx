@@ -307,7 +307,7 @@ test('datetime_range pill shows the time range string as tooltip title', () => {
   expect(screen.getByTestId('compact-filter-clear')).toBeInTheDocument();
 });
 
-test('numerical_range filter renders as CompactFilterTrigger with dialog aria-haspopup', () => {
+test('numerical_range filter renders as CompactFilterTrigger with dialog aria-haspopup', async () => {
   const filters = [
     {
       Header: 'Age range',
@@ -315,6 +315,8 @@ test('numerical_range filter renders as CompactFilterTrigger with dialog aria-ha
       id: 'age_range',
       input: 'numerical_range' as const,
       operator: ListViewFilterOperator.Between,
+      min: 18,
+      max: 99,
     },
   ];
 
@@ -330,6 +332,17 @@ test('numerical_range filter renders as CompactFilterTrigger with dialog aria-ha
   expect(pill).toBeInTheDocument();
   expect(pill).toHaveAttribute('aria-haspopup', 'dialog');
   expect(screen.getByText('Age range')).toBeInTheDocument();
+
+  await userEvent.click(pill);
+
+  const minInput = screen.getByRole('spinbutton', {
+    name: /age range minimum/i,
+  });
+  const maxInput = screen.getByRole('spinbutton', {
+    name: /age range maximum/i,
+  });
+  expect(minInput).toBeInTheDocument();
+  expect(maxInput).toBeInTheDocument();
 });
 
 test('numerical_range pill shows active state when value is set', () => {

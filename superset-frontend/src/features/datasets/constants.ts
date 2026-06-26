@@ -17,8 +17,9 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 
-export const PAGE_SIZE = 25;
+export const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 export const SORT_BY = [{ id: 'changed_on_delta_humanized', desc: true }];
 export const PASSWORDS_NEEDED_MESSAGE = t(
   'The passwords for the databases below are needed in order to ' +

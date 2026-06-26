@@ -64,7 +64,7 @@ export default function webpackExtendPlugin(): Plugin<void> {
       // Add YAML loader rule directly to existing rules
       config.module?.rules?.push({
         test: /\.ya?ml$/,
-        use: 'js-yaml-loader',
+        use: path.resolve(__dirname, './loaders/yaml-loader.cjs'),
       });
 
       // Add swc-loader rule for superset-frontend files

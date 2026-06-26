@@ -58,6 +58,7 @@ import handleResourceExport from 'src/utils/export';
 import SubMenu, { ButtonProps, SubMenuProps } from 'src/features/home/SubMenu';
 import { commonMenuData } from 'src/features/home/commonMenuData';
 import { QueryObjectColumns, SavedQueryObject } from 'src/views/CRUD/types';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
 import { loadTags } from 'src/components/Tag/utils';
 import { Icons } from '@superset-ui/core/components/Icons';
@@ -68,7 +69,7 @@ import SavedQueryPreviewModal from 'src/features/queries/SavedQueryPreviewModal'
 import { findPermission } from 'src/utils/findPermission';
 import { makeUrl } from 'src/utils/pathUtils';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const PASSWORDS_NEEDED_MESSAGE = t(
   'The passwords for the databases below are needed in order to ' +
     'import them together with the saved queries. Please note that the ' +
@@ -216,6 +217,7 @@ function SavedQueryList({
       ),
       buttonStyle: 'link',
       onClick: openSavedQueryImportModal,
+      'aria-label': t('Import queries'),
       'data-test': 'import-button',
     });
   }
@@ -242,26 +244,29 @@ function SavedQueryList({
   menuData.buttons = subMenuButtons;
 
   // Action methods
-  const openInSqlLab = (id: number, openInNewWindow: boolean) => {
-    copyTextToClipboard(() =>
-      Promise.resolve(
-        `${window.location.origin}${makeUrl(`/sqllab?savedQueryId=${id}`)}`,
-      ),
-    )
-      .then(() => {
-        addSuccessToast(t('Link Copied!'));
-      })
-      .catch(() => {
-        addDangerToast(t('Sorry, your browser does not support copying.'));
-      });
-    if (openInNewWindow) {
-      window.open(makeUrl(`/sqllab?savedQueryId=${id}`));
-    } else {
-      // React Router's basename already includes the application root; passing
-      // a relative path ensures correct navigation under subdirectory deployments.
-      history.push(`/sqllab?savedQueryId=${id}`);
-    }
-  };
+  const openInSqlLab = useCallback(
+    (id: number, openInNewWindow: boolean) => {
+      copyTextToClipboard(() =>
+        Promise.resolve(
+          `${window.location.origin}${makeUrl(`/sqllab?savedQueryId=${id}`)}`,
+        ),
+      )
+        .then(() => {
+          addSuccessToast(t('Link Copied!'));
+        })
+        .catch(() => {
+          addDangerToast(t('Sorry, your browser does not support copying.'));
+        });
+      if (openInNewWindow) {
+        window.open(makeUrl(`/sqllab?savedQueryId=${id}`));
+      } else {
+        // React Router's basename already includes the application root; passing
+        // a relative path ensures correct navigation under subdirectory deployments.
+        history.push(`/sqllab?savedQueryId=${id}`);
+      }
+    },
+    [addDangerToast, addSuccessToast, history],
+  );
 
   const copyQueryLink = useCallback(
     async (savedQuery: SavedQueryObject) => {
@@ -308,20 +313,21 @@ function SavedQueryList({
     );
   };
 
-  const handleBulkSavedQueryExport = async (
-    savedQueriesToExport: SavedQueryObject[],
-  ) => {
-    const ids = savedQueriesToExport.map(({ id }) => id);
-    setPreparingExport(true);
-    try {
-      await handleResourceExport('saved_query', ids, () => {
+  const handleBulkSavedQueryExport = useCallback(
+    async (savedQueriesToExport: SavedQueryObject[]) => {
+      const ids = savedQueriesToExport.map(({ id }) => id);
+      setPreparingExport(true);
+      try {
+        await handleResourceExport('saved_query', ids, () => {
+          setPreparingExport(false);
+        });
+      } catch (error) {
         setPreparingExport(false);
-      });
-    } catch (error) {
-      setPreparingExport(false);
-      addDangerToast(t('There was an issue exporting the selected queries'));
-    }
-  };
+        addDangerToast(t('There was an issue exporting the selected queries'));
+      }
+    },
+    [addDangerToast],
+  );
 
   const handleBulkQueryDelete = (queriesToDelete: SavedQueryObject[]) => {
     SupersetClient.delete({
@@ -532,7 +538,15 @@ function SavedQueryList({
         id: QueryObjectColumns.ChangedBy,
       },
     ],
-    [canDelete, canEdit, canExport, copyQueryLink, handleSavedQueryPreview],
+    [
+      canDelete,
+      canEdit,
+      canExport,
+      copyQueryLink,
+      handleBulkSavedQueryExport,
+      handleSavedQueryPreview,
+      openInSqlLab,
+    ],
   );
 
   const filters: ListViewFilters = useMemo(
@@ -640,7 +654,7 @@ function SavedQueryList({
         paginate: true,
       },
     ],
-    [addDangerToast],
+    [addDangerToast, canReadTag, user],
   );
 
   return (

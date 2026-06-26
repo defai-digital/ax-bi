@@ -28,7 +28,7 @@ export const controlPanel: ControlPanelConfig = {
   controlPanelSections: [
     sections.legacyTimeseriesTime,
     {
-      label: t('Query'),
+      label: () => t('Query'),
       expanded: true,
       controlSetRows: [
         ['metrics'],
@@ -40,7 +40,7 @@ export const controlPanel: ControlPanelConfig = {
             name: 'column_collection',
             config: {
               type: 'CollectionControl',
-              label: t('Time series columns'),
+              label: () => t('Time series columns'),
               renderTrigger: true,
               validators: [validateNonEmpty],
               controlName: 'TimeSeriesColumnControl',
@@ -53,11 +53,12 @@ export const controlPanel: ControlPanelConfig = {
             name: 'url',
             config: {
               type: 'TextControl',
-              label: t('URL'),
-              description: t(
-                "Templated link, it's possible to include {{ metric }} " +
-                  'or other values coming from the controls.',
-              ),
+              label: () => t('URL'),
+              description: () =>
+                t(
+                  "Templated link, it's possible to include {{ metric }} " +
+                    'or other values coming from the controls.',
+                ),
               default: '',
             },
           },

@@ -30,9 +30,9 @@
  * into heavy modules (connection/SupersetClientClass, query/types, etc.).
  * Only add leaf-level utilities with minimal transitive dependencies.
  *
- * Exports that can't be shimmed safely (e.g. getClientErrorObject, which
- * pulls in connection/types → SupersetClientClass) will produce
- * ESModulesLinkingWarnings at build time — these are harmless.
+ * Keep runtime shims intentionally small. If a docs-rendered component needs
+ * behavior from a heavy module, add the narrowest compatible implementation
+ * here instead of importing the full package barrel.
  */
 
 // Paths relative to docs/src/shims/ → superset-frontend/packages/superset-ui-core/src/
@@ -55,3 +55,58 @@ export { default as TimeFormats } from '../../../superset-frontend/packages/supe
 
 // color
 export { hexToRgb } from '../../../superset-frontend/packages/superset-ui-core/src/color/utils';
+
+export function formatNumber(
+  _format: string | undefined,
+  value: number | null | undefined,
+) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return `${value}`;
+  }
+  if (value === Number.POSITIVE_INFINITY) {
+    return '∞';
+  }
+  if (value === Number.NEGATIVE_INFINITY) {
+    return '-∞';
+  }
+  return new Intl.NumberFormat('en-US').format(value);
+}
+
+export async function getClientErrorObject(errorObject: unknown) {
+  if (typeof errorObject === 'string') {
+    return { error: errorObject };
+  }
+
+  if (errorObject instanceof Response && !errorObject.bodyUsed) {
+    const response = errorObject.clone();
+    try {
+      const errorJson = await response.json();
+      return {
+        ...errorJson,
+        error: errorJson.error || errorJson.message || errorObject.statusText,
+      };
+    } catch {
+      const errorText = await response.text();
+      return { ...errorObject, error: errorText || errorObject.statusText };
+    }
+  }
+
+  if (
+    errorObject &&
+    typeof errorObject === 'object' &&
+    'response' in errorObject &&
+    errorObject.response instanceof Response
+  ) {
+    return getClientErrorObject(errorObject.response);
+  }
+
+  const message =
+    errorObject &&
+    typeof errorObject === 'object' &&
+    'message' in errorObject &&
+    typeof errorObject.message === 'string'
+      ? errorObject.message
+      : 'An error occurred';
+
+  return { error: message };
+}

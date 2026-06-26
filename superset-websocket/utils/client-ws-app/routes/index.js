@@ -19,7 +19,16 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const config = require('../../../config.json');
+
+let config;
+try {
+  config = require('../../../config.json');
+} catch (error) {
+  if (error.code !== 'MODULE_NOT_FOUND') {
+    throw error;
+  }
+  config = require('../../../config.example.json');
+}
 
 router.get('/', function (req, res) {
   let numTokens = req.query.sockets ? Number(req.query.sockets) : 100;

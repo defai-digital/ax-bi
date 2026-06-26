@@ -1467,3 +1467,33 @@ class TestDestructiveDDLBlocking:
             assert data["success"] is False
             assert "Destructive DDL" in data["error"]
             ddl_mocks.execute.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_destructive_rendered_template_blocked(self, ddl_mocks, mcp_server):
+        """Destructive SQL produced by template rendering is blocked."""
+        mock_template_processor = Mock()
+        mock_template_processor.process_template.return_value = "DROP TABLE users"
+
+        with patch(
+            "superset.jinja_context.get_template_processor",
+            return_value=mock_template_processor,
+        ):
+            async with Client(mcp_server) as client:
+                result = await client.call_tool(
+                    "execute_sql",
+                    {
+                        "request": {
+                            "database_id": 1,
+                            "sql": "{{ statement }}",
+                            "template_params": {"statement": "DROP TABLE users"},
+                        }
+                    },
+                )
+                data = result.structured_content
+                assert data["success"] is False
+                assert "Destructive DDL" in data["error"]
+                mock_template_processor.process_template.assert_called_once_with(
+                    "{{ statement }}",
+                    statement="DROP TABLE users",
+                )
+                ddl_mocks.execute.assert_not_called()

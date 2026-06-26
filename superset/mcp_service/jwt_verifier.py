@@ -48,6 +48,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import HTTPConnection, Request
 from starlette.responses import HTMLResponse, JSONResponse, Response
 
+from superset.mcp_service.utils.config_utils import get_mcp_jwt_algorithm
 from superset.mcp_service.utils.error_sanitization import (
     sanitize_for_log as _sanitize_for_log,
 )
@@ -400,10 +401,8 @@ class MCPJWTVerifier(JWTVerifier):
         # default; falling back to the kwarg lets unit tests that construct
         # verifiers directly (without an app context) also get the warning
         # when no algorithm is pinned.
-        from flask import current_app
-
         try:
-            config_algorithm = current_app.config.get("MCP_JWT_ALGORITHM")
+            config_algorithm = get_mcp_jwt_algorithm()
         except RuntimeError:
             # No Flask application context (e.g. unit tests constructing the
             # verifier directly). Fall back to the explicit constructor arg.

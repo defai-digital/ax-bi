@@ -29,6 +29,7 @@ from superset.exceptions import SupersetSecurityException
 from superset.extensions import db, security_manager
 from superset.models.core import Database
 from superset.models.slice import Slice
+from superset.utils.core import error_msg_from_exception
 
 
 class DatasetWarmUpCacheCommand(BaseCommand):
@@ -47,14 +48,26 @@ class DatasetWarmUpCacheCommand(BaseCommand):
 
     def run(self) -> list[dict[str, Any]]:
         self.validate()
-        return [
-            ChartWarmUpCacheCommand(
-                chart,
-                self._dashboard_id,
-                self._extra_filters,
-            ).run()
-            for chart in self._charts
-        ]
+        chart_ids = [chart.id for chart in self._charts]
+        results = []
+        for chart_id in chart_ids:
+            try:
+                results.append(
+                    ChartWarmUpCacheCommand(
+                        chart_id,
+                        self._dashboard_id,
+                        self._extra_filters,
+                    ).run()
+                )
+            except Exception as ex:  # pylint: disable=broad-except
+                results.append(
+                    {
+                        "chart_id": chart_id,
+                        "viz_error": error_msg_from_exception(ex),
+                        "viz_status": None,
+                    }
+                )
+        return results
 
     def validate(self) -> None:
         table = (

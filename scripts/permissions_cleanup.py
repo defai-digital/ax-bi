@@ -14,14 +14,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from argparse import ArgumentParser
 from collections import defaultdict
 
-from superset import security_manager
-from superset.utils.decorators import transaction
 
-
-@transaction()
 def cleanup_permissions() -> None:
+    from superset import security_manager
+
     # 1. Clean up duplicates.
     pvms = security_manager.get_session.query(
         security_manager.permissionview_model
@@ -71,4 +70,19 @@ def cleanup_permissions() -> None:
         pvm.role = [r for r in pvm.role if r]
 
 
-cleanup_permissions()
+def main() -> None:
+    parser = ArgumentParser(
+        description="Clean duplicate and empty permission view menus and role links.",
+    )
+    parser.parse_args()
+
+    from superset.app import create_app
+    from superset.utils.decorators import transaction
+
+    app = create_app()
+    with app.app_context():
+        transaction()(cleanup_permissions)()
+
+
+if __name__ == "__main__":
+    main()

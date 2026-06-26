@@ -23,14 +23,12 @@ about a specific dataset.
 """
 
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
 from fastmcp import Context
 from sqlalchemy.orm import joinedload, subqueryload
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.dataset.schemas import (
     DatasetError,
     DatasetInfo,
@@ -43,6 +41,8 @@ from superset.mcp_service.privacy import (
     requires_data_model_metadata_access,
     user_can_view_data_model_metadata,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import dump_model_with_select_columns
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ async def get_dataset_info(
             joinedload(SqlaTable.database),
         ]
 
-        with event_logger.log_context(action="mcp.get_dataset_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_dataset_info.lookup"):
             tool = ModelGetInfoCore(
                 dao_class=DatasetDAO,
                 output_schema=DatasetInfo,
@@ -149,14 +149,12 @@ async def get_dataset_info(
                 "Filtering response: select_columns=%s, column_fields=%s"
                 % (request.select_columns, request.column_fields)
             )
-            with event_logger.log_context(action="mcp.get_dataset_info.serialization"):
-                return result.model_dump(
-                    mode="json",
+            with mcp_event_log_context(action="mcp.get_dataset_info.serialization"):
+                return dump_model_with_select_columns(
+                    result,
+                    request.select_columns,
                     by_alias=True,
-                    context={
-                        "select_columns": request.select_columns,
-                        "column_fields": request.column_fields,
-                    },
+                    extra_context={"column_fields": request.column_fields},
                 )
         else:
             await ctx.warning(
@@ -176,8 +174,7 @@ async def get_dataset_info(
                 type(e).__name__,
             )
         )
-        return DatasetError(
+        return DatasetError.create(
             error=f"Failed to get dataset info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

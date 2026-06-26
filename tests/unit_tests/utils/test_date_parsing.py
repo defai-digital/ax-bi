@@ -133,8 +133,10 @@ def test_epoch_format_invalid_values(caplog):
     # Verify warning was logged
     assert "Unable to convert column epoch to datetime, ignoring" in caplog.text
 
-    # The column should remain unchanged when conversion fails
-    assert df["epoch"].dtype == object
+    # The column should remain unchanged when conversion fails. On pandas 3.x
+    # string columns use the dedicated StringDtype rather than object, so check
+    # the column is non-numeric (i.e. unchanged) instead of asserting object.
+    assert not pd.api.types.is_numeric_dtype(df["epoch"])
     assert df["epoch"].iloc[0] == "not_a_number"
 
 

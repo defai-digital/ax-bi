@@ -21,12 +21,14 @@ from typing import Any, Dict, List
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from superset.mcp_service.mcp_core import (
     ModelGetInfoCore,
     ModelGetSchemaCore,
     ModelListCore,
+    request_or_default,
+    to_zero_based_page,
 )
 from superset.mcp_service.privacy import USER_DIRECTORY_FIELDS
 
@@ -62,6 +64,12 @@ class DummyErrorSchema(BaseModel):
     error_type: str
     timestamp: datetime
 
+    @classmethod
+    def create(cls, error: str, error_type: str) -> "DummyErrorSchema":
+        from superset.mcp_service.common.error_schemas import mcp_error_timestamp
+
+        return cls(error=error, error_type=error_type, timestamp=mcp_error_timestamp())
+
 
 # Dummy DAO
 class DummyDAO:
@@ -80,6 +88,34 @@ class DummyDAO:
 def dummy_serializer(obj, columns=None):
     # Serialize mock object to DummyOutputSchema
     return DummyOutputSchema(id=obj.id, name=obj.name)
+
+
+def test_to_zero_based_page_clamps_public_page_numbers():
+    assert to_zero_based_page(2) == 1
+    assert to_zero_based_page(1) == 0
+    assert to_zero_based_page(0) == 0
+
+
+class DummyRequestSchema(BaseModel):
+    items: List[str] = Field(default_factory=list)
+
+
+def test_request_or_default_returns_provided_request():
+    request = DummyRequestSchema(items=["explicit"])
+    default = DummyRequestSchema(items=["default"])
+
+    assert request_or_default(request, default) is request
+
+
+def test_request_or_default_deep_copies_default_request():
+    default = DummyRequestSchema(items=["default"])
+
+    result = request_or_default(None, default)
+    result.items.append("changed")
+
+    assert result is not default
+    assert result.items == ["default", "changed"]
+    assert default.items == ["default"]
 
 
 def test_model_list_tool_basic():

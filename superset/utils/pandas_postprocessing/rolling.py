@@ -83,6 +83,13 @@ def rolling(  # pylint: disable=too-many-arguments
         raise InvalidPostProcessingError(
             _("Invalid rolling_type: %(type)s", type=rolling_type)
         )
+    # Normalize the `quantile` rolling option to pandas' canonical `q` kwarg.
+    # Superset exposes `quantile` as the user-facing option key (e.g.
+    # {"quantile": 0.25}); pandas renamed the Rolling.quantile parameter from
+    # `quantile` to `q`, and rejects the old name in newer releases.
+    if rolling_type == "quantile" and "quantile" in rolling_type_options:
+        rolling_type_options = dict(rolling_type_options)
+        rolling_type_options["q"] = rolling_type_options.pop("quantile")
     try:
         df_rolling = getattr(df_rolling, rolling_type)(**rolling_type_options)
     except TypeError as ex:

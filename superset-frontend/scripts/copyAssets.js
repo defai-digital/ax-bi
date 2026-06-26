@@ -23,6 +23,16 @@
 const { sync } = require('fast-glob');
 const { copy } = require('fs-extra');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`Usage: node scripts/copyAssets.js [package-glob]
+
+Copy package/plugin asset files from src to lib and esm.
+
+Options:
+  --help, -h  Show this help message`);
+  process.exit(0);
+}
+
 const pkgGlob = process.argv[2] || '*';
 
 const packages = sync([`{packages,plugins}/${pkgGlob}`], {

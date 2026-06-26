@@ -32,6 +32,20 @@ logger = logging.getLogger(__name__)
 
 logger.info("Creating Flask app instance for MCP service")
 
+
+def register_flask_app(flask_app: Flask) -> None:
+    """
+    Register an already-initialized Superset Flask app for MCP helpers.
+
+    Main Superset startup initializes Flask-AppBuilder inside an app context,
+    then MCP tool calls can later run outside any Flask context. Keep the app
+    reference so those calls can push their own fresh app context without
+    attempting to create a second Superset app in the same process.
+    """
+    global app
+    app = flask_app
+
+
 try:
     from superset.extensions import appbuilder
 
@@ -50,7 +64,7 @@ try:
         # so we can get the actual Flask app instance from current_app
         logger.info("Reusing existing Flask app from app context for MCP service")
         # Use _get_current_object() to get the actual Flask app, not the LocalProxy
-        app = current_app._get_current_object()
+        register_flask_app(current_app._get_current_object())
     elif appbuilder_initialized:
         # appbuilder is initialized but we have no app context. Calling
         # create_app() here would invoke appbuilder.init_app() a second

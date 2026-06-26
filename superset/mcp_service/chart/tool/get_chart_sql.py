@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 from superset.commands.exceptions import CommandException
 from superset.commands.explore.form_data.parameters import CommandParameters
 from superset.exceptions import SupersetException, SupersetSecurityException
-from superset.extensions import event_logger
 from superset.mcp_service.chart.chart_helpers import (
     build_query_context_from_form_data,
     extract_x_axis_col,
@@ -46,6 +45,7 @@ from superset.mcp_service.chart.schemas import (
     GetChartSqlRequest,
 )
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -396,7 +396,7 @@ async def _handle_chart_sql_request(
             error="Chart identifier is required.",
             error_type="ValidationError",
         )
-    with event_logger.log_context(action="mcp.get_chart_sql.chart_lookup"):
+    with mcp_event_log_context(action="mcp.get_chart_sql.chart_lookup"):
         chart = _find_chart_by_identifier(request.identifier)
 
     if not chart:
@@ -429,7 +429,7 @@ async def _handle_chart_sql_request(
     )
 
     # Try saved query_context first (faster, more accurate)
-    with event_logger.log_context(action="mcp.get_chart_sql.build_query"):
+    with mcp_event_log_context(action="mcp.get_chart_sql.build_query"):
         if not using_unsaved_state:
             saved_result = _sql_from_saved_query_context(chart)
             if saved_result is not None:
@@ -456,7 +456,7 @@ async def _handle_unsaved_chart_sql(
     """Handle SQL retrieval for unsaved charts (form_data_key only)."""
     from superset.utils import json as utils_json
 
-    with event_logger.log_context(action="mcp.get_chart_sql.unsaved_chart_from_cache"):
+    with mcp_event_log_context(action="mcp.get_chart_sql.unsaved_chart_from_cache"):
         await ctx.info(
             "No chart identifier - getting SQL from unsaved chart cache: "
             "form_data_key=%s" % (form_data_key,)

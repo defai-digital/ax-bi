@@ -74,7 +74,7 @@ RUN_RESET_DB=1
 RUN_TESTS=1
 TEST_MODULE="tests"
 
-PARAMS=""
+PYTEST_ARGS=()
 while (( "$#" )); do
   case "$1" in
     --help)
@@ -105,11 +105,16 @@ while (( "$#" )); do
       shift 1
       ;;
     --module)
+      if [ -z "${2:-}" ]; then
+        echo "Error: --module requires a test module path" >&2
+        exit 1
+      fi
       TEST_MODULE=$2
       shift 2
       ;;
     --) # end argument parsing
       shift
+      PYTEST_ARGS+=("$@")
       break
       ;;
     --*) # unsupported flags
@@ -117,7 +122,7 @@ while (( "$#" )); do
       exit 1
       ;;
     *) # preserve positional arguments
-      PARAMS="$PARAMS $1"
+      PYTEST_ARGS+=("$1")
       shift
       ;;
   esac
@@ -144,5 +149,5 @@ fi
 
 if [ $RUN_TESTS -eq 1 ]
 then
-  pytest -vv --durations=0 "${TEST_MODULE}"
+  pytest -vv --durations=0 "${TEST_MODULE}" "${PYTEST_ARGS[@]}"
 fi

@@ -179,7 +179,6 @@ msgstr ""
 msgid "\"%s\" is now the system default theme"
 msgstr ""
 
-#, python-format
 msgid "% calculation"
 msgstr "حساب ٪"
 

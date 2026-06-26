@@ -92,6 +92,8 @@ def test_resample_ffill_with_gaps():
 
 def test_resample_zero_fill():
     post_df = pp.resample(df=timeseries_df, rule="1D", method="asfreq", fill_value=0)
+    # fill_value applies to numeric columns only; non-numeric (label) columns
+    # keep the NaN values introduced by upsampling.
     assert post_df.equals(
         pd.DataFrame(
             index=pd.to_datetime(
@@ -106,7 +108,7 @@ def test_resample_zero_fill():
                 ]
             ),
             data={
-                "label": ["x", "y", 0, 0, "z", 0, "q"],
+                "label": ["x", "y", np.nan, np.nan, "z", np.nan, "q"],
                 "y": [1.0, 2.0, 0, 0, 3.0, 0, 4.0],
             },
         )
@@ -131,7 +133,7 @@ def test_resample_zero_fill_with_gaps():
                 ]
             ),
             data={
-                "label": ["x", "y", 0, 0, "z", 0, "q"],
+                "label": ["x", "y", np.nan, np.nan, "z", np.nan, "q"],
                 "y": [1.0, 2.0, 0, 0, 0, 0, 4.0],
             },
         )
@@ -253,7 +255,7 @@ def test_resample_linear():
                 ]
             ),
             data={
-                "label": ["a", np.NaN, np.NaN, np.NaN, "e", np.NaN, np.NaN, "j"],
+                "label": ["a", np.nan, np.nan, np.nan, "e", np.nan, np.nan, "j"],
                 "y": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
             },
         )

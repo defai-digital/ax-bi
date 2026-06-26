@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import difflib
 from datetime import datetime
-from typing import Annotated, Any, cast, Dict, List, Literal, Protocol
+from typing import Annotated, Any, Dict, List, Literal, Protocol
 
 from pydantic import (
     AliasChoices,
@@ -49,9 +49,11 @@ from superset.mcp_service.common.cache_schemas import (
     OwnedByMeMixin,
     QueryCacheControl,
 )
-from superset.mcp_service.common.error_schemas import ChartGenerationError, MCPBaseError
+from superset.mcp_service.common.error_schemas import (
+    ChartGenerationError,
+    MCPBaseError,
+)
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from superset.mcp_service.privacy import filter_user_directory_fields
 from superset.mcp_service.system.schemas import (
     PaginationInfo,
     TagInfo,
@@ -60,7 +62,10 @@ from superset.mcp_service.utils import (
     escape_llm_context_delimiters,
     sanitize_for_llm_context,
 )
-from superset.mcp_service.utils.response_utils import humanize_timestamp
+from superset.mcp_service.utils.response_utils import (
+    filter_serialized_response_fields,
+    humanize_timestamp,
+)
 from superset.mcp_service.utils.sanitization import (
     sanitize_filter_value,
     sanitize_sql_expression,
@@ -166,30 +171,11 @@ class ChartInfo(BaseModel):
 
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
-        """Filter fields based on serialization context.
-
-        If context contains 'select_columns', only include those fields.
-        Otherwise, include all fields (default behavior).
-        """
-        # Get full serialization
-        data = filter_user_directory_fields(serializer(self))
-
-        # Check if we have a context with select_columns
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                # Filter to only requested fields
-                return {k: v for k, v in data.items() if k in select_columns}
-
-        return data
+        return filter_serialized_response_fields(serializer(self), info)
 
 
 class ChartError(MCPBaseError):
-    @field_validator("message")
-    @classmethod
-    def sanitize_error_for_llm_context(cls, value: str) -> str:
-        """Wrap error text before it is exposed to LLM context."""
-        return sanitize_for_llm_context(value, field_path=("error",))
+    pass
 
 
 class ChartCapabilities(BaseModel):
@@ -335,12 +321,11 @@ class GetChartInfoRequest(BaseModel):
     @field_validator("select_columns", mode="before")
     @classmethod
     def _parse_select_columns(cls, value: Any) -> Any:
-        from superset.mcp_service.utils.schema_utils import parse_json_or_list
+        from superset.mcp_service.utils.schema_utils import (
+            parse_select_columns_or_default,
+        )
 
-        if value is None:
-            return list(DEFAULT_GET_CHART_INFO_COLUMNS)
-        parsed = parse_json_or_list(value, "select_columns")
-        return parsed if parsed else list(DEFAULT_GET_CHART_INFO_COLUMNS)
+        return parse_select_columns_or_default(value, DEFAULT_GET_CHART_INFO_COLUMNS)
 
 
 def extract_filters_from_form_data(
@@ -1799,12 +1784,9 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
         Handles Claude Code bug where objects are double-serialized as strings.
         See: https://github.com/anthropics/claude-code/issues/5504
         """
-        from superset.mcp_service.utils.schema_utils import parse_json_or_model_list
+        from superset.mcp_service.utils.schema_utils import parse_filters
 
-        return cast(
-            List[ChartFilter],
-            parse_json_or_model_list(v, ChartFilter, "filters"),
-        )
+        return parse_filters(v, ChartFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
@@ -1815,9 +1797,11 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
         Handles Claude Code bug where arrays are double-serialized as strings.
         See: https://github.com/anthropics/claude-code/issues/5504
         """
-        from superset.mcp_service.utils.schema_utils import parse_json_or_list
+        from superset.mcp_service.utils.schema_utils import (
+            parse_select_columns as parse_select_columns_param,
+        )
 
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns_param(v)
 
     search: Annotated[
         str | None,
@@ -1853,12 +1837,17 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListChartsRequest":
         """Prevent using both search and filters simultaneously."""
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' parameters simultaneously. "
-                "Use either 'search' for text-based searching across multiple fields, "
-                "or 'filters' for precise column-based filtering, but not both."
-            )
+        from superset.mcp_service.utils.schema_utils import (
+            ensure_search_and_filters_not_combined,
+        )
+
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching across multiple fields, "
+            "or 'filters' for precise column-based filtering, but not both.",
+        )
         return self
 
 

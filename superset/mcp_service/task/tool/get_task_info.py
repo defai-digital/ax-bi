@@ -18,13 +18,11 @@
 """Get task info MCP tool."""
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.daos.tasks import TaskDAO
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.task.schemas import (
     GetTaskInfoRequest,
@@ -32,6 +30,7 @@ from superset.mcp_service.task.schemas import (
     TaskError,
     TaskInfo,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +68,7 @@ async def get_task_info(
     await ctx.info("Retrieving task: identifier=%s" % (request.identifier,))
 
     try:
-        with event_logger.log_context(action="mcp.get_task_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_task_info.lookup"):
             # ModelGetInfoCore handles int ID and UUID string automatically.
             # TaskDAO.base_filter (TaskFilter) enforces subscription-based access.
             get_tool = ModelGetInfoCore(
@@ -100,8 +99,7 @@ async def get_task_info(
             "Task retrieval failed: identifier=%s, error=%s, error_type=%s"
             % (request.identifier, str(e), type(e).__name__)
         )
-        return TaskError(
+        return TaskError.create(
             error=f"Failed to get task info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

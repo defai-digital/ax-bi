@@ -29,6 +29,21 @@ from superset.mcp_service.constants import (
     DEFAULT_WARN_THRESHOLD_PCT,
 )
 from superset.mcp_service.jwt_verifier import DetailedJWTVerifier, MCPJWTVerifier
+from superset.mcp_service.utils.config_utils import (
+    get_fab_api_key_enabled,
+    get_fab_api_key_prefixes,
+    get_mcp_api_key_enabled_flag,
+    get_mcp_auth_enabled,
+    get_mcp_jwks_uri,
+    get_mcp_jwt_algorithm,
+    get_mcp_jwt_algorithm_with_default,
+    get_mcp_jwt_audience,
+    get_mcp_jwt_debug_errors,
+    get_mcp_jwt_issuer,
+    get_mcp_jwt_public_key,
+    get_mcp_jwt_secret,
+    get_mcp_required_scopes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -338,9 +353,11 @@ def get_mcp_api_key_enabled(app: Flask, *, startup_warning: bool = False) -> boo
     is inherited from ``FAB_API_KEY_ENABLED``, logs a warning so operators
     know a FAB config change now also affects the MCP transport.
     """
-    if (mcp_setting := app.config.get("MCP_API_KEY_ENABLED", None)) is not None:
+    if (
+        mcp_setting := get_mcp_api_key_enabled_flag(app.config, default=None)
+    ) is not None:
         return bool(mcp_setting)
-    fab_enabled = bool(app.config.get("FAB_API_KEY_ENABLED", False))
+    fab_enabled = bool(get_fab_api_key_enabled(app.config))
     if startup_warning and fab_enabled:
         logger.warning(
             "MCP API key auth is enabled via FAB_API_KEY_ENABLED=True. "
@@ -364,7 +381,7 @@ def create_default_mcp_auth_factory(app: Flask) -> Optional[Any]:
     and logs a startup warning when that setting is True, so operators are
     aware that a FAB config change now also affects the MCP transport.
     """
-    auth_enabled = app.config.get("MCP_AUTH_ENABLED", False)
+    auth_enabled = get_mcp_auth_enabled(app.config)
     api_key_enabled = get_mcp_api_key_enabled(app, startup_warning=True)
 
     if not (auth_enabled or api_key_enabled):
@@ -377,7 +394,7 @@ def create_default_mcp_auth_factory(app: Flask) -> Optional[Any]:
     # fails to start instead of coming up in a permissive state — the
     # surrounding bootstrap would otherwise turn a None/raised provider into an
     # unauthenticated server.
-    if auth_enabled and not app.config.get("MCP_JWT_AUDIENCE"):
+    if auth_enabled and not get_mcp_jwt_audience(app.config):
         raise MCPAuthConfigError(
             "MCP_JWT_AUDIENCE must be set when MCP_AUTH_ENABLED is True so that "
             "tokens are bound to this service. Set MCP_JWT_AUDIENCE to the "
@@ -387,9 +404,9 @@ def create_default_mcp_auth_factory(app: Flask) -> Optional[Any]:
     jwt_verifier: Any | None = None
 
     if auth_enabled:
-        jwks_uri = app.config.get("MCP_JWKS_URI")
-        public_key = app.config.get("MCP_JWT_PUBLIC_KEY")
-        secret = app.config.get("MCP_JWT_SECRET")
+        jwks_uri = get_mcp_jwks_uri(app.config)
+        public_key = get_mcp_jwt_public_key(app.config)
+        secret = get_mcp_jwt_secret(app.config)
 
         if not (jwks_uri or public_key or secret):
             logger.warning("MCP_AUTH_ENABLED is True but no JWT keys/secret configured")
@@ -417,7 +434,7 @@ def create_default_mcp_auth_factory(app: Flask) -> Optional[Any]:
 
 def _build_composite_verifier(app: Flask, jwt_verifier: Any) -> CompositeTokenVerifier:
     """Build a CompositeTokenVerifier with API key prefixes from config."""
-    if required_scopes := app.config.get("MCP_REQUIRED_SCOPES", []):
+    if required_scopes := get_mcp_required_scopes(app.config):
         logger.warning(
             "MCP_REQUIRED_SCOPES is configured but API key tokens bypass "
             "scope enforcement. API key holders gain access regardless of "
@@ -425,7 +442,7 @@ def _build_composite_verifier(app: Flask, jwt_verifier: Any) -> CompositeTokenVe
             "roles/RBAC instead.",
             required_scopes,
         )
-    raw_prefixes: str | Sequence[str] = app.config.get("FAB_API_KEY_PREFIXES", ["sst_"])
+    raw_prefixes: str | Sequence[str] = get_fab_api_key_prefixes(app.config)
     # Normalize: a plain string (e.g. "sst_") would iterate as characters;
     # wrap it in a list so CompositeTokenVerifier receives a proper sequence.
     # Guard against non-iterable config values (e.g. None, integers) that
@@ -455,23 +472,23 @@ def _build_jwt_verifier(
     secret: Optional[str],
 ) -> JWTVerifier:
     """Construct the JWT verifier from configured keys/secret."""
-    debug_errors = app.config.get("MCP_JWT_DEBUG_ERRORS", False)
+    debug_errors = get_mcp_jwt_debug_errors(app.config)
 
     common_kwargs: Dict[str, Any] = {
-        "issuer": app.config.get("MCP_JWT_ISSUER"),
-        "audience": app.config.get("MCP_JWT_AUDIENCE"),
-        "required_scopes": app.config.get("MCP_REQUIRED_SCOPES", []),
+        "issuer": get_mcp_jwt_issuer(app.config),
+        "audience": get_mcp_jwt_audience(app.config),
+        "required_scopes": get_mcp_required_scopes(app.config),
     }
 
     # For HS256 (symmetric), use the secret as the public_key parameter
-    if app.config.get("MCP_JWT_ALGORITHM") == "HS256" and secret:
+    if get_mcp_jwt_algorithm(app.config) == "HS256" and secret:
         common_kwargs["public_key"] = secret
         common_kwargs["algorithm"] = "HS256"
     else:
         # For RS256 (asymmetric), use public key or JWKS
         common_kwargs["jwks_uri"] = jwks_uri
         common_kwargs["public_key"] = public_key
-        common_kwargs["algorithm"] = app.config.get("MCP_JWT_ALGORITHM", "RS256")
+        common_kwargs["algorithm"] = get_mcp_jwt_algorithm_with_default(app.config)
 
     if debug_errors:
         # DetailedJWTVerifier: detailed server-side logging of JWT

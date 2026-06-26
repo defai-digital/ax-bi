@@ -32,6 +32,7 @@ from pydantic import BaseModel, ValidationError
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 class JSONParseError(ValueError):
@@ -180,9 +181,39 @@ def parse_json_or_list(
     return [value]
 
 
+def parse_select_columns(value: Any) -> List[Any]:
+    """Parse the standard MCP select_columns request parameter."""
+    return parse_json_or_list(value, "select_columns")
+
+
+def parse_select_columns_or_default(
+    value: Any, default_columns: List[str]
+) -> List[Any]:
+    """Parse MCP select_columns, falling back to defaults when omitted or empty."""
+    if value is None:
+        return list(default_columns)
+    parsed = parse_select_columns(value)
+    return parsed if parsed else list(default_columns)
+
+
+def parse_filters(value: Any, model_class: Type[ModelT]) -> List[ModelT]:
+    """Parse the standard MCP structured filters request parameter."""
+    return parse_json_or_model_list(value, model_class, "filters")
+
+
+def ensure_search_and_filters_not_combined(
+    search: Any,
+    filters: Any,
+    message: str = "Cannot use both 'search' and 'filters' simultaneously.",
+) -> None:
+    """Reject list requests that mix free-text search with structured filters."""
+    if search and filters:
+        raise ValueError(message)
+
+
 def parse_json_or_model(
-    value: Any, model_class: Type[BaseModel], param_name: str = "parameter"
-) -> BaseModel:
+    value: Any, model_class: Type[ModelT], param_name: str = "parameter"
+) -> ModelT:
     """
     Parse a value into a Pydantic model, accepting JSON string or dict.
 
@@ -224,9 +255,9 @@ def parse_json_or_model(
 
 def parse_json_or_model_list(
     value: Any,
-    model_class: Type[BaseModel],
+    model_class: Type[ModelT],
     param_name: str = "parameter",
-) -> List[BaseModel]:
+) -> List[ModelT]:
     """
     Parse a value into a list of Pydantic models, accepting JSON string or list.
 
@@ -259,7 +290,7 @@ def parse_json_or_model_list(
     items = parse_json_or_list(value, param_name)
 
     # Validate each item against the model
-    validated_items = []
+    validated_items: list[ModelT] = []
     for i, item in enumerate(items):
         try:
             if isinstance(item, model_class):

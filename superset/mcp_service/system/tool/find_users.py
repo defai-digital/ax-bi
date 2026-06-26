@@ -23,12 +23,13 @@ from fastmcp import Context
 from sqlalchemy import or_
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import db, event_logger, security_manager
+from superset.extensions import db, security_manager
 from superset.mcp_service.system.schemas import (
     FindUsersRequest,
     FindUsersResponse,
     UserMatch,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ async def find_users(request: FindUsersRequest, ctx: Context) -> FindUsersRespon
     user_model = security_manager.user_model
     needle = f"%{request.query.strip()}%"
 
-    with event_logger.log_context(action="mcp.find_users.query"):
+    with mcp_event_log_context(action="mcp.find_users.query"):
         query = (
             db.session.query(user_model)
             .filter(

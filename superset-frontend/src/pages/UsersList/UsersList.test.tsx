@@ -150,6 +150,42 @@ describe('UsersList', () => {
     expect(pillLabels.some(l => /is active\?/i.test(l))).toBe(true);
   });
 
+  test('renders named numerical range filters for login counts', async () => {
+    await renderAndWait();
+
+    const loginCountPill = screen.getByRole('button', {
+      name: /^login count$/i,
+    });
+    fireEvent.click(loginCountPill);
+    expect(
+      await screen.findByRole('spinbutton', {
+        name: /login count minimum/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('spinbutton', {
+        name: /login count maximum/i,
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(loginCountPill);
+
+    const failLoginCountPill = screen.getByRole('button', {
+      name: /fail login count/i,
+    });
+    fireEvent.click(failLoginCountPill);
+    expect(
+      await screen.findByRole('spinbutton', {
+        name: /fail login count minimum/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('spinbutton', {
+        name: /fail login count maximum/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
   test('renders correct list columns', async () => {
     await renderAndWait();
 

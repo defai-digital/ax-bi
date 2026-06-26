@@ -73,8 +73,49 @@ const showHelp = args.includes('--help') || args.includes('-h');
 const DEFAULT_PORT = process.env.MCP_PORT || '5008';
 const DEFAULT_HOST = process.env.MCP_HOST || '127.0.0.1';
 
-// Show help
-if (showHelp) {
+function getOptionValue(name, defaultValue) {
+    const optionIndex = args.indexOf(name);
+    if (optionIndex === -1) {
+        return defaultValue;
+    }
+
+    const value = args[optionIndex + 1];
+    if (!value || value.startsWith('--')) {
+        console.error(`Error: ${name} requires a value`);
+        process.exit(1);
+    }
+
+    return value;
+}
+
+function validateArgs() {
+    const optionsWithValues = new Set(['--port', '--host']);
+    const flagOptions = new Set(['--stdio', '--http', '--debug', '--help', '-h']);
+
+    for (let index = 0; index < args.length; index += 1) {
+        const arg = args[index];
+
+        if (optionsWithValues.has(arg)) {
+            const value = args[index + 1];
+            if (!value || value.startsWith('--')) {
+                console.error(`Error: ${arg} requires a value`);
+                process.exit(1);
+            }
+            index += 1;
+            continue;
+        }
+
+        if (flagOptions.has(arg)) {
+            continue;
+        }
+
+        console.error(`Error: Unknown option: ${arg}`);
+        console.error('Run with --help to see supported options.');
+        process.exit(1);
+    }
+}
+
+function printHelp() {
     console.log(`
 Apache Superset MCP Server
 
@@ -111,7 +152,6 @@ Examples (Development):
   # Or use the Python CLI directly:
   superset mcp run --host 127.0.0.1 --port 6000
 `);
-    process.exit(0);
 }
 
 // Find Superset root directory
@@ -166,10 +206,35 @@ function findPython() {
     }
 }
 
+// Find Superset CLI executable
+function findSupersetCli() {
+    const supersetRoot = findSupersetRoot();
+    const cliPaths = [
+        path.join(supersetRoot, 'venv', 'bin', 'superset'),
+        path.join(supersetRoot, '.venv', 'bin', 'superset'),
+        path.join(supersetRoot, 'venv', 'Scripts', 'superset.exe'),
+        path.join(supersetRoot, '.venv', 'Scripts', 'superset.exe'),
+    ];
+
+    for (const cliPath of cliPaths) {
+        if (fs.existsSync(cliPath)) {
+            return cliPath;
+        }
+    }
+
+    try {
+        execSync('superset version', { stdio: 'ignore' });
+        return 'superset';
+    } catch (e) {
+        return null;
+    }
+}
+
 // Check Python and Superset installation
 function checkEnvironment() {
     const python = findPython();
     const supersetRoot = findSupersetRoot();
+    const supersetCli = findSupersetCli();
 
         console.error(`Using Python: ${python}`);
         console.error(`Superset root: ${supersetRoot}`);
@@ -194,12 +259,12 @@ Current PYTHONPATH: ${supersetRoot}
         process.exit(1);
     }
 
-    return { python, supersetRoot };
+    return { python, supersetRoot, supersetCli };
 }
 
 // Main execution
 function main() {
-    const { python, supersetRoot } = checkEnvironment();
+    const { python, supersetRoot, supersetCli } = checkEnvironment();
 
     // Prepare environment variables
     const env = {
@@ -220,34 +285,36 @@ function main() {
     }
 
     // Prepare command and arguments
-    let pythonArgs;
+    let command;
+    let commandArgs;
     if (isStdio) {
         console.error('Starting Superset MCP server in STDIO mode...');
-        pythonArgs = ['-m', 'superset.mcp_service'];
+        command = python;
+        commandArgs = ['-m', 'superset.mcp_service'];
     } else {
-        console.error(`Starting Superset MCP server in HTTP mode on ${DEFAULT_HOST}:${DEFAULT_PORT}...`);
+        const port = getOptionValue('--port', DEFAULT_PORT);
+        const host = getOptionValue('--host', DEFAULT_HOST);
 
-        // Parse port and host from arguments
-        const portIndex = args.indexOf('--port');
-        const port = portIndex !== -1 && args[portIndex + 1] ? args[portIndex + 1] : DEFAULT_PORT;
+        console.error(`Starting Superset MCP server in HTTP mode on ${host}:${port}...`);
+        if (!supersetCli) {
+            console.error('Error: Could not find Superset CLI executable.');
+            process.exit(1);
+        }
 
-        const hostIndex = args.indexOf('--host');
-        const host = hostIndex !== -1 && args[hostIndex + 1] ? args[hostIndex + 1] : DEFAULT_HOST;
-
-        pythonArgs = [
-            '-m', 'superset',
+        command = supersetCli;
+        commandArgs = [
             'mcp', 'run',
             '--host', host,
             '--port', port
         ];
 
         if (isDebug) {
-            pythonArgs.push('--debug');
+            commandArgs.push('--debug');
         }
     }
 
     // Spawn the Python process
-    const pythonProcess = spawn(python, pythonArgs, {
+    const pythonProcess = spawn(command, commandArgs, {
         env,
         stdio: isStdio ? ['inherit', 'inherit', 'inherit'] : 'inherit',
         cwd: supersetRoot
@@ -278,5 +345,20 @@ function main() {
     });
 }
 
-// Run the main function
-main();
+if (require.main === module) {
+    validateArgs();
+    if (showHelp) {
+        printHelp();
+        process.exit(0);
+    }
+    main();
+}
+
+module.exports = {
+    findPython,
+    findSupersetCli,
+    findSupersetRoot,
+    getOptionValue,
+    main,
+    printHelp,
+};

@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from copy import deepcopy
 from unittest import skip
 from unittest.mock import patch
 
@@ -684,7 +685,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
     ):
         """Test that database imports with masked ssh_tunnel passwords are rejected"""
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_password.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_password)
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),
             "databases/imported_database.yaml": yaml.safe_dump(masked_database_config),
@@ -708,7 +709,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
     ):
         """Test that database imports with masked ssh_tunnel private_key and private_key_password are rejected"""  # noqa: E501
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_private_key.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_private_key)
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),
             "databases/imported_database.yaml": yaml.safe_dump(masked_database_config),
@@ -738,7 +739,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
         """Test that a database with ssh_tunnel password can be imported"""
         mock_g.user = security_manager.find_user("admin")
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_password.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_password)
         masked_database_config["ssh_tunnel"]["password"] = "TEST"  # noqa: S105
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),
@@ -785,7 +786,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
         mock_g.user = security_manager.find_user("admin")
 
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_private_key.copy()
+        masked_database_config = deepcopy(database_with_ssh_tunnel_config_private_key)
         masked_database_config["ssh_tunnel"]["private_key"] = "TestPrivateKey"
         masked_database_config["ssh_tunnel"]["private_key_password"] = "TEST"  # noqa: S105
         contents = {
@@ -830,7 +831,9 @@ class TestImportDatabasesCommand(SupersetTestCase):
     ):
         """Test that databases with ssh_tunnels that have no credentials are rejected"""
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_no_credentials.copy()
+        masked_database_config = deepcopy(
+            database_with_ssh_tunnel_config_no_credentials
+        )
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),
             "databases/imported_database.yaml": yaml.safe_dump(masked_database_config),
@@ -852,7 +855,9 @@ class TestImportDatabasesCommand(SupersetTestCase):
     ):
         """Test that databases with ssh_tunnels that have multiple credentials are rejected"""  # noqa: E501
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = database_with_ssh_tunnel_config_mix_credentials.copy()
+        masked_database_config = deepcopy(
+            database_with_ssh_tunnel_config_mix_credentials
+        )
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),
             "databases/imported_database.yaml": yaml.safe_dump(masked_database_config),
@@ -874,7 +879,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
         """Test that databases with ssh_tunnels that have multiple credentials are rejected"""  # noqa: E501
         mock_schema_is_feature_enabled.return_value = True
         masked_database_config = (
-            database_with_ssh_tunnel_config_private_pass_only.copy()
+            deepcopy(database_with_ssh_tunnel_config_private_pass_only)
         )
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),

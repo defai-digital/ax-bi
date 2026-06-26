@@ -30,7 +30,11 @@ const fastGlob = require('fast-glob');
 const yargs = require('yargs');
 const { hideBin } = require('yargs/helpers');
 
-const { globs } = yargs(hideBin(process.argv)).parse();
+const { globs } = yargs(hideBin(process.argv))
+  .option('globs', {
+    type: 'array',
+  })
+  .parse();
 const glob = globs?.length > 1 ? `{${globs.join(',')}}` : globs?.[0] || '*';
 
 const BABEL_CONFIG = '--config-file=../../babel.config.js';

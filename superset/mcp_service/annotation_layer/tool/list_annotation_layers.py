@@ -22,7 +22,6 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.annotation_layer.schemas import (
     AnnotationLayerError,
     AnnotationLayerFilter,
@@ -32,7 +31,12 @@ from superset.mcp_service.annotation_layer.schemas import (
     ListAnnotationLayersRequest,
     serialize_annotation_layer,
 )
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +68,7 @@ async def list_annotation_layers(
     if ctx is None:
         raise RuntimeError("FastMCP context is required for list_annotation_layers")
 
-    request = request or _DEFAULT_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_REQUEST)
 
     await ctx.info(
         "Listing annotation layers: page=%s, page_size=%s, search=%s"
@@ -93,14 +97,14 @@ async def list_annotation_layers(
             logger=logger,
         )
 
-        with event_logger.log_context(action="mcp.list_annotation_layers.query"):
+        with mcp_event_log_context(action="mcp.list_annotation_layers.query"):
             result = list_tool.run_tool(
                 filters=request.filters,
                 search=request.search,
                 select_columns=request.select_columns,
                 order_column=request.order_column,
                 order_direction=request.order_direction,
-                page=max(request.page - 1, 0),
+                page=to_zero_based_page(request.page),
                 page_size=request.page_size,
             )
 

@@ -22,11 +22,11 @@ import logging
 import platform
 import time
 
-from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.system.schemas import HealthCheckResponse
+from superset.mcp_service.utils.config_utils import get_superset_app_name
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.utils.version import get_version_metadata
 
 logger = logging.getLogger(__name__)
@@ -71,11 +71,11 @@ async def health_check() -> HealthCheckResponse:
         # health_check(request={})  # This will cause validation errors
     """
     # Get app name from config (safe to do outside try block)
-    app_name = current_app.config.get("APP_NAME", "Superset")
+    app_name = get_superset_app_name()
     service_name = f"{app_name} MCP Service"
 
     try:
-        with event_logger.log_context(action="mcp.health_check.status"):
+        with mcp_event_log_context(action="mcp.health_check.status"):
             # Get version from Superset version metadata
             version_metadata = get_version_metadata()
             version = version_metadata.get("version_string", "unknown")

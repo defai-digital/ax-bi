@@ -130,6 +130,15 @@ describe('SavedQueryList', () => {
     ).toBeInTheDocument();
   });
 
+  test('labels the import queries button', async () => {
+    renderList();
+    await screen.findByTestId('saved_query-list-view');
+
+    expect(
+      screen.getByRole('button', { name: /import queries/i }),
+    ).toBeInTheDocument();
+  });
+
   test('renders query information', async () => {
     renderList();
 

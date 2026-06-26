@@ -2538,7 +2538,14 @@ class ExploreMixin:  # pylint: disable=too-many-public-methods
             ):
                 value = db_engine_spec.convert_dttm(
                     target_type=target_native_type,
-                    dttm=datetime.utcfromtimestamp(value / 1000),
+                    # Keep the datetime naive (UTC wall-clock). convert_dttm
+                    # implementations format the value with isoformat()/strftime()
+                    # into SQL literals; an aware datetime would append a
+                    # "+00:00" offset that breaks those literals (e.g. Postgres
+                    # TO_TIMESTAMP / MySQL STR_TO_DATE have no TZ token).
+                    dttm=datetime.fromtimestamp(value / 1000, tz=timezone.utc).replace(
+                        tzinfo=None
+                    ),
                     db_extra=db_extra,
                 )
                 value = literal_column(value)

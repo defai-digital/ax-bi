@@ -22,7 +22,6 @@ import logging
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.privacy import user_can_view_data_model_metadata
 from superset.mcp_service.user.schemas import (
@@ -31,6 +30,7 @@ from superset.mcp_service.user.schemas import (
     UserError,
     UserInfo,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ async def get_user_info(
         def _serializer(obj: object) -> UserInfo | None:
             return serialize_user_object(obj, include_sensitive=can_view_sensitive)
 
-        with event_logger.log_context(action="mcp.get_user_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_user_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=UserDAO,
                 output_schema=UserInfo,

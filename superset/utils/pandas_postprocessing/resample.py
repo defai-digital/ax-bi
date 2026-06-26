@@ -47,10 +47,22 @@ def resample(
         )
 
     if method == "asfreq" and fill_value is not None:
-        _df = df.resample(rule).asfreq(fill_value=fill_value)
-        _df = _df.fillna(fill_value)
+        # Resample without a fill value, then fill only numeric columns.
+        # Pandas 3.x raises TypeError when filling non-numeric (e.g. str)
+        # columns with a numeric fill_value, and filling a categorical/label
+        # column with an int is semantically wrong, so non-numeric columns keep
+        # the NaN values introduced by the upsampling.
+        _df = df.resample(rule).asfreq()
+        numeric_columns = _df.select_dtypes(include="number").columns
+        _df[numeric_columns] = _df[numeric_columns].fillna(fill_value)
     elif method == "linear":
-        _df = df.resample(rule).interpolate()
+        # Interpolate numeric columns only. Pandas 3.x raises
+        # ``TypeError`` when interpolating non-numeric (e.g. str) columns,
+        # so non-numeric columns keep the NaN values introduced by the
+        # upsampling, matching the previous behavior on pandas 2.x.
+        _df = df.resample(rule).asfreq()
+        numeric_columns = _df.select_dtypes(include="number").columns
+        _df[numeric_columns] = _df[numeric_columns].interpolate(method="linear")
     else:
         _df = getattr(df.resample(rule), method)()
         if method in ("ffill", "bfill"):

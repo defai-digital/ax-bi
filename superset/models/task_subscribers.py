@@ -48,7 +48,14 @@ class TaskSubscriber(CoreTaskSubscriber, AuditMixinNullable, Model):
     user_id = Column(
         Integer, ForeignKey("ab_user.id", ondelete="CASCADE"), nullable=False
     )
-    subscribed_at = Column(DateTime, nullable=False, default=datetime.now(timezone.utc))
+    subscribed_at = Column(
+        DateTime,
+        nullable=False,
+        # Pass a callable so the default is evaluated per-row at insert time;
+        # ``datetime.now(timezone.utc)`` (called here) would freeze a single
+        # import-time timestamp for every row.
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     # Relationships
     task = relationship("Task", back_populates="subscribers")

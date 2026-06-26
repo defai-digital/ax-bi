@@ -22,7 +22,7 @@ import { t } from '@apache-superset/core/translation';
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
-      label: t('UI Configuration'),
+      label: () => t('UI Configuration'),
       expanded: true,
       controlSetRows: [
         [

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import rison from 'rison';
 import fetchMock from 'fetch-mock';
@@ -121,7 +121,7 @@ test('"New Dataset" button exists (when canCreate=true)', async () => {
   // - "Dataset" (if icon is aria-hidden)
   // The $ anchor prevents matching future "Import Dataset" button.
   expect(
-    await screen.findByRole('button', { name: /(?:plus\s*)?Dataset$/i }),
+    await screen.findByRole('button', { name: /^(?:plus\s*)?Dataset$/i }),
   ).toBeInTheDocument();
 });
 
@@ -130,7 +130,7 @@ test('"New Dataset" button hidden (when canCreate=false)', async () => {
 
   await waitFor(() => {
     expect(
-      screen.queryByRole('button', { name: /(?:plus\s*)?Dataset$/i }),
+      screen.queryByRole('button', { name: /^(?:plus\s*)?Dataset$/i }),
     ).not.toBeInTheDocument();
   });
 });
@@ -138,17 +138,17 @@ test('"New Dataset" button hidden (when canCreate=false)', async () => {
 test('"Import" button exists (when canCreate=true)', async () => {
   renderDatasetList(mockAdminUser);
 
-  // Note: Using testId - import button lacks accessible text content
-  // TODO: Add aria-label or text to import button
-  expect(await screen.findByTestId('import-button')).toBeInTheDocument();
+  expect(
+    await screen.findByRole('button', { name: /import dataset/i }),
+  ).toBeInTheDocument();
 });
 
 test('"Import" button opens import modal', async () => {
   renderDatasetList(mockAdminUser);
 
-  // Note: Using testId - import button lacks accessible text content
-  // TODO: Add aria-label or text to import button
-  const importButton = await screen.findByTestId('import-button');
+  const importButton = await screen.findByRole('button', {
+    name: /import dataset/i,
+  });
   expect(importButton).toBeInTheDocument();
 
   await userEvent.click(importButton);
@@ -190,10 +190,8 @@ test('"Bulk select" button hidden for read-only users', async () => {
 test('renders Name search filter', async () => {
   renderDatasetList(mockAdminUser);
 
-  // Note: Using testId - search input lacks accessible label
-  // TODO: Add aria-label to search input
   expect(
-    await screen.findByTestId('search-filter-container'),
+    await screen.findByRole('textbox', { name: /name/i }),
   ).toBeInTheDocument();
 });
 
@@ -285,8 +283,7 @@ test('API call includes correct page size', async () => {
 test('typing in name filter updates input value and triggers API with decoded search filter', async () => {
   renderDatasetList(mockAdminUser);
 
-  const searchContainer = await screen.findByTestId('search-filter-container');
-  const searchInput = within(searchContainer).getByRole('textbox');
+  const searchInput = await screen.findByRole('textbox', { name: /name/i });
 
   // Record initial API calls
   const initialCallCount = fetchMock.callHistory.calls(

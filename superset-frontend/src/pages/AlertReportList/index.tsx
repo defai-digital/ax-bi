@@ -53,6 +53,7 @@ import {
   useListViewResource,
   useSingleViewResource,
 } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import {
   createErrorHandler,
   createFetchRelated,
@@ -69,7 +70,7 @@ import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
 const extensionsRegistry = getExtensionsRegistry();
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
 const AlertStateLabel: Record<AlertState, string> = {
   [AlertState.Success]: t('Success'),

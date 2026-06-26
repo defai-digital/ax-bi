@@ -28,7 +28,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.dashboard.exceptions import DashboardNotFoundError
 from superset.exceptions import SupersetSecurityException
-from superset.extensions import event_logger
 from superset.mcp_service.chart.chart_helpers import (
     build_applied_dashboard_filters,
     ChartNotOnDashboardError,
@@ -51,6 +50,8 @@ from superset.mcp_service.privacy import (
     user_can_view_data_model_metadata,
 )
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import dump_model_with_select_columns
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ async def _attach_dashboard_filters(
     """
     if not result.id:
         return None
-    with event_logger.log_context(action="mcp.get_chart_info.dashboard_filters"):
+    with mcp_event_log_context(action="mcp.get_chart_info.dashboard_filters"):
         try:
             dashboard_filters = build_applied_dashboard_filters(dashboard_id, result.id)
         except DashboardNotFoundError as exc:
@@ -270,7 +271,7 @@ async def get_chart_info(
 
     # Handle unsaved chart (form_data_key only, no identifier)
     if not request.identifier and request.form_data_key:
-        with event_logger.log_context(
+        with mcp_event_log_context(
             action="mcp.get_chart_info.unsaved_chart_from_cache"
         ):
             await ctx.info(
@@ -282,10 +283,7 @@ async def get_chart_info(
                 return result
             if not can_view_data_model_metadata:
                 result = redact_chart_data_model_fields(result)
-            return result.model_dump(
-                mode="json",
-                context={"select_columns": request.select_columns},
-            )
+            return dump_model_with_select_columns(result, request.select_columns)
 
     # At this point identifier must be set (validator ensures at least one
     # of identifier/form_data_key is provided, and the form_data_key-only
@@ -297,7 +295,7 @@ async def get_chart_info(
         subqueryload(Slice.tags),
     ]
 
-    with event_logger.log_context(action="mcp.get_chart_info.lookup"):
+    with mcp_event_log_context(action="mcp.get_chart_info.lookup"):
         tool = ModelGetInfoCore(
             dao_class=ChartDAO,
             output_schema=ChartInfo,
@@ -313,7 +311,7 @@ async def get_chart_info(
     if isinstance(result, ChartInfo):
         # If form_data_key is provided, override form_data with cached version
         if request.form_data_key:
-            with event_logger.log_context(
+            with mcp_event_log_context(
                 action="mcp.get_chart_info.unsaved_state_override"
             ):
                 await ctx.info(
@@ -340,10 +338,7 @@ async def get_chart_info(
             if error is not None:
                 return error
 
-        return result.model_dump(
-            mode="json",
-            context={"select_columns": request.select_columns},
-        )
+        return dump_model_with_select_columns(result, request.select_columns)
     else:
         await ctx.warning("Chart retrieval failed: error=%s" % (str(result),))
 

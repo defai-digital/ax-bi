@@ -24,6 +24,7 @@ that are referenced but not defined.
 
 import json  # noqa: TID251 - standalone docs script
 import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from pathlib import Path
 from typing import Any
 
@@ -788,6 +789,13 @@ def make_summaries_unique(spec: dict[str, Any]) -> int:  # noqa: C901
 
 def main() -> None:  # noqa: C901
     """Main function to fix the OpenAPI spec."""
+    parser = ArgumentParser(
+        description="Fix missing schema references in the OpenAPI spec.",
+        epilog=__doc__,
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    parser.parse_args()
+
     script_dir = Path(__file__).parent
     spec_path = script_dir.parent / "static" / "resources" / "openapi.json"
 

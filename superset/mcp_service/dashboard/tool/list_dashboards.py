@@ -31,7 +31,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 if TYPE_CHECKING:
     from superset.models.dashboard import Dashboard
 
-from superset.extensions import event_logger
 from superset.mcp_service.dashboard.schemas import (
     DashboardFilter,
     DashboardInfo,
@@ -39,7 +38,13 @@ from superset.mcp_service.dashboard.schemas import (
     ListDashboardsRequest,
     serialize_dashboard_object,
 )
-from superset.mcp_service.mcp_core import ModelListCore
+from superset.mcp_service.mcp_core import (
+    ModelListCore,
+    request_or_default,
+    to_zero_based_page,
+)
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.mcp_service.utils.response_utils import finalize_list_response
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +116,7 @@ async def list_dashboards(
     a filter: filters=[{"col": "created_by_fk", "opr": "eq", "value": <id>}]
     (or "changed_by_fk" for "last modified by").
     """
-    request = request or _DEFAULT_LIST_DASHBOARDS_REQUEST.model_copy(deep=True)
+    request = request_or_default(request, _DEFAULT_LIST_DASHBOARDS_REQUEST)
     await ctx.info(
         "Listing dashboards: page=%s, page_size=%s, search=%s"
         % (
@@ -163,34 +168,16 @@ async def list_dashboards(
         logger=logger,
     )
 
-    with event_logger.log_context(action="mcp.list_dashboards.query"):
+    with mcp_event_log_context(action="mcp.list_dashboards.query"):
         result = tool.run_tool(
             filters=request.filters,
             search=request.search,
             select_columns=request.select_columns,
             order_column=request.order_column,
             order_direction=request.order_direction,
-            page=max(request.page - 1, 0),
+            page=to_zero_based_page(request.page),
             page_size=request.page_size,
             created_by_me=request.created_by_me,
             owned_by_me=request.owned_by_me,
         )
-    count = len(result.dashboards) if hasattr(result, "dashboards") else 0
-    total_pages = getattr(result, "total_pages", None)
-    await ctx.info(
-        "Dashboards listed successfully: count=%s, total_pages=%s"
-        % (count, total_pages)
-    )
-
-    # Apply field filtering via serialization context
-    # Always use columns_requested (either explicit select_columns or defaults)
-    # This triggers DashboardInfo._filter_fields_by_context for each dashboard
-    columns_to_filter = result.columns_requested
-    await ctx.debug(
-        "Applying field filtering via serialization context: columns=%s"
-        % (columns_to_filter,)
-    )
-    with event_logger.log_context(action="mcp.list_dashboards.serialization"):
-        return result.model_dump(
-            mode="json", context={"select_columns": columns_to_filter}
-        )
+    return await finalize_list_response(result, "dashboards", "Dashboards", ctx)

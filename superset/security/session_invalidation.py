@@ -38,7 +38,7 @@ import math
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from flask import flash, session
+from flask import flash, g, request, session
 from flask_babel import gettext as __
 from flask_login import current_user, logout_user
 from sqlalchemy import event, inspect
@@ -93,11 +93,33 @@ def is_session_invalidated(
     return login_at < _as_utc_timestamp(invalidated_at)
 
 
-def _get_user_invalidated_at(user: Any) -> Optional[datetime]:
-    extra_attributes = getattr(user, "extra_attributes", None)
-    if not extra_attributes:
+def _get_user_invalidated_at(user_or_id: Any) -> Optional[datetime]:
+    user_id = getattr(user_or_id, "id", user_or_id)
+    if user_id is None:
         return None
-    return extra_attributes[0].sessions_invalidated_at
+
+    # Flask-Login stores ``_user_id`` in the session as a string, but
+    # ``UserAttribute.user_id`` is an integer column; coerce so the filter does
+    # not silently mismatch (or raise) on strict backends when the id comes
+    # from the session rather than an authenticated user object.
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return None
+
+    # The Flask-Login user object can outlive changes made in another session
+    # or earlier in the same request flow. Query the epoch directly so logout
+    # and account-disable invalidations are observed immediately.
+    from superset.extensions import db  # pylint: disable=import-outside-toplevel
+    from superset.models.user_attributes import (  # pylint: disable=import-outside-toplevel
+        UserAttribute,
+    )
+
+    return (
+        db.session.query(UserAttribute.sessions_invalidated_at)
+        .filter_by(user_id=user_id)
+        .scalar()
+    )
 
 
 def enforce_session_validity() -> Optional[Response]:
@@ -110,13 +132,18 @@ def enforce_session_validity() -> Optional[Response]:
     """
     try:
         user = current_user
+        session_user_id = None
         if not user or not getattr(user, "is_authenticated", False):
-            return None
+            session_user_id = session.get("_user_id")
+            if not session_user_id:
+                return None
         # Guest (embedded) users are not FAB users and have their own
         # revocation mechanism; skip them.
-        if getattr(user, "is_guest_user", False):
+        if getattr(user, "is_guest_user", False) and not session_user_id:
             return None
-        invalidated_at = _get_user_invalidated_at(user)
+
+        user_or_id = getattr(user, "id", None) or session_user_id or user
+        invalidated_at = _get_user_invalidated_at(user_or_id)
         if invalidated_at is None:
             return None
         login_at = session.get(SESSION_LOGIN_AT_KEY)
@@ -129,7 +156,11 @@ def enforce_session_validity() -> Optional[Response]:
         # this hook needing to know the route kind.
         logout_user()
         session.clear()
+        get_current_object = getattr(current_user, "_get_current_object", None)
+        g.user = get_current_object() if get_current_object else current_user
         flash(__("Your session has ended. Please sign in again."), "warning")
+        if request.path.startswith("/api/"):
+            return Response(status=401)
         return None
     except Exception:  # noqa: BLE001  # pylint: disable=broad-except
         logger.warning(
@@ -138,7 +169,9 @@ def enforce_session_validity() -> Optional[Response]:
         return None
 
 
-def invalidate_user_sessions(connection: Any, user_id: int) -> None:
+def invalidate_user_sessions(
+    connection: Any, user_id: int, *, round_up: bool = True
+) -> None:
     """Stamp the invalidation epoch for ``user_id`` using ``connection``.
 
     Upserts the user's ``UserAttribute`` row so the mechanism works even for
@@ -151,16 +184,17 @@ def invalidate_user_sessions(connection: Any, user_id: int) -> None:
     from superset.models.user_attributes import UserAttribute
 
     table = UserAttribute.__table__
-    # Round the epoch up to the next whole second. Some backends (e.g. MySQL)
-    # store ``DATETIME`` columns without sub-second precision and truncate the
-    # value; a session that logged in earlier in the same wall-clock second
-    # carries a fractional ``_login_at`` that would otherwise compare as >= the
-    # truncated epoch and survive invalidation. Ceiling the stamp guarantees it
-    # strictly exceeds any login time from the same second.
     now_epoch = _utcnow().timestamp()
-    now = datetime.fromtimestamp(math.ceil(now_epoch), timezone.utc).replace(
-        tzinfo=None
-    )
+    if round_up:
+        # Round the epoch up to the next whole second. Some backends (e.g.
+        # MySQL) store ``DATETIME`` columns without sub-second precision and
+        # truncate the value; a session that logged in earlier in the same
+        # wall-clock second carries a fractional ``_login_at`` that would
+        # otherwise compare as >= the truncated epoch and survive invalidation.
+        # Ceiling the stamp guarantees it strictly exceeds any login time from
+        # the same second.
+        now_epoch = math.ceil(now_epoch)
+    now = datetime.fromtimestamp(now_epoch, timezone.utc).replace(tzinfo=None)
 
     def _stamp_existing() -> int:
         return connection.execute(

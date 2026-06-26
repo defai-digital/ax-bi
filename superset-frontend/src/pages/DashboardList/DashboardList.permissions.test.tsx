@@ -185,9 +185,11 @@ describe('DashboardList - Permission-based UI Tests', () => {
 
     // Verify admin controls are visible
     expect(
-      screen.getByRole('button', { name: /dashboard/i }),
+      screen.getByRole('button', { name: /^(?:plus\s*)?Dashboard$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('import-button')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /import dashboards/i }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('bulk-select')).toBeInTheDocument();
 
     // Verify Actions column is visible
@@ -214,9 +216,11 @@ describe('DashboardList - Permission-based UI Tests', () => {
 
     // Verify permission-gated elements are hidden
     expect(
-      screen.queryByRole('button', { name: /dashboard/i }),
+      screen.queryByRole('button', { name: /^(?:plus\s*)?Dashboard$/i }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByTestId('import-button')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /import dashboards/i }),
+    ).not.toBeInTheDocument();
   });
 
   test('shows Actions column for users with admin permissions', async () => {
@@ -302,9 +306,11 @@ describe('DashboardList - Permission-based UI Tests', () => {
     await screen.findByTestId('dashboard-list-view');
 
     expect(
-      screen.getByRole('button', { name: /dashboard/i }),
+      screen.getByRole('button', { name: /^(?:plus\s*)?Dashboard$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('import-button')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /import dashboards/i }),
+    ).toBeInTheDocument();
   });
 
   test('hides Create and Import buttons for users with read-only permissions', async () => {
@@ -312,9 +318,11 @@ describe('DashboardList - Permission-based UI Tests', () => {
     await screen.findByTestId('dashboard-list-view');
 
     expect(
-      screen.queryByRole('button', { name: /dashboard/i }),
+      screen.queryByRole('button', { name: /^(?:plus\s*)?Dashboard$/i }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByTestId('import-button')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /import dashboards/i }),
+    ).not.toBeInTheDocument();
   });
 
   test('hides Create and Import buttons for users with export-only permissions', async () => {
@@ -322,9 +330,11 @@ describe('DashboardList - Permission-based UI Tests', () => {
     await screen.findByTestId('dashboard-list-view');
 
     expect(
-      screen.queryByRole('button', { name: /dashboard/i }),
+      screen.queryByRole('button', { name: /^(?:plus\s*)?Dashboard$/i }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByTestId('import-button')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /import dashboards/i }),
+    ).not.toBeInTheDocument();
   });
 
   test('renders favorite stars even for anonymous user', async () => {

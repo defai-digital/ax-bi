@@ -22,9 +22,70 @@ Enhanced error schemas for MCP chart generation with contextual information
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, overload
 
-from pydantic import BaseModel, computed_field, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    computed_field,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
+
+from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
+
+
+def mcp_error_timestamp() -> datetime:
+    """Return the standard aware UTC timestamp for MCP error responses."""
+    return datetime.now(timezone.utc)
+
+
+@overload
+def sanitize_error_text(value: str) -> str:
+    ...
+
+
+@overload
+def sanitize_error_text(value: None) -> None:
+    ...
+
+
+def sanitize_error_text(value: str | None) -> str | None:
+    """Wrap prompt-facing MCP error text as untrusted LLM context data."""
+    if value is None:
+        return None
+    return sanitize_for_llm_context(value, field_path=("error",))
+
+
+class MCPResourceError(BaseModel):
+    """Shared base for domain-specific MCP resource error responses.
+
+    Provides the common fields, timestamp factory, and optional LLM error-text
+    sanitization that every resource error schema needs, so individual schemas
+    only declare their class name.
+    """
+
+    error: str = Field(..., description="Error message")
+    error_type: str = Field(..., description="Type of error")
+    timestamp: str | datetime | None = Field(None, description="Error timestamp")
+
+    model_config = ConfigDict(ser_json_timedelta="iso8601")
+
+    #: Subclasses can override to ``False`` to skip LLM error-text sanitization.
+    _sanitize_error: bool = True
+
+    @field_validator("error")
+    @classmethod
+    def _sanitize_error_for_llm(cls, value: str) -> str:
+        if cls._sanitize_error:
+            return sanitize_error_text(value)
+        return value
+
+    @classmethod
+    def create(cls, error: str, error_type: str) -> "MCPResourceError":
+        """Create a standardized error with an aware UTC timestamp."""
+        return cls(error=error, error_type=error_type, timestamp=mcp_error_timestamp())
 
 
 class MCPBaseError(BaseModel):
@@ -40,7 +101,7 @@ class MCPBaseError(BaseModel):
     )
     message: str = Field(..., description="Human-readable error message")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=mcp_error_timestamp,
         description="Error timestamp",
     )
     details: str | None = Field(None, description="Detailed error explanation")
@@ -52,6 +113,12 @@ class MCPBaseError(BaseModel):
     )
 
     model_config = ConfigDict(ser_json_timedelta="iso8601")
+
+    @field_validator("message")
+    @classmethod
+    def _sanitize_message_for_llm(cls, value: str) -> str:
+        """Wrap the human-readable error message as untrusted LLM context data."""
+        return sanitize_error_text(value)
 
     @model_validator(mode="before")
     @classmethod

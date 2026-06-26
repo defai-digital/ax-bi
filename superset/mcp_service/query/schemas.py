@@ -22,7 +22,7 @@ Pydantic schemas for query history-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, List, Literal
 
 from pydantic import (
     BaseModel,
@@ -35,12 +35,14 @@ from pydantic import (
 )
 
 from superset.daos.base import ColumnOperator, ColumnOperatorEnum
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import MAX_PAGE_SIZE
-from superset.mcp_service.privacy import filter_user_directory_fields
 from superset.mcp_service.system.schemas import PaginationInfo
+from superset.mcp_service.utils.response_utils import filter_serialized_response_fields
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
-    parse_json_or_model_list,
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
 )
 
 DEFAULT_QUERY_COLUMNS = ["id", "status", "start_time", "database_id", "schema"]
@@ -111,7 +113,9 @@ class QueryInfo(BaseModel):
     )
     rows: int | None = Field(None, description="Number of rows returned or affected")
     database_id: int | None = Field(None, description="Database connection ID")
-    schema: str | None = Field(None, description="Database schema name")
+    schema_name: str | None = Field(
+        None, description="Database schema name", alias="schema"
+    )
     catalog: str | None = Field(None, description="Database catalog name")
     tab_name: str | None = Field(None, description="SQL Lab tab name")
     error_message: str | None = Field(None, description="Error message if query failed")
@@ -129,16 +133,8 @@ class QueryInfo(BaseModel):
     )
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
-        data = filter_user_directory_fields(serializer(self))
-
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                requested_fields = set(select_columns)
-                return {k: v for k, v in data.items() if k in requested_fields}
-
-        return data
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
+        return filter_serialized_response_fields(serializer(self), info)
 
 
 class QueryList(BaseModel):
@@ -232,31 +228,29 @@ class ListQueriesRequest(BaseModel):
     @classmethod
     def parse_filters(cls, v: Any) -> List[QueryFilter]:
         """Accept both JSON string and list of objects."""
-        return parse_json_or_model_list(v, QueryFilter, "filters")
+        return parse_filters(v, QueryFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> List[str]:
         """Accept JSON array, list, or comma-separated string."""
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListQueriesRequest":
         """Prevent using both search and filters simultaneously."""
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' parameters simultaneously. "
-                "Use either 'search' for text-based searching across multiple fields, "
-                "or 'filters' for precise column-based filtering, but not both."
-            )
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching across multiple fields, "
+            "or 'filters' for precise column-based filtering, but not both.",
+        )
         return self
 
 
-class QueryError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
+class QueryError(MCPResourceError):
+    pass
 
 
 class GetQueryInfoRequest(BaseModel):

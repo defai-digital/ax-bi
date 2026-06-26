@@ -42,13 +42,10 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-try:
-    import polib  # type: ignore[import-untyped]
-except ImportError:
-    print("polib is required. Install with: pip install polib", file=sys.stderr)
-    sys.exit(1)
+if TYPE_CHECKING:
+    import polib
 
 TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
 DEFAULT_OUTPUT = (
@@ -75,6 +72,12 @@ def _plural_key(entry: polib.POEntry) -> str:
 
 def build_index(translations_dir: Path) -> dict[str, Any]:
     """Read all .po files and build a combined translation index."""
+    try:
+        import polib  # type: ignore[import-untyped]
+    except ImportError:
+        print("polib is required. Install with: pip install polib", file=sys.stderr)
+        sys.exit(1)
+
     index: dict[str, dict[str, Any]] = {}
 
     langs = sorted(
@@ -137,6 +140,9 @@ def main() -> None:
         ),
     )
     args = parser.parse_args()
+
+    if not args.translations_dir.is_dir():
+        parser.error(f"--translations-dir does not exist: {args.translations_dir}")
 
     print(f"Reading .po files from {args.translations_dir} …", file=sys.stderr)
     index = build_index(args.translations_dir)

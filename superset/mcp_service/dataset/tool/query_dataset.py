@@ -34,7 +34,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError, SupersetException
-from superset.extensions import event_logger
 from superset.mcp_service.chart.schemas import DataColumn, PerformanceMetadata
 from superset.mcp_service.dataset.schemas import (
     DatasetError,
@@ -49,6 +48,7 @@ from superset.mcp_service.privacy import (
 )
 from superset.mcp_service.utils import _is_uuid
 from superset.mcp_service.utils.cache_utils import get_cache_status_from_result
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import build_oauth2_redirect_message
 
 logger = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ async def query_dataset(  # noqa: C901
             joinedload(SqlaTable.database),
         ]
 
-        with event_logger.log_context(action="mcp.query_dataset.lookup"):
+        with mcp_event_log_context(action="mcp.query_dataset.lookup"):
             dataset = _resolve_dataset(request.dataset_id, eager_options)
 
         if dataset is None:
@@ -324,7 +324,7 @@ async def query_dataset(  # noqa: C901
         await ctx.report_progress(4, 5, "Executing query")
         start_time = time.time()
 
-        with event_logger.log_context(action="mcp.query_dataset.execute"):
+        with mcp_event_log_context(action="mcp.query_dataset.execute"):
             factory = QueryContextFactory()
             # datasource_type is "table" because this tool queries SqlaTable
             # datasets (Superset's built-in semantic layer). External semantic

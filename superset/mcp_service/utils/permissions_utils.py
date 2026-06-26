@@ -27,6 +27,7 @@ from flask_appbuilder.security.sqla.models import User
 from pydantic import BaseModel
 
 from superset.mcp_service.privacy import USER_DIRECTORY_FIELDS
+from superset.mcp_service.utils.config_utils import get_superset_admin_role_name
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,25 @@ def get_current_user() -> Optional[User]:
         return None
 
 
+def current_user_can_access(permission: str, view_name: str) -> bool:
+    """Return whether the current user has access to a view permission."""
+    from superset import security_manager
+
+    return security_manager.can_access(permission, view_name)
+
+
+def current_user_can_access_database(database: Any) -> bool:
+    """Return whether the current user has access to a database."""
+    from superset import security_manager
+
+    return security_manager.can_access_database(database)
+
+
+def user_can_access_dataset_permission(permission: str) -> bool:
+    """Return whether the current user has a Dataset-level permission."""
+    return current_user_can_access(permission, "Dataset")
+
+
 def user_has_permission(
     user: Optional[User], permission: str, resource: Optional[str] = None
 ) -> bool:
@@ -89,12 +109,10 @@ def user_has_permission(
         return False
 
     try:
-        from flask import current_app
-
         # Check if user is admin (has all permissions). Use the configured
         # admin role name rather than hardcoding "Admin", so deployments that
         # rename the admin role (AUTH_ROLE_ADMIN) still grant admins the bypass.
-        admin_role_name = current_app.config["AUTH_ROLE_ADMIN"]
+        admin_role_name = get_superset_admin_role_name()
         # Collect role names granted directly AND inherited via group
         # membership (FAB users can receive the admin role through a group),
         # so a group-admin still gets the bypass.

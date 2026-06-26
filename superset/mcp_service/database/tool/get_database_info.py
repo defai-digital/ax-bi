@@ -23,12 +23,10 @@ about a specific database connection.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.database.schemas import (
     DatabaseError,
     DatabaseInfo,
@@ -41,6 +39,7 @@ from superset.mcp_service.privacy import (
     requires_data_model_metadata_access,
     user_can_view_data_model_metadata,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +103,7 @@ async def get_database_info(
     try:
         from superset.daos.database import DatabaseDAO
 
-        with event_logger.log_context(action="mcp.get_database_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_database_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=DatabaseDAO,
                 output_schema=DatabaseInfo,
@@ -144,8 +143,7 @@ async def get_database_info(
                 type(e).__name__,
             )
         )
-        return DatabaseError(
+        return DatabaseError.create(
             error=f"Failed to get database info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

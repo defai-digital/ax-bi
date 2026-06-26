@@ -76,6 +76,19 @@ def _restore_dropped_metric_columns(
     return df
 
 
+def _stack_metrics_for_combined_value(df: DataFrame) -> DataFrame:
+    # stack() reorders metrics into the inner level. dropna=False preserves
+    # restored all-NaN metric rows that would otherwise be silently dropped by
+    # stack's default dropna=True behavior on pandas 2.x.
+    # On pandas 3.x the new stack() implementation never introduces NA rows,
+    # so it rejects dropna entirely with a ValueError; in that case the default
+    # stack() already preserves the all-NaN rows.
+    try:
+        return df.stack(level=0, dropna=False).unstack()
+    except ValueError:
+        return df.stack(level=0).unstack()
+
+
 @validate_column_args("index", "columns")
 def pivot(  # pylint: disable=too-many-arguments
     df: DataFrame,
@@ -164,8 +177,6 @@ def pivot(  # pylint: disable=too-many-arguments
         df = df.drop(df.columns.difference(pivot_key_set), axis=PandasAxis.COLUMN)
 
     if combine_value_with_metric:
-        # dropna=False preserves restored all-NaN metric rows that would otherwise
-        # be silently dropped by stack's default dropna=True behavior.
-        df = df.stack(level=0, dropna=False).unstack()
+        df = _stack_metrics_for_combined_value(df)
 
     return df

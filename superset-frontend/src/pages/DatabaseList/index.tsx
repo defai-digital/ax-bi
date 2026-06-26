@@ -31,6 +31,7 @@ import { useSelector } from 'react-redux';
 import { useQueryParams, BooleanParam } from 'use-query-params';
 import { LocalStorageKeys, setItem } from 'src/utils/localStorageHelpers';
 import { useListViewResource } from 'src/views/CRUD/hooks';
+import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import {
   createErrorHandler,
   createFetchRelated,
@@ -84,7 +85,7 @@ const dbConfigExtraExtension = extensionsRegistry.get(
   'databaseconnection.extraOption',
 );
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const SEMANTIC_LAYERS_FLAG = 'SEMANTIC_LAYERS' as FeatureFlag;
 
 type ConnectionItem = DatabaseObject & {

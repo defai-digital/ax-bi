@@ -67,7 +67,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Annotated, Any, cast, Dict, List, Literal, TYPE_CHECKING
+from typing import Annotated, Any, Dict, List, Literal, TYPE_CHECKING
 
 from pydantic import (
     AliasChoices,
@@ -89,11 +89,12 @@ from superset.mcp_service.common.cache_schemas import (
     MetadataCacheControl,
     OwnedByMeMixin,
 )
-from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from superset.mcp_service.privacy import (
-    filter_user_directory_fields,
-    user_can_view_data_model_metadata,
+from superset.mcp_service.common.error_schemas import (
+    MCPResourceError,
+    sanitize_error_text,
 )
+from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from superset.mcp_service.privacy import user_can_view_data_model_metadata
 from superset.mcp_service.system.schemas import (
     PaginationInfo,
     RoleInfo,
@@ -103,7 +104,10 @@ from superset.mcp_service.utils import (
     escape_llm_context_delimiters,
     sanitize_for_llm_context,
 )
-from superset.mcp_service.utils.response_utils import humanize_timestamp
+from superset.mcp_service.utils.response_utils import (
+    filter_serialized_response_fields,
+    humanize_timestamp,
+)
 from superset.mcp_service.utils.sanitization import (
     sanitize_user_input,
     sanitize_user_input_with_changes,
@@ -111,27 +115,8 @@ from superset.mcp_service.utils.sanitization import (
 from superset.utils.json import loads as json_loads
 
 
-class DashboardError(BaseModel):
+class DashboardError(MCPResourceError):
     """Error response for dashboard operations"""
-
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Type of error")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @field_validator("error")
-    @classmethod
-    def sanitize_error_for_llm_context(cls, value: str) -> str:
-        """Wrap error text before it is exposed to LLM context."""
-        return sanitize_for_llm_context(value, field_path=("error",))
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "DashboardError":
-        """Create a standardized DashboardError with timestamp."""
-        from datetime import datetime
-
-        return cls(error=error, error_type=error_type, timestamp=datetime.now())
 
 
 def serialize_tag_object(tag: Any) -> TagInfo | None:
@@ -225,12 +210,9 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
         Handles Claude Code bug where objects are double-serialized as strings.
         See: https://github.com/anthropics/claude-code/issues/5504
         """
-        from superset.mcp_service.utils.schema_utils import parse_json_or_model_list
+        from superset.mcp_service.utils.schema_utils import parse_filters
 
-        return cast(
-            List[DashboardFilter],
-            parse_json_or_model_list(v, DashboardFilter, "filters"),
-        )
+        return parse_filters(v, DashboardFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
@@ -241,9 +223,11 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
         Handles Claude Code bug where arrays are double-serialized as strings.
         See: https://github.com/anthropics/claude-code/issues/5504
         """
-        from superset.mcp_service.utils.schema_utils import parse_json_or_list
+        from superset.mcp_service.utils.schema_utils import (
+            parse_select_columns as parse_select_columns_param,
+        )
 
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns_param(v)
 
     search: Annotated[
         str | None,
@@ -279,12 +263,17 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListDashboardsRequest":
         """Prevent using both search and filters simultaneously."""
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' parameters simultaneously. "
-                "Use either 'search' for text-based searching across multiple fields, "
-                "or 'filters' for precise column-based filtering, but not both."
-            )
+        from superset.mcp_service.utils.schema_utils import (
+            ensure_search_and_filters_not_combined,
+        )
+
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching across multiple fields, "
+            "or 'filters' for precise column-based filtering, but not both.",
+        )
         return self
 
 
@@ -355,12 +344,13 @@ class GetDashboardInfoRequest(MetadataCacheControl):
     @field_validator("select_columns", mode="before")
     @classmethod
     def _parse_select_columns(cls, value: Any) -> Any:
-        from superset.mcp_service.utils.schema_utils import parse_json_or_list
+        from superset.mcp_service.utils.schema_utils import (
+            parse_select_columns_or_default,
+        )
 
-        if value is None:
-            return list(DEFAULT_GET_DASHBOARD_INFO_COLUMNS)
-        parsed = parse_json_or_list(value, "select_columns")
-        return parsed if parsed else list(DEFAULT_GET_DASHBOARD_INFO_COLUMNS)
+        return parse_select_columns_or_default(
+            value, DEFAULT_GET_DASHBOARD_INFO_COLUMNS
+        )
 
 
 class GetDashboardLayoutRequest(BaseModel):
@@ -487,22 +477,7 @@ class DashboardInfo(BaseModel):
 
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
-        """Filter fields based on serialization context.
-
-        If context contains 'select_columns', only include those fields.
-        Otherwise, include all fields (default behavior).
-        """
-        # Get full serialization
-        data = filter_user_directory_fields(serializer(self))
-
-        # Check if we have a context with select_columns
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                # Filter to only requested fields
-                return {k: v for k, v in data.items() if k in select_columns}
-
-        return data
+        return filter_serialized_response_fields(serializer(self), info)
 
 
 class DashboardList(BaseModel):
@@ -593,9 +568,7 @@ class AddChartToDashboardResponse(BaseModel):
         labels — both must be wrapped so the LLM treats them as data, not
         instructions.
         """
-        if value is None:
-            return value
-        return sanitize_for_llm_context(value, field_path=("error",))
+        return sanitize_error_text(value)
 
 
 class GenerateDashboardRequest(BaseModel):

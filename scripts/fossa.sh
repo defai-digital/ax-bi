@@ -17,6 +17,15 @@
 # limitations under the License.
 #
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/fossa.sh
+
+Install the FOSSA CLI and run dependency analysis.
+EOF
+  exit 0
+fi
+
 # This is the recommended way to install FOSSA's cli per the docs:
 # https://docs.fossa.com/docs/generic-ci
 curl -s -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash

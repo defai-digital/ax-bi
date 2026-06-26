@@ -18,13 +18,13 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime
 
 import sqlalchemy as sa
 
 from superset import db
 from superset.commands.base import BaseCommand
 from superset.key_value.models import KeyValueEntry
+from superset.utils.dates import naive_utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class KeyValuePruneCommand(BaseCommand):
         # consistent with the selection and re-checks expiry on delete, so an
         # entry refreshed (expires_on moved into the future) between selection
         # and deletion is not removed.
-        cutoff = datetime.now()
+        cutoff = naive_utcnow()
 
         # Select all IDs whose expiry has already passed. Entries without an
         # expiry (expires_on IS NULL) never expire and are left untouched. The

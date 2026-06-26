@@ -27,7 +27,7 @@ from superset.models.core import Log
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils.core import get_user_id
-from superset.utils.dates import datetime_to_epoch
+from superset.utils.dates import datetime_to_epoch, naive_utcnow
 
 
 class LogDAO(BaseDAO[Log]):
@@ -41,10 +41,10 @@ class LogDAO(BaseDAO[Log]):
         user_id = get_user_id()
         has_subject_title = or_(
             and_(
-                Dashboard.dashboard_title is not None,
+                Dashboard.dashboard_title.isnot(None),
                 Dashboard.dashboard_title != "",
             ),
-            and_(Slice.slice_name is not None, Slice.slice_name != ""),
+            and_(Slice.slice_name.isnot(None), Slice.slice_name != ""),
         )
 
         if distinct:
@@ -142,7 +142,9 @@ class LogDAO(BaseDAO[Log]):
                     "item_title": item_title,
                     "time": datetime_to_epoch(log.dttm),
                     "time_delta_humanized": humanize.naturaltime(
-                        datetime.utcnow() - log.dttm
+                        # Log.dttm is stored as naive UTC; subtract a naive UTC
+                        # "now" to avoid a naive/aware TypeError.
+                        naive_utcnow() - log.dttm
                     ),
                 }
             )

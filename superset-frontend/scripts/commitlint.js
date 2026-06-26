@@ -24,21 +24,40 @@
  */
 const { execSync, spawnSync } = require('child_process');
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  process.stdout.write(`Usage: node scripts/commitlint.js [env-var-name]
+
+Check commit messages using commitlint.
+
+Arguments:
+  env-var-name  Environment variable containing the commit message
+                (default: GIT_PARAMS)
+
+Options:
+  --help, -h    Show this help message
+`);
+  process.exit(0);
+}
+
 const envVariable = process.argv[2] || 'GIT_PARAMS';
 
 if (!envVariable || !process.env[envVariable]) {
-  process.stdout.write(
+  process.stderr.write(
     `Please provide a commit message via \`${envVariable}={Your Message}\`.\n`,
   );
-  process.exit(0);
+  process.exit(1);
 }
 if (
   execSync('git rev-list --count HEAD ^master', {
     encoding: 'utf-8',
   }).trim() === '0'
 ) {
-  const { status } = spawnSync(`commitlint`, ['-E', envVariable], {
+  const { error, status } = spawnSync(`commitlint`, ['-E', envVariable], {
     stdio: 'inherit',
   });
+  if (error) {
+    process.stderr.write(`Unable to run commitlint: ${error.message}\n`);
+    process.exit(1);
+  }
   process.exit(status);
 }

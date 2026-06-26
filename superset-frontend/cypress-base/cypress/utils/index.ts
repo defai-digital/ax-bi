@@ -30,9 +30,9 @@ const toSlicelike = ($chart: JQuery<HTMLElement>): Slice => {
   const vizType = $chart.attr('data-test-viz-type');
 
   return {
-    slice_id: chartId ? parseInt(chartId, 10) : null,
+    slice_id: chartId ? parseInt(chartId, 10) : 0,
     form_data: {
-      viz_type: vizType || null,
+      viz_type: vizType || '',
     },
   };
 };

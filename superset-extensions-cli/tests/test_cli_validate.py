@@ -191,7 +191,7 @@ def test_validate_npm_with_malformed_version_output_raises_error(mock_run, mock_
     mock_which.return_value = "/usr/bin/npm"
     mock_run.return_value = Mock(returncode=0, stdout="not-a-version\n", stderr="")
 
-    # semver.compare will raise ValueError for malformed version
+    # semver.Version.parse will raise ValueError for malformed version
     with pytest.raises(ValueError):
         validate_npm()
 
@@ -204,7 +204,7 @@ def test_validate_npm_with_empty_version_output_raises_error(mock_run, mock_whic
     mock_which.return_value = "/usr/bin/npm"
     mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-    # semver.compare will raise ValueError for empty version
+    # semver.Version.parse will raise ValueError for empty version
     with pytest.raises(ValueError):
         validate_npm()
 

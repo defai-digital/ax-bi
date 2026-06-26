@@ -15790,7 +15790,7 @@ msgid ""
 "associate one dataset with a table.\n"
 msgstr ""
 "Ta tabela już ma przypisany zbiór danych. Możesz przypisać tylko jeden "
-"zbiór danych do tabeli."
+"zbiór danych do tabeli.\n"
 
 msgid "This theme is set locally"
 msgstr ""

@@ -143,6 +143,8 @@ async def test_list_saved_queries_basic(mock_list, mcp_server):
         assert data["saved_queries"] is not None
         assert len(data["saved_queries"]) == 1
         assert data["saved_queries"][0]["id"] == 1
+        assert data["saved_queries"][0]["schema"] == "public"
+        assert "schema_name" not in data["saved_queries"][0]
         assert data["saved_queries"][0]["label"] == "My Query"
 
 
@@ -310,6 +312,28 @@ async def test_list_saved_queries_select_columns_projects_fields(mock_list, mcp_
         assert set(sq.keys()) == {"id", "label"}
         assert sq["id"] == 1
         assert sq["label"] == "My Query"
+
+
+@patch("superset.daos.query.SavedQueryDAO.list")
+@pytest.mark.asyncio
+async def test_list_saved_queries_select_columns_keeps_schema_alias(
+    mock_list, mcp_server
+):
+    """select_columns uses the public schema field name, not the internal alias."""
+    saved_query = create_mock_saved_query()
+    saved_query._mapping = {"id": saved_query.id, "schema": saved_query.schema}
+    mock_list.return_value = ([saved_query], 1)
+    async with Client(mcp_server) as client:
+        request = ListSavedQueriesRequest(
+            page=1, page_size=10, select_columns=["id", "schema"]
+        )
+        result = await client.call_tool(
+            "list_saved_queries", {"request": request.model_dump()}
+        )
+        data = json.loads(result.content[0].text)
+        sq = data["saved_queries"][0]
+        assert set(sq.keys()) == {"id", "schema"}
+        assert sq["schema"] == "public"
 
 
 @pytest.mark.asyncio

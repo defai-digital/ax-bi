@@ -23,3 +23,8 @@ declare module '*.png' {
 }
 
 declare module '*.jpg';
+
+declare module 'echarts/i18n/*-obj.js' {
+  const locale: any;
+  export default locale;
+}

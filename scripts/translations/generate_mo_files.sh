@@ -19,4 +19,13 @@
 # This script generates .mo binary files from .po translation files
 # these .mo files are used by the backend to load translations
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  cat <<'EOF'
+Usage: ./scripts/translations/generate_mo_files.sh
+
+Generate backend .mo translation files from Superset .po catalogs.
+EOF
+  exit 0
+fi
+
 flask fab babel-compile --target superset/translations

@@ -23,6 +23,7 @@ from flask_appbuilder.api import rison as parse_rison, safe, SQLAInterface
 from flask_appbuilder.api.schemas import get_list_schema
 from flask_appbuilder.security.decorators import permission_name, protect
 from flask_appbuilder.security.sqla.models import RegisterUser, Role
+from flask_login import current_user
 from flask_wtf.csrf import generate_csrf
 from marshmallow import (
     EXCLUDE,
@@ -181,6 +182,9 @@ class SecurityRestApi(BaseSupersetApi):
             500:
               $ref: '#/components/responses/500'
         """
+        if not current_user.is_authenticated:
+            return self.response_401()
+
         return self.response(200, result=generate_csrf())
 
     @expose("/guest_token/", methods=("POST",))

@@ -38,7 +38,6 @@ from superset.commands.exceptions import (
     ObjectNotFoundError,
 )
 from superset.exceptions import SupersetException, SupersetSecurityException
-from superset.extensions import event_logger
 from superset.mcp_service.auth import (
     _get_app_context_manager,
     get_user_from_request,
@@ -50,6 +49,7 @@ from superset.mcp_service.constants import (
     DEFAULT_TOKEN_LIMIT,
     DEFAULT_WARN_THRESHOLD_PCT,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log
 from superset.mcp_service.utils.token_utils import (
     estimate_response_tokens,
     format_size_limit_error,
@@ -331,7 +331,7 @@ class LoggingMiddleware(Middleware):
             if error_type is not None:
                 payload["error_type"] = error_type
             if has_app_context():
-                event_logger.log(
+                mcp_event_log(
                     user_id=user_id,
                     action="mcp_tool_call",
                     dashboard_id=dashboard_id,
@@ -373,7 +373,7 @@ class LoggingMiddleware(Middleware):
             self._extract_context_info(context)
         )
         if has_app_context():
-            event_logger.log(
+            mcp_event_log(
                 user_id=user_id,
                 action="mcp_message",
                 dashboard_id=dashboard_id,
@@ -595,7 +595,7 @@ class GlobalErrorHandlerMiddleware(Middleware):
 
         # Log to Superset's event system
         try:
-            event_logger.log(
+            mcp_event_log(
                 user_id=user_id,
                 action="mcp_tool_error",
                 duration_ms=duration_ms,
@@ -996,7 +996,7 @@ class RateLimitMiddleware(Middleware):
             # Log rate limit event
             try:
                 user_id = get_user_id() if hasattr(context, "session") else None
-                event_logger.log(
+                mcp_event_log(
                     user_id=user_id,
                     action="mcp_rate_limit_exceeded",
                     curated_payload={
@@ -1300,7 +1300,7 @@ class ResponseSizeGuardMiddleware(Middleware):
 
         try:
             user_id = get_user_id()
-            event_logger.log(
+            mcp_event_log(
                 user_id=user_id,
                 action="mcp_response_truncated",
                 curated_payload={
@@ -1393,7 +1393,7 @@ class ResponseSizeGuardMiddleware(Middleware):
             # Log to event logger for monitoring
             try:
                 user_id = get_user_id()
-                event_logger.log(
+                mcp_event_log(
                     user_id=user_id,
                     action="mcp_response_size_exceeded",
                     curated_payload={
@@ -1432,12 +1432,16 @@ def create_response_size_guard_middleware() -> ResponseSizeGuardMiddleware | Non
     try:
         from superset.mcp_service.flask_singleton import get_flask_app
         from superset.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
+        from superset.mcp_service.utils.config_utils import (
+            get_mcp_response_size_config,
+        )
 
         flask_app = get_flask_app()
 
         # Get config from Flask app, falling back to defaults
-        config = flask_app.config.get(
-            "MCP_RESPONSE_SIZE_CONFIG", MCP_RESPONSE_SIZE_CONFIG
+        config = get_mcp_response_size_config(
+            flask_app.config,
+            default=MCP_RESPONSE_SIZE_CONFIG,
         )
 
         if not config.get("enabled", True):

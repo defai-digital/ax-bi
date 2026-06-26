@@ -203,6 +203,21 @@ class OpenDistroEngineSpec(BaseEngineSpec):  # pylint: disable=abstract-method
 
     engine = "odelasticsearch"
     engine_name = "OpenSearch (OpenDistro)"
+    metadata = {
+        "description": (
+            "OpenSearch and OpenDistro SQL connector for querying search and "
+            "analytics indexes through the Elasticsearch DB API."
+        ),
+        "logo": "elasticsearch.png",
+        "homepage_url": "https://opensearch.org/",
+        "categories": [
+            DatabaseCategory.SEARCH_NOSQL,
+            DatabaseCategory.OPEN_SOURCE,
+        ],
+        "pypi_packages": ["elasticsearch-dbapi"],
+        "connection_string": "odelasticsearch+https://{user}:{password}@{host}:9200/",
+        "default_port": 9200,
+    }
 
     @classmethod
     def convert_dttm(

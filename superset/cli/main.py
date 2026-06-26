@@ -32,6 +32,19 @@ from superset.utils.decorators import transaction
 logger = logging.getLogger(__name__)
 
 
+class SupersetFlaskGroup(FlaskGroup):
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        """List registered CLI commands without loading the Superset app.
+
+        FlaskGroup normally loads the app while formatting top-level help so it
+        can include app-provided commands. Superset registers its CLI modules
+        explicitly below, so eager app loading only adds side effects.
+        """
+
+        self._load_plugin_commands()
+        return sorted(click.Group.list_commands(self, ctx))
+
+
 def normalize_token(token_name: str) -> str:
     """
     As of click>=7, underscores in function names are replaced by dashes.
@@ -53,11 +66,10 @@ def create_app() -> Any:
 
 
 @click.group(
-    cls=FlaskGroup,
+    cls=SupersetFlaskGroup,
     create_app=create_app,
     context_settings={"token_normalize_func": normalize_token},
 )
-@with_appcontext
 def superset() -> None:
     """\033[1;37mThe Apache Superset CLI\033[0m"""
     # NOTE: codes above are ANSI color codes for bold white in CLI header ^^^

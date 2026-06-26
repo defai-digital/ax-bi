@@ -55,6 +55,13 @@ test('renders input with placeholder', () => {
   expect(screen.getByPlaceholderText('Type a value')).toBeInTheDocument();
 });
 
+test('labels the search input with the filter header', () => {
+  setup();
+  expect(
+    screen.getByRole('textbox', { name: 'Search Header' }),
+  ).toHaveAttribute('id', 'list-view-search-search-input');
+});
+
 test('renders search icon', () => {
   setup();
   expect(screen.getByTestId('filters-search')).toBeInTheDocument();

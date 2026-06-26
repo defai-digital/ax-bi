@@ -28,7 +28,6 @@ from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError
-from superset.extensions import event_logger
 from superset.mcp_service.auth import has_dataset_access
 from superset.mcp_service.chart.chart_helpers import extract_form_data_key_from_url
 from superset.mcp_service.chart.chart_utils import (
@@ -55,6 +54,7 @@ from superset.mcp_service.chart.schemas import (
     wrap_sql_adhoc_metrics,
 )
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
@@ -209,7 +209,7 @@ async def generate_chart(  # noqa: C901
         await ctx.debug(
             "Validating chart request: dataset_id=%s" % (request.dataset_id,)
         )
-        with event_logger.log_context(action="mcp.generate_chart.validation"):
+        with mcp_event_log_context(action="mcp.generate_chart.validation"):
             from superset.mcp_service.chart.validation import ValidationPipeline
 
             validation_result = ValidationPipeline.validate_request_with_warnings(
@@ -273,7 +273,7 @@ async def generate_chart(  # noqa: C901
             from superset.daos.dataset import DatasetDAO
 
             await ctx.debug("Looking up dataset: dataset_id=%s" % (request.dataset_id,))
-            with event_logger.log_context(action="mcp.generate_chart.dataset_lookup"):
+            with mcp_event_log_context(action="mcp.generate_chart.dataset_lookup"):
                 dataset = None
                 if isinstance(request.dataset_id, int) or (
                     isinstance(request.dataset_id, str) and request.dataset_id.isdigit()
@@ -355,7 +355,7 @@ async def generate_chart(  # noqa: C901
             await ctx.debug("Chart name: chart_name=%s" % (chart_name,))
 
             try:
-                with event_logger.log_context(action="mcp.generate_chart.db_write"):
+                with mcp_event_log_context(action="mcp.generate_chart.db_write"):
                     command = CreateChartCommand(
                         {
                             "slice_name": chart_name,
@@ -417,7 +417,7 @@ async def generate_chart(  # noqa: C901
 
                 # Compile check: execute the chart query to catch runtime errors
                 await ctx.report_progress(3, 5, "Running compile check (test query)")
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.generate_chart.compile_check"
                 ):
                     compile_result = _compile_chart(form_data, dataset.id)
@@ -484,7 +484,7 @@ async def generate_chart(  # noqa: C901
 
             # Generate form_data_key for saved charts (needed for chatbot rendering)
             try:
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.generate_chart.form_data_cache"
                 ):
                     from superset.commands.explore.form_data.parameters import (
@@ -558,7 +558,7 @@ async def generate_chart(  # noqa: C901
                     numeric_dataset_id = ds.id
 
             if numeric_dataset_id is not None:
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.generate_chart.compile_check"
                 ):
                     compile_result = _compile_chart(form_data, numeric_dataset_id)
@@ -640,7 +640,7 @@ async def generate_chart(  # noqa: C901
                 "Generating previews: formats=%s" % (str(request.preview_formats),)
             )
             try:
-                with event_logger.log_context(action="mcp.generate_chart.preview"):
+                with mcp_event_log_context(action="mcp.generate_chart.preview"):
                     for format_type in request.preview_formats:
                         await ctx.debug(
                             "Processing preview format: format=%s" % (format_type,)

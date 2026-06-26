@@ -1128,7 +1128,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         popupStyle: { minWidth: WIDER_DROPDOWN_WIDTH },
       },
     ],
-    [user, currentSourceFilter],
+    [cascadeClear, currentSourceFilter, fetchConnectionOptions, user],
   );
 
   const menuData: SubMenuProps = {
@@ -1154,6 +1154,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         </Tooltip>
       ),
       buttonStyle: 'link',
+      'aria-label': t('Import %s', datasetLabelLower()),
       onClick: openDatasetImportModal,
     });
   }

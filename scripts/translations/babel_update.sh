@@ -16,6 +16,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
+set -e
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: ./scripts/translations/babel_update.sh"
+  echo
+  echo "Extract and update Superset translation catalogs."
+  exit 0
+fi
+
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../.. && pwd )"
 LICENSE_TMP=$(mktemp)
@@ -39,7 +48,7 @@ cat <<'EOF'> "$LICENSE_TMP"
 
 EOF
 
-cd $ROOT_DIR
+cd "$ROOT_DIR"
 pybabel extract \
   -F superset/translations/babel.cfg \
   -o superset/translations/messages.pot \
@@ -52,7 +61,7 @@ pybabel extract \
 # Normalize .pot file
 msgcat --sort-by-msgid --no-wrap --no-location superset/translations/messages.pot -o superset/translations/messages.pot
 
-cat $LICENSE_TMP superset/translations/messages.pot > messages.pot.tmp \
+cat "$LICENSE_TMP" superset/translations/messages.pot > messages.pot.tmp \
   && mv messages.pot.tmp superset/translations/messages.pot
 
 # --no-fuzzy-matching: when a *new* source string is added, Babel's fuzzy
@@ -72,16 +81,12 @@ pybabel update \
   --no-fuzzy-matching
 
 # Chop off last blankline from po/pot files, see https://github.com/python-babel/babel/issues/799
-for file in $( find superset/translations/** );
+find superset/translations -type f \( -name "*.po" -o -name "*.pot" \) -print0 |
+while IFS= read -r -d '' file
 do
-  extension=${file##*.}
-  filename="${file%.*}"
-  if [ $extension == "po" ] || [ $extension == "pot" ]
-  then
-    mv $file $file.tmp
-    sed "$ d" $file.tmp > $file
-    rm $file.tmp
-  fi
+  mv "$file" "$file.tmp"
+  sed "$ d" "$file.tmp" > "$file"
+  rm "$file.tmp"
 done
 
-cd $CURRENT_DIR
+cd "$CURRENT_DIR"

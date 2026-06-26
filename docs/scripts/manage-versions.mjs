@@ -361,6 +361,7 @@ function removeVersion(section, version) {
 function printUsage() {
   console.log(`
 Usage:
+  node scripts/manage-versions.mjs --help
   node scripts/manage-versions.mjs add <section> <version> [--skip-generate]
   node scripts/manage-versions.mjs remove <section> <version>
 
@@ -379,6 +380,11 @@ Examples:
 }
 
 // Main execution
+if (rawArgs.includes('--help') || rawArgs.includes('-h')) {
+  printUsage();
+  process.exit(0);
+}
+
 if (!command || !section || !version) {
   printUsage();
   process.exit(1);

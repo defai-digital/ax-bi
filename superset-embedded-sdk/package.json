@@ -22,7 +22,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && babel src --out-dir lib --extensions '.ts,.tsx' && webpack --mode production",
+    "build": "rm -rf bundle dist lib && tsc && babel src --out-dir lib --extensions '.ts,.tsx' --ignore '**/*.test.ts' && webpack --mode production",
     "ci:release": "node ./release-if-necessary.js",
     "test": "jest"
   },
@@ -49,6 +49,9 @@
     "typescript": "^5.6.2",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
+  },
+  "overrides": {
+    "js-yaml": "^4.2.0"
   },
   "repository": {
     "type": "git",

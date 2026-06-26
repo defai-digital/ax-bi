@@ -23,12 +23,10 @@ about a specific tag.
 """
 
 import logging
-from datetime import datetime, timezone
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.mcp_core import ModelGetInfoCore
 from superset.mcp_service.tag.schemas import (
     GetTagInfoRequest,
@@ -36,6 +34,7 @@ from superset.mcp_service.tag.schemas import (
     TagError,
     TagInfo,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +70,7 @@ async def get_tag_info(request: GetTagInfoRequest, ctx: Context) -> TagInfo | Ta
     try:
         from superset.daos.tag import TagDAO
 
-        with event_logger.log_context(action="mcp.get_tag_info.lookup"):
+        with mcp_event_log_context(action="mcp.get_tag_info.lookup"):
             get_tool = ModelGetInfoCore(
                 dao_class=TagDAO,
                 output_schema=TagInfo,
@@ -101,8 +100,7 @@ async def get_tag_info(request: GetTagInfoRequest, ctx: Context) -> TagInfo | Ta
             "Tag information retrieval failed: identifier=%s, error=%s, error_type=%s"
             % (request.identifier, str(e), type(e).__name__)
         )
-        return TagError(
+        return TagError.create(
             error=f"Failed to get tag info: {str(e)}",
             error_type="InternalError",
-            timestamp=datetime.now(timezone.utc),
         )

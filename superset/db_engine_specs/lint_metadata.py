@@ -337,9 +337,12 @@ def _eval_ast_value(node: Any) -> Any:  # noqa: C901
 
     if isinstance(node, ast.Constant):
         return node.value
-    elif isinstance(node, ast.Str):  # Python 3.7 compat
+    ast_str = getattr(ast, "Str", None)
+    ast_num = getattr(ast, "Num", None)
+
+    if ast_str is not None and isinstance(node, ast_str):  # Python 3.7 compat
         return node.s
-    elif isinstance(node, ast.Num):  # Python 3.7 compat
+    elif ast_num is not None and isinstance(node, ast_num):  # Python 3.7 compat
         return node.n
     elif isinstance(node, ast.List):
         return [_eval_ast_value(e) for e in node.elts]
@@ -679,11 +682,9 @@ def main() -> int:
         else:
             print(output_text)
 
-    # In strict mode, fail if specs WITH metadata are missing required fields.
-    # Specs without metadata are intentionally internal/legacy and are allowed.
+    # In strict mode, fail if any spec is missing required fields.
     if args.strict:
-        # Only count specs that HAVE metadata but are incomplete
-        missing_count = sum(1 for r in reports if r.has_metadata and r.missing_required)
+        missing_count = sum(1 for r in reports if r.missing_required)
         invalid_pypi_count = sum(1 for r in reports if r.invalid_packages)
 
         if missing_count > 0:

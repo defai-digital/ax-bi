@@ -33,12 +33,15 @@ from pydantic import (
 )
 
 from superset.daos.base import ColumnOperator, ColumnOperatorEnum
+from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from superset.mcp_service.system.schemas import PaginationInfo
 from superset.mcp_service.utils import sanitize_for_llm_context
+from superset.mcp_service.utils.response_utils import select_serialized_response_fields
 from superset.mcp_service.utils.schema_utils import (
-    parse_json_or_list,
-    parse_json_or_model_list,
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
 )
 
 DEFAULT_TASK_COLUMNS: list[str] = ["id", "uuid", "task_type", "status", "changed_on"]
@@ -103,13 +106,7 @@ class TaskInfo(BaseModel):
 
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
-        data = serializer(self)
-        if info.context and isinstance(info.context, dict):
-            select_columns = info.context.get("select_columns")
-            if select_columns:
-                requested_fields = set(select_columns)
-                return {k: v for k, v in data.items() if k in requested_fields}
-        return data
+        return select_serialized_response_fields(serializer(self), info)
 
 
 class TaskList(BaseModel):
@@ -188,37 +185,27 @@ class ListTasksRequest(BaseModel):
     @field_validator("filters", mode="before")
     @classmethod
     def parse_filters(cls, v: Any) -> list[TaskColumnFilter]:
-        return parse_json_or_model_list(v, TaskColumnFilter, "filters")
+        return parse_filters(v, TaskColumnFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
     def parse_columns(cls, v: Any) -> list[str]:
-        return parse_json_or_list(v, "select_columns")
+        return parse_select_columns(v)
 
     @model_validator(mode="after")
     def validate_search_and_filters(self) -> "ListTasksRequest":
-        if self.search and self.filters:
-            raise ValueError(
-                "Cannot use both 'search' and 'filters' simultaneously. "
-                "Use 'search' for text matching on task_type/status/scope, or "
-                "'filters' for column-based filtering, but not both."
-            )
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' simultaneously. "
+            "Use 'search' for text matching on task_type/status/scope, or "
+            "'filters' for column-based filtering, but not both.",
+        )
         return self
 
 
-class TaskError(BaseModel):
-    error: str = Field(..., description="Error message")
-    error_type: str = Field(..., description="Error type")
-    timestamp: str | datetime | None = Field(None, description="Error timestamp")
-    model_config = ConfigDict(ser_json_timedelta="iso8601")
-
-    @classmethod
-    def create(cls, error: str, error_type: str) -> "TaskError":
-        return cls(
-            error=error,
-            error_type=error_type,
-            timestamp=datetime.now(timezone.utc),
-        )
+class TaskError(MCPResourceError):
+    pass
 
 
 class GetTaskInfoRequest(BaseModel):

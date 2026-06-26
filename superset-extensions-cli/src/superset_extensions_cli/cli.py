@@ -84,7 +84,7 @@ def validate_npm() -> None:
             sys.exit(1)
 
         npm_version = result.stdout.strip()
-        if semver.compare(npm_version, MIN_NPM_VERSION) < 0:
+        if semver.Version.parse(npm_version).compare(MIN_NPM_VERSION) < 0:
             click.secho(
                 f"❌ npm version {npm_version} is lower than the required {MIN_NPM_VERSION}.",  # noqa: E501
                 err=True,

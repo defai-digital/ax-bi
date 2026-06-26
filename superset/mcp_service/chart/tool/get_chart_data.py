@@ -24,7 +24,6 @@ import time
 from typing import Any, Dict, List, TYPE_CHECKING
 
 from fastmcp import Context
-from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import subqueryload
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -34,7 +33,6 @@ if TYPE_CHECKING:
 
 from superset.commands.exceptions import CommandException
 from superset.exceptions import OAuth2Error, OAuth2RedirectError, SupersetException
-from superset.extensions import event_logger
 from superset.mcp_service.chart.chart_helpers import (
     build_query_context_from_form_data,
     build_query_dicts_from_form_data,
@@ -55,6 +53,8 @@ from superset.mcp_service.utils import (
     sanitize_for_llm_context,
 )
 from superset.mcp_service.utils.cache_utils import get_cache_status_from_result
+from superset.mcp_service.utils.config_utils import get_superset_row_limit
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
@@ -321,7 +321,7 @@ async def get_chart_data(  # noqa: C901
 
         # Handle unsaved chart (form_data_key only, no identifier)
         if not request.identifier and request.form_data_key:
-            with event_logger.log_context(
+            with mcp_event_log_context(
                 action="mcp.get_chart_data.unsaved_chart_from_cache"
             ):
                 await ctx.info(
@@ -363,7 +363,7 @@ async def get_chart_data(  # noqa: C901
             subqueryload(Slice.table).subqueryload(SqlaTable.metrics),
         ]
 
-        with event_logger.log_context(action="mcp.get_chart_data.chart_lookup"):
+        with mcp_event_log_context(action="mcp.get_chart_data.chart_lookup"):
             await ctx.debug("Looking up chart: identifier=%s" % (request.identifier,))
             if request.identifier is None:
                 return ChartError(
@@ -424,7 +424,7 @@ async def get_chart_data(  # noqa: C901
 
             # Check if form_data_key is provided - use cached form_data instead
             if request.form_data_key:
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.get_chart_data.unsaved_state_override"
                 ):
                     await ctx.info(
@@ -470,7 +470,7 @@ async def get_chart_data(  # noqa: C901
                 row_limit = (
                     request.limit
                     or cached_form_data_dict.get("row_limit")
-                    or current_app.config["ROW_LIMIT"]
+                    or get_superset_row_limit()
                 )
 
                 query_context = build_query_context_from_form_data(
@@ -511,7 +511,7 @@ async def get_chart_data(  # noqa: C901
                 row_limit = (
                     request.limit
                     or form_data.get("row_limit")
-                    or current_app.config["ROW_LIMIT"]
+                    or get_superset_row_limit()
                 )
 
                 # Handle different chart types that have different form_data
@@ -605,7 +605,7 @@ async def get_chart_data(  # noqa: C901
             )
 
             # Execute the query
-            with event_logger.log_context(action="mcp.get_chart_data.query_execution"):
+            with mcp_event_log_context(action="mcp.get_chart_data.query_execution"):
                 command = ChartDataCommand(query_context)
                 command.validate()
                 result = command.run()
@@ -762,7 +762,7 @@ async def get_chart_data(  # noqa: C901
 
             # Handle different export formats
             if request.format == "csv":
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.get_chart_data.format_conversion"
                 ):
                     return _export_data_as_csv(
@@ -773,7 +773,7 @@ async def get_chart_data(  # noqa: C901
                         performance,
                     )
             elif request.format == "excel":
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.get_chart_data.format_conversion"
                 ):
                     return _export_data_as_excel(
@@ -906,9 +906,7 @@ async def _query_from_form_data(
             error_type="InvalidFormData",
         )
 
-    row_limit = (
-        request.limit or form_data.get("row_limit") or current_app.config["ROW_LIMIT"]
-    )
+    row_limit = request.limit or form_data.get("row_limit") or get_superset_row_limit()
     viz_type = form_data.get("viz_type", "unknown")
 
     try:
@@ -921,7 +919,7 @@ async def _query_from_form_data(
         )
 
         await ctx.report_progress(3, 4, "Executing data query")
-        with event_logger.log_context(action="mcp.get_chart_data.query_execution"):
+        with mcp_event_log_context(action="mcp.get_chart_data.query_execution"):
             command = ChartDataCommand(query_context)
             command.validate()
             result = command.run()

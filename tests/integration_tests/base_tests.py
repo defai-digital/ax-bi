@@ -206,8 +206,12 @@ class SupersetTestCase(TestCase):
         for pvm in pvms_to_remove or []:
             if isinstance(pvm, (tuple, list)):
                 pvm = security_manager.find_permission_view_menu(*pvm)
-            if pvm in pvms:
-                pvms.remove(pvm)
+            if pvm:
+                pvms = [
+                    existing_pvm
+                    for existing_pvm in pvms
+                    if existing_pvm.id != pvm.id
+                ]
 
         temp_role = ab_models.Role(name=f"tmp_role_{shortid()}")
         temp_role.permissions = pvms

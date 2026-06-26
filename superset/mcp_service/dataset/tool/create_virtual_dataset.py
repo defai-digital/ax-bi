@@ -21,11 +21,11 @@ from typing import Any
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
-from superset.extensions import event_logger
 from superset.mcp_service.dataset.schemas import (
     CreateVirtualDatasetRequest,
     CreateVirtualDatasetResponse,
 )
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ async def create_virtual_dataset(
 
         # Create the virtual dataset — CreateDatasetCommand enforces access control
         # and validates that the database exists (raises DatasetInvalidError otherwise)
-        with event_logger.log_context(action="mcp.create_virtual_dataset.create"):
+        with mcp_event_log_context(action="mcp.create_virtual_dataset.create"):
             properties: dict[str, Any] = {
                 "database": request.database_id,
                 "table_name": request.dataset_name,
@@ -138,7 +138,7 @@ async def create_virtual_dataset(
             if request.metrics or request.calculated_columns:
                 update_props = _build_update_props(request, dataset)
 
-                with event_logger.log_context(
+                with mcp_event_log_context(
                     action="mcp.create_virtual_dataset.update"
                 ):
                     dataset = _update_virtual_dataset(dataset.id, update_props)
