@@ -16,7 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t, VizType } from '@superset-ui/core';
+import { VizType } from '@superset-ui/core';
+import { t } from '@apache-superset/core/translation';
 import { VizDescriptor } from './types';
 
 /**
@@ -77,8 +78,9 @@ const BY_KEY: Record<string, VizDescriptor> = VIZ_DESCRIPTORS.reduce(
 );
 
 /** The descriptor for a viz type, or undefined if not guided-supported. */
-export const getVizDescriptor = (vizType?: string): VizDescriptor | undefined =>
-  vizType ? BY_KEY[vizType] : undefined;
+export const getVizDescriptor = (
+  vizType?: string,
+): VizDescriptor | undefined => (vizType ? BY_KEY[vizType] : undefined);
 
 /** Whether the guided builder can represent this viz type. */
 export const isGuidedVizType = (vizType?: string): boolean =>

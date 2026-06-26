@@ -88,6 +88,12 @@
         "description": "Enable granular export controls (can_export_data, can_export_image, can_copy_clipboard) instead of the single can_csv permission"
       },
       {
+        "name": "GUIDED_CHART_BUILDER",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Offer a guided, stepped chart builder in Explore (data -> measures -> group by -> filters -> limit -> visualize) as a simpler alternative to the full control panel. Compiles to the same form_data / query_context; the advanced panel remains one click away. See ax-docs/ux-simplification-*."
+      },
+      {
         "name": "MATRIXIFY",
         "default": false,
         "lifecycle": "development",
@@ -110,6 +116,12 @@
         "default": false,
         "lifecycle": "development",
         "description": "Enable semantic layers and show semantic views alongside datasets"
+      },
+      {
+        "name": "SIMPLIFIED_NAV",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Simplify navigation by relocating power-user destinations (e.g. SQL Lab) out of the primary nav bar into an \"Advanced\" group. Presentation-only; does not change routes or permissions. See ax-docs/ux-simplification-*."
       },
       {
         "name": "TABLE_V2_TIME_COMPARISON_ENABLED",

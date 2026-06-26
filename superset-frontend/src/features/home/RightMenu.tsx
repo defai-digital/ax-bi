@@ -60,6 +60,7 @@ import UploadDataModal from 'src/features/databases/UploadDataModel';
 import { uploadUserPerms } from 'src/views/CRUD/utils';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useThemeMenuItems } from 'src/hooks/useThemeMenuItems';
+import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 import { useLanguageMenuItems } from './LanguagePicker';
 import {
   ExtensionConfigs,
@@ -120,6 +121,8 @@ const RightMenu = ({
   }) => void;
 }) => {
   const theme = useTheme();
+  const commandPalette = useOptionalCommandPalette();
+  const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
   const user = useSelector<any, UserWithPermissionsAndRoles>(
     state => state.user,
   );
@@ -558,8 +561,7 @@ const RightMenu = ({
                   `}
                 >
                   {[
-                    navbarRight.show_watermark &&
-                      t('Powered by AX-BI'),
+                    navbarRight.show_watermark && t('Powered by AX-BI'),
                     navbarRight.version_string &&
                       `${t('Version')}: ${navbarRight.version_string}`,
                     navbarRight.version_sha &&
@@ -580,6 +582,20 @@ const RightMenu = ({
     };
 
     const items: MenuItem[] = [];
+
+    if (commandPalette) {
+      items.push({
+        key: 'command-palette',
+        label: (
+          <Tooltip title={t('Search (%s)', isMac ? '⌘K' : 'Ctrl+K')}>
+            <Icons.SearchOutlined
+              data-test="command-palette-trigger"
+              onClick={() => commandPalette.open()}
+            />
+          </Tooltip>
+        ),
+      });
+    }
 
     if (RightMenuExtension) {
       items.push({
@@ -618,6 +634,8 @@ const RightMenu = ({
 
     return items;
   }, [
+    commandPalette,
+    isMac,
     RightMenuExtension,
     navbarRight,
     showActionDropdown,

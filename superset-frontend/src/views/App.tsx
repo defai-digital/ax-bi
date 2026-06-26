@@ -29,6 +29,7 @@ import { css } from '@apache-superset/core/theme';
 import { Layout, Loading } from '@superset-ui/core/components';
 import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
 import { ErrorBoundary } from 'src/components';
+import { DesktopIntegration } from 'src/components/DesktopIntegration';
 import Menu from 'src/features/home/Menu';
 import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
 import ToastContainer from 'src/components/MessageToasts/ToastContainer';
@@ -84,38 +85,42 @@ const App = () => (
     <ScrollToTop />
     <LocationPathnameLogger />
     <RootContextProviders>
-      <Menu
-        data={bootstrapData.common.menu_data}
-        isFrontendRoute={isFrontendRoute}
-      />
-      <ExtensionsStartup>
-        <Switch>
-          {routes.map(({ path, Component, props = {}, Fallback = Loading }) => (
-            <Route path={path} key={path}>
-              <Suspense fallback={<Fallback />}>
-                <Layout>
-                  <Layout.Content
-                    css={css`
-                      display: flex;
-                      flex-direction: column;
-                    `}
-                  >
-                    <ErrorBoundary
-                      css={css`
-                        margin: 16px;
-                      `}
-                    >
-                      <Component user={bootstrapData.user} {...props} />
-                    </ErrorBoundary>
-                  </Layout.Content>
-                </Layout>
-              </Suspense>
-            </Route>
-          ))}
-          <Redirect from="/" to="/superset/welcome/" exact />
-        </Switch>
-      </ExtensionsStartup>
-      <ToastContainer />
+      <DesktopIntegration>
+        <Menu
+          data={bootstrapData.common.menu_data}
+          isFrontendRoute={isFrontendRoute}
+        />
+        <ExtensionsStartup>
+          <Switch>
+            {routes.map(
+              ({ path, Component, props = {}, Fallback = Loading }) => (
+                <Route path={path} key={path}>
+                  <Suspense fallback={<Fallback />}>
+                    <Layout>
+                      <Layout.Content
+                        css={css`
+                          display: flex;
+                          flex-direction: column;
+                        `}
+                      >
+                        <ErrorBoundary
+                          css={css`
+                            margin: 16px;
+                          `}
+                        >
+                          <Component user={bootstrapData.user} {...props} />
+                        </ErrorBoundary>
+                      </Layout.Content>
+                    </Layout>
+                  </Suspense>
+                </Route>
+              ),
+            )}
+            <Redirect from="/" to="/superset/welcome/" exact />
+          </Switch>
+        </ExtensionsStartup>
+        <ToastContainer />
+      </DesktopIntegration>
     </RootContextProviders>
   </Router>
 );

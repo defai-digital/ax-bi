@@ -392,15 +392,20 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
   // builder when enabled and the current viz type is one it supports. The
   // builder and the advanced control panel drive the same form_data, so users
   // can switch between them at will. Default to guided for supported viz types.
-  const guidedBuilderEnabled = isFeatureEnabled(
-    FeatureFlag.GuidedChartBuilder,
-  );
+  const guidedBuilderEnabled = isFeatureEnabled(FeatureFlag.GuidedChartBuilder);
   const [builderMode, setBuilderMode] = useState<'guided' | 'advanced'>(() =>
     guidedBuilderEnabled && isGuidedVizType(props.form_data?.viz_type)
       ? 'guided'
       : 'advanced',
   );
   const showGuidedBuilder = guidedBuilderEnabled && builderMode === 'guided';
+  const guidedBuilderActions = useMemo(
+    () => ({
+      setControlValue: (controlName: string, value: unknown) =>
+        props.actions.setControlValue(controlName, value),
+    }),
+    [props.actions],
+  );
 
   const [width, setWidth] = useState(
     getSidebarWidths(LocalStorageKeys.DatasourceWidth),
@@ -1073,7 +1078,7 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
             <GuidedBuilder
               formData={props.form_data}
               datasource={props.datasource}
-              actions={props.actions}
+              actions={guidedBuilderActions}
               onQuery={onQuery}
               onSwitchToAdvanced={() => setBuilderMode('advanced')}
               isLoading={props.chart.chartStatus === 'loading'}
