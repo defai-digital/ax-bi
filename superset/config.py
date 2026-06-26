@@ -683,6 +683,18 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enables the tagging system for organizing assets
     # @lifecycle: development
     "TAGGING_SYSTEM": False,
+    # Enable GenAI BI features (prompt-to-dashboard, AI asset search)
+    # @lifecycle: development
+    "GENAI_BI": False,
+    # Enable GenAI BI MCP tools (search_business_assets, describe_dataset_for_ai, etc.)
+    # @lifecycle: development
+    "GENAI_BI_MCP_TOOLS": False,
+    # Enable prompt-to-dashboard planning and composition
+    # @lifecycle: development
+    "GENAI_PROMPT_TO_DASHBOARD": False,
+    # Enable embedded dashboard AI assistant flows
+    # @lifecycle: development
+    "GENAI_EMBEDDED_ASSISTANT": False,
     # =================================================================
     # IN TESTING
     # =================================================================
@@ -1818,6 +1830,15 @@ FAB_ADD_SECURITY_PERMISSION_VIEWS_VIEW = False
 # the frontend UI visibility independently.
 FAB_API_KEY_ENABLED = False
 FAB_API_KEY_PREFIXES = ["sst_"]
+
+# ---------------------------------------------------------------------------
+# GenAI BI Configuration
+# ---------------------------------------------------------------------------
+# LLM provider configuration for GenAI BI features.
+# Example: {"provider": "openai", "model": "gpt-4", "api_key": "..."}
+# This config is read by the LLM provider factory in
+# superset.mcp_service.ai.provider_factory.
+GENAI_LLM_PROVIDER_CONFIG: dict[str, Any] = {}
 
 # The link to a page containing common errors and their resolutions
 # It will be appended at the bottom of sql_lab errors.

@@ -58,6 +58,30 @@
         "description": "Enable API key authentication via FAB SecurityManager When enabled, users can create/manage API keys in the User Info page"
       },
       {
+        "name": "GENAI_BI",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable GenAI BI features (prompt-to-dashboard, AI asset search)"
+      },
+      {
+        "name": "GENAI_BI_MCP_TOOLS",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable GenAI BI MCP tools (search_business_assets, describe_dataset_for_ai, etc.)"
+      },
+      {
+        "name": "GENAI_EMBEDDED_ASSISTANT",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable embedded dashboard AI assistant flows"
+      },
+      {
+        "name": "GENAI_PROMPT_TO_DASHBOARD",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable prompt-to-dashboard planning and composition"
+      },
+      {
         "name": "GRANULAR_EXPORT_CONTROLS",
         "default": false,
         "lifecycle": "development",

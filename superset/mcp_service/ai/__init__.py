@@ -14,4 +14,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from . import ai, core, dynamic_plugins, sql_lab, user_attributes  # noqa: F401
+"""GenAI BI AI package for MCP service.
+
+Provides LLM provider abstraction, Pydantic schemas for tool contracts,
+and supporting utilities for the GenAI BI pipeline.
+"""
+
+from superset.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
+from superset.mcp_service.ai.provider_factory import get_llm_provider
+
+__all__ = [
+    "LLMProvider",
+    "StubLLMProvider",
+    "get_llm_provider",
+]

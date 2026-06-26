@@ -19,6 +19,15 @@ under the License.
 
 # Technical Specification: GenAI BI And Prompt-To-Dashboard
 
+> **Related documents:**
+> [ADR](genai-bi-adr.md) ·
+> [PRD](genai-bi-prd.md) ·
+> [Product Roadmap](../GENAI_BI_ROADMAP.md)
+
+## Status
+
+Draft
+
 ## Scope
 
 This specification describes the first implementation path for GenAI-powered BI
@@ -51,14 +60,18 @@ Relevant frontend modules:
 
 ## Feature Flags
 
-Add feature flags:
+The following feature flags are to be added to `superset/config.py`:
 
 - `GENAI_BI`: enables GenAI BI backend and frontend entry points.
 - `GENAI_BI_MCP_TOOLS`: exposes new MCP tools.
 - `GENAI_PROMPT_TO_DASHBOARD`: enables dashboard planning and composition.
 - `GENAI_EMBEDDED_ASSISTANT`: enables embedded dashboard AI flows.
 
-Default all flags to disabled.
+All flags default to disabled. None exist in the codebase yet.
+
+Note: chart validation (`validate_chart_dataset`) is an internal function in
+`superset/mcp_service/chart/chart_utils.py` and
+`superset/mcp_service/chart/validation/`, not a standalone MCP tool.
 
 ## Backend Architecture
 
@@ -341,8 +354,7 @@ Purpose: lineage and audit for generated BI artifacts.
 
 Columns:
 
-- `id`: integer primary key.
-- `uuid`: UUID.
+- `uuid`: UUID primary key.
 - `artifact_type`: string enum: `chart`, `dashboard`, `dataset`, `report`.
 - `artifact_id`: integer.
 - `principal_user_id`: foreign key to user.
@@ -361,7 +373,6 @@ Indexes:
 
 - `(artifact_type, artifact_id)`
 - `principal_user_id`
-- `uuid`
 
 ### `AISemanticAlias`
 
@@ -369,8 +380,7 @@ Purpose: business synonyms for AI semantic resolution.
 
 Columns:
 
-- `id`: integer primary key.
-- `uuid`: UUID.
+- `uuid`: UUID primary key.
 - `dataset_id`: nullable foreign key to dataset.
 - `object_type`: string enum: `dataset`, `column`, `metric`, `dashboard`,
   `chart`.
@@ -384,6 +394,7 @@ Indexes:
 
 - `(dataset_id, object_type, object_name)`
 - `alias`
+- `(object_type, alias)` for cross-dataset alias lookups
 
 ### `AIEvaluationRun`
 
@@ -391,8 +402,7 @@ Purpose: repeatable prompt-to-dashboard evaluation records.
 
 Columns:
 
-- `id`: integer primary key.
-- `uuid`: UUID.
+- `uuid`: UUID primary key.
 - `prompt`: text.
 - `expected_result`: JSON.
 - `actual_result`: JSON.
@@ -487,7 +497,7 @@ class LLMProvider:
         *,
         system_prompt: str,
         user_prompt: str,
-        response_schema: type,
+        response_schema: type[BaseModel],
         metadata: dict[str, object],
     ) -> object:
         ...
@@ -578,3 +588,9 @@ Evaluation dimensions:
 - How should AI prompts be redacted before lineage storage?
 - What model/provider should be the default for local development?
 - Should semantic aliases require admin approval before use in production?
+
+## Related Documents
+
+- [ADR: Governed MCP-Native GenAI BI Architecture](genai-bi-adr.md)
+- [PRD: GenAI-Powered Business Intelligence](genai-bi-prd.md)
+- [GenAI BI Roadmap](../GENAI_BI_ROADMAP.md)

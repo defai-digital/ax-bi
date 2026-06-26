@@ -19,6 +19,11 @@ under the License.
 
 # ADR: Governed MCP-Native GenAI BI Architecture
 
+> **Related documents:**
+> [PRD](genai-bi-prd.md) ·
+> [Technical Specification](genai-bi-tech-spec.md) ·
+> [Product Roadmap](../GENAI_BI_ROADMAP.md)
+
 ## Status
 
 Proposed
@@ -55,10 +60,12 @@ intent level:
 - `describe_dataset_for_ai`
 - `plan_dashboard`
 - `create_chart_from_intent`
-- `validate_chart`
 - `compose_dashboard`
 - `explain_dashboard`
 - `evaluate_ai_answer`
+
+Chart validation (`validate_chart_dataset`) remains an internal function used by
+chart generation and preview flows, not a standalone MCP tool.
 
 The implementation will reuse existing Superset command, DAO, security, chart,
 dashboard, and MCP infrastructure. It will extend the existing MCP service
@@ -69,35 +76,11 @@ RBAC, dataset permissions, RLS, and metadata privacy controls.
 
 ## Architecture Principles
 
-### Semantic Grounding Over Raw Text-To-SQL
-
-AI should resolve business intent to governed datasets, saved metrics, columns,
-filters, and chart configurations. SQL can be generated or inspected as a
-secondary artifact, but direct raw text-to-SQL should not be the default user
-or MCP workflow.
-
-### Preview Before Mutation
-
-Chart generation should default to preview mode. Dashboard generation should
-create drafts or plans until the user approves saving or publishing.
-
-### High-Level MCP Tools
-
-Low-level CRUD tools remain useful, but the default agent experience should use
-stable high-level BI intent tools. This reduces tool-planning errors and makes
-governance easier to reason about.
-
-### Lineage And Auditability
-
-Generated artifacts need explicit lineage. Prompt, normalized intent, model,
-tool chain, source assets, validation summary, and user principal should be
-recorded.
-
-### Evaluation By Default
-
-Prompt-to-dashboard cannot be considered reliable without repeatable evals.
-Evaluation should cover semantic resolution, chart generation, dashboard
-quality, query success, and permission enforcement.
+The architecture follows five guiding principles: semantic grounding over raw
+text-to-SQL, preview before mutation, high-level MCP tools over low-level CRUD,
+explicit lineage and auditability, and evaluation by default. The full
+rationale, trade-offs, and phased implementation are documented in the
+[Product Roadmap](../GENAI_BI_ROADMAP.md).
 
 ## Considered Options
 
@@ -195,17 +178,6 @@ Decision: accepted.
 - Requires new data models for lineage, aliases, and evals.
 - Requires frontend review flows before users can safely publish.
 
-## Implementation Implications
-
-- Add feature flags for AI BI functionality.
-- Add AI-ready metadata APIs and MCP tools.
-- Add semantic aliases and asset ranking.
-- Add dashboard plan schemas.
-- Add lineage storage for generated artifacts.
-- Add eval harness and regression tests.
-- Keep mutation tools explicit and confirmation-oriented.
-- Avoid provider-specific product behavior in core workflows.
-
 ## Security Implications
 
 - AI tools must follow `SECURITY.md` and should name the assumed principal in
@@ -225,3 +197,9 @@ Decision: accepted.
 - Should embeddings be optional from the start or added after SQL-based ranking?
 - How should embedded guest-token AI flows restrict prompt-to-dashboard
   mutation behavior?
+
+## Related Documents
+
+- [PRD: GenAI-Powered Business Intelligence](genai-bi-prd.md)
+- [Technical Specification: GenAI BI And Prompt-To-Dashboard](genai-bi-tech-spec.md)
+- [GenAI BI Roadmap](../GENAI_BI_ROADMAP.md)

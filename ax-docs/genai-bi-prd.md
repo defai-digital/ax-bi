@@ -19,6 +19,15 @@ under the License.
 
 # PRD: GenAI-Powered Business Intelligence
 
+> **Related documents:**
+> [ADR](genai-bi-adr.md) ·
+> [Technical Specification](genai-bi-tech-spec.md) ·
+> [Product Roadmap](../GENAI_BI_ROADMAP.md)
+
+## Status
+
+Proposed
+
 ## Summary
 
 This product initiative revamps the Superset-based BI platform into a governed,
@@ -45,14 +54,11 @@ semantic metadata, chart generation, dashboard authoring, and audit controls.
 
 ## Non-Goals
 
-- Fully autonomous dashboard publishing in the first release.
-- Broad support for every chart plugin in the first release.
-- Replacing SQL Lab for expert users.
-- Training on customer data by default.
-- Cross-tenant AI memory.
-- Provider-specific product logic embedded in BI workflows.
-- Unreviewed external actions such as Slack posts, emails, webhooks, or ticket
-  creation.
+Non-goals are documented in the
+[Product Roadmap](../GENAI_BI_ROADMAP.md#low-value-or-complexity-heavy-work-to-avoid).
+Key exclusions for the first release include fully autonomous publishing,
+broad chart plugin support, raw text-to-SQL as the main surface, and
+provider-specific product logic.
 
 ## Target Users
 
@@ -79,22 +85,11 @@ embedded applications, or custom automation.
 
 ## Market Context
 
-The BI market is converging on semantic-model-grounded AI:
-
-- Power BI Copilot emphasizes report generation and summaries grounded in
-  semantic models.
-- Tableau Agent and Tableau Next emphasize agentic analytics over trusted
-  semantic data.
-- ThoughtSpot Spotter emphasizes trusted AI analyst behavior, governed access,
-  and verifiable answers.
-- Sigma AI emphasizes ask, create, automate, govern, and MCP positioning.
-- Omni AI emphasizes semantic grounding, dashboard/workbook agents, evals, and
-  feedback into the model layer.
-- Qlik emphasizes AI assistance, anomaly insights, automation, and MCP server
-  direction.
-
-The strategic lesson is consistent: prompt-to-dashboard is valuable only when it
-is governed, explainable, and grounded in trusted semantic assets.
+The BI market is converging on semantic-model-grounded AI. The competitive
+landscape and strategic lessons are documented in the
+[Product Roadmap](../GENAI_BI_ROADMAP.md#market-pattern).
+The consistent lesson is that prompt-to-dashboard is valuable only when it is
+governed, explainable, and grounded in trusted semantic assets.
 
 ## Product Principles
 
@@ -149,7 +144,9 @@ is governed, explainable, and grounded in trusted semantic assets.
 2. Agent calls `describe_dataset_for_ai` on candidate datasets.
 3. Agent calls `plan_dashboard`.
 4. Agent calls `create_chart_from_intent` for each chart.
-5. Agent calls `compose_dashboard` only after explicit user approval.
+5. Agent calls `compose_dashboard` only after the host application presents the
+   plan to the end user and receives explicit approval. The MCP protocol itself
+   does not provide a UI — approval flows through the calling application.
 
 ## Functional Requirements
 
@@ -232,34 +229,29 @@ is governed, explainable, and grounded in trusted semantic assets.
 
 ## Success Metrics
 
-- Dashboard draft creation completion rate.
-- Percentage of generated charts accepted or saved.
-- Average user edits per generated dashboard.
-- Prompt-to-dashboard time compared with manual workflow.
-- Dataset selection accuracy in evals.
-- Metric mapping accuracy in evals.
-- Permission leak regression count: zero tolerated.
-- Percentage of AI answers with cited source assets.
-- User-reported usefulness score for generated dashboards.
+| Metric | Target | Measurement Method |
+|--------|--------|-------------------|
+| Dashboard draft creation completion rate | >50% within first quarter | `AIGeneratedArtifact` lineage table: count of prompts that reach `compose_dashboard` vs. total prompts |
+| Percentage of generated charts accepted or saved | >30% within first quarter | `AIGeneratedArtifact` lineage table: charts with `save_chart=true` vs. total chart previews |
+| Average user edits per generated dashboard | <5 edits per dashboard | Dashboard version history: count of layout/content mutations after initial creation |
+| Prompt-to-dashboard time vs. manual workflow | <50% of manual time | Event logging: time from first `search_business_assets` call to `compose_dashboard` completion, compared to baseline manual dashboard creation time |
+| Dataset selection accuracy in evals | >80% correct selection | Evaluation harness: `evaluate_ai_answer` scores against expected dataset fixtures |
+| Metric mapping accuracy in evals | >80% correct mapping | Evaluation harness: `evaluate_ai_answer` scores against expected metric fixtures |
+| Permission leak regression count | Zero tolerated | Security test suite: RBAC/RLS regression tests, metadata privacy tests |
+| Percentage of AI answers with cited source assets | >90% | Lineage table: percentage of `AIGeneratedArtifact` records with non-empty `source_asset_refs` |
+| User-reported usefulness score for generated dashboards | >3.5/5.0 | User survey or in-app feedback widget on generated dashboard pages |
 
 ## Release Plan
 
-### MVP
+The phased rollout (MVP and follow-on) is documented in the
+[Product Roadmap](../GENAI_BI_ROADMAP.md#phased-implementation).
+The MVP covers feature flags, asset discovery, dataset description, chart
+intent generation, draft dashboard composition, artifact lineage, and an
+initial eval suite. Follow-on phases add dashboard/Explore assistants, embedded
+Q&A, report narratives, and anomaly explanations.
 
-- Feature flag for AI BI.
-- `search_business_assets`.
-- `describe_dataset_for_ai`.
-- `plan_dashboard`.
-- `create_chart_from_intent`.
-- Draft dashboard composition.
-- Artifact lineage.
-- Initial eval suite.
+## Related Documents
 
-### Follow-On
-
-- Dashboard-scoped assistant.
-- Explore assistant.
-- Embedded dashboard Q&A.
-- AI report narratives.
-- Alert and anomaly explanation.
-- Human-approved external actions.
+- [ADR: Governed MCP-Native GenAI BI Architecture](genai-bi-adr.md)
+- [Technical Specification: GenAI BI And Prompt-To-Dashboard](genai-bi-tech-spec.md)
+- [GenAI BI Roadmap](../GENAI_BI_ROADMAP.md)
