@@ -46,10 +46,32 @@ export function useServiceWorker(): ServiceWorkerState {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) {
-      return;
+      return undefined;
+    }
+
+    // A service worker that caches content-hashed webpack chunks is safe in
+    // production (filenames are immutable) but breaks the dev server: it serves
+    // stale chunks and fights HMR, producing ChunkLoadError timeouts. Skip
+    // registration in development, and actively tear down any worker/caches a
+    // previous session left behind so an already-affected dev session recovers.
+    if (process.env.WEBPACK_MODE === 'development') {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then(registrations =>
+          Promise.all(registrations.map(reg => reg.unregister())),
+        )
+        .catch(() => {});
+      if ('caches' in window) {
+        caches
+          .keys()
+          .then(keys => Promise.all(keys.map(key => caches.delete(key))))
+          .catch(() => {});
+      }
+      return undefined;
     }
 
     let registration: ServiceWorkerRegistration;
+    let updateIntervalId: ReturnType<typeof setInterval> | undefined;
 
     const handleUpdate = () => {
       if (!registration) return;
@@ -91,7 +113,7 @@ export function useServiceWorker(): ServiceWorkerState {
 
         // Check for updates periodically (every hour)
         const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000;
-        setInterval(() => {
+        updateIntervalId = setInterval(() => {
           registration.update();
         }, UPDATE_CHECK_INTERVAL);
 
@@ -129,6 +151,9 @@ export function useServiceWorker(): ServiceWorkerState {
     }
 
     return () => {
+      if (updateIntervalId !== undefined) {
+        clearInterval(updateIntervalId);
+      }
       if (registration) {
         registration.removeEventListener('updatefound', handleUpdate);
       }
