@@ -136,7 +136,11 @@ CLAUDE.local.md
 PROJECT.md
 .aider*
 .claude_rc*
+.claude/
 .claude/settings.local.json
+
+# Local/internal planning artifacts.
+ax-internal/
 .env.local
 oxc-custom-build/
 *.code-workspace
