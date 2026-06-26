@@ -342,7 +342,7 @@ class TestTakeTiledScreenshot:
         """A per-tile spinner timeout logs a warning but still takes the screenshot."""
         from superset.utils.screenshot_utils import PlaywrightTimeout
 
-        timeout = PlaywrightTimeout()
+        timeout = PlaywrightTimeout("Timeout")
         mock_page.wait_for_function.side_effect = timeout
 
         with patch("superset.utils.screenshot_utils.logger") as mock_logger:

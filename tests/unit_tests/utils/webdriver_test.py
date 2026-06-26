@@ -543,7 +543,7 @@ class TestWebDriverPlaywrightFallback:
         mock_browser_manager.get_browser.return_value = mock_browser
         mock_browser.new_context.return_value = mock_context
         mock_context.new_page.return_value = mock_page
-        mock_page.goto.side_effect = PlaywrightTimeout()
+        mock_page.goto.side_effect = PlaywrightTimeout("Timeout")
 
         with patch("superset.utils.webdriver.app") as mock_app:
             mock_app.config = {
@@ -748,7 +748,7 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_context.new_page.return_value = mock_page
         mock_page.locator.return_value = mock_element
 
-        timeout = PlaywrightTimeout()
+        timeout = PlaywrightTimeout("Timeout")
         mock_page.wait_for_function.side_effect = timeout
 
         with patch.object(WebDriverPlaywright, "auth", return_value=mock_context):
@@ -786,7 +786,7 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_context.new_page.return_value = mock_page
 
         # Keep a reference to the exact instance so we can verify identity below.
-        timeout = PlaywrightTimeout()
+        timeout = PlaywrightTimeout("Timeout")
         mock_page.locator.return_value = mock_element
         mock_element.wait_for.side_effect = timeout
 
