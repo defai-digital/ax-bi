@@ -1,91 +1,72 @@
 <!--
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
+This product is derived from Apache Superset, which is licensed to the
+Apache Software Foundation (ASF) under one or more contributor license
+agreements.  See the NOTICE file distributed with this work for additional
+information regarding copyright ownership.  The ASF licenses the underlying
+work to you under the Apache License, Version 2.0 (the "License"); you may
+not use this file except in compliance with the License.  You may obtain a
+copy of the License at
 
   http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+License for the specific language governing permissions and limitations
 under the License.
 -->
 
-# Superset
+# AX-BI
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/apache-2-0)
-[![Latest Release on Github](https://img.shields.io/github/v/release/apache/superset?sort=semver)](https://github.com/apache/superset/releases/latest)
-[![Build Status](https://github.com/apache/superset/actions/workflows/superset-python-unittest.yml/badge.svg)](https://github.com/apache/superset/actions)
-[![PyPI version](https://badge.fury.io/py/apache_superset.svg)](https://badge.fury.io/py/apache_superset)
-[![PyPI](https://img.shields.io/pypi/pyversions/apache_superset.svg?maxAge=2592000)](https://pypi.python.org/pypi/apache_superset)
-[![GitHub Stars](https://img.shields.io/github/stars/apache/superset?style=social)](https://github.com/apache/superset/stargazers)
-[![Contributors](https://img.shields.io/github/contributors/apache/superset)](https://github.com/apache/superset/graphs/contributors)
-[![Last Commit](https://img.shields.io/github/last-commit/apache/superset)](https://github.com/apache/superset/commits/master)
-[![Open Issues](https://img.shields.io/github/issues/apache/superset)](https://github.com/apache/superset/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/apache/superset)](https://github.com/apache/superset/pulls)
-[![Get on Slack](https://img.shields.io/badge/slack-join-orange.svg)](http://bit.ly/join-superset-slack)
-[![Documentation](https://img.shields.io/badge/docs-apache.org-blue.svg)](https://superset.apache.org)
+[![Built on Apache Superset](https://img.shields.io/badge/built%20on-Apache%20Superset-20A6C9.svg)](https://superset.apache.org)
+[![MCP-native](https://img.shields.io/badge/MCP-native-6E56CF.svg)](#mcp-native-genai-bi)
+[![Maintained by DEFAI](https://img.shields.io/badge/maintained%20by-DEFAI%20Private%20Limited-0A0A0A.svg)](#about-defai)
 
-<picture width="500">
-  <source
-    width="600"
-    media="(prefers-color-scheme: dark)"
-    src="https://superset.apache.org/img/superset-logo-horiz-dark.svg"
-    alt="Superset logo (dark)"
-  />
-  <img
-    width="600"
-    src="https://superset.apache.org/img/superset-logo-horiz-apache.svg"
-    alt="Superset logo (light)"
-  />
-</picture>
+<!-- TODO: replace with the AX-BI logo once brand assets are finalized. -->
+<h3>Open, governed, MCP-native GenAI BI for prompt-to-dashboard and trusted analytics agents.</h3>
 
-A modern, enterprise-ready business intelligence web application.
+**AX-BI** is a GenAI-native business intelligence platform by **DEFAI Private Limited**. It is not a chatbot bolted onto BI — it is a trusted AI analyst that discovers governed data assets, reasons over a semantic layer, generates validated charts, composes dashboards, explains results, and leaves an auditable trail. AX-BI builds on the proven [Apache Superset](https://superset.apache.org) foundation and extends it with a first-class [Model Context Protocol (MCP)](https://modelcontextprotocol.io) service so AI agents can operate on your data within your existing roles and row-level security.
 
-### Documentation
-
-- **[User Guide](https://superset.apache.org/user-docs/)** — For analysts and business users. Explore data, build charts, create dashboards, and connect databases.
-- **[Administrator Guide](https://superset.apache.org/admin-docs/)** — Install, configure, and operate Superset. Covers security, scaling, and database drivers.
-- **[Developer Guide](https://superset.apache.org/developer-docs/)** — Contribute to Superset or build on its REST API and extension framework.
-
-[**Why Superset?**](#why-superset) |
+[**Why AX-BI?**](#why-ax-bi) |
+[**MCP-Native GenAI BI**](#mcp-native-genai-bi) |
 [**Supported Databases**](#supported-databases) |
-[**Release Notes**](https://github.com/apache/superset/blob/master/RELEASING/README.md#release-notes-for-recent-releases) |
-[**Get Involved**](#get-involved) |
-[**Resources**](#resources) |
-[**Organizations Using Superset**](https://superset.apache.org/inTheWild)
+[**Installation**](#installation-and-configuration) |
+[**Development**](#development) |
+[**Built on Apache Superset**](#built-on-apache-superset) |
+[**About DEFAI**](#about-defai)
 
-## Why Superset?
+## Why AX-BI?
 
-Superset is a modern data exploration and data visualization platform. Superset can replace or augment proprietary business intelligence tools for many teams. Superset integrates well with a variety of data sources.
+AX-BI is a modern data exploration, visualization, and AI-analytics platform. It can replace or augment proprietary business intelligence tools while keeping you in control of your data, models, and deployment boundaries — fully self-hosted and extensible.
 
-Superset provides:
+AX-BI provides:
 
 - A **no-code interface** for building charts quickly
 - A powerful, web-based **SQL Editor** for advanced querying
 - A **lightweight semantic layer** for quickly defining custom dimensions and metrics
-- Out of the box support for **nearly any SQL** database or data engine
-- A wide array of **beautiful visualizations** to showcase your data, ranging from simple bar charts to geospatial visualizations
-- Lightweight, configurable **caching layer** to help ease database load
+- Out-of-the-box support for **nearly any SQL** database or data engine
+- A wide array of **beautiful visualizations**, from simple bar charts to geospatial maps
+- A lightweight, configurable **caching layer** to ease database load
 - Highly extensible **security roles and authentication** options
-- An **API** for programmatic customization
+- An **MCP service and REST API** for programmatic and AI-agent access
 - A **cloud-native architecture** designed from the ground up for scale
+
+## MCP-Native GenAI BI
+
+What sets AX-BI apart from a traditional BI stack is that it is **agent-ready by design**. The built-in MCP service exposes Superset's core resources — datasets, charts, dashboards, queries, and the semantic layer — as governed tools that any MCP-compatible AI agent can call.
+
+- **Prompt-to-dashboard** — turn natural-language questions into validated charts and composed dashboards, grounded in governed semantics rather than raw text-to-SQL.
+- **Governed by default** — agent tool visibility and every generated query respect your existing RBAC and row-level security. Agents cannot see or do more than the user they act for.
+- **Verifiable artifacts** — generated charts and dashboards are real, inspectable Superset objects, not opaque answers.
+- **Auditable** — agent actions flow through the same command, DAO, and event-logging layers as the rest of the platform.
+
+The MCP service lives in [`superset/mcp_service/`](superset/mcp_service/) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](GENAI_BI_ROADMAP.md) for the product direction.
 
 ## Screenshots & Gifs
 
-**Video Overview**
-
-<!-- File hosted here https://github.com/apache/superset-site/raw/lfs/superset-video-4k.mp4 -->
-
-[superset-video-1080p.webm](https://github.com/user-attachments/assets/b37388f7-a971-409c-96a7-90c4e31322e6)
-
-<br/>
+<!-- TODO: replace the images below with AX-BI-branded captures. The current
+     images are representative of the underlying Superset UI that AX-BI extends. -->
 
 **Large Gallery of Visualizations**
 
@@ -105,7 +86,7 @@ Superset provides:
 
 ## Supported Databases
 
-Superset can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/user-docs/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
+AX-BI can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/user-docs/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
 
 Here are some of the major database solutions that are supported:
 
@@ -164,7 +145,7 @@ Here are some of the major database solutions that are supported:
   <a href="https://superset.apache.org/user-docs/databases/supported/snowflake" title="Snowflake"><img src="docs/static/img/databases/snowflake.svg" alt="Snowflake" width="76" height="40" /></a> &nbsp;
   <a href="https://superset.apache.org/user-docs/databases/supported/sqlite" title="SQLite"><img src="docs/static/img/databases/sqlite.png" alt="SQLite" width="84" height="40" /></a> &nbsp;
   <a href="https://superset.apache.org/user-docs/databases/supported/starrocks" title="StarRocks"><img src="docs/static/img/databases/starrocks.png" alt="StarRocks" width="149" height="40" /></a> &nbsp;
-  <a href="https://superset.apache.org/user-docs/databases/supported/superset-meta-database" title="Superset meta database"><img src="docs/static/img/databases/superset.svg" alt="Superset meta database" width="150" height="39" /></a> &nbsp;
+  <a href="https://superset.apache.org/user-docs/databases/supported/superset-meta-database" title="Meta database"><img src="docs/static/img/databases/superset.svg" alt="Meta database" width="150" height="39" /></a> &nbsp;
   <a href="https://superset.apache.org/user-docs/databases/supported/tdengine" title="TDengine"><img src="docs/static/img/databases/tdengine.png" alt="TDengine" width="140" height="40" /></a> &nbsp;
   <a href="https://superset.apache.org/user-docs/databases/supported/teradata" title="Teradata"><img src="docs/static/img/databases/teradata.png" alt="Teradata" width="124" height="40" /></a> &nbsp;
   <a href="https://superset.apache.org/user-docs/databases/supported/timescaledb" title="TimescaleDB"><img src="docs/static/img/databases/timescale.png" alt="TimescaleDB" width="150" height="36" /></a> &nbsp;
@@ -175,83 +156,59 @@ Here are some of the major database solutions that are supported:
 </div>
 <!-- SUPPORTED_DATABASES_END -->
 
-**A more comprehensive list of supported databases** along with the configuration instructions can be found [here](https://superset.apache.org/user-docs/databases).
+**A more comprehensive list of supported databases** along with configuration instructions can be found in the [Apache Superset database docs](https://superset.apache.org/user-docs/databases), which apply to the AX-BI data layer.
 
-Want to add support for your datastore or data engine? Read more [here](https://superset.apache.org/user-docs/faq#does-superset-work-with-insert-database-engine-here) about the technical requirements.
+Want to add support for your datastore or data engine? Read about the [technical requirements](https://superset.apache.org/user-docs/faq#does-superset-work-with-insert-database-engine-here).
 
 ## Installation and Configuration
 
-Try out Superset's [quickstart](https://superset.apache.org/user-docs/quickstart) guide or learn about [the options for production deployments](https://superset.apache.org/admin-docs/installation/architecture).
+AX-BI runs anywhere the underlying Superset platform runs.
 
-## Get Involved
+- **Quick local trial** — use the bundled Docker Compose stack:
+  ```bash
+  docker compose -f docker-compose-non-dev.yml up
+  ```
+- **Production deployments** — see the [Helm chart](helm/superset/) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
+- **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](superset/mcp_service/PRODUCTION.md).
 
-- Ask and answer questions on [StackOverflow](https://stackoverflow.com/questions/tagged/apache-superset) using the **apache-superset** tag
-- [Join our community's Slack](http://bit.ly/join-superset-slack) and please read our [Slack Community Guidelines](https://github.com/apache/superset/blob/master/CODE_OF_CONDUCT.md#slack-community-guidelines)
-- [Join our dev@superset.apache.org Mailing list](https://lists.apache.org/list.html?dev@superset.apache.org). To join, simply send an email to [dev-subscribe@superset.apache.org](mailto:dev-subscribe@superset.apache.org)
-- Follow us on social media: [X](https://x.com/apachesuperset) | [LinkedIn](https://www.linkedin.com/company/apache-superset) | [Bluesky](https://bsky.app/profile/apachesuperset.bsky.social) | [Reddit](https://reddit.com/r/apache-superset)
-- If you want to help troubleshoot GitHub Issues involving the numerous database drivers that Superset supports, please consider adding your name and the databases you have access to on the [Superset Database Familiarity Rolodex](https://docs.google.com/spreadsheets/d/1U1qxiLvOX0kBTUGME1AHHi6Ywel6ECF8xk_Qy-V9R8c/edit#gid=0)
-- Join Superset's Town Hall and [Operational Model](https://preset.io/blog/the-superset-operational-model-wants-you/) recurring meetings. Meeting info is available on the [Superset Community Calendar](https://superset.apache.org/community)
+## Development
 
-## Contributor Guide
+AX-BI has a Flask/Python backend and a React/TypeScript frontend.
 
-Interested in contributing? Check out our
-[Developer Guide](https://superset.apache.org/developer-docs/)
-to find resources around contributing along with a detailed guide on
-how to set up a development environment.
+```bash
+# Backend (Flask dev server)
+make flask-app
 
-## Resources
+# Frontend dev server (port 9000)
+cd superset-frontend && npm run dev-server
 
-- [Superset "In the Wild"](https://superset.apache.org/inTheWild) - see who's using Superset, and [add your organization](https://github.com/apache/superset/edit/master/RESOURCES/INTHEWILD.yaml) to the list!
-- [Feature Flags](https://superset.apache.org/admin-docs/configuration/feature-flags) - the status of Superset's Feature Flags.
-- [Standard Roles](https://github.com/apache/superset/blob/master/RESOURCES/STANDARD_ROLES.md) - How RBAC permissions map to roles.
-- [Superset Wiki](https://github.com/apache/superset/wiki) - Tons of additional community resources: best practices, community content and other information.
-- [Superset SIPs](https://github.com/orgs/apache/projects/170) - The status of Superset's SIPs (Superset Improvement Proposals) for both consensus and implementation status.
+# Run the MCP service
+superset mcp run            # requires: pip install fastmcp
 
-Understanding the Superset Points of View
+# Tests
+pytest                                 # backend
+cd superset-frontend && npm run test   # frontend
 
-- [The Case for Dataset-Centric Visualization](https://preset.io/blog/dataset-centric-visualization/)
-- [Understanding the Superset Semantic Layer](https://preset.io/blog/understanding-superset-semantic-layer/)
+# Always run before pushing
+pre-commit run --all-files
+```
 
-- Getting Started with Superset
-  - [Superset in 2 Minutes using Docker Compose](https://superset.apache.org/admin-docs/installation/docker-compose)
-  - [Installing Database Drivers](https://superset.apache.org/user-docs/databases/#installing-database-drivers)
-  - [Building New Database Connectors](https://preset.io/blog/building-database-connector/)
-  - [Create Your First Dashboard](https://superset.apache.org/user-docs/using-superset/creating-your-first-dashboard)
-  - [Comprehensive Tutorial for Contributing Code to Apache Superset
-    ](https://preset.io/blog/tutorial-contributing-code-to-apache-superset/)
-- [Resources to master Superset by Preset](https://preset.io/resources/)
+See [`CLAUDE.md`](CLAUDE.md) for the full engineering guide (commands, architecture, conventions, and the MCP service), [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for product direction, and [`SECURITY.md`](SECURITY.md) for the security and threat model.
 
-- Deploying Superset
+## Built on Apache Superset
 
-  - [Official Docker image](https://hub.docker.com/r/apache/superset)
-  - [Helm Chart](https://github.com/apache/superset/tree/master/helm/superset)
+AX-BI is a derivative work of [Apache Superset](https://superset.apache.org), a project of the Apache Software Foundation, used under the [Apache License 2.0](LICENSE). DEFAI Private Limited is grateful to the Apache Superset community for the foundation this product is built on.
 
-- Recordings of Past [Superset Community Events](https://preset.io/events)
+*Apache Superset, Apache, and the Apache feather logo are trademarks of the Apache Software Foundation. DEFAI Private Limited and AX-BI are not affiliated with or endorsed by the Apache Software Foundation.* Upstream attribution and license terms are retained in the [`NOTICE`](NOTICE) and [`LICENSE`](LICENSE) files; the documentation links above point to the upstream Apache Superset docs, which apply to the corresponding AX-BI functionality.
 
-  - [Mixed Time Series Charts](https://preset.io/events/mixed-time-series-visualization-in-superset-workshop/)
-  - [How the Bing Team Customized Superset for the Internal Self-Serve Data & Analytics Platform](https://preset.io/events/how-the-bing-team-heavily-customized-superset-for-their-internal-data/)
-  - [Live Demo: Visualizing MongoDB and Pinot Data using Trino](https://preset.io/events/2021-04-13-visualizing-mongodb-and-pinot-data-using-trino/)
-  - [Introduction to the Superset API](https://preset.io/events/introduction-to-the-superset-api/)
-  - [Building a Database Connector for Superset](https://preset.io/events/2021-02-16-building-a-database-connector-for-superset/)
+## License
 
-- Visualizations
+AX-BI is distributed under the [Apache License 2.0](LICENSE). See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
 
-  - [Creating Viz Plugins](https://superset.apache.org/developer-docs/contributing/howtos#creating-visualization-plugins)
-  - [Managing and Deploying Custom Viz Plugins](https://medium.com/nmc-techblog/apache-superset-manage-custom-viz-plugins-in-production-9fde1a708e55)
-  - [Why Apache Superset is Betting on Apache ECharts](https://preset.io/blog/2021-4-1-why-echarts/)
+## About DEFAI
 
-- [Superset API](https://superset.apache.org/developer-docs/api)
+**AX-BI** is developed and maintained by **DEFAI Private Limited**.
 
-## Repo Activity
-
-<a href="https://next.ossinsight.io/widgets/official/compose-last-28-days-stats?repo_id=39464018" target="_blank" align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/compose-last-28-days-stats/thumbnail.png?repo_id=39464018&image_size=auto&color_scheme=dark" width="655" height="auto" />
-    <img alt="Performance Stats of apache/superset - Last 28 days" src="https://next.ossinsight.io/widgets/official/compose-last-28-days-stats/thumbnail.png?repo_id=39464018&image_size=auto&color_scheme=light" width="655" height="auto" />
-  </picture>
-</a>
-
-<!-- Made with [OSS Insight](https://ossinsight.io/) -->
-
-<!-- telemetry/analytics pixel: -->
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=bc1c90cd-bc04-4e11-8c7b-289fb2839492" />
+<!-- TODO: add DEFAI website, contact email, and support channel once finalized. -->
+- Website: _coming soon_
+- Support: _coming soon_
