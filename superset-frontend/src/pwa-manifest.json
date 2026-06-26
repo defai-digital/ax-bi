@@ -1,12 +1,12 @@
 {
-  "name": "Apache Superset",
-  "short_name": "Superset",
-  "description": "Modern data exploration and visualization platform",
+  "name": "AX-BI",
+  "short_name": "AX-BI",
+  "description": "AX-BI analytics and visualization platform",
   "start_url": "/superset/welcome/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#20a7c9",
+  "theme_color": "#35c98d",
   "icons": [
     {
       "src": "/static/assets/images/pwa/icon-192.png",
@@ -39,14 +39,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Apache Superset Dashboard"
+      "label": "AX-BI Dashboard"
     },
     {
       "src": "/static/assets/images/pwa/screenshot-narrow.png",
       "sizes": "540x720",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Apache Superset Mobile View"
+      "label": "AX-BI Mobile View"
     }
   ],
   "file_handlers": [

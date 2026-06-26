@@ -118,7 +118,23 @@ PACKAGE_JSON_FILE = str(files("superset") / "static/assets/package.json")
 #     "type": "image/png"
 #     "rel": "icon"
 # },
-FAVICONS = [{"href": "/static/assets/images/favicon.png"}]
+FAVICONS = [
+    {"href": "/static/assets/images/favicon.ico"},
+    {
+        "href": "/static/assets/images/favicon.svg",
+        "type": "image/svg+xml",
+    },
+    {
+        "href": "/static/assets/images/favicon-96x96.png",
+        "sizes": "96x96",
+        "type": "image/png",
+    },
+    {
+        "href": "/static/assets/images/apple-touch-icon.png",
+        "rel": "apple-touch-icon",
+        "sizes": "180x180",
+    },
+]
 PDF_COMPRESSION_LEVEL: Literal["NONE", "FAST", "MEDIUM", "SLOW"] = "MEDIUM"
 
 
@@ -405,13 +421,13 @@ AUTH_PASSWORD_COMMON_BLOCKLIST: list[str] = []
 # GLOBALS FOR APP Builder
 # ------------------------------
 # Uncomment to setup Your App name
-APP_NAME = "Superset"
+APP_NAME = "AX-BI"
 
 # Specify the App icon
 # NOTE: This variable is used to populate THEME_DEFAULT. If you override this in
 # superset_config.py, you must also override THEME_DEFAULT to see the change,
 # or set THEME_DEFAULT["token"]["brandLogoUrl"] directly.
-APP_ICON = "/static/assets/images/superset-logo-horiz.png"
+APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png"
 
 # Specify where clicking the logo would take the user
 # Default value of None will take you to '/superset/welcome'
@@ -1020,11 +1036,11 @@ _THEME_DEFAULT_BASE: Theme = {
         # Brand
         # Application name for window titles
         "brandAppName": APP_NAME,
-        "brandLogoAlt": "Apache Superset",
+        "brandLogoAlt": "AX-BI",
         "brandLogoUrl": APP_ICON,
         "brandLogoMargin": "18px 0",
         "brandLogoHref": LOGO_TARGET_PATH or "/",
-        "brandLogoHeight": "24px",
+        "brandLogoHeight": "34px",
         # Spinner - Set this to use a custom GIF/image loader
         # "brandSpinnerUrl": "/static/assets/images/loading.gif",
         "brandSpinnerUrl": None,
@@ -2169,7 +2185,7 @@ IMPALA_CANCEL_QUERY_ALLOW_INTERNAL_HOSTS: bool = False
 EMAIL_REPORTS_SUBJECT_PREFIX = "[Report] "
 
 # The text for call-to-action link in Alerts & Reports emails
-EMAIL_REPORTS_CTA = "Explore in Superset"
+EMAIL_REPORTS_CTA = "Explore in AX-BI"
 
 # Slack API token for the superset reports, either string or callable
 SLACK_API_TOKEN: Callable[[], str] | str | None = None
