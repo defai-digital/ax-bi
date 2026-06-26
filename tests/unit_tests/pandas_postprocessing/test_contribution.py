@@ -16,11 +16,12 @@
 # under the License.
 
 from datetime import datetime
+from decimal import Decimal
 
 import pytest
 from numpy import nan
 from numpy.testing import assert_array_equal
-from pandas import DataFrame
+from pandas import DataFrame, isna, Series
 
 from superset.exceptions import InvalidPostProcessingError
 from superset.utils.core import DTTM_ALIAS, PostProcessingContributionOrientation
@@ -87,6 +88,42 @@ def test_contribution_on_selected_columns():
     assert_array_equal(processed_df["b"].tolist(), [1, 9, nan])
     assert_array_equal(processed_df["c"].tolist(), [nan, nan, nan])
     assert processed_df["pct_a"].tolist() == [0.25, 0.75, 0]
+
+
+def test_contribution_ignores_arrow_string_columns():
+    pytest.importorskip("pyarrow")
+    df = DataFrame(
+        {
+            "name": Series(["alpha", None, "beta"], dtype="string[pyarrow]"),
+            "count": [1, nan, 3],
+        }
+    )
+
+    processed_df = contribution(
+        df,
+        orientation=PostProcessingContributionOrientation.COLUMN,
+        columns=["count"],
+        rename_columns=["count__contribution"],
+    )
+
+    assert processed_df["name"].iloc[0] == "alpha"
+    assert isna(processed_df["name"].iloc[1])
+    assert processed_df["name"].iloc[2] == "beta"
+    assert_array_equal(processed_df["count"].tolist(), [1, nan, 3])
+    assert processed_df["count__contribution"].tolist() == [0.25, 0, 0.75]
+
+
+def test_contribution_keeps_decimal_columns_numeric():
+    df = DataFrame({"amount": [Decimal("1.5"), Decimal("2.5"), None]})
+
+    processed_df = contribution(
+        df,
+        orientation=PostProcessingContributionOrientation.COLUMN,
+        columns=["amount"],
+        rename_columns=["amount__contribution"],
+    )
+
+    assert processed_df["amount__contribution"].tolist() == [0.375, 0.625, 0]
 
 
 def test_contribution_with_time_shift_columns():

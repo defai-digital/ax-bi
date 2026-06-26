@@ -22,10 +22,28 @@ from typing import Any
 
 from flask_babel import gettext as _
 from pandas import DataFrame, MultiIndex
+from pandas.api.types import is_numeric_dtype
 
 from superset.exceptions import InvalidPostProcessingError
 from superset.utils.core import PostProcessingContributionOrientation
 from superset.utils.pandas_postprocessing.utils import validate_column_args
+
+
+def _is_decimal_column(df: DataFrame, column: Any) -> bool:
+    """Return whether a column contains only Decimal non-null values."""
+    non_null_values = df[column].dropna()
+    return not non_null_values.empty and non_null_values.map(
+        lambda value: isinstance(value, Decimal)
+    ).all()
+
+
+def _get_numeric_contribution_columns(df: DataFrame) -> list[Any]:
+    """Return columns safe for numeric contribution calculations."""
+    return [
+        column
+        for column in df.columns
+        if is_numeric_dtype(df[column]) or _is_decimal_column(df, column)
+    ]
 
 
 @validate_column_args("columns")
@@ -56,7 +74,8 @@ def contribution(
     :return: DataFrame with contributions.
     """
     contribution_df = df.copy()
-    numeric_df = contribution_df.select_dtypes(include=["number", Decimal])
+    numeric_columns = _get_numeric_contribution_columns(contribution_df)
+    numeric_df = contribution_df.loc[:, numeric_columns].copy()
     numeric_df.fillna(0, inplace=True)
     # verify column selections
     if columns:
