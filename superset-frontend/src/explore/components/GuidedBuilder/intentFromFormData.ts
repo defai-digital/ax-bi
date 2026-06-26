@@ -67,7 +67,7 @@ export function intentFromFormData(formData?: JsonObject): GuidedIntent {
     : stringsOnly(formData?.groupby);
 
   const filters = Array.isArray(formData?.adhoc_filters)
-    ? (formData?.adhoc_filters as JsonObject[])
+    ? (formData.adhoc_filters as JsonObject[])
         .map(toGuidedFilter)
         .filter((f): f is GuidedFilter => f !== undefined)
     : [];

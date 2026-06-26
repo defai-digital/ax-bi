@@ -51,8 +51,7 @@ interface ColumnSelectPopoverTriggerProps {
   selectedMetrics?: QueryFormMetric[];
 }
 
-interface ColumnSelectPopoverTriggerInnerProps
-  extends ColumnSelectPopoverTriggerProps {
+interface ColumnSelectPopoverTriggerInnerProps extends ColumnSelectPopoverTriggerProps {
   datasource?: any;
 }
 

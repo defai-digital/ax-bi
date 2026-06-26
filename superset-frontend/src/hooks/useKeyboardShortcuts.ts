@@ -66,6 +66,11 @@ export interface UseKeyboardShortcutResult {
 
 let shortcutIdCounter = 0;
 
+const getNextShortcutId = (): number => {
+  shortcutIdCounter += 1;
+  return shortcutIdCounter - 1;
+};
+
 /**
  * Hook to register a keyboard shortcut with the global registry
  *
@@ -99,7 +104,7 @@ export function useKeyboardShortcut(
 
   // Generate stable ID
   const idRef = useRef(
-    options.id || `shortcut-${keys.replace(/\+/g, '-')}-${shortcutIdCounter++}`,
+    options.id || `shortcut-${keys.replace(/\+/g, '-')}-${getNextShortcutId()}`,
   );
 
   const unregister = useCallback(() => {
@@ -186,7 +191,7 @@ export function useKeyboardShortcuts(
     idsRef.current = shortcuts.map(
       ({ keys, options }, index) =>
         options?.id ||
-        `shortcut-${keys.replace(/\+/g, '-')}-${shortcutIdCounter++}-${index}`,
+        `shortcut-${keys.replace(/\+/g, '-')}-${getNextShortcutId()}-${index}`,
     );
   }
 

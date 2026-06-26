@@ -92,8 +92,7 @@ export interface QueryResultInterface {
 }
 
 export interface SingleQueryResultPaneProp
-  extends QueryResultInterface,
-    DrillControlsProps {
+  extends QueryResultInterface, DrillControlsProps {
   // {datasource.id}__{datasource.type}, eg: 1__table
   datasourceId?: string;
   isVisible: boolean;

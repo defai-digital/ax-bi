@@ -164,7 +164,7 @@ const config: ControlPanelConfig = {
       visibility: ({ controls }: ControlPanelsContainerProps) =>
         Boolean(
           !controls?.secondary_metric?.value ||
-            controls?.secondary_metric?.value === controls?.metric.value,
+          controls?.secondary_metric?.value === controls?.metric.value,
         ),
     },
     linear_color_scheme: {
@@ -174,7 +174,7 @@ const config: ControlPanelConfig = {
       visibility: ({ controls }: ControlPanelsContainerProps) =>
         Boolean(
           controls?.secondary_metric?.value &&
-            controls?.secondary_metric?.value !== controls?.metric.value,
+          controls?.secondary_metric?.value !== controls?.metric.value,
         ),
     },
     columns: {

@@ -104,6 +104,22 @@ function matchesPatterns(url: string, patterns: RegExp[]): boolean {
 }
 
 /**
+ * Trim cache to max entries (FIFO)
+ */
+async function trimCache(cacheName: string, maxEntries: number): Promise<void> {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+
+  if (keys.length > maxEntries) {
+    // Delete oldest entries
+    const deleteCount = keys.length - maxEntries;
+    for (let i = 0; i < deleteCount; i += 1) {
+      await cache.delete(keys[i]);
+    }
+  }
+}
+
+/**
  * Stale-while-revalidate strategy for static assets
  * Returns cached response immediately, then updates cache in background
  */
@@ -188,22 +204,6 @@ async function networkFirst(
       statusText: 'Service Unavailable',
       headers: { 'Content-Type': 'application/json' },
     });
-  }
-}
-
-/**
- * Trim cache to max entries (FIFO)
- */
-async function trimCache(cacheName: string, maxEntries: number): Promise<void> {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-
-  if (keys.length > maxEntries) {
-    // Delete oldest entries
-    const deleteCount = keys.length - maxEntries;
-    for (let i = 0; i < deleteCount; i++) {
-      await cache.delete(keys[i]);
-    }
   }
 }
 

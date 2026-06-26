@@ -54,7 +54,8 @@ const BuilderComponentPane = ({ topOffset = 0 }) => (
         position: absolute;
         height: 100%;
         width: ${BUILDER_PANE_WIDTH}px;
-        box-shadow: -${theme.sizeUnit}px 0 ${theme.sizeUnit}px 0 ${tinycolor(theme.colorBorder).setAlpha(0.1).toRgbString()};
+        box-shadow: -${theme.sizeUnit}px 0 ${theme.sizeUnit}px 0
+          ${tinycolor(theme.colorBorder).setAlpha(0.1).toRgbString()};
         background-color: ${theme.colorBgBase};
       `}
     >
