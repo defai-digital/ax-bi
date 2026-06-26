@@ -47,10 +47,8 @@ export type CodeEditorMode =
 
 export type CodeEditorTheme = 'light' | 'dark';
 
-export interface CodeEditorProps extends Omit<
-  IAceEditorProps,
-  'mode' | 'theme'
-> {
+export interface CodeEditorProps
+  extends Omit<IAceEditorProps, 'mode' | 'theme'> {
   mode?: CodeEditorMode;
   theme?: CodeEditorTheme;
   name?: string;

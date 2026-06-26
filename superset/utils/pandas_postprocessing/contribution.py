@@ -32,9 +32,10 @@ from superset.utils.pandas_postprocessing.utils import validate_column_args
 def _is_decimal_column(df: DataFrame, column: Any) -> bool:
     """Return whether a column contains only Decimal non-null values."""
     non_null_values = df[column].dropna()
-    return not non_null_values.empty and non_null_values.map(
-        lambda value: isinstance(value, Decimal)
-    ).all()
+    return (
+        not non_null_values.empty
+        and non_null_values.map(lambda value: isinstance(value, Decimal)).all()
+    )
 
 
 def _get_numeric_contribution_columns(df: DataFrame) -> list[Any]:

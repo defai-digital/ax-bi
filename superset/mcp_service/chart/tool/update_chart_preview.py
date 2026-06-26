@@ -285,9 +285,7 @@ def update_chart_preview(  # noqa: C901
         previews: Dict[str, Any] = {}
         if request.generate_preview:
             try:
-                with mcp_event_log_context(
-                    action="mcp.update_chart_preview.preview"
-                ):
+                with mcp_event_log_context(action="mcp.update_chart_preview.preview"):
                     for format_type in request.preview_formats:
                         # URL previews are represented by explore_url/chart.url.
                         # Screenshot-based previews are not supported.

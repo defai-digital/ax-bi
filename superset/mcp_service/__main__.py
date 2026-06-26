@@ -58,6 +58,7 @@ if os.environ.get("FASTMCP_TRANSPORT", "stdio") == "stdio":
     click.echo = echo_to_stderr
     click.secho = secho_to_stderr
 
+
 def _add_default_middlewares() -> None:
     """Add the standard middleware stack to the MCP instance.
 

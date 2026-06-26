@@ -86,7 +86,8 @@ export interface ChartDataResponseResult {
   detected_currency?: string | null;
 }
 
-export interface TimeseriesChartDataResponseResult extends ChartDataResponseResult {
+export interface TimeseriesChartDataResponseResult
+  extends ChartDataResponseResult {
   data: TimeseriesDataRecord[];
   label_map: Record<string, string[]>;
 }

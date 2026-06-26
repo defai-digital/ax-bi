@@ -878,8 +878,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
     ):
         """Test that databases with ssh_tunnels that have multiple credentials are rejected"""  # noqa: E501
         mock_schema_is_feature_enabled.return_value = True
-        masked_database_config = (
-            deepcopy(database_with_ssh_tunnel_config_private_pass_only)
+        masked_database_config = deepcopy(
+            database_with_ssh_tunnel_config_private_pass_only
         )
         contents = {
             "metadata.yaml": yaml.safe_dump(database_metadata_config),

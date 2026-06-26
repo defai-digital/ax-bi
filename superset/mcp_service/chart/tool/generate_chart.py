@@ -417,9 +417,7 @@ async def generate_chart(  # noqa: C901
 
                 # Compile check: execute the chart query to catch runtime errors
                 await ctx.report_progress(3, 5, "Running compile check (test query)")
-                with mcp_event_log_context(
-                    action="mcp.generate_chart.compile_check"
-                ):
+                with mcp_event_log_context(action="mcp.generate_chart.compile_check"):
                     compile_result = _compile_chart(form_data, dataset.id)
                 if not compile_result.success:
                     # Query failed — delete the broken chart and return an error
@@ -484,9 +482,7 @@ async def generate_chart(  # noqa: C901
 
             # Generate form_data_key for saved charts (needed for chatbot rendering)
             try:
-                with mcp_event_log_context(
-                    action="mcp.generate_chart.form_data_cache"
-                ):
+                with mcp_event_log_context(action="mcp.generate_chart.form_data_cache"):
                     from superset.commands.explore.form_data.parameters import (
                         CommandParameters,
                     )
@@ -558,9 +554,7 @@ async def generate_chart(  # noqa: C901
                     numeric_dataset_id = ds.id
 
             if numeric_dataset_id is not None:
-                with mcp_event_log_context(
-                    action="mcp.generate_chart.compile_check"
-                ):
+                with mcp_event_log_context(action="mcp.generate_chart.compile_check"):
                     compile_result = _compile_chart(form_data, numeric_dataset_id)
                 if not compile_result.success:
                     await ctx.warning(

@@ -43,7 +43,8 @@ export interface TreeChartDataResponseResult extends ChartDataResponseResult {
   data: TreeDataRecord[];
 }
 
-export interface EchartsTreeChartProps extends BaseChartProps<EchartsTreeFormData> {
+export interface EchartsTreeChartProps
+  extends BaseChartProps<EchartsTreeFormData> {
   formData: EchartsTreeFormData;
   queriesData: TreeChartDataResponseResult[];
 }

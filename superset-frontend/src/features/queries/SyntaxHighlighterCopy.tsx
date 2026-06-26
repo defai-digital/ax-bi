@@ -64,10 +64,8 @@ const SyntaxHighlighterWrapper = styled.div`
   }
 `;
 
-interface SyntaxHighlighterCopyProps extends Omit<
-  CodeSyntaxHighlighterProps,
-  'children'
-> {
+interface SyntaxHighlighterCopyProps
+  extends Omit<CodeSyntaxHighlighterProps, 'children'> {
   children: string;
   addDangerToast?: ToastProps['addDangerToast'];
   addSuccessToast?: ToastProps['addSuccessToast'];

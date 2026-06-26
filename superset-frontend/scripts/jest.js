@@ -19,25 +19,25 @@
  * under the License.
  */
 
-const { spawnSync } = require("node:child_process");
+const { spawnSync } = require('node:child_process');
 
-const DEFAULT_ARGS = ["--max-workers=80%", "--workerIdleMemoryLimit=1536MB"];
+const DEFAULT_ARGS = ['--max-workers=80%', '--workerIdleMemoryLimit=1536MB'];
 const args = process.argv.slice(2);
 
 const hasWorkerControlArg = args.some(
-  (arg) =>
-    arg === "--runInBand" ||
-    arg === "-i" ||
-    arg === "--maxWorkers" ||
-    arg === "--max-workers" ||
-    arg.startsWith("--maxWorkers=") ||
-    arg.startsWith("--max-workers=")
+  arg =>
+    arg === '--runInBand' ||
+    arg === '-i' ||
+    arg === '--maxWorkers' ||
+    arg === '--max-workers' ||
+    arg.startsWith('--maxWorkers=') ||
+    arg.startsWith('--max-workers='),
 );
 
 const hasWorkerMemoryLimitArg = args.some(
-  (arg) =>
-    arg === "--workerIdleMemoryLimit" ||
-    arg.startsWith("--workerIdleMemoryLimit=")
+  arg =>
+    arg === '--workerIdleMemoryLimit' ||
+    arg.startsWith('--workerIdleMemoryLimit='),
 );
 
 const jestArgs = [
@@ -47,8 +47,8 @@ const jestArgs = [
 ];
 const result = spawnSync(
   process.execPath,
-  [require.resolve("jest/bin/jest"), ...jestArgs],
-  { stdio: "inherit" }
+  [require.resolve('jest/bin/jest'), ...jestArgs],
+  { stdio: 'inherit' },
 );
 
 if (result.error) {

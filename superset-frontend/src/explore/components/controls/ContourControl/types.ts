@@ -41,9 +41,8 @@ export interface ErrorMapType {
   color: string[];
 }
 
-export interface ContourControlProps extends ControlComponentProps<
-  OptionValueType[]
-> {
+export interface ContourControlProps
+  extends ControlComponentProps<OptionValueType[]> {
   contours?: {};
 }
 

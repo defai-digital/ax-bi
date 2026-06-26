@@ -54,7 +54,8 @@ export type BigNumberWithTrendlineFormData = BigNumberTotalFormData & {
   showYAxisMinMaxLabels?: boolean;
 };
 
-export interface BigNumberTotalChartDataResponseResult extends ChartDataResponseResult {
+export interface BigNumberTotalChartDataResponseResult
+  extends ChartDataResponseResult {
   data: BigNumberDatum[];
 }
 

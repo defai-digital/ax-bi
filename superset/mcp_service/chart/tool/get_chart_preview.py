@@ -1322,9 +1322,7 @@ async def _get_chart_preview_internal(  # noqa: C901
         )
 
         # Handle different preview formats using strategy pattern
-        with mcp_event_log_context(
-            action="mcp.get_chart_preview.preview_generation"
-        ):
+        with mcp_event_log_context(action="mcp.get_chart_preview.preview_generation"):
             preview_generator = PreviewFormatGenerator(chart, request)
             content = preview_generator.generate()
 

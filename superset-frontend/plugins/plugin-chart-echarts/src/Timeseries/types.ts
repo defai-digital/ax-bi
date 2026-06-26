@@ -102,7 +102,8 @@ export type EchartsTimeseriesFormData = QueryFormData & {
 } & LegendFormData &
   TitleFormData;
 
-export interface EchartsTimeseriesChartProps extends BaseChartProps<EchartsTimeseriesFormData> {
+export interface EchartsTimeseriesChartProps
+  extends BaseChartProps<EchartsTimeseriesFormData> {
   formData: EchartsTimeseriesFormData;
 }
 

@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from superset.mcp_service.utils.config_utils import (
@@ -237,7 +239,7 @@ def test_get_mcp_response_size_config_defaults_to_empty_dict() -> None:
 
 
 def test_get_mcp_response_size_config_preserves_empty_default() -> None:
-    default = {}
+    default: dict[str, Any] = {}
 
     assert get_mcp_response_size_config({}, default=default) is default
 
@@ -246,8 +248,7 @@ def test_get_mcp_disabled_tools_reads_supplied_config() -> None:
     disabled_tools = {"health_check"}
 
     assert (
-        get_mcp_disabled_tools({"MCP_DISABLED_TOOLS": disabled_tools})
-        is disabled_tools
+        get_mcp_disabled_tools({"MCP_DISABLED_TOOLS": disabled_tools}) is disabled_tools
     )
 
 
@@ -295,7 +296,7 @@ def test_get_mcp_tool_search_config_uses_supplied_default() -> None:
 
 
 def test_get_mcp_tool_search_config_preserves_empty_default() -> None:
-    default = {}
+    default: dict[str, Any] = {}
 
     assert get_mcp_tool_search_config({}, default=default) is default
 

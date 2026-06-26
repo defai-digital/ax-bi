@@ -845,8 +845,7 @@ class BaseReportState:
         return (
             last_success is not None
             and self._report_schedule.grace_period
-            and naive_utcnow()
-            - timedelta(seconds=self._report_schedule.grace_period)
+            and naive_utcnow() - timedelta(seconds=self._report_schedule.grace_period)
             < last_success.end_dttm
         )
 
@@ -862,8 +861,7 @@ class BaseReportState:
         return (
             last_success is not None
             and self._report_schedule.grace_period
-            and naive_utcnow()
-            - timedelta(seconds=self._report_schedule.grace_period)
+            and naive_utcnow() - timedelta(seconds=self._report_schedule.grace_period)
             < last_success.end_dttm
         )
 

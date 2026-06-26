@@ -138,9 +138,7 @@ async def create_virtual_dataset(
             if request.metrics or request.calculated_columns:
                 update_props = _build_update_props(request, dataset)
 
-                with mcp_event_log_context(
-                    action="mcp.create_virtual_dataset.update"
-                ):
+                with mcp_event_log_context(action="mcp.create_virtual_dataset.update"):
                     dataset = _update_virtual_dataset(dataset.id, update_props)
 
         # Build response

@@ -119,9 +119,7 @@ async def generate_explore_link(
 
     try:
         await ctx.report_progress(1, 4, "Validating dataset exists")
-        with mcp_event_log_context(
-            action="mcp.generate_explore_link.dataset_check"
-        ):
+        with mcp_event_log_context(action="mcp.generate_explore_link.dataset_check"):
             dataset = None
             if isinstance(request.dataset_id, int) or (
                 isinstance(request.dataset_id, str) and request.dataset_id.isdigit()
@@ -305,9 +303,7 @@ async def generate_explore_link(
             )
 
         await ctx.report_progress(3, 4, "Generating explore URL")
-        with mcp_event_log_context(
-            action="mcp.generate_explore_link.url_generation"
-        ):
+        with mcp_event_log_context(action="mcp.generate_explore_link.url_generation"):
             # Generate explore link using shared utilities
             explore_url = generate_url(
                 dataset_id=request.dataset_id, form_data=form_data

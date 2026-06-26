@@ -818,13 +818,12 @@ def _build_starlette_middleware(
     # None, and use_factory_config auth lives outside Flask config entirely.
     auth_enabled = auth_provider is not None
     app_name = get_superset_app_name(flask_app.config)
-    app_icon = get_superset_app_icon(flask_app.config)
     base_page_config: dict[str, Any] = {
         "title": f"{app_name} MCP Server",
         "server_key": app_name.lower().replace(" ", "-"),
         "app_name": app_name,
     }
-    if app_icon:
+    if app_icon := get_superset_app_icon(flask_app.config):
         if app_icon.startswith(("http://", "https://")):
             base_page_config["logo_url"] = app_icon
         elif app_icon.startswith("/"):

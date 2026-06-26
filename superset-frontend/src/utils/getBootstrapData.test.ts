@@ -128,8 +128,9 @@ describe('getBootstrapData and helpers', () => {
         document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
 
         jest.resetModules();
-        const { default: getBootstrapData, applicationRoot } =
-          await import('./getBootstrapData');
+        const { default: getBootstrapData, applicationRoot } = await import(
+          './getBootstrapData'
+        );
         getBootstrapData();
 
         const expectedAppRoot =

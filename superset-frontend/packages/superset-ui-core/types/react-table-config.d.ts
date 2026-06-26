@@ -68,8 +68,7 @@ import {
 declare module 'react-table' {
   type ColumnSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   export interface TableOptions<D extends object>
-    extends
-      UseExpandedOptions<D>,
+    extends UseExpandedOptions<D>,
       UseFiltersOptions<D>,
       UseGlobalFiltersOptions<D>,
       UseGroupByOptions<D>,
@@ -84,15 +83,13 @@ declare module 'react-table' {
       Record<string, any> {}
 
   export interface Hooks<D extends object = {}>
-    extends
-      UseExpandedHooks<D>,
+    extends UseExpandedHooks<D>,
       UseGroupByHooks<D>,
       UseRowSelectHooks<D>,
       UseSortByHooks<D> {}
 
   export interface TableInstance<D extends object = {}>
-    extends
-      UseColumnOrderInstanceProps<D>,
+    extends UseColumnOrderInstanceProps<D>,
       UseExpandedInstanceProps<D>,
       UseFiltersInstanceProps<D>,
       UseGlobalFiltersInstanceProps<D>,
@@ -103,8 +100,7 @@ declare module 'react-table' {
       UseSortByInstanceProps<D> {}
 
   export interface TableState<D extends object = {}>
-    extends
-      UseColumnOrderState<D>,
+    extends UseColumnOrderState<D>,
       UseExpandedState<D>,
       UseFiltersState<D>,
       UseGlobalFiltersState<D>,
@@ -116,8 +112,7 @@ declare module 'react-table' {
       UseSortByState<D> {}
 
   export interface Column<D extends object = {}>
-    extends
-      UseFiltersColumnOptions<D>,
+    extends UseFiltersColumnOptions<D>,
       UseGroupByColumnOptions<D>,
       UseResizeColumnsColumnOptions<D>,
       UseSortByColumnOptions<D> {
@@ -127,8 +122,7 @@ declare module 'react-table' {
   }
 
   export interface ColumnInstance<D extends object = {}>
-    extends
-      UseFiltersColumnProps<D>,
+    extends UseFiltersColumnProps<D>,
       UseGroupByColumnProps<D>,
       UseResizeColumnsColumnProps<D>,
       UseSortByColumnProps<D> {
@@ -138,11 +132,11 @@ declare module 'react-table' {
   }
 
   export interface Cell<D extends object = {}>
-    extends UseGroupByCellProps<D>, UseRowStateCellProps<D> {}
+    extends UseGroupByCellProps<D>,
+      UseRowStateCellProps<D> {}
 
   export interface Row<D extends object = {}>
-    extends
-      UseExpandedRowProps<D>,
+    extends UseExpandedRowProps<D>,
       UseGroupByRowProps<D>,
       UseRowSelectRowProps<D>,
       UseRowStateRowProps<D> {}

@@ -119,8 +119,7 @@ def main(event_type: str, sha: str, repo: str) -> None:
         pr_number = github_ref.split("/")[-2] if "/" in github_ref else ""
         if not is_int(pr_number):
             raise ValueError(
-                "GITHUB_REF must be a pull request ref like "
-                "'refs/pull/<number>/merge'"
+                "GITHUB_REF must be a pull request ref like 'refs/pull/<number>/merge'"
             )
         files = fetch_changed_files_pr(repo, pr_number)
         print("PR files:")

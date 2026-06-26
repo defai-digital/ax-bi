@@ -42,13 +42,11 @@ def mcp_error_timestamp() -> datetime:
 
 
 @overload
-def sanitize_error_text(value: str) -> str:
-    ...
+def sanitize_error_text(value: str) -> str: ...
 
 
 @overload
-def sanitize_error_text(value: None) -> None:
-    ...
+def sanitize_error_text(value: None) -> None: ...
 
 
 def sanitize_error_text(value: str | None) -> str | None:

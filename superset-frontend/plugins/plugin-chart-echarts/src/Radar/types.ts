@@ -61,7 +61,8 @@ export enum EchartsRadarLabelType {
   KeyValue = 'key_value',
 }
 
-export interface EchartsRadarChartProps extends BaseChartProps<EchartsRadarFormData> {
+export interface EchartsRadarChartProps
+  extends BaseChartProps<EchartsRadarFormData> {
   formData: EchartsRadarFormData;
 }
 

@@ -65,9 +65,7 @@ async def get_layer_annotation_info(
         from superset.daos.annotation_layer import AnnotationDAO, AnnotationLayerDAO
 
         # Verify the layer exists
-        with mcp_event_log_context(
-            action="mcp.get_layer_annotation_info.layer_lookup"
-        ):
+        with mcp_event_log_context(action="mcp.get_layer_annotation_info.layer_lookup"):
             layer = AnnotationLayerDAO.find_by_id(request.layer_id)
 
         if layer is None:

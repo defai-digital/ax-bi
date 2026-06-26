@@ -54,7 +54,8 @@ export const DEFAULT_FORM_DATA: Partial<EchartsSunburstFormData> = {
   dateFormat: 'smart_date',
 };
 
-export interface EchartsSunburstChartProps extends ChartProps<EchartsSunburstFormData> {
+export interface EchartsSunburstChartProps
+  extends ChartProps<EchartsSunburstFormData> {
   formData: EchartsSunburstFormData;
   queriesData: ChartDataResponseResult[];
 }

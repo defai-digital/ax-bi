@@ -989,8 +989,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         )
 
     def on_user_logout(self, user: Any) -> None:
-        user_id = getattr(user, "id", None)
-        if user_id is not None:
+        if (user_id := getattr(user, "id", None)) is not None:
             try:
                 from superset.extensions import db
                 from superset.security.session_invalidation import (

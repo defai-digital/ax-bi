@@ -19,8 +19,6 @@
 
 from datetime import timezone
 
-import pytest
-
 from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
@@ -52,8 +50,8 @@ def test_subclass_inherits_create_and_sanitization():
     from superset.mcp_service.dataset.schemas import DatasetError
     from superset.mcp_service.query.schemas import QueryError
     from superset.mcp_service.report.schemas import ReportError
-    from superset.mcp_service.role.schemas import RoleError
     from superset.mcp_service.rls.schemas import RlsFilterError
+    from superset.mcp_service.role.schemas import RoleError
     from superset.mcp_service.saved_query.schemas import SavedQueryError
     from superset.mcp_service.tag.schemas import TagError
     from superset.mcp_service.task.schemas import TaskError
@@ -75,11 +73,15 @@ def test_subclass_inherits_create_and_sanitization():
     ]
 
     for cls in all_error_classes:
-        assert issubclass(cls, MCPResourceError), f"{cls.__name__} must extend MCPResourceError"
+        assert issubclass(cls, MCPResourceError), (
+            f"{cls.__name__} must extend MCPResourceError"
+        )
 
         # create() produces an aware UTC timestamp
         err = cls.create(error="test error", error_type="TestError")
-        assert err.timestamp.tzinfo is timezone.utc, f"{cls.__name__}.create() timestamp"
+        assert err.timestamp.tzinfo is timezone.utc, (
+            f"{cls.__name__}.create() timestamp"
+        )
         assert err.error_type == "TestError"
 
         # Error text is sanitized by default

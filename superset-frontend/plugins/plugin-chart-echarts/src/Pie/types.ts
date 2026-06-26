@@ -61,7 +61,8 @@ export enum EchartsPieLabelType {
   Template = 'template',
 }
 
-export interface EchartsPieChartProps extends BaseChartProps<EchartsPieFormData> {
+export interface EchartsPieChartProps
+  extends BaseChartProps<EchartsPieFormData> {
   formData: EchartsPieFormData;
 }
 

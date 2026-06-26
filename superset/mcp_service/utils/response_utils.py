@@ -102,8 +102,13 @@ def dump_model_with_select_columns(
     *,
     by_alias: bool = False,
     extra_context: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Dump a Pydantic model with the MCP select-column serialization context."""
+) -> Any:
+    """Dump a Pydantic model with the MCP select-column serialization context.
+
+    Returns ``Any`` so callers can declare their concrete ``XInfo | XError`` /
+    ``XList | XError`` response type; the runtime value is the serialized dict
+    produced by ``model.model_dump``.
+    """
     context = {"select_columns": select_columns}
     if extra_context:
         context.update(extra_context)
@@ -121,7 +126,7 @@ async def finalize_list_response(
     ctx: Any,
     *,
     by_alias: bool = False,
-) -> dict[str, Any]:
+) -> Any:
     """Common post-query pipeline for MCP list tools.
 
     Logs count/total_pages, extracts columns_requested, and dumps with
@@ -143,8 +148,11 @@ async def finalize_list_response(
 
     Returns
     -------
-    dict[str, Any]
-        The dumped model with select-column serialization context applied
+    Any
+        The dumped model with select-column serialization context applied.
+        Typed as ``Any`` so callers can declare their concrete
+        ``XList | XError`` response type; the runtime value is the
+        serialized dict produced by ``dump_model_with_select_columns``.
     """
     count = len(getattr(result, items_attr, []))
     total_pages = getattr(result, "total_pages", None)
