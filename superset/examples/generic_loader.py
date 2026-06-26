@@ -17,6 +17,7 @@
 """Generic Parquet example data loader."""
 
 import logging
+import sqlite3
 from functools import partial
 from typing import Any, Callable, Optional
 
@@ -32,6 +33,39 @@ from superset.utils import json
 from superset.utils.database import get_example_database
 
 logger = logging.getLogger(__name__)
+
+
+def _write_dataframe_to_table(
+    pdf: Any,
+    table_name: str,
+    database: Database,
+    engine: Any,
+    schema: Optional[str],
+) -> None:
+    """Write a dataframe to an example table.
+
+    Pandas 2.x no longer treats SQLAlchemy 1.4 engines as supported SQLAlchemy
+    connectables in some environments and falls back to calling ``cursor()`` on
+    the engine. For the local SQLite examples database, use a native sqlite3
+    connection so example loading remains usable without changing the broader
+    SQLAlchemy path for other database backends.
+    """
+    to_sql_kwargs = {
+        "name": table_name,
+        "if_exists": "replace",
+        "chunksize": 500,
+        "method": "multi",
+        "index": False,
+    }
+    if database.backend == "sqlite":
+        database_path = engine.url.database
+        if not database_path:
+            raise ValueError("SQLite example database path could not be resolved")
+        with sqlite3.connect(database_path) as conn:
+            pdf.to_sql(con=conn, **to_sql_kwargs)
+        return
+
+    pdf.to_sql(con=engine, schema=schema, **to_sql_kwargs)
 
 
 def serialize_numpy_arrays(obj: Any) -> Any:  # noqa: C901
@@ -152,14 +186,12 @@ def load_parquet_table(  # noqa: C901
 
         # Write to target database
         with database.get_sqla_engine() as engine:
-            pdf.to_sql(
-                table_name,
-                engine,
+            _write_dataframe_to_table(
+                pdf=pdf,
+                table_name=table_name,
+                database=database,
+                engine=engine,
                 schema=schema,
-                if_exists="replace",
-                chunksize=500,
-                method="multi",
-                index=False,
             )
 
         logger.info("Loaded %d rows into %s", len(pdf), table_name)

@@ -16,7 +16,10 @@
 # under the License.
 """Tests for generic_loader.py UUID threading functionality."""
 
+import sqlite3
 from unittest.mock import MagicMock, patch
+
+import pandas as pd
 
 
 @patch("superset.examples.generic_loader.get_example_database")
@@ -231,3 +234,29 @@ def test_create_generic_loader_without_uuid():
         mock_load.assert_called_once()
         call_kwargs = mock_load.call_args[1]
         assert call_kwargs["uuid"] is None
+
+
+def test_write_dataframe_to_table_uses_sqlite_connection(tmp_path):
+    from superset.examples.generic_loader import _write_dataframe_to_table
+
+    database_path = tmp_path / "examples.db"
+    database = MagicMock()
+    database.backend = "sqlite"
+    engine = MagicMock()
+    engine.url.database = str(database_path)
+    pdf = pd.DataFrame({"name": ["alpha", "beta"], "value": [1, 2]})
+
+    _write_dataframe_to_table(
+        pdf=pdf,
+        table_name="example_table",
+        database=database,
+        engine=engine,
+        schema="main",
+    )
+
+    with sqlite3.connect(database_path) as conn:
+        rows = conn.execute(
+            "SELECT name, value FROM example_table ORDER BY value"
+        ).fetchall()
+
+    assert rows == [("alpha", 1), ("beta", 2)]
