@@ -16,10 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FC, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import {
+  FC,
+  KeyboardEvent,
+  ReactNode,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
-import { Modal } from 'antd';
+import { Icons, Modal } from '@superset-ui/core/components';
 import Fuse from 'fuse.js';
 import {
   useCommandPalette,
@@ -27,57 +36,81 @@ import {
   CommandType,
 } from './CommandPaletteContext';
 
-// Styled components
 const PaletteModal = styled(Modal)`
   .ant-modal-content {
     padding: 0;
-    border-radius: 12px;
+    border-radius: ${({ theme }) => theme.borderRadiusLG}px;
     overflow: hidden;
+    box-shadow: ${({ theme }) => theme.boxShadowSecondary};
+  }
+  .ant-modal-close {
+    display: none;
   }
   .ant-modal-body {
     padding: 0;
+    overflow: hidden;
   }
 `;
 
 const SearchContainer = styled.div`
-  padding: ${({ theme }) => theme.paddingLG}px;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.marginSM}px;
+  padding: ${({ theme }) => `${theme.padding}px ${theme.paddingLG}px`};
   border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
+  background: ${({ theme }) => theme.colorBgElevated};
+`;
+
+const SearchIcon = styled.span`
+  display: flex;
+  color: ${({ theme }) => theme.colorTextTertiary};
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: ${({ theme }) => `${theme.paddingSM}px ${theme.paddingLG}px`};
+  padding: ${({ theme }) => `${theme.paddingXS}px 0`};
   font-size: ${({ theme }) => theme.fontSizeLG}px;
   border: none;
   outline: none;
-  background: ${({ theme }) => theme.colorBgContainer};
+  background: transparent;
   color: ${({ theme }) => theme.colorText};
+  line-height: ${({ theme }) => theme.lineHeightLG};
 
   &::placeholder {
     color: ${({ theme }) => theme.colorTextPlaceholder};
   }
 `;
 
+const SearchHint = styled.span`
+  flex: 0 0 auto;
+  color: ${({ theme }) => theme.colorTextTertiary};
+  font-size: ${({ theme }) => theme.fontSizeSM}px;
+
+  @media (max-width: 576px) {
+    display: none;
+  }
+`;
+
 const CommandList = styled.div`
-  max-height: 400px;
+  max-height: min(448px, calc(100vh - 184px));
   overflow-y: auto;
-  padding: ${({ theme }) => theme.paddingXS}px 0;
+  padding: ${({ theme }) => theme.paddingSM}px;
+  background: ${({ theme }) => theme.colorBgContainer};
 `;
 
 const CommandGroup = styled.div`
   &:not(:first-child) {
-    border-top: 1px solid ${({ theme }) => theme.colorBorderSecondary};
     margin-top: ${({ theme }) => theme.marginXS}px;
-    padding-top: ${({ theme }) => theme.paddingXS}px;
   }
 `;
 
 const GroupHeader = styled.div`
-  padding: ${({ theme }) => `${theme.paddingXS}px ${theme.paddingLG}px`};
+  padding: ${({ theme }) => `${theme.paddingXS}px ${theme.paddingSM}px`};
   font-size: ${({ theme }) => theme.fontSizeSM}px;
   color: ${({ theme }) => theme.colorTextSecondary};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
+  font-weight: ${({ theme }) => theme.fontWeightStrong};
 `;
 
 interface CommandItemProps {
@@ -88,24 +121,34 @@ const CommandItem = styled.div<CommandItemProps>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.marginSM}px;
-  padding: ${({ theme }) => `${theme.paddingSM}px ${theme.paddingLG}px`};
+  min-height: 56px;
+  padding: ${({ theme }) => `${theme.paddingSM}px ${theme.padding}px`};
   cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius}px;
   background: ${({ $isSelected, theme }) =>
     $isSelected ? theme.colorPrimaryBg : 'transparent'};
+  outline: none;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: ${({ theme }) => theme.colorPrimaryBg};
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px ${({ theme }) => theme.colorPrimaryBorder};
   }
 `;
 
 const CommandIcon = styled.span`
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: ${({ theme }) => theme.fontSizeLG}px;
-  color: ${({ theme }) => theme.colorTextSecondary};
+  flex: 0 0 auto;
+  border-radius: ${({ theme }) => theme.borderRadius}px;
+  color: ${({ theme }) => theme.colorPrimary};
+  background: ${({ theme }) => theme.colorFillQuaternary};
 `;
 
 const CommandContent = styled.div`
@@ -132,31 +175,30 @@ const CommandDescription = styled.div`
 const CommandShortcut = styled.span`
   font-size: ${({ theme }) => theme.fontSizeSM}px;
   color: ${({ theme }) => theme.colorTextSecondary};
-  padding: ${({ theme }) => `${theme.paddingXXS}px ${theme.paddingXS}px`};
+  padding: ${({ theme }) => `${theme.paddingXXS}px ${theme.paddingSM}px`};
   background: ${({ theme }) => theme.colorFillSecondary};
   border-radius: ${({ theme }) => theme.borderRadiusSM}px;
+  white-space: nowrap;
 `;
 
 const EmptyState = styled.div`
-  padding: ${({ theme }) => theme.paddingXL}px;
+  padding: ${({ theme }) => `${theme.paddingXL * 2}px ${theme.paddingXL}px`};
   text-align: center;
   color: ${({ theme }) => theme.colorTextSecondary};
 `;
 
-// Default icons for command types
-const TYPE_ICONS: Record<CommandType, string> = {
-  navigation: '🧭',
-  action: '⚡',
-  recent: '🕐',
-  help: '❓',
+const TYPE_ICONS: Record<string, ReactNode> = {
+  navigation: <Icons.DashboardOutlined iconSize="m" />,
+  action: <Icons.ThunderboltOutlined iconSize="m" />,
+  recent: <Icons.HistoryOutlined iconSize="m" />,
+  help: <Icons.QuestionCircleOutlined iconSize="m" />,
 };
 
-// Group labels
-const TYPE_LABELS: Record<CommandType, string> = {
-  navigation: 'Navigation',
-  action: 'Actions',
-  recent: 'Recent',
-  help: 'Help',
+const TYPE_LABELS: Record<string, string> = {
+  navigation: t('Navigation'),
+  action: t('Actions'),
+  recent: t('Recent'),
+  help: t('Help'),
 };
 
 interface CommandPaletteProps {
@@ -179,10 +221,8 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Get all commands
   const commands = useMemo(() => getCommands(), [getCommands]);
 
-  // Setup fuzzy search
   const fuse = useMemo(
     () =>
       new Fuse(commands, {
@@ -193,7 +233,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     [commands],
   );
 
-  // Filter commands based on search
   const filteredCommands = useMemo(() => {
     if (!searchQuery.trim()) {
       return commands.slice(0, maxResults);
@@ -203,7 +242,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     return results.slice(0, maxResults).map(result => result.item);
   }, [searchQuery, commands, fuse, maxResults]);
 
-  // Group commands by type
   const groupedCommands = useMemo(() => {
     const groups = new Map<CommandType, Command[]>();
 
@@ -218,7 +256,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     return groups;
   }, [filteredCommands]);
 
-  // Reset state when palette opens
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
@@ -227,7 +264,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     }
   }, [isOpen]);
 
-  // Scroll selected item into view
   useEffect(() => {
     if (!listRef.current) return;
 
@@ -239,7 +275,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     }
   }, [selectedIndex]);
 
-  // Handle command execution
   const executeCommand = useCallback(
     (command: Command) => {
       close();
@@ -256,9 +291,8 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     [groupedCommands],
   );
 
-  // Handle keyboard navigation
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
+    (event: KeyboardEvent) => {
       const totalItems = flatCommands.length;
 
       switch (event.key) {
@@ -290,21 +324,33 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     [flatCommands, selectedIndex, executeCommand, close],
   );
 
+  const renderCommandIcon = (command: Command, type: CommandType) =>
+    typeof command.icon === 'string'
+      ? command.icon
+      : command.icon || TYPE_ICONS[type] || TYPE_ICONS.action;
+
   let itemIndex = 0;
 
   return (
     <PaletteModal
-      open={isOpen}
-      onCancel={close}
+      show={isOpen}
+      onHide={close}
       footer={null}
+      hideFooter
       centered
-      width={560}
-      destroyOnClose
+      width={640}
+      title={t('Command palette')}
+      name="command-palette"
+      destroyOnHidden
     >
       <SearchContainer>
+        <SearchIcon>
+          <Icons.SearchOutlined iconSize="l" />
+        </SearchIcon>
         <SearchInput
           ref={inputRef}
           type="text"
+          aria-label={t('Search commands')}
           placeholder={placeholder}
           value={searchQuery}
           onChange={e => {
@@ -313,9 +359,10 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
           }}
           onKeyDown={handleKeyDown}
         />
+        <SearchHint>{t('Esc to close')}</SearchHint>
       </SearchContainer>
 
-      <CommandList ref={listRef}>
+      <CommandList ref={listRef} role="listbox" aria-label={t('Commands')}>
         {filteredCommands.length === 0 ? (
           <EmptyState>{t('No commands found')}</EmptyState>
         ) : (
@@ -323,7 +370,8 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
             <CommandGroup key={type}>
               <GroupHeader>{TYPE_LABELS[type] || type}</GroupHeader>
               {cmds.map(cmd => {
-                const currentIndex = itemIndex++;
+                const currentIndex = itemIndex;
+                itemIndex += 1;
                 const isSelected = currentIndex === selectedIndex;
 
                 return (
@@ -331,14 +379,13 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                     key={cmd.id}
                     $isSelected={isSelected}
                     data-index={currentIndex}
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={-1}
                     onClick={() => executeCommand(cmd)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
                   >
-                    <CommandIcon>
-                      {typeof cmd.icon === 'string'
-                        ? cmd.icon
-                        : cmd.icon || TYPE_ICONS[type] || '⚡'}
-                    </CommandIcon>
+                    <CommandIcon>{renderCommandIcon(cmd, type)}</CommandIcon>
                     <CommandContent>
                       <CommandName>{cmd.name}</CommandName>
                       {cmd.description && (

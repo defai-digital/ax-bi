@@ -141,3 +141,9 @@ PROJECT.md
 oxc-custom-build/
 *.code-workspace
 *.duckdb
+
+# Qoder IDE
+.qoder/
+
+# Tauri desktop build artifacts
+superset-desktop/src-tauri/target/

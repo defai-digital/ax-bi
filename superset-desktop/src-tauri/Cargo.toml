@@ -1,0 +1,30 @@
+[package]
+name = "axbi-desktop"
+version = "0.1.0"
+description = "AX-BI Desktop Client"
+authors = ["AX-BI Team"]
+license = "Apache-2.0"
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-deep-link = "2"
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.11", features = ["json"] }
+url = "2"
+log = "0.4"
+env_logger = "0.10"
+thiserror = "1"
+
+[features]
+# This feature is used for CLI builds
+custom-protocol = ["tauri/custom-protocol"]

@@ -19,38 +19,51 @@
 import { FC } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
-import { Button, Space } from 'antd';
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Button, Icons, Space } from '@superset-ui/core/components';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
-// Styled components
 const InstallBanner = styled.div`
   position: fixed;
   bottom: ${({ theme }) => theme.marginLG}px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: ${({ theme }) => theme.marginLG}px;
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.marginSM}px;
-  padding: ${({ theme }) => `${theme.paddingSM}px ${theme.paddingLG}px`};
+  gap: ${({ theme }) => theme.margin}px;
+  padding: ${({ theme }) => `${theme.padding}px ${theme.paddingLG}px`};
   background: ${({ theme }) => theme.colorBgContainer};
   border: 1px solid ${({ theme }) => theme.colorBorder};
   border-radius: ${({ theme }) => theme.borderRadiusLG}px;
   box-shadow: ${({ theme }) => theme.boxShadowSecondary};
   z-index: 1000;
-  max-width: calc(100vw - 32px);
+  width: min(448px, calc(100vw - 32px));
 
   @media (max-width: 576px) {
     bottom: ${({ theme }) => theme.marginSM}px;
-    flex-direction: column;
-    text-align: center;
+    left: ${({ theme }) => theme.marginSM}px;
+    right: ${({ theme }) => theme.marginSM}px;
+    width: auto;
+    align-items: flex-start;
   }
+`;
+
+const InstallIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: ${({ theme }) => theme.borderRadius}px;
+  color: ${({ theme }) => theme.colorPrimary};
+  background: ${({ theme }) => theme.colorPrimaryBg};
 `;
 
 const InstallContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 `;
 
 const InstallTitle = styled.div`
@@ -62,6 +75,7 @@ const InstallTitle = styled.div`
 const InstallDescription = styled.div`
   font-size: ${({ theme }) => theme.fontSizeSM}px;
   color: ${({ theme }) => theme.colorTextSecondary};
+  line-height: ${({ theme }) => theme.lineHeightSM};
 `;
 
 const CloseButton = styled.button`
@@ -73,9 +87,13 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: ${({ theme }) => theme.borderRadiusSM}px;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     color: ${({ theme }) => theme.colorText};
+    background: ${({ theme }) => theme.colorFillSecondary};
+    outline: none;
   }
 `;
 
@@ -109,7 +127,10 @@ export const PWAInstallPrompt: FC = () => {
   };
 
   return (
-    <InstallBanner>
+    <InstallBanner role="status">
+      <InstallIcon aria-hidden="true">
+        <Icons.DownloadOutlined iconSize="l" />
+      </InstallIcon>
       <InstallContent>
         <InstallTitle>{getPlatformText()}</InstallTitle>
         <InstallDescription>
@@ -118,14 +139,15 @@ export const PWAInstallPrompt: FC = () => {
       </InstallContent>
       <Space>
         <Button
-          type="primary"
-          icon={<DownloadOutlined />}
+          buttonStyle="primary"
+          aria-label={t('Install')}
+          icon={<Icons.DownloadOutlined iconColor="light" />}
           onClick={handleInstall}
         >
           {t('Install')}
         </Button>
         <CloseButton onClick={dismissInstall} aria-label={t('Dismiss')}>
-          <CloseOutlined />
+          <Icons.CloseOutlined iconSize="m" />
         </CloseButton>
       </Space>
     </InstallBanner>
@@ -148,7 +170,8 @@ export const PWAInstallButton: FC<{ size?: 'small' | 'middle' | 'large' }> = ({
     <Button
       size={size}
       type="text"
-      icon={<DownloadOutlined />}
+      aria-label={t('Install App')}
+      icon={<Icons.DownloadOutlined />}
       onClick={promptInstall}
     >
       {t('Install App')}
