@@ -533,7 +533,7 @@ const SliceHeaderControls = (
     dashboardComponentId: componentId,
     copyMenuItemTitle: t('Copy permalink to clipboard'),
     emailMenuItemTitle: t('Share chart by email'),
-    emailSubject: t('Superset chart'),
+    emailSubject: t('AX-BI chart'),
     emailBody: t('Check out this chart: '),
     addSuccessToast,
     addDangerToast,

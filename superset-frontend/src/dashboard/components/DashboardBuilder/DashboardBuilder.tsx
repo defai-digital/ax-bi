@@ -124,6 +124,9 @@ const StyledContent = styled.div<{
 }>`
   grid-column: 2;
   grid-row: 2;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   // @z-index-above-dashboard-header (100) + 1 = 101
   ${({ fullSizeChartId }) => fullSizeChartId && `z-index: 101;`}
 `;

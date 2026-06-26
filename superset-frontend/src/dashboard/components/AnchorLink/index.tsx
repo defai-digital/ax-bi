@@ -69,7 +69,7 @@ export default function AnchorLink({
         <URLShortLinkButton
           anchorLinkId={id}
           dashboardId={dashboardId}
-          emailSubject={t('Superset chart')}
+          emailSubject={t('AX-BI chart')}
           emailContent={t('Check out this chart in dashboard:')}
           placement={placement}
         />

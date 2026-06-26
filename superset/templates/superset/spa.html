@@ -52,6 +52,11 @@
         margin: 0;
       }
       {% endif %}
+      main.ant-layout-content:has([data-test='dashboard-content-wrapper']) {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
     </style>
 
     {% if dark_theme_bg and entry != 'embedded' %}

@@ -164,7 +164,7 @@ export default function RedirectWarning() {
         </WarningBody>
 
         <WarningFooter justify="flex-end" gap="small">
-          <Button onClick={handleReturn}>{t('Return to Superset')}</Button>
+          <Button onClick={handleReturn}>{t('Return to AX-BI')}</Button>
           <Button type="primary" onClick={handleContinue}>
             {t('Continue')}
           </Button>
