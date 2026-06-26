@@ -19,7 +19,7 @@ under the License.
 
 # Release Notes for Superset 4.0.0
 
-4.0.0 brings a plethora of exciting changes to Superset. We have introduced several breaking changes to improve the overall architecture and scalability of our codebase. These changes may require some code updates, but they are designed to enhance performance and maintainability in the long run. We have also upgraded various dependencies to their latest versions and deprecated certain features that are no longer aligned with our long-term roadmap. We encourage all developers to carefully review the `CHANGELOG.md` and `UPDATING.md` files and update their code accordingly. While our main focus was on code cleanup, this release also contains exciting new features and marks a significant milestone for the project.
+4.0.0 brings a plethora of exciting changes to Superset. We have introduced several breaking changes to improve the overall architecture and scalability of our codebase. These changes may require some code updates, but they are designed to enhance performance and maintainability in the long run. We have also upgraded various dependencies to their latest versions and deprecated certain features that are no longer aligned with our long-term roadmap. We encourage all developers to carefully review the GitHub release notes and `UPDATING.md` file and update their code accordingly. While our main focus was on code cleanup, this release also contains exciting new features and marks a significant milestone for the project.
 
 Here are some of the highlights of this release.
 
@@ -46,9 +46,9 @@ Tags are available using the `TAGGING_SYSTEM` feature flag. They address many of
     <img src="media/tags-2.png" alt="Image" width="100%">
 </div>
 
-### New CHANGELOG format
+### GitHub release notes
 
-We changed the structure of the `CHANGELOG.md` file in [#26800](https://github.com/apache/superset/pull/26800) to better organize the contents of each release and also to deal with GitHub size limitations when displaying the file. Now every release will have its own file at `CHANGELOG/<version>.md`. The main `CHANGELOG.md` file is now an index with links to all releases.
+Release information is published in [GitHub Releases](https://github.com/apache/superset/releases), which keeps highlights, fixes, and migration notes with the corresponding release tag.
 
 ### Improved drag and drop experience when editing a dashboard
 
@@ -136,7 +136,7 @@ The ECharts version of the Sunburst chart was introduced by [#22833](https://git
 As with any Superset version upgrade, the process is simple in the broadest strokes, as outlined in the documentation. However, as with any upgrade, we expect to see numerous speed bumps along that path depending on your configuration, your infrastructure, your databases in use, and other customizations/configurations. To make a safe leap to this version, we'd suggest the following steps:
 
 - Back up your databases
-- Carefully read `CHANGELOG.md` for all the incremental changes in this version (and any prior versions between your current installation and 4.0.0).
+- Carefully read the GitHub release notes for all the incremental changes in this version (and any prior versions between your current installation and 4.0.0).
 - Similarly, review `UPDATING.md` to keep an eye out for all changes that have been explicitly marked as breaking changes.
 - Adjust your feature flags and configurations to meet your feature requirements and preferences.
 - Execute the migrations

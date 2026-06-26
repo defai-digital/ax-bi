@@ -131,9 +131,9 @@ Extension developers should depend on and use core libraries directly:
 When Superset upgrades its core dependencies (e.g., a new major version of Ant Design or SQLAlchemy), extension developers should upgrade their extensions accordingly. This ensures compatibility and access to the latest features and security fixes.
 :::
 
-## API Versioning and Changelog
+## API Versioning and Release Notes
 
-Once the extensions API reaches **v1**, we will maintain a dedicated `CHANGELOG.md` file to track all changes to the public APIs. This will include:
+Once the extensions API reaches **v1**, public API changes will be tracked in GitHub Releases. This will include:
 
 - New APIs and features
 - Deprecation notices

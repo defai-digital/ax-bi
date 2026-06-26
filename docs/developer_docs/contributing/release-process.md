@@ -108,7 +108,7 @@ VERSION = "X.Y.0rc1"
 ```
 
 #### Update Documentation
-- CHANGELOG.md
+- GitHub release notes
 - UPDATING.md (for breaking changes)
 - Documentation version
 
@@ -188,7 +188,7 @@ The release candidate:
 
 Resources:
 - Release notes: [link]
-- CHANGELOG: [link]
+- GitHub release: [link]
 - PR list: [link]
 
 The vote will be open for at least 72 hours.
@@ -360,30 +360,10 @@ Found issue in RC1:
 - Suggested fix: [if known]
 ```
 
-### CHANGELOG Maintenance
+### GitHub Release Notes
 
-#### Format
-```markdown
-## X.Y.Z (YYYY-MM-DD)
-
-### Features
-- feat: Description (#PR_NUMBER)
-
-### Fixes
-- fix: Description (#PR_NUMBER)
-
-### Breaking Changes
-- BREAKING: Description (#PR_NUMBER)
-  Migration: Steps to migrate
-```
-
-#### Generating CHANGELOG
-```bash
-# Use git log to generate initial list
-git log --oneline vX.Y-1.Z..vX.Y.Z | grep -E "^[a-f0-9]+ (feat|fix|perf|refactor|docs)"
-
-# Group by type and format
-```
+Record release information in GitHub Releases. Include highlights, notable fixes,
+breaking changes, and links to the relevant pull requests.
 
 ## Breaking Changes Process
 

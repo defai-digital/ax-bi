@@ -110,5 +110,5 @@ Superset is only as good as the databases it can query. This release saw the exp
 
 ## Breaking Changes and Full Changelog
 
-- To see the complete changelog in this release, head to [CHANGELOG.MD](https://github.com/apache/superset/blob/master/CHANGELOG.md).
+- To see the complete release history, head to [GitHub Releases](https://github.com/apache/superset/releases).
 - You can find a list of backwards incompatible changes [here](https://github.com/apache/superset/blob/3d103e66fcaee42a6b4a42b2638e13d5e2208c3b/UPDATING.md).

@@ -217,48 +217,16 @@ on the main repo:
 git push
 ```
 
-### Updating changelog
+### Drafting GitHub release notes
 
-Next, update the `CHANGELOG/<version>.md` with all the changes that are included in the release.
-Make sure the branch has been pushed to `origin` to ensure the changelog generator
-can pick up changes since the previous release.
-Similar to `cherrytree`, the change log script requires a github token, either as an env var
-(`GITHUB_TOKEN`) or as the parameter `--access_token`.
-
-#### Initial release (e.g. 1.5.0)
-
-When generating the changelog for an initial minor release, you should compare with
-the previous release (in the example, the previous release branch is `1.4`, so remember to
-update it accordingly):
-
-```bash
-python changelog.py --previous_version 1.4 --current_version ${SUPERSET_GITHUB_BRANCH} changelog
-```
-
-You can get a list of pull requests with labels started with blocking, risk, hold, revert and security by using the parameter `--risk`.
-Example:
-
-```bash
-python changelog.py --previous_version 0.37 --current_version 0.38 changelog --access_token {GITHUB_TOKEN} --risk
-```
-
-The script will checkout both branches, compare all the PRs, and output the lines that are needed to be added to the
-`CHANGELOG/<version>.md` file in the root of the repo. Remember to also make sure to update the branch id (with the above command
-`1.5` needs to be changed to `1.5.0`)
+Next, draft the release notes in GitHub Releases with all the changes that are
+included in the release. Include highlights, notable fixes, breaking changes,
+and links to the relevant pull requests.
 
 Then, in `UPDATING.md`, a file that contains a list of notifications around
 deprecations and upgrading-related topics,
 make sure to move the content now under the `Next Version` section under a new
 section for the new release.
-
-#### Patch release (e.g. 1.5.1)
-
-To compare the forthcoming patch release with the latest release from the same branch, set
-`--previous_version` as the tag of the previous release (in this example `1.5.0`; remember to update accordingly)
-
-```bash
-python changelog.py --previous_version 1.5.0 --current_version ${SUPERSET_GITHUB_BRANCH} changelog
-```
 
 ### Set version number
 
@@ -504,7 +472,8 @@ At this point, a GitHub action will run that will check whether this release's v
 
 ### Update Superset files
 
-Now that we have a final Apache release we need to open a pull request on Superset with the changes on [CHANGELOG/\<version\>.md](../CHANGELOG) and [UPDATING.md](../UPDATING.md).
+Now that we have a final Apache release we need to open a pull request on Superset
+with the changes on [UPDATING.md](../UPDATING.md), if any.
 
 We also need to update the Environment section of [ISSUE_TEMPLATE/bug-report.yml](../.github/ISSUE_TEMPLATE//bug-report.yml) to reflect the new release changes. This includes removing versions that are not supported anymore and adding new ones.
 

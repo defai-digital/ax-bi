@@ -46,6 +46,10 @@ build
 app.db
 *.egg-info/
 changelog.sh
+CHANGELOG/
+CHANGELOG.md
+**/CHANGELOG.md
+**/changelog.config.js
 dist
 dump.rdb
 env

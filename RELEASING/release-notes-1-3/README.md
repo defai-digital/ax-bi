@@ -69,5 +69,5 @@ Also in the works is a new database connection UI, which should make connecting 
 
 ## Breaking Changes and Full Changelog
 
-- To see the complete changelog in this release, head to [CHANGELOG.MD](../../CHANGELOG.md).
+- To see the complete release history, head to [GitHub Releases](https://github.com/apache/superset/releases).
 - 1.3.0 does not contain any backwards incompatible changes.

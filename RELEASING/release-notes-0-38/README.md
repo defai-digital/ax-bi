@@ -315,4 +315,4 @@ Other
 [List of backwards incompatible changes](https://github.com/apache/superset/blob/master/UPDATING.md#0380)
 
 ## Complete Changelog
-For the complete changelog please see [apache/superset/CHANGELOG.md](https://github.com/apache/superset/blob/master/CHANGELOG.md)
+For the complete release history please see [apache/superset releases](https://github.com/apache/superset/releases).
