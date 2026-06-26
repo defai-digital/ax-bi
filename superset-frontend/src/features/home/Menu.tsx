@@ -19,6 +19,7 @@
 import { useState, useEffect } from 'react';
 import { styled, css, useTheme } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import { ensureStaticPrefix } from 'src/utils/assetUrl';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
@@ -38,6 +39,7 @@ import {
 import { datasetsLabel } from 'src/features/semanticLayers/label';
 import RightMenu from './RightMenu';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
+import { simplifyMenuData, flattenChilds } from './simplifyMenu';
 
 interface MenuProps {
   data: MenuData;
@@ -463,8 +465,28 @@ export default function MenuWrapper({ data, ...rest }: MenuProps) {
     }
   });
 
-  newMenuData.menu = cleanedMenu;
-  newMenuData.settings = settings;
+  // Simplified Navigation (SIMPLIFIED_NAV): relocate power-user destinations
+  // (e.g. SQL Lab / Saved Queries) out of the primary nav bar into an
+  // "Advanced" settings group. Presentation-only — items here have already
+  // passed permission filtering, so this never widens access. With the flag
+  // off, simplifyMenuData returns the input unchanged.
+  const simplifiedNav = isFeatureEnabled(FeatureFlag.SimplifiedNav);
+  const { menu: primaryMenu, demoted } = simplifyMenuData(
+    cleanedMenu,
+    simplifiedNav,
+  );
+
+  newMenuData.menu = primaryMenu;
+  newMenuData.settings = demoted.length
+    ? [
+        ...settings,
+        {
+          label: t('Advanced'),
+          name: 'Advanced',
+          childs: flattenChilds(demoted),
+        },
+      ]
+    : settings;
 
   return <Menu data={newMenuData} {...rest} />;
 }

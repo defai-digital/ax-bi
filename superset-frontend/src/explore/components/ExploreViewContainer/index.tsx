@@ -37,6 +37,8 @@ import {
   MatrixifyFormData,
   DatasourceType,
   ensureIsArray,
+  isFeatureEnabled,
+  FeatureFlag,
 } from '@superset-ui/core';
 import {
   ControlStateMapping,
@@ -91,6 +93,7 @@ import { User } from 'src/types/bootstrapTypes';
 import ExploreChartPanel from '../ExploreChartPanel';
 import ConnectedControlPanelsContainer from '../ControlPanelsContainer';
 import SaveModal from '../SaveModal';
+import GuidedBuilder, { isGuidedVizType } from '../GuidedBuilder';
 import DataSourcePanel from '../DatasourcePanel';
 import ConnectedExploreChartHeader from '../ExploreChartHeader';
 import ExploreContainer from '../ExploreContainer';
@@ -384,6 +387,21 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
   );
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Guided chart builder (GUIDED_CHART_BUILDER): offer the simplified stepped
+  // builder when enabled and the current viz type is one it supports. The
+  // builder and the advanced control panel drive the same form_data, so users
+  // can switch between them at will. Default to guided for supported viz types.
+  const guidedBuilderEnabled = isFeatureEnabled(
+    FeatureFlag.GuidedChartBuilder,
+  );
+  const [builderMode, setBuilderMode] = useState<'guided' | 'advanced'>(() =>
+    guidedBuilderEnabled && isGuidedVizType(props.form_data?.viz_type)
+      ? 'guided'
+      : 'advanced',
+  );
+  const showGuidedBuilder = guidedBuilderEnabled && builderMode === 'guided';
+
   const [width, setWidth] = useState(
     getSidebarWidths(LocalStorageKeys.DatasourceWidth),
   );
@@ -1051,22 +1069,33 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
           enable={{ right: true }}
           className="col-sm-3 explore-column controls-column"
         >
-          <ConnectedControlPanelsContainer
-            exploreState={props.exploreState}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Combined actions type is compatible at runtime
-            actions={props.actions as any}
-            form_data={props.form_data}
-            controls={props.controls}
-            chart={props.chart}
-            datasource_type={props.datasource_type}
-            isDatasourceMetaLoading={props.isDatasourceMetaLoading}
-            onQuery={onQuery}
-            onStop={onStop}
-            canStopQuery={props.can_add || props.can_overwrite}
-            errorMessage={dataTabErrorMessage}
-            buttonErrorMessage={errorMessage}
-            chartIsStale={chartIsStale}
-          />
+          {showGuidedBuilder ? (
+            <GuidedBuilder
+              formData={props.form_data}
+              datasource={props.datasource}
+              actions={props.actions}
+              onQuery={onQuery}
+              onSwitchToAdvanced={() => setBuilderMode('advanced')}
+              isLoading={props.chart.chartStatus === 'loading'}
+            />
+          ) : (
+            <ConnectedControlPanelsContainer
+              exploreState={props.exploreState}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Combined actions type is compatible at runtime
+              actions={props.actions as any}
+              form_data={props.form_data}
+              controls={props.controls}
+              chart={props.chart}
+              datasource_type={props.datasource_type}
+              isDatasourceMetaLoading={props.isDatasourceMetaLoading}
+              onQuery={onQuery}
+              onStop={onStop}
+              canStopQuery={props.can_add || props.can_overwrite}
+              errorMessage={dataTabErrorMessage}
+              buttonErrorMessage={errorMessage}
+              chartIsStale={chartIsStale}
+            />
+          )}
         </Resizable>
         <div
           className={cx(

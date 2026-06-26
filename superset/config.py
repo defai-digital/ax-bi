@@ -695,6 +695,17 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enable embedded dashboard AI assistant flows
     # @lifecycle: development
     "GENAI_EMBEDDED_ASSISTANT": False,
+    # Simplify navigation by relocating power-user destinations (e.g. SQL Lab)
+    # out of the primary nav bar into an "Advanced" group. Presentation-only;
+    # does not change routes or permissions. See ax-docs/ux-simplification-*.
+    # @lifecycle: development
+    "SIMPLIFIED_NAV": False,
+    # Offer a guided, stepped chart builder in Explore (data -> measures ->
+    # group by -> filters -> limit -> visualize) as a simpler alternative to the
+    # full control panel. Compiles to the same form_data / query_context; the
+    # advanced panel remains one click away. See ax-docs/ux-simplification-*.
+    # @lifecycle: development
+    "GUIDED_CHART_BUILDER": False,
     # =================================================================
     # IN TESTING
     # =================================================================
