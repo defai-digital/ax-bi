@@ -61,28 +61,15 @@ What sets AX-BI apart from a traditional BI stack is that it is **agent-ready by
 - **Verifiable artifacts** — generated charts and dashboards are real, inspectable Superset objects, not opaque answers.
 - **Auditable** — agent actions flow through the same command, DAO, and event-logging layers as the rest of the platform.
 
+Available GenAI BI MCP tools include:
+
+- `search_business_assets` — searches governed datasets, charts, and dashboards
+  with RBAC-aware filtering, relevance scoring, and optional certified-only
+  results.
+- `describe_dataset_for_ai` — returns compact, AI-ready dataset context with
+  semantic alias lookup and privacy-aware metadata controls.
+
 The MCP service lives in [`superset/mcp_service/`](superset/mcp_service/) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](GENAI_BI_ROADMAP.md) for the product direction.
-
-## Screenshots & Gifs
-
-<!-- TODO: replace the images below with AX-BI-branded captures. The current
-     images are representative of the underlying Superset UI that AX-BI extends. -->
-
-**Large Gallery of Visualizations**
-
-<kbd><img title="Gallery" src="https://superset.apache.org/img/screenshots/gallery.jpg"/></kbd><br/>
-
-**Craft Beautiful, Dynamic Dashboards**
-
-<kbd><img title="View Dashboards" src="https://superset.apache.org/img/screenshots/dashboard.jpg"/></kbd><br/>
-
-**No-Code Chart Builder**
-
-<kbd><img title="Slice & dice your data" src="https://superset.apache.org/img/screenshots/explore.jpg"/></kbd><br/>
-
-**Powerful SQL Editor**
-
-<kbd><img title="SQL Lab" src="https://superset.apache.org/img/screenshots/sql_lab.jpg"/></kbd><br/>
 
 ## Supported Databases
 
