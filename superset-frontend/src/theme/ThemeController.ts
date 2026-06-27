@@ -1003,7 +1003,10 @@ export class ThemeController {
         return themeConfig as AnyThemeConfig;
       }
     } catch (error) {
-      console.warn(`Failed to parse theme configuration from ${source}:`, error);
+      console.warn(
+        `Failed to parse theme configuration from ${source}:`,
+        error,
+      );
     }
 
     return null;

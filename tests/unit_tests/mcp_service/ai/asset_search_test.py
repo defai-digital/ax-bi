@@ -190,4 +190,6 @@ def test_search_assets_sorts_by_relevance(
     mock_dashboards.return_value = []
 
     results = search_assets("test", limit=10)
+    assert results[0].relevance_score is not None
+    assert results[1].relevance_score is not None
     assert results[0].relevance_score >= results[1].relevance_score

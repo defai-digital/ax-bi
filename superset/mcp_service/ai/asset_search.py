@@ -25,7 +25,7 @@ and certification status.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import or_
 
@@ -89,7 +89,7 @@ def _search_datasets(
 
     search_filter = or_(
         SqlaTable.table_name.ilike(f"%{query}%"),
-        SqlaTable.description.ilike(f"%{query}%"),
+        cast(Any, SqlaTable.description).ilike(f"%{query}%"),
     )
 
     session = db.session

@@ -45,7 +45,7 @@ from pathlib import Path
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import polib
+    import polib  # type: ignore[import-untyped]
 
 TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
 DEFAULT_OUTPUT = (
@@ -73,7 +73,7 @@ def _plural_key(entry: polib.POEntry) -> str:
 def build_index(translations_dir: Path) -> dict[str, Any]:
     """Read all .po files and build a combined translation index."""
     try:
-        import polib  # type: ignore[import-untyped]
+        import polib
     except ImportError:
         print("polib is required. Install with: pip install polib", file=sys.stderr)
         sys.exit(1)

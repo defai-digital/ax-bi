@@ -25,7 +25,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-
+from pydantic import ValidationError
 
 # ---------------------------------------------------------------------------
 # Decorator passthrough
@@ -80,8 +80,8 @@ finally:
 
 class TestUpdateDashboardRequest:
     def test_required_dashboard_id(self) -> None:
-        with pytest.raises(Exception):
-            UpdateDashboardRequest()  # type: ignore[call-arg]
+        with pytest.raises(ValidationError):
+            UpdateDashboardRequest()
 
     def test_valid_minimal_request(self) -> None:
         req = UpdateDashboardRequest(dashboard_id=42)

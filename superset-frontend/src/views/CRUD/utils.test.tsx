@@ -44,7 +44,9 @@ import { Filter, TableTab } from './types';
 const mockSupersetClientGet = (response: object) =>
   jest
     .spyOn(SupersetClient, 'get')
-    .mockResolvedValue(response as Awaited<ReturnType<typeof SupersetClient.get>>);
+    .mockResolvedValue(
+      response as Awaited<ReturnType<typeof SupersetClient.get>>,
+    );
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -558,11 +560,11 @@ test('createFetchRelated maps API related results to select options', async () =
   });
   const handleError = jest.fn();
 
-  const result = await createFetchRelated(
-    'dataset',
-    'database',
-    handleError,
-  )('main', 3, 25);
+  const result = await createFetchRelated('dataset', 'database', handleError)(
+    'main',
+    3,
+    25,
+  );
 
   expect(SupersetClient.get).toHaveBeenCalledWith({
     endpoint:
@@ -580,11 +582,11 @@ test('createFetchRelated calls error handler and returns empty options on failur
   jest.spyOn(SupersetClient, 'get').mockRejectedValue(error);
   const handleError = jest.fn();
 
-  const result = await createFetchRelated(
-    'dataset',
-    'database',
-    handleError,
-  )('', 0, 25);
+  const result = await createFetchRelated('dataset', 'database', handleError)(
+    '',
+    0,
+    25,
+  );
 
   expect(handleError).toHaveBeenCalledWith(error);
   expect(result).toEqual({ data: [], totalCount: 0 });
@@ -609,15 +611,11 @@ test('createFetchOwners includes the logged-in user once when present in results
     },
   });
 
-  const result = await createFetchOwners(
-    'dataset',
-    jest.fn(),
-    {
-      userId: 7,
-      firstName: 'Grace',
-      lastName: 'Hopper',
-    },
-  )('', 0, 25);
+  const result = await createFetchOwners('dataset', jest.fn(), {
+    userId: 7,
+    firstName: 'Grace',
+    lastName: 'Hopper',
+  })('', 0, 25);
 
   expect(result.totalCount).toBe(2);
   expect(result.data.map(({ value }) => value)).toEqual([7, 8]);
