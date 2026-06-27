@@ -22,16 +22,70 @@ creates (or reuses) a local DuckDB database named "Local Files" so users do
 not need to manually connect a database before uploading files.
 """
 
-import json
 import logging
 import os
+import tempfile
 
 from flask import current_app
 
 from superset import db
+from superset.exceptions import SupersetException
 from superset.models.core import Database
+from superset.utils import json
 
 logger = logging.getLogger(__name__)
+
+LOCAL_DB_EXTRA = {
+    "metadata_params": {},
+    "engine_params": {},
+    "metadata_cache_timeout": {},
+    "schemas_allowed_for_file_upload": [None],
+}
+LOCAL_DB_ATTRS = {
+    "allow_file_upload": True,
+    "allow_run_async": True,
+    "allow_dml": True,
+    "allow_ctas": True,
+    "allow_cvas": False,
+    "expose_in_sqllab": True,
+}
+
+
+class LocalDatabaseConfigurationError(SupersetException):
+    """Raised when the configured local upload database name is unavailable."""
+
+    status = 422
+
+
+def _get_raw_extra(database: Database) -> dict[str, object]:
+    """Return raw database extra metadata, resetting malformed JSON."""
+    try:
+        extra = json.loads(database.extra or "{}")
+    except json.JSONDecodeError:
+        return dict(LOCAL_DB_EXTRA)
+    if not isinstance(extra, dict):
+        return dict(LOCAL_DB_EXTRA)
+    return extra
+
+
+def _repair_local_db(database: Database) -> bool:
+    """Repair mutable flags and metadata on the auto-managed local database."""
+    changed = False
+    for attr, value in LOCAL_DB_ATTRS.items():
+        if getattr(database, attr) != value:
+            setattr(database, attr, value)
+            changed = True
+
+    extra = _get_raw_extra(database)
+    if extra.get("schemas_allowed_for_file_upload") != [None]:
+        extra["schemas_allowed_for_file_upload"] = [None]
+
+    serialized_extra = json.dumps(extra)
+    if database.extra != serialized_extra:
+        database.extra = serialized_extra
+        changed = True
+
+    return changed
 
 
 def get_or_create_local_db() -> Database:
@@ -51,45 +105,36 @@ def get_or_create_local_db() -> Database:
     db_path = current_app.config.get("LOCAL_DB_PATH")
 
     if not db_path:
-        upload_folder = current_app.config.get("UPLOAD_FOLDER", "/tmp/")
+        upload_folder = current_app.config.get("UPLOAD_FOLDER", tempfile.gettempdir())
         db_path = os.path.join(upload_folder, "local_files.duckdb")
+    sqlalchemy_uri = f"duckdb:///{db_path}"
 
     # Ensure the parent directory exists
-    db_dir = os.path.dirname(db_path)
-    if db_dir:
+    if db_dir := os.path.dirname(db_path):
         os.makedirs(db_dir, exist_ok=True)
 
     # Look for an existing local DB record
-    local_db = (
-        db.session.query(Database)
-        .filter_by(database_name=db_name)
-        .one_or_none()
-    )
+    local_db = db.session.query(Database).filter_by(database_name=db_name).one_or_none()
 
     if local_db:
-        logger.debug("Reusing existing local database '%s' (id=%s)", db_name, local_db.id)
+        if local_db.sqlalchemy_uri != sqlalchemy_uri:
+            raise LocalDatabaseConfigurationError(
+                "A database named '%s' already exists but does not match the "
+                "configured local upload DuckDB database. Rename that database "
+                "or change LOCAL_DB_NAME." % db_name
+            )
+        if _repair_local_db(local_db):
+            db.session.commit()
+        logger.debug(
+            "Reusing existing local database '%s' (id=%s)", db_name, local_db.id
+        )
         return local_db
-
-    # Build the DuckDB SQLAlchemy URI
-    sqlalchemy_uri = f"duckdb:///{db_path}"
 
     local_db = Database(
         database_name=db_name,
         sqlalchemy_uri=sqlalchemy_uri,
-        allow_file_upload=True,
-        allow_run_async=True,
-        allow_dml=True,
-        allow_ctas=True,
-        allow_cvas=False,
-        expose_in_sqllab=True,
-        extra=json.dumps(
-            {
-                "metadata_params": {},
-                "engine_params": {},
-                "metadata_cache_timeout": {},
-                "schemas_allowed_for_file_upload": [],
-            }
-        ),
+        **LOCAL_DB_ATTRS,
+        extra=json.dumps(LOCAL_DB_EXTRA),
     )
     db.session.add(local_db)
     db.session.commit()

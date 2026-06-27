@@ -20,7 +20,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
-import { SupersetClient } from '@superset-ui/core';
+import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
 import { Upload, Progress } from '@superset-ui/core/components';
 import { Alert } from '@apache-superset/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
@@ -180,10 +180,11 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
         );
 
         return { datasetId: data.dataset_id };
-      } catch (error: any) {
+      } catch (error) {
+        const clientError = await getClientErrorObject(error);
         const msg =
-          error?.response?.json?.message ||
-          error?.message ||
+          clientError.message ||
+          clientError.error ||
           t('Upload failed. Please try again.');
         addDangerToast(msg);
         return { error: msg };
@@ -192,14 +193,9 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
     [addSuccessToast, addDangerToast],
   );
 
-  const updateFile = useCallback(
-    (id: string, updates: Partial<FileEntry>) => {
-      setFiles(prev =>
-        prev.map(f => (f.id === id ? { ...f, ...updates } : f)),
-      );
-    },
-    [],
-  );
+  const updateFile = useCallback((id: string, updates: Partial<FileEntry>) => {
+    setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...updates } : f)));
+  }, []);
 
   const processFiles = useCallback(
     async (fileList: File[]) => {
@@ -290,6 +286,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
         <Dragger
           accept={ACCEPTED_EXTENSIONS}
           beforeUpload={handleBeforeUpload}
+          data-test="upload-data-dropzone"
           showUploadList={false}
           disabled={isUploading}
           multiple
@@ -327,10 +324,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
                   </FileStatusBadge>
                 )}
                 {entry.status === 'error' && (
-                  <FileStatusBadge
-                    $fileStatus="error"
-                    title={entry.error}
-                  >
+                  <FileStatusBadge $fileStatus="error" title={entry.error}>
                     {t('Failed')}
                   </FileStatusBadge>
                 )}

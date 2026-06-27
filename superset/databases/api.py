@@ -38,7 +38,7 @@ from flask_appbuilder.models.sqla.interface import SQLAInterface
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoSuchTableError, OperationalError, SQLAlchemyError
 
-from superset import db, event_logger
+from superset import db, event_logger, is_feature_enabled
 from superset.commands.database.create import CreateDatabaseCommand
 from superset.commands.database.delete import DeleteDatabaseCommand
 from superset.commands.database.exceptions import (
@@ -1855,7 +1855,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         log_to_statsd=False,
     )
     @requires_form_data
-    def auto_upload(self) -> Response:
+    def auto_upload(self) -> Response:  # noqa: C901
         """Upload a file to the auto-provisioned local DuckDB database.
         ---
         post:
@@ -1911,6 +1911,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         import re
         import uuid
 
+        if not is_feature_enabled("ENABLE_LOCAL_FILE_UPLOAD"):
+            return self.response_404()
+
         try:
             file = request.files.get("file")
             if not file or not file.filename:
@@ -1942,11 +1945,19 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             # Sanitize: keep only alphanumeric and underscores, prefix with 'upload_'
             table_name = re.sub(r"[^\w]", "_", table_name).strip("_").lower()
             if not table_name:
+                table_name = (
+                    re.sub(r"[^\w]", "_", os.path.splitext(filename)[0])
+                    .strip("_")
+                    .lower()
+                )
+            if not table_name:
                 table_name = "upload"
-            table_name = f"upload_{table_name}"
             # Append a short suffix to avoid collisions
             short_id = uuid.uuid4().hex[:6]
-            table_name = f"{table_name}_{short_id}"
+            suffix = f"_{short_id}"
+            prefix = "upload_"
+            max_name_length = 250 - len(prefix) - len(suffix)
+            table_name = f"{prefix}{table_name[:max_name_length]}{suffix}"
 
             # Get or create the local DuckDB database
             local_db = get_or_create_local_db()
@@ -1985,14 +1996,19 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                 )
                 .one_or_none()
             )
-            dataset_id = sqla_table.id if sqla_table else None
+            if sqla_table is None:
+                return self.response_500(
+                    message="Upload succeeded but dataset could not be found"
+                )
 
             return self.response(
                 201,
                 database_id=local_db.id,
-                dataset_id=dataset_id,
+                dataset_id=sqla_table.id,
                 table_name=table_name,
             )
+        except SupersetException as ex:
+            return self.response(ex.status, message=ex.message)
         except Exception as ex:
             logger.exception("Auto upload failed")
             return self.response_400(message=str(ex))

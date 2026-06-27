@@ -20,8 +20,10 @@ The React UploadData page is registered in the frontend router, but Flask
 must serve the SPA shell first so the client-side router can take over.
 """
 
+from flask import abort
 from flask_appbuilder import expose, has_access, permission_name
 
+from superset import is_feature_enabled
 from superset.superset_typing import FlaskResponse
 from superset.views.base import BaseSupersetView
 
@@ -36,7 +38,10 @@ class UploadDataView(BaseSupersetView):
 
     @expose("/", methods=("GET",))
     @has_access
-    @permission_name("read")
+    @permission_name("upload")
     def index(self) -> FlaskResponse:
         """Render the upload page SPA entry point."""
+        if not is_feature_enabled("ENABLE_LOCAL_FILE_UPLOAD"):
+            abort(404)
+
         return super().render_app_template()

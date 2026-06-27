@@ -173,8 +173,8 @@ Dataset Management:
 - create_dataset: Register a physical table as a dataset against an existing DB connection (requires write access)
 - create_virtual_dataset: Save a SQL query as a virtual dataset for charting (requires write access)
 - query_dataset: Query a dataset using its semantic layer (saved metrics, dimensions, filters) without needing a saved chart
-- upload_file: Upload a CSV/Excel/Parquet file and create a dataset with zero config (auto-provisions DuckDB, requires write access)
-- upload_files: Upload multiple files in one call and create a dataset for each (batch version of upload_file, max 10 files, requires write access)
+- upload_file: Upload a CSV/Excel/Parquet file and create a dataset with zero config (auto-provisions DuckDB, requires Database upload access)
+- upload_files: Upload multiple files in one call and create a dataset for each (batch version of upload_file, max 10 files, requires Database upload access)
 
 Chart Management:
 - list_charts: List charts with advanced filters (1-based pagination)
@@ -492,9 +492,11 @@ Input format:
   charts, or dashboards). SQL execution is a separate permission — see execute_sql below.
 - Write tools (generate_chart, generate_dashboard, update_chart, update_dashboard, create_dataset, create_virtual_dataset,
   save_sql_query, add_chart_to_existing_dashboard, add_dashboard_filter, update_chart_preview, create_report,
-  create_chart_from_intent, compose_dashboard, upload_file, upload_files) require write
+  create_chart_from_intent, compose_dashboard) require write
   permissions. These tools are only listed for users who have the necessary access.
   If a write tool does not appear in the tool list, the current user lacks write access.
+- Upload tools (upload_file, upload_files) require Database upload access. If an
+  upload tool does not appear in the tool list, the current user lacks upload access.
 - execute_sql requires SQL Lab access (execute_sql_query permission), which is separate
   from write access. A user may have SQL Lab access without having write access to charts
   or dashboards, and vice versa.

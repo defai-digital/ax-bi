@@ -595,13 +595,15 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         })
         .catch(
           createErrorHandler(errMsg =>
-            t(
-              'An error occurred while fetching dataset related data: %s',
-              errMsg,
+            addDangerToast(
+              t(
+                'An error occurred while fetching dataset related data: %s',
+                errMsg,
+              ),
             ),
           ),
         ),
-    [],
+    [addDangerToast],
   );
 
   const openDatasetDuplicateModal = useCallback((dataset: VirtualDataset) => {

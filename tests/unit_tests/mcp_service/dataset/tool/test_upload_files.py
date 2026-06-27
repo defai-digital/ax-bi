@@ -19,7 +19,7 @@
 
 import base64
 import importlib
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from fastmcp import Client
@@ -73,6 +73,11 @@ def mock_auth():
 class TestUploadFiles:
     """Tests for the upload_files MCP tool."""
 
+    def test_upload_files_uses_database_upload_permission(self) -> None:
+        """MCP upload_files must align with the REST upload permission."""
+        assert upload_files_module.upload_files._class_permission_name == ("Database")
+        assert upload_files_module.upload_files._method_permission_name == ("upload")
+
     @patch.object(upload_files_module, "upload_single_file")
     @pytest.mark.asyncio
     async def test_all_files_succeed(self, mock_upload, mcp_server) -> None:
@@ -83,7 +88,7 @@ class TestUploadFiles:
         ]
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_files",
                 {
                     "request": {
@@ -116,7 +121,7 @@ class TestUploadFiles:
         ]
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_files",
                 {
                     "request": {
@@ -145,7 +150,7 @@ class TestUploadFiles:
         )
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_files",
                 {
                     "request": {
@@ -172,7 +177,7 @@ class TestUploadFiles:
         mock_upload.return_value = _make_dataset_info(42)
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_files",
                 {
                     "request": {
@@ -195,7 +200,7 @@ class TestUploadFiles:
         mock_upload.return_value = _make_dataset_info(1)
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_files",
                 {
                     "request": {
@@ -279,9 +284,7 @@ class TestUploadFilesSchema:
                 FileUploadResult(
                     filename="a.csv", success=True, dataset=_make_dataset_info(1)
                 ),
-                FileUploadResult(
-                    filename="b.png", success=False, error="Unsupported"
-                ),
+                FileUploadResult(filename="b.png", success=False, error="Unsupported"),
             ],
             total=2,
             succeeded=1,

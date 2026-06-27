@@ -25,6 +25,8 @@ import pytest
 from fastmcp import Client
 
 from superset.mcp_service.app import mcp
+from superset.mcp_service.dataset.schemas import DatasetError
+from tests.unit_tests.conftest import with_feature_flags
 
 # Import the module directly for patching
 upload_file_module = importlib.import_module(
@@ -38,7 +40,7 @@ def _make_mock_dataset(
     database_id: int = 1,
     database_name: str = "Local Files",
 ) -> MagicMock:
-    """Build a mock SqlaTable-like object with all fields serialize_dataset_object needs."""
+    """Build a mock SqlaTable-like object."""
     dataset = MagicMock()
     dataset.id = dataset_id
     dataset.table_name = table_name
@@ -81,6 +83,12 @@ def _make_mock_local_db(db_id: int = 1, name: str = "Local Files") -> MagicMock:
     return local_db
 
 
+def _set_query_result(mock_session: MagicMock, result: MagicMock | None) -> None:
+    mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
+        result
+    )
+
+
 def _csv_base64() -> str:
     """Return a minimal CSV file encoded as base64."""
     csv_content = b"name,value\nAlice,10\nBob,20\n"
@@ -105,13 +113,50 @@ def mock_auth():
 class TestUploadFile:
     """Tests for the upload_file MCP tool."""
 
+    def test_upload_file_uses_database_upload_permission(self) -> None:
+        """MCP upload_file must align with the REST upload permission."""
+        assert upload_file_module.upload_file._class_permission_name == ("Database")
+        assert upload_file_module.upload_file._method_permission_name == ("upload")
+
+    @with_feature_flags(ENABLE_LOCAL_FILE_UPLOAD=False)
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
+    async def test_upload_returns_error_when_feature_disabled(
+        self, mock_get_local_db, mcp_server
+    ) -> None:
+        """Tool fails closed when local file upload is disabled."""
+        direct_result = upload_file_module.upload_single_file(
+            file_content=_csv_base64(),
+            filename="sales.csv",
+        )
+        assert isinstance(direct_result, DatasetError)
+        assert direct_result.error_type == "FeatureDisabledError"
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": "sales.csv",
+                    }
+                },
+            )
+
+        mock_get_local_db.assert_not_called()
+        assert result is not None
+
     @patch.object(upload_file_module, "serialize_dataset_object")
     @patch.object(upload_file_module.db, "session")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
     async def test_upload_csv_success(
-        self, mock_get_local_db, mock_upload_cmd, mock_session, mock_serialize,
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
         mcp_server,
     ) -> None:
         """Happy path: CSV file uploaded and dataset created."""
@@ -122,9 +167,7 @@ class TestUploadFile:
         mock_upload_cmd.return_value = mock_cmd_instance
 
         mock_dataset = _make_mock_dataset()
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-            mock_dataset
-        )
+        _set_query_result(mock_session, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
 
         async with Client(mcp_server) as client:
@@ -156,7 +199,11 @@ class TestUploadFile:
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
     async def test_upload_excel_success(
-        self, mock_get_local_db, mock_upload_cmd, mock_session, mock_serialize,
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
         mcp_server,
     ) -> None:
         """Excel file (.xlsx) is handled correctly."""
@@ -165,9 +212,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_report_xyz")
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-            mock_dataset
-        )
+        _set_query_result(mock_session, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_report_xyz"}
 
         # Minimal xlsx bytes (not a real file, but enough for the tool flow
@@ -194,7 +239,11 @@ class TestUploadFile:
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
     async def test_upload_parquet_success(
-        self, mock_get_local_db, mock_upload_cmd, mock_session, mock_serialize,
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
         mcp_server,
     ) -> None:
         """Parquet file (.parquet) is handled correctly."""
@@ -203,9 +252,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset()
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-            mock_dataset
-        )
+        _set_query_result(mock_session, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_data"}
 
         fake_parquet = base64.b64encode(b"fake-parquet-content").decode()
@@ -310,7 +357,11 @@ class TestUploadFile:
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
     async def test_custom_table_name(
-        self, mock_get_local_db, mock_upload_cmd, mock_session, mock_serialize,
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
         mcp_server,
     ) -> None:
         """Custom table_name parameter overrides the derived name."""
@@ -319,13 +370,11 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="my_custom_table")
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-            mock_dataset
-        )
+        _set_query_result(mock_session, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "my_custom_table"}
 
         async with Client(mcp_server) as client:
-            result = await client.call_tool(
+            await client.call_tool(
                 "upload_file",
                 {
                     "request": {
@@ -345,8 +394,87 @@ class TestUploadFile:
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
+    async def test_blank_custom_table_name_falls_back_to_unique_filename_name(
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
+        mcp_server,
+    ) -> None:
+        """Blank custom table_name should not collapse to deterministic 'upload'."""
+        local_db = _make_mock_local_db()
+        mock_get_local_db.return_value = local_db
+        mock_cmd_instance = MagicMock()
+        mock_upload_cmd.return_value = mock_cmd_instance
+        mock_dataset = _make_mock_dataset(table_name="upload_sales_abc123")
+        _set_query_result(mock_session, mock_dataset)
+        mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
+
+        async with Client(mcp_server) as client:
+            await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": "sales.csv",
+                        "table_name": "   ",
+                    }
+                },
+            )
+
+        call_args = mock_upload_cmd.call_args
+        assert call_args[0][1].startswith("upload_sales_")
+        assert call_args[0][1] != "upload"
+
+    @patch.object(upload_file_module, "serialize_dataset_object")
+    @patch.object(upload_file_module.db, "session")
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
+    async def test_generated_table_name_fits_dataset_limit(
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
+        mcp_server,
+    ) -> None:
+        """Generated table names must fit the dataset table_name column."""
+        local_db = _make_mock_local_db()
+        mock_get_local_db.return_value = local_db
+        mock_cmd_instance = MagicMock()
+        mock_upload_cmd.return_value = mock_cmd_instance
+        mock_dataset = _make_mock_dataset(table_name="upload_long")
+        _set_query_result(mock_session, mock_dataset)
+        mock_serialize.return_value = {"id": 99, "table_name": "upload_long"}
+
+        async with Client(mcp_server) as client:
+            await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": f"{'a' * 244}.csv",
+                    }
+                },
+            )
+
+        call_args = mock_upload_cmd.call_args
+        assert len(call_args[0][1]) == 250
+        assert call_args[0][1].startswith("upload_")
+
+    @patch.object(upload_file_module, "serialize_dataset_object")
+    @patch.object(upload_file_module.db, "session")
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
     async def test_dataset_not_found_after_upload(
-        self, mock_get_local_db, mock_upload_cmd, mock_session, mock_serialize,
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
         mcp_server,
     ) -> None:
         """Tool returns DatasetError when dataset is not found after upload."""
@@ -354,9 +482,7 @@ class TestUploadFile:
         mock_get_local_db.return_value = local_db
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-            None
-        )
+        _set_query_result(mock_session, None)
 
         async with Client(mcp_server) as client:
             result = await client.call_tool(
@@ -401,7 +527,7 @@ class TestUploadFileSchema:
         from superset.mcp_service.dataset.schemas import UploadFileRequest
 
         with pytest.raises(ValidationError):
-            UploadFileRequest()  # type: ignore[call-arg]
+            UploadFileRequest()
 
     def test_empty_filename_rejected(self) -> None:
         from pydantic import ValidationError

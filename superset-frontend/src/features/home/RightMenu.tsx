@@ -42,15 +42,14 @@ import {
 } from '@superset-ui/core/components';
 import type { ItemType, MenuItem } from '@superset-ui/core/components/Menu';
 import { ensureAppRoot } from 'src/utils/pathUtils';
+import { findPermission } from 'src/utils/findPermission';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 import { RootState } from 'src/dashboard/types';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useThemeMenuItems } from 'src/hooks/useThemeMenuItems';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 import { useLanguageMenuItems } from './LanguagePicker';
-import {
-  RightMenuProps,
-} from './types';
+import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
 
 const extensionsRegistry = getExtensionsRegistry();
@@ -82,6 +81,9 @@ const RightMenu = ({
   const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
   const dashboardId = useSelector<RootState, number | undefined>(
     state => state.dashboardInfo?.id,
+  );
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
   );
   const {
     setThemeMode,
@@ -138,19 +140,19 @@ const RightMenu = ({
       if (!navbarRight.user_is_anonymous) {
         createItems.push({
           key: 'create-sql',
-          label: (
-            <Link to="/sqllab?new=true">{t('SQL query')}</Link>
-          ),
+          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
           icon: <Icons.SearchOutlined />,
         });
         createItems.push({
           key: 'create-chart',
           label: (
-            <Link to={
-              Number.isInteger(dashboardId)
-                ? `/chart/add?dashboard_id=${dashboardId}`
-                : '/chart/add'
-            }>
+            <Link
+              to={
+                Number.isInteger(dashboardId)
+                  ? `/chart/add?dashboard_id=${dashboardId}`
+                  : '/chart/add'
+              }
+            >
               {t('Chart')}
             </Link>
           ),
@@ -158,18 +160,19 @@ const RightMenu = ({
         });
         createItems.push({
           key: 'create-dashboard',
-          label: (
-            <Link to="/dashboard/new/">{t('Dashboard')}</Link>
-          ),
+          label: <Link to="/dashboard/new/">{t('Dashboard')}</Link>,
           icon: <Icons.DashboardOutlined />,
         });
-        createItems.push({
-          key: 'create-upload-data',
-          label: (
-            <Link to="/upload/">{t('Upload data')}</Link>
-          ),
-          icon: <Icons.UploadOutlined />,
-        });
+        if (
+          canUploadData &&
+          isFeatureEnabled(FeatureFlag.EnableLocalFileUpload)
+        ) {
+          createItems.push({
+            key: 'create-upload-data',
+            label: <Link to="/upload/">{t('Upload data')}</Link>,
+            icon: <Icons.UploadOutlined />,
+          });
+        }
       }
       if (createItems.length > 0) {
         items.push({
@@ -371,9 +374,7 @@ const RightMenu = ({
               {navbarRight.bug_report_text || t('Report a bug')}
             </Typography.Link>
           ),
-          icon: navbarRight.bug_report_icon ? undefined : (
-            <Icons.BugOutlined />
-          ),
+          icon: navbarRight.bug_report_icon ? undefined : <Icons.BugOutlined />,
         });
       }
       if (helpItems.length > 0) {
@@ -437,6 +438,7 @@ const RightMenu = ({
     RightMenuItemIconExtension,
     navbarRight,
     dashboardId,
+    canUploadData,
     canSetMode,
     themeMenuItem,
     languageMenuItem,

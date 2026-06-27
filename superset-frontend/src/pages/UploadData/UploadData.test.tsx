@@ -17,15 +17,63 @@
  * under the License.
  */
 
-import fetchMock from 'fetch-mock';
-import { render, screen } from 'spec/helpers/testing-library';
+import { ComponentType } from 'react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from 'spec/helpers/testing-library';
+import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
 import UploadData from '.';
 
-// Mock the auto_upload endpoint
-fetchMock.post('glob:*api/v1/database/auto_upload/', {
-  database_id: 1,
-  dataset_id: 1,
-  table_name: 'upload_test_abc123',
+type ToastInjectedProps = {
+  addDangerToast: (msg: string) => void;
+  addSuccessToast: (msg: string) => void;
+};
+
+const mockAddDangerToast = jest.fn();
+const mockAddSuccessToast = jest.fn();
+
+jest.mock('src/components/MessageToasts/withToasts', () => ({
+  __esModule: true,
+  default: (Component: ComponentType<ToastInjectedProps>) =>
+    function MockedWithToasts(props: Record<string, unknown>) {
+      return (
+        <Component
+          {...props}
+          addDangerToast={mockAddDangerToast}
+          addSuccessToast={mockAddSuccessToast}
+        />
+      );
+    },
+}));
+
+jest.mock('@superset-ui/core', () => ({
+  ...jest.requireActual('@superset-ui/core'),
+  SupersetClient: {
+    ...jest.requireActual('@superset-ui/core').SupersetClient,
+    post: jest.fn(),
+  },
+  getClientErrorObject: jest.fn(),
+}));
+
+const mockedPost = SupersetClient.post as jest.Mock;
+const mockedGetClientErrorObject = getClientErrorObject as jest.Mock;
+
+beforeEach(() => {
+  mockAddDangerToast.mockReset();
+  mockAddSuccessToast.mockReset();
+  mockedPost.mockReset();
+  mockedGetClientErrorObject.mockReset();
+  mockedPost.mockResolvedValue({
+    json: {
+      database_id: 1,
+      dataset_id: 1,
+      table_name: 'upload_test_abc123',
+    },
+  });
+  mockedGetClientErrorObject.mockResolvedValue({ error: '' });
 });
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
@@ -55,5 +103,36 @@ describe('UploadData', () => {
         'Supported formats: CSV, TSV, XLS, XLSX, Parquet. Multiple files supported.',
       ),
     ).toBeVisible();
+  });
+
+  test('shows structured API error messages for failed uploads', async () => {
+    const apiError = new Error('Forbidden');
+    mockedPost.mockRejectedValue(apiError);
+    mockedGetClientErrorObject.mockResolvedValue({
+      message: 'Local file upload is disabled',
+    });
+
+    render(<UploadData />, {
+      useRedux: true,
+      useRouter: true,
+    });
+
+    const input = screen.getByTestId('upload-data-dropzone');
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveAttribute('type', 'file');
+
+    fireEvent.change(input as HTMLInputElement, {
+      target: {
+        files: [new File(['a,b\n1,2'], 'orders.csv', { type: 'text/csv' })],
+      },
+    });
+
+    await waitFor(() => {
+      expect(mockedGetClientErrorObject).toHaveBeenCalledWith(apiError);
+      expect(mockAddDangerToast).toHaveBeenCalledWith(
+        'Local file upload is disabled',
+      );
+    });
+    expect(await screen.findByText('Failed')).toBeVisible();
   });
 });

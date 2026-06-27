@@ -1207,9 +1207,43 @@ class DelimitedListField(fields.List):
 
 
 class BaseUploadFilePostSchemaMixin(Schema):
+    type_extension_config_keys = {
+        UploadFileType.CSV.value: "CSV_EXTENSIONS",
+        UploadFileType.EXCEL.value: "EXCEL_EXTENSIONS",
+        UploadFileType.COLUMNAR.value: "COLUMNAR_EXTENSIONS",
+    }
+
     @validates("file")
     def validate_file_extension(self, file: FileStorage, **kwargs: Any) -> None:
         allowed_extensions = current_app.config["ALLOWED_EXTENSIONS"]
+        self._validate_file_extension(file, allowed_extensions)
+
+    @validates_schema
+    def validate_file_extension_matches_type(
+        self, data: dict[str, Any], **kwargs: Any
+    ) -> None:
+        """Validate that the extension matches the selected upload reader type."""
+        file = data.get("file")
+        upload_type = data.get("type")
+        if not file or not upload_type:
+            return
+        if isinstance(upload_type, UploadFileType):
+            upload_type = upload_type.value
+        extension_config_key = self.type_extension_config_keys.get(upload_type)
+        if not extension_config_key:
+            return
+        try:
+            self._validate_file_extension(
+                file, current_app.config[extension_config_key]
+            )
+        except ValidationError as ex:
+            raise ValidationError({"file": ex.messages}) from ex
+
+    @staticmethod
+    def _validate_file_extension(
+        file: FileStorage, allowed_extensions: set[str]
+    ) -> None:
+        """Validate a file extension against an allowed extension set."""
         file_suffix = Path(file.filename).suffix
         if not file_suffix:
             raise ValidationError([_("File extension is not allowed.")])
@@ -1248,7 +1282,7 @@ class UploadPostSchema(BaseUploadFilePostSchemaMixin):
     )
     table_name = fields.String(
         required=True,
-        validate=[Length(min=1, max=10000)],
+        validate=[Length(min=1, max=250)],
         allow_none=False,
         metadata={"description": "The name of the table to be created/appended"},
     )

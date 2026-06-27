@@ -17,6 +17,7 @@
  * under the License.
  */
 import {
+  createStore,
   render,
   screen,
   userEvent,
@@ -185,4 +186,103 @@ test('hides logout button when embedded and flag is enabled', async () => {
 
   userEvent.hover(await screen.findByText(/Settings/i));
   expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+});
+
+test('shows upload data menu item when local upload is enabled and permitted', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,
+  );
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+    initialState: {
+      user: {
+        roles: {
+          Alpha: [['can_upload', 'Database']],
+        },
+      },
+    },
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+  expect(await screen.findByText('Upload data')).toBeInTheDocument();
+});
+
+test('hides upload data menu item without local upload permission', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,
+  );
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+    initialState: {
+      user: {
+        roles: {
+          Gamma: [['can_read', 'Database']],
+        },
+      },
+    },
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+  await waitFor(() => {
+    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
+  });
+});
+
+test('hides upload data menu item when local upload is disabled', async () => {
+  mockIsFeatureEnabled.mockReturnValue(false);
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+    initialState: {
+      user: {
+        roles: {
+          Alpha: [['can_upload', 'Database']],
+        },
+      },
+    },
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+  await waitFor(() => {
+    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
+  });
+});
+
+test('updates upload data menu item when upload permission changes', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,
+  );
+
+  const store = createStore(
+    {},
+    {
+      user: (
+        state = { roles: { Gamma: [['can_read', 'Database']] } },
+        action: { type: string },
+      ) =>
+        action.type === 'grant-upload'
+          ? { roles: { Alpha: [['can_upload', 'Database']] } }
+          : state,
+    },
+  );
+
+  render(<RightMenu {...createProps()} />, {
+    store,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+  await waitFor(() => {
+    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
+  });
+
+  store.dispatch({ type: 'grant-upload' });
+
+  expect(await screen.findByText('Upload data')).toBeInTheDocument();
 });

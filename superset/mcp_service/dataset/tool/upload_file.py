@@ -37,7 +37,7 @@ from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 from werkzeug.datastructures import FileStorage
 
-from superset import db
+from superset import db, is_feature_enabled
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
     UploadCommand,
@@ -75,6 +75,7 @@ FILE_TYPE_MAP: dict[str, UploadFileType] = {
 }
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
+MAX_TABLE_NAME_LENGTH = 250
 
 
 def _build_file_storage(file_bytes: bytes, filename: str) -> FileStorage:
@@ -89,7 +90,10 @@ def _sanitize_table_name(raw_name: str) -> str:
     if not sanitized:
         sanitized = "upload"
     short_id = uuid.uuid4().hex[:6]
-    return f"upload_{sanitized}_{short_id}"
+    suffix = f"_{short_id}"
+    prefix = "upload_"
+    max_name_length = MAX_TABLE_NAME_LENGTH - len(prefix) - len(suffix)
+    return f"{prefix}{sanitized[:max_name_length]}{suffix}"
 
 
 def upload_single_file(  # noqa: C901
@@ -103,6 +107,12 @@ def upload_single_file(  # noqa: C901
     MCP tools. This function is synchronous and meant to be called from an
     async wrapper.
     """
+    if not is_feature_enabled("ENABLE_LOCAL_FILE_UPLOAD"):
+        return DatasetError.create(
+            error="Local file upload is disabled",
+            error_type="FeatureDisabledError",
+        )
+
     ext = os.path.splitext(filename)[1].lower()
     file_type = FILE_TYPE_MAP.get(ext)
 
@@ -131,7 +141,8 @@ def upload_single_file(  # noqa: C901
     if table_name:
         derived_name = re.sub(r"[^\w]", "_", table_name).strip("_").lower()
         if not derived_name:
-            derived_name = "upload"
+            stem = os.path.splitext(filename)[0]
+            derived_name = _sanitize_table_name(stem)
     else:
         stem = os.path.splitext(filename)[0]
         derived_name = _sanitize_table_name(stem)
@@ -196,8 +207,8 @@ def upload_single_file(  # noqa: C901
 
 @tool(
     tags=["mutate"],
-    class_permission_name="Dataset",
-    method_permission_name="write",
+    class_permission_name="Database",
+    method_permission_name="upload",
     annotations=ToolAnnotations(
         title="Upload file and create dataset",
         readOnlyHint=False,

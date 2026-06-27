@@ -17,8 +17,11 @@
  * under the License.
  */
 import rison from 'rison';
+import { SupersetClient } from '@superset-ui/core';
 import {
   checkUploadExtensions,
+  createFetchOwners,
+  createFetchRelated,
   getAlreadyExists,
   getEncryptedExtraFieldsNeeded,
   getFilterValues,
@@ -37,6 +40,15 @@ import {
 import { User } from 'src/types/bootstrapTypes';
 import { WelcomeTable } from 'src/features/home/types';
 import { Filter, TableTab } from './types';
+
+const mockSupersetClientGet = (response: object) =>
+  jest
+    .spyOn(SupersetClient, 'get')
+    .mockResolvedValue(response as Awaited<ReturnType<typeof SupersetClient.get>>);
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 const terminalErrors = {
   errors: [
@@ -532,6 +544,83 @@ test('successfully modified rison to encode correctly', () => {
     expect(actualEncoding).toEqual(expectedEncoding);
     expect(rison.decode(actualEncoding)).toEqual(testObject);
   });
+});
+
+test('createFetchRelated maps API related results to select options', async () => {
+  mockSupersetClientGet({
+    json: {
+      result: [
+        { text: 'Main database', value: 1 },
+        { text: ' ', value: 2 },
+      ],
+      count: 2,
+    },
+  });
+  const handleError = jest.fn();
+
+  const result = await createFetchRelated(
+    'dataset',
+    'database',
+    handleError,
+  )('main', 3, 25);
+
+  expect(SupersetClient.get).toHaveBeenCalledWith({
+    endpoint:
+      '/api/v1/dataset/related/database?q=(filter:main,page:3,page_size:25)',
+  });
+  expect(result).toEqual({
+    data: [{ label: 'Main database', value: 1 }],
+    totalCount: 2,
+  });
+  expect(handleError).not.toHaveBeenCalled();
+});
+
+test('createFetchRelated calls error handler and returns empty options on failure', async () => {
+  const error = 'Unable to fetch related databases';
+  jest.spyOn(SupersetClient, 'get').mockRejectedValue(error);
+  const handleError = jest.fn();
+
+  const result = await createFetchRelated(
+    'dataset',
+    'database',
+    handleError,
+  )('', 0, 25);
+
+  expect(handleError).toHaveBeenCalledWith(error);
+  expect(result).toEqual({ data: [], totalCount: 0 });
+});
+
+test('createFetchOwners includes the logged-in user once when present in results', async () => {
+  mockSupersetClientGet({
+    json: {
+      result: [
+        {
+          text: 'Grace Hopper',
+          value: 7,
+          extra: { email: 'grace@example.com' },
+        },
+        {
+          text: 'Ada Lovelace',
+          value: 8,
+          extra: { email: 'ada@example.com' },
+        },
+      ],
+      count: 2,
+    },
+  });
+
+  const result = await createFetchOwners(
+    'dataset',
+    jest.fn(),
+    {
+      userId: 7,
+      firstName: 'Grace',
+      lastName: 'Hopper',
+    },
+  )('', 0, 25);
+
+  expect(result.totalCount).toBe(2);
+  expect(result.data.map(({ value }) => value)).toEqual([7, 8]);
 });
 
 test('checkUploadExtensions should return valid upload extensions', () => {

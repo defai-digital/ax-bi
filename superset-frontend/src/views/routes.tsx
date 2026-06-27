@@ -26,6 +26,7 @@ import {
 } from 'react';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import getBootstrapData from 'src/utils/getBootstrapData';
+import { findPermission } from 'src/utils/findPermission';
 
 // not lazy loaded since this is the home page.
 import Home from 'src/pages/Home';
@@ -228,10 +229,6 @@ export const routes: Routes = [
     Component: FileHandler,
   },
   {
-    path: '/upload/',
-    Component: UploadData,
-  },
-  {
     path: '/dashboard/list/',
     Component: DashboardList,
   },
@@ -355,6 +352,7 @@ const user = getBootstrapData()?.user;
 const authRegistrationEnabled =
   getBootstrapData()?.common.conf.AUTH_USER_REGISTRATION;
 const isAdmin = isUserAdmin(user);
+const canUploadData = findPermission('can_upload', 'Database', user?.roles);
 
 if (isAdmin) {
   routes.push(
@@ -384,6 +382,13 @@ if (authRegistrationEnabled) {
   routes.push({
     path: '/registrations/',
     Component: UserRegistrations,
+  });
+}
+
+if (canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload)) {
+  routes.push({
+    path: '/upload/',
+    Component: UploadData,
   });
 }
 
