@@ -55,3 +55,34 @@ test('returns diff items', () => {
     },
   ]);
 });
+
+test('treats malformed json_metadata as empty when returning diff items', () => {
+  const nextFilterScopes = {
+    filter1: {
+      scope: ['ROOT_ID'],
+      immune: [],
+    },
+  };
+
+  expect(
+    getOverwriteItems(
+      {
+        css: '',
+        json_metadata: '{malformed',
+      },
+      {
+        css: '',
+        json_metadata: JSON.stringify({
+          filter_scopes: nextFilterScopes,
+          default_filters: {},
+        }),
+      },
+    ),
+  ).toEqual([
+    {
+      keyPath: 'json_metadata.filter_scopes',
+      newValue: JSON.stringify(nextFilterScopes, null, 2),
+      oldValue: '{}',
+    },
+  ]);
+});

@@ -21,10 +21,21 @@ import { OVERWRITE_INSPECT_FIELDS } from 'src/dashboard/constants';
 
 const JSON_KEYS = new Set(['json_metadata', 'position_json']);
 
+function parseJsonField(value: unknown) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
 function extractValue(object: JsonObject, keyPath: string) {
   return keyPath.split('.').reduce((obj: JsonObject, key: string) => {
     const value = obj?.[key];
-    return JSON_KEYS.has(key) && value ? JSON.parse(value) : value;
+    return JSON_KEYS.has(key) && value ? parseJsonField(value) : value;
   }, object);
 }
 
