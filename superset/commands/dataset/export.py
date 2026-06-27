@@ -18,7 +18,7 @@
 
 import logging
 from collections.abc import Iterator
-from typing import Callable
+from typing import Any, Callable
 
 import yaml
 
@@ -35,6 +35,20 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 JSON_KEYS = {"params", "template_params", "extra"}
+
+
+def _load_json_object(
+    value: Any,
+    key: str,
+    default: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        logger.info("Unable to decode `%s` field: %s", key, value)
+        return default
+
+    return parsed if isinstance(parsed, dict) else default
 
 
 class ExportDatasetsCommand(ExportModelsCommand):
@@ -60,20 +74,16 @@ class ExportDatasetsCommand(ExportModelsCommand):
         # TODO (betodealmeida): move this logic to export_to_dict once this
         # becomes the default export endpoint
         for key in JSON_KEYS:
-            if payload.get(key):
-                try:
-                    payload[key] = json.loads(payload[key])
-                except json.JSONDecodeError:
-                    logger.info("Unable to decode `%s` field: %s", key, payload[key])
+            if payload.get(key) is not None:
+                payload[key] = _load_json_object(payload[key], key, {})
         for key in ("metrics", "columns"):
             for attributes in payload.get(key, []):
-                if attributes.get("extra"):
-                    try:
-                        attributes["extra"] = json.loads(attributes["extra"])
-                    except json.JSONDecodeError:
-                        logger.info(
-                            "Unable to decode `extra` field: %s", attributes["extra"]
-                        )
+                if attributes.get("extra") is not None:
+                    attributes["extra"] = _load_json_object(
+                        attributes["extra"],
+                        "extra",
+                        None,
+                    )
 
         payload["version"] = EXPORT_VERSION
         payload["database_uuid"] = str(model.database.uuid)

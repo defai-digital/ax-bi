@@ -388,3 +388,53 @@ def test_export_related_database_replaces_non_object_extra(
     database_payload = yaml.safe_load(export["databases/my_database.yaml"]())
 
     assert database_payload["extra"] == {}
+
+
+def test_file_content_replaces_non_object_json_fields(
+    session: Session,
+) -> None:
+    """
+    Test exporting a dataset with JSON fields that decode to non-object values.
+    """
+    from superset.commands.dataset.export import ExportDatasetsCommand
+    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from superset.models.core import Database
+
+    engine = db.session.get_bind()
+    SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
+
+    database = Database(database_name="my_database", sqlalchemy_uri="sqlite://")
+    sqla_table = SqlaTable(
+        table_name="my_table",
+        database=database,
+        params="[]",
+        template_params="[]",
+        extra="[]",
+        columns=[
+            TableColumn(
+                column_name="my_col",
+                type="INTEGER",
+                extra="[]",
+            ),
+        ],
+        metrics=[
+            SqlMetric(
+                metric_name="count",
+                expression="COUNT(*)",
+                extra="[]",
+            ),
+        ],
+    )
+    db.session.add_all([database, sqla_table])
+    db.session.flush()
+
+    content = ExportDatasetsCommand._file_content(  # pylint: disable=protected-access
+        sqla_table
+    )
+    payload = yaml.safe_load(content)
+
+    assert payload["params"] == {}
+    assert payload["template_params"] == {}
+    assert payload["extra"] == {}
+    assert payload["columns"][0]["extra"] is None
+    assert payload["metrics"][0]["extra"] is None
