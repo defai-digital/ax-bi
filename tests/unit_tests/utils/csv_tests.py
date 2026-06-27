@@ -100,6 +100,43 @@ def fake_get_chart_csv_data_empty(
     return json.dumps(fake_result).encode("utf-8")
 
 
+def fake_get_chart_csv_data_error_payload(
+    chart_url: str,
+    auth_cookies: dict[str, str] | None = None,
+    timeout: float | None = None,
+) -> bytes | None:
+    """Return an error-shaped chart payload with no result list."""
+    return json.dumps({"message": "chart failed"}).encode("utf-8")
+
+
+def fake_get_chart_csv_data_empty_result_list(
+    chart_url: str,
+    auth_cookies: dict[str, str] | None = None,
+    timeout: float | None = None,
+) -> bytes | None:
+    """Return an empty chart result list."""
+    return json.dumps({"result": []}).encode("utf-8")
+
+
+def fake_get_chart_csv_data_malformed_metadata(
+    chart_url: str,
+    auth_cookies: dict[str, str] | None = None,
+    timeout: float | None = None,
+) -> bytes | None:
+    """Return data with malformed column/index metadata."""
+    fake_result = {
+        "result": [
+            {
+                "data": {"col1": [1, 2]},
+                "coltypes": "not-a-list",
+                "colnames": ["col1"],
+                "indexnames": ["idx1"],
+            }
+        ]
+    }
+    return json.dumps(fake_result).encode("utf-8")
+
+
 def fake_get_chart_csv_data_valid(
     chart_url: str,
     auth_cookies: dict[str, str] | None = None,
@@ -288,6 +325,23 @@ def test_get_chart_dataframe_returns_none_for_empty_data(
     monkeypatch.setattr(csv, "get_chart_csv_data", fake_get_chart_csv_data_empty)
     result = get_chart_dataframe("http://dummy-url")
     # When data is empty, the function should return None
+    assert result is None
+
+
+@pytest.mark.parametrize(
+    "fake_payload",
+    [
+        fake_get_chart_csv_data_error_payload,
+        fake_get_chart_csv_data_empty_result_list,
+        fake_get_chart_csv_data_malformed_metadata,
+    ],
+)
+def test_get_chart_dataframe_returns_none_for_malformed_payload(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_payload: Any,
+) -> None:
+    monkeypatch.setattr(csv, "get_chart_csv_data", fake_payload)
+    result = get_chart_dataframe("http://dummy-url")
     assert result is None
 
 
