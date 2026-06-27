@@ -1000,17 +1000,21 @@ class CertificationMixin:
             return {}
         return extra if isinstance(extra, dict) else {}
 
+    def get_certification_dict(self) -> dict[str, Any]:
+        certification = self.get_extra_dict().get("certification")
+        return certification if isinstance(certification, dict) else {}
+
     @property
     def is_certified(self) -> bool:
         return bool(self.get_extra_dict().get("certification"))
 
     @property
     def certified_by(self) -> Optional[str]:
-        return self.get_extra_dict().get("certification", {}).get("certified_by")
+        return self.get_certification_dict().get("certified_by")
 
     @property
     def certification_details(self) -> Optional[str]:
-        return self.get_extra_dict().get("certification", {}).get("details")
+        return self.get_certification_dict().get("details")
 
     @property
     def warning_markdown(self) -> Optional[str]:

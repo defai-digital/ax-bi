@@ -95,6 +95,17 @@ def test_certification_mixin_ignores_non_object_extra() -> None:
     assert obj.is_certified is False
 
 
+def test_certification_mixin_ignores_non_object_certification_details() -> None:
+    from superset.models.helpers import CertificationMixin
+
+    obj = CertificationMixin()
+    obj.extra = '{"certification": 1}'
+
+    assert obj.is_certified is True
+    assert obj.certified_by is None
+    assert obj.certification_details is None
+
+
 @pytest.fixture
 def database(mocker: MockerFixture, session: Session) -> Database:
     from superset.connectors.sqla.models import SqlaTable
