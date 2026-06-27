@@ -663,6 +663,8 @@ class TableSchema(AuditMixinNullable, ExtraJSONMixin, Model):
             description = json.loads(self.description)
         except (TypeError, json.JSONDecodeError):
             description = None
+        if not isinstance(description, dict):
+            description = None
 
         return {
             "id": self.id,

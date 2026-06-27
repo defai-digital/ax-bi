@@ -179,3 +179,13 @@ def test_table_schema_to_dict_allows_malformed_description() -> None:
     table_schema = TableSchema(id=1, description="{malformed")
 
     assert table_schema.to_dict()["description"] is None
+
+
+@pytest.mark.parametrize("description", ['["bad"]', '"bad"', "1", "null"])
+def test_table_schema_to_dict_ignores_non_object_description(
+    description: str,
+) -> None:
+    """TableSchema serialization should ignore non-object JSON descriptions."""
+    table_schema = TableSchema(id=1, description=description)
+
+    assert table_schema.to_dict()["description"] is None
