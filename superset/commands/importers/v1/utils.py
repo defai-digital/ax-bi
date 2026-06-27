@@ -154,8 +154,14 @@ def load_configs(
         prefix = file_name.split("/")[0]
         schema = schemas.get(f"{prefix}/")
         if schema:
+            config: Any = None
             try:
                 config = load_yaml(file_name, content)
+                if not isinstance(config, dict):
+                    raise ValidationError({"_schema": ["Invalid config file"]})
+                config_uuid = (
+                    str(config["uuid"]) if config.get("uuid") is not None else None
+                )
 
                 # populate passwords from the request, from YAML config,
                 # or from existing DBs
@@ -164,11 +170,14 @@ def load_configs(
                 elif prefix == "databases" and config.get("password"):
                     # password already in YAML config, keep it
                     pass
-                elif prefix == "databases" and config["uuid"] in db_passwords:
-                    config["password"] = db_passwords[config["uuid"]]
+                elif (
+                    prefix == "databases"
+                    and config_uuid is not None
+                    and config_uuid in db_passwords
+                ):
+                    config["password"] = db_passwords[config_uuid]
 
                 ssh_tunnel = config.get("ssh_tunnel") or {}
-                config_uuid = str(config["uuid"])
 
                 # populate masked ssh_tunnel_passwords from the request or from
                 # the same existing database. Do not add credentials absent from
@@ -179,6 +188,7 @@ def load_configs(
                         ssh_tunnel["password"] = ssh_tunnel_passwords[file_name]
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_passwords.get(config_uuid) is not None
                     ):
                         ssh_tunnel["password"] = db_ssh_tunnel_passwords[config_uuid]
@@ -190,6 +200,7 @@ def load_configs(
                         ssh_tunnel["private_key"] = ssh_tunnel_private_keys[file_name]
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_private_keys.get(config_uuid) is not None
                     ):
                         ssh_tunnel["private_key"] = db_ssh_tunnel_private_keys[
@@ -205,6 +216,7 @@ def load_configs(
                         )
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_priv_key_passws.get(config_uuid) is not None
                     ):
                         ssh_tunnel["private_key_password"] = (

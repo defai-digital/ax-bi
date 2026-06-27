@@ -20,6 +20,67 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from marshmallow import fields, Schema, ValidationError
+from pytest_mock import MockerFixture
+
+
+class RequiredNameSchema(Schema):
+    name = fields.String(required=True)
+
+
+def _mock_empty_import_queries(mocker: MockerFixture) -> None:
+    query = mocker.patch("superset.commands.importers.v1.utils.db").session.query
+    query.return_value.all.return_value = []
+
+
+def test_load_configs_rejects_non_object_yaml(mocker: MockerFixture) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/bad.yaml": "- item"},
+        {"databases/": RequiredNameSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/bad.yaml": {"_schema": ["Invalid config file"]},
+    }
+
+
+def test_load_configs_schema_error_does_not_require_config_assignment(
+    mocker: MockerFixture,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/bad.yaml": "{}"},
+        {"databases/": RequiredNameSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/bad.yaml": {"name": ["Missing data for required field."]},
+    }
 
 
 class TestConvertTemporalColumns:
