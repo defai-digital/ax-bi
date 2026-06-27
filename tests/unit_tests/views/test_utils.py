@@ -16,6 +16,7 @@
 # under the License.
 """Tests for superset.views.utils module"""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,6 +30,7 @@ from superset.views.utils import (
     get_dashboard_extra_filters,
     get_datasource_info,
     get_form_data,
+    is_slice_in_container,
     JS_CONTROL_FORM_DATA_KEYS,
     loads_request_json,
     REJECTED_FORM_DATA_KEYS,
@@ -79,6 +81,49 @@ def test_loads_request_json_requires_object() -> None:
     assert loads_request_json("null") == {}
     assert loads_request_json('"scalar"') == {}
     assert loads_request_json("not json") == {}
+
+
+def test_is_slice_in_container_handles_malformed_chart_meta() -> None:
+    """Malformed chart metadata should not crash container checks."""
+    layout: dict[str, dict[str, Any]] = {
+        "CHART-1": {
+            "type": "CHART",
+            "meta": "bad",
+        },
+    }
+
+    assert not is_slice_in_container(layout, "CHART-1", 1)
+
+
+def test_is_slice_in_container_handles_malformed_children() -> None:
+    """Malformed container children should not be traversed."""
+    layout: dict[str, dict[str, Any]] = {
+        "TABS-1": {
+            "type": "TABS",
+            "children": "CHART-1",
+        },
+        "CHART-1": {
+            "type": "CHART",
+            "meta": {"chartId": 1},
+        },
+    }
+
+    assert not is_slice_in_container(layout, "TABS-1", 1)
+
+
+def test_is_slice_in_container_finds_nested_chart() -> None:
+    layout: dict[str, dict[str, Any]] = {
+        "TABS-1": {
+            "type": "TABS",
+            "children": ["CHART-1"],
+        },
+        "CHART-1": {
+            "type": "CHART",
+            "meta": {"chartId": 1},
+        },
+    }
+
+    assert is_slice_in_container(layout, "TABS-1", 1)
 
 
 def test_get_datasource_info_parses_combined_datasource_key() -> None:

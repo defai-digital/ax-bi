@@ -469,11 +469,18 @@ def is_slice_in_container(
     if not isinstance(node, dict):
         return False
     node_type = node.get("type")
-    if node_type == "CHART" and node.get("meta", {}).get("chartId") == slice_id:
+    meta = node.get("meta")
+    if (
+        node_type == "CHART"
+        and isinstance(meta, dict)
+        and meta.get("chartId") == slice_id
+    ):
         return True
 
     if node_type in CONTAINER_TYPES:
         children = node.get("children", [])
+        if not isinstance(children, list):
+            return False
         return any(
             is_slice_in_container(layout, child_id, slice_id) for child_id in children
         )
