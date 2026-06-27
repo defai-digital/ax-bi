@@ -82,3 +82,33 @@ def test_validate_dashboard_bundle_shape_accepts_valid_entries() -> None:
     }
 
     assert _validate_dashboard_bundle_shape(data) is data
+
+
+@pytest.mark.parametrize(
+    "dashboard",
+    [
+        Dashboard(dashboard_title="My dashboard", json_metadata="{"),
+        Dashboard(dashboard_title="My dashboard", json_metadata="[]"),
+        Dashboard(dashboard_title="My dashboard", position_json="{"),
+        Dashboard(dashboard_title="My dashboard", position_json="[]"),
+        Dashboard(
+            dashboard_title="My dashboard",
+            json_metadata=json.dumps({"native_filter_configuration": {}}),
+        ),
+        Dashboard(
+            dashboard_title="My dashboard",
+            json_metadata=json.dumps({"filter_scopes": []}),
+        ),
+    ],
+)
+def test_validate_dashboard_bundle_shape_rejects_invalid_dashboard_json(
+    dashboard: Dashboard,
+) -> None:
+    """V0 dashboard JSON fields must be object-shaped."""
+    data = {
+        "datasources": [],
+        "dashboards": [dashboard],
+    }
+
+    with pytest.raises(DashboardImportException):
+        _validate_dashboard_bundle_shape(data)

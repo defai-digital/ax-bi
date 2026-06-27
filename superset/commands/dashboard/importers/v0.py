@@ -127,7 +127,7 @@ def import_dashboard(  # noqa: C901
             },
         }
         """
-        position_data = json.loads(dashboard.position_json)
+        position_data = _load_dashboard_json_object(dashboard.position_json)
         position_json = position_data.values()
         for value in position_json:
             if (
@@ -142,7 +142,7 @@ def import_dashboard(  # noqa: C901
         dashboard.position_json = json.dumps(position_data)
 
     def alter_native_filters(dashboard: Dashboard) -> None:
-        json_metadata = json.loads(dashboard.json_metadata)
+        json_metadata = _load_dashboard_json_object(dashboard.json_metadata)
         native_filter_configuration = json_metadata.get("native_filter_configuration")
         if not native_filter_configuration:
             return
@@ -165,7 +165,7 @@ def import_dashboard(  # noqa: C901
     # Clearing the slug to avoid conflicts
     dashboard_to_import.slug = None
 
-    old_json_metadata = json.loads(dashboard_to_import.json_metadata or "{}")
+    old_json_metadata = _load_dashboard_json_object(dashboard_to_import.json_metadata)
     old_to_new_slc_id_dict: dict[int, int] = {}
     new_timed_refresh_immune_slices = []
     new_expanded_slices = {}
@@ -215,7 +215,10 @@ def import_dashboard(  # noqa: C901
         filter_scopes = convert_filter_scopes(old_json_metadata, slices)
 
     if "filter_scopes" in i_params_dict:
-        filter_scopes = old_json_metadata.get("filter_scopes")
+        metadata_filter_scopes = old_json_metadata.get("filter_scopes")
+        filter_scopes = (
+            metadata_filter_scopes if isinstance(metadata_filter_scopes, dict) else {}
+        )
 
     # then replace old slice id to new slice id:
     if filter_scopes:
@@ -310,10 +313,44 @@ def _validate_dashboard_bundle_shape(data: Any) -> dict[str, Any]:
         _load_datasource_remote_id(datasource, index)
 
     for dashboard in data["dashboards"]:
-        if not isinstance(dashboard, Dashboard):
-            raise DashboardImportException(_("Invalid dashboard import file"))
+        _validate_dashboard_import_object(dashboard)
 
     return data
+
+
+def _load_dashboard_json_object(value: Any) -> dict[str, Any]:
+    if not value:
+        return {}
+
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    if not isinstance(parsed, dict):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    return parsed
+
+
+def _validate_dashboard_import_object(dashboard: Any) -> None:
+    if not isinstance(dashboard, Dashboard):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    json_metadata = _load_dashboard_json_object(dashboard.json_metadata)
+    native_filter_configuration = json_metadata.get("native_filter_configuration")
+    if native_filter_configuration is not None and not isinstance(
+        native_filter_configuration,
+        list,
+    ):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    filter_scopes = json_metadata.get("filter_scopes")
+    if filter_scopes is not None and not isinstance(filter_scopes, dict):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    if dashboard.position_json:
+        _load_dashboard_json_object(dashboard.position_json)
 
 
 def _load_datasource_remote_id(datasource: Any, index: int) -> Any:
