@@ -357,6 +357,36 @@ class TestCore(SupersetTestCase):
         for k in keys:
             assert k in resp.keys()
 
+    @pytest.mark.parametrize(
+        "datasource_key",
+        [
+            ("bad",),
+            ("1__table__extra",),
+            ("bad__table",),
+            ("1__bad_type",),
+        ],
+    )
+    def test_fetch_datasource_metadata_rejects_malformed_datasource_key(
+        self,
+        datasource_key: str,
+    ):
+        self.login(ADMIN_USERNAME)
+        resp = self.client.get(
+            f"/superset/fetch_datasource_metadata?datasourceKey={datasource_key}"
+        )
+        payload = json.loads(resp.data.decode("utf-8"))
+
+        assert resp.status_code == 400
+        assert payload["error"] == "The data source seems to have been deleted"
+
+    def test_fetch_datasource_metadata_rejects_missing_datasource_key(self):
+        self.login(ADMIN_USERNAME)
+        resp = self.client.get("/superset/fetch_datasource_metadata")
+        payload = json.loads(resp.data.decode("utf-8"))
+
+        assert resp.status_code == 400
+        assert payload["error"] == "The data source seems to have been deleted"
+
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_slice_id_is_always_logged_correctly_on_web_request(self):
         # explore case
@@ -886,6 +916,20 @@ class TestCore(SupersetTestCase):
             f"/superset/explore/?form_data={quote(json.dumps(form_data))}"
         )
         assert rv.headers["Location"] == f"/explore/?form_data_key={random_key}"
+
+    @mock.patch("superset.commands.explore.form_data.create.CreateFormDataCommand.run")
+    def test_explore_redirect_tolerates_malformed_datasource(
+        self, mock_command: mock.Mock
+    ):
+        self.login(ADMIN_USERNAME)
+        form_data = {"slice_id": 1, "viz_type": "line", "datasource": "bad"}
+        rv = self.client.get(
+            f"/superset/explore/?form_data={quote(json.dumps(form_data))}"
+        )
+
+        assert rv.status_code == 302
+        assert rv.headers["Location"].startswith("/explore/?form_data=")
+        mock_command.assert_not_called()
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_has_table(self):

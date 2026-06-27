@@ -131,6 +131,23 @@ PARAMETER_MISSING_ERR = __(
 SqlResults = dict[str, Any]
 
 
+def _parse_datasource_key(
+    datasource_key: Any,
+) -> tuple[int, DatasourceType] | None:
+    if not isinstance(datasource_key, str) or not datasource_key:
+        return None
+
+    parts = datasource_key.split("__")
+    if len(parts) != 2:
+        return None
+
+    raw_datasource_id, raw_datasource_type = parts
+    try:
+        return int(raw_datasource_id), DatasourceType(raw_datasource_type)
+    except ValueError:
+        return None
+
+
 class Superset(BaseSupersetView):
     """The base views for Superset!"""
 
@@ -403,14 +420,15 @@ class Superset(BaseSupersetView):
                 "slice_id", int(request.args.get("slice_id", 0))
             )
             if datasource := parsed_form_data.get("datasource"):
-                datasource_id, datasource_type = datasource.split("__")
-                parameters = CommandParameters(
-                    datasource_id=datasource_id,
-                    datasource_type=datasource_type,
-                    chart_id=slice_id,
-                    form_data=request_form_data,
-                )
-                form_data_key = CreateFormDataCommand(parameters).run()
+                if datasource_info := _parse_datasource_key(datasource):
+                    datasource_id, datasource_type = datasource_info
+                    parameters = CommandParameters(
+                        datasource_id=datasource_id,
+                        datasource_type=datasource_type,
+                        chart_id=slice_id,
+                        form_data=request_form_data,
+                    )
+                    form_data_key = CreateFormDataCommand(parameters).run()
         if form_data_key:
             url = parse.urlparse(redirect_url)
             query = parse.parse_qs(url.query)
@@ -898,10 +916,12 @@ class Superset(BaseSupersetView):
         :returns: The Flask response
         :raises SupersetSecurityException: If the user cannot access the resource
         """
-        datasource_id, datasource_type = request.args["datasourceKey"].split("__")
-        datasource = DatasourceDAO.get_datasource(
-            DatasourceType(datasource_type), int(datasource_id)
-        )
+        datasource_info = _parse_datasource_key(request.args.get("datasourceKey"))
+        if not datasource_info:
+            return json_error_response(DATASOURCE_MISSING_ERR, status=400)
+
+        datasource_id, datasource_type = datasource_info
+        datasource = DatasourceDAO.get_datasource(datasource_type, datasource_id)
         # Check if datasource exists
         if not datasource:
             return json_error_response(DATASOURCE_MISSING_ERR)
