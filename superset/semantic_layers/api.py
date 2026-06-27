@@ -95,6 +95,58 @@ def _serialize_layer(layer: SemanticLayer) -> dict[str, Any]:
     }
 
 
+def _get_schema_defs(schema: dict[str, Any]) -> dict[str, Any]:
+    defs = schema.get("$defs", {})
+    return defs if isinstance(defs, dict) else {}
+
+
+def _get_schema_properties(schema: dict[str, Any]) -> dict[str, Any]:
+    properties = schema.get("properties", {})
+    return properties if isinstance(properties, dict) else {}
+
+
+def _get_discriminator_mapping(
+    prop_schema: dict[str, Any],
+) -> tuple[str, dict[str, Any]] | None:
+    discriminator = prop_schema.get("discriminator")
+    if not isinstance(discriminator, dict):
+        return None
+
+    mapping = discriminator.get("mapping")
+    discriminator_field = discriminator.get("propertyName")
+    if (
+        not isinstance(mapping, dict)
+        or not mapping
+        or not isinstance(discriminator_field, str)
+        or not discriminator_field
+    ):
+        return None
+
+    return discriminator_field, mapping
+
+
+def _get_required_fields(
+    defs: dict[str, Any],
+    ref: Any,
+    discriminator_field: str,
+) -> set[str]:
+    if not isinstance(ref, str):
+        return set()
+
+    ref_name = ref.rsplit("/", 1)[-1] if "/" in ref else ref
+    variant_def = defs.get(ref_name, {})
+    if not isinstance(variant_def, dict):
+        return set()
+
+    required_values = variant_def.get("required", [])
+    if not isinstance(required_values, list):
+        return set()
+
+    required = {field for field in required_values if isinstance(field, str)}
+    required.discard(discriminator_field)
+    return required
+
+
 def _infer_discriminators(
     schema: dict[str, Any],
     data: dict[str, Any],
@@ -107,32 +159,26 @@ def _infer_discriminators(
     against one of the variants by checking which variant's required fields are
     present, then injects the discriminator value.
     """
-    defs = schema.get("$defs", {})
-    for prop_name, prop_schema in schema.get("properties", {}).items():
+    defs = _get_schema_defs(schema)
+    for prop_name, prop_schema in _get_schema_properties(schema).items():
+        if not isinstance(prop_schema, dict):
+            continue
+
         value = data.get(prop_name)
         if not isinstance(value, dict):
             continue
 
         # Find discriminated union via discriminator mapping
-        mapping = (
-            prop_schema.get("discriminator", {}).get("mapping")
-            if "discriminator" in prop_schema
-            else None
-        )
-        if not mapping:
+        discriminator = _get_discriminator_mapping(prop_schema)
+        if not discriminator:
             continue
-
-        discriminator_field = prop_schema["discriminator"].get("propertyName")
-        if not discriminator_field or discriminator_field in value:
-            continue
+        discriminator_field, mapping = discriminator
 
         # Try each variant: match by required fields present in the data
         for disc_value, ref in mapping.items():
-            ref_name = ref.rsplit("/", 1)[-1] if "/" in ref else ref
-            variant_def = defs.get(ref_name, {})
-            required = set(variant_def.get("required", []))
-            # Exclude the discriminator itself from the check
-            required.discard(discriminator_field)
+            if discriminator_field in value:
+                continue
+            required = _get_required_fields(defs, ref, discriminator_field)
             if required and required.issubset(value.keys()):
                 data = {
                     **data,

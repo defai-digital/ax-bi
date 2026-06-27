@@ -1104,6 +1104,68 @@ def test_infer_discriminators_no_discriminator() -> None:
     assert result == data
 
 
+@pytest.mark.parametrize(
+    "schema",
+    [
+        {"properties": []},
+        {"properties": {"auth": []}},
+        {"properties": {"auth": {"discriminator": []}}},
+        {
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": [],
+                    },
+                },
+            },
+        },
+        {
+            "$defs": [],
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": "#/$defs/VariantA"},
+                    },
+                },
+            },
+        },
+        {
+            "$defs": {"VariantA": {"required": "field_a"}},
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": "#/$defs/VariantA"},
+                    },
+                },
+            },
+        },
+        {
+            "$defs": {"VariantA": {"required": ["field_a"]}},
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": None},
+                    },
+                },
+            },
+        },
+    ],
+)
+def test_infer_discriminators_skips_malformed_schema_fragments(
+    schema: dict[str, Any],
+) -> None:
+    """Malformed schema fragments should not crash discriminator inference."""
+    from superset.semantic_layers.api import _infer_discriminators
+
+    data = {"auth": {"field_a": "value"}}
+
+    assert _infer_discriminators(schema, data) == data
+
+
 def test_parse_partial_config_strict_success() -> None:
     """Test _parse_partial_config returns config on strict validation."""
     from superset.semantic_layers.api import _parse_partial_config
