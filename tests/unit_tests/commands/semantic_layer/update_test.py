@@ -294,6 +294,34 @@ def test_update_uniqueness_same_config_different_name(
     )
 
 
+def test_update_uniqueness_uses_empty_config_for_non_object_stored_config(
+    mocker: MockerFixture,
+) -> None:
+    """Non-object stored configuration is treated as an empty object."""
+    mock_model = _make_view_model(configuration="[]")
+
+    dao = mocker.patch(
+        "superset.commands.semantic_layer.update.SemanticViewDAO",
+    )
+    dao.find_by_id.return_value = mock_model
+    dao.update.return_value = mock_model
+    dao.validate_update_uniqueness.return_value = True
+
+    mocker.patch(
+        "superset.commands.semantic_layer.update.security_manager",
+    )
+
+    result = UpdateSemanticViewCommand(1, {"description": "updated"}).run()
+
+    assert result == mock_model
+    dao.validate_update_uniqueness.assert_called_once_with(
+        view_uuid="view-uuid-1",
+        name="my_view",
+        layer_uuid="layer-uuid-1",
+        configuration={},
+    )
+
+
 def test_update_uniqueness_same_config_same_name_fails(
     mocker: MockerFixture,
 ) -> None:

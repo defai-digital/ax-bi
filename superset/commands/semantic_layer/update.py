@@ -43,6 +43,16 @@ from superset.utils.decorators import on_error, transaction
 logger = logging.getLogger(__name__)
 
 
+def _load_json_object(value: str | None) -> dict[str, Any]:
+    """Parse a JSON object string, returning an empty object for invalid shapes."""
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
 class UpdateSemanticViewCommand(BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
@@ -75,7 +85,7 @@ class UpdateSemanticViewCommand(BaseCommand):
         layer_uuid = str(self._model.semantic_layer_uuid)
         configuration = self._properties.get(
             "configuration",
-            json.loads(self._model.configuration),
+            _load_json_object(self._model.configuration),
         )
         if not SemanticViewDAO.validate_update_uniqueness(
             view_uuid=str(self._model.uuid),
