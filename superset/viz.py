@@ -199,9 +199,15 @@ class BaseViz:  # pylint: disable=too-many-public-methods
     @staticmethod
     @deprecated(deprecated_in="3.0")
     def handle_js_int_overflow(
-        data: dict[str, list[dict[str, Any]]],
-    ) -> dict[str, list[dict[str, Any]]]:
-        for record in data.get("records", {}):
+        data: dict[str, Any],
+    ) -> dict[str, Any]:
+        records = data.get("records")
+        if not isinstance(records, list):
+            return data
+
+        for record in records:
+            if not isinstance(record, dict):
+                continue
             for k, v in list(record.items()):
                 if isinstance(v, int):
                     # if an int is too big for Java Script to handle

@@ -209,6 +209,58 @@ def test_deck_multilayer_filtering_tolerates_malformed_scopes() -> None:
     ]
 
 
+def test_handle_js_int_overflow_converts_large_record_values() -> None:
+    """Unsafe JavaScript integers in record rows should be stringified."""
+    data: dict[str, Any] = {
+        "records": [
+            {
+                "small": 42,
+                "large": viz.JS_MAX_INTEGER + 1,
+                "negative": -(viz.JS_MAX_INTEGER + 1),
+            }
+        ]
+    }
+
+    result = viz.BaseViz.handle_js_int_overflow(data)
+
+    assert result is data
+    assert data["records"][0] == {
+        "small": 42,
+        "large": str(viz.JS_MAX_INTEGER + 1),
+        "negative": str(-(viz.JS_MAX_INTEGER + 1)),
+    }
+
+
+def test_handle_js_int_overflow_ignores_malformed_records_container() -> None:
+    """Unexpected records containers should be left unchanged."""
+    data: dict[str, Any] = {"records": {"large": viz.JS_MAX_INTEGER + 1}}
+
+    result = viz.BaseViz.handle_js_int_overflow(data)
+
+    assert result is data
+    assert data == {"records": {"large": viz.JS_MAX_INTEGER + 1}}
+
+
+def test_handle_js_int_overflow_skips_non_mapping_records() -> None:
+    """Malformed row entries should not prevent valid rows from being processed."""
+    data: dict[str, Any] = {
+        "records": [
+            "bad-row",
+            {"large": viz.JS_MAX_INTEGER + 1},
+            None,
+        ]
+    }
+
+    result = viz.BaseViz.handle_js_int_overflow(data)
+
+    assert result is data
+    assert data["records"] == [
+        "bad-row",
+        {"large": str(viz.JS_MAX_INTEGER + 1)},
+        None,
+    ]
+
+
 def test_get_df_payload_propagates_oauth2_redirect_error() -> None:
     """
     OAuth2RedirectError (a SupersetErrorException) must propagate out of
