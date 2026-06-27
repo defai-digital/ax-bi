@@ -236,7 +236,16 @@ def load_configs(
                         else value
                         for path, value in encrypted_extra_secrets[file_name].items()
                     }
-                    temp_dict = json.loads(config["masked_encrypted_extra"])
+                    try:
+                        temp_dict = json.loads(config["masked_encrypted_extra"])
+                    except (TypeError, ValueError) as ex:
+                        raise ValidationError(
+                            {"masked_encrypted_extra": ["Invalid JSON"]}
+                        ) from ex
+                    if not isinstance(temp_dict, dict):
+                        raise ValidationError(
+                            {"masked_encrypted_extra": ["Invalid JSON object"]}
+                        )
                     temp_dict = json.set_masked_fields(temp_dict, normalized_secrets)
                     config["masked_encrypted_extra"] = json.dumps(temp_dict)
 

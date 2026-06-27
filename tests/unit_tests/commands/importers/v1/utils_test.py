@@ -28,6 +28,11 @@ class RequiredNameSchema(Schema):
     name = fields.String(required=True)
 
 
+class MaskedEncryptedExtraSchema(Schema):
+    name = fields.String(required=True)
+    masked_encrypted_extra = fields.String(required=False)
+
+
 def _mock_empty_import_queries(mocker: MockerFixture) -> None:
     query = mocker.patch("superset.commands.importers.v1.utils.db").session.query
     query.return_value.all.return_value = []
@@ -80,6 +85,49 @@ def test_load_configs_schema_error_does_not_require_config_assignment(
     assert len(exceptions) == 1
     assert exceptions[0].messages == {
         "databases/bad.yaml": {"name": ["Missing data for required field."]},
+    }
+
+
+@pytest.mark.parametrize(
+    ("masked_encrypted_extra", "expected_message"),
+    [
+        ("{bad json", "Invalid JSON"),
+        ("[]", "Invalid JSON object"),
+    ],
+)
+def test_load_configs_rejects_bad_masked_encrypted_extra_when_applying_secrets(
+    mocker: MockerFixture,
+    masked_encrypted_extra: str,
+    expected_message: str,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+    from superset.utils import json
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {
+            "databases/database.yaml": (
+                "name: test_db\n"
+                f"masked_encrypted_extra: {json.dumps(masked_encrypted_extra)}\n"
+            )
+        },
+        {"databases/": MaskedEncryptedExtraSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {"databases/database.yaml": {"$.secret": "secret-value"}},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/database.yaml": {
+            "masked_encrypted_extra": [expected_message],
+        },
     }
 
 
