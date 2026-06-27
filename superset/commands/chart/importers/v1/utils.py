@@ -37,9 +37,18 @@ def filter_chart_annotations(chart_config: dict[str, Any]) -> None:
       annotation layers objects.
     """
     params = chart_config.get("params", {})
+    if not isinstance(params, dict):
+        return
+
     als = params.get("annotation_layers", [])
+    if not isinstance(als, list):
+        params["annotation_layers"] = []
+        return
+
     params["annotation_layers"] = [
-        al for al in als if al.get("annotationType") == AnnotationType.FORMULA
+        al
+        for al in als
+        if isinstance(al, dict) and al.get("annotationType") == AnnotationType.FORMULA
     ]
 
 

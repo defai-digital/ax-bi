@@ -166,6 +166,53 @@ def test_filter_chart_annotations(session: Session) -> None:
     assert all([al["annotationType"] == "FORMULA" for al in annotation_layers])  # noqa: C419
 
 
+def test_filter_chart_annotations_ignores_malformed_params() -> None:
+    """
+    Malformed params should not break annotation filtering.
+    """
+    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+
+    config = {"params": "bad-params"}
+
+    filter_chart_annotations(config)
+
+    assert config["params"] == "bad-params"
+
+
+def test_filter_chart_annotations_ignores_malformed_layers() -> None:
+    """
+    Malformed annotation layer containers should not break annotation filtering.
+    """
+    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+
+    config = {
+        "params": {
+            "annotation_layers": [
+                "bad-layer",
+                {"annotationType": "EVENT"},
+                {"annotationType": "FORMULA"},
+            ]
+        }
+    }
+
+    filter_chart_annotations(config)
+
+    assert config["params"]["annotation_layers"] == [{"annotationType": "FORMULA"}]
+
+
+def test_filter_chart_annotations_replaces_scalar_layers() -> None:
+    """
+    Scalar annotation layer containers should be treated as empty.
+    """
+    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+
+    config = {"params": {"annotation_layers": "bad-layers"}}
+
+    filter_chart_annotations(config)
+
+    assert config["params"]["annotation_layers"] == []
+
+
 def test_import_existing_chart_without_permission(
     mocker: MockerFixture,
     session_with_data: Session,
