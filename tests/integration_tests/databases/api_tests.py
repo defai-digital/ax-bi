@@ -388,26 +388,18 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(model)
         db.session.commit()
 
-    @pytest.mark.skip("buggy")
     @with_feature_flags(SSH_TUNNELING=True)
-    @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
-    )
     @mock.patch("superset.models.core.Database.get_all_catalog_names")
     @mock.patch("superset.models.core.Database.get_all_schema_names")
     def test_create_database_with_ssh_tunnel_no_port_no_default(
         self,
         mock_get_all_schema_names,
         mock_get_all_catalog_names,
-        mock_test_connection_database_command_run,
     ):
         """
         Database API: Test that missing port raises SSHTunnelDatabaseError
         """
         self.login(username="admin")
-        example_db = get_example_database()
-        if example_db.backend == "sqlite":
-            return
 
         modified_sqlalchemy_uri = "weird+db://foo:bar@localhost/test-db"
 
