@@ -768,6 +768,25 @@ def test_query_context_modified_native_filter_simple_metric_on_target_allowed(
     assert not query_context_modified(qc)
 
 
+def test_query_context_modified_native_filter_malformed_simple_metric_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """A SIMPLE metric with malformed column metadata is modified."""
+    query = SimpleNamespace(
+        columns=[],
+        metrics=[
+            {
+                "expressionType": "SIMPLE",
+                "column": "region",
+                "aggregate": "MIN",
+            }
+        ],
+        groupby=[],
+    )
+    qc = _native_filter_ctx(mocker, [query])
+    assert query_context_modified(qc)
+
+
 def test_query_context_modified_native_filter_adhoc_metric_blocked(
     mocker: MockerFixture,
 ) -> None:
@@ -872,6 +891,36 @@ def test_query_context_modified_native_filter_configured_sort_metric_allowed(
     )
     qc = _native_filter_ctx(mocker, [query], control_values={"sortMetric": "total"})
     assert not query_context_modified(qc)
+
+
+def test_query_context_modified_native_filter_malformed_control_values_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed controlValues do not authorize saved-metric sorting."""
+    query = SimpleNamespace(
+        columns=["region"],
+        metrics=["total"],
+        groupby=[],
+        orderby=[["total", True]],
+    )
+    qc = _native_filter_ctx(
+        mocker,
+        [query],
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    {
+                        "id": "F1",
+                        "targets": [
+                            {"datasetId": 20, "column": {"name": "region"}},
+                        ],
+                        "controlValues": "bad",
+                    }
+                ]
+            }
+        ),
+    )
+    assert query_context_modified(qc)
 
 
 def test_query_context_modified_native_filter_arbitrary_saved_metric_blocked(

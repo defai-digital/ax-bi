@@ -445,9 +445,12 @@ def _native_filter_allowed_targets(
                 allowed_columns.add(column["name"])
         # The filter may be configured to sort its values by a saved metric; a
         # legitimate value lookup then sends that metric name.
-        sort_metric = (fltr.get("controlValues") or {}).get("sortMetric") or fltr.get(
-            "sortMetric"
-        )
+        control_values = fltr.get("controlValues")
+        sort_metric = (
+            control_values.get("sortMetric")
+            if isinstance(control_values, dict)
+            else None
+        ) or fltr.get("sortMetric")
         if isinstance(sort_metric, str):
             allowed_metrics.add(sort_metric)
         # Filter ids are unique, so the matching filter is the only one.
@@ -482,7 +485,8 @@ def _native_filter_term_allowed(
     if isinstance(term, str):
         return term in allowed_columns or term in allowed_metrics
     if isinstance(term, dict) and term.get("expressionType") == "SIMPLE":
-        return (term.get("column") or {}).get("column_name") in allowed_columns
+        column = term.get("column")
+        return isinstance(column, dict) and column.get("column_name") in allowed_columns
     return False
 
 
