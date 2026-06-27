@@ -58,6 +58,74 @@ metadata = Model.metadata  # pylint: disable=no-member
 logger = logging.getLogger(__name__)
 
 
+def _get_position_node(
+    position: dict[str, Any],
+    node_id: str,
+) -> dict[str, Any] | None:
+    node = position.get(node_id)
+    return node if isinstance(node, dict) else None
+
+
+def _iter_layout_children(
+    position: dict[str, Any],
+    node: dict[str, Any],
+) -> list[dict[str, Any]]:
+    node_children = node.get("children", [])
+    if not isinstance(node_children, list):
+        return []
+
+    children: list[dict[str, Any]] = []
+    for child_id in node_children:
+        if not isinstance(child_id, str):
+            continue
+        child = _get_position_node(position, child_id)
+        if isinstance(child, dict) and isinstance(child.get("type"), str):
+            children.append(child)
+    return children
+
+
+def _apply_tab_metadata(
+    node: dict[str, Any],
+    children: list[dict[str, Any]],
+    all_tabs: dict[str, str],
+) -> None:
+    node_id = node.get("id")
+    if not isinstance(node_id, str):
+        return
+
+    meta = node.get("meta")
+    title = meta.get("text") if isinstance(meta, dict) else None
+    if not isinstance(title, str):
+        title = node_id
+
+    node["children"] = children
+    node["title"] = title
+    node["value"] = node_id
+    all_tabs[node_id] = title
+
+
+def _build_tab_tree_node(
+    position: dict[str, Any],
+    node: dict[str, Any],
+    children: list[dict[str, Any]],
+    queue: deque[tuple[dict[str, Any], list[dict[str, Any]]]],
+    all_tabs: dict[str, str],
+) -> None:
+    new_children: list[dict[str, Any]] = []
+    node_type = node.get("type")
+    for child in _iter_layout_children(position, node):
+        if node_type == "TABS":
+            children.append(child)
+            queue.append((child, new_children))
+        elif node_type in ["GRID", "ROOT"]:
+            queue.append((child, children))
+        elif node_type == "TAB":
+            queue.append((child, new_children))
+
+    if node_type == "TAB":
+        _apply_tab_metadata(node, new_children, all_tabs)
+
+
 def copy_dashboard(_mapper: Mapper, _connection: Connection, target: Dashboard) -> None:
     dashboard_id = app.config["DASHBOARD_TEMPLATE_ID"]
     if dashboard_id is None:
@@ -326,49 +394,20 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def tabs(self) -> dict[str, Any]:
-        if self.position == {}:
+        position = self.position
+        if not position or "ROOT_ID" not in position:
             return {}
 
-        def get_node(node_id: str) -> dict[str, Any]:
-            """
-            Helper function for getting a node from the position_data
-            """
-            return self.position[node_id]
-
-        def build_tab_tree(
-            node: dict[str, Any], children: list[dict[str, Any]]
-        ) -> None:
-            """
-            Function for building the tab tree structure and list of all tabs
-            """
-
-            new_children: list[dict[str, Any]] = []
-            # new children to overwrite parent's children
-            for child_id in node.get("children", []):
-                child = get_node(child_id)
-                if node["type"] == "TABS":
-                    # if TABS add create a new list and append children to it
-                    # new_children.append(child)
-                    children.append(child)
-                    queue.append((child, new_children))
-                elif node["type"] in ["GRID", "ROOT"]:
-                    queue.append((child, children))
-                elif node["type"] == "TAB":
-                    queue.append((child, new_children))
-            if node["type"] == "TAB":
-                node["children"] = new_children
-                node["title"] = node["meta"]["text"]
-                node["value"] = node["id"]
-                all_tabs[node["id"]] = node["title"]
-
-        root = get_node("ROOT_ID")
+        root = _get_position_node(position, "ROOT_ID")
+        if root is None:
+            return {}
         tab_tree: list[dict[str, Any]] = []
         all_tabs: dict[str, str] = {}
         queue: deque[tuple[dict[str, Any], list[dict[str, Any]]]] = deque()
         queue.append((root, tab_tree))
         while queue:
             node, children = queue.popleft()
-            build_tab_tree(node, children)
+            _build_tab_tree_node(position, node, children, queue, all_tabs)
 
         return {"all_tabs": all_tabs, "tab_tree": tab_tree}
 
