@@ -93,6 +93,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _iter_dicts(value: Any) -> list[dict[str, Any]]:
+    """Return dictionary entries from a list-like cached payload value."""
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
 def execute_sql_with_cursor(
     database: Database,
     cursor: Any,
@@ -802,16 +809,19 @@ class SQLExecutor:
         cache_key = self._generate_cache_key(sql, opts)
 
         if (cached := cache_manager.data_cache.get(cache_key)) is not None:
+            if not isinstance(cached, dict):
+                return None
+
             # Reconstruct statement results from cached data
             statements = [
                 StatementResult(
-                    original_sql=stmt_data["original_sql"],
-                    executed_sql=stmt_data["executed_sql"],
-                    data=stmt_data["data"],
-                    row_count=stmt_data["row_count"],
-                    execution_time_ms=stmt_data["execution_time_ms"],
+                    original_sql=stmt_data.get("original_sql", ""),
+                    executed_sql=stmt_data.get("executed_sql", ""),
+                    data=stmt_data.get("data"),
+                    row_count=stmt_data.get("row_count", 0),
+                    execution_time_ms=stmt_data.get("execution_time_ms"),
                 )
-                for stmt_data in cached.get("statements", [])
+                for stmt_data in _iter_dicts(cached.get("statements"))
             ]
             return QueryResultType(
                 status=QueryStatus.SUCCESS,
@@ -1060,6 +1070,8 @@ class SQLExecutor:
                         from superset.utils.core import zlib_decompress
 
                         payload = msgpack.loads(zlib_decompress(blob))
+                        if not isinstance(payload, dict):
+                            raise ValueError("Malformed query result payload")
 
                         statements = [
                             StatementResult(
@@ -1070,7 +1082,9 @@ class SQLExecutor:
                                         stmt_data.get("data", []),
                                         columns=[
                                             c.get("column_name", c.get("name", ""))
-                                            for c in stmt_data.get("columns", [])
+                                            for c in _iter_dicts(
+                                                stmt_data.get("columns")
+                                            )
                                         ],
                                     )
                                     if stmt_data.get("data")
@@ -1079,7 +1093,7 @@ class SQLExecutor:
                                 row_count=stmt_data.get("row_count", 0),
                                 execution_time_ms=stmt_data.get("execution_time_ms"),
                             )
-                            for stmt_data in payload.get("statements", [])
+                            for stmt_data in _iter_dicts(payload.get("statements"))
                         ]
                         return QueryResultType(
                             status=QueryStatusType.SUCCESS,
