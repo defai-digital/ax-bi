@@ -40,6 +40,7 @@ from superset.daos.dashboard import DashboardDAO
 from superset.daos.report import ReportScheduleDAO
 from superset.exceptions import SupersetSecurityException
 from superset.models.dashboard import Dashboard
+from superset.models.helpers import json_to_dict
 from superset.reports.models import ReportSchedule
 from superset.tags.models import ObjectType
 from superset.utils import json
@@ -47,6 +48,18 @@ from superset.utils.core import send_email_smtp
 from superset.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
+
+
+def _get_native_filter_ids(json_metadata: str | None) -> set[str]:
+    metadata = json_to_dict(json_metadata or "")
+    native_filter_configuration = metadata.get("native_filter_configuration") or []
+    if not isinstance(native_filter_configuration, list):
+        return set()
+    return {
+        filter_config["id"]
+        for filter_config in native_filter_configuration
+        if isinstance(filter_config, dict) and isinstance(filter_config.get("id"), str)
+    }
 
 
 class UpdateDashboardCommand(UpdateMixin, BaseCommand):
@@ -204,18 +217,10 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
             new_json_metadata = self._properties.get("json_metadata", "")
             if not new_json_metadata:
                 return []
-            current_metadata = json.loads(self._model.json_metadata or "{}")  # type: ignore
-            new_metadata = json.loads(new_json_metadata)
-            current_filter_ids = {
-                f["id"]
-                for f in (current_metadata.get("native_filter_configuration") or [])
-                if "id" in f
-            }
-            new_filter_ids = {
-                f["id"]
-                for f in (new_metadata.get("native_filter_configuration") or [])
-                if "id" in f
-            }
+            current_filter_ids = _get_native_filter_ids(
+                self._model.json_metadata  # type: ignore
+            )
+            new_filter_ids = _get_native_filter_ids(new_json_metadata)
             return list(current_filter_ids - new_filter_ids)
 
         def find_reports_containing_native_filters(
