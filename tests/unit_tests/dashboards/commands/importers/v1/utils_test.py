@@ -140,6 +140,71 @@ def test_update_id_refs_ignores_malformed_metadata_entries(app_context: None):
     assert fixed["metadata"]["chart_customization_config"][1]["targets"][1] == {}
 
 
+def test_update_id_refs_ignores_scalar_metadata_containers(app_context: None):
+    """Scalar metadata containers should not abort dashboard import."""
+    from superset.commands.dashboard.importers.v1.utils import (
+        find_native_filter_datasets,
+        update_id_refs,
+    )
+
+    config: dict[str, Any] = {
+        "position": {
+            "CHART1": {
+                "id": "CHART1",
+                "meta": {"chartId": 101, "uuid": "uuid1"},
+                "type": "CHART",
+            },
+        },
+        "metadata": {
+            "timed_refresh_immune_slices": 101,
+            "filter_scopes": {"101": {"filter_name": {"immune": 101}}},
+            "native_filter_configuration": [
+                {
+                    "targets": 10,
+                    "scope": {"excluded": 101},
+                    "chartsInScope": 101,
+                },
+            ],
+            "chart_customization_config": [{"targets": 10}],
+            "chart_configuration": {
+                "101": {
+                    "id": 101,
+                    "crossFilters": {
+                        "scope": {"excluded": 101},
+                        "chartsInScope": 101,
+                    },
+                }
+            },
+            "global_chart_configuration": {
+                "scope": {"excluded": 101},
+                "chartsInScope": 101,
+            },
+        },
+    }
+
+    fixed = update_id_refs(config, {"uuid1": 1}, {})
+
+    metadata = fixed["metadata"]
+    assert metadata["timed_refresh_immune_slices"] == 101
+    assert metadata["filter_scopes"]["1"]["filter_name"]["immune"] == 101
+    assert metadata["native_filter_configuration"][0]["scope"]["excluded"] == 101
+    assert metadata["native_filter_configuration"][0]["chartsInScope"] == 101
+    assert metadata["chart_configuration"]["1"]["crossFilters"] == {
+        "scope": {"excluded": 101},
+        "chartsInScope": 101,
+    }
+    assert metadata["global_chart_configuration"] == {
+        "scope": {"excluded": 101},
+        "chartsInScope": 101,
+    }
+    assert (
+        find_native_filter_datasets(
+            {"native_filter_configuration": 10, "chart_customization_config": 10}
+        )
+        == set()
+    )
+
+
 def test_find_native_filter_datasets_ignores_malformed_entries():
     from superset.commands.dashboard.importers.v1.utils import (
         find_native_filter_datasets,

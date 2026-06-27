@@ -31,10 +31,16 @@ JSON_KEYS = {"position": "position_json", "metadata": "json_metadata"}
 
 
 def _iter_dataset_uuid_targets(configs: Any) -> Any:
-    for config in configs or []:
+    if not isinstance(configs, list):
+        return
+
+    for config in configs:
         if not isinstance(config, dict):
             continue
-        for target in config.get("targets") or []:
+        targets = config.get("targets")
+        if not isinstance(targets, list):
+            continue
+        for target in targets:
             if isinstance(target, dict):
                 yield target
 
@@ -114,7 +120,7 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
     if not isinstance(metadata, dict):
         metadata = {}
         fixed["metadata"] = metadata
-    if "timed_refresh_immune_slices" in metadata:
+    if isinstance(metadata.get("timed_refresh_immune_slices"), list):
         metadata["timed_refresh_immune_slices"] = [
             id_map[old_id]
             for old_id in metadata["timed_refresh_immune_slices"]
@@ -137,11 +143,12 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
             for attributes in columns.values():
                 if not isinstance(attributes, dict):
                     continue
-                attributes["immune"] = [
-                    id_map[old_id]
-                    for old_id in attributes.get("immune", [])
-                    if old_id in id_map
-                ]
+                if isinstance(attributes.get("immune"), list):
+                    attributes["immune"] = [
+                        id_map[old_id]
+                        for old_id in attributes["immune"]
+                        if old_id in id_map
+                    ]
 
     if isinstance(metadata.get("expanded_slices"), dict):
         metadata["expanded_slices"] = {
@@ -175,10 +182,15 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
     native_filter_configuration = fixed.get("metadata", {}).get(
         "native_filter_configuration", []
     )
+    if not isinstance(native_filter_configuration, list):
+        native_filter_configuration = []
+
     for native_filter in native_filter_configuration:
         if not isinstance(native_filter, dict):
             continue
         targets = native_filter.get("targets", [])
+        if not isinstance(targets, list):
+            targets = []
         for target in targets:
             if not isinstance(target, dict):
                 continue
@@ -188,24 +200,31 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
 
         scope = native_filter.get("scope", {})
         scope_excluded = scope.get("excluded", []) if isinstance(scope, dict) else []
-        if scope_excluded:
-            native_filter["scope"]["excluded"] = [
+        if isinstance(scope, dict) and isinstance(scope_excluded, list):
+            scope["excluded"] = [
                 id_map[old_id] for old_id in scope_excluded if old_id in id_map
             ]
 
-        charts_in_scope = native_filter.get("chartsInScope", [])
-        if charts_in_scope:
+        charts_in_scope = native_filter.get("chartsInScope")
+        if "chartsInScope" in native_filter and isinstance(charts_in_scope, list):
             native_filter["chartsInScope"] = _remap_chart_ids(
                 charts_in_scope, id_map, uuid_to_new_id
             )
 
     # fix display control dataset references
-    for customization in (
-        fixed.get("metadata", {}).get("chart_customization_config") or []
-    ):
+    chart_customization_config = fixed.get("metadata", {}).get(
+        "chart_customization_config"
+    )
+    if not isinstance(chart_customization_config, list):
+        chart_customization_config = []
+
+    for customization in chart_customization_config:
         if not isinstance(customization, dict):
             continue
-        for target in customization.get("targets") or []:
+        targets = customization.get("targets")
+        if not isinstance(targets, list):
+            continue
+        for target in targets:
             if not isinstance(target, dict):
                 continue
             dataset_uuid = target.pop("datasetUuid", None)
@@ -229,7 +248,7 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
 
 
 def _remap_chart_ids(
-    id_list: list[Any],
+    id_list: Any,
     id_map: dict[int, int],
     uuid_to_new_id: dict[str, int] | None = None,
 ) -> list[int]:
@@ -238,6 +257,9 @@ def _remap_chart_ids(
     Handles both the standard import format (integer IDs) and the example-export
     format (UUID strings produced by export_example.remap_chart_configuration).
     """
+    if not isinstance(id_list, list):
+        return []
+
     result = []
     for item in id_list:
         if isinstance(item, int):
@@ -266,10 +288,13 @@ def _update_cross_filter_scope(
 
     scope = cross_filter_config.get("scope", {})
     if isinstance(scope, dict):
-        if excluded := scope.get("excluded", []):
+        if "excluded" in scope and isinstance(excluded := scope.get("excluded"), list):
             scope["excluded"] = _remap_chart_ids(excluded, id_map, uuid_to_new_id)
 
-    if charts_in_scope := cross_filter_config.get("chartsInScope", []):
+    if "chartsInScope" in cross_filter_config and isinstance(
+        charts_in_scope := cross_filter_config.get("chartsInScope"),
+        list,
+    ):
         cross_filter_config["chartsInScope"] = _remap_chart_ids(
             charts_in_scope, id_map, uuid_to_new_id
         )
