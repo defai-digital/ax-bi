@@ -207,6 +207,42 @@ class TestSeedSystemThemesCommand:
         assert mock_session.add.call_count == 2  # Both themes should be added
         # Note: commit is handled by @transaction() decorator, not directly called
 
+    @with_config(
+        {
+            "THEME_DEFAULT": {"uuid": "referenced-theme-uuid"},
+            "THEME_DARK": None,
+        }
+    )
+    @patch("superset.commands.theme.seed.logger")
+    @patch("superset.commands.theme.seed.ThemeDAO")
+    @patch("superset.commands.theme.seed.db")
+    def test_run_skips_uuid_reference_with_non_object_json(
+        self,
+        mock_db,
+        mock_theme_dao,
+        mock_logger,
+        app,
+    ):
+        """Test UUID references with non-object JSON are skipped."""
+        # Arrange
+        mock_session = Mock()
+        mock_db.session = mock_session
+        mock_theme = Mock(spec=Theme)
+        mock_theme.json_data = "[]"
+        mock_theme_dao.find_by_uuid.return_value = mock_theme
+
+        command = SeedSystemThemesCommand()
+
+        # Act
+        command.run()
+
+        # Assert
+        mock_session.query.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            "Theme JSON for UUID %s must be an object",
+            "referenced-theme-uuid",
+        )
+
     def test_validate(self):
         """Test validate method (should be no-op)"""
         # Arrange
