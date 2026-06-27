@@ -73,14 +73,27 @@ class Datasource(BaseSupersetView):
         if not isinstance(data, str):
             return json_error_response(_("Request missing data field."), status=500)
 
-        datasource_dict = json.loads(data)
+        try:
+            datasource_dict = json.loads(data)
+        except (TypeError, ValueError):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+        if not isinstance(datasource_dict, dict):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+
         normalize_columns = datasource_dict.get("normalize_columns", False)
         always_filter_main_dttm = datasource_dict.get("always_filter_main_dttm", False)
         datasource_dict["normalize_columns"] = normalize_columns
         datasource_dict["always_filter_main_dttm"] = always_filter_main_dttm
         datasource_id = datasource_dict.get("id")
         datasource_type = datasource_dict.get("type")
-        database_id = datasource_dict["database"].get("id")
+        database = datasource_dict.get("database")
+        if (
+            datasource_id is None
+            or not isinstance(datasource_type, str)
+            or not isinstance(database, dict)
+        ):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+        database_id = database.get("id")
         orm_datasource = DatasourceDAO.get_datasource(
             DatasourceType(datasource_type), datasource_id
         )

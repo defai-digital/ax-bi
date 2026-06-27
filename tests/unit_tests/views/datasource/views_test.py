@@ -224,6 +224,48 @@ def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "{bad json",
+        "[]",
+        '"bad"',
+        "1",
+        "null",
+        "{}",
+        '{"id": 1, "type": "table", "database": []}',
+    ],
+)
+@patch(
+    "superset.views.datasource.views._", side_effect=lambda message, **kwargs: message
+)
+@patch("superset.views.datasource.views.json_error_response", return_value="error")
+@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+def test_save_rejects_malformed_datasource_payload(
+    mock_get_datasource: MagicMock,
+    mock_json_error_response: MagicMock,
+    mock_gettext: MagicMock,
+    payload: str,
+) -> None:
+    """Malformed datasource payloads should fail before datasource lookup."""
+    from flask import Flask
+
+    raw_save = _get_view_func("save")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/save/",
+        method="POST",
+        data={"data": payload},
+    ):
+        assert raw_save(_view_self()) == "error"
+
+    mock_get_datasource.assert_not_called()
+    mock_json_error_response.assert_called_once_with(
+        "Invalid datasource payload.", status=400
+    )
+    mock_gettext.assert_called_once_with("Invalid datasource payload.")
+
+
 @patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
 @patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
 def test_save_always_checks_ownership_even_without_owners_field(
