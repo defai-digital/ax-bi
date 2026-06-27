@@ -653,7 +653,7 @@ class TableSchema(AuditMixinNullable, ExtraJSONMixin, Model):
     def to_dict(self) -> dict[str, Any]:
         try:
             description = json.loads(self.description)
-        except json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             description = None
 
         return {

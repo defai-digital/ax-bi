@@ -29,7 +29,7 @@ from superset.exceptions import (
     SupersetTemplateException,
 )
 from superset.models import sql_lab as sql_lab_module
-from superset.models.sql_lab import Query, SavedQuery
+from superset.models.sql_lab import Query, SavedQuery, TableSchema
 
 
 @pytest.mark.parametrize(
@@ -133,3 +133,17 @@ def test_sql_tables_mixin_invalid_sql_returns_empty_list(
         else klass(database=MagicMock())
     )
     assert instance.sql_tables == []
+
+
+def test_table_schema_to_dict_allows_null_description() -> None:
+    """TableSchema serialization should tolerate a null description."""
+    table_schema = TableSchema(id=1, description=None)
+
+    assert table_schema.to_dict()["description"] is None
+
+
+def test_table_schema_to_dict_allows_malformed_description() -> None:
+    """TableSchema serialization should tolerate malformed JSON."""
+    table_schema = TableSchema(id=1, description="{malformed")
+
+    assert table_schema.to_dict()["description"] is None
