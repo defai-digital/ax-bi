@@ -37,15 +37,23 @@ logger = logging.getLogger(__name__)
 def parse_extra(extra_payload: str) -> dict[str, Any]:
     try:
         extra = json.loads(extra_payload)
-    except json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         logger.info("Unable to decode `extra` field: %s", extra_payload)
+        return {}
+
+    if not isinstance(extra, dict):
         return {}
 
     # Fix for DBs saved with an invalid ``schemas_allowed_for_csv_upload``
     schemas_allowed_for_csv_upload = extra.get("schemas_allowed_for_csv_upload")
     if isinstance(schemas_allowed_for_csv_upload, str):
-        extra["schemas_allowed_for_csv_upload"] = json.loads(
-            schemas_allowed_for_csv_upload
+        try:
+            parsed_schemas = json.loads(schemas_allowed_for_csv_upload)
+        except json.JSONDecodeError:
+            parsed_schemas = []
+
+        extra["schemas_allowed_for_csv_upload"] = (
+            parsed_schemas if isinstance(parsed_schemas, list) else []
         )
 
     return extra
