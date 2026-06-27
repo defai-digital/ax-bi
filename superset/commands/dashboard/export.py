@@ -48,6 +48,15 @@ DEFAULT_CHART_HEIGHT = 50
 DEFAULT_CHART_WIDTH = 4
 
 
+def _load_json_object(value: str, key: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        logger.info("Unable to decode `%s` field: %s", key, value)
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def get_default_position(title: str) -> dict[str, Any]:
     return {
         "DASHBOARD_VERSION_KEY": "v2",
@@ -303,11 +312,7 @@ class ExportDashboardsCommand(ExportModelsCommand):
         for key, new_name in JSON_KEYS.items():
             value: Optional[str] = payload.pop(key, None)
             if value:
-                try:
-                    payload[new_name] = json.loads(value)
-                except (TypeError, json.JSONDecodeError):
-                    logger.info("Unable to decode `%s` field: %s", key, value)
-                    payload[new_name] = {}
+                payload[new_name] = _load_json_object(value, key)
 
         # Extract all native filter datasets and replace native
         # filter dataset references with uuid
@@ -424,11 +429,7 @@ class ExportDashboardsCommand(ExportModelsCommand):
         for key, new_name in JSON_KEYS.items():
             value: Optional[str] = payload.pop(key, None)
             if value:
-                try:
-                    payload[new_name] = json.loads(value)
-                except (TypeError, json.JSONDecodeError):
-                    logger.info("Unable to decode `%s` field: %s", key, value)
-                    payload[new_name] = {}
+                payload[new_name] = _load_json_object(value, key)
 
         if export_related:
             # Extract all native filter datasets and export referenced datasets

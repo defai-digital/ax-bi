@@ -775,6 +775,33 @@ def test_file_content_missing_dataset_preserves_dataset_id() -> None:
     assert "datasetUuid" not in target
 
 
+def test_file_content_ignores_non_object_metadata_and_position() -> None:
+    """Persisted non-object JSON should not break dashboard export."""
+    from superset.commands.dashboard.export import ExportDashboardsCommand
+
+    dashboard = MagicMock()
+    dashboard.dashboard_title = "Test Dashboard"
+    dashboard.theme = None
+    dashboard.slices = []
+    dashboard.tags = []
+    dashboard.roles = []
+    dashboard.export_to_dict.return_value = {
+        "position_json": "[]",
+        "json_metadata": "[]",
+    }
+
+    with patch(
+        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        return_value=False,
+    ):
+        content = ExportDashboardsCommand._file_content(dashboard)
+
+    result = yaml.safe_load(content)
+
+    assert result["metadata"] == {}
+    assert result["position"]["DASHBOARD_VERSION_KEY"] == "v2"
+
+
 def test_stabilize_chart_ids_resolves_id_collisions() -> None:
     """
     Two charts whose UUIDs reduce to the same derived id must still get distinct
