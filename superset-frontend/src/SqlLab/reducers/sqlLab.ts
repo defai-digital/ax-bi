@@ -65,6 +65,17 @@ function alterUnsavedQueryEditorState(
   };
 }
 
+function parseDatabaseExtra(extra?: string) {
+  if (!extra) {
+    return {};
+  }
+  try {
+    return JSON.parse(extra);
+  } catch {
+    return {};
+  }
+}
+
 export default function sqlLabReducer(
   state: SqlLabState = {} as SqlLabState,
   action: SqlLabAction,
@@ -727,7 +738,7 @@ export default function sqlLabReducer(
       (action.databases as any[])!.forEach((db: any) => {
         databases[db.id] = {
           ...db,
-          extra_json: JSON.parse(db.extra || ''),
+          extra_json: parseDatabaseExtra(db.extra),
         };
       });
       return { ...state, databases };

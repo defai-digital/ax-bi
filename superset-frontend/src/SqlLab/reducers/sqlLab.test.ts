@@ -19,7 +19,7 @@
 import { QueryState } from '@superset-ui/core';
 import sqlLabReducer from 'src/SqlLab/reducers/sqlLab';
 import * as actions from 'src/SqlLab/actions/sqlLab';
-import type { SqlLabAction } from 'src/SqlLab/actions/sqlLab';
+import type { Database, SqlLabAction } from 'src/SqlLab/actions/sqlLab';
 import type { SqlLabRootState } from 'src/SqlLab/types';
 import { table, initialState as mockState } from '../fixtures';
 
@@ -658,5 +658,35 @@ describe('sqlLabReducer', () => {
       );
       expect(newState.queries.abcd.state).toBe(QueryState.Success);
     });
+  });
+});
+
+test('SET_DATABASES tolerates missing or malformed database extra payloads', () => {
+  const databases: (Database & { database_name: string; extra?: string })[] = [
+    {
+      id: 1,
+      allow_run_async: false,
+      database_name: 'Missing extra',
+    },
+    {
+      id: 2,
+      allow_run_async: true,
+      database_name: 'Malformed extra',
+      extra: '{malformed',
+    },
+    {
+      id: 3,
+      allow_run_async: true,
+      database_name: 'Valid extra',
+      extra: '{"cancel_query_on_windows_unload":true}',
+    },
+  ];
+
+  const newState = sqlLabReducer(initialState, actions.setDatabases(databases));
+
+  expect(newState.databases[1].extra_json).toEqual({});
+  expect(newState.databases[2].extra_json).toEqual({});
+  expect(newState.databases[3].extra_json).toEqual({
+    cancel_query_on_windows_unload: true,
   });
 });
