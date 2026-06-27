@@ -19,6 +19,7 @@ from __future__ import annotations
 import re
 from unittest.mock import MagicMock, patch
 
+import pytest
 from flask import Flask
 
 
@@ -62,3 +63,23 @@ def test_streaming_csv_falls_back_when_filename_empty() -> None:
 
     assert filename.startswith("sqllab_abc123_")
     assert filename.endswith(".csv")
+
+
+@pytest.mark.parametrize(
+    "template_params, expected",
+    [
+        ('{"region": "APAC"}', {"region": "APAC"}),
+        ({"region": "APAC"}, {"region": "APAC"}),
+        ("[]", {}),
+        (["bad"], {}),
+        ("{malformed", {}),
+    ],
+)
+def test_load_template_params_accepts_only_objects(
+    template_params: object,
+    expected: dict[str, object],
+) -> None:
+    """SQL formatting template params should only expand mapping values."""
+    from superset.sqllab.api import _load_template_params
+
+    assert _load_template_params(template_params) == expected

@@ -73,6 +73,27 @@ from superset.views.base_api import BaseSupersetApi, requires_json, statsd_metri
 logger = logging.getLogger(__name__)
 
 
+def _load_template_params(template_params: Any) -> dict[str, Any]:
+    if isinstance(template_params, dict):
+        return template_params
+    try:
+        parsed = json.loads(template_params) if isinstance(template_params, str) else {}
+    except json.JSONDecodeError:
+        logger.warning(
+            "Invalid template parameter %s. Skipping processing",
+            str(template_params),
+        )
+        return {}
+
+    if not isinstance(parsed, dict):
+        logger.warning(
+            "Invalid template parameter %s. Skipping processing",
+            str(template_params),
+        )
+        return {}
+    return parsed
+
+
 class SqlLabRestApi(BaseSupersetApi):
     method_permission_name = MODEL_API_RW_METHOD_PERMISSION_MAP
     datamodel = SQLAInterface(Query)
@@ -248,23 +269,13 @@ class SqlLabRestApi(BaseSupersetApi):
                     database_engine = database.db_engine_spec.engine
 
                     if template_params:
-                        try:
-                            template_params = (
-                                json.loads(template_params)
-                                if isinstance(template_params, str)
-                                else template_params
+                        template_params = _load_template_params(template_params)
+                        if template_params:
+                            template_processor = get_template_processor(
+                                database=database
                             )
-                            if template_params:
-                                template_processor = get_template_processor(
-                                    database=database
-                                )
-                                sql = template_processor.process_template(
-                                    sql, **template_params
-                                )
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "Invalid template parameter %s. Skipping processing",
-                                str(template_params),
+                            sql = template_processor.process_template(
+                                sql, **template_params
                             )
 
             result = SQLScript(sql, model.get("engine", database_engine)).format()
