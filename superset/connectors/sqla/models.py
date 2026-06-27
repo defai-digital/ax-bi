@@ -531,15 +531,19 @@ class BaseDatasource(
             # Columns used in query filters
             column_names.update(
                 filter_["subject"]
-                for filter_ in form_data.get("adhoc_filters") or []
-                if filter_.get("clause") == "WHERE" and filter_.get("subject")
+                for filter_ in utils.as_list(form_data.get("adhoc_filters") or [])
+                if isinstance(filter_, dict)
+                and filter_.get("clause") == "WHERE"
+                and filter_.get("subject")
             )
 
             # columns used by Filter Box
             column_names.update(
                 filter_config["column"]
-                for filter_config in form_data.get("filter_configs") or []
-                if "column" in filter_config
+                for filter_config in utils.as_list(
+                    form_data.get("filter_configs") or []
+                )
+                if isinstance(filter_config, dict) and "column" in filter_config
             )
 
             # for legacy dashboard imports which have the wrong query_context in them
