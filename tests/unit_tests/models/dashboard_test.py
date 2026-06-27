@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from datetime import datetime
+
 from superset.models.dashboard import Dashboard
 
 
@@ -50,3 +52,31 @@ def test_dashboard_link_renders_plain_slug() -> None:
 
     assert "/superset/dashboard/sales/" in link
     assert "Sales" in link
+
+
+def test_dashboard_position_ignores_malformed_layout_json() -> None:
+    """Malformed position_json should not break dashboard model access."""
+    dash = Dashboard(position_json="{malformed")
+
+    assert dash.position == {}
+
+
+def test_dashboard_position_ignores_non_object_layout_json() -> None:
+    """Non-object position_json should not be treated as layout data."""
+    dash = Dashboard(position_json="[]")
+
+    assert dash.position == {}
+
+
+def test_dashboard_data_ignores_malformed_layout_json() -> None:
+    """Dashboard serialization should tolerate malformed position_json."""
+    dash = Dashboard(
+        id=1,
+        dashboard_title="Sales",
+        json_metadata="{}",
+        position_json="{malformed",
+        changed_on=datetime(2024, 1, 1),
+    )
+    dash.slices = []
+
+    assert dash.data["position_json"] == {}

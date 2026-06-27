@@ -46,7 +46,7 @@ from superset_core.common.models import Dashboard as CoreDashboard
 from superset import db, is_feature_enabled, security_manager
 from superset.connectors.sqla.models import BaseDatasource, SqlaTable
 from superset.daos.datasource import DatasourceDAO
-from superset.models.helpers import AuditMixinNullable, ImportExportMixin
+from superset.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
 from superset.models.slice import Slice
 from superset.models.user_attributes import UserAttribute
 from superset.tasks.thumbnails import cache_dashboard_thumbnail
@@ -249,9 +249,6 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def data(self) -> dict[str, Any]:
-        positions = self.position_json
-        if positions:
-            positions = json.loads(positions)
         return {
             "id": self.id,
             "metadata": self.params_dict,
@@ -262,7 +259,7 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
             "published": self.published,
             "slug": self.slug,
             "slices": [slc.data for slc in self.slices],
-            "position_json": positions,
+            "position_json": self.position,
             "last_modified_time": self.changed_on.replace(microsecond=0).timestamp(),
             "is_managed_externally": self.is_managed_externally,
         }
@@ -297,9 +294,7 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def position(self) -> dict[str, Any]:
-        if self.position_json:
-            return json.loads(self.position_json)
-        return {}
+        return json_to_dict(self.position_json)
 
     @property
     def tabs(self) -> dict[str, Any]:
