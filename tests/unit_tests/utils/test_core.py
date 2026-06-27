@@ -1374,6 +1374,54 @@ def test_merge_extra_form_data_removes_extra_form_data():
     assert form_data["time_range"] == "Last week"
 
 
+@pytest.mark.parametrize(
+    "extra_form_data",
+    [
+        ([],),
+        ("not an object",),
+        (None,),
+    ],
+)
+def test_merge_extra_form_data_ignores_malformed_extra_form_data(
+    extra_form_data: object,
+) -> None:
+    """
+    Test that non-object extra_form_data does not crash form data merging.
+    """
+    form_data = {
+        "time_range": "Last 10 days",
+        "extra_form_data": extra_form_data,
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data == {
+        "time_range": "Last 10 days",
+        "adhoc_filters": [],
+    }
+
+
+def test_merge_extra_form_data_merges_append_fields() -> None:
+    """
+    Test that list append fields and custom_form_data merge into form data.
+    """
+    form_data = {
+        "interactive_groupby": ["country"],
+        "custom_form_data": {"existing": True},
+        "extra_form_data": {
+            "interactive_groupby": ["state"],
+            "interactive_highlight": ["segment"],
+            "custom_form_data": {"added": "value"},
+        },
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data["interactive_groupby"] == ["country", "state"]
+    assert form_data["interactive_highlight"] == ["segment"]
+    assert form_data["custom_form_data"] == {"existing": True, "added": "value"}
+    assert form_data["adhoc_filters"] == []
+    assert "extra_form_data" not in form_data
+
+
 def test_merge_extra_form_data_creates_temporal_filter_when_none_exists():
     """
     Test that when granularity_sqla_override and time_range are provided

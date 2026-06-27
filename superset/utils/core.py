@@ -1092,15 +1092,29 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
     """
     filter_keys = ["filters", "adhoc_filters"]
     extra_form_data = form_data.pop("extra_form_data", {})
+    if not isinstance(extra_form_data, dict):
+        extra_form_data = {}
     append_filters: list[QueryObjectFilterClause] = extra_form_data.get("filters", None)
 
     # merge append extras
-    for key in [key for key in EXTRA_FORM_DATA_APPEND_KEYS if key not in filter_keys]:
-        extra_value = getattr(extra_form_data, key, {})
-        form_value = getattr(form_data, key, {})
-        form_value.update(extra_value)
-        if form_value:
-            form_data["key"] = extra_value
+    for key in EXTRA_FORM_DATA_APPEND_KEYS - {*filter_keys, "custom_form_data"}:
+        extra_value = extra_form_data.get(key)
+        if not isinstance(extra_value, list):
+            continue
+        form_value = form_data.get(key)
+        if not isinstance(form_value, list):
+            form_value = []
+        form_data[key] = [*form_value, *extra_value]
+
+    custom_form_data = extra_form_data.get("custom_form_data")
+    if isinstance(custom_form_data, dict):
+        form_custom_form_data = form_data.get("custom_form_data")
+        if not isinstance(form_custom_form_data, dict):
+            form_custom_form_data = {}
+        form_data["custom_form_data"] = {
+            **form_custom_form_data,
+            **custom_form_data,
+        }
 
     # map regular extras that apply to form data properties
     for src_key, target_key in EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS.items():
