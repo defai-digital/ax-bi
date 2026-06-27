@@ -38,6 +38,22 @@ const createUpdateDashboardApi = (id: number) =>
     endpoint: `/api/v1/dashboard/${id}`,
   });
 
+type DashboardMetadata = DashboardInfo['metadata'];
+
+const parseDashboardMetadata = (
+  jsonMetadata: string | undefined,
+  fallback: DashboardMetadata,
+) => {
+  if (!jsonMetadata) {
+    return fallback;
+  }
+  try {
+    return JSON.parse(jsonMetadata) as DashboardMetadata;
+  } catch {
+    return fallback;
+  }
+};
+
 export const DASHBOARD_INFO_UPDATED = 'DASHBOARD_INFO_UPDATED';
 export const DASHBOARD_INFO_FILTERS_CHANGED = 'DASHBOARD_INFO_FILTERS_CHANGED';
 
@@ -71,20 +87,23 @@ export const saveChartConfiguration =
     const { id, metadata } = getState().dashboardInfo;
 
     const updateDashboard = createUpdateDashboardApi(id);
+    const nextMetadata = {
+      ...metadata,
+      chart_configuration: chartConfiguration ?? metadata.chart_configuration,
+      global_chart_configuration:
+        globalChartConfiguration ?? metadata.global_chart_configuration,
+    };
 
     try {
       const response = await updateDashboard({
-        json_metadata: JSON.stringify({
-          ...metadata,
-          chart_configuration:
-            chartConfiguration ?? metadata.chart_configuration,
-          global_chart_configuration:
-            globalChartConfiguration ?? metadata.global_chart_configuration,
-        }),
+        json_metadata: JSON.stringify(nextMetadata),
       });
       dispatch(
         dashboardInfoChanged({
-          metadata: JSON.parse(response.result.json_metadata || '{}'),
+          metadata: parseDashboardMetadata(
+            response.result.json_metadata,
+            nextMetadata,
+          ),
         }),
       );
       dispatch({
@@ -120,20 +139,24 @@ export function saveFilterBarOrientation(orientation: FilterBarOrientation) {
   return async (dispatch: Dispatch, getState: () => RootState) => {
     const { id, metadata } = getState().dashboardInfo;
     const updateDashboard = createUpdateDashboardApi(id);
+    const nextMetadata = {
+      ...metadata,
+      filter_bar_orientation: orientation,
+    };
     try {
       const response = await updateDashboard({
-        json_metadata: JSON.stringify({
-          ...metadata,
-          filter_bar_orientation: orientation,
-        }),
+        json_metadata: JSON.stringify(nextMetadata),
       });
       const updatedDashboard = response.result;
       const lastModifiedTime = response.last_modified_time;
-      if (updatedDashboard.json_metadata) {
-        const metadata = JSON.parse(updatedDashboard.json_metadata);
-        if (metadata.filter_bar_orientation) {
-          dispatch(setFilterBarOrientation(metadata.filter_bar_orientation));
-        }
+      const parsedMetadata = parseDashboardMetadata(
+        updatedDashboard.json_metadata,
+        nextMetadata,
+      );
+      if (parsedMetadata.filter_bar_orientation) {
+        dispatch(
+          setFilterBarOrientation(parsedMetadata.filter_bar_orientation),
+        );
       }
       if (lastModifiedTime) {
         dispatch(onSave(lastModifiedTime));
@@ -165,22 +188,24 @@ export function saveCrossFiltersSetting(crossFiltersEnabled: boolean) {
 
     dispatch(setCrossFiltersEnabled(crossFiltersEnabled));
     const updateDashboard = createUpdateDashboardApi(id);
+    const nextMetadata = {
+      ...metadata,
+      cross_filters_enabled: crossFiltersEnabled,
+    };
 
     try {
       const response = await updateDashboard({
-        json_metadata: JSON.stringify({
-          ...metadata,
-          cross_filters_enabled: crossFiltersEnabled,
-        }),
+        json_metadata: JSON.stringify(nextMetadata),
       });
 
       const updatedDashboard = response.result;
       const lastModifiedTime = response.last_modified_time;
 
-      if (updatedDashboard.json_metadata) {
-        const metadata = JSON.parse(updatedDashboard.json_metadata);
-        dispatch(setCrossFiltersEnabled(metadata.cross_filters_enabled));
-      }
+      const parsedMetadata = parseDashboardMetadata(
+        updatedDashboard.json_metadata,
+        nextMetadata,
+      );
+      dispatch(setCrossFiltersEnabled(parsedMetadata.cross_filters_enabled));
 
       if (lastModifiedTime) {
         dispatch(onSave(lastModifiedTime));
@@ -188,7 +213,10 @@ export function saveCrossFiltersSetting(crossFiltersEnabled: boolean) {
 
       dispatch(
         dashboardInfoChanged({
-          metadata: JSON.parse(response.result.json_metadata || '{}'),
+          metadata: parseDashboardMetadata(
+            response.result.json_metadata,
+            nextMetadata,
+          ),
         }),
       );
       return response;
