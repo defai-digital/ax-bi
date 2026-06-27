@@ -24,6 +24,7 @@ import yaml
 
 from superset.commands.export.models import ExportModelsCommand
 from superset.connectors.sqla.models import SqlaTable
+from superset.commands.database.export import parse_extra
 from superset.commands.dataset.exceptions import DatasetNotFoundError
 from superset.daos.dataset import DatasetDAO
 from superset.utils.dict_import_export import EXPORT_VERSION
@@ -112,10 +113,7 @@ class ExportDatasetsCommand(ExportModelsCommand):
             # TODO (betodealmeida): move this logic to export_to_dict once this
             # becomes the default export endpoint
             if payload.get("extra"):
-                try:
-                    payload["extra"] = json.loads(payload["extra"])
-                except json.JSONDecodeError:
-                    logger.info("Unable to decode `extra` field: %s", payload["extra"])
+                payload["extra"] = parse_extra(payload["extra"])
 
             if ssh_tunnel := model.database.ssh_tunnel:
                 ssh_tunnel_payload = ssh_tunnel.export_to_dict(

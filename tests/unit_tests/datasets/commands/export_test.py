@@ -356,3 +356,35 @@ def test_export_two_datasets_same_table_name_different_schema(
     assert schemas_in_yaml == {"prod", "dev"}, (
         f"Expected both prod and dev schemas in export, got {schemas_in_yaml}"
     )
+
+
+def test_export_related_database_replaces_non_object_extra(
+    session: Session,
+) -> None:
+    """
+    Test exporting a dataset with malformed related database extra metadata.
+    """
+    from superset.commands.dataset.export import ExportDatasetsCommand
+    from superset.connectors.sqla.models import SqlaTable
+    from superset.models.core import Database
+
+    engine = db.session.get_bind()
+    SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
+
+    database = Database(
+        database_name="my_database",
+        sqlalchemy_uri="sqlite://",
+        extra="[]",
+    )
+    sqla_table = SqlaTable(table_name="my_table", database=database)
+    db.session.add_all([database, sqla_table])
+    db.session.flush()
+
+    export = dict(
+        ExportDatasetsCommand._export(  # pylint: disable=protected-access
+            sqla_table
+        )
+    )
+    database_payload = yaml.safe_load(export["databases/my_database.yaml"]())
+
+    assert database_payload["extra"] == {}
