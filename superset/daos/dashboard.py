@@ -82,6 +82,13 @@ def _load_json_object(value: Any) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def _load_json_object_list(metadata: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = metadata.get(key, [])
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
 class DashboardDAO(BaseDAO[Dashboard]):
     base_filter = DashboardAccessFilter
     # Column used by MCP tools for title-based identifier fallback, so a
@@ -442,11 +449,15 @@ class DashboardDAO(BaseDAO[Dashboard]):
     ) -> dict[str, list[dict[str, Any]]]:
         dashboard = cls.get_by_id_or_slug(id)
         metadata = _load_dashboard_json_metadata(dashboard)
-        native_filter_configuration = metadata.get("native_filter_configuration", [])
+        native_filter_configuration = _load_json_object_list(
+            metadata,
+            "native_filter_configuration",
+        )
 
         tab_filters = defaultdict(list)
         for filter in native_filter_configuration:
-            if tabs_in_scope := filter.get("tabsInScope", []):
+            tabs_in_scope = filter.get("tabsInScope", [])
+            if isinstance(tabs_in_scope, list):
                 for tab_key in tabs_in_scope:
                     tab_filters[tab_key].append(filter)
             tab_filters["all"].append(filter)
@@ -465,10 +476,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
         updated_configuration: list[dict[str, Any]] = []
         if attributes:
             metadata = _load_dashboard_json_metadata(dashboard)
-            native_filter_configuration = metadata.get(
-                "native_filter_configuration", []
+            native_filter_configuration = _load_json_object_list(
+                metadata,
+                "native_filter_configuration",
             )
             reordered_filter_ids: list[int] = attributes.get("reordered", [])
+            modified_filters = [
+                item
+                for item in attributes.get("modified", [])
+                if isinstance(item, dict)
+            ]
             updated_configuration = []
 
             # Modify / Delete existing filters
@@ -481,11 +498,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
                     continue
 
                 modified_filter = next(
-                    (
-                        f
-                        for f in attributes.get("modified", [])
-                        if f.get("id") == conf.get("id")
-                    ),
+                    (f for f in modified_filters if f.get("id") == conf.get("id")),
                     None,
                 )
                 if modified_filter:
@@ -496,13 +509,14 @@ class DashboardDAO(BaseDAO[Dashboard]):
                     updated_configuration.append(conf)
 
             # Append new filters
-            for new_filter in attributes.get("modified", []):
+            for new_filter in modified_filters:
                 new_filter_id = new_filter.get("id")
                 if new_filter_id not in [f.get("id") for f in updated_configuration]:
                     updated_configuration.append(new_filter)
 
                     if (
                         reordered_filter_ids
+                        and isinstance(new_filter_id, int)
                         and new_filter_id not in reordered_filter_ids
                     ):
                         reordered_filter_ids.append(new_filter_id)
@@ -510,8 +524,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
             # Reorder filters
             if reordered_filter_ids:
                 filter_map = {
-                    filter_config["id"]: filter_config
+                    filter_id: filter_config
                     for filter_config in updated_configuration
+                    if (filter_id := filter_config.get("id")) is not None
                 }
 
                 updated_configuration = [
@@ -535,8 +550,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
         updated_configuration = []
 
         if attributes:
-            chart_customization_config = metadata.get("chart_customization_config", [])
+            chart_customization_config = _load_json_object_list(
+                metadata,
+                "chart_customization_config",
+            )
             reordered_customization_ids: list[str] = attributes.get("reordered", [])
+            modified_customizations = [
+                item
+                for item in attributes.get("modified", [])
+                if isinstance(item, dict)
+            ]
 
             for conf in chart_customization_config:
                 deleted_customization = next(
@@ -549,7 +572,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 modified_customization = next(
                     (
                         c
-                        for c in attributes.get("modified", [])
+                        for c in modified_customizations
                         if c.get("id") == conf.get("id")
                     ),
                     None,
@@ -559,7 +582,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 else:
                     updated_configuration.append(conf)
 
-            for new_customization in attributes.get("modified", []):
+            for new_customization in modified_customizations:
                 new_customization_id = new_customization.get("id")
                 if new_customization_id not in [
                     c.get("id") for c in updated_configuration
@@ -568,14 +591,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
 
                     if (
                         reordered_customization_ids
+                        and isinstance(new_customization_id, str)
                         and new_customization_id not in reordered_customization_ids
                     ):
                         reordered_customization_ids.append(new_customization_id)
 
             if reordered_customization_ids:
                 customization_map = {
-                    customization_config["id"]: customization_config
+                    customization_id: customization_config
                     for customization_config in updated_configuration
+                    if (customization_id := customization_config.get("id")) is not None
                 }
 
                 updated_configuration = [

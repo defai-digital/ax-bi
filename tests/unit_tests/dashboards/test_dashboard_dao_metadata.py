@@ -53,10 +53,93 @@ def test_update_native_filters_config_empty_attributes_returns_empty_list() -> N
     assert DashboardDAO.update_native_filters_config(dashboard, {}) == []
 
 
+def test_get_native_filter_configuration_ignores_non_object_items() -> None:
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    {"id": "filter-1", "tabsInScope": ["TAB-1"]},
+                    {"id": "filter-2", "tabsInScope": "TAB-2"},
+                ]
+            }
+        ),
+    )
+
+    with patch.object(DashboardDAO, "get_by_id_or_slug", return_value=dashboard):
+        result = DashboardDAO.get_native_filter_configuration("1")
+
+    assert dict(result) == {
+        "TAB-1": [{"id": "filter-1", "tabsInScope": ["TAB-1"]}],
+        "all": [
+            {"id": "filter-1", "tabsInScope": ["TAB-1"]},
+            {"id": "filter-2", "tabsInScope": "TAB-2"},
+        ],
+    }
+
+
+def test_update_native_filters_config_ignores_non_object_items() -> None:
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    {"name": "No ID"},
+                ]
+            }
+        ),
+    )
+    attributes = {
+        "modified": ["bad-update", {"id": "filter-1", "name": "Region"}],
+        "deleted": [],
+        "reordered": ["filter-1"],
+    }
+
+    result = DashboardDAO.update_native_filters_config(dashboard, attributes)
+
+    assert result == [{"id": "filter-1", "name": "Region"}]
+    assert json.loads(dashboard.json_metadata) == {
+        "native_filter_configuration": [{"id": "filter-1", "name": "Region"}]
+    }
+
+
 def test_update_chart_customizations_config_ignores_malformed_metadata() -> None:
     dashboard = Dashboard(id=1, json_metadata="{malformed")
     attributes = {
         "modified": [{"id": "customization-1", "name": "Compact title"}],
+        "deleted": [],
+        "reordered": ["customization-1"],
+    }
+
+    result = DashboardDAO.update_chart_customizations_config(dashboard, attributes)
+
+    assert result == [{"id": "customization-1", "name": "Compact title"}]
+    assert json.loads(dashboard.json_metadata) == {
+        "chart_customization_config": [
+            {"id": "customization-1", "name": "Compact title"}
+        ]
+    }
+
+
+def test_update_chart_customizations_config_ignores_non_object_items() -> None:
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "chart_customization_config": [
+                    "bad-customization",
+                    {"name": "No ID"},
+                ]
+            }
+        ),
+    )
+    attributes = {
+        "modified": [
+            "bad-update",
+            {"id": "customization-1", "name": "Compact title"},
+        ],
         "deleted": [],
         "reordered": ["customization-1"],
     }
