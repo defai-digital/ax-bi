@@ -37,6 +37,26 @@ logger = logging.getLogger(__name__)
 JSON_KEYS = {"params", "template_params", "extra"}
 
 
+def _coerce_attribute_payloads(
+    payload: dict[str, Any],
+    key: str,
+) -> list[dict[str, Any]]:
+    """Return dict attributes for metrics/columns, dropping malformed entries."""
+    attributes = payload.get(key)
+    if attributes is None:
+        return []
+    if not isinstance(attributes, list):
+        payload[key] = []
+        return []
+
+    valid_attributes = [
+        attribute for attribute in attributes if isinstance(attribute, dict)
+    ]
+    if len(valid_attributes) != len(attributes):
+        payload[key] = valid_attributes
+    return valid_attributes
+
+
 def _load_json_object(
     value: Any,
     key: str,
@@ -77,7 +97,7 @@ class ExportDatasetsCommand(ExportModelsCommand):
             if payload.get(key) is not None:
                 payload[key] = _load_json_object(payload[key], key, {})
         for key in ("metrics", "columns"):
-            for attributes in payload.get(key, []):
+            for attributes in _coerce_attribute_payloads(payload, key):
                 if attributes.get("extra") is not None:
                     attributes["extra"] = _load_json_object(
                         attributes["extra"],

@@ -16,6 +16,7 @@
 # under the License.
 # pylint: disable=import-outside-toplevel, unused-argument, unused-import
 
+from unittest.mock import MagicMock
 from uuid import UUID
 
 import yaml
@@ -438,3 +439,31 @@ def test_file_content_replaces_non_object_json_fields(
     assert payload["extra"] == {}
     assert payload["columns"][0]["extra"] is None
     assert payload["metrics"][0]["extra"] is None
+
+
+def test_file_content_ignores_malformed_column_metric_entries() -> None:
+    """Malformed column/metric entries should not crash dataset export."""
+    from superset.commands.dataset.export import ExportDatasetsCommand
+
+    model = MagicMock()
+    model.cache_timeout = None
+    model.database.uuid = UUID("00000000-0000-0000-0000-000000000010")
+    model.export_to_dict.return_value = {
+        "table_name": "my_table",
+        "params": "{}",
+        "template_params": "{}",
+        "extra": "{}",
+        "metrics": 10,
+        "columns": [
+            "bad-column",
+            {"column_name": "profit", "extra": '{"certified_by": "User"}'},
+        ],
+    }
+
+    content = ExportDatasetsCommand._file_content(model)  # pylint: disable=protected-access
+    payload = yaml.safe_load(content)
+
+    assert payload["metrics"] == []
+    assert payload["columns"] == [
+        {"column_name": "profit", "extra": {"certified_by": "User"}}
+    ]
