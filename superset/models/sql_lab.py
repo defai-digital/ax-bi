@@ -254,17 +254,25 @@ class Query(
             TableColumn,
         )
 
-        return [
-            TableColumn(
-                column_name=col["column_name"],
-                database=self.database,
-                is_dttm=col["is_dttm"],
-                filterable=True,
-                groupby=True,
-                type=col["type"],
+        columns = self.extra.get("columns", [])
+        if not isinstance(columns, list):
+            return []
+
+        table_columns = []
+        for col in columns:
+            if not isinstance(col, dict) or not isinstance(col.get("column_name"), str):
+                continue
+            table_columns.append(
+                TableColumn(
+                    column_name=col["column_name"],
+                    database=self.database,
+                    is_dttm=bool(col.get("is_dttm")),
+                    filterable=True,
+                    groupby=True,
+                    type=col.get("type"),
+                )
             )
-            for col in self.extra.get("columns", [])
-        ]
+        return table_columns
 
     @property
     def db_extra(self) -> Optional[dict[str, Any]]:

@@ -30,6 +30,7 @@ from superset.exceptions import (
 )
 from superset.models import sql_lab as sql_lab_module
 from superset.models.sql_lab import Query, SavedQuery, TableSchema
+from superset.utils import json
 
 
 @pytest.mark.parametrize(
@@ -133,6 +134,37 @@ def test_sql_tables_mixin_invalid_sql_returns_empty_list(
         else klass(database=MagicMock())
     )
     assert instance.sql_tables == []
+
+
+def test_query_columns_tolerates_malformed_extra_columns() -> None:
+    query = Query(
+        database=MagicMock(),
+        extra_json=json.dumps(
+            {
+                "columns": [
+                    {"column_name": "ds", "is_dttm": True, "type": "TIMESTAMP"},
+                    {"column_name": "category"},
+                    {"is_dttm": False, "type": "INTEGER"},
+                    ["not", "a", "dict"],
+                    "bad",
+                ]
+            }
+        ),
+    )
+
+    columns = query.columns
+
+    assert [column.column_name for column in columns] == ["ds", "category"]
+    assert columns[0].is_dttm is True
+    assert columns[0].type == "TIMESTAMP"
+    assert columns[1].is_dttm is False
+    assert columns[1].type is None
+
+
+def test_query_columns_ignores_non_list_extra_columns() -> None:
+    query = Query(database=MagicMock(), extra_json=json.dumps({"columns": {}}))
+
+    assert query.columns == []
 
 
 def test_table_schema_to_dict_allows_null_description() -> None:
