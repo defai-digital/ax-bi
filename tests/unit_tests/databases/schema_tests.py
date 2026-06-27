@@ -252,6 +252,37 @@ def test_rename_encrypted_extra() -> None:
     }
 
 
+def test_extra_validator_rejects_non_object_extra() -> None:
+    """Database extra must decode to a JSON object."""
+    from superset.databases.schemas import extra_validator
+
+    with pytest.raises(ValidationError) as exc_info:
+        extra_validator("[]")
+
+    assert exc_info.value.messages == ["Extra field must be a JSON object."]
+
+
+def test_extra_validator_rejects_non_object_metadata_params() -> None:
+    """metadata_params must be an object before keys are validated."""
+    from superset.databases.schemas import extra_validator
+
+    with pytest.raises(ValidationError) as exc_info:
+        extra_validator(json.dumps({"metadata_params": ["schema"]}))
+
+    assert exc_info.value.messages == [
+        "The metadata_params in Extra field must be a JSON object."
+    ]
+
+
+def test_extra_validator_accepts_object_metadata_params() -> None:
+    """Valid metadata_params objects should keep passing validation."""
+    from superset.databases.schemas import extra_validator
+
+    value = json.dumps({"metadata_params": {"schema": "public"}})
+
+    assert extra_validator(value) == value
+
+
 def test_oauth2_schema_success() -> None:
     """
     Test a successful redirect.

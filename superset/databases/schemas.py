@@ -264,8 +264,17 @@ def extra_validator(value: str) -> str:
                 [_("Field cannot be decoded by JSON. %(msg)s", msg=str(ex))]
             ) from ex
 
+        if not isinstance(extra_, dict):
+            raise ValidationError([_("Extra field must be a JSON object.")])
+
+        metadata_params = extra_.get("metadata_params", {})
+        if not isinstance(metadata_params, dict):
+            raise ValidationError(
+                [_("The metadata_params in Extra field must be a JSON object.")]
+            )
+
         metadata_signature = inspect.signature(MetaData)
-        for key in extra_.get("metadata_params", {}):
+        for key in metadata_params:
             if key not in metadata_signature.parameters:
                 raise ValidationError(
                     [
