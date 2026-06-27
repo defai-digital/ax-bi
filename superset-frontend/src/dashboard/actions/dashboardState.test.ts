@@ -24,6 +24,7 @@ import {
 import { waitFor } from 'spec/helpers/testing-library';
 
 import {
+  SAVE_DASHBOARD_FINISHED,
   SAVE_DASHBOARD_STARTED,
   saveDashboardRequest,
   SET_OVERRIDE_CONFIRM,
@@ -225,6 +226,30 @@ describe('dashboardState actions', () => {
         await waitFor(() => expect(putStub.mock.calls.length).toBe(1));
         const { body } = putStub.mock.calls[0][0];
         expect(body).toBe(JSON.stringify(confirmedDashboardData));
+      });
+
+      test('finishes overwrite save when response metadata is malformed', async () => {
+        const id = 192;
+        const { getState, dispatch } = setup();
+        putStub.mockRestore();
+        putStub = jest.spyOn(SupersetClient, 'put').mockResolvedValue({
+          json: {
+            result: { ...newDashboardData, json_metadata: '{malformed' },
+            last_modified_time: 123,
+          },
+        } as any);
+
+        const thunk = saveDashboardRequest(
+          newDashboardData,
+          id,
+          SAVE_TYPE_OVERWRITE_CONFIRMED,
+        );
+
+        await thunk(dispatch, getState);
+
+        expect(dispatch).toHaveBeenCalledWith({
+          type: SAVE_DASHBOARD_FINISHED,
+        });
       });
     });
 
