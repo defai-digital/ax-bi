@@ -97,6 +97,8 @@ class AlertCommand(BaseCommand):
         self._report_schedule.last_value = self._result
         try:
             config = json.loads(self._report_schedule.validator_config_json)
+            if not isinstance(config, dict):
+                raise AlertValidatorConfigError()
             operator = config["op"]
             threshold = config["threshold"]
             # Return False for None results to prevent false alert triggers
@@ -111,7 +113,7 @@ class AlertCommand(BaseCommand):
                 return (False, self._info_message)
             triggered = OPERATOR_FUNCTIONS[operator](self._result, threshold)
             return (triggered, None)
-        except (KeyError, json.JSONDecodeError) as ex:
+        except (KeyError, TypeError, json.JSONDecodeError) as ex:
             raise AlertValidatorConfigError() from ex
 
     def _validate_not_null(self, rows: np.recarray[Any, Any]) -> None:
