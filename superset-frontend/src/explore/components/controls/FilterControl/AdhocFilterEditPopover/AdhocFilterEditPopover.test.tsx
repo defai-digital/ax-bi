@@ -25,6 +25,37 @@ import AdhocFilterEditPopover from '.';
 import AdhocFilter from '../AdhocFilter';
 import { Clauses, ExpressionTypes } from '../types';
 
+jest.mock('src/core/editors', () => {
+  const React = require('react');
+
+  return {
+    EditorHost: React.forwardRef(
+      (
+        {
+          value,
+          onChange,
+        }: {
+          value: string;
+          onChange: (value: string) => void;
+        },
+        ref: React.Ref<{ resize: () => void }>,
+      ) => {
+        React.useImperativeHandle(ref, () => ({
+          resize: jest.fn(),
+        }));
+
+        return (
+          <textarea
+            aria-label="SQL editor"
+            value={value}
+            onChange={event => onChange(event.target.value)}
+          />
+        );
+      },
+    ),
+  };
+});
+
 const simpleAdhocFilter = new AdhocFilter({
   expressionType: ExpressionTypes.Simple,
   subject: 'value',
@@ -120,8 +151,7 @@ describe('AdhocFilterEditPopover', () => {
     ).toBeDisabled();
   });
 
-  /* oxlint-disable-next-line jest/no-disabled-tests */
-  test.skip('updates the filter when changes are made', async () => {
+  test('updates the filter when changes are made', async () => {
     const onChange = jest.fn();
     renderPopover({
       onChange,
@@ -131,8 +161,7 @@ describe('AdhocFilterEditPopover', () => {
     // Switch to SQL tab
     await userEvent.click(screen.getByRole('tab', { name: /custom sql/i }));
 
-    // Find and update the SQL editor
-    const sqlInput = screen.getByTestId('sql-input');
+    const sqlInput = screen.getByRole('textbox');
     fireEvent.change(sqlInput, { target: { value: 'COUNT(*) > 0' } });
 
     // Wait for validation to complete
