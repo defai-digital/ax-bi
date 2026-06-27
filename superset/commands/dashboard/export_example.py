@@ -434,6 +434,8 @@ def export_dashboard_yaml(
     if dashboard.json_metadata:
         try:
             json_metadata = superset_json.loads(dashboard.json_metadata)
+            if not isinstance(json_metadata, dict):
+                json_metadata = {}
         except Exception:
             logger.debug("Could not parse json_metadata")
 

@@ -30,6 +30,7 @@ from superset.commands.dashboard.export_example import (
     _make_bytes_generator,
     _make_yaml_generator,
     export_chart,
+    export_dashboard_yaml,
     export_dataset_data,
     export_dataset_yaml,
     ExportExampleCommand,
@@ -79,6 +80,26 @@ def test_make_bytes_generator():
 
     result = generator()
     assert result == data
+
+
+def test_export_dashboard_yaml_ignores_non_object_json_metadata():
+    """Non-object dashboard metadata should not break example export."""
+    mock_dashboard = MagicMock()
+    mock_dashboard.position = {}
+    mock_dashboard.json_metadata = "[]"
+    mock_dashboard.dashboard_title = "Test Dashboard"
+    mock_dashboard.description = None
+    mock_dashboard.css = ""
+    mock_dashboard.slug = None
+    mock_dashboard.certified_by = None
+    mock_dashboard.certification_details = None
+    mock_dashboard.published = False
+    mock_dashboard.uuid = uuid4()
+
+    result = export_dashboard_yaml(mock_dashboard, {}, {})
+
+    assert result["metadata"]["native_filter_configuration"] == []
+    assert result["metadata"]["chart_configuration"] == {}
 
 
 def test_export_dataset_yaml():
