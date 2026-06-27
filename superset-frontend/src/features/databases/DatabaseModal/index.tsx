@@ -75,6 +75,7 @@ import {
   ExtraJson,
   CustomTextType,
   DatabaseParameters,
+  parseExtraJson,
 } from '../types';
 import ExtraOptions from './ExtraOptions';
 import SqlAlchemyForm from './SqlAlchemyForm';
@@ -269,7 +270,7 @@ export function dbReducer(
   let query_input = '';
   let parametersCatalog;
   let actionPayloadJson;
-  const extraJson: ExtraJson = JSON.parse(trimmedState.extra || '{}');
+  const extraJson: ExtraJson = parseExtraJson(trimmedState.extra);
 
   switch (action.type) {
     case ActionType.ExtraEditorChange:
@@ -572,7 +573,7 @@ export function dbReducer(
       ) {
         // "extra" payload from the api is a string
         const extraJsonPayload: ExtraJson = {
-          ...JSON.parse((action.payload.extra as string) || '{}'),
+          ...parseExtraJson(action.payload.extra),
         };
 
         const payloadCatalog = extraJsonPayload.engine_params?.catalog;
@@ -932,7 +933,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
       if (dbToUpdate?.parameters?.catalog) {
         // need to stringify gsheets catalog to allow it to be serialized
         dbToUpdate.extra = JSON.stringify({
-          ...JSON.parse(dbToUpdate.extra || '{}'),
+          ...parseExtraJson(dbToUpdate.extra),
           engine_params: {
             catalog: dbToUpdate.parameters.catalog,
           },
@@ -1006,7 +1007,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
     if (dbToUpdate?.parameters?.catalog) {
       // need to stringify gsheets catalog to allow it to be serialized
       dbToUpdate.extra = JSON.stringify({
-        ...JSON.parse(dbToUpdate.extra || '{}'),
+        ...parseExtraJson(dbToUpdate.extra),
         engine_params: {
           catalog: dbToUpdate.parameters.catalog,
         },

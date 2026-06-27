@@ -101,6 +101,15 @@ describe('ExtraOptions Component', () => {
     expect(screen.getByText(t('Other'))).toBeInTheDocument();
   });
 
+  test('renders when extra is malformed', () => {
+    renderComponent({ ...defaultDb, extra: '{malformed' });
+
+    expect(screen.getByText(t('SQL Lab'))).toBeInTheDocument();
+    expect(screen.getByText(t('Performance'))).toBeInTheDocument();
+    expect(screen.getByText(t('Security'))).toBeInTheDocument();
+    expect(screen.getByText(t('Other'))).toBeInTheDocument();
+  });
+
   test('calls onInputChange when "Expose database in SQL Lab" checkbox is clicked', () => {
     renderComponent();
     const sqlLabText = screen.getByText(t('SQL Lab'));
