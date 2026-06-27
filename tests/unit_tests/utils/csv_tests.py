@@ -109,6 +109,24 @@ def fake_get_chart_csv_data_error_payload(
     return json.dumps({"message": "chart failed"}).encode("utf-8")
 
 
+def fake_get_chart_csv_data_invalid_json(
+    chart_url: str,
+    auth_cookies: dict[str, str] | None = None,
+    timeout: float | None = None,
+) -> bytes | None:
+    """Return bytes that decode as UTF-8 but are not valid JSON."""
+    return b"{invalid json"
+
+
+def fake_get_chart_csv_data_invalid_utf8(
+    chart_url: str,
+    auth_cookies: dict[str, str] | None = None,
+    timeout: float | None = None,
+) -> bytes | None:
+    """Return bytes that cannot be decoded as UTF-8 JSON."""
+    return b"\xff"
+
+
 def fake_get_chart_csv_data_empty_result_list(
     chart_url: str,
     auth_cookies: dict[str, str] | None = None,
@@ -331,6 +349,8 @@ def test_get_chart_dataframe_returns_none_for_empty_data(
 @pytest.mark.parametrize(
     "fake_payload",
     [
+        fake_get_chart_csv_data_invalid_json,
+        fake_get_chart_csv_data_invalid_utf8,
         fake_get_chart_csv_data_error_payload,
         fake_get_chart_csv_data_empty_result_list,
         fake_get_chart_csv_data_malformed_metadata,

@@ -147,7 +147,10 @@ def get_chart_dataframe(
     if content is None:
         return None
 
-    result = json.loads(content.decode("utf-8"))
+    try:
+        result = json.loads(content.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
     first_result = _get_first_result(result)
     if first_result is None:
         return None
