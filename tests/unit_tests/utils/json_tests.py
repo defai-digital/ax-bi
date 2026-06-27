@@ -221,6 +221,17 @@ def test_sensitive_fields() -> None:
     }
 
 
+def test_reveal_sensitive_leaves_mask_when_old_path_is_missing() -> None:
+    """
+    Test reveal_sensitive tolerates masked fields missing from the old payload.
+    """
+    assert json.reveal_sensitive(
+        {},
+        {"password": PASSWORD_MASK},
+        {"$.password"},
+    ) == {"password": PASSWORD_MASK}
+
+
 def test_base_json_conv():
     assert json.base_json_conv(np.bool_(1)) is True
     assert json.base_json_conv(np.int64(1)) == 1

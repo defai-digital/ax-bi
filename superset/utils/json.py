@@ -300,7 +300,8 @@ def reveal_sensitive(
         for match in jsonpath_expr.find(revealed_payload):
             if match.value == PASSWORD_MASK:
                 old_value = match.full_path.find(old_payload)
-                match.context.value[match.path.fields[0]] = old_value[0].value
+                if old_value and hasattr(match.path, "fields"):
+                    match.context.value[match.path.fields[0]] = old_value[0].value
 
     return revealed_payload
 

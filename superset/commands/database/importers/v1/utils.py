@@ -37,6 +37,16 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 
+def _load_json_object(value: str | None) -> dict[str, Any]:
+    """Parse a JSON object string, returning an empty object for invalid shapes."""
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def import_database(  # noqa: C901
     config: dict[str, Any],
     overwrite: bool = False,
@@ -82,8 +92,8 @@ def import_database(  # noqa: C901
     # For new DBs, schema validation already ensured no fields are still masked.
     if masked_encrypted_extra := config.pop("masked_encrypted_extra", None):
         if existing and existing.encrypted_extra:
-            old_config = json.loads(existing.encrypted_extra)
-            new_config = json.loads(masked_encrypted_extra)
+            old_config = _load_json_object(existing.encrypted_extra)
+            new_config = _load_json_object(masked_encrypted_extra)
             sensitive_fields = (
                 existing.db_engine_spec.encrypted_extra_sensitive_field_paths()
             )
