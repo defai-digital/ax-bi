@@ -99,6 +99,17 @@ type DashboardInfo = {
   };
 };
 
+const parseJsonMetadata = (jsonMetadata?: string) => {
+  if (!jsonMetadata?.length) {
+    return {};
+  }
+  try {
+    return JSON.parse(jsonMetadata);
+  } catch {
+    return {};
+  }
+};
+
 const PropertiesModal = ({
   addSuccessToast,
   addDangerToast,
@@ -228,9 +239,7 @@ const PropertiesModal = ({
       endpoint: `/api/v1/dashboard/${dashboardId}`,
     }).then(response => {
       const dashboard = response.json.result;
-      const jsonMetadataObj = dashboard.json_metadata?.length
-        ? JSON.parse(dashboard.json_metadata)
-        : {};
+      const jsonMetadataObj = parseJsonMetadata(dashboard.json_metadata);
 
       handleDashboardData({
         ...dashboard,

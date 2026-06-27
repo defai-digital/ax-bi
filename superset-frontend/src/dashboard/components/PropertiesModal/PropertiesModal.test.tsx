@@ -727,6 +727,28 @@ describe('PropertiesModal', () => {
     getSpy.mockRestore();
   });
 
+  test('should render fetched dashboard when metadata JSON is malformed', async () => {
+    mockedIsFeatureEnabled.mockReturnValue(false);
+    const props = createProps();
+    const getSpy = jest.spyOn(SupersetCore.SupersetClient, 'get');
+    getSpy.mockResolvedValue({
+      json: {
+        result: { ...dashboardInfo, json_metadata: '{malformed' },
+      },
+    } as any);
+
+    render(<PropertiesModal {...props} />, {
+      useRedux: true,
+    });
+
+    expect(
+      await screen.findByTestId('dashboard-edit-properties-form'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+
+    getSpy.mockRestore();
+  });
+
   test('should run validation when data is ready', async () => {
     mockedIsFeatureEnabled.mockReturnValue(false);
     const props = createProps();
