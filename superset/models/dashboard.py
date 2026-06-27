@@ -128,6 +128,34 @@ DashboardRoles = Table(
 )
 
 
+def _get_native_filter_datasource_ids(
+    json_metadata: str | None,
+) -> set[tuple[int, str]]:
+    json_metadata_dict = json_to_dict(json_metadata or "")
+    native_filter_configuration = json_metadata_dict.get(
+        "native_filter_configuration", []
+    )
+    if not isinstance(native_filter_configuration, list):
+        return set()
+
+    datasource_ids: set[tuple[int, str]] = set()
+    for native_filter in native_filter_configuration:
+        if not isinstance(native_filter, dict):
+            continue
+        targets = native_filter.get("targets", [])
+        if not isinstance(targets, list):
+            continue
+        for target in targets:
+            if not isinstance(target, dict):
+                continue
+            id_ = target.get("datasetId")
+            if id_ is None:
+                continue
+            datasource = DatasourceDAO.get_datasource(utils.DatasourceType.TABLE, id_)
+            datasource_ids.add((datasource.id, datasource.type))
+    return datasource_ids
+
+
 class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
     """The dashboard object!"""
 
@@ -386,19 +414,9 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
                 slices = copied_dashboard.__dict__.setdefault("slices", [])
                 slices.append(copied_slc)
 
-            json_metadata = json.loads(dashboard.json_metadata)
-            native_filter_configuration: list[dict[str, Any]] = json_metadata.get(
-                "native_filter_configuration", []
+            datasource_ids.update(
+                _get_native_filter_datasource_ids(dashboard.json_metadata)
             )
-            for native_filter in native_filter_configuration:
-                for target in native_filter.get("targets", []):
-                    id_ = target.get("datasetId")
-                    if id_ is None:
-                        continue
-                    datasource = DatasourceDAO.get_datasource(
-                        utils.DatasourceType.TABLE, id_
-                    )
-                    datasource_ids.add((datasource.id, datasource.type))
 
             copied_dashboard.alter_params(remote_id=dashboard_id)
             copied_dashboards.append(copied_dashboard)
