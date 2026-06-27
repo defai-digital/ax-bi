@@ -47,6 +47,7 @@ from superset.models.slice import Slice
 from superset.schemas import error_payload_content
 from superset.sql_lab import Query as SqllabQuery
 from superset.superset_typing import FlaskResponse
+from superset.utils import json
 from superset.utils.core import get_user_id, time_function
 from superset.views.error_handling import handle_api_exception
 
@@ -114,6 +115,24 @@ def requires_form_data(f: Callable[..., Any]) -> Callable[..., Any]:
         return f(self, *args, **kwargs)
 
     return functools.update_wrapper(wraps, f)
+
+
+def load_optional_json_object_form_field(field_name: str) -> dict[str, Any] | None:
+    """
+    Load an optional multipart form field containing a JSON object.
+    """
+    if field_name not in request.form:
+        return None
+
+    try:
+        value = json.loads(request.form[field_name])
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise ValueError(f"Invalid JSON object for form field: {field_name}") from ex
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Invalid JSON object for form field: {field_name}")
+
+    return value
 
 
 def statsd_metrics(f: Callable[..., Any]) -> Callable[..., Any]:

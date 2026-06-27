@@ -16,9 +16,47 @@
 # under the License.
 """Tests for superset.views.base module"""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+
+def test_load_optional_json_object_form_field_returns_none_when_missing(
+    app: Any,
+) -> None:
+    """Test that missing JSON object form fields are optional."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context("/", method="POST", data={}):
+        assert load_optional_json_object_form_field("missing") is None
+
+
+def test_load_optional_json_object_form_field_loads_object(app: Any) -> None:
+    """Test that JSON object form fields are decoded."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context(
+        "/", method="POST", data={"passwords": '{"database.yaml": "SECRET"}'}
+    ):
+        assert load_optional_json_object_form_field("passwords") == {
+            "database.yaml": "SECRET"
+        }
+
+
+@pytest.mark.parametrize(("payload",), [("{",), ("[]",), ("null",)])
+def test_load_optional_json_object_form_field_rejects_invalid_payload(
+    app: Any,
+    payload: str,
+) -> None:
+    """Test that JSON form fields must be objects."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context("/", method="POST", data={"passwords": payload}):
+        with pytest.raises(
+            ValueError, match="Invalid JSON object for form field: passwords"
+        ):
+            load_optional_json_object_form_field("passwords")
 
 
 @patch("superset.views.base.utils.get_user_id", return_value=1)

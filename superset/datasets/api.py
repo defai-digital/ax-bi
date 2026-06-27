@@ -76,11 +76,11 @@ from superset.datasets.schemas import (
 )
 from superset.exceptions import SupersetSyntaxErrorException, SupersetTemplateException
 from superset.jinja_context import BaseTemplateProcessor, get_template_processor
-from superset.utils import json
 from superset.utils.core import parse_boolean_string, sanitize_cookie_token
 from superset.views.base import DatasourceFilter
 from superset.views.base_api import (
     BaseSupersetModelRestApi,
+    load_optional_json_object_form_field,
     RelatedFieldFilter,
     requires_form_data,
     requires_json,
@@ -1017,29 +1017,22 @@ class DatasetRestApi(BaseSupersetModelRestApi):
         if not contents:
             raise NoValidFilesFoundError()
 
-        passwords = (
-            json.loads(request.form["passwords"])
-            if "passwords" in request.form
-            else None
-        )
         overwrite = request.form.get("overwrite") == "true"
         sync_columns = request.form.get("sync_columns") == "true"
         sync_metrics = request.form.get("sync_metrics") == "true"
-        ssh_tunnel_passwords = (
-            json.loads(request.form["ssh_tunnel_passwords"])
-            if "ssh_tunnel_passwords" in request.form
-            else None
-        )
-        ssh_tunnel_private_keys = (
-            json.loads(request.form["ssh_tunnel_private_keys"])
-            if "ssh_tunnel_private_keys" in request.form
-            else None
-        )
-        ssh_tunnel_priv_key_passwords = (
-            json.loads(request.form["ssh_tunnel_private_key_passwords"])
-            if "ssh_tunnel_private_key_passwords" in request.form
-            else None
-        )
+        try:
+            passwords = load_optional_json_object_form_field("passwords")
+            ssh_tunnel_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_passwords"
+            )
+            ssh_tunnel_private_keys = load_optional_json_object_form_field(
+                "ssh_tunnel_private_keys"
+            )
+            ssh_tunnel_priv_key_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_private_key_passwords"
+            )
+        except ValueError as ex:
+            return self.response_400(message=str(ex))
 
         command = ImportDatasetsCommand(
             contents,

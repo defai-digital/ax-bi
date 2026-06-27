@@ -530,6 +530,55 @@ def test_import_with_encrypted_extra_secrets(
     )
 
 
+@pytest.mark.parametrize(("payload",), [("{",), ("[]",)])
+def test_import_rejects_invalid_json_object_form_field(
+    payload: str,
+    mocker: MockerFixture,
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """
+    Test that optional JSON form fields must contain JSON objects.
+    """
+    contents = {
+        "metadata.yaml": yaml.safe_dump(
+            {
+                "version": "1.0.0",
+                "type": "Database",
+                "timestamp": "2021-01-01T00:00:00Z",
+            }
+        ),
+        "databases/test.yaml": yaml.safe_dump(
+            {
+                "database_name": "test",
+                "sqlalchemy_uri": "bigquery://gcp-project-id/",
+                "uuid": "00000000-0000-0000-0000-123456789001",
+            }
+        ),
+    }
+    mocker.patch("superset.databases.api.is_zipfile", return_value=True)
+    mocker.patch("superset.databases.api.ZipFile")
+    mocker.patch(
+        "superset.databases.api.get_contents_from_bundle",
+        return_value=contents,
+    )
+    command = mocker.patch("superset.databases.api.ImportDatabasesCommand")
+
+    form_data = {
+        "formData": (BytesIO(b"test"), "test.zip"),
+        "passwords": payload,
+    }
+    response = client.post(
+        "/api/v1/database/import/",
+        data=form_data,
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": "Invalid JSON object for form field: passwords"}
+    command.assert_not_called()
+
+
 def test_non_zip_import(client: Any, full_api_access: None) -> None:
     """
     Test that non-ZIP imports are not allowed.
