@@ -121,6 +121,19 @@ def _build_sqla_table_for_query(
     return sqla_table
 
 
+def test_sqla_table_extra_dict_returns_object_extra() -> None:
+    table = SqlaTable(extra='{"warning_markdown": "Use carefully"}')
+
+    assert table.extra_dict == {"warning_markdown": "Use carefully"}
+
+
+@pytest.mark.parametrize("extra", ["[]", '"bad"', "1", "null", None, "{malformed"])
+def test_sqla_table_extra_dict_ignores_non_object_extra(extra: str | None) -> None:
+    table = SqlaTable(extra=extra)
+
+    assert table.extra_dict == {}
+
+
 def test_query_blocks_disallowed_function_on_chart_data_path(
     mocker: MockerFixture,
 ) -> None:

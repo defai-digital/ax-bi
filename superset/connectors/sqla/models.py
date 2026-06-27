@@ -1576,9 +1576,10 @@ class SqlaTable(
     @property
     def extra_dict(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra)
+            extra = json.loads(self.extra)
         except (TypeError, json.JSONDecodeError):
             return {}
+        return extra if isinstance(extra, dict) else {}
 
     def get_fetch_values_predicate(
         self,
