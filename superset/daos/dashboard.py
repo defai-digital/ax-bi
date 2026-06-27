@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, cast, Dict, List
 
 from flask import g
 from flask_appbuilder.models.sqla.interface import SQLAInterface
@@ -68,6 +68,18 @@ def _load_dashboard_json_metadata(dashboard: Dashboard) -> dict[str, Any]:
         return {}
 
     return metadata if isinstance(metadata, dict) else {}
+
+
+def _load_json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
 
 
 class DashboardDAO(BaseDAO[Dashboard]):
@@ -287,6 +299,8 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 value.get("meta", {}).get("chartId")
                 for value in positions.values()
                 if isinstance(value, dict)
+                and isinstance(value.get("meta"), dict)
+                and value.get("meta", {}).get("chartId")
             ]
 
             current_slices = (
@@ -300,8 +314,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
             for obj in positions.values():
                 if (
                     isinstance(obj, dict)
-                    and obj["type"] == "CHART"
-                    and obj["meta"]["chartId"]
+                    and obj.get("type") == "CHART"
+                    and isinstance(obj.get("meta"), dict)
+                    and obj["meta"].get("chartId")
                 ):
                     chart_id = obj["meta"]["chartId"]
                     obj["meta"]["uuid"] = uuid_map.get(chart_id)
@@ -323,18 +338,20 @@ class DashboardDAO(BaseDAO[Dashboard]):
                     }
                 else:
                     slc_id_dict = {sid: sid for sid in slice_ids}
+                old_filter_scopes = cast(
+                    dict[int, dict[str, dict[str, Any]]],
+                    _load_json_object(data["filter_scopes"]),
+                )
                 new_filter_scopes = copy_filter_scopes(
                     old_to_new_slc_id_dict=slc_id_dict,
-                    old_filter_scopes=json.loads(data["filter_scopes"] or "{}")
-                    if isinstance(data["filter_scopes"], str)
-                    else data["filter_scopes"],
+                    old_filter_scopes=old_filter_scopes,
                 )
 
-            default_filters_data = json.loads(data.get("default_filters", "{}"))
+            default_filters_data = _load_json_object(data.get("default_filters"))
             applicable_filters = {
                 key: v
                 for key, v in default_filters_data.items()
-                if int(key) in slice_ids
+                if str(key).isdigit() and int(key) in slice_ids
             }
             md["default_filters"] = json.dumps(applicable_filters)
 

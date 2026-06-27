@@ -16,9 +16,14 @@
 # under the License.
 
 from collections.abc import Iterator
+from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
+from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
+
+from superset.utils import json
 
 
 @pytest.fixture
@@ -73,3 +78,36 @@ def test_remove_favorite(session: Session) -> None:
 
     DashboardDAO.remove_favorite(dashboard)
     assert len(DashboardDAO.favorited_ids([dashboard])) == 0
+
+
+def test_set_dash_metadata_ignores_non_object_filter_metadata(
+    mocker: MockerFixture,
+) -> None:
+    from superset.daos.dashboard import DashboardDAO
+    from superset.models.dashboard import Dashboard
+
+    chart_uuid = uuid4()
+    mock_slice = MagicMock(id=10, uuid=chart_uuid)
+    query = mocker.patch("superset.daos.dashboard.db").session.query.return_value
+    query.filter.return_value.all.return_value = [mock_slice]
+
+    dashboard = Dashboard(json_metadata="{}", position_json="{}")
+    DashboardDAO.set_dash_metadata(
+        dashboard,
+        {
+            "positions": {
+                "ROOT_ID": {"type": "ROOT", "children": ["CHART-10"]},
+                "CHART-10": {"type": "CHART", "meta": {"chartId": 10}},
+                "BROKEN": {"type": "CHART"},
+            },
+            "filter_scopes": "[]",
+            "default_filters": "[]",
+        },
+    )
+
+    metadata = json.loads(dashboard.json_metadata)
+    position = json.loads(dashboard.position_json)
+
+    assert json.loads(metadata["default_filters"]) == {}
+    assert "filter_scopes" not in metadata
+    assert position["CHART-10"]["meta"]["uuid"] == str(chart_uuid)
