@@ -30,23 +30,31 @@ logger = logging.getLogger(__name__)
 JSON_KEYS = {"position": "position_json", "metadata": "json_metadata"}
 
 
+def _iter_dataset_uuid_targets(configs: Any) -> Any:
+    for config in configs or []:
+        if not isinstance(config, dict):
+            continue
+        for target in config.get("targets") or []:
+            if isinstance(target, dict):
+                yield target
+
+
 def find_chart_uuids(position: dict[str, Any]) -> set[str]:
     return set(build_uuid_to_id_map(position))
 
 
 def find_native_filter_datasets(metadata: dict[str, Any]) -> set[str]:
     uuids: set[str] = set()
-    for native_filter in metadata.get("native_filter_configuration", []):
-        targets = native_filter.get("targets", [])
-        for target in targets:
-            dataset_uuid = target.get("datasetUuid")
-            if dataset_uuid:
-                uuids.add(dataset_uuid)
-    for customization in metadata.get("chart_customization_config") or []:
-        for target in customization.get("targets") or []:
-            dataset_uuid = target.get("datasetUuid")
-            if dataset_uuid:
-                uuids.add(dataset_uuid)
+    for target in _iter_dataset_uuid_targets(
+        metadata.get("native_filter_configuration")
+    ):
+        if dataset_uuid := target.get("datasetUuid"):
+            uuids.add(dataset_uuid)
+    for target in _iter_dataset_uuid_targets(
+        metadata.get("chart_customization_config")
+    ):
+        if dataset_uuid := target.get("datasetUuid"):
+            uuids.add(dataset_uuid)
     return uuids
 
 
@@ -56,10 +64,29 @@ def build_uuid_to_id_map(position: dict[str, Any]) -> dict[str, int]:
         for child in position.values()
         if (
             isinstance(child, dict)
-            and child["type"] == "CHART"
+            and child.get("type") == "CHART"
+            and isinstance(child.get("meta"), dict)
             and "uuid" in child["meta"]
+            and "chartId" in child["meta"]
         )
     }
+
+
+def _load_json_object(value: Any) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _is_int_like(value: Any) -> bool:
+    try:
+        int(value)
+    except (TypeError, ValueError):
+        return False
+    return True
 
 
 def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
@@ -71,7 +98,12 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
     fixed = config.copy()
 
     # build map old_id => new_id and uuid => new_id
-    old_ids = build_uuid_to_id_map(fixed["position"])
+    position = fixed.get("position", {})
+    if not isinstance(position, dict):
+        position = {}
+        fixed["position"] = position
+
+    old_ids = build_uuid_to_id_map(position)
     id_map = {
         old_id: chart_ids[uuid] for uuid, old_id in old_ids.items() if uuid in chart_ids
     }
@@ -79,51 +111,61 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
 
     # fix metadata
     metadata = fixed.get("metadata", {})
+    if not isinstance(metadata, dict):
+        metadata = {}
+        fixed["metadata"] = metadata
     if "timed_refresh_immune_slices" in metadata:
         metadata["timed_refresh_immune_slices"] = [
-            id_map[old_id] for old_id in metadata["timed_refresh_immune_slices"]
+            id_map[old_id]
+            for old_id in metadata["timed_refresh_immune_slices"]
+            if old_id in id_map
         ]
 
-    if "filter_scopes" in metadata:
+    if isinstance(metadata.get("filter_scopes"), dict):
         # in filter_scopes the key is the chart ID as a string; we need to update
         # them to be the new ID as a string:
         metadata["filter_scopes"] = {
             str(id_map[int(old_id)]): columns
             for old_id, columns in metadata["filter_scopes"].items()
-            if int(old_id) in id_map
+            if _is_int_like(old_id) and int(old_id) in id_map
         }
 
         # now update columns to use new IDs:
         for columns in metadata["filter_scopes"].values():
+            if not isinstance(columns, dict):
+                continue
             for attributes in columns.values():
+                if not isinstance(attributes, dict):
+                    continue
                 attributes["immune"] = [
                     id_map[old_id]
-                    for old_id in attributes["immune"]
+                    for old_id in attributes.get("immune", [])
                     if old_id in id_map
                 ]
 
-    if "expanded_slices" in metadata:
+    if isinstance(metadata.get("expanded_slices"), dict):
         metadata["expanded_slices"] = {
             str(id_map[int(old_id)]): value
             for old_id, value in metadata["expanded_slices"].items()
+            if _is_int_like(old_id) and int(old_id) in id_map
         }
 
     if "default_filters" in metadata:
-        default_filters = json.loads(metadata["default_filters"])
+        default_filters = _load_json_object(metadata["default_filters"])
         metadata["default_filters"] = json.dumps(
             {
                 str(id_map[int(old_id)]): value
                 for old_id, value in default_filters.items()
-                if int(old_id) in id_map
+                if _is_int_like(old_id) and int(old_id) in id_map
             }
         )
 
     # fix position
-    position = fixed.get("position", {})
     for child in position.values():
         if (
             isinstance(child, dict)
-            and child["type"] == "CHART"
+            and child.get("type") == "CHART"
+            and isinstance(child.get("meta"), dict)
             and "uuid" in child["meta"]
             and child["meta"]["uuid"] in chart_ids
         ):
@@ -134,13 +176,18 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
         "native_filter_configuration", []
     )
     for native_filter in native_filter_configuration:
+        if not isinstance(native_filter, dict):
+            continue
         targets = native_filter.get("targets", [])
         for target in targets:
+            if not isinstance(target, dict):
+                continue
             dataset_uuid = target.pop("datasetUuid", None)
-            if dataset_uuid:
-                target["datasetId"] = dataset_info[dataset_uuid]["datasource_id"]
+            if dataset_uuid and (info := dataset_info.get(dataset_uuid)):
+                target["datasetId"] = info["datasource_id"]
 
-        scope_excluded = native_filter.get("scope", {}).get("excluded", [])
+        scope = native_filter.get("scope", {})
+        scope_excluded = scope.get("excluded", []) if isinstance(scope, dict) else []
         if scope_excluded:
             native_filter["scope"]["excluded"] = [
                 id_map[old_id] for old_id in scope_excluded if old_id in id_map
@@ -156,7 +203,11 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
     for customization in (
         fixed.get("metadata", {}).get("chart_customization_config") or []
     ):
+        if not isinstance(customization, dict):
+            continue
         for target in customization.get("targets") or []:
+            if not isinstance(target, dict):
+                continue
             dataset_uuid = target.pop("datasetUuid", None)
             if dataset_uuid:
                 info = dataset_info.get(dataset_uuid)
@@ -243,6 +294,9 @@ def update_cross_filter_scoping(
 
     # Update chart_configuration entries
     if "chart_configuration" not in metadata:
+        return fixed
+
+    if not isinstance(metadata["chart_configuration"], dict):
         return fixed
 
     new_chart_configuration: dict[str, Any] = {}
