@@ -278,6 +278,29 @@ def test_catalog_cache() -> None:
     assert database.catalog_cache_timeout == 10
 
 
+def test_database_extra_properties_ignore_non_object_values() -> None:
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="sqlite://",
+        extra=json.dumps(
+            {
+                "metadata_cache_timeout": [],
+                "engine_params": [],
+                "schema_options": [],
+            }
+        ),
+    )
+
+    assert database.metadata_cache_timeout == {}
+    assert database.catalog_cache_enabled is False
+    assert database.catalog_cache_timeout is None
+    assert database.connect_args == {}
+    assert database.schema_options == {}
+
+    database.extra = json.dumps({"engine_params": {"connect_args": []}})
+    assert database.connect_args == {}
+
+
 def test_get_default_catalog() -> None:
     """
     Test the `get_default_catalog` method.
@@ -530,6 +553,30 @@ def test_get_sqla_engine(mocker: MockerFixture) -> None:
     create_engine = mocker.patch("superset.models.core.create_engine")
 
     database = Database(database_name="my_db", sqlalchemy_uri="trino://")
+    database._get_sqla_engine(nullpool=False)
+
+    create_engine.assert_called_with(
+        make_url("trino:///"),
+        connect_args={"source": "Apache Superset"},
+    )
+
+
+def test_get_sqla_engine_ignores_non_object_engine_params(
+    mocker: MockerFixture,
+) -> None:
+    from superset.models.core import Database
+
+    mocker.patch(
+        "superset.models.core.security_manager.find_user",
+        return_value=None,
+    )
+    create_engine = mocker.patch("superset.models.core.create_engine")
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="trino://",
+        extra=json.dumps({"engine_params": []}),
+    )
     database._get_sqla_engine(nullpool=False)
 
     create_engine.assert_called_with(

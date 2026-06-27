@@ -2371,6 +2371,16 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
             except json.JSONDecodeError as ex:
                 logger.error(ex, exc_info=True)
                 raise
+            if not isinstance(extra, dict):
+                return {}
+            for key in (
+                "engine_params",
+                "metadata_cache_timeout",
+                "metadata_params",
+                "schema_options",
+            ):
+                if not isinstance(extra.get(key), dict):
+                    extra.pop(key, None)
         return extra
 
     @staticmethod
