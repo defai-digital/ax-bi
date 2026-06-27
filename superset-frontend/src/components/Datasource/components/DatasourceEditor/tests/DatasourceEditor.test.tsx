@@ -70,6 +70,22 @@ test('renders Tabs', async () => {
   expect(screen.getByTestId('edit-dataset-tabs')).toBeInTheDocument();
 });
 
+test('renders when a metric has malformed extra metadata', async () => {
+  const testProps = createProps();
+  await asyncRender({
+    ...testProps,
+    datasource: {
+      ...testProps.datasource,
+      table_name: 'Vehicle Sales +',
+      metrics: testProps.datasource.metrics?.map((metric, index) =>
+        index === 0 ? { ...metric, extra: '{malformed' } : metric,
+      ),
+    },
+  });
+
+  expect(screen.getByTestId('edit-dataset-tabs')).toBeInTheDocument();
+});
+
 test('can sync columns from source', async () => {
   const testProps = createProps();
   await asyncRender({
