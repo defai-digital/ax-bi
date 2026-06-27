@@ -89,3 +89,12 @@ def test_validate_params_json_with_jinja():
 
     # None value should pass
     validate_params_json_with_jinja(None)
+
+
+@pytest.mark.parametrize("params", ["[]", '"bad"', "1", "null"])
+def test_validate_params_json_with_jinja_rejects_non_object_json(params: str):
+    """Test params JSON must decode to an object."""
+    from marshmallow import ValidationError
+
+    with pytest.raises(ValidationError, match="Params must be a JSON object"):
+        validate_params_json_with_jinja(params)

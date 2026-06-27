@@ -123,6 +123,8 @@ def validate_params_json_with_jinja(value: str | None) -> None:
         params = json.loads(value)
     except (json.JSONDecodeError, TypeError) as ex:
         raise ValidationError("Invalid JSON") from ex
+    if not isinstance(params, dict):
+        raise ValidationError("Params must be a JSON object")
 
     # Then validate Jinja2 templates within the params
     try:
