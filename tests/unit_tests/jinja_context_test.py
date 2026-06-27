@@ -1208,6 +1208,38 @@ def test_metric_macro_no_dataset_id_with_context_missing_info(
         DatasetDAO.find_by_id.assert_not_called()
 
 
+def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed context containers should raise the normal template error."""
+    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    ChartDAO = mocker.patch("superset.daos.chart.ChartDAO")  # noqa: N806
+    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g.form_data = {"queries": [], "datasource": []}
+
+    env = SandboxedEnvironment(undefined=DebugUndefined)
+    with current_app.test_request_context(
+        data={"form_data": json.dumps([])},
+        query_string={"form_data": json.dumps("not-an-object")},
+    ):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+    DatasetDAO.find_by_id.assert_not_called()
+    ChartDAO.find_by_id.assert_not_called()
+
+    with current_app.test_request_context(json=["not-an-object"]):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+
+
 def test_metric_macro_no_dataset_id_with_context_datasource_id(
     mocker: MockerFixture,
 ) -> None:
@@ -1258,6 +1290,28 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id(
         ],
     }
     with current_app.test_request_context():
+        assert metric_macro(env, {}, "macro_key") == "COUNT(*)"
+
+
+def test_metric_macro_no_dataset_id_with_request_datasource_string(
+    mocker: MockerFixture,
+) -> None:
+    """The metric macro accepts the combined datasource string in JSON bodies."""
+    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO.find_by_id.return_value = SqlaTable(
+        table_name="test_dataset",
+        metrics=[
+            SqlMetric(metric_name="macro_key", expression="COUNT(*)"),
+        ],
+        database=Database(database_name="my_database", sqlalchemy_uri="sqlite://"),
+        schema="my_schema",
+        sql=None,
+    )
+    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g.form_data = {}
+
+    env = SandboxedEnvironment(undefined=DebugUndefined)
+    with current_app.test_request_context(json={"datasource": "1__table"}):
         assert metric_macro(env, {}, "macro_key") == "COUNT(*)"
 
 
