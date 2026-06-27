@@ -208,6 +208,38 @@ def test_import_assets_imports_tags(mocker: MockerFixture, session: Session) -> 
         assert assocs[0].tag.name == "dashboard_tag"
 
 
+def test_import_tag_ignores_malformed_tags_yaml(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """Malformed tags.yaml metadata should not abort tag import."""
+    from superset import db
+    from superset.commands.importers.v1.assets import feature_flag_manager
+    from superset.commands.importers.v1.utils import import_tag
+    from superset.tags.models import ObjectType, Tag, TaggedObject
+
+    mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=True)
+
+    engine = db.session.get_bind()
+    Tag.metadata.create_all(engine)  # pylint: disable=no-member
+
+    tag_ids = import_tag(
+        ["chart_tag"],
+        {"tags.yaml": yaml.dump({"tags": ["bad", {"description": "missing name"}]})},
+        object_id=42,
+        object_type="chart",
+        db_session=db.session,
+    )
+
+    tag = db.session.query(Tag).filter_by(name="chart_tag").one()
+    assoc = db.session.query(TaggedObject).filter_by(tag_id=tag.id).one()
+
+    assert tag_ids == [tag.id]
+    assert tag.description is None
+    assert assoc.object_id == 42
+    assert assoc.object_type == ObjectType.chart
+
+
 def test_import_assets_skips_tags_when_feature_disabled(
     mocker: MockerFixture, session: Session
 ) -> None:

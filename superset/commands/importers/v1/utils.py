@@ -310,7 +310,15 @@ def import_tag(
             logger.error("Error parsing tags.yaml: %s", err)
             tags_config = {}
 
-        for tag_info in tags_config.get("tags", []):
+        if not isinstance(tags_config, dict):
+            tags_config = {}
+        tag_entries = tags_config.get("tags", [])
+        if not isinstance(tag_entries, list):
+            tag_entries = []
+
+        for tag_info in tag_entries:
+            if not isinstance(tag_info, dict):
+                continue
             tag_name = tag_info.get("tag_name")
             description = tag_info.get("description", None)
             if tag_name:
