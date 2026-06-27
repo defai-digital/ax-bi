@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional
+from typing import cast, Optional
 
 from superset import db
 from superset.commands.dataset.exceptions import DatasetNotFoundError
@@ -30,7 +30,7 @@ from superset.key_value.utils import decode_permalink_id
 from superset.models import core as models
 from superset.sqllab.permalink.exceptions import SqlLabPermalinkGetFailedError
 from superset.sqllab.permalink.types import SqlLabPermalinkValue
-from superset.utils import core as utils, json
+from superset.utils import core as utils
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,10 @@ class GetSqlLabPermalinkCommand(BaseSqlLabPermalinkCommand):
                 kv = db.session.query(models.KeyValue).filter_by(id=id).scalar()
                 if not kv:
                     return None
-                return json.loads(kv.value)
+                return cast(
+                    SqlLabPermalinkValue,
+                    self.codec.decode(kv.value.encode("utf-8")),
+                )
             except Exception as ex:
                 raise SqlLabPermalinkGetFailedError(
                     message=utils.error_msg_from_exception(ex)
