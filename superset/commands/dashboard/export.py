@@ -85,9 +85,17 @@ def append_charts(position: dict[str, Any], charts: set[Slice]) -> dict[str, Any
 
     # if we have ROOT_ID/GRID_ID, append orphan charts to a new row inside the grid
     row_hash = None
-    if "ROOT_ID" in position and "GRID_ID" in position["ROOT_ID"]["children"]:
-        row_hash = f"ROW-N-{len(position['GRID_ID']['children'])}"
-        position["GRID_ID"]["children"].append(row_hash)
+    root = position.get("ROOT_ID")
+    grid = position.get("GRID_ID")
+    root_children = root.get("children") if isinstance(root, dict) else None
+    grid_children = grid.get("children") if isinstance(grid, dict) else None
+    if (
+        isinstance(root_children, list)
+        and isinstance(grid_children, list)
+        and "GRID_ID" in root_children
+    ):
+        row_hash = f"ROW-N-{len(grid_children)}"
+        grid_children.append(row_hash)
         position[row_hash] = {
             "children": chart_hashes,
             "id": row_hash,

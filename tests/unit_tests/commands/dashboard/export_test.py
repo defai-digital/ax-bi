@@ -592,6 +592,47 @@ def test_orphan_chart_gets_uuid_derived_chart_id() -> None:
     assert chart_meta["chartId"] != env_local_id
 
 
+def test_orphan_chart_export_tolerates_malformed_grid_layout() -> None:
+    """Malformed ROOT_ID/GRID_ID nodes must not abort dashboard export."""
+    from superset.commands.dashboard.export import ExportDashboardsCommand
+
+    chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
+    orphan = MagicMock()
+    orphan.id = 392
+    orphan.uuid = chart_uuid
+    orphan.slice_name = "Orphan Chart"
+
+    dashboard = MagicMock()
+    dashboard.dashboard_title = "Test Dashboard"
+    dashboard.theme = None
+    dashboard.slices = [orphan]
+    dashboard.tags = []
+    dashboard.roles = []
+    dashboard.export_to_dict.return_value = {
+        "position_json": json.dumps(
+            {
+                "DASHBOARD_VERSION_KEY": "v2",
+                "ROOT_ID": "malformed",
+                "GRID_ID": {"children": "malformed"},
+            }
+        ),
+        "json_metadata": "{}",
+    }
+
+    with patch(
+        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        return_value=False,
+    ):
+        content = ExportDashboardsCommand._file_content(dashboard)
+
+    result = yaml.safe_load(content)
+    chart_node = result["position"][f"CHART-{chart_uuid}"]
+
+    assert chart_node["type"] == "CHART"
+    assert chart_node["meta"]["uuid"] == chart_uuid
+    assert "parents" not in chart_node
+
+
 def test_stabilize_chart_ids_skips_invalid_uuid() -> None:
     """A malformed meta.uuid must not abort the whole dashboard export."""
     result = _export_with_chart(
