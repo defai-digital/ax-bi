@@ -147,7 +147,14 @@ def import_dashboard(  # noqa: C901
         if not native_filter_configuration:
             return
         for native_filter in native_filter_configuration:
-            for target in native_filter.get("targets", []):
+            if not isinstance(native_filter, dict):
+                continue
+            targets = native_filter.get("targets", [])
+            if not isinstance(targets, list):
+                continue
+            for target in targets:
+                if not isinstance(target, dict):
+                    continue
                 old_dataset_id = target.get("datasetId")
                 if dataset_id_mapping and old_dataset_id is not None:
                     target["datasetId"] = dataset_id_mapping.get(
@@ -333,17 +340,36 @@ def _load_dashboard_json_object(value: Any) -> dict[str, Any]:
     return parsed
 
 
+def _validate_native_filter_configuration(
+    native_filter_configuration: Any,
+) -> None:
+    """Validate v0 native filter metadata has the container shapes import expects."""
+    if native_filter_configuration is None:
+        return
+
+    if not isinstance(native_filter_configuration, list):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    for native_filter in native_filter_configuration:
+        if not isinstance(native_filter, dict):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+        targets = native_filter.get("targets")
+        if targets is None:
+            continue
+        if not isinstance(targets, list) or not all(
+            isinstance(target, dict) for target in targets
+        ):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+
+
 def _validate_dashboard_import_object(dashboard: Any) -> None:
     if not isinstance(dashboard, Dashboard):
         raise DashboardImportException(_("Invalid dashboard import file"))
 
     json_metadata = _load_dashboard_json_object(dashboard.json_metadata)
-    native_filter_configuration = json_metadata.get("native_filter_configuration")
-    if native_filter_configuration is not None and not isinstance(
-        native_filter_configuration,
-        list,
-    ):
-        raise DashboardImportException(_("Invalid dashboard import file"))
+    _validate_native_filter_configuration(
+        json_metadata.get("native_filter_configuration")
+    )
 
     filter_scopes = json_metadata.get("filter_scopes")
     if filter_scopes is not None and not isinstance(filter_scopes, dict):

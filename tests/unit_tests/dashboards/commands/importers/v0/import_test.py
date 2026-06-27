@@ -97,6 +97,22 @@ def test_validate_dashboard_bundle_shape_accepts_valid_entries() -> None:
         ),
         Dashboard(
             dashboard_title="My dashboard",
+            json_metadata=json.dumps({"native_filter_configuration": ["bad"]}),
+        ),
+        Dashboard(
+            dashboard_title="My dashboard",
+            json_metadata=json.dumps(
+                {"native_filter_configuration": [{"targets": "bad"}]}
+            ),
+        ),
+        Dashboard(
+            dashboard_title="My dashboard",
+            json_metadata=json.dumps(
+                {"native_filter_configuration": [{"targets": ["bad"]}]}
+            ),
+        ),
+        Dashboard(
+            dashboard_title="My dashboard",
             json_metadata=json.dumps({"filter_scopes": []}),
         ),
     ],
