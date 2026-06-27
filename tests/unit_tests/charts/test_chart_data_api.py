@@ -52,6 +52,36 @@ def test_load_json_object_rejects_malformed_json() -> None:
     assert _load_json_object("{malformed") is None
 
 
+def test_map_form_data_datasource_to_dataset_id_extracts_context() -> None:
+    """Chart data log context extracts dashboard, dataset, and chart IDs."""
+    from superset.charts.data.api import ChartDataRestApi
+
+    context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
+        MagicMock(),
+        {
+            "datasource": {"id": 5, "type": "table"},
+            "form_data": {"dashboardId": 7, "slice_id": 9},
+        },
+    )
+
+    assert context == {"dashboard_id": 7, "dataset_id": 5, "slice_id": 9}
+
+
+def test_map_form_data_datasource_to_dataset_id_ignores_malformed_context() -> None:
+    """Malformed chart data log context containers should not raise."""
+    from superset.charts.data.api import ChartDataRestApi
+
+    context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
+        MagicMock(),
+        {
+            "datasource": "5__table",
+            "form_data": "not-an-object",
+        },
+    )
+
+    assert context == {"dashboard_id": None, "dataset_id": None, "slice_id": None}
+
+
 def test_get_data_sets_g_form_data_without_dashboard_filter() -> None:
     """
     Regression test: GET /api/v1/chart/<pk>/data/ must populate g.form_data

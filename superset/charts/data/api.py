@@ -84,6 +84,11 @@ def _load_json_object(value: str | None) -> dict[str, Any] | None:
     return parsed if isinstance(parsed, dict) else None
 
 
+def _as_dict(value: Any) -> dict[str, Any]:
+    """Return a dict value, or an empty dict for malformed containers."""
+    return value if isinstance(value, dict) else {}
+
+
 class ChartDataRestApi(ChartRestApi):
     include_route_methods = {"get_data", "data", "data_from_cache"}
 
@@ -631,16 +636,16 @@ class ChartDataRestApi(ChartRestApi):
     def _map_form_data_datasource_to_dataset_id(
         self, form_data: dict[str, Any]
     ) -> dict[str, Any]:
+        nested_form_data = _as_dict(form_data.get("form_data"))
+        datasource = _as_dict(form_data.get("datasource"))
         return {
-            "dashboard_id": form_data.get("form_data", {}).get("dashboardId"),
+            "dashboard_id": nested_form_data.get("dashboardId"),
             "dataset_id": (
-                form_data.get("datasource", {}).get("id")
-                if isinstance(form_data.get("datasource"), dict)
-                and form_data.get("datasource", {}).get("type")
-                == DatasourceType.TABLE.value
+                datasource.get("id")
+                if datasource.get("type") == DatasourceType.TABLE.value
                 else None
             ),
-            "slice_id": form_data.get("form_data", {}).get("slice_id"),
+            "slice_id": nested_form_data.get("slice_id"),
         }
 
     @logs_context(context_func=_map_form_data_datasource_to_dataset_id)
