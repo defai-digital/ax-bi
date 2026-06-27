@@ -210,6 +210,22 @@ fetchMock.get(FETCH_REPORT_INVALID_ANCHOR_ENDPOINT, {
   },
 });
 
+const FETCH_MALFORMED_CONFIG_ALERT_ENDPOINT = 'glob:*/api/v1/report/8';
+fetchMock.get(FETCH_MALFORMED_CONFIG_ALERT_ENDPOINT, {
+  result: {
+    ...generateMockPayload(false),
+    id: 8,
+    recipients: [
+      {
+        id: 1,
+        recipient_config_json: '{malformed',
+        type: 'Email',
+      },
+    ],
+    validator_config_json: '{malformed',
+  },
+});
+
 // Related mocks — component uses /api/v1/report/related/* endpoints for both
 // alerts and reports, so we mock both the legacy alert paths and the actual
 // report paths used by the component.
@@ -411,6 +427,22 @@ test('properly renders edit alert text', async () => {
   expect(screen.getByText('Edit alert')).toBeInTheDocument();
   const saveButton = screen.getByRole('button', { name: /save/i });
   expect(saveButton).toBeInTheDocument();
+});
+
+test('edit alert tolerates malformed notification and validator config', async () => {
+  const props = generateMockedProps(false, true, false);
+  render(
+    <AlertReportModal
+      {...props}
+      alert={{ ...(props.alert as AlertObject), id: 8 }}
+    />,
+    {
+      useRedux: true,
+    },
+  );
+
+  expect(await screen.findByText('Edit alert')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
 });
 
 test('properly renders add report text', () => {
