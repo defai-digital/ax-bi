@@ -105,6 +105,27 @@ def test_update_native_filters_config_ignores_non_object_items() -> None:
     }
 
 
+def test_update_native_filters_config_ignores_scalar_update_containers() -> None:
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {"native_filter_configuration": [{"id": "filter-1", "name": "Region"}]}
+        ),
+    )
+    attributes = {
+        "modified": "bad-update",
+        "deleted": "filter-1",
+        "reordered": "filter-1",
+    }
+
+    result = DashboardDAO.update_native_filters_config(dashboard, attributes)
+
+    assert result == [{"id": "filter-1", "name": "Region"}]
+    assert json.loads(dashboard.json_metadata) == {
+        "native_filter_configuration": [{"id": "filter-1", "name": "Region"}]
+    }
+
+
 def test_update_chart_customizations_config_ignores_malformed_metadata() -> None:
     dashboard = Dashboard(id=1, json_metadata="{malformed")
     attributes = {
@@ -142,6 +163,33 @@ def test_update_chart_customizations_config_ignores_non_object_items() -> None:
         ],
         "deleted": [],
         "reordered": ["customization-1"],
+    }
+
+    result = DashboardDAO.update_chart_customizations_config(dashboard, attributes)
+
+    assert result == [{"id": "customization-1", "name": "Compact title"}]
+    assert json.loads(dashboard.json_metadata) == {
+        "chart_customization_config": [
+            {"id": "customization-1", "name": "Compact title"}
+        ]
+    }
+
+
+def test_update_chart_customizations_config_ignores_scalar_update_containers() -> None:
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "chart_customization_config": [
+                    {"id": "customization-1", "name": "Compact title"}
+                ]
+            }
+        ),
+    )
+    attributes = {
+        "modified": "bad-update",
+        "deleted": "customization-1",
+        "reordered": "customization-1",
     }
 
     result = DashboardDAO.update_chart_customizations_config(dashboard, attributes)

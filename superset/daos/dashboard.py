@@ -89,6 +89,11 @@ def _load_json_object_list(metadata: dict[str, Any], key: str) -> list[dict[str,
     return [item for item in value if isinstance(item, dict)]
 
 
+def _as_list(value: Any) -> list[Any]:
+    """Return a list value, or an empty list for malformed containers."""
+    return value if isinstance(value, list) else []
+
+
 class DashboardDAO(BaseDAO[Dashboard]):
     base_filter = DashboardAccessFilter
     # Column used by MCP tools for title-based identifier fallback, so a
@@ -480,18 +485,19 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 metadata,
                 "native_filter_configuration",
             )
-            reordered_filter_ids: list[int] = attributes.get("reordered", [])
+            reordered_filter_ids = _as_list(attributes.get("reordered", []))
             modified_filters = [
                 item
-                for item in attributes.get("modified", [])
+                for item in _as_list(attributes.get("modified", []))
                 if isinstance(item, dict)
             ]
+            deleted_filter_ids = _as_list(attributes.get("deleted", []))
             updated_configuration = []
 
             # Modify / Delete existing filters
             for conf in native_filter_configuration:
                 deleted_filter = next(
-                    (f for f in attributes.get("deleted", []) if f == conf.get("id")),
+                    (f for f in deleted_filter_ids if f == conf.get("id")),
                     None,
                 )
                 if deleted_filter:
@@ -554,16 +560,17 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 metadata,
                 "chart_customization_config",
             )
-            reordered_customization_ids: list[str] = attributes.get("reordered", [])
+            reordered_customization_ids = _as_list(attributes.get("reordered", []))
             modified_customizations = [
                 item
-                for item in attributes.get("modified", [])
+                for item in _as_list(attributes.get("modified", []))
                 if isinstance(item, dict)
             ]
+            deleted_customization_ids = _as_list(attributes.get("deleted", []))
 
             for conf in chart_customization_config:
                 deleted_customization = next(
-                    (c for c in attributes.get("deleted", []) if c == conf.get("id")),
+                    (c for c in deleted_customization_ids if c == conf.get("id")),
                     None,
                 )
                 if deleted_customization:
