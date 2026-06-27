@@ -51,6 +51,13 @@ def _get_owner_id(tab_state_id: int) -> int:
     return db.session.query(TabState.user_id).filter_by(id=tab_state_id).scalar()
 
 
+def _load_expanded_value(value: str) -> bool:
+    payload = json.loads(value)
+    if not isinstance(payload, bool):
+        raise ValueError("expanded must be a JSON boolean")
+    return payload
+
+
 class TabStateView(BaseSupersetView):
     @has_access_api
     @expose("/", methods=("POST",))
@@ -293,7 +300,7 @@ class TableSchemaView(BaseSupersetView):
             owner_id = _get_owner_id(tab_state_id)
             if owner_id is None or owner_id != get_user_id():
                 return json_error_response(__("Forbidden"), status=403)
-            payload = json.loads(request.form["expanded"])
+            payload = _load_expanded_value(request.form["expanded"])
             db.session.query(TableSchema).filter_by(id=table_schema_id).update(
                 {"expanded": payload}
             )
