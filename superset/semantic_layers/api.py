@@ -60,7 +60,11 @@ from superset.daos.semantic_layer import SemanticLayerDAO
 from superset.datasets.schemas import get_delete_ids_schema
 from superset.exceptions import SupersetSecurityException
 from superset.models.core import Database
-from superset.semantic_layers.models import SemanticLayer, SemanticView
+from superset.semantic_layers.models import (
+    load_configuration,
+    SemanticLayer,
+    SemanticView,
+)
 from superset.semantic_layers.registry import registry
 from superset.semantic_layers.schemas import (
     SemanticLayerPostSchema,
@@ -81,9 +85,7 @@ logger = logging.getLogger(__name__)
 
 
 def _serialize_layer(layer: SemanticLayer) -> dict[str, Any]:
-    config = layer.configuration
-    if isinstance(config, str):
-        config = json.loads(config)
+    config = load_configuration(layer.configuration)
     return {
         "uuid": str(layer.uuid),
         "name": layer.name,
@@ -780,9 +782,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
         existing = SemanticLayerDAO.get_semantic_views(str(layer.uuid))
         existing_keys: set[tuple[str, str]] = set()
         for v in existing:
-            config = v.configuration
-            if isinstance(config, str):
-                config = json.loads(config)
+            config = load_configuration(v.configuration)
             existing_keys.add((v.name, json.dumps(config or {}, sort_keys=True)))
         runtime_key = json.dumps(runtime_data or {}, sort_keys=True)
 

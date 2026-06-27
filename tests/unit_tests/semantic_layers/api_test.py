@@ -1014,6 +1014,33 @@ def test_serialize_layer_none_config(
     assert response.json["result"]["configuration"] == {}
 
 
+@SEMANTIC_LAYERS_APP
+@pytest.mark.parametrize("configuration", ["{malformed", "[]"])
+def test_serialize_layer_malformed_config(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+    configuration: str,
+) -> None:
+    """Test _serialize_layer tolerates persisted malformed configuration."""
+    layer = MagicMock()
+    layer.uuid = uuid_lib.uuid4()
+    layer.name = "Layer"
+    layer.description = None
+    layer.type = "snowflake"
+    layer.cache_timeout = None
+    layer.configuration = configuration
+    layer.changed_on_delta_humanized.return_value = "1 day ago"
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = layer
+
+    response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
+
+    assert response.status_code == 200
+    assert response.json["result"]["configuration"] == {}
+
+
 def test_infer_discriminators_injects_discriminator() -> None:
     """Test _infer_discriminators injects discriminator values."""
     from superset.semantic_layers.api import _infer_discriminators
@@ -2125,6 +2152,39 @@ def test_get_views_existing_dict_config(
     assert response.status_code == 200
     result = response.json["result"]
     assert result[0]["already_added"] is True
+
+
+@SEMANTIC_LAYERS_APP
+def test_get_views_existing_malformed_config(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/views tolerates malformed existing view configuration."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.uuid = uuid_lib.uuid4()
+
+    mock_view = MagicMock()
+    mock_view.name = "View X"
+    mock_layer.implementation.get_semantic_views.return_value = [mock_view]
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+
+    existing_view = MagicMock()
+    existing_view.name = "View X"
+    existing_view.configuration = "{malformed"
+
+    mock_dao.get_semantic_views.return_value = [existing_view]
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/views",
+        json={"runtime_data": {"key": "val"}},
+    )
+
+    assert response.status_code == 200
+    assert response.json["result"][0]["already_added"] is False
 
 
 @pytest.mark.parametrize(
