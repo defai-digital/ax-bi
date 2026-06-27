@@ -42,8 +42,6 @@ from superset.commands.chart.data.create_async_job_command import (
     CreateAsyncChartDataJobCommand,
 )
 from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.utils.fast_cache import set_fast_cache
-from superset.utils.json_fast import dumps_fast
 from superset.commands.chart.data.streaming_export_command import (
     StreamingCSVExportCommand,
 )
@@ -65,6 +63,8 @@ from superset.utils.core import (
     get_user_id,
 )
 from superset.utils.decorators import logs_context
+from superset.utils.fast_cache import set_fast_cache
+from superset.utils.json_fast import dumps_fast
 from superset.views.base import CsvResponse, generate_download_headers, XlsxResponse
 from superset.views.base_api import statsd_metrics
 
@@ -72,6 +72,16 @@ if TYPE_CHECKING:
     from superset.common.query_context import QueryContext
 
 logger = logging.getLogger(__name__)
+
+
+def _load_json_object(value: str | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 class ChartDataRestApi(ChartRestApi):
@@ -160,10 +170,7 @@ class ChartDataRestApi(ChartRestApi):
         if not chart:
             return self.response_404()
 
-        try:
-            json_body = json.loads(chart.query_context)
-        except (TypeError, json.JSONDecodeError):
-            json_body = None
+        json_body = _load_json_object(chart.query_context)
 
         if json_body is None:
             return self.response_400(
@@ -243,10 +250,7 @@ class ChartDataRestApi(ChartRestApi):
         if use_async:
             return self._run_async(json_body, command, add_extra_log_payload)
 
-        try:
-            form_data = json.loads(chart.params)
-        except (TypeError, json.JSONDecodeError):
-            form_data = {}
+        form_data = _load_json_object(chart.params) or {}
 
         return self._get_data_response(
             command=command,

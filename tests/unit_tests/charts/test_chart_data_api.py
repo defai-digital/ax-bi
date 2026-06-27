@@ -31,6 +31,27 @@ if TYPE_CHECKING:
     from superset.app import SupersetApp
 
 
+def test_load_json_object_accepts_json_objects() -> None:
+    """Saved chart payload parsing accepts object JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object('{"queries": []}') == {"queries": []}
+
+
+def test_load_json_object_rejects_non_object_json() -> None:
+    """Saved chart payload parsing rejects non-object JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object("[]") is None
+
+
+def test_load_json_object_rejects_malformed_json() -> None:
+    """Saved chart payload parsing rejects malformed JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object("{malformed") is None
+
+
 def test_get_data_sets_g_form_data_without_dashboard_filter() -> None:
     """
     Regression test: GET /api/v1/chart/<pk>/data/ must populate g.form_data
