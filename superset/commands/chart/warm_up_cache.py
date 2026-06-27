@@ -54,7 +54,12 @@ class ChartWarmUpCacheCommand(BaseCommand):
             return []
 
         if self._extra_filters:
-            filters = json.loads(self._extra_filters)
+            try:
+                filters = json.loads(self._extra_filters)
+            except (TypeError, json.JSONDecodeError) as ex:
+                raise ChartInvalidError(
+                    "Extra filters must be a list of objects"
+                ) from ex
             if not isinstance(filters, list) or not all(
                 isinstance(item, dict) for item in filters
             ):

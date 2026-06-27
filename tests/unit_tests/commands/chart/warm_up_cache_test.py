@@ -253,7 +253,7 @@ def test_handles_empty_dashboard_filters(
 
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
 def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
-    """Verify that invalid JSON in extra_filters raises appropriate error"""
+    """Verify that invalid JSON in extra_filters raises a controlled error."""
     chart = Slice(
         id=128,
         slice_name="Test Chart",
@@ -277,16 +277,7 @@ def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
         ):
             result = ChartWarmUpCacheCommand(chart, 42, invalid_json).run()
 
-            assert result["viz_error"] is not None, "Should return an error"
-            assert result["chart_id"] == 128
-            # JSONDecodeError messages vary across Python versions
-            error_str = str(result["viz_error"]).lower()
-            assert (
-                "json" in error_str
-                or "decode" in error_str
-                or "expecting" in error_str
-                or "delimiter" in error_str
-            ), f"Error should be a JSON decode issue: {result['viz_error']}"
+            assert result["viz_error"] == "Extra filters must be a list of objects"
 
 
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
