@@ -64,11 +64,14 @@ class ExportChartsCommand(ExportModelsCommand):
             key: value for key, value in payload.items() if key not in REMOVE_KEYS
         }
 
-        if payload.get("params"):
+        if payload.get("params") is not None:
             try:
-                payload["params"] = json.loads(payload["params"])
-            except json.JSONDecodeError:
+                params = json.loads(payload["params"])
+            except (TypeError, json.JSONDecodeError):
                 logger.info("Unable to decode `params` field: %s", payload["params"])
+                params = {}
+
+            payload["params"] = params if isinstance(params, dict) else {}
 
         payload["version"] = EXPORT_VERSION
         if model.table:
