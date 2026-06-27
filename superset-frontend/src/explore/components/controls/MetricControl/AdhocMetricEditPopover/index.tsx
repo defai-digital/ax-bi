@@ -66,7 +66,7 @@ interface SavedMetricType {
 interface DatasourceInfo {
   type?: DatasourceType | string;
   id?: number | string;
-  extra?: string;
+  extra?: string | ExtraConfig;
   [key: string]: unknown;
 }
 
@@ -409,9 +409,12 @@ class AdhocMetricEditPopover extends PureComponent<
         savedMetric?.metric_name !== propsSavedMetric?.metric_name);
 
     let extra: ExtraConfig = {};
-    if (datasource?.extra && typeof datasource.extra === 'string') {
+    if (datasource?.extra) {
       try {
-        extra = JSON.parse(datasource.extra) as ExtraConfig;
+        extra =
+          typeof datasource.extra === 'string'
+            ? (JSON.parse(datasource.extra) as ExtraConfig)
+            : datasource.extra;
       } catch {} // eslint-disable-line no-empty
     }
 
