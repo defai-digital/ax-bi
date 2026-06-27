@@ -130,15 +130,12 @@ def import_dashboard(  # noqa: C901
         position_data = _load_dashboard_json_object(dashboard.position_json)
         position_json = position_data.values()
         for value in position_json:
-            if (
-                isinstance(value, dict)
-                and value.get("meta")
-                and value.get("meta", {}).get("chartId")
-            ):
-                old_slice_id = value["meta"]["chartId"]
+            meta = value.get("meta") if isinstance(value, dict) else None
+            if isinstance(meta, dict) and meta.get("chartId"):
+                old_slice_id = meta["chartId"]
 
                 if old_slice_id in old_to_new_slc_id_dict:
-                    value["meta"]["chartId"] = old_to_new_slc_id_dict[old_slice_id]
+                    meta["chartId"] = old_to_new_slc_id_dict[old_slice_id]
         dashboard.position_json = json.dumps(position_data)
 
     def alter_native_filters(dashboard: Dashboard) -> None:
@@ -362,6 +359,15 @@ def _validate_native_filter_configuration(
             raise DashboardImportException(_("Invalid dashboard import file"))
 
 
+def _validate_dashboard_position(position_json: dict[str, Any]) -> None:
+    for node in position_json.values():
+        if not isinstance(node, dict):
+            continue
+        meta = node.get("meta")
+        if meta is not None and not isinstance(meta, dict):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+
+
 def _validate_dashboard_import_object(dashboard: Any) -> None:
     if not isinstance(dashboard, Dashboard):
         raise DashboardImportException(_("Invalid dashboard import file"))
@@ -376,7 +382,9 @@ def _validate_dashboard_import_object(dashboard: Any) -> None:
         raise DashboardImportException(_("Invalid dashboard import file"))
 
     if dashboard.position_json:
-        _load_dashboard_json_object(dashboard.position_json)
+        _validate_dashboard_position(
+            _load_dashboard_json_object(dashboard.position_json)
+        )
 
 
 def _load_datasource_remote_id(datasource: Any, index: int) -> Any:

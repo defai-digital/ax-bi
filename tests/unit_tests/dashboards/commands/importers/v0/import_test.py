@@ -93,6 +93,10 @@ def test_validate_dashboard_bundle_shape_accepts_valid_entries() -> None:
         Dashboard(dashboard_title="My dashboard", position_json="[]"),
         Dashboard(
             dashboard_title="My dashboard",
+            position_json=json.dumps({"CHART-1": {"meta": "bad"}}),
+        ),
+        Dashboard(
+            dashboard_title="My dashboard",
             json_metadata=json.dumps({"native_filter_configuration": {}}),
         ),
         Dashboard(
