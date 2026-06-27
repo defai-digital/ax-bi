@@ -72,6 +72,13 @@ def test_json_codec_decode_wraps_malformed_json() -> None:
         codec.decode(b"{malformed")
 
 
+def test_marshmallow_codec_decode_wraps_schema_errors() -> None:
+    codec = MarshmallowKeyValueCodec(DashboardPermalinkSchema())
+
+    with pytest.raises(KeyValueCodecDecodeException):
+        codec.decode(JsonKeyValueCodec().encode({"foo": "bar"}))
+
+
 @pytest.mark.parametrize(
     "schema,input_,expected_result",
     [
@@ -93,7 +100,7 @@ def test_json_codec_decode_wraps_malformed_json() -> None:
         (
             DashboardPermalinkSchema(),
             {"foo": "bar"},
-            KeyValueCodecEncodeException(),
+            KeyValueCodecDecodeException(),
         ),
     ],
 )

@@ -104,4 +104,4 @@ class MarshmallowKeyValueCodec(JsonKeyValueCodec):
             obj = super().decode(value)
             return self.schema.load(obj)
         except ValidationError as ex:
-            raise KeyValueCodecEncodeException(message=str(ex)) from ex
+            raise KeyValueCodecDecodeException(message=str(ex)) from ex
