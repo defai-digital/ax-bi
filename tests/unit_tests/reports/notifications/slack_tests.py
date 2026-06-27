@@ -22,6 +22,7 @@ import pandas as pd
 import pytest
 from slack_sdk.errors import SlackApiError
 
+from superset.reports.notifications.exceptions import NotificationParamException
 from superset.reports.notifications.slackv2 import SlackV2Notification
 from superset.utils.core import HeaderDataType
 
@@ -74,6 +75,43 @@ def test_get_channel_with_multi_recipients(mock_header_data) -> None:
     assert result == "some_channel,second_channel,third_channel"
 
     # Test if the recipient configuration JSON is valid when using a SlackV2 recipient type  # noqa: E501
+
+
+def test_get_channel_malformed_recipient_config_raises_param_exception(
+    mock_header_data,
+) -> None:
+    from superset.reports.models import ReportRecipients, ReportRecipientType
+    from superset.reports.notifications.base import NotificationContent
+    from superset.reports.notifications.slack import SlackNotification
+
+    notification = SlackNotification(
+        recipient=ReportRecipients(
+            type=ReportRecipientType.SLACK,
+            recipient_config_json="{malformed",
+        ),
+        content=NotificationContent(name="test alert", header_data=mock_header_data),
+    )
+
+    with pytest.raises(NotificationParamException, match="Slack channel is required"):
+        notification._get_channel()
+
+
+def test_get_channels_missing_slackv2_target_raises_param_exception(
+    mock_header_data,
+) -> None:
+    from superset.reports.models import ReportRecipients, ReportRecipientType
+    from superset.reports.notifications.base import NotificationContent
+
+    notification = SlackV2Notification(
+        recipient=ReportRecipients(
+            type=ReportRecipientType.SLACKV2,
+            recipient_config_json="{}",
+        ),
+        content=NotificationContent(name="test alert", header_data=mock_header_data),
+    )
+
+    with pytest.raises(NotificationParamException, match="Slack channel is required"):
+        notification._get_channels()
 
 
 def test_valid_recipient_config_json_slackv2(mock_header_data) -> None:

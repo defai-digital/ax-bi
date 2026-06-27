@@ -25,7 +25,10 @@ from flask import current_app
 
 from superset import feature_flag_manager
 from superset.reports.models import ReportRecipientType
-from superset.reports.notifications.base import BaseNotification
+from superset.reports.notifications.base import (
+    BaseNotification,
+    get_recipient_config_target,
+)
 from superset.reports.notifications.exceptions import (
     NotificationParamException,
     NotificationUnprocessableException,
@@ -50,14 +53,10 @@ class WebhookNotification(BaseNotification):
         :returns: The webhook URL
         :raises NotificationParamException: If the webhook URL is not provided in the recipient configuration
         """  # noqa: E501
-        try:
-            cfg = json.loads(self._recipient.recipient_config_json)
-            target = cfg.get("target") if isinstance(cfg, dict) else None
-            if not target:
-                raise NotificationParamException("Webhook URL is required")
-            return target
-        except (json.JSONDecodeError, KeyError, TypeError) as ex:
-            raise NotificationParamException("Webhook URL is required") from ex
+        return get_recipient_config_target(
+            self._recipient.recipient_config_json,
+            "Webhook URL is required",
+        )
 
     def _get_req_payload(self) -> dict[str, Any]:
         header_content = {

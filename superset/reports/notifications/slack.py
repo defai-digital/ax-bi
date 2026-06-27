@@ -33,7 +33,10 @@ from slack_sdk.errors import (
 )
 
 from superset.reports.models import ReportRecipientType
-from superset.reports.notifications.base import BaseNotification
+from superset.reports.notifications.base import (
+    BaseNotification,
+    get_recipient_config_target,
+)
 from superset.reports.notifications.exceptions import (
     NotificationAuthorizationException,
     NotificationMalformedException,
@@ -42,7 +45,6 @@ from superset.reports.notifications.exceptions import (
     SlackV1NotificationError,
 )
 from superset.reports.notifications.slack_mixin import SlackMixin
-from superset.utils import json
 from superset.utils.core import recipients_string_to_list
 from superset.utils.decorators import statsd_gauge
 from superset.utils.slack import (
@@ -68,7 +70,11 @@ class SlackNotification(SlackMixin, BaseNotification):  # pylint: disable=too-fe
         channels. Multiple channels are demarcated by a comma.
         :returns: The comma separated list of channel(s)
         """
-        recipient_str = json.loads(self._recipient.recipient_config_json)["target"]
+        recipient_str = get_recipient_config_target(
+            self._recipient.recipient_config_json,
+            "Slack channel is required",
+            allow_empty=True,
+        )
 
         return ",".join(recipients_string_to_list(recipient_str))
 
