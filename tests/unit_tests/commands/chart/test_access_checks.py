@@ -100,6 +100,38 @@ def test_create_chart_command_allowed_when_access_passes() -> None:
                     command.validate()  # should not raise
 
 
+def test_create_chart_command_ignores_malformed_params_for_viz_type() -> None:
+    """Malformed params should not break command construction."""
+    from superset.commands.chart.create import CreateChartCommand
+
+    command = CreateChartCommand(
+        {
+            "slice_name": "test",
+            "params": "{",
+            "datasource_id": 1,
+            "datasource_type": "table",
+        }
+    )
+
+    assert "viz_type" not in command._properties
+
+
+def test_create_chart_command_uses_object_params_for_viz_type() -> None:
+    """Object params can provide the fallback viz_type."""
+    from superset.commands.chart.create import CreateChartCommand
+
+    command = CreateChartCommand(
+        {
+            "slice_name": "test",
+            "params": '{"viz_type": "table"}',
+            "datasource_id": 1,
+            "datasource_type": "table",
+        }
+    )
+
+    assert command._properties["viz_type"] == "table"
+
+
 # ---------------------------------------------------------------------------
 # UpdateChartCommand
 # ---------------------------------------------------------------------------

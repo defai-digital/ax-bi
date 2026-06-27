@@ -47,7 +47,10 @@ class CreateChartCommand(CreateMixin, BaseCommand):
         self._properties = data.copy()
 
         if params_str := self._properties.get("params"):
-            params = json.loads(params_str)
+            try:
+                params = json.loads(params_str)
+            except (TypeError, ValueError):
+                params = {}
             if isinstance(params, dict) and "viz_type" in params:
                 # Only fall back to params when no top-level viz_type was supplied;
                 # an explicit top-level field takes precedence.
