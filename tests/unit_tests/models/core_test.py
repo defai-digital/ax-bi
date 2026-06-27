@@ -890,6 +890,30 @@ def test_get_oauth2_config(app_context: None) -> None:
     }
 
 
+def test_get_encrypted_extra_ignores_non_object_json() -> None:
+    """
+    Test that encrypted_extra must deserialize to a dictionary.
+    """
+    database = Database(encrypted_extra="[]")
+
+    assert database.get_encrypted_extra() == {}
+
+
+def test_get_oauth2_config_ignores_non_object_encrypted_extra(
+    app_context: None,
+) -> None:
+    """
+    Test that OAuth2 config lookup tolerates non-object encrypted_extra.
+    """
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="postgresql://user:password@host:5432/examples",
+        encrypted_extra="[]",
+    )
+
+    assert database.get_oauth2_config() is None
+
+
 def test_get_oauth2_config_token_request_type_from_db_engine_specs(
     mocker: MockerFixture, app_context: None
 ) -> None:

@@ -351,6 +351,8 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         if (masked_encrypted_extra := self.masked_encrypted_extra) is not None:
             with suppress(TypeError, json.JSONDecodeError):
                 encrypted_config = json.loads(masked_encrypted_extra)
+                if not isinstance(encrypted_config, dict):
+                    encrypted_config = {}
         try:
             parameters = self.db_engine_spec.get_parameters_from_uri(  # type: ignore
                 masked_uri,
@@ -1134,6 +1136,8 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
             except json.JSONDecodeError as ex:
                 logger.error(ex, exc_info=True)
                 raise
+            if not isinstance(encrypted_extra, dict):
+                encrypted_extra = {}
         return encrypted_extra
 
     # pylint: disable=invalid-name
@@ -1339,7 +1343,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         admins to create custom OAuth2 clients from the Superset UI, and assign them to
         specific databases.
         """
-        encrypted_extra = json.loads(self.encrypted_extra or "{}")
+        encrypted_extra = self.get_encrypted_extra()
         if oauth2_client_info := encrypted_extra.get("oauth2_client_info"):
             schema = OAuth2ClientConfigSchema()
             client_config = schema.load(oauth2_client_info)
