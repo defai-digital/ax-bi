@@ -265,10 +265,14 @@ class BaseReportState:
         Retrieve the URL for the dashboard tabs, or return the dashboard URL if no tabs are available.
         """  # noqa: E501
         force = "true" if self._report_schedule.force_screenshot else "false"
+        extra = self._report_schedule.extra
+        dashboard_state = extra.get("dashboard", {}) if isinstance(extra, dict) else {}
+        if not isinstance(dashboard_state, dict):
+            dashboard_state = {}
 
-        if (
-            dashboard_state := self._report_schedule.extra.get("dashboard")
-        ) and feature_flag_manager.is_feature_enabled("ALERT_REPORT_TABS"):
+        if dashboard_state and feature_flag_manager.is_feature_enabled(
+            "ALERT_REPORT_TABS"
+        ):
             native_filter_params, filter_warnings = (
                 self._report_schedule.get_native_filters_params()
             )
@@ -277,7 +281,9 @@ class BaseReportState:
             if anchor := dashboard_state.get("anchor"):
                 try:
                     anchor_list = json.loads(anchor)
-                    if not isinstance(anchor_list, list):
+                    if not isinstance(anchor_list, list) or not all(
+                        isinstance(tab_anchor, str) for tab_anchor in anchor_list
+                    ):
                         raise json.JSONDecodeError(
                             "Anchor value is not a list", anchor, 0
                         )
@@ -288,7 +294,7 @@ class BaseReportState:
                         user_friendly=user_friendly,
                     )
                     return urls
-                except json.JSONDecodeError:
+                except (TypeError, json.JSONDecodeError):
                     logger.debug("Anchor value is not a list, Fall back to single tab")
 
             # Skip the permalink when there is nothing meaningful to encode —
@@ -322,12 +328,11 @@ class BaseReportState:
             # Preserve any urlParams from extra.dashboard (e.g. standalone=true)
             # set via API even when ALERT_REPORT_TABS is off — same merge
             # semantics as the protected branch above.
-            fallback_state = self._report_schedule.extra.get("dashboard") or {}
             return [
                 self._get_tab_url(
                     {
                         "urlParams": self._merge_native_filters_into_url_params(
-                            fallback_state.get("urlParams"),
+                            dashboard_state.get("urlParams"),
                             native_filter_params,
                         )
                     },
@@ -378,9 +383,15 @@ class BaseReportState:
         report's value wins. All other params (e.g. ``standalone=true``)
         survive in their original order.
         """
-        merged: list[Sequence[str]] = [
-            list(p) for p in (existing or []) if p[0] != "native_filters"
-        ]
+        merged: list[Sequence[str]] = []
+        for param in existing or []:
+            if (
+                isinstance(param, Sequence)
+                and not isinstance(param, (str, bytes))
+                and param
+                and param[0] != "native_filters"
+            ):
+                merged.append(list(param))
         merged.append(["native_filters", native_filter_params or ""])
         return merged
 
