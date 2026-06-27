@@ -484,6 +484,64 @@ def test_update_accepts_valid_active_tab_ids(mocker: MockerFixture) -> None:
     cmd.validate()  # should not raise
 
 
+def test_update_rejects_malformed_dashboard_position_json(
+    mocker: MockerFixture,
+) -> None:
+    model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
+    model.dashboard.position_json = "{malformed"
+    _setup_mocks(mocker, model)
+
+    cmd = UpdateReportScheduleCommand(
+        model_id=1,
+        data={"extra": {"dashboard": {"activeTabs": ["TAB-valid"]}}},
+    )
+
+    with pytest.raises(ReportScheduleInvalidError) as exc_info:
+        cmd.validate()
+    messages = exc_info.value.normalized_messages()
+    assert "extra" in messages
+    assert any(
+        "layout metadata is invalid" in str(message).lower()
+        for message in messages["extra"]
+    )
+
+
+def test_update_rejects_malformed_dashboard_native_filter_metadata(
+    mocker: MockerFixture,
+) -> None:
+    model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
+    model.dashboard.position_json = "{}"
+    model.dashboard.json_metadata = "{malformed"
+    _setup_mocks(mocker, model)
+
+    cmd = UpdateReportScheduleCommand(
+        model_id=1,
+        data={
+            "extra": {
+                "dashboard": {
+                    "nativeFilters": [
+                        {
+                            "nativeFilterId": "filter-1",
+                            "filterType": "select",
+                            "columnName": "country_name",
+                            "filterValues": ["USA"],
+                        }
+                    ]
+                }
+            }
+        },
+    )
+
+    with pytest.raises(ReportScheduleInvalidError) as exc_info:
+        cmd.validate()
+    messages = exc_info.value.normalized_messages()
+    assert "extra" in messages
+    assert any(
+        "native filter metadata is invalid" in str(message).lower()
+        for message in messages["extra"]
+    )
+
+
 # --- Database not found for alert ---
 
 
