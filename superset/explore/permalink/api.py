@@ -99,6 +99,8 @@ class ExplorePermalinkRestApi(BaseSupersetApi):
             return self.response(201, key=key, url=url)
         except ValidationError as ex:
             return self.response(400, message=ex.messages)
+        except ExplorePermalinkInvalidStateError as ex:
+            return self.response(400, message=str(ex))
         except (
             ChartAccessDeniedError,
             DatasetAccessDeniedError,
