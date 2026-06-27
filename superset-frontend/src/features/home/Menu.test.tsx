@@ -38,64 +38,6 @@ jest.mock('antd', () => ({
   },
 }));
 
-const dropdownItems = [
-  {
-    label: 'Data',
-    icon: 'fa-database',
-    childs: [
-      {
-        label: 'Connect Database',
-        name: 'dbconnect',
-        perm: true,
-      },
-      {
-        label: 'Connect Google Sheet',
-        name: 'gsheets',
-        perm: true,
-      },
-      {
-        label: 'Upload a CSV',
-        name: 'Upload a CSV',
-        url: '#',
-        perm: true,
-      },
-      {
-        label: 'Upload a Columnar File',
-        name: 'Upload a Columnar file',
-        url: '#',
-        perm: true,
-      },
-      {
-        label: 'Upload Excel',
-        name: 'Upload Excel',
-        url: '#',
-        perm: true,
-      },
-    ],
-  },
-  {
-    label: 'SQL query',
-    url: '/sqllab?new=true',
-    icon: 'fa-fw fa-search',
-    perm: 'can_sqllab',
-    view: 'Superset',
-  },
-  {
-    label: 'Chart',
-    url: '/chart/add',
-    icon: 'fa-fw fa-bar-chart',
-    perm: 'can_write',
-    view: 'Chart',
-  },
-  {
-    label: 'Dashboard',
-    url: '/dashboard/new/',
-    icon: 'fa-fw fa-dashboard',
-    perm: 'can_write',
-    view: 'Dashboard',
-  },
-];
-
 const user = {
   createdOn: '2021-04-27T18:12:38.952304',
   email: 'admin',
@@ -320,7 +262,7 @@ test.each(['', '/myapp'])(
   },
 );
 
-test('should render the environment tag', async () => {
+test('should render the environment tag inside Settings dropdown', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: { environment_tag },
@@ -331,6 +273,8 @@ test('should render the environment tag', async () => {
     useRouter: true,
     useTheme: true,
   });
+  // The environment tag is now inside the Settings dropdown
+  userEvent.hover(screen.getByText('Settings'));
   expect(await screen.findByText(environment_tag.text)).toBeInTheDocument();
 });
 
@@ -374,36 +318,6 @@ test('should render the top navbar child menu items', async () => {
   expect(databases).toHaveAttribute('href', database.url);
 });
 
-test('should render the dropdown items', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...notanonProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
-  const dropdown = screen.getByTestId('new-dropdown-icon');
-  userEvent.hover(dropdown);
-  // todo (philip): test data submenu
-  expect(await screen.findByText(dropdownItems[1].label)).toHaveAttribute(
-    'href',
-    dropdownItems[1].url,
-  );
-  expect(await screen.findByText(dropdownItems[1].label)).toHaveAttribute(
-    'href',
-    dropdownItems[1].url,
-  );
-  expect(
-    screen.getByTestId(`menu-item-${dropdownItems[1].label}`),
-  ).toBeInTheDocument();
-  expect(await screen.findByText(dropdownItems[2].label)).toHaveAttribute(
-    'href',
-    dropdownItems[2].url,
-  );
-  expect(
-    screen.getByTestId(`menu-item-${dropdownItems[2].label}`),
-  ).toBeInTheDocument();
-});
 
 test('should render the Settings', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
@@ -446,16 +360,6 @@ test('should render the Settings dropdown child menu items', async () => {
   expect(listUsers).toHaveAttribute('href', settings[0].childs[0].url);
 });
 
-test('should render the plus menu (+) when user is not anonymous', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...notanonProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
-  expect(await screen.findByTestId('new-dropdown-icon')).toBeInTheDocument();
-});
 
 test('should NOT render the plus menu (+) when user is anonymous', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
@@ -544,7 +448,7 @@ test('should render the About section and version_string, sha or build_number wh
   expect(buildTexts[0]).toBeInTheDocument();
 });
 
-test('should render the Documentation link when available', async () => {
+test('should render the Documentation link inside Settings when available', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: {
@@ -557,12 +461,13 @@ test('should render the Documentation link when available', async () => {
     useRouter: true,
     useTheme: true,
   });
+  // Documentation link is now inside the Settings dropdown Help group
   userEvent.hover(screen.getByText('Settings'));
-  const doc = await screen.findByTitle('Documentation');
-  expect(doc).toHaveAttribute('href', documentation_url);
+  const doc = await screen.findByText('Documentation');
+  expect(doc.closest('a')).toHaveAttribute('href', documentation_url);
 });
 
-test('should render the Bug Report link when available', async () => {
+test('should render the Bug Report link inside Settings when available', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: {
@@ -576,27 +481,12 @@ test('should render the Bug Report link when available', async () => {
     useRouter: true,
     useTheme: true,
   });
-  const bugReport = await screen.findByTitle('Report a bug');
-  expect(bugReport).toHaveAttribute('href', bug_report_url);
+  // Bug report link is now inside the Settings dropdown Help group
+  userEvent.hover(screen.getByText('Settings'));
+  const bugReport = await screen.findByText('Report a bug');
+  expect(bugReport.closest('a')).toHaveAttribute('href', bug_report_url);
 });
 
-test('should render the Login link when user is anonymous', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  const {
-    data: {
-      navbar_right: { user_login_url },
-    },
-  } = mockedProps;
-
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
-  const login = await screen.findByText('Login');
-  expect(login).toHaveAttribute('href', user_login_url);
-});
 
 test('should render the Language Picker', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });

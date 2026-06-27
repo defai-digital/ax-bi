@@ -180,6 +180,10 @@ const FileHandler = lazy(
   () => import(/* webpackChunkName: "FileHandler" */ 'src/pages/FileHandler'),
 );
 
+const UploadData = lazy(
+  () => import(/* webpackChunkName: "UploadData" */ 'src/pages/UploadData'),
+);
+
 const RedirectWarning = lazy(
   () =>
     import(
@@ -222,6 +226,10 @@ export const routes: Routes = [
   {
     path: '/superset/file-handler',
     Component: FileHandler,
+  },
+  {
+    path: '/upload/',
+    Component: UploadData,
   },
   {
     path: '/dashboard/list/',

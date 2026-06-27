@@ -15,3 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 """GenAI BI MCP tools subpackage."""
+
+from .compose_dashboard import compose_dashboard
+from .create_chart_from_intent import create_chart_from_intent
+from .describe_dataset_for_ai import describe_dataset_for_ai
+from .explain_dashboard import explain_dashboard
+from .plan_dashboard import plan_dashboard
+from .search_business_assets import search_business_assets
+from .suggest_chart_improvements import suggest_chart_improvements
+
+__all__ = [
+    "describe_dataset_for_ai",
+    "search_business_assets",
+    "plan_dashboard",
+    "create_chart_from_intent",
+    "compose_dashboard",
+    "explain_dashboard",
+    "suggest_chart_improvements",
+]

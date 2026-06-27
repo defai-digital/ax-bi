@@ -137,6 +137,14 @@ export function useDefaultCommands(): void {
         keywords: ['create', 'new', 'sql', 'query', 'editor'],
         action: () => navigate(`${appRoot}/sqllab?new=true`),
       },
+      {
+        id: 'action-upload-data',
+        name: t('Upload Data'),
+        description: t('Upload a CSV, Excel, or Parquet file to start exploring'),
+        type: 'action',
+        keywords: ['upload', 'csv', 'excel', 'file', 'import'],
+        action: () => navigate(`${appRoot}/upload/`),
+      },
     ];
 
     const cleanups = commands.map(cmd => registerCommand(cmd));

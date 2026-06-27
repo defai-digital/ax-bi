@@ -42,6 +42,8 @@ from superset.commands.chart.data.create_async_job_command import (
     CreateAsyncChartDataJobCommand,
 )
 from superset.commands.chart.data.get_data_command import ChartDataCommand
+from superset.utils.fast_cache import set_fast_cache
+from superset.utils.json_fast import dumps_fast
 from superset.commands.chart.data.streaming_export_command import (
     StreamingCSVExportCommand,
 )
@@ -524,11 +526,19 @@ class ChartDataRestApi(ChartRestApi):
                 payload["dashboard_filters"] = dashboard_filter_context.to_dict()
 
             with event_logger.log_context(f"{self.__class__.__name__}.json_dumps"):
-                response_data = json.dumps(
-                    payload,
-                    default=json.json_int_dttm_ser,
-                    ignore_nan=True,
+                response_data = dumps_fast(payload)
+
+            # Write the serialized JSON to the fast-cache Redis key so the
+            # Node.js gateway (superset-websocket) can serve it directly,
+            # bypassing Flask for subsequent cache hits.
+            if queries and queries[0].get("cache_key"):
+                cache_timeout = queries[0].get("cache_timeout")
+                set_fast_cache(
+                    key=queries[0]["cache_key"],
+                    json_str=response_data,
+                    timeout=cache_timeout,
                 )
+
             resp = make_response(response_data, 200)
             resp.headers["Content-Type"] = "application/json; charset=utf-8"
             return resp

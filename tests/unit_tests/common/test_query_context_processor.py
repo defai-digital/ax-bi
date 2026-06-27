@@ -1857,3 +1857,114 @@ def test_raise_for_access_evaluates_access_before_validate():
             processor.raise_for_access()
 
     query.validate.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _df_to_records tests
+# ---------------------------------------------------------------------------
+
+
+class TestDfToRecords:
+    """Tests for QueryContextProcessor._df_to_records static method."""
+
+    def test_no_datetime_columns_passthrough(self) -> None:
+        """DataFrame with no datetime columns should pass through unchanged."""
+        df = pd.DataFrame({"name": ["Alice", "Bob"], "value": [1, 2]})
+        records = QueryContextProcessor._df_to_records(df)
+
+        assert len(records) == 2
+        assert records[0]["name"] == "Alice"
+        assert records[0]["value"] == 1
+        assert records[1]["name"] == "Bob"
+        assert records[1]["value"] == 2
+
+    def test_datetime_columns_converted_to_epoch_ms(self) -> None:
+        """Datetime columns should be converted to epoch milliseconds."""
+        df = pd.DataFrame(
+            {
+                "ts": pd.to_datetime(
+                    ["2024-01-15 12:00:00", "2024-06-15 12:00:00"]
+                ),
+                "value": [10, 20],
+            }
+        )
+        records = QueryContextProcessor._df_to_records(df)
+
+        assert len(records) == 2
+        # Verify epoch ms values (2024-01-15 12:00:00 UTC = 1705320000000 ms)
+        assert isinstance(records[0]["ts"], int)
+        assert records[0]["ts"] == 1705320000000
+        assert records[0]["value"] == 10
+
+    def test_timezone_aware_datetime_normalized_to_utc(self) -> None:
+        """Timezone-aware datetimes should be normalized to UTC."""
+        import pytz
+
+        tz = pytz.timezone("US/Eastern")
+        df = pd.DataFrame(
+            {
+                "ts": pd.to_datetime(
+                    ["2024-01-15 07:00:00"]
+                ).tz_localize("US/Eastern"),
+                "value": [42],
+            }
+        )
+        records = QueryContextProcessor._df_to_records(df)
+
+        # 2024-01-15 07:00:00 EST = 2024-01-15 12:00:00 UTC = 1705320000000 ms
+        assert records[0]["ts"] == 1705320000000
+
+    def test_nat_values_become_none(self) -> None:
+        """NaT (Not-a-Time) values should become None in records."""
+        df = pd.DataFrame(
+            {
+                "ts": pd.to_datetime(
+                    ["2024-01-15 12:00:00", None]
+                ),
+                "value": [10, 20],
+            }
+        )
+        records = QueryContextProcessor._df_to_records(df)
+
+        assert records[0]["ts"] == 1705320000000
+        assert records[1]["ts"] is None
+        assert records[1]["value"] == 20
+
+    def test_does_not_mutate_original_dataframe(self) -> None:
+        """The original DataFrame should not be modified."""
+        df = pd.DataFrame(
+            {"ts": pd.to_datetime(["2024-01-15 12:00:00"]), "value": [10]}
+        )
+        original_dtype = df["ts"].dtype
+        original_value = df["ts"].iloc[0]
+
+        QueryContextProcessor._df_to_records(df)
+
+        # Original should be unchanged
+        assert df["ts"].dtype == original_dtype
+        assert df["ts"].iloc[0] == original_value
+
+    def test_date_object_columns_converted(self) -> None:
+        """Date objects in object columns should be converted to epoch ms."""
+        import datetime
+
+        df = pd.DataFrame(
+            {
+                "d": [
+                    datetime.date(2024, 1, 15),
+                    datetime.date(2024, 6, 15),
+                ],
+                "value": [10, 20],
+            }
+        )
+        records = QueryContextProcessor._df_to_records(df)
+
+        assert isinstance(records[0]["d"], int)
+        # 2024-01-15 00:00:00 UTC = 1705276800000 ms
+        assert records[0]["d"] == 1705276800000
+
+    def test_empty_dataframe(self) -> None:
+        """Empty DataFrame should return empty list."""
+        df = pd.DataFrame({"ts": pd.Series(dtype="datetime64[ns]")})
+        records = QueryContextProcessor._df_to_records(df)
+        assert records == []

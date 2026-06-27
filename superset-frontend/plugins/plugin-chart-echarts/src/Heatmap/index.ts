@@ -18,8 +18,7 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { ChartMetadata, ChartPlugin } from '@superset-ui/core';
-import transformProps from './transformProps';
-import buildQuery from './buildQuery';
+
 import example1 from './images/example1.png';
 import example1Dark from './images/example1-dark.png';
 import example2 from './images/example2.png';
@@ -56,10 +55,10 @@ const metadata = new ChartMetadata({
 export default class EchartsHeatmapChartPlugin extends ChartPlugin {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       loadChart: () => import('./Heatmap'),
       metadata,
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
       controlPanel,
     });
   }

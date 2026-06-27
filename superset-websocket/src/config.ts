@@ -31,6 +31,7 @@ export interface RedisConfig {
 
 type ConfigType = {
   port: number;
+  httpPort: number;
   logLevel: string;
   logToFile: boolean;
   logFilename: string;
@@ -55,11 +56,16 @@ type ConfigType = {
   eventYieldBatchSize: number;
   maxConnectionsPerChannel: number;
   maxTotalConnections: number;
+  // Fast Data API Gateway configuration
+  fastCacheEnabled: boolean;
+  fastCacheKeyPrefix: string;
+  httpCorsOrigins: string[];
 };
 
 function defaultConfig(): ConfigType {
   return {
     port: 8080,
+    httpPort: 8081,
     logLevel: 'info',
     logToFile: false,
     logFilename: 'app.log',
@@ -83,6 +89,10 @@ function defaultConfig(): ConfigType {
     // 0 disables the limit (unlimited); set a positive value to opt in.
     maxConnectionsPerChannel: 0,
     maxTotalConnections: 0,
+    // Fast Data API Gateway
+    fastCacheEnabled: true,
+    fastCacheKeyPrefix: 'fc:',
+    httpCorsOrigins: [],
     statsd: {
       host: '127.0.0.1',
       port: 8125,
@@ -138,6 +148,7 @@ const toStringArray = (s: string) =>
 function applyEnvOverrides(config: ConfigType): ConfigType {
   const envVarConfigSetter: { [envVar: string]: (val: string) => void } = {
     PORT: val => (config.port = toNumber(val)),
+    HTTP_PORT: val => (config.httpPort = toNumber(val)),
     LOG_LEVEL: val => (config.logLevel = val),
     LOG_TO_FILE: val => (config.logToFile = toBoolean(val)),
     LOG_FILENAME: val => (config.logFilename = val),
@@ -177,6 +188,9 @@ function applyEnvOverrides(config: ConfigType): ConfigType {
     STATSD_HOST: val => (config.statsd.host = val),
     STATSD_PORT: val => (config.statsd.port = toNumber(val)),
     STATSD_GLOBAL_TAGS: val => (config.statsd.globalTags = toStringArray(val)),
+    FAST_CACHE_ENABLED: val => (config.fastCacheEnabled = toBoolean(val)),
+    FAST_CACHE_KEY_PREFIX: val => (config.fastCacheKeyPrefix = val),
+    HTTP_CORS_ORIGINS: val => (config.httpCorsOrigins = toStringArray(val)),
   };
 
   Object.entries(envVarConfigSetter).forEach(([envVar, set]) => {

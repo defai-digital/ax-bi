@@ -18,18 +18,17 @@
  */
 import { t } from '@apache-superset/core/translation';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import example from './images/tree.png';
 import exampleDark from './images/tree-dark.png';
-import buildQuery from './buildQuery';
+
 import { EchartsChartPlugin } from '../types';
 
 export default class EchartsTreeChartPlugin extends EchartsChartPlugin {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsTree'),
       metadata: {
@@ -51,7 +50,7 @@ export default class EchartsTreeChartPlugin extends EchartsChartPlugin {
         thumbnail,
         thumbnailDark,
       },
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

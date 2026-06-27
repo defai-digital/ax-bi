@@ -20,6 +20,8 @@ from .create_virtual_dataset import create_virtual_dataset
 from .get_dataset_info import get_dataset_info
 from .list_datasets import list_datasets
 from .query_dataset import query_dataset
+from .upload_file import upload_file
+from .upload_files import upload_files
 
 __all__ = [
     "create_dataset",
@@ -27,4 +29,6 @@ __all__ = [
     "get_dataset_info",
     "list_datasets",
     "query_dataset",
+    "upload_file",
+    "upload_files",
 ]

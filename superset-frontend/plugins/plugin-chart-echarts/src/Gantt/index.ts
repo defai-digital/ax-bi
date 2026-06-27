@@ -18,9 +18,7 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
-import transformProps from './transformProps';
 import controlPanel from './controlPanel';
-import buildQuery from './buildQuery';
 import { EchartsChartPlugin } from '../types';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
@@ -32,7 +30,7 @@ import example2Dark from './images/example2-dark.png';
 export default class EchartsGanttChartPlugin extends EchartsChartPlugin {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsGantt'),
       metadata: {
@@ -56,7 +54,7 @@ export default class EchartsGanttChartPlugin extends EchartsChartPlugin {
           { url: example2, urlDark: example2Dark },
         ],
       },
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

@@ -19,18 +19,17 @@
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import example from './images/example.jpg';
 import exampleDark from './images/example-dark.jpg';
-import buildQuery from './buildQuery';
+
 import { EchartsChartPlugin } from '../types';
 
 export default class EchartsGraphChartPlugin extends EchartsChartPlugin {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsGraph'),
       metadata: {
@@ -59,7 +58,7 @@ export default class EchartsGraphChartPlugin extends EchartsChartPlugin {
           Behavior.DrillBy,
         ],
       },
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

@@ -1,5 +1,6 @@
 {
   "port": 8080,
+  "httpPort": 8081,
   "logLevel": "info",
   "logToFile": false,
   "logFilename": "app.log",
@@ -18,5 +19,7 @@
   "redisStreamPrefix": "async-events-",
   "jwtAlgorithms": ["HS256"],
   "jwtSecret": "CHANGE-ME-IN-PRODUCTION-GOTTA-BE-LONG-AND-SECRET",
-  "jwtCookieName": "async-token"
+  "jwtCookieName": "async-token",
+  "fastCacheEnabled": true,
+  "fastCacheKeyPrefix": "fc:"
 }

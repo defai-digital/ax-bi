@@ -484,6 +484,99 @@ class CreateDatasetRequest(BaseModel):
         return v
 
 
+class UploadFileRequest(BaseModel):
+    """Request schema for upload_file to upload a CSV/Excel/Parquet file
+    and create a dataset from it with zero-config (auto-provisions DuckDB)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    file_content: str = Field(
+        ...,
+        description="Base64-encoded file content. The AI agent should encode "
+        "the file bytes as base64 before sending.",
+    )
+    filename: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Original filename including extension (e.g. 'sales.csv', "
+        "'report.xlsx', 'data.parquet'). Used to detect file type and derive "
+        "the table name.",
+    )
+    table_name: str | None = Field(
+        default=None,
+        max_length=250,
+        description="Optional custom table name. If omitted, a name is derived "
+        "from the filename with a random suffix to avoid collisions.",
+    )
+
+
+class FileItem(BaseModel):
+    """A single file within a batch upload request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    file_content: str = Field(
+        ...,
+        description="Base64-encoded file content.",
+    )
+    filename: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Original filename including extension.",
+    )
+    table_name: str | None = Field(
+        default=None,
+        max_length=250,
+        description="Optional custom table name for this file.",
+    )
+
+
+class UploadFilesRequest(BaseModel):
+    """Request schema for upload_files to upload multiple CSV/Excel/Parquet files
+    and create datasets from them with zero-config (auto-provisions DuckDB)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    files: List[FileItem] = Field(
+        ...,
+        min_length=1,
+        description="List of files to upload. Each file is processed independently "
+        "and gets its own dataset. Maximum 10 files per batch.",
+    )
+
+    @field_validator("files", mode="after")
+    @classmethod
+    def _limit_batch_size(cls, v: List[FileItem]) -> List[FileItem]:
+        """Enforce a maximum batch size of 10 files."""
+        if len(v) > 10:
+            raise ValueError("Maximum 10 files per batch upload")
+        return v
+
+
+class FileUploadResult(BaseModel):
+    """Result for a single file in a batch upload."""
+
+    filename: str = Field(..., description="Original filename")
+    success: bool = Field(..., description="Whether this file was uploaded successfully")
+    dataset: DatasetInfo | None = Field(
+        None, description="Dataset info if upload succeeded"
+    )
+    error: str | None = Field(None, description="Error message if upload failed")
+
+
+class UploadFilesResponse(BaseModel):
+    """Response schema for upload_files batch upload."""
+
+    results: List[FileUploadResult] = Field(
+        ..., description="Per-file upload results"
+    )
+    total: int = Field(..., description="Total number of files processed")
+    succeeded: int = Field(..., description="Number of files uploaded successfully")
+    failed: int = Field(..., description="Number of files that failed to upload")
+
+
 class CreateVirtualDatasetRequest(BaseModel):
     """Request schema for create_virtual_dataset."""
 

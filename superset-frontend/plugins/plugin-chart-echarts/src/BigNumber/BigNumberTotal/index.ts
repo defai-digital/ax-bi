@@ -19,8 +19,6 @@
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
-import buildQuery from './buildQuery';
 import example1 from './images/BigNumber.jpg';
 import example1Dark from './images/BigNumber-dark.jpg';
 import example2 from './images/BigNumber2.jpg';
@@ -62,8 +60,8 @@ export default class BigNumberTotalChartPlugin extends EchartsChartPlugin<
     super({
       loadChart: () => import('../BigNumberViz'),
       metadata,
-      buildQuery,
-      transformProps,
+      loadBuildQuery: () => import('./buildQuery'),
+      loadTransformProps: () => import('./transformProps'),
       controlPanel,
     });
   }

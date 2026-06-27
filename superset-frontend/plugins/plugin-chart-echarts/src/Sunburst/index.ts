@@ -18,11 +18,11 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
-import transformProps from './transformProps';
+
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import controlPanel from './controlPanel';
-import buildQuery from './buildQuery';
+
 import example1 from './images/Sunburst1.png';
 import example1Dark from './images/Sunburst1-dark.png';
 import example2 from './images/Sunburst2.png';
@@ -32,7 +32,7 @@ import { EchartsChartPlugin } from '../types';
 export default class EchartsSunburstChartPlugin extends EchartsChartPlugin {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsSunburst'),
       metadata: {
@@ -60,7 +60,7 @@ export default class EchartsSunburstChartPlugin extends EchartsChartPlugin {
         thumbnail,
         thumbnailDark,
       },
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

@@ -180,7 +180,7 @@ BUILD_NUMBER = None
 DEFAULT_VIZ_TYPE = "table"
 
 # default row limit when requesting chart data
-ROW_LIMIT = 50000
+ROW_LIMIT = 10000
 # default row limit when requesting samples from datasource in explore view
 SAMPLES_ROW_LIMIT = 1000
 # default row limit for native filters
@@ -699,7 +699,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # out of the primary nav bar into an "Advanced" group. Presentation-only;
     # does not change routes or permissions. See ax-docs/ux-simplification-*.
     # @lifecycle: development
-    "SIMPLIFIED_NAV": False,
+    "SIMPLIFIED_NAV": True,
     # Offer a guided, stepped chart builder in Explore (data -> measures ->
     # group by -> filters -> limit -> visualize) as a simpler alternative to the
     # full control panel. Compiles to the same form_data / query_context; the
@@ -857,6 +857,12 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @lifecycle: stable
     # @category: runtime_config
     "EMBEDDED_SUPERSET": False,
+    # Enable the dedicated Upload Data page for zero-config file analytics.
+    # When enabled, users can drag-and-drop CSV/XLSX/Parquet files and the
+    # system auto-provisions a local DuckDB database — no DB connection needed.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "ENABLE_LOCAL_FILE_UPLOAD": True,
     # Enable Jinja templating in SQL queries
     # @lifecycle: stable
     # @category: runtime_config
@@ -1270,6 +1276,10 @@ SCREENSHOT_TILED_VIEWPORT_HEIGHT = 2000  # Height of each tile in pixels
 UPLOAD_FOLDER = BASE_DIR + "/static/uploads/"
 UPLOAD_CHUNK_SIZE = 4096
 
+# Local file analytics: auto-provisioned DuckDB for zero-config uploads
+LOCAL_DB_NAME = "Local Files"
+LOCAL_DB_PATH = UPLOAD_FOLDER + "local_files.duckdb"
+
 # Upper bound, in bytes, on the size of a single uploaded data file (e.g. CSV,
 # Excel, columnar). Files larger than this are rejected before their contents
 # are buffered into memory, keeping the resources consumed by a single upload
@@ -1288,6 +1298,14 @@ CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
 
 # Cache for datasource metadata and query results
 DATA_CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
+
+# Fast Data API Gateway cache configuration.
+# When enabled, the Python backend writes a pre-serialized JSON copy of chart
+# data responses to Redis alongside the DataFrame cache. The Node.js sidecar
+# (superset-websocket) reads this key and serves it directly, bypassing Flask
+# for cache hits.
+FAST_CACHE_ENABLED: bool = False
+FAST_CACHE_KEY_PREFIX: str = "fc:"
 
 # Cache for dashboard filter state. `CACHE_TYPE` defaults to `SupersetMetastoreCache`
 # that stores the values in the key-value table in the Superset metastore, as it's
@@ -2504,6 +2522,12 @@ STATIC_ASSETS_PREFIX = ""
 # Some sqlalchemy connection strings can open Superset to security risks.
 # Typically these should not be allowed.
 PREVENT_UNSAFE_DB_CONNECTIONS = True
+
+# Allow DuckDB connections for local file analytics. When True, DuckDB is
+# exempted from the security blocklist in analytics_db_safety.py.
+# DuckDB is safe for single-tenant / trusted deployments where users
+# already have filesystem access.
+ALLOW_DUCKDB_CONNECTIONS = True
 
 # If true all default urls on datasets will be handled as relative URLs by the frontend
 PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET = True

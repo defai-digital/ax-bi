@@ -20,6 +20,7 @@ import logging
 import re
 from typing import Any, cast, ClassVar, Sequence, TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 from flask import current_app
 from flask_babel import gettext as _
@@ -282,7 +283,64 @@ class QueryContextProcessor:
                 )
             return result or ""
 
-        return df.to_dict(orient="records")
+        return self._df_to_records(df)
+
+    @staticmethod
+    def _df_to_records(df: pd.DataFrame) -> list[dict[str, Any]]:
+        """Convert DataFrame to list of dicts with optimized datetime handling.
+
+        Pre-converts datetime and date columns to epoch milliseconds (as int64,
+        with ``None`` for NaT values) before calling ``to_dict``. This avoids
+        the per-value ``default`` handler overhead during JSON serialization
+        (``json_int_dttm_ser``), which is the primary serialization bottleneck
+        for chart data responses with datetime columns.
+
+        Uses ``df.assign()`` to replace only datetime columns, avoiding a full
+        DataFrame copy when non-datetime columns dominate.
+        """
+        datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
+        date_cols = df.select_dtypes(include=["object"]).columns[
+            [pd.api.types.infer_dtype(df[col], skipna=True) == "date" for col in
+             df.select_dtypes(include=["object"]).columns]
+        ]
+
+        if len(datetime_cols) == 0 and len(date_cols) == 0:
+            return df.to_dict(orient="records")
+
+        # Build converted columns from the original DataFrame (no copy yet),
+        # then use assign() to create a new DataFrame with only these columns
+        # replaced. This avoids copying non-datetime columns twice.
+        converted: dict[str, Any] = {}
+
+        for col in datetime_cols:
+            series = df[col]
+            null_mask = np.asarray(series.isnull())
+            if hasattr(series.dtype, "tz") and series.dtype.tz:
+                # Timezone-aware: normalize to UTC before numeric conversion
+                series = series.dt.tz_convert("UTC")
+            # Reinterpret datetime64/timestamp int64 as nanoseconds since epoch,
+            # then convert to epoch milliseconds. NaT values become None so
+            # they serialize to JSON ``null``.
+            ns = series.values.view("int64").astype("float64")
+            ns[null_mask] = np.nan
+            ms = ns / 1e6
+            with np.errstate(invalid="ignore"):
+                converted[col] = np.where(
+                    np.isnan(ms), None, ms.astype("int64")
+                )
+
+        for col in date_cols:
+            null_mask = np.asarray(pd.isna(df[col]))
+            dt_series = pd.to_datetime(df[col], errors="coerce")
+            ns = dt_series.values.view("int64").astype("float64")
+            ns[null_mask] = np.nan
+            ms = ns / 1e6
+            with np.errstate(invalid="ignore"):
+                converted[col] = np.where(
+                    np.isnan(ms), None, ms.astype("int64")
+                )
+
+        return df.assign(**converted).to_dict(orient="records")
 
     def _prepare_contribution_totals(self) -> tuple[list[int], int | None]:
         """
