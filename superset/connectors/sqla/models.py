@@ -514,7 +514,7 @@ class BaseDatasource(
         # Cast to dict[str, Any] since we'll be mutating with del and .update()
         data = cast(dict[str, Any], self.data)
         metric_names = set()
-        column_names = set()
+        column_names: set[str] = set()
         for slc in slices:
             form_data = slc.form_data
             # pull out all required metrics from the form_data
@@ -522,11 +522,13 @@ class BaseDatasource(
                 for metric in utils.as_list(form_data.get(metric_param) or []):
                     metric_names.add(utils.get_metric_name(metric, self.verbose_map))
                     if utils.is_adhoc_metric(metric):
-                        column_ = metric.get("column")
-                        if isinstance(column_, dict) and (
-                            column_name := column_.get("column_name")
+                        metric_column = metric.get("column")
+                        if (
+                            isinstance(metric_column, dict)
+                            and (metric_column_name := metric_column.get("column_name"))
+                            and isinstance(metric_column_name, str)
                         ):
-                            column_names.add(column_name)
+                            column_names.add(metric_column_name)
 
             # Columns used in query filters
             column_names.update(
@@ -534,7 +536,7 @@ class BaseDatasource(
                 for filter_ in utils.as_list(form_data.get("adhoc_filters") or [])
                 if isinstance(filter_, dict)
                 and filter_.get("clause") == "WHERE"
-                and filter_.get("subject")
+                and isinstance(filter_.get("subject"), str)
             )
 
             # columns used by Filter Box
@@ -543,7 +545,8 @@ class BaseDatasource(
                 for filter_config in utils.as_list(
                     form_data.get("filter_configs") or []
                 )
-                if isinstance(filter_config, dict) and "column" in filter_config
+                if isinstance(filter_config, dict)
+                and isinstance(filter_config.get("column"), str)
             )
 
             # for legacy dashboard imports which have the wrong query_context in them
@@ -560,25 +563,29 @@ class BaseDatasource(
 
             # legacy charts don't have query_context charts
             if query_context:
-                column_names.update(
-                    [
-                        utils.get_column_name(column_)
-                        for query in query_context.queries
-                        for column_ in query.columns
-                    ]
-                    or []
-                )
+                for query in query_context.queries:
+                    for query_column in query.columns:
+                        try:
+                            query_column_name = utils.get_column_name(query_column)
+                        except ValueError:
+                            continue
+                        if isinstance(query_column_name, str):
+                            column_names.add(query_column_name)
             else:
-                _columns = [
-                    (
-                        utils.get_column_name(column_)
-                        if utils.is_adhoc_column(column_)
-                        else column_
-                    )
-                    for column_param in COLUMN_FORM_DATA_PARAMS
-                    for column_ in utils.as_list(form_data.get(column_param) or [])
-                ]
-                column_names.update(_columns)
+                for column_param in COLUMN_FORM_DATA_PARAMS:
+                    for saved_column in utils.as_list(
+                        form_data.get(column_param) or []
+                    ):
+                        try:
+                            saved_column_name = (
+                                utils.get_column_name(saved_column)
+                                if utils.is_adhoc_column(saved_column)
+                                else saved_column
+                            )
+                        except ValueError:
+                            continue
+                        if isinstance(saved_column_name, str):
+                            column_names.add(saved_column_name)
 
         filtered_metrics = [
             metric

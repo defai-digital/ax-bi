@@ -1157,6 +1157,50 @@ def test_data_for_slices_ignores_malformed_filter_entries(
     }
 
 
+def test_data_for_slices_ignores_malformed_column_entries(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed saved column entries should not break datasource data."""
+    database = mocker.MagicMock()
+    database.id = 1
+
+    table = SqlaTable(
+        table_name="test_table",
+        database=database,
+        columns=[
+            TableColumn(column_name="country"),
+            TableColumn(column_name="region"),
+        ],
+        metrics=[],
+    )
+
+    mock_slice = mocker.MagicMock()
+    mock_slice.id = 1
+    mock_slice.slice_name = "Test Chart"
+    mock_slice.form_data = {
+        "columns": [
+            ["bad-column"],
+            {"bad": "column"},
+            "country",
+        ],
+        "groupby": ["region"],
+        "adhoc_filters": [
+            {"clause": "WHERE", "subject": ["bad-filter-subject"]},
+        ],
+        "filter_configs": [
+            {"column": {"bad": "filter-column"}},
+        ],
+    }
+    mock_slice.get_query_context.side_effect = DatasourceNotFound()
+
+    result = table.data_for_slices([mock_slice])
+
+    assert {column["column_name"] for column in result["columns"]} == {
+        "country",
+        "region",
+    }
+
+
 def test_owners_data_includes_email(mocker: MockerFixture) -> None:
     """Test that the owners_data property includes the email field."""
     database = mocker.MagicMock()
