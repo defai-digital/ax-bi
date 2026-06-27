@@ -94,6 +94,12 @@ def test_get_metric_name_invalid_metric():
 
     metric = deepcopy(SIMPLE_SUM_ADHOC_METRIC)
     del metric["label"]
+    metric["column"] = "my_col"
+    with pytest.raises(ValueError):  # noqa: PT011
+        get_metric_name(metric)
+
+    metric = deepcopy(SIMPLE_SUM_ADHOC_METRIC)
+    del metric["label"]
     metric["expressionType"] = "FOO"
     with pytest.raises(ValueError):  # noqa: PT011
         get_metric_name(metric)

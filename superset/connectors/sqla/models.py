@@ -522,8 +522,10 @@ class BaseDatasource(
                 for metric in utils.as_list(form_data.get(metric_param) or []):
                     metric_names.add(utils.get_metric_name(metric, self.verbose_map))
                     if utils.is_adhoc_metric(metric):
-                        column_ = metric.get("column") or {}
-                        if column_name := column_.get("column_name"):
+                        column_ = metric.get("column")
+                        if isinstance(column_, dict) and (
+                            column_name := column_.get("column_name")
+                        ):
                             column_names.add(column_name)
 
             # Columns used in query filters

@@ -1080,6 +1080,43 @@ def test_data_for_slices_handles_missing_datasource(mocker: MockerFixture) -> No
     assert "verbose_map" in result
 
 
+def test_data_for_slices_ignores_malformed_adhoc_metric_column(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed adhoc metric columns should not break dashboard datasource data."""
+    database = mocker.MagicMock()
+    database.id = 1
+
+    table = SqlaTable(
+        table_name="test_table",
+        database=database,
+        columns=[],
+        metrics=[],
+    )
+
+    mock_slice = mocker.MagicMock()
+    mock_slice.id = 1
+    mock_slice.slice_name = "Test Chart"
+    mock_slice.form_data = {
+        "metrics": [
+            {
+                "expressionType": "SIMPLE",
+                "label": "Bad metric column",
+                "column": "not-a-column-object",
+                "aggregate": "SUM",
+            }
+        ]
+    }
+    mock_slice.get_query_context.side_effect = DatasourceNotFound()
+
+    mocker.patch.object(SqlaTable, "columns", [])
+    mocker.patch.object(SqlaTable, "metrics", [])
+
+    result = table.data_for_slices([mock_slice])
+
+    assert result["columns"] == []
+
+
 def test_owners_data_includes_email(mocker: MockerFixture) -> None:
     """Test that the owners_data property includes the email field."""
     database = mocker.MagicMock()

@@ -1411,7 +1411,10 @@ def get_metric_name(metric: Metric, verbose_map: dict[str, Any] | None = None) -
             if sql_expression := metric.get("sqlExpression"):
                 return sql_expression
         if expression_type == "SIMPLE":
-            column: AdhocMetricColumn = metric.get("column") or {}
+            column_value = metric.get("column")
+            column: AdhocMetricColumn = (
+                column_value if isinstance(column_value, dict) else {}
+            )
             column_name = column.get("column_name")
             aggregate = metric.get("aggregate")
             if column and aggregate:
