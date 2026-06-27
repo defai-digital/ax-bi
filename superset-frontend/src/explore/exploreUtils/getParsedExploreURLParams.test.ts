@@ -64,6 +64,20 @@ test('get datasource and viz type from form_data search param - url when creatin
   );
 });
 
+test('ignores malformed form_data search param', () => {
+  setupLocation(`${EXPLORE_BASE_URL}?form_data=%7Bmalformed&slice_id=56`);
+  expect(getParsedExploreURLParams().toString()).toEqual('slice_id=56');
+});
+
+test('keeps valid form_data fields when datasource is not a string', () => {
+  setupLocation(
+    `${EXPLORE_BASE_URL}?form_data=%7B%22viz_type%22%3A%22big_number%22%2C%22datasource%22%3A2%7D`,
+  );
+  expect(getParsedExploreURLParams().toString()).toEqual(
+    `viz_type=${VizType.BigNumber}&datasource=2`,
+  );
+});
+
 test('get permalink key from path params', () => {
   setupLocation(`${EXPLORE_BASE_URL}p/kpOqweaMY9R/`);
   expect(getParsedExploreURLParams().toString()).toEqual(

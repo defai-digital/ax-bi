@@ -30,7 +30,7 @@ const EXPLORE_URL_SEARCH_PARAMS = {
     name: 'form_data',
     parser: (formData: string) => {
       const formDataObject = JSON.parse(formData);
-      if (formDataObject.datasource) {
+      if (typeof formDataObject.datasource === 'string') {
         const [datasource_id, datasource_type] =
           formDataObject.datasource.split('__');
         formDataObject.datasource_id = datasource_id;
@@ -94,7 +94,7 @@ const getParsedExploreURLSearchParams = (
             currentParam as ExploreUrlSearchParamsWithParser
           ].parser?.(paramValue) ?? paramValue;
       } catch {
-        parsedParamValue = paramValue;
+        return acc;
       }
       if (typeof parsedParamValue === 'object') {
         return { ...acc, ...parsedParamValue };
