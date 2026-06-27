@@ -57,6 +57,19 @@ DASHBOARD_CUSTOM_FIELDS = {
 }
 
 
+def _load_dashboard_json_metadata(dashboard: Dashboard) -> dict[str, Any]:
+    try:
+        metadata = json.loads(dashboard.json_metadata or "{}")
+    except (TypeError, ValueError):
+        logger.warning(
+            "Ignoring malformed dashboard json_metadata",
+            extra={"dashboard_id": dashboard.id},
+        )
+        return {}
+
+    return metadata if isinstance(metadata, dict) else {}
+
+
 class DashboardDAO(BaseDAO[Dashboard]):
     base_filter = DashboardAccessFilter
     # Column used by MCP tools for title-based identifier fallback, so a
@@ -409,7 +422,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
         cls, id: str
     ) -> dict[str, list[dict[str, Any]]]:
         dashboard = cls.get_by_id_or_slug(id)
-        metadata = json.loads(dashboard.json_metadata or "{}")
+        metadata = _load_dashboard_json_metadata(dashboard)
         native_filter_configuration = metadata.get("native_filter_configuration", [])
 
         tab_filters = defaultdict(list)
@@ -430,8 +443,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
         if not dashboard:
             raise DashboardUpdateFailedError("Dashboard not found")
 
+        updated_configuration: list[dict[str, Any]] = []
         if attributes:
-            metadata = json.loads(dashboard.json_metadata or "{}")
+            metadata = _load_dashboard_json_metadata(dashboard)
             native_filter_configuration = metadata.get(
                 "native_filter_configuration", []
             )
@@ -498,7 +512,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dashboard: Dashboard,
         attributes: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        metadata = json.loads(dashboard.json_metadata or "{}")
+        metadata = _load_dashboard_json_metadata(dashboard)
         updated_configuration = []
 
         if attributes:
@@ -560,7 +574,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
     def update_colors_config(
         cls, dashboard: Dashboard, attributes: dict[str, Any]
     ) -> None:
-        metadata = json.loads(dashboard.json_metadata or "{}")
+        metadata = _load_dashboard_json_metadata(dashboard)
 
         for key in [
             "color_scheme_domain",
