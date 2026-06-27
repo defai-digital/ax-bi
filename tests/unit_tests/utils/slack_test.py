@@ -216,3 +216,18 @@ The server responded with: missing scope: channels:read"""
             {"name": "general", "id": "C12345"},
             {"name": "random", "id": "C67890"},
         ]
+
+    def test_handle_malformed_response_metadata(self, mocker):
+        mock_data = {
+            "channels": [{"name": "general", "id": "C12345"}],
+            "response_metadata": ["bad-metadata"],
+        }
+
+        mock_response_instance = MockResponse(mock_data)
+        mock_client = mocker.Mock()
+        mock_client.conversations_list.return_value = mock_response_instance
+        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+
+        result = get_channels_with_search()
+
+        assert result == [{"name": "general", "id": "C12345"}]

@@ -101,7 +101,12 @@ def get_channels() -> list[SlackChannelSchema]:
                 len(channels),
             )
 
-            cursor = response.data.get("response_metadata", {}).get("next_cursor")
+            response_metadata = response.data.get("response_metadata") or {}
+            cursor = (
+                response_metadata.get("next_cursor")
+                if isinstance(response_metadata, dict)
+                else None
+            )
             if not cursor:
                 break
 
