@@ -286,8 +286,12 @@ def add_sqllab_custom_filters(form_data: dict[Any, Any]) -> Any:
                 params = json.loads(params_str)
                 if isinstance(params, dict):
                     filters = params.get("_filters")
-                    if filters:
-                        form_data.update({"filters": filters})
+                    if isinstance(filters, list):
+                        valid_filters = [
+                            filter_ for filter_ in filters if isinstance(filter_, dict)
+                        ]
+                        if valid_filters:
+                            form_data.update({"filters": valid_filters})
     except (TypeError, json.JSONDecodeError):
         data = {}
 

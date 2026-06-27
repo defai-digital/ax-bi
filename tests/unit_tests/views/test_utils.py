@@ -27,6 +27,7 @@ from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
 from superset.views.utils import (
+    add_sqllab_custom_filters,
     get_dashboard_extra_filters,
     get_datasource_info,
     get_form_data,
@@ -173,6 +174,46 @@ def test_get_form_data_ignores_non_object_query_entries() -> None:
 
     assert form_data == {"queries": ["not an object"]}
     assert slc is None
+
+
+def test_add_sqllab_custom_filters_adds_valid_filters() -> None:
+    form_data: dict[str, Any] = {}
+    filters = [{"col": "country", "op": "==", "val": "US"}]
+
+    with current_app.test_request_context(
+        data=json.dumps({"templateParams": json.dumps({"_filters": filters})}),
+    ):
+        add_sqllab_custom_filters(form_data)
+
+    assert form_data["filters"] == filters
+
+
+@pytest.mark.parametrize("filters_value", ["bad", {"col": "country"}, 1, None])
+def test_add_sqllab_custom_filters_ignores_malformed_filters(
+    filters_value: Any,
+) -> None:
+    form_data: dict[str, Any] = {}
+
+    with current_app.test_request_context(
+        data=json.dumps({"templateParams": json.dumps({"_filters": filters_value})}),
+    ):
+        add_sqllab_custom_filters(form_data)
+
+    assert form_data == {}
+
+
+def test_add_sqllab_custom_filters_drops_malformed_filter_entries() -> None:
+    form_data: dict[str, Any] = {}
+    valid_filter = {"col": "country", "op": "==", "val": "US"}
+
+    with current_app.test_request_context(
+        data=json.dumps(
+            {"templateParams": json.dumps({"_filters": ["bad", valid_filter]})}
+        ),
+    ):
+        add_sqllab_custom_filters(form_data)
+
+    assert form_data["filters"] == [valid_filter]
 
 
 def _mock_dashboard_extra_filter_queries(
