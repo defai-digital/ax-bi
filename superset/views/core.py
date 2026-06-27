@@ -472,7 +472,7 @@ class Superset(BaseSupersetView):
         elif form_data_key := request.args.get("form_data_key"):
             parameters = CommandParameters(key=form_data_key)
             value = GetFormDataCommand(parameters).run()
-            initial_form_data = json.loads(value) if value else {}
+            initial_form_data = loads_request_json(value) if value else {}
 
         if not initial_form_data:
             slice_id = request.args.get("slice_id")

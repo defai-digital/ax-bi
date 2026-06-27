@@ -27,6 +27,7 @@ from superset.views.utils import (
     get_dashboard_extra_filters,
     get_form_data,
     JS_CONTROL_FORM_DATA_KEYS,
+    loads_request_json,
     REJECTED_FORM_DATA_KEYS,
 )
 
@@ -66,6 +67,15 @@ def test_get_form_data_ignores_non_object_request_form_data() -> None:
 
     assert form_data == {}
     assert slc is None
+
+
+def test_loads_request_json_requires_object() -> None:
+    """Request JSON helpers should return only decoded JSON objects."""
+    assert loads_request_json('{"slice_id": 1}') == {"slice_id": 1}
+    assert loads_request_json("[]") == {}
+    assert loads_request_json("null") == {}
+    assert loads_request_json('"scalar"') == {}
+    assert loads_request_json("not json") == {}
 
 
 def test_get_form_data_ignores_non_object_json_body() -> None:

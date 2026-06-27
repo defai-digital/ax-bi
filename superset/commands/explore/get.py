@@ -38,10 +38,11 @@ from superset.explore.exceptions import WrongEndpointError
 from superset.explore.permalink.exceptions import ExplorePermalinkGetFailedError
 from superset.extensions import security_manager
 from superset.superset_typing import ExplorableData
-from superset.utils import core as utils, json
+from superset.utils import core as utils
 from superset.views.utils import (
     get_datasource_info,
     get_form_data,
+    loads_request_json,
     sanitize_datasource_data,
 )
 
@@ -77,7 +78,7 @@ class GetExploreCommand(BaseCommand, ABC):
         elif self._form_data_key:
             parameters = FormDataCommandParameters(key=self._form_data_key)
             value = GetFormDataCommand(parameters).run()
-            initial_form_data = json.loads(value) if value else {}
+            initial_form_data = loads_request_json(value) if value else {}
 
         message = None
 
