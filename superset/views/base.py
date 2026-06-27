@@ -341,10 +341,17 @@ def _load_theme_from_model(
     if theme_model:
         try:
             db_theme = json.loads(theme_model.json_data)
+            if not isinstance(db_theme, dict):
+                logger.error(
+                    "Invalid JSON object in system %s theme %s",
+                    theme_type.value,
+                    theme_model.id,
+                )
+                return fallback_theme
             if fallback_theme:
                 merged = _merge_theme_dicts(dict(fallback_theme), db_theme)
                 return cast(Theme, merged)
-            return db_theme
+            return cast(Theme, db_theme)
         except json.JSONDecodeError:
             logger.error(
                 "Invalid JSON in system %s theme %s", theme_type.value, theme_model.id
