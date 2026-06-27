@@ -16,6 +16,7 @@
 # under the License.
 from __future__ import annotations
 
+import copy
 import uuid
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -132,7 +133,6 @@ def test_export_yields_dataset_files_for_display_controls():
             ],
         }
     )
-
     mock_dataset = MagicMock()
     sentinel_file = ("datasets/my_dataset.yaml", lambda: "dataset_content")
     mock_datasets_cmd = MagicMock()
@@ -162,6 +162,84 @@ def test_export_yields_dataset_files_for_display_controls():
     mock_datasets_cmd.run.assert_called_once()
     filenames = [name for name, _ in results]
     assert "datasets/my_dataset.yaml" in filenames
+
+
+def test_export_skips_malformed_dataset_reference_entries() -> None:
+    """
+    Dashboard export should ignore malformed metadata entries when resolving datasets.
+    """
+    from superset.commands.dashboard.export import ExportDashboardsCommand
+
+    dataset_uuid = str(uuid.uuid4())
+    native_dataset_id = 42
+    customization_dataset_id = 43
+    mock_dashboard = _make_mock_dashboard(
+        {
+            "native_filter_configuration": [
+                "bad-filter",
+                {
+                    "id": "NATIVE_FILTER-abc",
+                    "targets": [
+                        "bad-target",
+                        {"datasetId": native_dataset_id},
+                    ],
+                },
+            ],
+            "chart_customization_config": [
+                "bad-customization",
+                {
+                    "id": "CUSTOMIZATION-abc",
+                    "targets": [
+                        "bad-target",
+                        {"datasetId": customization_dataset_id},
+                    ],
+                },
+            ],
+        }
+    )
+    export_payload = mock_dashboard.export_to_dict.return_value
+    mock_dashboard.export_to_dict.side_effect = [
+        copy.deepcopy(export_payload),
+        copy.deepcopy(export_payload),
+    ]
+
+    mock_dataset = MagicMock()
+    mock_dataset.uuid = dataset_uuid
+    sentinel_file = ("datasets/my_dataset.yaml", lambda: "dataset_content")
+    mock_datasets_cmd = MagicMock()
+    mock_datasets_cmd.run.side_effect = lambda: iter([sentinel_file])
+
+    with (
+        patch(
+            "superset.commands.dashboard.export.DatasetDAO.find_by_id",
+            return_value=mock_dataset,
+        ),
+        patch(
+            "superset.commands.dashboard.export.ExportDatasetsCommand",
+            return_value=mock_datasets_cmd,
+        ) as mock_datasets_cls,
+        patch(
+            "superset.commands.dashboard.export.ExportChartsCommand"
+        ) as mock_charts_cls,
+        patch(
+            "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+            return_value=False,
+        ),
+    ):
+        mock_charts_cls.return_value.run.return_value = iter([])
+        content = ExportDashboardsCommand._file_content(mock_dashboard)
+        results = list(ExportDashboardsCommand._export(mock_dashboard))
+
+    result = yaml.safe_load(content)
+    native_filters = result["metadata"]["native_filter_configuration"]
+    customizations = result["metadata"]["chart_customization_config"]
+    assert native_filters[1]["targets"][1]["datasetUuid"] == dataset_uuid
+    assert customizations[1]["targets"][1]["datasetUuid"] == dataset_uuid
+    assert mock_datasets_cls.call_count == 2
+    assert mock_datasets_cls.call_args_list[0].args == ([native_dataset_id],)
+    assert mock_datasets_cls.call_args_list[1].args == ([customization_dataset_id],)
+    filenames = [name for name, _ in results]
+    assert filenames.count("datasets/my_dataset.yaml") == 2
 
 
 def test_file_content_null_chart_customization_config_does_not_raise():

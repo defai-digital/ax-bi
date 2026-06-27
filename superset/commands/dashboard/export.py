@@ -57,6 +57,15 @@ def _load_json_object(value: str, key: str) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def _iter_dicts(value: Any) -> Iterator[dict[str, Any]]:
+    """Yield dictionary entries from a list-like metadata field."""
+    if not isinstance(value, list):
+        return
+    for item in value:
+        if isinstance(item, dict):
+            yield item
+
+
 def get_default_position(title: str) -> dict[str, Any]:
     return {
         "DASHBOARD_VERSION_KEY": "v2",
@@ -316,10 +325,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
 
         # Extract all native filter datasets and replace native
         # filter dataset references with uuid
-        for native_filter in payload.get("metadata", {}).get(
-            "native_filter_configuration", []
+        for native_filter in _iter_dicts(
+            payload.get("metadata", {}).get("native_filter_configuration")
         ):
-            for target in native_filter.get("targets", []):
+            for target in _iter_dicts(native_filter.get("targets")):
                 dataset_id = target.pop("datasetId", None)
                 if dataset_id is not None:
                     dataset = DatasetDAO.find_by_id(dataset_id)
@@ -330,10 +339,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
         # datasetId is intentionally preserved alongside datasetUuid so that
         # bundles remain importable by older versions that do not yet understand
         # datasetUuid for display-control targets.
-        for customization in (
-            payload.get("metadata", {}).get("chart_customization_config") or []
+        for customization in _iter_dicts(
+            payload.get("metadata", {}).get("chart_customization_config")
         ):
-            for target in customization.get("targets") or []:
+            for target in _iter_dicts(customization.get("targets")):
                 dataset_id = target.get("datasetId")
                 if dataset_id is not None:
                     dataset = DatasetDAO.find_by_id(dataset_id)
@@ -433,10 +442,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
 
         if export_related:
             # Extract all native filter datasets and export referenced datasets
-            for native_filter in payload.get("metadata", {}).get(
-                "native_filter_configuration", []
+            for native_filter in _iter_dicts(
+                payload.get("metadata", {}).get("native_filter_configuration")
             ):
-                for target in native_filter.get("targets", []):
+                for target in _iter_dicts(native_filter.get("targets")):
                     dataset_id = target.pop("datasetId", None)
                     if dataset_id is not None:
                         dataset = DatasetDAO.find_by_id(dataset_id)
@@ -444,10 +453,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
                             yield from ExportDatasetsCommand([dataset_id]).run()
 
             # Export datasets referenced by display controls
-            for customization in (
-                payload.get("metadata", {}).get("chart_customization_config") or []
+            for customization in _iter_dicts(
+                payload.get("metadata", {}).get("chart_customization_config")
             ):
-                for target in customization.get("targets") or []:
+                for target in _iter_dicts(customization.get("targets")):
                     dataset_id = target.get("datasetId")
                     if dataset_id is not None:
                         dataset = DatasetDAO.find_by_id(dataset_id)
