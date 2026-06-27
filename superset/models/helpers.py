@@ -960,12 +960,13 @@ class ExtraJSONMixin:
     @property
     def extra(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra_json or "{}") or {}
+            extra = json.loads(self.extra_json or "{}") or {}
         except (TypeError, json.JSONDecodeError) as exc:
             logger.error(
                 "Unable to load an extra json: %r. Leaving empty.", exc, exc_info=True
             )
             return {}
+        return extra if isinstance(extra, dict) else {}
 
     @extra.setter
     def extra(self, extras: dict[str, Any]) -> None:
@@ -994,9 +995,10 @@ class CertificationMixin:
 
     def get_extra_dict(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra)
+            extra = json.loads(self.extra)
         except (TypeError, json.JSONDecodeError):
             return {}
+        return extra if isinstance(extra, dict) else {}
 
     @property
     def is_certified(self) -> bool:

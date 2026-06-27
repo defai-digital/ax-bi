@@ -64,6 +64,37 @@ def test_json_to_dict_ignores_non_object_json() -> None:
     assert json_to_dict('["count"]') == {}
 
 
+def test_extra_json_mixin_ignores_non_object_extra() -> None:
+    from superset.models.helpers import ExtraJSONMixin
+
+    obj = ExtraJSONMixin()
+    obj.extra_json = "[]"
+
+    assert obj.extra == {}
+
+
+def test_extra_json_mixin_set_key_after_non_object_extra() -> None:
+    from superset.models.helpers import ExtraJSONMixin
+    from superset.utils import json
+
+    obj = ExtraJSONMixin()
+    obj.extra_json = "[]"
+
+    obj.set_extra_json_key("owner", "admin")
+
+    assert json.loads(obj.extra_json) == {"owner": "admin"}
+
+
+def test_certification_mixin_ignores_non_object_extra() -> None:
+    from superset.models.helpers import CertificationMixin
+
+    obj = CertificationMixin()
+    obj.extra = "[]"
+
+    assert obj.get_extra_dict() == {}
+    assert obj.is_certified is False
+
+
 @pytest.fixture
 def database(mocker: MockerFixture, session: Session) -> Database:
     from superset.connectors.sqla.models import SqlaTable
