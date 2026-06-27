@@ -165,3 +165,24 @@ test('getUrlParam uses provided search string instead of window.location.search 
 
   locationSpy.mockRestore();
 });
+
+test('getUrlParam returns object values for object URL params', () => {
+  expect(
+    getUrlParam(
+      URL_PARAMS.preselectFilters,
+      `?preselect_filters=${encodeURIComponent('{"region":["EMEA"]}')}`,
+    ),
+  ).toEqual({ region: ['EMEA'] });
+});
+
+test('getUrlParam ignores malformed object URL params', () => {
+  expect(
+    getUrlParam(URL_PARAMS.preselectFilters, '?preselect_filters={malformed'),
+  ).toBeNull();
+});
+
+test('getUrlParam ignores non-object JSON for object URL params', () => {
+  expect(
+    getUrlParam(URL_PARAMS.preselectFilters, '?preselect_filters=42'),
+  ).toBeNull();
+});

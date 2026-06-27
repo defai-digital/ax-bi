@@ -86,7 +86,14 @@ export function getUrlParam(
       if (!urlParam) {
         return null;
       }
-      return JSON.parse(urlParam);
+      try {
+        const parsed = JSON.parse(urlParam);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+          ? parsed
+          : null;
+      } catch {
+        return null;
+      }
     case 'boolean':
       if (!urlParam) {
         return null;
