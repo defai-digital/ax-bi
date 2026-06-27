@@ -293,7 +293,8 @@ class DashboardDAO(BaseDAO[Dashboard]):
         new_filter_scopes = {}
         md = dashboard.params_dict
 
-        if (positions := data.get("positions")) is not None:
+        if data.get("positions") is not None:
+            positions = _load_json_object(data["positions"])
             # find slices in the position data
             slice_ids = [
                 value.get("meta", {}).get("chartId")
@@ -408,7 +409,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dash.dashboard_title = data["dashboard_title"]
         dash.css = data.get("css")
 
-        metadata = json.loads(data["json_metadata"])
+        metadata = _load_json_object(data.get("json_metadata"))
         old_to_new_slice_ids: dict[int, int] = {}
         if data.get("duplicate_slices"):
             # Duplicating slices as well, mapping old ids to new ones
@@ -421,7 +422,8 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 old_to_new_slice_ids[slc.id] = new_slice.id
 
             # update chartId of layout entities
-            for value in metadata["positions"].values():
+            positions = _load_json_object(metadata.get("positions"))
+            for value in positions.values():
                 if isinstance(value, dict) and value.get("meta", {}).get("chartId"):
                     old_id = value["meta"]["chartId"]
                     new_id = old_to_new_slice_ids.get(old_id)
