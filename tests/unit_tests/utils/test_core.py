@@ -1451,6 +1451,61 @@ def test_merge_extra_form_data_merges_append_fields() -> None:
     assert "extra_form_data" not in form_data
 
 
+def test_merge_extra_form_data_ignores_malformed_nested_filter_values() -> None:
+    """
+    Test that malformed nested filter lists do not crash extra form data merging.
+    """
+    form_data: dict[str, Any] = {
+        "adhoc_filters": [None],
+        "adhoc_filter_b": [],
+        "extra_form_data": {
+            "adhoc_filters": [
+                "bad",
+                {
+                    "expressionType": "SQL",
+                    "clause": "WHERE",
+                    "sqlExpression": "1 = 0",
+                },
+            ],
+            "filters": [
+                None,
+                {"col": "foo", "op": "IN", "val": ["bar"]},
+            ],
+        },
+    }
+    merge_extra_form_data(form_data)
+
+    converted_adhoc_filter = form_data["adhoc_filters"][1]
+    del converted_adhoc_filter["filterOptionName"]
+    assert form_data["adhoc_filters"] == [
+        {
+            "isExtra": True,
+            "expressionType": "SQL",
+            "clause": "WHERE",
+            "sqlExpression": "1 = 0",
+        },
+        {
+            "clause": "WHERE",
+            "comparator": ["bar"],
+            "expressionType": "SIMPLE",
+            "isExtra": True,
+            "operator": "IN",
+            "subject": "foo",
+        },
+    ]
+    converted_filter = form_data["adhoc_filter_b"][0]
+    del converted_filter["filterOptionName"]
+    assert converted_filter == {
+        "clause": "WHERE",
+        "comparator": ["bar"],
+        "expressionType": "SIMPLE",
+        "isExtra": True,
+        "operator": "IN",
+        "subject": "foo",
+    }
+    assert "extra_form_data" not in form_data
+
+
 def test_merge_extra_form_data_creates_temporal_filter_when_none_exists():
     """
     Test that when granularity_sqla_override and time_range are provided

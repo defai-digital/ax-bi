@@ -1094,7 +1094,16 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
     extra_form_data = form_data.pop("extra_form_data", {})
     if not isinstance(extra_form_data, dict):
         extra_form_data = {}
-    append_filters: list[QueryObjectFilterClause] = extra_form_data.get("filters", None)
+    raw_append_filters = extra_form_data.get("filters")
+    append_filters: list[QueryObjectFilterClause] = (
+        [
+            cast(QueryObjectFilterClause, fltr)
+            for fltr in raw_append_filters
+            if isinstance(fltr, dict)
+        ]
+        if isinstance(raw_append_filters, list)
+        else []
+    )
 
     # merge append extras
     for key in EXTRA_FORM_DATA_APPEND_KEYS - {*filter_keys, "custom_form_data"}:
@@ -1131,17 +1140,33 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
     if extras:
         form_data["extras"] = extras
 
-    adhoc_filters: list[AdhocFilterClause] = form_data.get("adhoc_filters", [])
+    raw_adhoc_filters = form_data.get("adhoc_filters", [])
+    adhoc_filters: list[AdhocFilterClause] = (
+        [
+            cast(AdhocFilterClause, adhoc_filter)
+            for adhoc_filter in raw_adhoc_filters
+            if isinstance(adhoc_filter, dict)
+        ]
+        if isinstance(raw_adhoc_filters, list)
+        else []
+    )
     form_data["adhoc_filters"] = adhoc_filters
-    append_adhoc_filters: list[AdhocFilterClause] = extra_form_data.get(
-        "adhoc_filters", []
+    raw_append_adhoc_filters = extra_form_data.get("adhoc_filters", [])
+    append_adhoc_filters: list[AdhocFilterClause] = (
+        [
+            cast(AdhocFilterClause, adhoc_filter)
+            for adhoc_filter in raw_append_adhoc_filters
+            if isinstance(adhoc_filter, dict)
+        ]
+        if isinstance(raw_append_adhoc_filters, list)
+        else []
     )
     adhoc_filters.extend(
         {"isExtra": True, **adhoc_filter} for adhoc_filter in append_adhoc_filters
     )
     if append_filters:
         for key, value in form_data.items():
-            if re.match("adhoc_filter.*", key):
+            if re.match("adhoc_filter.*", key) and isinstance(value, list):
                 value.extend(
                     simple_filter_to_adhoc({"isExtra": True, **fltr})
                     for fltr in append_filters
