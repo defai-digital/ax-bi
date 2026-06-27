@@ -119,18 +119,32 @@ const getOptionsForSavedMetrics = (
 
 type ValueType = Metric | AdhocMetric | QueryFormMetric;
 
+interface ExtraConfig {
+  disallow_adhoc_metrics?: boolean;
+  [key: string]: unknown;
+}
+
+const getDatasourceExtra = (extra?: string | ExtraConfig): ExtraConfig => {
+  if (!extra) {
+    return {};
+  }
+  if (typeof extra !== 'string') {
+    return extra;
+  }
+  try {
+    return JSON.parse(extra);
+  } catch {
+    return {};
+  }
+};
+
 const DndMetricSelect = (props: any) => {
   const { onChange, multi, datasource, savedMetrics } = props;
 
-  const extra = useMemo<{ disallow_adhoc_metrics?: boolean }>(() => {
-    let extra = {};
-    if (datasource?.extra) {
-      try {
-        extra = JSON.parse(datasource.extra);
-      } catch {} // eslint-disable-line no-empty
-    }
-    return extra;
-  }, [datasource?.extra]);
+  const extra = useMemo<ExtraConfig>(
+    () => getDatasourceExtra(datasource?.extra),
+    [datasource?.extra],
+  );
 
   // Semantic views do not support arbitrary SQL expressions as metrics.
   const disallowAdhocMetrics =
@@ -140,12 +154,7 @@ const DndMetricSelect = (props: any) => {
   // directly, so we need to inject the flag there too — not just in canDrop.
   const datasourceForPopover = useMemo(() => {
     if (!disallowAdhocMetrics || !datasource) return datasource;
-    let parsedExtra: Record<string, unknown> = {};
-    if (datasource.extra) {
-      try {
-        parsedExtra = JSON.parse(datasource.extra as string);
-      } catch {} // eslint-disable-line no-empty
-    }
+    const parsedExtra = getDatasourceExtra(datasource.extra);
     return {
       ...datasource,
       extra: JSON.stringify({ ...parsedExtra, disallow_adhoc_metrics: true }),
@@ -219,7 +228,7 @@ const DndMetricSelect = (props: any) => {
         item.type === 'metric' ? value.includes(item.value.metric_name) : false;
       return !isMetricAlreadyInValues;
     },
-    [value, extra, savedMetricSet],
+    [disallowAdhocMetrics, savedMetricSet, value],
   );
 
   const onNewMetric = useCallback(
