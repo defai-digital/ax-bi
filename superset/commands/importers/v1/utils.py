@@ -1,3 +1,5 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file
 # to you under the Apache License, Version 2.0 (the
@@ -60,7 +62,7 @@ def load_yaml(file_name: str, content: str) -> dict[str, Any]:
     """Try to load a YAML file"""
     try:
         return yaml.safe_load(content)
-    except yaml.parser.ParserError as ex:
+    except yaml.YAMLError as ex:
         logger.exception("Invalid YAML in %s", file_name)
         raise ValidationError({file_name: "Not a valid YAML file"}) from ex
 

@@ -38,6 +38,17 @@ def _mock_empty_import_queries(mocker: MockerFixture) -> None:
     query.return_value.all.return_value = []
 
 
+def test_load_yaml_wraps_scanner_errors() -> None:
+    from superset.commands.importers.v1.utils import load_yaml
+
+    with pytest.raises(ValidationError) as excinfo:
+        load_yaml("databases/bad.yaml", "name: [")
+
+    assert excinfo.value.messages == {
+        "databases/bad.yaml": "Not a valid YAML file",
+    }
+
+
 def test_load_configs_rejects_non_object_yaml(mocker: MockerFixture) -> None:
     from superset.commands.importers.v1.utils import load_configs
 
