@@ -1451,6 +1451,21 @@ def test_merge_extra_form_data_merges_append_fields() -> None:
     assert "extra_form_data" not in form_data
 
 
+def test_merge_extra_form_data_resets_malformed_extras() -> None:
+    """
+    Test that non-object extras does not crash extra override merging.
+    """
+    form_data: dict[str, Any] = {
+        "extras": [],
+        "extra_form_data": {"relative_start": "now"},
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data["extras"] == {"relative_start": "now"}
+    assert form_data["adhoc_filters"] == []
+    assert "extra_form_data" not in form_data
+
+
 def test_merge_extra_form_data_ignores_malformed_nested_filter_values() -> None:
     """
     Test that malformed nested filter lists do not crash extra form data merging.
@@ -1469,6 +1484,9 @@ def test_merge_extra_form_data_ignores_malformed_nested_filter_values() -> None:
             ],
             "filters": [
                 None,
+                {"col": "missing-op", "val": "x"},
+                {"op": "IN", "val": "x"},
+                {"col": "foo", "op": "IN"},
                 {"col": "foo", "op": "IN", "val": ["bar"]},
             ],
         },

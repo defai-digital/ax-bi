@@ -1099,7 +1099,12 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
         [
             cast(QueryObjectFilterClause, fltr)
             for fltr in raw_append_filters
-            if isinstance(fltr, dict)
+            if (
+                isinstance(fltr, dict)
+                and "col" in fltr
+                and "op" in fltr
+                and "val" in fltr
+            )
         ]
         if isinstance(raw_append_filters, list)
         else []
@@ -1133,6 +1138,8 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
 
     # map extras that apply to form data extra properties
     extras = form_data.get("extras", {})
+    if not isinstance(extras, dict):
+        extras = {}
     for key in EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS:
         value = extra_form_data.get(key)
         if value is not None:
