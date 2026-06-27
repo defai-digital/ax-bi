@@ -16,6 +16,7 @@
 # under the License.
 from datetime import datetime
 from io import BytesIO
+from typing import Any
 from zipfile import is_zipfile, ZipFile
 
 from flask import request, Response, send_file
@@ -32,6 +33,22 @@ from superset.extensions import event_logger
 from superset.utils import json
 from superset.utils.core import parse_boolean_string
 from superset.views.base_api import BaseSupersetApi, requires_form_data, statsd_metrics
+
+
+def _load_optional_json_object_form_field(field_name: str) -> dict[str, Any] | None:
+    """Load an optional multipart form field containing a JSON object."""
+    if field_name not in request.form:
+        return None
+
+    try:
+        value = json.loads(request.form[field_name])
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise ValueError(f"Invalid JSON object for form field: {field_name}") from ex
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Invalid JSON object for form field: {field_name}")
+
+    return value
 
 
 class ImportExportRestApi(BaseSupersetApi):
@@ -199,31 +216,22 @@ class ImportExportRestApi(BaseSupersetApi):
         # endpoint always overwrote existing assets.
         overwrite = parse_boolean_string(request.form.get("overwrite", "true"))
 
-        passwords = (
-            json.loads(request.form["passwords"])
-            if "passwords" in request.form
-            else None
-        )
-        ssh_tunnel_passwords = (
-            json.loads(request.form["ssh_tunnel_passwords"])
-            if "ssh_tunnel_passwords" in request.form
-            else None
-        )
-        ssh_tunnel_private_keys = (
-            json.loads(request.form["ssh_tunnel_private_keys"])
-            if "ssh_tunnel_private_keys" in request.form
-            else None
-        )
-        ssh_tunnel_priv_key_passwords = (
-            json.loads(request.form["ssh_tunnel_private_key_passwords"])
-            if "ssh_tunnel_private_key_passwords" in request.form
-            else None
-        )
-        encrypted_extra_secrets = (
-            json.loads(request.form["encrypted_extra_secrets"])
-            if "encrypted_extra_secrets" in request.form
-            else None
-        )
+        try:
+            passwords = _load_optional_json_object_form_field("passwords")
+            ssh_tunnel_passwords = _load_optional_json_object_form_field(
+                "ssh_tunnel_passwords"
+            )
+            ssh_tunnel_private_keys = _load_optional_json_object_form_field(
+                "ssh_tunnel_private_keys"
+            )
+            ssh_tunnel_priv_key_passwords = _load_optional_json_object_form_field(
+                "ssh_tunnel_private_key_passwords"
+            )
+            encrypted_extra_secrets = _load_optional_json_object_form_field(
+                "encrypted_extra_secrets"
+            )
+        except ValueError as ex:
+            return self.response_400(message=str(ex))
 
         command = ImportAssetsCommand(
             contents,
