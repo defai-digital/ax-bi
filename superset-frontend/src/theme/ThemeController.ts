@@ -989,6 +989,26 @@ export class ThemeController {
     }
   }
 
+  private parseThemeJsonData(
+    jsonData: string | null | undefined,
+    source: string,
+  ): AnyThemeConfig | null {
+    try {
+      const themeConfig: unknown = JSON.parse(jsonData || '');
+      if (
+        themeConfig &&
+        typeof themeConfig === 'object' &&
+        !Array.isArray(themeConfig)
+      ) {
+        return themeConfig as AnyThemeConfig;
+      }
+    } catch (error) {
+      console.warn(`Failed to parse theme configuration from ${source}:`, error);
+    }
+
+    return null;
+  }
+
   /**
    * Fetches a theme configuration from the CRUD API.
    * @param themeId - The ID of the theme to fetch
@@ -1008,9 +1028,12 @@ export class ThemeController {
       });
 
       const { result } = await getTheme();
-      const themeConfig = JSON.parse(result.json_data);
+      const themeConfig = this.parseThemeJsonData(
+        result.json_data,
+        `theme ${themeId}`,
+      );
 
-      if (!themeConfig || typeof themeConfig !== 'object') {
+      if (!themeConfig) {
         console.error(`Invalid theme configuration for theme ${themeId}`);
         return null;
       }
@@ -1072,10 +1095,11 @@ export class ThemeController {
             '/api/v1/theme/?q=(filters:!((col:is_system_default,opr:eq,value:!t)))',
         });
         if (response.json?.result?.length > 0) {
-          const themeConfig = JSON.parse(response.json.result[0].json_data);
-          if (themeConfig && typeof themeConfig === 'object') {
-            return themeConfig;
-          }
+          const themeConfig = this.parseThemeJsonData(
+            response.json.result[0].json_data,
+            'system default theme',
+          );
+          if (themeConfig) return themeConfig;
         }
       } catch (clientError) {
         // If SupersetClient is not configured yet or request fails, fall back to native fetch
@@ -1088,10 +1112,11 @@ export class ThemeController {
         if (defaultResponse.ok) {
           const data = await defaultResponse.json();
           if (data.result?.length > 0) {
-            const themeConfig = JSON.parse(data.result[0].json_data);
-            if (themeConfig && typeof themeConfig === 'object') {
-              return themeConfig;
-            }
+            const themeConfig = this.parseThemeJsonData(
+              data.result[0].json_data,
+              'system default theme',
+            );
+            if (themeConfig) return themeConfig;
           }
         }
       }
@@ -1103,10 +1128,11 @@ export class ThemeController {
             '/api/v1/theme/?q=(filters:!((col:theme_name,opr:eq,value:THEME_DEFAULT),(col:is_system,opr:eq,value:!t)))',
         });
         if (response.json?.result?.length > 0) {
-          const themeConfig = JSON.parse(response.json.result[0].json_data);
-          if (themeConfig && typeof themeConfig === 'object') {
-            return themeConfig;
-          }
+          const themeConfig = this.parseThemeJsonData(
+            response.json.result[0].json_data,
+            'named system theme',
+          );
+          if (themeConfig) return themeConfig;
         }
       } catch (clientError) {
         const headers = this.getGuestTokenHeader();
@@ -1118,10 +1144,11 @@ export class ThemeController {
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
           if (fallbackData.result?.length > 0) {
-            const themeConfig = JSON.parse(fallbackData.result[0].json_data);
-            if (themeConfig && typeof themeConfig === 'object') {
-              return themeConfig;
-            }
+            const themeConfig = this.parseThemeJsonData(
+              fallbackData.result[0].json_data,
+              'named system theme',
+            );
+            if (themeConfig) return themeConfig;
           }
         }
       }
