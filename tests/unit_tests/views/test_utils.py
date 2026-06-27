@@ -18,13 +18,16 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from flask import current_app
 
+from superset.exceptions import SupersetException
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
 from superset.views.utils import (
     get_dashboard_extra_filters,
+    get_datasource_info,
     get_form_data,
     JS_CONTROL_FORM_DATA_KEYS,
     loads_request_json,
@@ -76,6 +79,35 @@ def test_loads_request_json_requires_object() -> None:
     assert loads_request_json("null") == {}
     assert loads_request_json('"scalar"') == {}
     assert loads_request_json("not json") == {}
+
+
+def test_get_datasource_info_parses_combined_datasource_key() -> None:
+    """Combined datasource keys override the explicit URL values."""
+    assert get_datasource_info(None, None, {"datasource": "12__table"}) == (
+        12,
+        "table",
+    )
+
+
+def test_get_datasource_info_uses_explicit_values_without_combined_key() -> None:
+    """Explicit datasource route values still work without form datasource."""
+    assert get_datasource_info(7, "table", {}) == (7, "table")
+
+
+def test_get_datasource_info_rejects_malformed_datasource_keys() -> None:
+    """Malformed datasource keys should raise the normal missing-dataset error."""
+    malformed_datasources: tuple[str | list[str], ...] = (
+        "bad__table",
+        "1__table__extra",
+        "None__table",
+        [],
+    )
+    for datasource in malformed_datasources:
+        with pytest.raises(SupersetException) as excinfo:
+            get_datasource_info(None, None, {"datasource": datasource})
+        assert str(excinfo.value) == (
+            "The dataset associated with this chart no longer exists"
+        )
 
 
 def test_get_form_data_ignores_non_object_json_body() -> None:

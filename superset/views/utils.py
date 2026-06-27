@@ -310,18 +310,26 @@ def get_datasource_info(
     :raises SupersetException: If the datasource no longer exists
     """
 
-    if "__" in (datasource := form_data.get("datasource", "")):
-        datasource_id, datasource_type = datasource.split("__")
+    raw_datasource_id: Any = datasource_id
+    if isinstance(datasource := form_data.get("datasource"), str):
+        parts = datasource.split("__")
+        if len(parts) == 2:
+            raw_datasource_id, datasource_type = parts
         # The case where the datasource has been deleted
-        if datasource_id == "None":
-            datasource_id = None
+        if raw_datasource_id == "None":
+            raw_datasource_id = None
 
-    if not datasource_id:
+    if not raw_datasource_id:
         raise SupersetException(
             _("The dataset associated with this chart no longer exists")
         )
 
-    datasource_id = int(datasource_id)
+    try:
+        datasource_id = int(raw_datasource_id)
+    except (TypeError, ValueError) as ex:
+        raise SupersetException(
+            _("The dataset associated with this chart no longer exists")
+        ) from ex
     return datasource_id, datasource_type
 
 
