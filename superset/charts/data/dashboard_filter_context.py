@@ -37,6 +37,17 @@ logger = logging.getLogger(__name__)
 CHART_TYPE = "CHART"
 
 
+def _parse_json_object(value: str | None) -> dict[str, Any]:
+    if not value:
+        return {}
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        logger.warning("Failed to parse dashboard filter context JSON")
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 class DashboardFilterStatus(str, Enum):
     APPLIED = "applied"
     NOT_APPLIED = "not_applied"
@@ -267,16 +278,19 @@ def get_dashboard_filter_context(
     _check_dashboard_access(dashboard)
     _validate_chart_on_dashboard(dashboard, chart_id)
 
-    metadata = json.loads(dashboard.json_metadata or "{}")
-    native_filter_config: list[dict[str, Any]] = metadata.get(
-        "native_filter_configuration", []
-    )
+    metadata = _parse_json_object(dashboard.json_metadata)
+    native_filter_config = metadata.get("native_filter_configuration", [])
+    if not isinstance(native_filter_config, list):
+        native_filter_config = []
 
-    position_json: dict[str, Any] = json.loads(dashboard.position_json or "{}")
+    position_json = _parse_json_object(dashboard.position_json)
 
     context = DashboardFilterContext()
 
     for flt in native_filter_config:
+        if not isinstance(flt, dict):
+            continue
+
         flt_type = flt.get("type", "")
         if flt_type == "DIVIDER":
             continue

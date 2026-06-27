@@ -430,6 +430,100 @@ def test_get_dashboard_filter_context_static_defaults(
 
 @patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
 @patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_ignores_malformed_metadata(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = "{malformed"
+    dashboard.position_json = json.dumps(SAMPLE_POSITION_JSON)
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert ctx.filters == []
+    assert ctx.extra_form_data == {}
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_ignores_malformed_position_json(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    filter_config = [
+        _make_filter(
+            flt_id="f1",
+            name="Region",
+            scope_root=["ROOT_ID"],
+            default_value=["US"],
+            target_column="region",
+        ),
+    ]
+    metadata = {"native_filter_configuration": filter_config}
+
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = json.dumps(metadata)
+    dashboard.position_json = "{malformed"
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert len(ctx.filters) == 1
+    assert ctx.filters[0].status == DashboardFilterStatus.APPLIED
+    assert ctx.extra_form_data["filters"][0]["val"] == ["US"]
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_skips_malformed_filter_entries(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    filter_config = [
+        "bad-filter",
+        123,
+        _make_filter(
+            flt_id="f1",
+            name="Region",
+            scope_root=["ROOT_ID"],
+            default_value=["US"],
+            target_column="region",
+        ),
+    ]
+    metadata = {"native_filter_configuration": filter_config}
+
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = json.dumps(metadata)
+    dashboard.position_json = json.dumps(SAMPLE_POSITION_JSON)
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert len(ctx.filters) == 1
+    assert ctx.filters[0].id == "f1"
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_mixed_filter_types(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
