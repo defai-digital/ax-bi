@@ -365,6 +365,8 @@ def apply_dashboard_filter_context(  # noqa: C901
             ]
 
         extras = query.get("extras") or {}
+        if not isinstance(extras, dict):
+            extras = {}
         for key in EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS:
             if key in extra_form_data:
                 extras[key] = extra_form_data[key]

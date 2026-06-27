@@ -215,6 +215,23 @@ def test_apply_dashboard_filter_context_applies_time_grain_to_extras() -> None:
     assert query_context_json["queries"][0]["extras"]["time_grain_sqla"] == "P1M"
 
 
+def test_apply_dashboard_filter_context_resets_malformed_extras() -> None:
+    """Malformed query extras should not crash dashboard context application."""
+    query_context_json: dict[str, Any] = {
+        "queries": [{"extras": "bad-extras"}],
+    }
+
+    apply_dashboard_filter_context(
+        query_context_json,
+        {"relative_start": "now", "time_grain_sqla": "P1M"},
+    )
+
+    assert query_context_json["queries"][0]["extras"] == {
+        "relative_start": "now",
+        "time_grain_sqla": "P1M",
+    }
+
+
 def test_apply_dashboard_filter_context_overrides_x_axis_time_grain() -> None:
     """
     For charts with an adhoc X-Axis, the dashboard grain must override the
