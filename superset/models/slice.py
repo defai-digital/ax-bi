@@ -43,7 +43,7 @@ from superset_core.common.models import Chart as CoreChart
 
 from superset import db, is_feature_enabled, security_manager
 from superset.legacy import update_time_range
-from superset.models.helpers import AuditMixinNullable, ImportExportMixin
+from superset.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
 from superset.tasks.thumbnails import cache_chart_thumbnail
 from superset.tasks.utils import get_current_user
 from superset.thumbnails.digest import get_chart_digest
@@ -191,7 +191,7 @@ class Slice(  # pylint: disable=too-many-public-methods
 
     @property
     def viz(self) -> BaseViz | None:
-        form_data = json.loads(self.params)
+        form_data = self.params_dict
         viz_class = viz_types.get(self.viz_type)
         datasource = self.datasource
         if viz_class and datasource:
@@ -260,12 +260,7 @@ class Slice(  # pylint: disable=too-many-public-methods
 
     @property
     def form_data(self) -> dict[str, Any]:
-        form_data: dict[str, Any] = {}
-        try:
-            form_data = json.loads(self.params)
-        except Exception as ex:  # pylint: disable=broad-except
-            logger.error("Malformed json in slice's params", exc_info=True)
-            logger.exception(ex)
+        form_data = self.params_dict
         form_data.update(
             {
                 "slice_id": self.id,
@@ -281,13 +276,11 @@ class Slice(  # pylint: disable=too-many-public-methods
 
     def get_query_context(self) -> QueryContext | None:
         if self.query_context:
-            try:
+            query_context = json_to_dict(self.query_context)
+            if query_context:
                 return self.get_query_context_factory().create(
-                    **{**json.loads(self.query_context), "current_slice": self}
+                    **{**query_context, "current_slice": self}
                 )
-            except json.JSONDecodeError as ex:
-                logger.error("Malformed json in slice's query context", exc_info=True)
-                logger.exception(ex)
         return None
 
     def get_explore_url(

@@ -124,6 +124,46 @@ class TestSlice:
         result = slc.datasource_url()
         assert result is None
 
+    def test_form_data_ignores_non_object_params(self):
+        """form_data should tolerate valid JSON that is not an object."""
+        slc = Slice(
+            id=1,
+            datasource_id=2,
+            datasource_type="table",
+            viz_type="table",
+            params="[]",
+        )
+
+        assert slc.form_data == {
+            "slice_id": 1,
+            "viz_type": "table",
+            "datasource": "2__table",
+        }
+
+    def test_form_data_ignores_malformed_params(self):
+        """form_data should tolerate malformed chart params."""
+        slc = Slice(
+            id=1,
+            datasource_id=2,
+            datasource_type="table",
+            viz_type="table",
+            params="{malformed",
+        )
+
+        assert slc.form_data == {
+            "slice_id": 1,
+            "viz_type": "table",
+            "datasource": "2__table",
+        }
+
+    def test_get_query_context_ignores_non_object_json(self):
+        """Non-object query_context JSON should not reach the factory."""
+        slc = Slice(query_context="[]")
+        slc.query_context_factory = MagicMock()
+
+        assert slc.get_query_context() is None
+        slc.query_context_factory.create.assert_not_called()
+
     def test_icons_escapes_datasource_html(self):
         """icons must HTML-escape the datasource name and edit URL."""
         slc = Slice()
