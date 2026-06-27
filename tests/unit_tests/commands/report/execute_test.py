@@ -1061,6 +1061,35 @@ def test_get_dashboard_urls_ignores_malformed_url_params(
     ]
 
 
+@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@with_feature_flags(ALERT_REPORT_TABS=True)
+def test_get_dashboard_urls_ignores_malformed_anchor(
+    mock_permalink_cls,
+    mocker: MockerFixture,
+) -> None:
+    mock_report_schedule: ReportSchedule = mocker.Mock(spec=ReportSchedule)
+    mock_report_schedule.chart = False
+    mock_report_schedule.force_screenshot = False
+    mock_report_schedule.extra = cast(Any, {"dashboard": {"anchor": ["TAB-1"]}})
+    mock_report_schedule.get_native_filters_params.return_value = ("()", [])  # type: ignore[attr-defined]
+
+    mock_dashboard = mocker.MagicMock()
+    mock_dashboard.uuid = UUID("12345678-1234-1234-1234-123456789abc")
+    mock_report_schedule.dashboard = mock_dashboard
+
+    class_instance: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+    class_instance._report_schedule = mock_report_schedule
+
+    result = class_instance.get_dashboard_urls()
+
+    mock_permalink_cls.assert_not_called()
+    assert len(result) == 1
+    assert "/dashboard/p/" not in result[0]
+    assert "12345678-1234-1234-1234-123456789abc" in result[0]
+
+
 def test_get_native_filters_params_skips_malformed_filter_entries() -> None:
     report_schedule = ReportSchedule()
     report_schedule.extra = cast(

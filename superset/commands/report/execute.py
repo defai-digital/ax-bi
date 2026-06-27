@@ -17,7 +17,7 @@
 import logging
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import Any, Optional, Union
+from typing import Any, cast, Optional, Union
 from uuid import UUID
 
 import pandas as pd
@@ -258,6 +258,21 @@ class BaseReportState:
             **kwargs,
         )
 
+    @staticmethod
+    def _normalize_dashboard_anchor(
+        dashboard_state: DashboardPermalinkState,
+    ) -> tuple[DashboardPermalinkState, str | None]:
+        anchor = dashboard_state.get("anchor")
+        if not anchor:
+            return dashboard_state, None
+        if isinstance(anchor, str):
+            return dashboard_state, anchor
+
+        logger.debug("Ignoring malformed dashboard tab anchor")
+        sanitized_dashboard_state = cast(DashboardPermalinkState, {**dashboard_state})
+        sanitized_dashboard_state.pop("anchor", None)
+        return sanitized_dashboard_state, None
+
     def get_dashboard_urls(
         self, user_friendly: bool = False, **kwargs: Any
     ) -> list[str]:
@@ -278,7 +293,9 @@ class BaseReportState:
             )
             if filter_warnings:
                 self._filter_warnings.extend(filter_warnings)
-            if anchor := dashboard_state.get("anchor"):
+            dashboard_state, anchor = self._normalize_dashboard_anchor(dashboard_state)
+
+            if anchor:
                 try:
                     anchor_list = json.loads(anchor)
                     if not isinstance(anchor_list, list) or not all(
