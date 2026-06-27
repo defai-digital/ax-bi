@@ -2599,7 +2599,11 @@ class DeckGeoJson(BaseDeckGLViz):
     @deprecated(deprecated_in="3.0")
     def get_properties(self, data: dict[str, Any]) -> dict[str, Any]:
         geojson = data[get_column_name(self.form_data["geojson"])]
-        return json.loads(geojson)
+        try:
+            properties = json.loads(geojson)
+        except (TypeError, json.JSONDecodeError):
+            return {}
+        return properties if isinstance(properties, dict) else {}
 
 
 class DeckArc(BaseDeckGLViz):

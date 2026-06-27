@@ -85,6 +85,22 @@ def _deck_viz(form_data: dict[str, Any] | None = None) -> viz.BaseDeckGLViz:
     )
 
 
+def _deck_geojson_viz() -> viz.DeckGeoJson:
+    database = Database(database_name="d", sqlalchemy_uri="sqlite://")
+    datasource = SqlaTable(
+        table_name="t",
+        columns=[],
+        metrics=[],
+        main_dttm_col=None,
+        database=database,
+    )
+    return viz.DeckGeoJson(
+        datasource=datasource,
+        form_data={"viz_type": "deck_geojson", "geojson": "geom"},
+        force=True,
+    )
+
+
 def _resample_df() -> Any:
     import pandas as pd
 
@@ -207,6 +223,21 @@ def test_deck_multilayer_filtering_tolerates_malformed_scopes() -> None:
         "invalid_scope",
         "layer_0",
     ]
+
+
+@pytest.mark.parametrize("geojson", ["{bad", "[]", '"point"', None])
+def test_deck_geojson_properties_ignore_malformed_geojson(geojson: Any) -> None:
+    """Malformed GeoJSON payloads should produce an empty feature object."""
+    obj = _deck_geojson_viz()
+
+    assert obj.get_properties({"geom": geojson}) == {}
+
+
+def test_deck_geojson_properties_loads_object_geojson() -> None:
+    """Object-shaped GeoJSON payloads are still parsed into feature properties."""
+    obj = _deck_geojson_viz()
+
+    assert obj.get_properties({"geom": '{"type": "Point"}'}) == {"type": "Point"}
 
 
 def test_handle_js_int_overflow_converts_large_record_values() -> None:
