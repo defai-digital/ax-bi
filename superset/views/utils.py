@@ -194,9 +194,10 @@ def get_viz(
 
 def loads_request_json(request_json_data: str) -> dict[Any, Any]:
     try:
-        return json.loads(request_json_data)
+        data = json.loads(request_json_data)
     except (TypeError, json.JSONDecodeError):
         return {}
+    return data if isinstance(data, dict) else {}
 
 
 def get_form_data(
@@ -208,11 +209,15 @@ def get_form_data(
 
     if has_request_context():
         json_data = request.get_json(cache=True) if request.is_json else {}
+        if not isinstance(json_data, dict):
+            json_data = {}
 
         # chart data API requests are JSON
         first_query = (
             json_data["queries"][0]
-            if "queries" in json_data and json_data["queries"]
+            if isinstance(json_data.get("queries"), list)
+            and json_data["queries"]
+            and isinstance(json_data["queries"][0], dict)
             else None
         )
 
@@ -226,7 +231,7 @@ def get_form_data(
             parsed_form_data = loads_request_json(request_form_data)
             # some chart data api requests are form_data
             queries = parsed_form_data.get("queries")
-            if isinstance(queries, list):
+            if isinstance(queries, list) and queries and isinstance(queries[0], dict):
                 form_data.update(queries[0])
             else:
                 form_data.update(parsed_form_data)

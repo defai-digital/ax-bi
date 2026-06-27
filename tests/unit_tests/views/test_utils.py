@@ -18,6 +18,8 @@
 
 from unittest.mock import MagicMock, patch
 
+from flask import current_app
+
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
@@ -52,6 +54,38 @@ def test_get_form_data_strips_js_control_keys() -> None:
         assert key not in form_data
     # Non-JS keys are preserved.
     assert form_data["viz_type"] == "deck_geojson"
+
+
+def test_get_form_data_ignores_non_object_request_form_data() -> None:
+    """Non-object request form data should not crash form parsing."""
+    with current_app.test_request_context(
+        data={"form_data": "[]"},
+        query_string={"form_data": "[]"},
+    ):
+        form_data, slc = get_form_data()
+
+    assert form_data == {}
+    assert slc is None
+
+
+def test_get_form_data_ignores_non_object_json_body() -> None:
+    """Non-object JSON request bodies should not crash form parsing."""
+    with current_app.test_request_context(json=["queries"]):
+        form_data, slc = get_form_data()
+
+    assert form_data == {}
+    assert slc is None
+
+
+def test_get_form_data_ignores_non_object_query_entries() -> None:
+    """Query arrays without object entries should not crash form parsing."""
+    with current_app.test_request_context(
+        data={"form_data": json.dumps({"queries": ["not an object"]})},
+    ):
+        form_data, slc = get_form_data()
+
+    assert form_data == {"queries": ["not an object"]}
+    assert slc is None
 
 
 def _mock_dashboard_extra_filter_queries(
