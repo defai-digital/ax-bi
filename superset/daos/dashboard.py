@@ -436,10 +436,11 @@ class DashboardDAO(BaseDAO[Dashboard]):
             # update chartId of layout entities
             positions = _load_json_object(metadata.get("positions"))
             for value in positions.values():
-                if isinstance(value, dict) and value.get("meta", {}).get("chartId"):
-                    old_id = value["meta"]["chartId"]
+                meta = value.get("meta") if isinstance(value, dict) else None
+                if isinstance(meta, dict) and meta.get("chartId"):
+                    old_id = meta["chartId"]
                     new_id = old_to_new_slice_ids.get(old_id)
-                    value["meta"]["chartId"] = new_id
+                    meta["chartId"] = new_id
         else:
             dash.slices = original_dash.slices
 

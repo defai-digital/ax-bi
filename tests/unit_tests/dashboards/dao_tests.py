@@ -164,3 +164,43 @@ def test_copy_dashboard_ignores_non_object_metadata_positions(
 
     assert copied_dash.dashboard_title == "copied dash"
     mock_db.session.add.assert_any_call(copied_dash)
+
+
+def test_copy_dashboard_skips_malformed_position_meta(
+    app: Any,
+    mocker: MockerFixture,
+) -> None:
+    from superset.daos.dashboard import DashboardDAO
+
+    chart_uuid = uuid4()
+    mocker.patch("superset.daos.dashboard.is_feature_enabled", return_value=False)
+    mock_db = mocker.patch("superset.daos.dashboard.db")
+    mock_db.session.query.return_value.filter.return_value.all.return_value = [
+        MagicMock(id=100, uuid=chart_uuid)
+    ]
+
+    mock_slice = MagicMock(id=10)
+    mock_slice.clone.return_value = MagicMock(id=100, dashboards=[])
+    original_dash = MagicMock(slices=[mock_slice], params="{}")
+
+    with app.test_request_context():
+        g.user = None
+        copied_dash = DashboardDAO.copy_dashboard(
+            original_dash,
+            {
+                "dashboard_title": "copied dash",
+                "json_metadata": {
+                    "positions": {
+                        "BROKEN": {"type": "CHART", "meta": "not-an-object"},
+                        "CHART-10": {"type": "CHART", "meta": {"chartId": 10}},
+                    }
+                },
+                "duplicate_slices": True,
+            },
+        )
+
+    position = json.loads(copied_dash.position_json)
+
+    assert position["BROKEN"]["meta"] == "not-an-object"
+    assert position["CHART-10"]["meta"]["chartId"] == 100
+    assert position["CHART-10"]["meta"]["uuid"] == str(chart_uuid)
