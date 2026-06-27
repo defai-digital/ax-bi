@@ -79,6 +79,19 @@ interface AnnotationOverrides {
   [key: string]: unknown;
 }
 
+const parseQueryContextFormData = (
+  queryContext?: string,
+): SliceData['data'] => {
+  if (!queryContext) {
+    return {};
+  }
+  try {
+    return JSON.parse(queryContext).form_data ?? {};
+  } catch {
+    return {};
+  }
+};
+
 interface AnnotationLayerProps {
   name?: string;
   annotationType?: string;
@@ -519,7 +532,7 @@ class AnnotationLayer extends PureComponent<
     }).then(({ json }) => {
       const { result } = json;
       const queryContext = result.query_context;
-      const formData = JSON.parse(queryContext).form_data;
+      const formData = parseQueryContextFormData(queryContext);
       const dataObject = {
         data: {
           ...formData,
@@ -547,7 +560,7 @@ class AnnotationLayer extends PureComponent<
       const sliceName = result.slice_name;
       const queryContext = result.query_context;
       const vizType = result.viz_type;
-      const formData = JSON.parse(queryContext).form_data;
+      const formData = parseQueryContextFormData(queryContext);
       const metadata = registry.get(vizType);
       const canBeAnnotationType =
         metadata && metadata.canBeAnnotationType(annotationType);

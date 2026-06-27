@@ -55,11 +55,8 @@ const withIdResult = {
   },
 };
 
-beforeAll(() => {
-  const supportedAnnotationTypes = Object.values(ANNOTATION_TYPES_METADATA).map(
-    value => value.value,
-  );
-
+const setupFetchRoutes = (chartWithIdResult = withIdResult) => {
+  fetchMock.removeRoutes();
   fetchMock.get(nativeLayerApiRoute, {
     result: [{ name: 'Chart A', id: 'a' }],
   });
@@ -68,7 +65,15 @@ beforeAll(() => {
     result: [{ id: 'a', slice_name: 'Chart A', viz_type: VizType.Table }],
   });
 
-  fetchMock.get(chartApiWithIdRoute, withIdResult);
+  fetchMock.get(chartApiWithIdRoute, chartWithIdResult);
+};
+
+beforeAll(() => {
+  const supportedAnnotationTypes = Object.values(ANNOTATION_TYPES_METADATA).map(
+    value => value.value,
+  );
+
+  setupFetchRoutes();
 
   setupColors();
 
@@ -81,6 +86,11 @@ beforeAll(() => {
       canBeAnnotationTypes: ['EVENT'],
     }),
   );
+});
+
+afterEach(() => {
+  fetchMock.clearHistory();
+  setupFetchRoutes();
 });
 
 const waitForRender = (props?: any) =>
@@ -208,6 +218,24 @@ test('fetches chart on mount if value present', async () => {
     sourceType: 'Table',
   });
   expect(fetchMock.callHistory.calls(chartApiWithIdRoute).length).toBe(1);
+});
+
+test('handles malformed chart query context on mount', async () => {
+  setupFetchRoutes({
+    result: {
+      ...withIdResult.result,
+      query_context: '{malformed',
+    },
+  });
+  await waitForRender({
+    name: 'Test',
+    value: 'a',
+    annotationType: ANNOTATION_TYPES_METADATA.EVENT.value,
+    sourceType: 'Table',
+  });
+
+  expect(fetchMock.callHistory.calls(chartApiWithIdRoute).length).toBe(1);
+  expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
 });
 
 test('keeps apply disabled when missing required fields', async () => {
