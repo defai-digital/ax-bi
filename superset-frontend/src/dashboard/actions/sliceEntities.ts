@@ -81,9 +81,20 @@ function fetchAllSlicesFailed(error: string) {
   return { type: FETCH_ALL_SLICES_FAILED, payload: { error } };
 }
 
+const parseSliceParams = (params?: string | null) => {
+  if (!params) {
+    return {};
+  }
+  try {
+    return JSON.parse(params);
+  } catch {
+    return {};
+  }
+};
+
 const parseResult = (result: any[]) =>
   result.reduce((slices, slice: any) => {
-    let form_data = JSON.parse(slice.params);
+    let form_data = parseSliceParams(slice.params);
     form_data = {
       ...form_data,
       // force using datasource stored in relational table prop
