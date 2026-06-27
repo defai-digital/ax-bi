@@ -2777,9 +2777,11 @@ class ExploreMixin:  # pylint: disable=too-many-public-methods
 
         # Fallback to the default format (if defined).
         if not tf and self.db_extra:
-            tf = self.db_extra.get("python_date_format_by_column_name", {}).get(
-                col.column_name
+            date_format_by_column = self.db_extra.get(
+                "python_date_format_by_column_name",
             )
+            if isinstance(date_format_by_column, dict):
+                tf = date_format_by_column.get(col.column_name)
 
         if tf:
             if tf in {"epoch_ms", "epoch_s"}:

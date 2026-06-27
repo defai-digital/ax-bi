@@ -238,6 +238,19 @@ def test_get_db_engine_spec(mocker: MockerFixture) -> None:
         ),
         (
             datetime(2023, 1, 1, 1, 23, 45, 600000),
+            TableColumn(column_name="ds"),
+            Database(
+                extra=json.dumps(
+                    {
+                        "python_date_format_by_column_name": "bad",
+                    },
+                ),
+                sqlalchemy_uri="foo://",
+            ),
+            "'2023-01-01 01:23:45.600000'",
+        ),
+        (
+            datetime(2023, 1, 1, 1, 23, 45, 600000),
             TableColumn(),
             Database(sqlalchemy_uri="foo://"),
             "'2023-01-01 01:23:45.600000'",
