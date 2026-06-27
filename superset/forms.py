@@ -34,6 +34,8 @@ class JsonListField(Field):
     def process_formdata(self, valuelist: list[str]) -> None:
         if valuelist and valuelist[0]:
             self.data = json.loads(valuelist[0])
+            if not isinstance(self.data, list):
+                raise ValueError("Not a valid JSON list")
         else:
             self.data = []
 
