@@ -69,6 +69,22 @@ def _timeseries_viz(form_data: dict[str, Any]) -> viz.NVD3TimeSeriesViz:
     )
 
 
+def _deck_viz(form_data: dict[str, Any] | None = None) -> viz.BaseDeckGLViz:
+    database = Database(database_name="d", sqlalchemy_uri="sqlite://")
+    datasource = SqlaTable(
+        table_name="t",
+        columns=[],
+        metrics=[],
+        main_dttm_col=None,
+        database=database,
+    )
+    return viz.BaseDeckGLViz(
+        datasource=datasource,
+        form_data=form_data or {},
+        force=True,
+    )
+
+
 def _resample_df() -> Any:
     import pandas as pd
 
@@ -144,6 +160,53 @@ def test_deck_multi_rejects_excessive_sub_slices() -> None:
 
     with pytest.raises(QueryObjectValidationError):
         obj.get_data(_resample_df())
+
+
+def test_deck_filters_ignore_malformed_deck_slice_containers() -> None:
+    """Malformed adhoc_filters and deck_slices containers should be ignored."""
+    obj = _deck_viz()
+
+    assert obj._get_deck_slices_from_filters({"adhoc_filters": "bad-filters"}) is None
+    assert (
+        obj._get_deck_slices_from_filters(
+            {"adhoc_filters": [{"deck_slices": "bad-slices"}]}
+        )
+        is None
+    )
+
+
+def test_deck_filters_ignore_scalar_layer_scope() -> None:
+    """Scalar layerFilterScope values should be treated as unscoped."""
+    obj = _deck_viz()
+
+    assert obj._get_filter_layer_scope({"layerFilterScope": "bad-scope"}) is None
+
+
+def test_deck_multilayer_filtering_tolerates_malformed_scopes() -> None:
+    """Malformed layerFilterScope values should not crash layer filtering."""
+    obj = _deck_viz()
+    form_data = {
+        "slice_id": 123,
+        "adhoc_filters": [
+            {
+                "subject": "invalid_scope",
+                "layerFilterScope": "bad-scope",
+                "deck_slices": [123, 456],
+            },
+            {
+                "subject": "layer_0",
+                "layerFilterScope": [0],
+                "deck_slices": [123, 456],
+            },
+        ],
+    }
+
+    result = obj._apply_multilayer_filtering(form_data)
+
+    assert [flt["subject"] for flt in result["adhoc_filters"]] == [
+        "invalid_scope",
+        "layer_0",
+    ]
 
 
 def test_get_df_payload_propagates_oauth2_redirect_error() -> None:
