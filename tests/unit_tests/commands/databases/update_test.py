@@ -497,6 +497,39 @@ def test_remove_oauth_config_purges_tokens(
     database_needs_oauth2.purge_oauth2_tokens.assert_called()
 
 
+def test_update_oauth2_non_object_encrypted_extra_purges_tokens(
+    mocker: MockerFixture,
+    database_needs_oauth2: MockerFixture,
+) -> None:
+    """
+    Test that non-object encrypted extra updates remove OAuth and purge tokens.
+    """
+    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao.find_by_id.return_value = database_needs_oauth2
+    database_dao.update.return_value = database_needs_oauth2
+    sync_db_perms_dao = mocker.patch(
+        "superset.commands.database.sync_permissions.DatabaseDAO"
+    )
+    sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
+    mocker.patch("superset.commands.database.update.get_username")
+    mocker.patch("superset.security_manager.get_user_by_username")
+
+    find_permission_view_menu = mocker.patch.object(
+        security_manager,
+        "find_permission_view_menu",
+    )
+    find_permission_view_menu.side_effect = [
+        None,
+        "[my_db].[schema2]",
+    ]
+    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+
+    UpdateDatabaseCommand(1, {"masked_encrypted_extra": "[]"}).run()
+
+    add_pvm.assert_not_called()
+    database_needs_oauth2.purge_oauth2_tokens.assert_called()
+
+
 def test_update_oauth2_removes_masked_encrypted_extra_key(
     mocker: MockerFixture,
     database_needs_oauth2: MockerFixture,
