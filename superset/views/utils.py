@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-import contextlib
 import logging
 from collections import defaultdict
 from functools import wraps
@@ -43,6 +42,7 @@ from superset.extensions import cache_manager, feature_flag_manager, security_ma
 from superset.legacy import update_time_range
 from superset.models.core import Database
 from superset.models.dashboard import Dashboard
+from superset.models.helpers import json_to_dict
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query
 from superset.superset_typing import (
@@ -367,23 +367,24 @@ def get_dashboard_extra_filters(
     ):
         return []
 
-    with contextlib.suppress(json.JSONDecodeError):
-        # does this dashboard have default filters?
-        json_metadata = json.loads(dashboard.json_metadata)
-        default_filters = json.loads(json_metadata.get("default_filters", "null"))
-        if not default_filters:
-            return []
+    # does this dashboard have default filters?
+    json_metadata = json_to_dict(dashboard.json_metadata)
+    raw_default_filters = json_metadata.get("default_filters")
+    if isinstance(raw_default_filters, str):
+        default_filters = json_to_dict(raw_default_filters)
+    elif isinstance(raw_default_filters, dict):
+        default_filters = raw_default_filters
+    else:
+        default_filters = {}
+    if not default_filters:
+        return []
 
-        # are default filters applicable to the given slice?
-        filter_scopes = json_metadata.get("filter_scopes", {})
-        layout = json.loads(dashboard.position_json or "{}")
-
-        if (
-            isinstance(layout, dict)
-            and isinstance(filter_scopes, dict)
-            and isinstance(default_filters, dict)
-        ):
-            return build_extra_filters(layout, filter_scopes, default_filters, slice_id)
+    # are default filters applicable to the given slice?
+    filter_scopes = json_metadata.get("filter_scopes", {})
+    if isinstance(filter_scopes, dict):
+        return build_extra_filters(
+            dashboard.position, filter_scopes, default_filters, slice_id
+        )
     return []
 
 
@@ -402,8 +403,9 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
 
         filter_configs: list[dict[str, Any]] = []
         if filter_slice:
+            raw_filter_configs = filter_slice.params_dict.get("filter_configs") or []
             filter_configs = (
-                json.loads(filter_slice.params or "{}").get("filter_configs") or []
+                raw_filter_configs if isinstance(raw_filter_configs, list) else []
             )
 
         scopes_by_filter_field = filter_scopes.get(filter_id, {})
@@ -422,8 +424,10 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
                     # Ensure that the filter value encoding adheres to the filter select
                     # type.
                     for filter_config in filter_configs:
-                        if filter_config["column"] == col:
-                            is_multiple = filter_config["multiple"]
+                        if not isinstance(filter_config, dict):
+                            continue
+                        if filter_config.get("column") == col:
+                            is_multiple = filter_config.get("multiple")
 
                             if not is_multiple and isinstance(val, list):
                                 val = val[0]
@@ -448,7 +452,9 @@ def is_slice_in_container(
     if container_id == "ROOT_ID":
         return True
 
-    node = layout[container_id]
+    node = layout.get(container_id)
+    if not isinstance(node, dict):
+        return False
     node_type = node.get("type")
     if node_type == "CHART" and node.get("meta", {}).get("chartId") == slice_id:
         return True

@@ -16,7 +16,13 @@
 # under the License.
 """Tests for superset.views.utils module"""
 
+from unittest.mock import MagicMock, patch
+
+from superset.models.dashboard import Dashboard
+from superset.models.slice import Slice
+from superset.utils import json
 from superset.views.utils import (
+    get_dashboard_extra_filters,
     get_form_data,
     JS_CONTROL_FORM_DATA_KEYS,
     REJECTED_FORM_DATA_KEYS,
@@ -46,3 +52,71 @@ def test_get_form_data_strips_js_control_keys() -> None:
         assert key not in form_data
     # Non-JS keys are preserved.
     assert form_data["viz_type"] == "deck_geojson"
+
+
+def _mock_dashboard_extra_filter_queries(
+    mock_db: MagicMock,
+    dashboard: Dashboard,
+    filter_slice: Slice | None = None,
+) -> None:
+    dashboard_query = MagicMock()
+    dashboard_query.filter_by.return_value.one_or_none.return_value = dashboard
+    filter_query = MagicMock()
+    filter_query.filter_by.return_value.one_or_none.return_value = filter_slice
+    mock_db.session.query.side_effect = (
+        lambda model: dashboard_query if model is Dashboard else filter_query
+    )
+
+
+def test_get_dashboard_extra_filters_ignores_non_object_metadata() -> None:
+    """Non-object dashboard metadata should not break default filter lookup."""
+    dashboard = Dashboard(id=1, json_metadata="[]", position_json="{}")
+    dashboard.slices = [Slice(id=10)]
+
+    with patch("superset.views.utils.db") as mock_db:
+        _mock_dashboard_extra_filter_queries(mock_db, dashboard)
+
+        assert get_dashboard_extra_filters(slice_id=10, dashboard_id=1) == []
+
+
+def test_get_dashboard_extra_filters_ignores_non_object_filter_params() -> None:
+    """Non-object filter chart params should not break extra filter creation."""
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "default_filters": json.dumps({"10": {"country": ["US"]}}),
+                "filter_scopes": {"10": {"country": {"scope": ["ROOT_ID"]}}},
+            }
+        ),
+        position_json="{}",
+    )
+    dashboard.slices = [Slice(id=20)]
+    filter_slice = Slice(id=10, params="[]")
+
+    with patch("superset.views.utils.db") as mock_db:
+        _mock_dashboard_extra_filter_queries(mock_db, dashboard, filter_slice)
+
+        assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == [
+            {"col": "country", "op": "in", "val": ["US"]}
+        ]
+
+
+def test_get_dashboard_extra_filters_ignores_stale_scope_layout_node() -> None:
+    """Stale filter scopes should not crash when a layout node is missing."""
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "default_filters": json.dumps({"10": {"country": ["US"]}}),
+                "filter_scopes": {"10": {"country": {"scope": ["MISSING_ID"]}}},
+            }
+        ),
+        position_json="{}",
+    )
+    dashboard.slices = [Slice(id=20)]
+
+    with patch("superset.views.utils.db") as mock_db:
+        _mock_dashboard_extra_filter_queries(mock_db, dashboard)
+
+        assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
