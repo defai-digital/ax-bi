@@ -17,10 +17,13 @@
 import pytest
 
 from superset.commands.dashboard.importers.v0 import (
+    _validate_dashboard_bundle_shape,
     import_dashboards,
     ImportDashboardsCommand,
 )
+from superset.connectors.sqla.models import SqlaTable
 from superset.exceptions import DashboardImportException
+from superset.models.dashboard import Dashboard
 from superset.utils import json
 
 
@@ -32,6 +35,8 @@ from superset.utils import json
         json.dumps({"dashboards": []}),
         json.dumps({"datasources": {}, "dashboards": []}),
         json.dumps({"datasources": [], "dashboards": {}}),
+        json.dumps({"datasources": [{}], "dashboards": []}),
+        json.dumps({"datasources": [], "dashboards": [{}]}),
     ],
 )
 def test_import_dashboards_rejects_invalid_bundle_shape(content: str) -> None:
@@ -46,3 +51,34 @@ def test_import_dashboards_command_validate_rejects_invalid_bundle_shape() -> No
 
     with pytest.raises(DashboardImportException):
         command.validate()
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        "{",
+        "[]",
+        "{}",
+    ],
+)
+def test_validate_dashboard_bundle_shape_rejects_invalid_datasource_params(
+    params: str,
+) -> None:
+    """V0 dashboard datasource params must be objects with a remote id."""
+    data = {
+        "datasources": [SqlaTable(params=params)],
+        "dashboards": [],
+    }
+
+    with pytest.raises(DashboardImportException):
+        _validate_dashboard_bundle_shape(data)
+
+
+def test_validate_dashboard_bundle_shape_accepts_valid_entries() -> None:
+    """V0 dashboard bundles must contain SqlaTable and Dashboard entries."""
+    data = {
+        "datasources": [SqlaTable(params=json.dumps({"remote_id": 42}))],
+        "dashboards": [Dashboard(dashboard_title="My dashboard")],
+    }
+
+    assert _validate_dashboard_bundle_shape(data) is data

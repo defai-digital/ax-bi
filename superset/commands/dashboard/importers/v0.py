@@ -306,7 +306,29 @@ def _validate_dashboard_bundle_shape(data: Any) -> dict[str, Any]:
     ):
         raise DashboardImportException(_("Invalid dashboard import file"))
 
+    for index, datasource in enumerate(data["datasources"]):
+        _load_datasource_remote_id(datasource, index)
+
+    for dashboard in data["dashboards"]:
+        if not isinstance(dashboard, Dashboard):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+
     return data
+
+
+def _load_datasource_remote_id(datasource: Any, index: int) -> Any:
+    if not isinstance(datasource, SqlaTable):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    try:
+        params = json.loads(datasource.params or "{}")
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    if not isinstance(params, dict) or "remote_id" not in params:
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    return params["remote_id"]
 
 
 def import_dashboards(
@@ -320,10 +342,9 @@ def import_dashboards(
     data = json.loads(content, object_hook=decode_dashboards)
     data = _validate_dashboard_bundle_shape(data)
     dataset_id_mapping: dict[int, int] = {}
-    for table in data["datasources"]:
+    for index, table in enumerate(data["datasources"]):
         new_dataset_id = import_dataset(table, database_id, import_time=import_time)
-        params = json.loads(table.params)
-        dataset_id_mapping[params["remote_id"]] = new_dataset_id
+        dataset_id_mapping[_load_datasource_remote_id(table, index)] = new_dataset_id
 
     for dashboard in data["dashboards"]:
         import_dashboard(dashboard, dataset_id_mapping, import_time=import_time)
