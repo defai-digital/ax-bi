@@ -2172,8 +2172,11 @@ def remove_extra_adhoc_filters(form_data: dict[str, Any]) -> None:
         key: value for key, value in form_data.items() if ADHOC_FILTERS_REGEX.match(key)
     }
     for key, value in adhoc_filters.items():
+        filter_items = value if isinstance(value, list) else []
         form_data[key] = [
-            filter_ for filter_ in value or [] if not filter_.get("isExtra")
+            filter_
+            for filter_ in filter_items
+            if isinstance(filter_, dict) and not filter_.get("isExtra")
         ]
 
 

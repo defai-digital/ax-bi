@@ -117,6 +117,14 @@ class MockZipInfo:
                 ],
             },
         ),
+        (
+            {"foo": "bar", "adhoc_filters": "bad-filters"},
+            {"foo": "bar", "adhoc_filters": []},
+        ),
+        (
+            {"foo": "bar", "adhoc_filters": [ADHOC_FILTER, "bad-filter"]},
+            {"foo": "bar", "adhoc_filters": [ADHOC_FILTER]},
+        ),
     ],
 )
 def test_remove_extra_adhoc_filters(
