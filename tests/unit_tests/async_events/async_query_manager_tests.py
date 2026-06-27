@@ -24,8 +24,10 @@ from pytest import fixture, mark, raises  # noqa: PT013
 
 from superset import security_manager
 from superset.async_events.async_query_manager import (
+    AsyncQueryJobException,
     AsyncQueryManager,
     AsyncQueryTokenException,
+    parse_event,
 )
 from superset.async_events.cache_backend import (
     RedisCacheBackend,
@@ -48,6 +50,18 @@ def set_current_as_guest_user():
     g.user = security_manager.get_guest_user_from_token(
         {"user": {}, "resources": [{"type": "dashboard", "id": "some-uuid"}]}
     )
+
+
+def test_parse_event_merges_json_object_payload():
+    assert parse_event(("1-0", {"data": '{"status": "done"}'})) == {
+        "id": "1-0",
+        "status": "done",
+    }
+
+
+def test_parse_event_rejects_non_object_payload():
+    with raises(AsyncQueryJobException):
+        parse_event(("1-0", {"data": "[]"}))
 
 
 def test_parse_channel_id_from_request(async_query_manager):
