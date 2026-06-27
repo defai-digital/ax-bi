@@ -847,6 +847,35 @@ def test_merge_extra_filters_ignores_empty_filters():
     assert form_data == expected
 
 
+@pytest.mark.parametrize(
+    "extra_filters",
+    [
+        ("not a list",),
+        ({"col": "a", "op": "in", "val": "x"},),
+        ([None, "bad", {"col": "a"}, {"op": "in", "val": "x"}],),
+    ],
+)
+def test_merge_extra_filters_ignores_malformed_extra_filters(
+    extra_filters: object,
+) -> None:
+    form_data = {"extra_filters": extra_filters}
+    merge_extra_filters(form_data)
+
+    assert form_data == {"adhoc_filters": [], "applied_time_extras": {}}
+
+
+def test_merge_extra_filters_ignores_malformed_adhoc_filters() -> None:
+    form_data: dict[str, Any] = {
+        "adhoc_filters": "not a list",
+        "extra_filters": [{"col": "a", "op": "in", "val": "someval"}],
+    }
+    merge_extra_filters(form_data)
+
+    assert form_data["adhoc_filters"][0]["subject"] == "a"
+    assert form_data["applied_time_extras"] == {}
+    assert "extra_filters" not in form_data
+
+
 def test_merge_extra_filters_ignores_nones():
     form_data = {
         "adhoc_filters": [

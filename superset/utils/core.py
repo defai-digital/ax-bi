@@ -1185,6 +1185,8 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:  # noqa: C901
     # Note extra_filters only support simple filters.
     form_data.setdefault("applied_time_extras", {})
     adhoc_filters = form_data.get("adhoc_filters", [])
+    if not isinstance(adhoc_filters, list):
+        adhoc_filters = []
     form_data["adhoc_filters"] = adhoc_filters
     merge_extra_form_data(form_data)
     if "extra_filters" in form_data:
@@ -1209,15 +1211,26 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:  # noqa: C901
         existing_filters = {}
         for existing in adhoc_filters:
             if (
-                existing["expressionType"] == "SIMPLE"
+                isinstance(existing, dict)
+                and existing.get("expressionType") == "SIMPLE"
                 and existing.get("comparator") is not None
                 and existing.get("subject") is not None
             ):
                 existing_filters[get_filter_key(existing)] = existing["comparator"]
 
-        for filtr in form_data[  # pylint: disable=too-many-nested-blocks
-            "extra_filters"
-        ]:
+        extra_filters = form_data["extra_filters"]
+        if not isinstance(extra_filters, list):
+            extra_filters = []
+
+        for filtr in extra_filters:  # pylint: disable=too-many-nested-blocks
+            if (
+                not isinstance(filtr, dict)
+                or "col" not in filtr
+                or "op" not in filtr
+                or "val" not in filtr
+            ):
+                continue
+            filtr = cast(QueryObjectFilterClause, filtr)
             filtr["isExtra"] = True
             # Pull out time filters/options and merge into form data
             filter_column = filtr["col"]
