@@ -64,10 +64,19 @@ const RisonParam: QueryParamConfig<string, any> = {
       .replace(/\+/g, '%2B')
       .replace(/#/g, '%23');
   },
-  decode: (dataStr?: string | string[]) =>
-    dataStr === undefined || Array.isArray(dataStr)
-      ? undefined
-      : rison.decode(dataStr),
+  decode: (dataStr?: string | string[]) => {
+    if (dataStr === undefined || Array.isArray(dataStr)) {
+      return undefined;
+    }
+    try {
+      const decoded = rison.decode(dataStr);
+      return typeof decoded === 'object' && !Array.isArray(decoded)
+        ? decoded
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  },
 };
 
 export const SELECT_WIDTH = 176;
