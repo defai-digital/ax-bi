@@ -16,6 +16,7 @@
 # under the License.
 
 
+from typing import Any
 from unittest.mock import call, MagicMock, patch
 
 import pytest
@@ -26,11 +27,13 @@ from superset.commands.utils import (
     populate_owner_list,
     Tag,
     TagType,
+    update_chart_config_dataset,
     update_tags,
     User,
     validate_tags,
 )
 from superset.tags.models import ObjectType
+from superset.utils import json
 
 OBJECT_TYPES = {ObjectType.chart, ObjectType.chart}
 MOCK_TAGS = [
@@ -65,6 +68,12 @@ MOCK_TAGS = [
         type=TagType.favorited_by,
     ),
 ]
+
+DATASET_INFO = {
+    "datasource_id": 2,
+    "datasource_type": "table",
+    "datasource_name": "new_dataset",
+}
 
 
 @patch("superset.commands.utils.g")
@@ -196,6 +205,51 @@ def test_compute_owner_list_no_owners_handle_none(mock_populate_owner_list):
 
     compute_owner_list(current_owners, new_owners)
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
+
+
+def test_update_chart_config_dataset_clears_non_object_query_context() -> None:
+    """
+    Test that non-object chart query contexts are cleared during dataset remap.
+    """
+    config: dict[str, Any] = {
+        "params": {},
+        "query_context": "[]",
+    }
+
+    update_chart_config_dataset(config, DATASET_INFO)
+
+    assert config["query_context"] is None
+
+
+def test_update_chart_config_dataset_ignores_malformed_nested_context() -> None:
+    """
+    Test that malformed nested query context fields do not break dataset remap.
+    """
+    config: dict[str, Any] = {
+        "params": {},
+        "query_context": json.dumps(
+            {
+                "datasource": {"id": 1, "type": "table"},
+                "form_data": [],
+                "queries": [
+                    "not an object",
+                    {"datasource": {"id": 1, "type": "table"}},
+                    {"metrics": ["count"]},
+                ],
+            }
+        ),
+    }
+
+    update_chart_config_dataset(config, DATASET_INFO)
+
+    query_context = json.loads(config["query_context"])
+    assert query_context["datasource"] == {"id": 2, "type": "table"}
+    assert query_context["form_data"] == []
+    assert query_context["queries"] == [
+        "not an object",
+        {"datasource": {"id": 2, "type": "table"}},
+        {"metrics": ["count"]},
+    ]
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)

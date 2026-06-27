@@ -210,22 +210,27 @@ def update_chart_config_dataset(
     if "query_context" in config and config["query_context"] is not None:
         try:
             query_context = json.loads(config["query_context"])
-
-            query_context["datasource"] = {
-                "id": dataset_info["datasource_id"],
-                "type": dataset_info["datasource_type"],
-            }
-
-            if "form_data" in query_context:
-                query_context["form_data"]["datasource"] = dataset_uid
-
-            if "queries" in query_context:
-                for query in query_context["queries"]:
-                    if "datasource" in query:
-                        query["datasource"] = query_context["datasource"]
-
-            config["query_context"] = json.dumps(query_context)
         except json.JSONDecodeError:
             config["query_context"] = None
+            return config
+
+        if not isinstance(query_context, dict):
+            config["query_context"] = None
+            return config
+
+        query_context["datasource"] = {
+            "id": dataset_info["datasource_id"],
+            "type": dataset_info["datasource_type"],
+        }
+
+        if isinstance(query_context.get("form_data"), dict):
+            query_context["form_data"]["datasource"] = dataset_uid
+
+        if isinstance(query_context.get("queries"), list):
+            for query in query_context["queries"]:
+                if isinstance(query, dict) and "datasource" in query:
+                    query["datasource"] = query_context["datasource"]
+
+        config["query_context"] = json.dumps(query_context)
 
     return config
