@@ -348,6 +348,20 @@ export function scheduleQuery(
       );
 }
 
+function parseTemplateParams(templateParams?: string) {
+  if (!templateParams) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(templateParams);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 export function estimateQueryCost(
   queryEditor: QueryEditor,
 ): SqlLabThunkAction<Promise<unknown[]>> {
@@ -361,7 +375,7 @@ export function estimateQueryCost(
       catalog,
       schema,
       sql: requestSql,
-      template_params: JSON.parse(templateParams || '{}'),
+      template_params: parseTemplateParams(templateParams),
     };
 
     return Promise.all([

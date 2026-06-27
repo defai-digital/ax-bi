@@ -191,6 +191,51 @@ describe('async actions', () => {
   });
 
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
+  describe('estimateQueryCost', () => {
+    const estimateQueryEndpoint = 'glob:*/api/v1/sqllab/estimate/';
+
+    beforeEach(() => {
+      fetchMock.removeRoute(estimateQueryEndpoint);
+      fetchMock.post(
+        estimateQueryEndpoint,
+        { result: [{ cost: 1 }] },
+        { name: estimateQueryEndpoint },
+      );
+    });
+
+    test('ignores malformed template params', async () => {
+      const queryEditorWithInvalidTemplateParams = {
+        ...queryEditor,
+        dbId: 5,
+        templateParams: '{malformed',
+      };
+      const store = mockStore({
+        ...initialState,
+        sqlLab: {
+          ...initialState.sqlLab,
+          queryEditors: [queryEditorWithInvalidTemplateParams],
+          unsavedQueryEditor: {},
+        },
+      });
+
+      await store.dispatch(
+        actions.estimateQueryCost(
+          queryEditorWithInvalidTemplateParams as unknown as QueryEditor,
+        ),
+      );
+
+      const call = fetchMock.callHistory.calls(estimateQueryEndpoint)[0];
+      expect(JSON.parse(call.options.body as string)).toEqual({
+        catalog: queryEditorWithInvalidTemplateParams.catalog,
+        database_id: 5,
+        schema: queryEditorWithInvalidTemplateParams.schema,
+        sql: queryEditorWithInvalidTemplateParams.sql,
+        template_params: {},
+      });
+    });
+  });
+
+  // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
   describe('formatQuery', () => {
     const formatQueryEndpoint = 'glob:*/api/v1/sqllab/format_sql/';
     const expectedSql = 'SELECT 1';
