@@ -1278,6 +1278,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         try:
             # Parse the parent chart's configuration
             parent_form_data = json.loads(parent_slice.params or "{}")
+            if not isinstance(parent_form_data, dict):
+                return False
 
             # Check if this is actually a multi-layer deck.gl chart
             if parent_form_data.get("viz_type") != "deck_multi":
@@ -1285,6 +1287,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
             # Get the configured child slices
             deck_slices = parent_form_data.get("deck_slices", [])
+            if not isinstance(deck_slices, list):
+                return False
 
             # Validate the child is in the parent's configuration
             return child_slice_id in deck_slices

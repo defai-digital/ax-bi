@@ -2101,6 +2101,36 @@ def test_validate_child_in_parent_multilayer_malformed_json(
     )
 
 
+def test_validate_child_in_parent_multilayer_scalar_params(
+    app_context: None, mocker: MockerFixture
+) -> None:
+    """Test validation fails gracefully with non-object JSON params"""
+    sm = SupersetSecurityManager(appbuilder)
+
+    parent_slice = mocker.MagicMock(spec=Slice)
+    parent_slice.params = json.dumps(["not", "an", "object"])
+
+    assert not sm._validate_child_in_parent_multilayer(
+        child_slice_id=1, parent_slice=parent_slice
+    )
+
+
+def test_validate_child_in_parent_multilayer_scalar_deck_slices(
+    app_context: None, mocker: MockerFixture
+) -> None:
+    """Test validation fails gracefully with non-list deck_slices"""
+    sm = SupersetSecurityManager(appbuilder)
+
+    parent_slice = mocker.MagicMock(spec=Slice)
+    parent_slice.params = json.dumps(
+        {"viz_type": "deck_multi", "deck_slices": "bad-slices"}
+    )
+
+    assert not sm._validate_child_in_parent_multilayer(
+        child_slice_id=1, parent_slice=parent_slice
+    )
+
+
 def test_validate_child_in_parent_multilayer_null_params(
     app_context: None, mocker: MockerFixture
 ) -> None:
