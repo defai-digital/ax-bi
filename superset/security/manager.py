@@ -381,6 +381,22 @@ def freeze_value(value: Any) -> str:
     return json.dumps(_strip_overridable_keys(value), sort_keys=True)
 
 
+def _get_native_filter_config(json_metadata: str | None) -> list[dict[str, Any]]:
+    if not json_metadata:
+        return []
+    try:
+        metadata = json.loads(json_metadata)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(metadata, dict):
+        return []
+
+    filters = metadata.get("native_filter_configuration", [])
+    if not isinstance(filters, list):
+        return []
+    return [flt for flt in filters if isinstance(flt, dict)]
+
+
 def _native_filter_allowed_targets(
     query_context: "QueryContext", form_data: dict[str, Any]
 ) -> Optional[tuple[set[str], set[str]]]:
@@ -406,11 +422,7 @@ def _native_filter_allowed_targets(
     dashboard = (
         db.session.query(Dashboard).filter(Dashboard.id == dashboard_id).one_or_none()
     )
-    if dashboard is None or not dashboard.json_metadata:
-        return None
-    try:
-        metadata = json.loads(dashboard.json_metadata)
-    except (TypeError, ValueError):
+    if dashboard is None:
         return None
 
     datasource = getattr(query_context, "datasource", None)
@@ -418,10 +430,12 @@ def _native_filter_allowed_targets(
 
     allowed_columns: set[str] = set()
     allowed_metrics: set[str] = set()
-    for fltr in metadata.get("native_filter_configuration", []):
+    for fltr in _get_native_filter_config(dashboard.json_metadata):
         if fltr.get("id") != native_filter_id:
             continue
         for target in fltr.get("targets", []):
+            if not isinstance(target, dict):
+                continue
             column = target.get("column")
             if (
                 target.get("datasetId") == datasource_id
@@ -440,6 +454,20 @@ def _native_filter_allowed_targets(
         break
 
     return allowed_columns, allowed_metrics
+
+
+def _dashboard_native_filter_has_datasource(
+    dashboard: Any,
+    native_filter_id: str,
+    datasource_id: int | str,
+) -> bool:
+    return any(
+        target.get("datasetId") == datasource_id
+        for fltr in _get_native_filter_config(dashboard.json_metadata)
+        if isinstance(fltr, dict) and native_filter_id == fltr.get("id")
+        for target in fltr.get("targets", [])
+        if isinstance(target, dict)
+    )
 
 
 def _native_filter_term_allowed(
@@ -3532,16 +3560,10 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                             # Native filter.
                             form_data.get("type") == "NATIVE_FILTER"
                             and (native_filter_id := form_data.get("native_filter_id"))
-                            and dashboard_.json_metadata
-                            and (json_metadata := json.loads(dashboard_.json_metadata))
-                            and any(
-                                target.get("datasetId") == datasource.data["id"]
-                                for fltr in json_metadata.get(
-                                    "native_filter_configuration",
-                                    [],
-                                )
-                                for target in fltr.get("targets", [])
-                                if native_filter_id == fltr.get("id")
+                            and _dashboard_native_filter_has_datasource(
+                                dashboard_,
+                                native_filter_id,
+                                datasource.data["id"],
                             )
                         )
                         or (

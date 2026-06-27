@@ -32,6 +32,7 @@ from superset.extensions import appbuilder
 from superset.models.slice import Slice
 from superset.security.manager import (
     _collect_sortable_identifiers,
+    _dashboard_native_filter_has_datasource,
     freeze_value,
     query_context_modified,
     SupersetSecurityManager,
@@ -668,6 +669,7 @@ def _native_filter_ctx(
     dataset_id: int = 20,
     targets: list[Any] | None = None,
     control_values: dict[str, Any] | None = None,
+    json_metadata: str | None = None,
 ) -> Any:
     """Build a native-filter query context (no slice_) + patched dashboard."""
     if targets is None:
@@ -682,7 +684,7 @@ def _native_filter_ctx(
     qc.datasource.data = {"id": dataset_id}
     qc.queries = queries
     dash = mocker.MagicMock()
-    dash.json_metadata = json.dumps(
+    dash.json_metadata = json_metadata or json.dumps(
         {
             "native_filter_configuration": [
                 {
@@ -766,6 +768,65 @@ def test_query_context_modified_native_filter_no_filter_context_blocked(
     query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
     qc = _native_filter_ctx(mocker, [query], native_filter_id=None)
     assert query_context_modified(qc)
+
+
+def test_query_context_modified_native_filter_malformed_metadata_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed dashboard metadata fails closed for native-filter requests."""
+    query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
+    qc = _native_filter_ctx(mocker, [query], json_metadata="{malformed")
+    assert query_context_modified(qc)
+
+
+def test_query_context_modified_native_filter_skips_malformed_entries(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed entries do not block a valid native-filter target entry."""
+    query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
+    qc = _native_filter_ctx(
+        mocker,
+        [query],
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    123,
+                    {
+                        "id": "F1",
+                        "targets": [
+                            "bad-target",
+                            {"datasetId": 20, "column": {"name": "region"}},
+                        ],
+                    },
+                ]
+            }
+        ),
+    )
+    assert not query_context_modified(qc)
+
+
+def test_dashboard_native_filter_has_datasource_malformed_metadata() -> None:
+    """Malformed dashboard metadata does not grant native-filter datasource access."""
+    dashboard = SimpleNamespace(json_metadata="{malformed")
+    assert not _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
+
+
+def test_dashboard_native_filter_has_datasource_matching_filter() -> None:
+    dashboard = SimpleNamespace(
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    {
+                        "id": "F1",
+                        "targets": ["bad-target", {"datasetId": 20}],
+                    },
+                ]
+            }
+        )
+    )
+    assert _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
 
 
 def test_query_context_modified_native_filter_configured_sort_metric_allowed(
