@@ -134,6 +134,43 @@ def test_apply_dashboard_filter_context_does_not_duplicate_filters(
         assert ExtraCache().filter_values("country") == ["USA"]
 
 
+def test_apply_dashboard_filter_context_ignores_malformed_query_entries() -> None:
+    """
+    Malformed query containers should not prevent valid query context updates.
+    """
+    query_context_json: dict[str, Any] = {
+        "queries": [
+            "bad-query",
+            {"filters": "bad-existing-filters"},
+        ],
+    }
+    extra_form_data: dict[str, Any] = {
+        "filters": [
+            "bad-filter",
+            {"col": "country", "op": "IN", "val": ["USA"]},
+        ],
+    }
+
+    apply_dashboard_filter_context(query_context_json, extra_form_data)
+
+    assert query_context_json["queries"][0] == "bad-query"
+    assert query_context_json["queries"][1]["filters"] == [
+        {"col": "country", "op": "IN", "val": ["USA"], "isExtra": True},
+    ]
+    assert query_context_json["queries"][1]["extra_form_data"] == {}
+
+
+def test_apply_dashboard_filter_context_ignores_scalar_containers() -> None:
+    """Scalar query/filter containers should be treated as empty."""
+    query_context_json: dict[str, Any] = {"queries": "bad-queries"}
+    extra_form_data: dict[str, Any] = {"filters": "bad-filters"}
+
+    apply_dashboard_filter_context(query_context_json, extra_form_data)
+
+    assert query_context_json == {"queries": "bad-queries"}
+    assert extra_form_data == {}
+
+
 def test_apply_dashboard_filter_context_applies_time_grain_to_extras() -> None:
     """
     A dashboard time-grain filter must land in ``query["extras"]``, where

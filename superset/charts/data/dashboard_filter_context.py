@@ -48,6 +48,13 @@ def _parse_json_object(value: str | None) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
+def _iter_dicts(value: Any) -> list[dict[str, Any]]:
+    """Return dict items from a list-like value."""
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
 class DashboardFilterStatus(str, Enum):
     APPLIED = "applied"
     NOT_APPLIED = "not_applied"
@@ -334,10 +341,10 @@ def apply_dashboard_filter_context(  # noqa: C901
     :param extra_form_data: The dashboard's merged extra_form_data to apply. It's
     also mutated in place.
     """
-    extra_filters = extra_form_data.pop("filters", [])
-    for query in query_context.get("queries", []):
+    extra_filters = _iter_dicts(extra_form_data.pop("filters", []))
+    for query in _iter_dicts(query_context.get("queries", [])):
         if extra_filters:
-            existing_filters = query.get("filters") or []
+            existing_filters = _iter_dicts(query.get("filters", []))
             query["filters"] = existing_filters + [
                 {**flt, "isExtra": True} for flt in extra_filters
             ]
