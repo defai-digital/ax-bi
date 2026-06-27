@@ -40,6 +40,30 @@ if TYPE_CHECKING:
     from superset.models.core import Database
 
 
+def test_json_to_dict_returns_dict() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('{"metric": "sum__num"}') == {"metric": "sum__num"}
+
+
+def test_json_to_dict_tolerates_trailing_commas() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('{"metrics": ["count", ]\n}') == {"metrics": ["count"]}
+
+
+def test_json_to_dict_ignores_malformed_json() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict("{malformed") == {}
+
+
+def test_json_to_dict_ignores_non_object_json() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('["count"]') == {}
+
+
 @pytest.fixture
 def database(mocker: MockerFixture, session: Session) -> Database:
     from superset.connectors.sqla.models import SqlaTable

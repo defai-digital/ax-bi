@@ -239,7 +239,12 @@ def json_to_dict(json_str: str) -> dict[Any, Any]:
     if json_str:
         val = re.sub(",[ \t\r\n]+}", "}", json_str)
         val = re.sub(",[ \t\r\n]+\\]", "]", val)
-        return json.loads(val)
+        try:
+            parsed = json.loads(val)
+        except (TypeError, ValueError):
+            logger.warning("Ignoring malformed JSON metadata")
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
 
     return {}
 
