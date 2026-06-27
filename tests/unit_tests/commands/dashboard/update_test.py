@@ -17,6 +17,9 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from superset.commands.dashboard.exceptions import DashboardInvalidError
 from superset.commands.dashboard.update import (
     _get_native_filter_ids,
     UpdateDashboardCommand,
@@ -59,3 +62,18 @@ def test_process_native_filter_diff_ignores_malformed_current_metadata() -> None
         command.process_native_filter_diff()
 
     mock_report_dao.find_by_native_filter_id.assert_not_called()
+
+
+def test_validate_rejects_non_object_json_metadata() -> None:
+    command = UpdateDashboardCommand(1, {"json_metadata": "[]"})
+
+    with (
+        patch("superset.commands.dashboard.update.DashboardDAO") as mock_dao,
+        patch(
+            "superset.commands.dashboard.update.security_manager.raise_for_ownership"
+        ),
+    ):
+        mock_dao.find_by_id.return_value = MagicMock(id=1)
+
+        with pytest.raises(DashboardInvalidError):
+            command.validate()

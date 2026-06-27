@@ -25,6 +25,7 @@ from marshmallow import ValidationError
 
 from superset import db, security_manager
 from superset.commands.base import BaseCommand, UpdateMixin
+from superset.commands.dashboard.create import load_json_object
 from superset.commands.dashboard.exceptions import (
     DashboardChartCustomizationsUpdateFailedError,
     DashboardColorsConfigUpdateFailedError,
@@ -81,15 +82,28 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
 
         # Re-serialize position_json to escape 4-byte Unicode characters
         if position_json := self._properties.get("position_json"):
-            self._properties["position_json"] = json.dumps(json.loads(position_json))
+            self._properties["position_json"] = json.dumps(
+                load_json_object(position_json, "position_json")
+            )
 
         dashboard = DashboardDAO.update(self._model, self._properties)
         if self._properties.get("json_metadata"):
             DashboardDAO.set_dash_metadata(
                 dashboard,
-                data=json.loads(self._properties.get("json_metadata", "{}")),
+                data=load_json_object(
+                    self._properties.get("json_metadata", "{}"),
+                    "json_metadata",
+                ),
             )
         return dashboard
+
+    def _validate_json_fields(self, exceptions: list[ValidationError]) -> None:
+        for field_name in ("json_metadata", "position_json"):
+            if value := self._properties.get(field_name):
+                try:
+                    load_json_object(value, field_name)
+                except ValidationError as ex:
+                    exceptions.append(ex)
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
@@ -97,6 +111,8 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         roles_ids: Optional[list[int]] = self._properties.get("roles")
         slug: Optional[str] = self._properties.get("slug")
         tag_ids: Optional[list[int]] = self._properties.get("tags")
+
+        self._validate_json_fields(exceptions)
 
         # Validate/populate model exists
         self._model = DashboardDAO.find_by_id(self._model_id)
@@ -111,6 +127,8 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
         # Validate slug uniqueness
         if not DashboardDAO.validate_update_slug_uniqueness(self._model_id, slug):
             exceptions.append(DashboardSlugExistsValidationError())
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
 
         # Validate/Populate owner
         try:

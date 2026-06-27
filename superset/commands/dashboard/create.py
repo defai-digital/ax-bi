@@ -36,6 +36,16 @@ from superset.utils.decorators import on_error, transaction
 logger = logging.getLogger(__name__)
 
 
+def load_json_object(value: str, field_name: str) -> dict[str, Any]:
+    try:
+        data = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise ValidationError(f"{field_name} must be valid JSON") from ex
+    if not isinstance(data, dict):
+        raise ValidationError(f"{field_name} must be a JSON object")
+    return data
+
+
 class CreateDashboardCommand(CreateMixin, BaseCommand):
     def __init__(self, data: dict[str, Any]) -> None:
         self._properties = data.copy()
@@ -51,7 +61,7 @@ class CreateDashboardCommand(CreateMixin, BaseCommand):
         if json_metadata := self._properties.get("json_metadata"):
             DashboardDAO.set_dash_metadata(
                 dashboard,
-                data=json.loads(json_metadata),
+                data=load_json_object(json_metadata, "json_metadata"),
             )
         if after_create := current_app.config.get("AFTER_ASSET_CREATE"):
             after_create(dashboard, "dashboard")
@@ -63,9 +73,18 @@ class CreateDashboardCommand(CreateMixin, BaseCommand):
         role_ids: Optional[list[int]] = self._properties.get("roles")
         slug: str = self._properties.get("slug", "")
 
+        for field_name in ("json_metadata", "position_json"):
+            if value := self._properties.get(field_name):
+                try:
+                    load_json_object(value, field_name)
+                except ValidationError as ex:
+                    exceptions.append(ex)
+
         # Validate slug uniqueness
         if not DashboardDAO.validate_slug_uniqueness(slug):
             exceptions.append(DashboardSlugExistsValidationError())
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
 
         try:
             owners = self.populate_owners(owner_ids)
