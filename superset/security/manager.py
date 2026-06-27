@@ -699,11 +699,20 @@ def query_context_modified(query_context: "QueryContext") -> bool:
     if form_data.get("slice_id") != stored_chart.id:
         return True
 
-    stored_query_context = (
-        json.loads(cast(str, stored_chart.query_context))
-        if stored_chart.query_context
-        else None
-    )
+    stored_query_context = None
+    if stored_chart.query_context:
+        try:
+            stored_query_context = json.loads(cast(str, stored_chart.query_context))
+        except (TypeError, ValueError):
+            return True
+        if not isinstance(stored_query_context, dict):
+            return True
+        stored_queries = stored_query_context.get("queries")
+        if stored_queries is not None and not (
+            isinstance(stored_queries, list)
+            and all(isinstance(query, dict) for query in stored_queries)
+        ):
+            return True
 
     # compare columns and metrics in form_data with stored values. Order-by is
     # handled separately: a strict subset check there would reject a guest

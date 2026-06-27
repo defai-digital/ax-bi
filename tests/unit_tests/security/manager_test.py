@@ -660,6 +660,37 @@ def test_query_context_modified_tampered(
     assert query_context_modified(query_context)
 
 
+@pytest.mark.parametrize(
+    "stored_query_context",
+    [
+        "{malformed",
+        "[]",
+        json.dumps({"queries": [1]}),
+    ],
+)
+def test_query_context_modified_invalid_stored_query_context_fails_closed(
+    mocker: MockerFixture,
+    stored_metrics: list[AdhocMetric],
+    stored_query_context: str,
+) -> None:
+    """
+    Invalid saved query context should be treated as modified for guest access.
+    """
+    query_context = mocker.MagicMock()
+    query_context.slice_.id = 42
+    query_context.slice_.query_context = stored_query_context
+    query_context.slice_.params_dict = {
+        "metrics": stored_metrics,
+    }
+    query_context.form_data = {
+        "slice_id": 42,
+        "metrics": stored_metrics,
+    }
+    query_context.queries = [QueryObject(metrics=stored_metrics)]  # type: ignore
+
+    assert query_context_modified(query_context)
+
+
 def _native_filter_ctx(
     mocker: MockerFixture,
     queries: list[Any],
