@@ -290,6 +290,64 @@ def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
 
 
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+def test_non_list_extra_filters_raises_error(mock_chart_data_command):
+    """Verify that non-list extra_filters JSON raises a controlled error."""
+    chart = Slice(
+        id=228,
+        slice_name="Test Chart",
+        viz_type="pie",
+        datasource_id=1,
+        datasource_type="table",
+    )
+
+    mock_query = Mock()
+    mock_query.filter = []
+    mock_qc = Mock()
+    mock_qc.queries = [mock_query]
+
+    with patch.object(chart, "get_query_context", return_value=mock_qc):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "pie"}],
+        ):
+            result = ChartWarmUpCacheCommand(
+                chart,
+                42,
+                '{"col": "state", "op": "==", "val": "CA"}',
+            ).run()
+
+    assert result["viz_error"] == "Extra filters must be a list of objects"
+    assert mock_query.filter == []
+
+
+@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+def test_extra_filters_with_non_object_entries_raises_error(mock_chart_data_command):
+    """Verify that extra_filters list entries must be objects."""
+    chart = Slice(
+        id=229,
+        slice_name="Test Chart",
+        viz_type="pie",
+        datasource_id=1,
+        datasource_type="table",
+    )
+
+    mock_query = Mock()
+    mock_query.filter = []
+    mock_qc = Mock()
+    mock_qc.queries = [mock_query]
+
+    with patch.object(chart, "get_query_context", return_value=mock_qc):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "pie"}],
+        ):
+            result = ChartWarmUpCacheCommand(chart, 42, '["state"]').run()
+
+    assert result["viz_error"] == "Extra filters must be a list of objects"
+    assert mock_query.filter == []
+
+
+@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
 def test_none_query_context_raises_chart_invalid_error(mock_chart_data_command):
     """Verify that None query context raises ChartInvalidError for non-legacy charts"""
     chart = Slice(
