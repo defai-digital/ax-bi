@@ -32,30 +32,35 @@ import logging
 import os
 import re
 import uuid
-from typing import Any
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 from werkzeug.datastructures import FileStorage
 
+from superset import db
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
     UploadCommand,
     UploadFileType,
 )
-from superset.commands.database.uploaders.columnar_reader import ColumnarReader
-from superset.commands.database.uploaders.csv_reader import CSVReader
-from superset.commands.database.uploaders.excel_reader import ExcelReader
+from superset.commands.database.uploaders.columnar_reader import (
+    ColumnarReader,
+    ColumnarReaderOptions,
+)
+from superset.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
+from superset.commands.database.uploaders.excel_reader import (
+    ExcelReader,
+    ExcelReaderOptions,
+)
 from superset.commands.database.uploaders.local_db import get_or_create_local_db
 from superset.connectors.sqla.models import SqlaTable
 from superset.mcp_service.dataset.schemas import (
     DatasetError,
     DatasetInfo,
-    UploadFileRequest,
     serialize_dataset_object,
+    UploadFileRequest,
 )
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
-from superset import db
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +92,7 @@ def _sanitize_table_name(raw_name: str) -> str:
     return f"upload_{sanitized}_{short_id}"
 
 
-def upload_single_file(
+def upload_single_file(  # noqa: C901
     file_content: str,
     filename: str,
     table_name: str | None = None,
@@ -103,7 +108,9 @@ def upload_single_file(
 
     if file_type is None:
         return DatasetError.create(
-            error=f"Unsupported file extension '{ext}'. Supported: {SUPPORTED_EXTENSIONS}",
+            error=(
+                f"Unsupported file extension '{ext}'. Supported: {SUPPORTED_EXTENSIONS}"
+            ),
             error_type="UnsupportedFileTypeError",
         )
 
@@ -133,14 +140,18 @@ def upload_single_file(
         file_storage = _build_file_storage(file_bytes, filename)
         local_db = get_or_create_local_db()
 
-        reader_options: dict[str, Any] = {"already_exists": "replace"}
         reader: BaseDataReader
         if file_type == UploadFileType.CSV:
-            reader = CSVReader(reader_options)
+            csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
+            reader = CSVReader(csv_reader_options)
         elif file_type == UploadFileType.EXCEL:
-            reader = ExcelReader(reader_options)
+            excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+            reader = ExcelReader(excel_reader_options)
         elif file_type == UploadFileType.COLUMNAR:
-            reader = ColumnarReader(reader_options)
+            columnar_reader_options: ColumnarReaderOptions = {
+                "already_exists": "replace"
+            }
+            reader = ColumnarReader(columnar_reader_options)
         else:
             return DatasetError.create(
                 error="Unexpected file type", error_type="UnsupportedFileTypeError"
@@ -224,8 +235,7 @@ async def upload_file(
     For multiple files, use the upload_files tool instead.
     """
     await ctx.info(
-        "Uploading file '%s' (%d bytes)"
-        % (request.filename, len(request.file_content))
+        "Uploading file '%s' (%d bytes)" % (request.filename, len(request.file_content))
     )
 
     result = upload_single_file(
@@ -237,7 +247,5 @@ async def upload_file(
     if isinstance(result, DatasetError):
         await ctx.error("Upload failed for '%s'" % request.filename)
     else:
-        await ctx.info(
-            "Dataset created from uploaded file '%s'" % request.filename
-        )
+        await ctx.info("Dataset created from uploaded file '%s'" % request.filename)
     return result

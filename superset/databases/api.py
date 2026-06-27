@@ -68,11 +68,16 @@ from superset.commands.database.uploaders.base import (
     UploadCommand,
     UploadFileType,
 )
-from superset.commands.database.uploaders.columnar_reader import ColumnarReader
-from superset.commands.database.uploaders.csv_reader import CSVReader
-from superset.commands.database.uploaders.excel_reader import ExcelReader
+from superset.commands.database.uploaders.columnar_reader import (
+    ColumnarReader,
+    ColumnarReaderOptions,
+)
+from superset.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
+from superset.commands.database.uploaders.excel_reader import (
+    ExcelReader,
+    ExcelReaderOptions,
+)
 from superset.commands.database.uploaders.local_db import get_or_create_local_db
-from superset.connectors.sqla.models import SqlaTable
 from superset.commands.database.validate import ValidateDatabaseParametersCommand
 from superset.commands.database.validate_sql import ValidateSQLCommand
 from superset.commands.importers.exceptions import (
@@ -80,6 +85,7 @@ from superset.commands.importers.exceptions import (
     NoValidFilesFoundError,
 )
 from superset.commands.importers.v1.utils import get_contents_from_bundle
+from superset.connectors.sqla.models import SqlaTable
 from superset.constants import MODEL_API_RW_METHOD_PERMISSION_MAP, RouteMethod
 from superset.daos.database import DatabaseDAO
 from superset.databases.decorators import check_table_access
@@ -1867,7 +1873,8 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                       description: The file to upload (CSV, XLSX, or Parquet)
                     table_name:
                       type: string
-                      description: Optional table name (derived from filename if omitted)
+                      description: >-
+                        Optional table name (derived from filename if omitted)
                   required:
                     - file
           responses:
@@ -1945,14 +1952,18 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             local_db = get_or_create_local_db()
 
             # Create appropriate reader with sensible defaults
-            reader_options: dict[str, Any] = {"already_exists": "replace"}
             reader: BaseDataReader
             if file_type == UploadFileType.CSV:
-                reader = CSVReader(reader_options)
+                csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
+                reader = CSVReader(csv_reader_options)
             elif file_type == UploadFileType.EXCEL:
-                reader = ExcelReader(reader_options)
+                excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+                reader = ExcelReader(excel_reader_options)
             elif file_type == UploadFileType.COLUMNAR:
-                reader = ColumnarReader(reader_options)
+                columnar_reader_options: ColumnarReaderOptions = {
+                    "already_exists": "replace"
+                }
+                reader = ColumnarReader(columnar_reader_options)
             else:
                 return self.response_400(message="Unexpected Invalid file type")
 
