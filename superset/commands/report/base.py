@@ -66,16 +66,33 @@ def _get_dashboard_state_invalid_tab_ids(
     position_data: dict[str, Any],
 ) -> set[str]:
     active_tabs = dashboard_state.get("activeTabs") or []
-    invalid_tab_ids = set(active_tabs) - set(position_data.keys())
+    active_tab_ids = (
+        {tab_id for tab_id in active_tabs if isinstance(tab_id, str)}
+        if isinstance(active_tabs, list)
+        else set()
+    )
+    invalid_tab_ids = active_tab_ids - set(position_data.keys())
 
     if anchor := dashboard_state.get("anchor"):
+        if not isinstance(anchor, str):
+            invalid_tab_ids.add(str(anchor))
+            return invalid_tab_ids
+
         try:
-            anchor_list: list[str] = json.loads(anchor)
-            if _invalid_tab_ids := set(anchor_list) - set(position_data.keys()):
-                invalid_tab_ids.update(_invalid_tab_ids)
+            anchor_list = json.loads(anchor)
         except json.JSONDecodeError:
             if anchor not in position_data:
                 invalid_tab_ids.add(anchor)
+            return invalid_tab_ids
+
+        if not isinstance(anchor_list, list) or not all(
+            isinstance(anchor_id, str) for anchor_id in anchor_list
+        ):
+            invalid_tab_ids.add(anchor)
+            return invalid_tab_ids
+
+        if _invalid_tab_ids := set(anchor_list) - set(position_data.keys()):
+            invalid_tab_ids.update(_invalid_tab_ids)
 
     return invalid_tab_ids
 
@@ -150,10 +167,15 @@ def _get_dashboard_native_filter_ids(
         )
         return None
 
+    native_filter_configuration = json_metadata.get("native_filter_configuration", [])
+    if not isinstance(native_filter_configuration, list):
+        return set()
+
     return {
-        f["id"]
-        for f in json_metadata.get("native_filter_configuration", [])
-        if "id" in f
+        filter_id
+        for native_filter in native_filter_configuration
+        if isinstance(native_filter, dict)
+        and isinstance(filter_id := native_filter.get("id"), str)
     }
 
 
