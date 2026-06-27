@@ -589,6 +589,34 @@ def get_spa_payload(extra_data: dict[str, Any] | None = None) -> dict[str, Any]:
     return payload
 
 
+def _normalize_spa_theme_payload(
+    payload: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Normalize SPA bootstrap theme payload objects."""
+    common_data = payload.get("common", {})
+    if not isinstance(common_data, dict):
+        common_data = {}
+
+    theme_data = copy.deepcopy(common_data.get("theme", {}))
+    if not isinstance(theme_data, dict):
+        theme_data = {}
+
+    default_theme = theme_data.get("default", {})
+    if not isinstance(default_theme, dict):
+        default_theme = {}
+        theme_data["default"] = default_theme
+
+    dark_theme = theme_data.get("dark", {})
+    if not isinstance(dark_theme, dict):
+        dark_theme = {}
+        theme_data["dark"] = dark_theme
+
+    payload["common"] = common_data
+    payload["common"]["theme"] = theme_data
+
+    return theme_data, default_theme, dark_theme
+
+
 def get_spa_template_context(
     entry: str | None = "spa",
     extra_bootstrap_data: dict[str, Any] | None = None,
@@ -609,10 +637,7 @@ def get_spa_template_context(
     """
     payload = get_spa_payload(extra_bootstrap_data)
 
-    # Deep copy theme data to avoid mutating cached bootstrap payload
-    theme_data = copy.deepcopy(payload.get("common", {}).get("theme", {}))
-    default_theme = theme_data.get("default", {})
-    dark_theme = theme_data.get("dark", {})
+    theme_data, default_theme, dark_theme = _normalize_spa_theme_payload(payload)
 
     # Apply brandAppName fallback to both default and dark themes
     # Priority: theme brandAppName > APP_NAME config > "Superset" default
@@ -621,7 +646,7 @@ def get_spa_template_context(
         if not theme_config:
             continue
         # Get or create token dict
-        if "token" not in theme_config:
+        if not isinstance(theme_config.get("token"), dict):
             theme_config["token"] = {}
         theme_tokens = theme_config["token"]
 
@@ -633,11 +658,6 @@ def get_spa_template_context(
             if app_name_from_config != "Superset":
                 # User has customized APP_NAME, use it as brandAppName
                 theme_tokens["brandAppName"] = app_name_from_config
-
-    # Write the modified theme data back to payload
-    if "common" not in payload:
-        payload["common"] = {}
-    payload["common"]["theme"] = theme_data
 
     # Extract theme tokens for template access (after fallback applied)
     # Use the direct reference to ensure we get the modified token dict

@@ -905,6 +905,56 @@ class TestBrandAppNameFallback:
         # Should handle gracefully and use default title
         assert result["default_title"] == "Superset"
 
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_common_payload(
+        self, mock_app, mock_payload
+    ):
+        """Test handling when common payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Superset"}
+        mock_payload.return_value = {"common": ["bad-common"]}
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Superset"
+        assert result["theme_tokens"] == {}
+
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_theme_payload(self, mock_app, mock_payload):
+        """Test handling when theme payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Superset"}
+        mock_payload.return_value = {"common": {"theme": ["bad-theme"]}}
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Superset"
+        assert result["theme_tokens"] == {}
+
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_token_payload(self, mock_app, mock_payload):
+        """Test handling when theme token payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Custom App"}
+        mock_payload.return_value = {
+            "common": {
+                "theme": {
+                    "default": {"token": ["bad-token"]},
+                }
+            }
+        }
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Custom App"
+        assert result["theme_tokens"] == {"brandAppName": "Custom App"}
+
 
 class TestGetDefaultSpinnerSvg:
     """Test get_default_spinner_svg function"""
