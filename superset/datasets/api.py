@@ -354,7 +354,7 @@ class DatasetRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -439,7 +439,9 @@ class DatasetRestApi(BaseSupersetModelRestApi):
             else False
         )
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -631,7 +633,9 @@ class DatasetRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.duplicate_model_schema.load(request.json)
+            item = self.duplicate_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1091,7 +1095,9 @@ class DatasetRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            body = GetOrCreateDatasetSchema().load(request.json)
+            body = GetOrCreateDatasetSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as ex:
             return self.response(400, message=ex.messages)
         table_name = body["table_name"]
@@ -1188,7 +1194,9 @@ class DatasetRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """  # noqa: E501
         try:
-            body = DatasetCacheWarmUpRequestSchema().load(request.json)
+            body = DatasetCacheWarmUpRequestSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
