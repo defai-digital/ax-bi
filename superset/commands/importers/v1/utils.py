@@ -180,6 +180,8 @@ def load_configs(
                     config["password"] = db_passwords[config_uuid]
 
                 ssh_tunnel = config.get("ssh_tunnel") or {}
+                if not isinstance(ssh_tunnel, dict):
+                    ssh_tunnel = {}
 
                 # populate masked ssh_tunnel_passwords from the request or from
                 # the same existing database. Do not add credentials absent from

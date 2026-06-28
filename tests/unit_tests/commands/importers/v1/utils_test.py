@@ -33,6 +33,11 @@ class MaskedEncryptedExtraSchema(Schema):
     masked_encrypted_extra = fields.String(required=False)
 
 
+class SshTunnelSchema(Schema):
+    name = fields.String(required=True)
+    ssh_tunnel = fields.Dict(required=False)
+
+
 def _mock_empty_import_queries(mocker: MockerFixture) -> None:
     query = mocker.patch("superset.commands.importers.v1.utils.db").session.query
     query.return_value.all.return_value = []
@@ -138,6 +143,34 @@ def test_load_configs_rejects_bad_masked_encrypted_extra_when_applying_secrets(
     assert exceptions[0].messages == {
         "databases/database.yaml": {
             "masked_encrypted_extra": [expected_message],
+        },
+    }
+
+
+def test_load_configs_rejects_non_object_ssh_tunnel_without_crashing(
+    mocker: MockerFixture,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/database.yaml": "name: test_db\nssh_tunnel: []\n"},
+        {"databases/": SshTunnelSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/database.yaml": {
+            "ssh_tunnel": ["Not a valid mapping type."],
         },
     }
 
