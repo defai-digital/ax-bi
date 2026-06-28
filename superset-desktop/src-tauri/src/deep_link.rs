@@ -19,9 +19,25 @@
 
 use log::{info, warn};
 use tauri::{AppHandle, Manager, Runtime};
+use tauri_plugin_deep_link::DeepLinkExt;
 use url::Url;
 
+use crate::navigation::build_navigation_script;
+
+fn is_dashboard_identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
+}
+
 fn parse_deep_link(url: &str) -> Option<String> {
+    if url.contains("/../") || url.ends_with("/..") || url.contains("/./") || url.ends_with("/.") {
+        warn!("Rejected deep link with dot segment: {}", url);
+        return None;
+    }
+
     let parsed = Url::parse(url).ok()?;
     if parsed.scheme() != "axbi" {
         warn!("Unknown deep link scheme: {}", parsed.scheme());
@@ -33,15 +49,21 @@ fn parse_deep_link(url: &str) -> Option<String> {
         "dashboard" => {
             if path.is_empty() {
                 "/dashboard/list/".to_string()
+            } else if is_dashboard_identifier(path) {
+                format!("/superset/dashboard/{path}/")
             } else {
-                format!("/superset/dashboard/{}/", path)
+                warn!("Invalid dashboard deep link identifier: {}", path);
+                return None;
             }
         }
         "chart" => {
             if path.is_empty() {
                 "/chart/list/".to_string()
+            } else if path.chars().all(|ch| ch.is_ascii_digit()) {
+                format!("/explore/?slice_id={path}")
             } else {
-                format!("/explore/?slice_id={}", path)
+                warn!("Invalid chart deep link identifier: {}", path);
+                return None;
             }
         }
         "explore" => "/explore/".to_string(),
@@ -49,7 +71,7 @@ fn parse_deep_link(url: &str) -> Option<String> {
         "home" => "/superset/welcome/".to_string(),
         other => {
             warn!("Unknown deep link host: {}", other);
-            format!("/{}/{}", host, path)
+            return None;
         }
     };
     info!("Parsed deep link: {} -> {}", url, route);
@@ -59,7 +81,13 @@ fn parse_deep_link(url: &str) -> Option<String> {
 pub fn handle_deep_link<R: Runtime>(app: &AppHandle<R>, url: &str) {
     if let Some(path) = parse_deep_link(url) {
         if let Some(window) = app.get_webview_window("main") {
-            let js = format!("window.location.href = '{}';", path.replace('\'', "\\'"));
+            let js = match build_navigation_script(&path) {
+                Ok(js) => js,
+                Err(e) => {
+                    warn!("Rejected deep link navigation: {}", e);
+                    return;
+                }
+            };
             if let Err(e) = window.eval(&js) {
                 warn!("Failed to navigate to deep link: {}", e);
             }
@@ -69,7 +97,54 @@ pub fn handle_deep_link<R: Runtime>(app: &AppHandle<R>, url: &str) {
     }
 }
 
-pub fn setup<R: Runtime>(_app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
+    if let Err(error) = app.deep_link().register_all() {
+        warn!("Failed to register deep link schemes: {}", error);
+    }
+
+    let app_for_events = app.clone();
+    app.deep_link().on_open_url(move |event| {
+        for url in event.urls() {
+            handle_deep_link(&app_for_events, url.as_str());
+        }
+    });
+
+    if let Some(urls) = app.deep_link().get_current()? {
+        for url in urls {
+            handle_deep_link(app, url.as_str());
+        }
+    }
+
     info!("Deep link handler initialized");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_deep_link;
+
+    #[test]
+    fn parses_known_deep_links() {
+        assert_eq!(
+            parse_deep_link("axbi://dashboard/world-banks-data"),
+            Some("/superset/dashboard/world-banks-data/".to_string())
+        );
+        assert_eq!(
+            parse_deep_link("axbi://chart/42"),
+            Some("/explore/?slice_id=42".to_string())
+        );
+        assert_eq!(
+            parse_deep_link("axbi://sqllab"),
+            Some("/sqllab/".to_string())
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_or_unsafe_deep_links() {
+        assert_eq!(parse_deep_link("https://dashboard/1"), None);
+        assert_eq!(parse_deep_link("axbi://unknown/path"), None);
+        assert_eq!(parse_deep_link("axbi://chart/1abc"), None);
+        assert_eq!(parse_deep_link("axbi://dashboard/../admin"), None);
+        assert_eq!(parse_deep_link("axbi://dashboard/.."), None);
+    }
 }

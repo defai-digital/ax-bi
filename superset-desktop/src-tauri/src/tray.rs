@@ -18,18 +18,9 @@
 // System tray setup for AX-BI desktop client
 
 use log::info;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Runtime};
 
 pub fn setup<R: Runtime>(_app: &AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
     info!("System tray setup - skipping (icons not configured)");
     Ok(())
-}
-
-pub fn navigate_to_route<R: Runtime>(app: &AppHandle<R>, path: &str) {
-    if let Some(window) = app.get_webview_window("main") {
-        let js = format!("window.location.href = '{}';", path);
-        let _ = window.eval(&js);
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
 }
