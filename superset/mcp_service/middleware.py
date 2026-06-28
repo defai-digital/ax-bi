@@ -1306,6 +1306,10 @@ class ResponseSizeGuardMiddleware(Middleware):
         if not was_truncated:
             return None
 
+        if isinstance(truncated, dict):
+            truncated["_response_truncated"] = True
+            truncated["_truncation_notes"] = notes
+
         truncated_tokens = estimate_response_tokens(truncated)
         if truncated_tokens > self.token_limit:
             return None
@@ -1334,10 +1338,6 @@ class ResponseSizeGuardMiddleware(Middleware):
             )
         except Exception as log_error:  # noqa: BLE001
             logger.warning("Failed to log truncation event: %s", log_error)
-
-        if isinstance(truncated, dict):
-            truncated["_response_truncated"] = True
-            truncated["_truncation_notes"] = notes
 
         # Re-wrap into ToolResult if we unwrapped one
         if extracted is not None and isinstance(truncated, dict):

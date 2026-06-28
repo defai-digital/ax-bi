@@ -357,6 +357,35 @@ class TestResponseSizeGuardMiddleware:
         call_args = mock_event_logger.log.call_args
         assert call_args.kwargs["action"] == "mcp_response_truncated"
 
+    def test_rejects_truncation_when_metadata_exceeds_limit(self) -> None:
+        """The final size check must include truncation metadata fields."""
+        middleware = ResponseSizeGuardMiddleware(token_limit=10)
+        truncated_payload = {"id": 1}
+
+        def estimate_after_metadata(payload: Any) -> int:
+            if isinstance(payload, dict) and payload.get("_response_truncated"):
+                return 11
+            return 1
+
+        with (
+            patch(
+                "superset.mcp_service.middleware.truncate_oversized_response",
+                return_value=(truncated_payload, True, ["long truncation note"]),
+            ),
+            patch(
+                "superset.mcp_service.middleware.estimate_response_tokens",
+                side_effect=estimate_after_metadata,
+            ),
+        ):
+            result = middleware._try_truncate_info_response(
+                "get_dashboard_info",
+                {"description": "x" * 1000},
+                estimated_tokens=100,
+            )
+
+        assert result is None
+        assert truncated_payload["_response_truncated"] is True
+
 
 class TestCreateResponseSizeGuardMiddleware:
     """Test create_response_size_guard_middleware factory function."""
