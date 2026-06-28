@@ -128,6 +128,25 @@ def test_sanitize_text_redacts_key_value_secret():
     assert "secret" in redactions
 
 
+@pytest.mark.parametrize(
+    ("input_text", "leaked_fragment", "expected"),
+    [
+        ('connected with password="hunter two" to db', "hunter two", "password="),
+        ("connected with secret='alpha beta' to db", "alpha beta", "secret="),
+    ],
+)
+def test_sanitize_text_redacts_quoted_key_value_secret_with_spaces(
+    input_text: str,
+    leaked_fragment: str,
+    expected: str,
+) -> None:
+    redactions: set[str] = set()
+    out = _sanitize_text(input_text, redactions)
+    assert leaked_fragment not in out
+    assert f"{expected}[REDACTED_SECRET]" in out
+    assert "secret" in redactions
+
+
 def test_sanitize_text_preserves_original_separator():
     """password: foo stays 'password: [REDACTED_SECRET]' — don't rewrite to '='."""
     redactions: set[str] = set()

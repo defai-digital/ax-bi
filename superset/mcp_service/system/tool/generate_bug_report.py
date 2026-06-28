@@ -87,7 +87,7 @@ _BEARER_RE = re.compile(r"(?i)\b(bearer|token|api[_-]?key)\s+(?!\[REDACTED_)\S+"
 _KEY_VALUE_SECRET_RE = re.compile(
     r"(?i)\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?key|"
     r"auth[_-]?token|authorization|bearer|session[_-]?id)"
-    r"(\s*[:=]\s*)\"?([^\"\s,;]+)\"?"
+    r"(\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;]+)"
 )
 _URL_CREDENTIALS_RE = re.compile(r"(\b[A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]*:[^\s/@]*@")
 _LONG_HEX_RE = re.compile(r"\b[A-Fa-f0-9]{32,}\b")
