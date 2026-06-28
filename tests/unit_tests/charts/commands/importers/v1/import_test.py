@@ -99,6 +99,25 @@ def test_import_chart(mocker: MockerFixture, session_with_schema: Session) -> No
     mock_can_access.assert_called_once_with("can_write", "Chart")
 
 
+def test_import_chart_without_params(
+    mocker: MockerFixture,
+    session_with_schema: Session,
+) -> None:
+    """
+    Test importing a chart with omitted optional params.
+    """
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+
+    config = copy.deepcopy(chart_config)
+    config["datasource_id"] = 1
+    config["datasource_type"] = "table"
+    del config["params"]
+
+    chart = import_chart(config)
+
+    assert chart.params == "{}"
+
+
 def test_import_chart_managed_externally(
     mocker: MockerFixture, session_with_schema: Session
 ) -> None:

@@ -80,7 +80,8 @@ def import_chart(
     filter_chart_annotations(config)
 
     # TODO (betodealmeida): move this logic to import_from_dict
-    config["params"] = json.dumps(config["params"])
+    params = config.get("params")
+    config["params"] = json.dumps(params if isinstance(params, dict) else {})
 
     # migrate old viz types to new ones
     config = migrate_chart(config)
