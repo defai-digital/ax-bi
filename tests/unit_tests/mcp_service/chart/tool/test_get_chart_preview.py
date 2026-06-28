@@ -29,6 +29,7 @@ import pytest
 from superset.mcp_service.chart.schemas import (
     AccessibilityMetadata,
     ASCIIPreview,
+    ChartError,
     ChartPreview,
     GetChartPreviewRequest,
     InteractivePreview,
@@ -44,9 +45,42 @@ from superset.mcp_service.chart.tool.get_chart_preview import (
     _sanitize_chart_preview_for_llm_context,
     ASCIIPreviewStrategy,
     TablePreviewStrategy,
+    VegaLitePreviewStrategy,
 )
 from superset.mcp_service.utils import sanitize_for_llm_context
 from superset.utils import json as utils_json
+
+
+@pytest.mark.parametrize(
+    ("strategy_cls", "preview_format"),
+    [
+        (ASCIIPreviewStrategy, "ascii"),
+        (TablePreviewStrategy, "table"),
+        (VegaLitePreviewStrategy, "vega_lite"),
+    ],
+)
+def test_preview_strategies_reject_non_object_saved_params(
+    strategy_cls: type[Any],
+    preview_format: str,
+) -> None:
+    """Preview strategies should require object-shaped saved chart params."""
+    chart = SimpleNamespace(
+        id=42,
+        slice_name="Broken chart",
+        viz_type="table",
+        datasource_id=1,
+        datasource_type="table",
+        params="[]",
+    )
+
+    preview = strategy_cls(
+        chart,
+        GetChartPreviewRequest(identifier=42, format=preview_format),
+    ).generate()
+
+    assert isinstance(preview, ChartError)
+    assert preview.error_type == "ParseError"
+    assert "Saved chart params are not a valid JSON object." in preview.error
 
 
 class TestPreviewXAxisInQueryContext:
@@ -617,8 +651,8 @@ class TestGetChartPreview:
             lambda chart: None,
         )
         monkeypatch.setattr(
-            get_chart_preview_module.event_logger,
-            "log_context",
+            get_chart_preview_module,
+            "mcp_event_log_context",
             lambda **kwargs: nullcontext(),
         )
         monkeypatch.setattr(
@@ -1128,8 +1162,8 @@ class TestDetachedInstanceError:
                 return_value=MagicMock(is_valid=True, warnings=[]),
             ),
             patch.object(
-                get_chart_preview_module.event_logger,
-                "log_context",
+                get_chart_preview_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             # Return a real URLPreview so Pydantic model validation succeeds
@@ -1213,8 +1247,8 @@ class TestDetachedInstanceError:
                 return_value=MagicMock(is_valid=True, warnings=[]),
             ),
             patch.object(
-                get_chart_preview_module.event_logger,
-                "log_context",
+                get_chart_preview_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             # Simulate the session expiring inside the strategy
