@@ -93,7 +93,9 @@ class ExplorePermalinkRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            state = self.add_model_schema.load(request.json)
+            state = self.add_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             key = CreateExplorePermalinkCommand(state=state).run()
             url = url_for("ExplorePermalinkView.permalink", key=key, _external=True)
             return self.response(201, key=key, url=url)

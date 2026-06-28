@@ -162,7 +162,9 @@ class DashboardPermalinkRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            state = self.add_model_schema.load(request.json)
+            state = self.add_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             key = CreateDashboardPermalinkCommand(
                 dashboard_id=pk,
                 state=state,
