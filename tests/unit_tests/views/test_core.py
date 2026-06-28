@@ -24,7 +24,11 @@ from flask import current_app
 
 from superset.utils import json
 from superset.utils.core import DatasourceType
-from superset.views.core import _parse_datasource_key, Superset
+from superset.views.core import (
+    _get_selected_column_names,
+    _parse_datasource_key,
+    Superset,
+)
 
 
 @pytest.mark.parametrize(
@@ -57,6 +61,36 @@ def test_parse_datasource_key_accepts_valid_keys(
 def test_parse_datasource_key_rejects_malformed_keys(datasource_key: object) -> None:
     """Malformed datasource keys should not raise raw parsing errors."""
     assert _parse_datasource_key(datasource_key) is None
+
+
+def test_get_selected_column_names_extracts_valid_names() -> None:
+    """Selected column names should be extracted from Explore form data."""
+    selected_columns = [
+        {"name": "ds"},
+        {"name": "revenue"},
+    ]
+
+    assert _get_selected_column_names(selected_columns) == ["ds", "revenue"]
+
+
+def test_get_selected_column_names_skips_malformed_entries() -> None:
+    """Malformed selected column entries should not break Explore initialization."""
+    selected_columns = [
+        {"name": "ds"},
+        {"label": "missing name"},
+        {"name": 123},
+        "bad-column",
+    ]
+
+    assert _get_selected_column_names(selected_columns) == ["ds"]
+
+
+@pytest.mark.parametrize("selected_columns", [None, {}, "bad"])
+def test_get_selected_column_names_rejects_non_list_values(
+    selected_columns: object,
+) -> None:
+    """Non-list selected column payloads are ignored."""
+    assert _get_selected_column_names(selected_columns) == []
 
 
 @patch("superset.views.core.CreateFormDataCommand.run")

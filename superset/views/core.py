@@ -148,6 +148,20 @@ def _parse_datasource_key(
         return None
 
 
+def _get_selected_column_names(selected_columns: object) -> list[str]:
+    if not isinstance(selected_columns, list):
+        return []
+
+    column_names: list[str] = []
+    for column in selected_columns:
+        if not isinstance(column, dict):
+            continue
+        name = column.get("name")
+        if isinstance(name, str):
+            column_names.append(name)
+    return column_names
+
+
 class Superset(BaseSupersetView):
     """The base views for Superset!"""
 
@@ -536,10 +550,7 @@ class Superset(BaseSupersetView):
         if "viz_type" not in form_data:
             form_data["viz_type"] = app.config["DEFAULT_VIZ_TYPE"]
             if app.config["DEFAULT_VIZ_TYPE"] == "table":
-                all_columns = []
-                for x in selectedColumns:
-                    all_columns.append(x["name"])
-                form_data["all_columns"] = all_columns
+                form_data["all_columns"] = _get_selected_column_names(selectedColumns)
 
         # slc perms
         slice_add_perm = security_manager.can_access("can_write", "Chart")
