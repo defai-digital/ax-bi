@@ -137,6 +137,8 @@ def fetch_csrf_token(
         if cookie_headers:
             for cookie in cookie_headers:
                 cookie = cookie.split(";", 1)[0]
+                if "=" not in cookie:
+                    continue
                 name, value = cookie.split("=", 1)
                 if name == session_cookie_name:
                     session_cookie = value

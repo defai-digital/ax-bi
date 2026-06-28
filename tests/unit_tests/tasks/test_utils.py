@@ -29,6 +29,7 @@ from superset.tasks.exceptions import ExecutorNotFoundError, InvalidExecutorErro
 from superset.tasks.types import Executor, ExecutorType, FixedExecutor
 from superset.tasks.utils import (
     error_update,
+    fetch_csrf_token,
     get_active_dedup_key,
     get_current_user,
     get_finished_dedup_key,
@@ -63,6 +64,30 @@ class ModelType(int, Enum):
     DASHBOARD = 1
     CHART = 2
     REPORT_SCHEDULE = 3
+
+
+class _FakeHeaders:
+    def __init__(self, cookies: list[str]) -> None:
+        self._cookies = cookies
+
+    def get_all(self, name: str) -> list[str]:
+        return self._cookies if name == "set-cookie" else []
+
+
+class _FakeResponse:
+    status = 200
+
+    def __init__(self, cookies: list[str]) -> None:
+        self.headers = _FakeHeaders(cookies)
+
+    def __enter__(self) -> "_FakeResponse":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return b'{"result": "csrf-token"}'
 
 
 @pytest.mark.parametrize(
@@ -581,6 +606,25 @@ def test_properties_roundtrip():
     serialized = serialize_properties(original)
     parsed = parse_properties(serialized)
     assert parsed == original
+
+
+def test_fetch_csrf_token_skips_malformed_cookie_headers() -> None:
+    """Malformed Set-Cookie values should not hide a valid session cookie."""
+    with (
+        patch("superset.tasks.utils.get_url_path", return_value="http://example/csrf"),
+        patch(
+            "superset.tasks.utils.request.urlopen",
+            return_value=_FakeResponse(
+                ["malformed-cookie", "session=session-value; Path=/"]
+            ),
+        ),
+    ):
+        result = fetch_csrf_token({"Cookie": "old=session"})
+
+    assert result == {
+        "X-CSRF-Token": "csrf-token",
+        "Cookie": "session=session-value",
+    }
 
 
 class TestGetCurrentUser:
