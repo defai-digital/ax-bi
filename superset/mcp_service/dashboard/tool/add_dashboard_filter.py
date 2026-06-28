@@ -231,9 +231,13 @@ def add_dashboard_filter(
                 json_metadata = json.loads(dashboard.json_metadata or "{}")
             except (json.JSONDecodeError, TypeError):
                 json_metadata = {}
+            if not isinstance(json_metadata, dict):
+                json_metadata = {}
 
             # Get or initialize native filter configuration
             existing_filters = json_metadata.get("native_filter_configuration", [])
+            if not isinstance(existing_filters, list):
+                existing_filters = []
 
             # Build and append the new filter
             updated_filters = _build_filter_config(request, list(existing_filters))

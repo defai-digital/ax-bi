@@ -738,6 +738,17 @@ def _resolve_filter_operator_and_value(
     return None, None
 
 
+def _load_dashboard_metadata(raw_json: str | None) -> dict[str, Any]:
+    """Parse dashboard json_metadata, treating malformed values as empty."""
+    from superset.utils import json
+
+    try:
+        metadata = json.loads(raw_json or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    return metadata if isinstance(metadata, dict) else {}
+
+
 def build_applied_dashboard_filters(
     dashboard_id: int, chart_id: int
 ) -> list[AppliedDashboardFilter]:
@@ -776,7 +787,7 @@ def build_applied_dashboard_filters(
             f"Chart {chart_id} is not on dashboard {dashboard_id}"
         )
 
-    metadata = json.loads(dashboard.json_metadata or "{}")
+    metadata = _load_dashboard_metadata(dashboard.json_metadata)
     native_filter_config = metadata.get("native_filter_configuration", [])
     if not isinstance(native_filter_config, list):
         return []

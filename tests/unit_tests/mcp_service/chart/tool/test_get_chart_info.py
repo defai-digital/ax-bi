@@ -318,6 +318,36 @@ class TestBuildAppliedDashboardFilters:
 
         assert result == []
 
+    def test_non_object_json_metadata_returns_empty_list(self):
+        dashboard = self._make_dashboard(
+            json_metadata="[]",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert result == []
+
+    def test_malformed_json_metadata_returns_empty_list(self):
+        dashboard = self._make_dashboard(
+            json_metadata="{bad json",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert result == []
+
 
 def _json(native_filter_list):
     """Serialize a native_filter list as JSON string for embedding in
