@@ -319,6 +319,47 @@ def test_save_always_checks_ownership_even_without_owners_field(
     mock_security_manager.raise_for_ownership.assert_called_once_with(mock_orm)
 
 
+@patch("superset.views.datasource.views.sanitize_datasource_data", return_value={})
+@patch("superset.views.datasource.views.populate_owner_list", return_value=[])
+@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("superset.views.datasource.views.db")
+def test_save_accepts_missing_owners_after_ownership_check(
+    mock_db: MagicMock,
+    mock_get_datasource: MagicMock,
+    mock_populate_owner_list: MagicMock,
+    mock_sanitize_datasource_data: MagicMock,
+) -> None:
+    """Omitted owners should use the owner helper's default handling."""
+    mock_orm = MagicMock()
+    mock_orm.owner_class = None
+    mock_orm.data = {"id": 1}
+    mock_get_datasource.return_value = mock_orm
+
+    from flask import Flask
+
+    raw_save = _get_view_func("save")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/save/",
+        method="POST",
+        data={
+            "data": superset_json.dumps(
+                {
+                    "id": 1,
+                    "type": "table",
+                    "database": {"id": 1},
+                    "columns": [],
+                }
+            )
+        },
+    ):
+        assert raw_save(_view_self()) == "ok"
+
+    mock_populate_owner_list.assert_called_once_with(None, default_to_user=False)
+    mock_orm.update_from_object.assert_called_once()
+    mock_db.session.commit.assert_called_once()
+
+
 @patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
 @patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
 def test_save_non_owner_with_owners_field_is_rejected(

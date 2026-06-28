@@ -125,7 +125,7 @@ class Datasource(BaseSupersetView):
                 raise DatasetForbiddenError() from ex
 
         datasource_dict["owners"] = populate_owner_list(
-            datasource_dict["owners"], default_to_user=False
+            datasource_dict.get("owners"), default_to_user=False
         )
 
         duplicates = [
