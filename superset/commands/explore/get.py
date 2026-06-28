@@ -49,6 +49,28 @@ from superset.views.utils import (
 logger = logging.getLogger(__name__)
 
 
+def _get_slice_metadata(slc: Any) -> dict[str, Any]:
+    extra_owners = []
+    if resolver := current_app.config.get("EXTRA_OWNERS_RESOLVER"):
+        extra_owners = resolver(slc)
+
+    metadata = {
+        "created_on_humanized": (slc.created_on_humanized if slc.created_on else None),
+        "changed_on_humanized": (slc.changed_on_humanized if slc.changed_on else None),
+        "owners": [owner.get_full_name() for owner in slc.owners],
+        "extra_owners": extra_owners,
+        "dashboards": [
+            {"id": dashboard.id, "dashboard_title": dashboard.dashboard_title}
+            for dashboard in slc.dashboards
+        ],
+    }
+    if slc.created_by:
+        metadata["created_by"] = slc.created_by.get_full_name()
+    if slc.changed_by:
+        metadata["changed_by"] = slc.changed_by.get_full_name()
+    return metadata
+
+
 class GetExploreCommand(BaseCommand, ABC):
     def __init__(
         self,
@@ -161,24 +183,7 @@ class GetExploreCommand(BaseCommand, ABC):
         metadata = None
 
         if slc:
-            extra_owners = []
-            if resolver := current_app.config.get("EXTRA_OWNERS_RESOLVER"):
-                extra_owners = resolver(slc)
-
-            metadata = {
-                "created_on_humanized": slc.created_on_humanized,
-                "changed_on_humanized": slc.changed_on_humanized,
-                "owners": [owner.get_full_name() for owner in slc.owners],
-                "extra_owners": extra_owners,
-                "dashboards": [
-                    {"id": dashboard.id, "dashboard_title": dashboard.dashboard_title}
-                    for dashboard in slc.dashboards
-                ],
-            }
-            if slc.created_by:
-                metadata["created_by"] = slc.created_by.get_full_name()
-            if slc.changed_by:
-                metadata["changed_by"] = slc.changed_by.get_full_name()
+            metadata = _get_slice_metadata(slc)
 
         result: dict[str, Any] = {
             "dataset": sanitize_datasource_data(datasource_data),
