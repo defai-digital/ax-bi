@@ -257,6 +257,20 @@ class TestThemeHelpers:
         )
 
     @patch("superset.views.base.logger")
+    def test_load_theme_from_model_null_json(self, mock_logger):
+        """Test _load_theme_from_model with null JSON data"""
+        mock_model = MagicMock()
+        mock_model.json_data = None
+        mock_model.id = 1
+        fallback = {"token": {"colorPrimary": "#111"}}
+
+        result = _load_theme_from_model(mock_model, fallback, ThemeMode.DEFAULT)
+        assert result == fallback
+        mock_logger.error.assert_called_once_with(
+            "Invalid JSON in system %s theme %s", "default", 1
+        )
+
+    @patch("superset.views.base.logger")
     def test_load_theme_from_model_non_object_json(self, mock_logger):
         """Test _load_theme_from_model with non-object JSON"""
         mock_model = MagicMock()

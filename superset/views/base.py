@@ -384,7 +384,7 @@ def _load_theme_from_model(
                 merged = _merge_theme_dicts(dict(fallback_theme), db_theme)
                 return cast(Theme, merged)
             return cast(Theme, db_theme)
-        except json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             logger.error(
                 "Invalid JSON in system %s theme %s", theme_type.value, theme_model.id
             )
