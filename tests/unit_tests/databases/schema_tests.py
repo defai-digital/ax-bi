@@ -157,6 +157,54 @@ def test_database_parameters_schema_mixin_malformed_masked_encrypted_extra(
     }
 
 
+def test_database_parameters_schema_mixin_non_object_masked_encrypted_extra(
+    mocker: MockerFixture,
+) -> None:
+    """Non-object masked encrypted extras should not reach engine specs."""
+    from superset.databases.schemas import DatabaseParametersSchemaMixin
+    from superset.db_engine_specs.base import BasicParametersMixin, BasicParametersType
+    from superset.models.core import ConfigurationMethod
+
+    captured_encrypted_extra: dict[str, object] = {}
+
+    class DummyEngine(BasicParametersMixin):
+        engine = "dummy"
+        default_driver = "dummy"
+
+        @classmethod
+        def build_sqlalchemy_uri(
+            cls,
+            parameters: BasicParametersType,
+            encrypted_extra: dict[str, str] | None = None,
+        ) -> str:
+            captured_encrypted_extra["value"] = encrypted_extra or {}
+            return super().build_sqlalchemy_uri(parameters, encrypted_extra)
+
+    class DummySchema(DatabaseParametersSchemaMixin, Schema):
+        sqlalchemy_uri = fields.String()
+        masked_encrypted_extra = fields.String(allow_none=True)
+
+    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+
+    schema = DummySchema()
+    payload = {
+        "engine": "dummy_engine",
+        "configuration_method": ConfigurationMethod.DYNAMIC_FORM,
+        "masked_encrypted_extra": "[]",
+        "parameters": {
+            "username": "username",
+            "password": "password",
+            "host": "localhost",
+            "port": 12345,
+            "database": "dbname",
+        },
+    }
+
+    schema.load(payload)
+
+    assert captured_encrypted_extra["value"] == {}
+
+
 def test_database_parameters_schema_mixin_no_engine(
     dummy_schema: "Schema",
 ) -> None:

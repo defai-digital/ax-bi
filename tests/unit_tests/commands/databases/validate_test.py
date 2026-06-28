@@ -88,6 +88,42 @@ def test_command_ignores_malformed_masked_encrypted_extra(
     assert build_sqlalchemy_uri.call_args.args[1] == {}
 
 
+def test_command_ignores_non_object_masked_encrypted_extra(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test that non-object masked encrypted extra falls back to an empty object.
+    """
+    user = mocker.MagicMock()
+    user.email = "alice@example.org"
+    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+
+    database = mocker.MagicMock()
+    with database.get_sqla_engine() as engine:
+        engine.dialect.do_ping.return_value = True
+
+    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO.build_db_for_connection_test.return_value = database
+
+    build_sqlalchemy_uri = mocker.patch(
+        "superset.db_engine_specs.gsheets.GSheetsEngineSpec.build_sqlalchemy_uri",
+        return_value="gsheets://",
+    )
+
+    properties = {
+        "engine": "gsheets",
+        "driver": "gsheets",
+        "catalog": {"test": "https://example.org/"},
+        "masked_encrypted_extra": "[]",
+    }
+    command = ValidateDatabaseParametersCommand(properties)
+    command.run()
+
+    build_sqlalchemy_uri.assert_called_once()
+    assert build_sqlalchemy_uri.call_args.args[1] == {}
+
+
 def test_command_invalid(mocker: MockerFixture) -> None:
     """
     Test the command when the payload is invalid.
