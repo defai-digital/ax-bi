@@ -839,7 +839,12 @@ class BigQueryEngineSpec(BaseEngineSpec):  # pylint: disable=too-many-public-met
         if encrypted_extra:
             credentials_info = encrypted_extra.get("credentials_info")
             if isinstance(credentials_info, str):
-                credentials_info = json.loads(credentials_info)
+                try:
+                    credentials_info = json.loads(credentials_info)
+                except (TypeError, ValueError) as ex:
+                    raise ValidationError("Invalid service credentials") from ex
+            if not isinstance(credentials_info, dict):
+                raise ValidationError("Invalid service credentials")
             project_id = credentials_info.get("project_id")
         if not encrypted_extra:
             raise ValidationError("Missing service credentials")

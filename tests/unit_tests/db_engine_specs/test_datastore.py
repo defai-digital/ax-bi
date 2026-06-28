@@ -793,6 +793,24 @@ def test_build_sqlalchemy_uri_missing_project_id() -> None:
         DatastoreEngineSpec.build_sqlalchemy_uri(parameters, encrypted_extra)
 
 
+@pytest.mark.parametrize(
+    "credentials_info",
+    [None, [], json.dumps([]), "{bad json"],
+)
+def test_build_sqlalchemy_uri_rejects_malformed_credentials_info(
+    credentials_info,
+) -> None:
+    """
+    Test that malformed credential containers raise ``ValidationError``.
+    """
+    from marshmallow.exceptions import ValidationError
+
+    parameters: DatastoreParametersType = {"credentials_info": {}, "query": {}}
+    encrypted_extra = {"credentials_info": credentials_info}
+    with pytest.raises(ValidationError, match="Invalid service credentials"):
+        DatastoreEngineSpec.build_sqlalchemy_uri(parameters, encrypted_extra)
+
+
 def test_get_parameters_from_uri() -> None:
     """
     Test extracting parameters from a URI with encrypted_extra.
