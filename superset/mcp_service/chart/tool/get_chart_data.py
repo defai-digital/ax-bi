@@ -130,6 +130,28 @@ def _load_saved_chart_form_data(params: str | None) -> dict[str, Any] | ChartErr
     return parsed
 
 
+def _load_saved_query_context(query_context: str | None) -> dict[str, Any] | None:
+    """Load saved query_context when it has the expected object shape."""
+    if not query_context:
+        return None
+
+    from superset.utils import json as utils_json
+
+    try:
+        parsed = utils_json.loads(query_context)
+    except (TypeError, ValueError):
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    queries = parsed.get("queries")
+    if queries is not None and not isinstance(queries, list):
+        return None
+
+    return parsed
+
+
 def _recommend_visualizations(
     viz_type: str,
     columns: list[DataColumn],
@@ -509,14 +531,15 @@ async def get_chart_data(  # noqa: C901
                     "Built query_context from cached form_data (unsaved state)"
                 )
             elif chart.query_context:
-                try:
-                    query_context_json = utils_json.loads(chart.query_context)
+                query_context_json = _load_saved_query_context(chart.query_context)
+                if query_context_json is not None:
                     await ctx.debug(
                         "Using chart's saved query_context for data retrieval"
                     )
-                except (TypeError, ValueError) as e:
+                else:
                     await ctx.warning(
-                        "Failed to parse chart query_context: %s" % str(e)
+                        "Chart saved query_context is not a valid JSON object. "
+                        "Falling back to saved chart form_data."
                     )
 
             if query_context_json is None and not using_unsaved_state:

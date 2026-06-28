@@ -35,6 +35,7 @@ from superset.mcp_service.chart.schemas import (
 )
 from superset.mcp_service.chart.tool.get_chart_data import (
     _GENERIC_TYPE_MAP,
+    _load_saved_query_context,
     _MAX_RECOMMENDATIONS,
     _query_from_form_data,
     _recommend_visualizations,
@@ -383,6 +384,12 @@ class _AsyncContext:
 
 
 class TestSavedChartParamsFallback:
+    def test_non_object_saved_query_context_is_ignored(self) -> None:
+        """Saved query_context must be object-shaped before use."""
+        assert _load_saved_query_context("[]") is None
+        assert _load_saved_query_context('"not-an-object"') is None
+        assert _load_saved_query_context('{"queries": "not-a-list"}') is None
+
     @pytest.mark.asyncio
     async def test_non_object_saved_params_returns_parse_error(
         self,
@@ -433,6 +440,98 @@ class TestSavedChartParamsFallback:
         assert isinstance(result, ChartError)
         assert result.error_type == "ParseError"
         assert "Saved chart params are not a valid JSON object." in result.error
+
+    @pytest.mark.asyncio
+    async def test_non_object_saved_query_context_falls_back_to_params(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_auth: Any,
+    ) -> None:
+        """Corrupt saved query_context should use saved chart params fallback."""
+        chart_data_module = importlib.import_module(
+            "superset.mcp_service.chart.tool.get_chart_data"
+        )
+        query_context_factory_module = importlib.import_module(
+            "superset.common.query_context_factory"
+        )
+        get_data_command_module = importlib.import_module(
+            "superset.commands.chart.data.get_data_command"
+        )
+        chart = SimpleNamespace(
+            id=42,
+            slice_name="Fallback chart",
+            viz_type="table",
+            datasource_id=7,
+            datasource_type="table",
+            query_context="[]",
+            params='{"viz_type": "table", "metrics": ["count"], "groupby": ["name"]}',
+        )
+        captured_query_contexts: list[dict[str, Any]] = []
+
+        class QueryContextFactory:
+            def create(self, **kwargs: Any) -> object:
+                captured_query_contexts.append(kwargs)
+                return object()
+
+        class ChartDataCommand:
+            def __init__(self, query_context: object) -> None:
+                self.query_context = query_context
+
+            def validate(self) -> None:
+                pass
+
+            def run(self) -> dict[str, Any]:
+                return {
+                    "queries": [
+                        {
+                            "data": [{"name": "alpha", "count": 1}],
+                            "colnames": ["name", "count"],
+                            "rowcount": 1,
+                        }
+                    ]
+                }
+
+        monkeypatch.setattr(
+            chart_data_module,
+            "find_chart_by_identifier",
+            lambda *args, **kwargs: chart,
+        )
+        monkeypatch.setattr(
+            chart_data_module,
+            "validate_chart_dataset",
+            lambda *args, **kwargs: SimpleNamespace(
+                is_valid=True,
+                error=None,
+                warnings=[],
+            ),
+        )
+        monkeypatch.setattr(
+            query_context_factory_module,
+            "QueryContextFactory",
+            QueryContextFactory,
+        )
+        monkeypatch.setattr(
+            get_data_command_module,
+            "ChartDataCommand",
+            ChartDataCommand,
+        )
+        monkeypatch.setattr(
+            chart_data_module,
+            "mcp_event_log_context",
+            lambda **kwargs: nullcontext(),
+        )
+        monkeypatch.setattr(
+            "fastmcp.server.dependencies.get_context",
+            lambda: _AsyncContext(),
+        )
+
+        result = await chart_data_module.get_chart_data(
+            GetChartDataRequest(identifier=42),
+        )
+
+        assert isinstance(result, ChartData)
+        assert result.row_count == 1
+        assert captured_query_contexts[0]["queries"][0]["metrics"] == ["count"]
 
 
 class TestUnsavedChartDataQueryConstruction:
