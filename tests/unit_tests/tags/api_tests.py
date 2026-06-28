@@ -74,6 +74,44 @@ def test_add_objects_accepts_valid_tag_payload(
     command.run.assert_called_once_with()
 
 
+def test_create_tag_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Malformed JSON request bodies should fail before tag creation."""
+    command = mocker.patch("superset.tags.api.CreateCustomTagWithRelationshipsCommand")
+
+    response = client.post(
+        "/api/v1/tag/",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json["message"] == {"_schema": ["Invalid input type."]}
+    command.assert_not_called()
+
+
+def test_bulk_create_tag_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Malformed JSON request bodies should fail before bulk tag creation."""
+    command = mocker.patch("superset.tags.api.CreateCustomTagWithRelationshipsCommand")
+
+    response = client.post(
+        "/api/v1/tag/bulk_create",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json["message"] == {"_schema": ["Invalid input type."]}
+    command.assert_not_called()
+
+
 def test_update_uses_schema_normalized_payload(
     client: Any,
     full_api_access: None,
@@ -98,3 +136,22 @@ def test_update_uses_schema_normalized_payload(
         },
     )
     command.run.assert_called_once_with()
+
+
+def test_update_tag_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Malformed JSON request bodies should fail before tag updates."""
+    command = mocker.patch("superset.tags.api.UpdateTagCommand")
+
+    response = client.put(
+        "/api/v1/tag/10",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json["message"] == {"_schema": ["Invalid input type."]}
+    command.assert_not_called()
