@@ -28,6 +28,8 @@ from pydantic import (
     model_serializer,
 )
 
+from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
+
 
 class _SchemaFieldNormalizer(BaseModel):
     """Mixin that renames schema_name → schema in JSON output.
@@ -199,6 +201,14 @@ class ExecuteSqlResponse(BaseModel):
             "with literal '{{ var }}' placeholders unrendered."
         ),
     )
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap SQL error text before exposing it to LLM clients."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
 
 
 class SaveSqlQueryRequest(BaseModel):
