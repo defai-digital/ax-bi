@@ -121,8 +121,13 @@ def _sanitize_error_for_logging(error: Exception) -> str:
 
     # Generic database connection URIs (redis, snowflake, bigquery, mssql, etc.)
     error_str = re.sub(
-        r"\b\w+://[^@\s]{1,100}@[^/\s]{1,100}/[^\s]{0,100}",
-        "[SCHEME]://[REDACTED]@[REDACTED]/[REDACTED]",
+        r"\b([A-Za-z][A-Za-z0-9+.-]*://)"
+        r"[^\s/@]{0,100}(?::[^\s/@]{0,100})?@"
+        r"[^/\s]{1,100}(/[^\s]{0,100})?",
+        lambda match: (
+            f"{match.group(1)}[REDACTED]@[REDACTED]"
+            f"{'/[REDACTED]' if match.group(2) else ''}"
+        ),
         error_str,
         flags=re.IGNORECASE,
     )

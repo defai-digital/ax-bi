@@ -38,11 +38,37 @@ from superset.mcp_service.auth import MCPNoAuthSourceError, MCPPermissionDeniedE
 from superset.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
 from superset.mcp_service.middleware import (
     _is_user_error,
+    _sanitize_error_for_logging,
     create_response_size_guard_middleware,
     GlobalErrorHandlerMiddleware,
     RBACToolVisibilityMiddleware,
     ResponseSizeGuardMiddleware,
 )
+
+
+def test_sanitize_error_for_logging_redacts_extended_scheme_credentials() -> None:
+    """Driver schemes with '+' must not leak connection credentials."""
+    sanitized = _sanitize_error_for_logging(
+        RuntimeError(
+            "failed postgresql+psycopg2://admin:s3cret@db.internal/prod on retry"
+        )
+    )
+
+    assert "admin:s3cret" not in sanitized
+    assert "db.internal" not in sanitized
+    assert "prod" not in sanitized
+    assert "postgresql+psycopg2://[REDACTED]@[REDACTED]/[REDACTED]" in sanitized
+
+
+def test_sanitize_error_for_logging_redacts_pathless_url_credentials() -> None:
+    """Pathless Redis-style URLs must not leak password-only credentials."""
+    sanitized = _sanitize_error_for_logging(
+        RuntimeError("failed redis://:s3cret@redis.internal:6379")
+    )
+
+    assert ":s3cret@" not in sanitized
+    assert "redis.internal" not in sanitized
+    assert "redis://[REDACTED]@[REDACTED]" in sanitized
 
 
 class TestResponseSizeGuardMiddleware:
