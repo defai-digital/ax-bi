@@ -469,6 +469,19 @@ class TestChartSerializationEagerLoading:
             "Verified Q1 2026 metrics"
         )
 
+    def test_serialize_chart_object_ignores_non_object_params(self) -> None:
+        """Chart params must be object-shaped before becoming response form_data."""
+        from superset.mcp_service.chart.schemas import serialize_chart_object
+
+        chart = _make_mock_chart()
+        chart.params = "[]"
+
+        result = serialize_chart_object(chart)
+
+        assert result is not None
+        assert result.form_data is None
+        assert result.filters is None
+
     def test_serialize_chart_object_sanitizes_chart_metadata_and_filters(
         self,
     ) -> None:
