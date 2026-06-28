@@ -1288,6 +1288,51 @@ def test_update_recipient_to_slack_v2_missing_channels(mocker: MockerFixture):
         mock_cmmd.update_report_schedule_slack_v2()
 
 
+def test_update_recipient_to_slack_v2_skips_malformed_channels(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test converting Slack recipients treats malformed channel lookup results
+    as missing channels instead of raising a raw lookup error.
+    """
+    mocker.patch(
+        "superset.commands.report.execute.get_channels_with_search",
+        return_value=[
+            {
+                "id": "abc124f",
+                "name": "Channel 1",
+                "is_member": True,
+                "is_private": False,
+            },
+            {
+                "name": "Channel 2",
+                "is_member": True,
+                "is_private": False,
+            },
+        ],
+    )
+    mock_report_schedule = ReportSchedule(
+        recipients=[
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=json.dumps({"target": "Channel 1, Channel 2"}),
+            ),
+        ],
+    )
+
+    mock_cmmd: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+
+    with pytest.raises(UpdateFailedError, match="Could not find"):
+        mock_cmmd.update_report_schedule_slack_v2()
+
+    assert mock_cmmd._report_schedule.recipients[0].type == ReportRecipientType.SLACK
+    assert mock_cmmd._report_schedule.recipients[0].recipient_config_json == json.dumps(
+        {"target": "Channel 1, Channel 2"}
+    )
+
+
 # ---------------------------------------------------------------------------
 # Tier 1: _update_query_context + create_log
 # ---------------------------------------------------------------------------

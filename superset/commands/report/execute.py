@@ -87,6 +87,18 @@ from superset.utils.urls import get_url_path
 logger = logging.getLogger(__name__)
 
 
+def _get_slack_channel_name_and_id(channel: object) -> tuple[str, str] | None:
+    if not isinstance(channel, dict):
+        return None
+
+    name = channel.get("name")
+    channel_id = channel.get("id")
+    if not isinstance(name, str) or not isinstance(channel_id, str):
+        return None
+
+    return name, channel_id
+
+
 class BaseReportState:
     current_states: list[ReportState] = []
     initial: bool = False
@@ -155,16 +167,23 @@ class BaseReportState:
                         exact_match=True,
                     )
                     channels_list = recipients_string_to_list(channel_names)
-                    if len(channels_list) != len(channels):
+                    channel_names_and_ids = [
+                        name_and_id
+                        for channel in channels
+                        if (name_and_id := _get_slack_channel_name_and_id(channel))
+                    ]
+                    if len(channels_list) != len(channel_names_and_ids):
                         missing_channels = set(channels_list) - {
-                            channel["name"] for channel in channels
+                            name for name, _ in channel_names_and_ids
                         }
                         msg = (
                             "Could not find the following channels: "
                             f"{', '.join(missing_channels)}"
                         )
                         raise UpdateFailedError(msg)
-                    channel_ids = ",".join(channel["id"] for channel in channels)
+                    channel_ids = ",".join(
+                        channel_id for _, channel_id in channel_names_and_ids
+                    )
                     recipient.recipient_config_json = json.dumps(
                         {
                             "target": channel_ids,
