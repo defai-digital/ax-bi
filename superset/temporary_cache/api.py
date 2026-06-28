@@ -69,7 +69,7 @@ class TemporaryCacheRestApi(BaseSupersetApi, ABC):
     @requires_json
     def post(self, pk: int) -> Response:
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
             tab_id = request.args.get("tab_id")
             args = CommandParameters(
                 resource_id=pk,
@@ -89,7 +89,9 @@ class TemporaryCacheRestApi(BaseSupersetApi, ABC):
     @requires_json
     def put(self, pk: int, key: str) -> Response:
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             tab_id = request.args.get("tab_id")
             args = CommandParameters(
                 resource_id=pk,
