@@ -46,6 +46,7 @@ that risk.
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel
@@ -625,7 +626,7 @@ def truncate_oversized_response(
     if hasattr(response, "model_dump"):
         data = response.model_dump()
     elif isinstance(response, dict):
-        data = dict(response)
+        data = deepcopy(response)
     else:
         return response, False, notes
 

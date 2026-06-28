@@ -677,3 +677,26 @@ class TestTruncateOversizedResponse:
         assert isinstance(result, dict)
         assert result["id"] == 1  # Scalar fields preserved
         assert len(notes) > 0
+
+    def test_does_not_mutate_nested_dict_response(self) -> None:
+        """Truncating a dict response must not mutate nested original data."""
+        response: dict[str, Any] = {
+            "id": 1,
+            "charts": [
+                {
+                    "id": 1,
+                    "description": "x" * 2000,
+                }
+            ],
+        }
+        original_description = response["charts"][0]["description"]
+
+        result, was_truncated, notes = truncate_oversized_response(response, 100)
+
+        assert was_truncated is True
+        assert isinstance(result, dict)
+        charts = result["charts"]
+        assert isinstance(charts, list)
+        assert charts[0]["description"] != original_description
+        assert response["charts"][0]["description"] == original_description
+        assert notes
