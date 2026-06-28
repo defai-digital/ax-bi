@@ -87,7 +87,10 @@ class ChartWarmUpCacheCommand(BaseCommand):
         ).get_payload()
         delattr(g, "form_data")
 
-        return payload["errors"] or None, payload["status"]
+        if not isinstance(payload, dict) or "status" not in payload:
+            raise ChartInvalidError("Chart warm-up returned an unexpected payload")
+
+        return payload.get("errors") or None, payload["status"]
 
     def _warm_up_non_legacy_cache(self, chart: Slice) -> tuple[Any, Any]:
         """Warm up cache for non-legacy visualizations."""
@@ -109,7 +112,12 @@ class ChartWarmUpCacheCommand(BaseCommand):
         payload = command.run()
 
         # Report the first error.
-        for query_result in cast(list[dict[str, Any]], payload["queries"]):
+        query_results = payload.get("queries") if isinstance(payload, dict) else None
+        if not isinstance(query_results, list):
+            raise ChartInvalidError("Chart warm-up returned an unexpected payload")
+        for query_result in query_results:
+            if not isinstance(query_result, dict):
+                raise ChartInvalidError("Chart warm-up returned an unexpected payload")
             error = query_result.get("error")
             status = query_result.get("status")
             if error is not None:
