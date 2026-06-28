@@ -93,9 +93,7 @@ describe('UploadData', () => {
     ).toBeVisible();
 
     // Check that the drop zone text is rendered (multi-file)
-    expect(
-      screen.getByText('Click or drag files to upload'),
-    ).toBeVisible();
+    expect(screen.getByText('Click or drag files to upload')).toBeVisible();
 
     // Check that supported formats are listed with multi-file note
     expect(

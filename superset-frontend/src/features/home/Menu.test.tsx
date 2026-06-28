@@ -318,7 +318,6 @@ test('should render the top navbar child menu items', async () => {
   expect(databases).toHaveAttribute('href', database.url);
 });
 
-
 test('should render the Settings', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
   render(<Menu {...mockedProps} />, {
@@ -359,7 +358,6 @@ test('should render the Settings dropdown child menu items', async () => {
   const listUsers = await screen.findByText('List Users');
   expect(listUsers).toHaveAttribute('href', settings[0].childs[0].url);
 });
-
 
 test('should NOT render the plus menu (+) when user is anonymous', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
@@ -486,7 +484,6 @@ test('should render the Bug Report link inside Settings when available', async (
   const bugReport = await screen.findByText('Report a bug');
   expect(bugReport.closest('a')).toHaveAttribute('href', bug_report_url);
 });
-
 
 test('should render the Language Picker', async () => {
   useSelectorMock.mockReturnValue({ roles: user.roles });
