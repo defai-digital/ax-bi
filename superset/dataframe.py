@@ -54,6 +54,77 @@ def _is_na(val: Any) -> bool:
         return False
 
 
+def _get_columns_by_dtype(
+    dframe: pd.DataFrame,
+) -> tuple[pd.Index, pd.Index, pd.Index]:
+    """Return columns that need specialized record conversion."""
+    return (
+        dframe.select_dtypes(include=["floating"]).columns,
+        dframe.select_dtypes(include=["integer"]).columns,
+        dframe.select_dtypes(include=["object"]).columns,
+    )
+
+
+def _get_float_conversions(
+    dframe: pd.DataFrame,
+    float_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for float columns containing NaN values."""
+    converted: dict[str, Any] = {}
+    for col in float_cols:
+        arr = dframe[col].values
+        mask = np.isnan(arr)
+        if mask.any():
+            result = arr.astype(object)
+            result[mask] = None
+            converted[col] = result
+    return converted
+
+
+def _get_integer_conversions(
+    dframe: pd.DataFrame,
+    int_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for integer columns containing JS-unsafe values."""
+    converted: dict[str, Any] = {}
+    for col in int_cols:
+        arr = dframe[col].values
+        big_mask = np.abs(arr) > JS_MAX_INTEGER
+        if big_mask.any():
+            result = arr.astype(object)
+            result[big_mask] = arr[big_mask].astype(str)
+            converted[col] = result
+    return converted
+
+
+def _get_object_conversions(
+    dframe: pd.DataFrame,
+    object_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for object columns containing null values."""
+    converted: dict[str, Any] = {}
+    for col in object_cols:
+        series = dframe[col]
+        null_mask = series.isna()
+        if null_mask.any():
+            result = series.values.copy()
+            result[null_mask] = None
+            converted[col] = result
+    return converted
+
+
+def _convert_object_column_big_integers(
+    records: list[dict[str, Any]],
+    object_cols: pd.Index,
+) -> None:
+    """Convert JS-unsafe integers that live inside object columns."""
+    object_col_set = set(object_cols)
+    for record in records:
+        for key in object_col_set:
+            if key in record:
+                record[key] = _convert_big_integers(record[key])
+
+
 def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
     """
     Convert a DataFrame to a set of records.
@@ -73,48 +144,18 @@ def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
             "DataFrame columns are not unique, some columns will be omitted."
         )
 
-    # Identify column types for vectorized processing
-    float_cols = dframe.select_dtypes(include=["floating"]).columns
-    int_cols = dframe.select_dtypes(include=["integer"]).columns
-    object_cols = dframe.select_dtypes(include=["object"]).columns
+    float_cols, int_cols, object_cols = _get_columns_by_dtype(dframe)
 
-    needs_processing = (
-        len(float_cols) > 0 or len(int_cols) > 0 or len(object_cols) > 0
-    )
+    needs_processing = len(float_cols) > 0 or len(int_cols) > 0 or len(object_cols) > 0
 
     if not needs_processing:
         return dframe.to_dict(orient="records")
 
-    # Build converted columns for vectorized NaN/big-int handling
-    converted: dict[str, Any] = {}
-
-    # Float columns: replace NaN with None (vectorized), preserve Inf
-    for col in float_cols:
-        arr = dframe[col].values
-        mask = np.isnan(arr)
-        if mask.any():
-            # Create an object array with None where NaN
-            result = arr.astype(object)
-            result[mask] = None
-            converted[col] = result
-
-    # Integer columns: convert big ints to strings (vectorized)
-    for col in int_cols:
-        arr = dframe[col].values
-        big_mask = np.abs(arr) > JS_MAX_INTEGER
-        if big_mask.any():
-            result = arr.astype(object)
-            result[big_mask] = arr[big_mask].astype(str)
-            converted[col] = result
-
-    # Object columns: per-value NaN check (can't vectorize mixed-type columns)
-    for col in object_cols:
-        series = dframe[col]
-        null_mask = series.isna()
-        if null_mask.any():
-            result = series.values.copy()
-            result[null_mask] = None
-            converted[col] = result
+    converted = {
+        **_get_float_conversions(dframe, float_cols),
+        **_get_integer_conversions(dframe, int_cols),
+        **_get_object_conversions(dframe, object_cols),
+    }
 
     # Apply conversions and build records
     if converted:
@@ -128,10 +169,6 @@ def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
     # vectorized (e.g., int values in object columns) and any remaining
     # edge cases in object columns.
     if len(object_cols) > 0:
-        object_col_set = set(object_cols)
-        for record in records:
-            for key in object_col_set:
-                if key in record:
-                    record[key] = _convert_big_integers(record[key])
+        _convert_object_column_big_integers(records, object_cols)
 
     return records

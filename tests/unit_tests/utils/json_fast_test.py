@@ -15,16 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 """Tests for superset.utils.json_fast (orjson-based fast serializer)."""
-import json
+
 import time
 import uuid
 from datetime import date, datetime, time as dt_time, timedelta
 from decimal import Decimal
 
 import numpy as np
-import pandas as pd
-import pytest
 
+from superset.utils import json as sjson
 from superset.utils.json_fast import dumps_fast, dumps_fast_bytes
 
 
@@ -155,7 +154,7 @@ class TestDumpsFastFallback:
 
     def test_set(self) -> None:
         result = dumps_fast({"s": {1, 2, 3}})
-        parsed = json.loads(result)
+        parsed = sjson.loads(result)
         assert sorted(parsed["s"]) == [1, 2, 3]
 
     def test_bytes_utf8(self) -> None:
@@ -205,7 +204,7 @@ class TestDumpsFastChartPayload:
             ]
         }
         result = dumps_fast(payload)
-        parsed = json.loads(result)
+        parsed = sjson.loads(result)
         assert parsed["result"][0]["data"][0]["date"] == 1704067200000
         assert len(parsed["result"][0]["data"]) == 3
 
@@ -213,7 +212,11 @@ class TestDumpsFastChartPayload:
         """Benchmark: orjson should be significantly faster than simplejson."""
         # Generate a 10K-row payload similar to chart data
         rows = [
-            {"date": 1704067200000 + i * 86400000, "value": float(i), "name": f"row_{i}"}
+            {
+                "date": 1704067200000 + i * 86400000,
+                "value": float(i),
+                "name": f"row_{i}",
+            }
             for i in range(10000)
         ]
         payload = {"result": [{"data": rows, "status": "success"}]}
@@ -227,9 +230,6 @@ class TestDumpsFastChartPayload:
             dumps_fast(payload)
         orjson_time = time.perf_counter() - start
 
-        # Time simplejson
-        from superset.utils import json as sjson
-
         start = time.perf_counter()
         for _ in range(10):
             sjson.dumps(payload, default=sjson.json_int_dttm_ser, ignore_nan=True)
@@ -237,5 +237,11 @@ class TestDumpsFastChartPayload:
 
         # orjson should be at least 2x faster (typically 5-10x)
         speedup = simplejson_time / orjson_time
-        print(f"\norjson: {orjson_time:.4f}s, simplejson: {simplejson_time:.4f}s, speedup: {speedup:.1f}x")
-        assert speedup > 1.5, f"orjson should be faster, but speedup is only {speedup:.1f}x"
+        print(
+            f"\norjson: {orjson_time:.4f}s, "
+            f"simplejson: {simplejson_time:.4f}s, "
+            f"speedup: {speedup:.1f}x"
+        )
+        assert speedup > 1.5, (
+            f"orjson should be faster, but speedup is only {speedup:.1f}x"
+        )
