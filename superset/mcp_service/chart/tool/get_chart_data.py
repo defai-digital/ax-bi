@@ -106,6 +106,30 @@ _VIZ_CATEGORY: dict[str, str] = {
 _MAX_RECOMMENDATIONS = 4
 
 
+def _load_saved_chart_form_data(params: str | None) -> dict[str, Any] | ChartError:
+    """Load saved chart params as a JSON object."""
+    if not params:
+        return {}
+
+    from superset.utils import json as utils_json
+
+    try:
+        parsed = utils_json.loads(params)
+    except (TypeError, ValueError) as ex:
+        return ChartError(
+            error=f"Failed to parse saved chart params: {ex}",
+            error_type="ParseError",
+        )
+
+    if not isinstance(parsed, dict):
+        return ChartError(
+            error="Saved chart params are not a valid JSON object.",
+            error_type="ParseError",
+        )
+
+    return parsed
+
+
 def _recommend_visualizations(
     viz_type: str,
     columns: list[DataColumn],
@@ -504,7 +528,11 @@ async def get_chart_data(  # noqa: C901
                     "Consider re-saving the chart to enable full data retrieval."
                 )
                 # Try to construct from form_data as a fallback
-                form_data = utils_json.loads(chart.params) if chart.params else {}
+                form_data_result = _load_saved_chart_form_data(chart.params)
+                if isinstance(form_data_result, ChartError):
+                    await ctx.warning(form_data_result.error)
+                    return form_data_result
+                form_data = form_data_result
                 from superset.common.query_context_factory import QueryContextFactory
 
                 factory = QueryContextFactory()

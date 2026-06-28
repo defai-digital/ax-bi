@@ -28,6 +28,7 @@ import pytest
 
 from superset.mcp_service.chart.schemas import (
     ChartData,
+    ChartError,
     DataColumn,
     GetChartDataRequest,
     PerformanceMetadata,
@@ -365,8 +366,73 @@ class TestChartDataSanitization:
 
 
 class _AsyncContext:
+    async def debug(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    async def error(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    async def info(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
     async def report_progress(self, *args: Any, **kwargs: Any) -> None:
         pass
+
+    async def warning(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+
+class TestSavedChartParamsFallback:
+    @pytest.mark.asyncio
+    async def test_non_object_saved_params_returns_parse_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_auth: Any,
+    ) -> None:
+        """Fallback query construction should require object-shaped chart params."""
+        chart_data_module = importlib.import_module(
+            "superset.mcp_service.chart.tool.get_chart_data"
+        )
+        chart = SimpleNamespace(
+            id=42,
+            slice_name="Broken chart",
+            viz_type="table",
+            datasource_id=7,
+            datasource_type="table",
+            query_context=None,
+            params="[]",
+        )
+        monkeypatch.setattr(
+            chart_data_module,
+            "find_chart_by_identifier",
+            lambda *args, **kwargs: chart,
+        )
+        monkeypatch.setattr(
+            chart_data_module,
+            "validate_chart_dataset",
+            lambda *args, **kwargs: SimpleNamespace(
+                is_valid=True,
+                error=None,
+                warnings=[],
+            ),
+        )
+        monkeypatch.setattr(
+            chart_data_module,
+            "mcp_event_log_context",
+            lambda **kwargs: nullcontext(),
+        )
+        monkeypatch.setattr(
+            "fastmcp.server.dependencies.get_context",
+            lambda: _AsyncContext(),
+        )
+
+        result = await chart_data_module.get_chart_data(
+            GetChartDataRequest(identifier=42),
+        )
+
+        assert isinstance(result, ChartError)
+        assert result.error_type == "ParseError"
+        assert "Saved chart params are not a valid JSON object." in result.error
 
 
 class TestUnsavedChartDataQueryConstruction:
@@ -421,8 +487,8 @@ class TestUnsavedChartDataQueryConstruction:
         )
         monkeypatch.setattr(
             chart_data_module,
-            "event_logger",
-            SimpleNamespace(log_context=lambda **kwargs: nullcontext()),
+            "mcp_event_log_context",
+            lambda **kwargs: nullcontext(),
         )
 
         adhoc_filter = {
@@ -507,8 +573,8 @@ class TestUnsavedChartDataQueryConstruction:
         )
         monkeypatch.setattr(
             chart_data_module,
-            "event_logger",
-            SimpleNamespace(log_context=lambda **kwargs: nullcontext()),
+            "mcp_event_log_context",
+            lambda **kwargs: nullcontext(),
         )
         monkeypatch.setattr(
             "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
@@ -1195,19 +1261,12 @@ def mock_auth():
     def _noop_log_context(*_args: Any, **_kwargs: Any) -> Any:
         yield lambda **_kw: None
 
-    # Neutralize event_logger.log_context: the default DBEventLogger would
-    # otherwise insert a log row referencing our mock user_id and fail a
-    # FK constraint against the real users table. Patch via the module
-    # object directly — the `tool` package's __init__.py re-exports the
-    # get_chart_data function under the same name, which shadows the
-    # submodule binding in the package namespace, so a dotted-string patch
-    # target resolves to the function and mock.patch cannot find
-    # event_logger on it.
-    mock_event_logger = Mock()
-    mock_event_logger.log_context.side_effect = _noop_log_context
+    # Neutralize MCP event logging: the real logger would otherwise insert
+    # a log row referencing our mock user_id and fail a FK constraint against
+    # the real users table.
     with (
         patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user,
-        patch.object(_gcd_module, "event_logger", mock_event_logger),
+        patch.object(_gcd_module, "mcp_event_log_context", _noop_log_context),
     ):
         user = Mock()
         user.id = 1
