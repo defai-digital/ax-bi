@@ -161,6 +161,18 @@ class StatementInfo(BaseModel):
         ),
     )
 
+    @field_validator("original_sql")
+    @classmethod
+    def sanitize_original_sql(cls, v: str) -> str:
+        """Wrap submitted SQL text before exposing it to LLM clients."""
+        return sanitize_for_llm_context(v, field_path=("original_sql",))
+
+    @field_validator("executed_sql")
+    @classmethod
+    def sanitize_executed_sql(cls, v: str) -> str:
+        """Wrap transformed SQL text before exposing it to LLM clients."""
+        return sanitize_for_llm_context(v, field_path=("executed_sql",))
+
 
 class ExecuteSqlResponse(BaseModel):
     """Response schema for SQL execution results."""
