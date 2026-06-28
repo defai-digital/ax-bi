@@ -51,6 +51,12 @@ def test_extract_form_data_key_from_url_empty():
     assert extract_form_data_key_from_url("") is None
 
 
+def test_extract_form_data_key_from_url_malformed_url():
+    assert (
+        extract_form_data_key_from_url("http://[invalid/?form_data_key=abc123") is None
+    )
+
+
 def test_extract_form_data_key_from_url_multiple_params():
     url = "http://localhost:8088/explore/?slice_id=5&form_data_key=xyz789&other=val"
     assert extract_form_data_key_from_url(url) == "xyz789"

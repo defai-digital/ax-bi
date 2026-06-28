@@ -30,7 +30,7 @@ from superset.mcp_service.utils.config_utils import (
 logger = logging.getLogger(__name__)
 
 # Hostnames that indicate a development/local environment
-LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "0.0.0.0"}  # noqa: S104
+LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}  # noqa: S104
 
 
 def _is_local_url(url: str) -> bool:
@@ -68,7 +68,10 @@ def extract_permalink_key_from_url(url: str | None) -> str | None:
     """
     if not url:
         return None
-    path = urlparse(url).path
+    try:
+        path = urlparse(url).path
+    except ValueError:
+        return None
     parts = [p for p in path.split("/") if p]
     if len(parts) >= 3 and parts[-3] == "explore" and parts[-2] == "p":
         return parts[-1]

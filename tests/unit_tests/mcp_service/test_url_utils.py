@@ -50,6 +50,10 @@ def test_extract_permalink_key_from_url_empty():
     assert extract_permalink_key_from_url("") is None
 
 
+def test_extract_permalink_key_from_url_malformed_url():
+    assert extract_permalink_key_from_url("http://[invalid/explore/p/abc123/") is None
+
+
 def test_extract_permalink_key_from_url_with_path_prefix():
     url = "https://example.com/superset/explore/p/xyz789/"
     assert extract_permalink_key_from_url(url) == "xyz789"
@@ -118,6 +122,19 @@ def test_get_mcp_service_url_falls_back_for_local_host(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
         lambda: "http://localhost:9001",
+    )
+
+    assert get_mcp_service_url() == "http://localhost:5008"
+
+
+def test_get_mcp_service_url_falls_back_for_ipv6_loopback(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(url_utils, "get_mcp_service_url_config", lambda: None)
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: "http://[::1]:9001",
     )
 
     assert get_mcp_service_url() == "http://localhost:5008"

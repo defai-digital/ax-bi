@@ -692,7 +692,10 @@ def extract_form_data_key_from_url(url: str | None) -> str | None:
     """
     if not url:
         return None
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return None
     values = parse_qs(parsed.query).get("form_data_key", [])
     return values[0] if values else None
 
