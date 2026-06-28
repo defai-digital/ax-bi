@@ -936,6 +936,25 @@ class TestBuildPreviewFormData:
         assert result["slice_id"] == 9
         assert result["slice_name"] == "Broken"
 
+    def test_handles_non_object_existing_params(self):
+        """Gracefully recovers when chart.params is not a JSON object."""
+        config = TableChartConfig(
+            chart_type="table",
+            columns=[ColumnRef(name="col1")],
+        )
+        request = UpdateChartRequest(identifier=1, config=config)
+        chart = Mock()
+        chart.id = 9
+        chart.datasource_id = 4
+        chart.slice_name = "Broken"
+        chart.params = "[]"
+
+        result = _build_preview_form_data(request, chart, parsed_config=config)
+
+        assert isinstance(result, dict)
+        assert result["slice_id"] == 9
+        assert result["slice_name"] == "Broken"
+
 
 class TestUpdateChartSaveWithConfig:
     """Save-path integration tests for update_chart with a full config payload."""
