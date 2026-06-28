@@ -222,7 +222,9 @@ class SecurityRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            body = guest_token_create_schema.load(request.json)
+            body = guest_token_create_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             self.appbuilder.sm.validate_guest_token_resources(body["resources"])
             guest_token_validator_hook = current_app.config.get(
                 "GUEST_TOKEN_VALIDATOR_HOOK"
