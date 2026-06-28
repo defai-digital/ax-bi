@@ -24,7 +24,7 @@ Database.execute() API with RLS, template rendering, and security validation.
 
 import logging
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from fastmcp import Context
@@ -52,6 +52,10 @@ from superset.mcp_service.utils.oauth2_utils import (
 )
 from superset.mcp_service.utils.permissions_utils import (
     current_user_can_access_database,
+)
+from superset.mcp_service.utils.sanitization import (
+    escape_llm_context_delimiters,
+    sanitize_for_llm_context,
 )
 from superset.sql.parse import SQLScript
 
@@ -290,6 +294,36 @@ def _sanitize_row_values(rows: list[dict[str, Any]]) -> None:
                 row[key] = str(value)
 
 
+def _coerce_rows_data(rows_data: Any) -> list[dict[str, Any]]:
+    """Coerce cached result shapes into row dictionaries."""
+    if not isinstance(rows_data, list):
+        rows_data = [rows_data]
+
+    return [row if isinstance(row, dict) else {"value": row} for row in rows_data]
+
+
+def _sanitize_rows_for_llm_context(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Wrap SQL result string values and escape delimiter tokens in row keys."""
+    return cast(
+        list[dict[str, Any]],
+        sanitize_for_llm_context(
+            rows,
+            field_path=("rows",),
+            excluded_field_names=frozenset(),
+        ),
+    )
+
+
+def _column_info(name: Any, column_type: str) -> ColumnInfo:
+    """Build column metadata with delimiter-safe names."""
+    return ColumnInfo(
+        name=escape_llm_context_delimiters(str(name)),
+        type=column_type,
+    )
+
+
 def _data_to_statement_data(data: Any) -> StatementData:
     """Convert statement data (DataFrame, list, dict, bytes) to StatementData.
 
@@ -307,11 +341,10 @@ def _data_to_statement_data(data: Any) -> StatementData:
     elif isinstance(data, pd.DataFrame):
         rows_data = data.to_dict(orient="records")
         _sanitize_row_values(rows_data)
+        rows_data = _sanitize_rows_for_llm_context(rows_data)
         return StatementData(
             rows=rows_data,
-            columns=[
-                ColumnInfo(name=col, type=str(data[col].dtype)) for col in data.columns
-            ],
+            columns=[_column_info(col, str(data[col].dtype)) for col in data.columns],
         )
     elif isinstance(data, bytes):
         try:
@@ -322,11 +355,13 @@ def _data_to_statement_data(data: Any) -> StatementData:
     else:
         rows_data = [{"value": str(data)}]
 
+    rows_data = _coerce_rows_data(rows_data)
     _sanitize_row_values(rows_data)
+    rows_data = _sanitize_rows_for_llm_context(rows_data)
     col_names = list(rows_data[0].keys()) if rows_data else []
     return StatementData(
         rows=rows_data,
-        columns=[ColumnInfo(name=col, type="object") for col in col_names],
+        columns=[_column_info(col, "object") for col in col_names],
     )
 
 
