@@ -451,7 +451,9 @@ class SemanticViewRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -840,7 +842,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
               $ref: '#/components/responses/422'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -900,7 +902,9 @@ class SemanticLayerRestApi(BaseSupersetApi):
               $ref: '#/components/responses/422'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 

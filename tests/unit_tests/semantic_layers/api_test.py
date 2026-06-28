@@ -75,6 +75,22 @@ def test_put_semantic_view(
 
 
 @SEMANTIC_LAYERS_APP
+def test_put_semantic_view_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """PUT /semantic_view/<id> rejects malformed JSON before command dispatch."""
+    response = client.put(
+        "/api/v1/semantic_view/1",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
+@SEMANTIC_LAYERS_APP
 def test_put_semantic_view_not_found(
     client: Any,
     full_api_access: None,
@@ -736,6 +752,31 @@ def test_post_semantic_layer_missing_required_fields(
     )
 
     assert response.status_code == 400
+
+
+@SEMANTIC_LAYERS_APP
+@pytest.mark.parametrize(
+    ("method", "url"),
+    [
+        ("post", "/api/v1/semantic_layer/"),
+        ("put", f"/api/v1/semantic_layer/{uuid_lib.uuid4()}"),
+    ],
+)
+def test_semantic_layer_write_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+    method: str,
+    url: str,
+) -> None:
+    """Semantic layer writes reject malformed JSON before command dispatch."""
+    response = getattr(client, method)(
+        url,
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
 
 
 @SEMANTIC_LAYERS_APP
