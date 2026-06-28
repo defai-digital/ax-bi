@@ -198,7 +198,7 @@ class RLSRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -291,7 +291,9 @@ class RLSRestApi(BaseSupersetModelRestApi):
         """
 
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
