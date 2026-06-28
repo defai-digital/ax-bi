@@ -21,6 +21,7 @@ import functools
 import logging
 import os
 import traceback
+from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Callable, cast
 
@@ -128,6 +129,37 @@ FRONTEND_CONF_KEYS = (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_auth_provider(
+    provider: object,
+    default_icon: str | None = None,
+) -> dict[str, str] | None:
+    if not isinstance(provider, dict):
+        return None
+
+    name = provider.get("name")
+    icon = provider.get("icon", default_icon)
+    if not isinstance(name, str) or not isinstance(icon, str):
+        return None
+
+    return {"name": name, "icon": icon}
+
+
+def _serialize_auth_providers(
+    providers: Iterable[object],
+    default_icon: str = "fa-sign-in",
+) -> list[dict[str, str]]:
+    return [
+        serialized_provider
+        for provider in providers
+        if (
+            serialized_provider := _serialize_auth_provider(
+                provider,
+                default_icon=default_icon,
+            )
+        )
+    ]
 
 
 def get_error_msg() -> str:
@@ -519,25 +551,13 @@ def cached_common_bootstrap_data(  # pylint: disable=unused-argument
 
     frontend_config["AUTH_TYPE"] = auth_type
     if auth_type == AUTH_OAUTH:
-        oauth_providers = []
-        for provider in appbuilder.sm.oauth_providers:
-            oauth_providers.append(
-                {
-                    "name": provider["name"],
-                    "icon": provider["icon"],
-                }
-            )
-        frontend_config["AUTH_PROVIDERS"] = oauth_providers
+        frontend_config["AUTH_PROVIDERS"] = _serialize_auth_providers(
+            appbuilder.sm.oauth_providers
+        )
     elif auth_type == AUTH_SAML:
-        saml_providers = []
-        for provider in appbuilder.sm.saml_providers:
-            saml_providers.append(
-                {
-                    "name": provider["name"],
-                    "icon": provider.get("icon", "fa-sign-in"),
-                }
-            )
-        frontend_config["AUTH_PROVIDERS"] = saml_providers
+        frontend_config["AUTH_PROVIDERS"] = _serialize_auth_providers(
+            appbuilder.sm.saml_providers
+        )
 
     bootstrap_data = {
         "application_root": app.config["APPLICATION_ROOT"],
