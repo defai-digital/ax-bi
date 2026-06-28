@@ -35,3 +35,10 @@ def test_json_list_field_rejects_non_list_json() -> None:
 
     with pytest.raises(ValueError, match="Not a valid JSON list"):
         field.process_formdata(['{"not": "a-list"}'])
+
+
+def test_json_list_field_rejects_malformed_json() -> None:
+    field = JsonListField().bind(Form(), "foo")
+
+    with pytest.raises(ValueError, match="Not a valid JSON list"):
+        field.process_formdata(["[invalid"])
