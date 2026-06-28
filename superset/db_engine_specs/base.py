@@ -2729,7 +2729,8 @@ class BasicParametersMixin:
     ) -> str:
         # TODO (betodealmeida): this method should also build `connect_args`
         # make a copy so that we don't update the original
-        query = parameters.get("query", {}).copy()
+        raw_query = parameters.get("query") or {}
+        query = raw_query.copy() if isinstance(raw_query, dict) else {}
         if parameters.get("encryption"):
             if not cls.encryption_parameters:
                 raise Exception(  # pylint: disable=broad-exception-raised

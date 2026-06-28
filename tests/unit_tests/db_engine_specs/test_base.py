@@ -23,7 +23,7 @@ import json  # noqa: TID251
 import re
 from datetime import timedelta
 from textwrap import dedent
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -33,7 +33,12 @@ from sqlalchemy.dialects import sqlite
 from sqlalchemy.engine.url import make_url, URL
 from sqlalchemy.sql import sqltypes
 
-from superset.db_engine_specs.base import BaseEngineSpec, convert_inspector_columns
+from superset.db_engine_specs.base import (
+    BaseEngineSpec,
+    BasicParametersMixin,
+    BasicParametersType,
+    convert_inspector_columns,
+)
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import OAuth2RedirectError
 from superset.sql.parse import Table
@@ -100,6 +105,26 @@ def test_validate_db_uri(mocker: MockerFixture) -> None:
 
     with pytest.raises(ValueError):  # noqa: PT011
         BaseEngineSpec.validate_database_uri(URL.create("sqlite"))
+
+
+def test_basic_parameters_mixin_ignores_malformed_query_params() -> None:
+    class ExampleEngineSpec(BasicParametersMixin):
+        engine = "example"
+        default_driver = "driver"
+
+    uri = ExampleEngineSpec.build_sqlalchemy_uri(
+        cast(
+            BasicParametersType,
+            {
+                "host": "example.com",
+                "port": 1234,
+                "database": "analytics",
+                "query": "not a query mapping",
+            },
+        )
+    )
+
+    assert uri == "example+driver://example.com:1234/analytics"
 
 
 @pytest.mark.parametrize(
