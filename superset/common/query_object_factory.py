@@ -141,7 +141,8 @@ class QueryObjectFactory:  # pylint: disable=too-few-public-methods
             temporal_flt = [
                 flt
                 for flt in filters or []
-                if flt.get("op") == FilterOperator.TEMPORAL_RANGE
+                if isinstance(flt, dict)
+                and flt.get("op") == FilterOperator.TEMPORAL_RANGE
             ]
             if temporal_flt:
                 # Use the temporal filter as the time range.
