@@ -4169,6 +4169,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         from superset.models.dashboard import Dashboard
 
         for resource in token.get("resources") or []:
+            if not isinstance(resource, dict):
+                continue
             if resource.get("type") != GuestTokenResourceType.DASHBOARD.value:
                 continue
             resource_id = str(resource.get("id"))
