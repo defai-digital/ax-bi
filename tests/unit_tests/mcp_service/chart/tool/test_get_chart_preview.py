@@ -697,6 +697,117 @@ class TestGetChartPreview:
         assert query["filters"] == [{"col": "gender", "op": "==", "val": "boy"}]
 
     @pytest.mark.asyncio
+    async def test_form_data_key_ignores_non_object_cached_form_data_for_saved_chart(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Invalid cached override should leave saved chart params intact."""
+        from contextlib import nullcontext
+
+        get_chart_preview_module = importlib.import_module(
+            "superset.mcp_service.chart.tool.get_chart_preview"
+        )
+        get_form_data_module = importlib.import_module(
+            "superset.commands.explore.form_data.get"
+        )
+
+        class AsyncContext:
+            def __init__(self) -> None:
+                self.warnings: list[str] = []
+
+            async def debug(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            async def error(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            async def info(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            async def report_progress(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            async def warning(self, message: str, *args: Any, **kwargs: Any) -> None:
+                del args, kwargs
+                self.warnings.append(message)
+
+        saved_params = utils_json.dumps(
+            {
+                "viz_type": "table",
+                "groupby": ["gender"],
+                "metrics": ["count"],
+            }
+        )
+        chart = SimpleNamespace(
+            id=42,
+            slice_name="Saved Chart Preview",
+            viz_type="table",
+            datasource_id=1,
+            datasource_type="table",
+            params=saved_params,
+        )
+
+        monkeypatch.setattr(
+            get_chart_preview_module,
+            "find_chart_by_identifier",
+            lambda identifier: chart,
+        )
+        monkeypatch.setattr(
+            get_chart_preview_module,
+            "validate_chart_dataset",
+            lambda *args, **kwargs: SimpleNamespace(
+                is_valid=True,
+                warnings=[],
+                error=None,
+            ),
+        )
+        monkeypatch.setattr(
+            get_chart_preview_module.db.session,
+            "refresh",
+            lambda chart: None,
+        )
+        monkeypatch.setattr(
+            get_chart_preview_module,
+            "mcp_event_log_context",
+            lambda **kwargs: nullcontext(),
+        )
+        monkeypatch.setattr(
+            get_form_data_module.GetFormDataCommand,
+            "__init__",
+            lambda self, cmd_params: None,
+        )
+        monkeypatch.setattr(
+            get_form_data_module.GetFormDataCommand,
+            "run",
+            lambda self: utils_json.dumps([]),
+        )
+        monkeypatch.setattr(
+            get_chart_preview_module.PreviewFormatGenerator,
+            "generate",
+            lambda self: TablePreview(table_data="", row_count=0),
+        )
+        monkeypatch.setattr(
+            get_chart_preview_module,
+            "get_superset_base_url",
+            lambda: "http://localhost",
+        )
+
+        ctx = AsyncContext()
+        result = await get_chart_preview_module._get_chart_preview_internal(
+            GetChartPreviewRequest(
+                identifier=42,
+                form_data_key="cached-key",
+                format="table",
+            ),
+            ctx,
+        )
+
+        assert isinstance(result, ChartPreview)
+        assert chart.params == saved_params
+        assert chart.viz_type == "table"
+        assert any("cached form_data is not a JSON object" in w for w in ctx.warnings)
+
+    @pytest.mark.asyncio
     async def test_preview_dimensions(self):
         """Test preview dimensions in response."""
         # Standard dimensions that may appear in preview responses

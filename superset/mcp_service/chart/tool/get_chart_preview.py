@@ -1304,11 +1304,14 @@ async def _get_chart_preview_internal(  # noqa: C901
                     cmd_params = CommandParameters(key=request.form_data_key)
                     cached_form_data = GetFormDataCommand(cmd_params).run()
                     if cached_form_data:
-                        chart.params = cached_form_data
                         from superset.utils import json as utils_json
 
                         parsed = utils_json.loads(cached_form_data)
-                        if isinstance(parsed, dict) and "viz_type" in parsed:
+                        if not isinstance(parsed, dict):
+                            raise ValueError("cached form_data is not a JSON object")
+
+                        chart.params = cached_form_data
+                        if "viz_type" in parsed:
                             chart.viz_type = parsed["viz_type"]
                         await ctx.info(
                             "Chart params overridden with unsaved state from cache"
