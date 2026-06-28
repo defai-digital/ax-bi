@@ -657,11 +657,15 @@ def generic_find_fk_constraint_name(
 ) -> str | None:
     """Utility to find a foreign-key constraint name in alembic migrations"""
     for fk in insp.get_foreign_keys(table):
+        referred_columns = fk.get("referred_columns")
+        name = fk.get("name")
         if (
-            fk["referred_table"] == referenced
-            and set(fk["referred_columns"]) == columns
+            fk.get("referred_table") == referenced
+            and isinstance(referred_columns, list)
+            and set(referred_columns) == columns
+            and isinstance(name, str)
         ):
-            return fk["name"]
+            return name
 
     return None
 
@@ -673,11 +677,15 @@ def generic_find_fk_constraint_names(  # pylint: disable=invalid-name
     names = set()
 
     for fk in insp.get_foreign_keys(table):
+        referred_columns = fk.get("referred_columns")
+        name = fk.get("name")
         if (
-            fk["referred_table"] == referenced
-            and set(fk["referred_columns"]) == columns
+            fk.get("referred_table") == referenced
+            and isinstance(referred_columns, list)
+            and set(referred_columns) == columns
+            and isinstance(name, str)
         ):
-            names.add(fk["name"])
+            names.add(name)
 
     return names
 
@@ -688,8 +696,14 @@ def generic_find_uq_constraint_name(
     """Utility to find a unique constraint name in alembic migrations"""
 
     for uq in insp.get_unique_constraints(table):
-        if columns == set(uq["column_names"]):
-            return uq["name"]
+        column_names = uq.get("column_names")
+        name = uq.get("name")
+        if (
+            isinstance(column_names, list)
+            and columns == set(column_names)
+            and isinstance(name, str)
+        ):
+            return name
 
     return None
 

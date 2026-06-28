@@ -34,6 +34,8 @@ from superset.utils.core import (
     FilterOperator,
     generic_find_constraint_name,
     generic_find_fk_constraint_name,
+    generic_find_fk_constraint_names,
+    generic_find_uq_constraint_name,
     get_datasource_full_name,
     get_query_source_from_request,
     get_stacktrace,
@@ -611,6 +613,78 @@ def test_generic_find_fk_constraint_none_exist():
     )
 
     assert result is None
+
+
+def test_generic_find_fk_constraint_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+    referenced_table_name = "other_table"
+
+    insp_mock.get_foreign_keys.return_value = [
+        {
+            "name": None,
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+        {
+            "name": "missing_columns",
+            "referred_table": referenced_table_name,
+        },
+        {
+            "name": "valid_constraint",
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+    ]
+
+    result = generic_find_fk_constraint_name(
+        table_name, columns, referenced_table_name, insp_mock
+    )
+
+    assert result == "valid_constraint"
+
+
+def test_generic_find_fk_constraint_names_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+    referenced_table_name = "other_table"
+
+    insp_mock.get_foreign_keys.return_value = [
+        {
+            "name": None,
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+        {
+            "name": "valid_constraint",
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+    ]
+
+    result = generic_find_fk_constraint_names(
+        table_name, columns, referenced_table_name, insp_mock
+    )
+
+    assert result == {"valid_constraint"}
+
+
+def test_generic_find_uq_constraint_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+
+    insp_mock.get_unique_constraints.return_value = [
+        {"name": None, "column_names": list(columns)},
+        {"name": "missing_columns"},
+        {"name": "valid_constraint", "column_names": list(columns)},
+    ]
+
+    result = generic_find_uq_constraint_name(table_name, columns, insp_mock)
+
+    assert result == "valid_constraint"
 
 
 def test_get_datasource_full_name():
