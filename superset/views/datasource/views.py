@@ -24,6 +24,7 @@ from flask_appbuilder.security.decorators import has_access, has_access_api
 from flask_babel import _
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoResultFound, NoSuchTableError
+from werkzeug.exceptions import BadRequest
 
 from superset import db, event_logger, security_manager
 from superset.commands.dataset.exceptions import (
@@ -233,9 +234,13 @@ class Datasource(BaseSupersetView):
     def samples(self) -> FlaskResponse:
         try:
             params = SamplesRequestSchema().load(request.args)
-            payload = SamplesPayloadSchema().load(request.json)
+            try:
+                raw_payload = request.get_json(cache=True) if request.is_json else None
+            except BadRequest as ex:
+                raise ValidationError({"_schema": ["Invalid input type."]}) from ex
+            payload = SamplesPayloadSchema().load(raw_payload)
         except ValidationError as err:
-            return json_error_response(err.messages, status=400)
+            return json_error_response(payload={"message": err.messages}, status=400)
         dashboard_id = None
         if security_manager.is_guest_user():
             if not params["dashboard_id"]:

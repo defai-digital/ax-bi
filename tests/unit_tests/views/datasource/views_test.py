@@ -219,6 +219,24 @@ def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
     assert call_kwargs["table"].schema == "public"
 
 
+def test_samples_rejects_malformed_json_body() -> None:
+    """Malformed samples payloads should return schema validation errors."""
+    from flask import Flask
+
+    raw_samples = _get_view_func("samples")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/samples?datasource_id=1&datasource_type=table",
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        response = raw_samples(_view_self())
+
+    assert response.status_code == 400
+    assert response.get_json() == {"message": {"_schema": ["Invalid input type."]}}
+
+
 # ---------------------------------------------------------------------------
 # Datasource.save — ownership bypass prevention
 # ---------------------------------------------------------------------------
