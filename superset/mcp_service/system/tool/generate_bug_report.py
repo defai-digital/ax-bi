@@ -89,7 +89,7 @@ _KEY_VALUE_SECRET_RE = re.compile(
     r"auth[_-]?token|authorization|bearer|session[_-]?id)"
     r"(\s*[:=]\s*)\"?([^\"\s,;]+)\"?"
 )
-_URL_CREDENTIALS_RE = re.compile(r"(\b\w+://)[^\s/@]+:[^\s/@]+@")
+_URL_CREDENTIALS_RE = re.compile(r"(\b[A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]*:[^\s/@]*@")
 _LONG_HEX_RE = re.compile(r"\b[A-Fa-f0-9]{32,}\b")
 _JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b")
 

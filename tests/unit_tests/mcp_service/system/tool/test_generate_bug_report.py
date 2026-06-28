@@ -147,6 +147,27 @@ def test_sanitize_text_redacts_credentialed_url():
     assert "url_credentials" in redactions
 
 
+def test_sanitize_text_redacts_credentialed_url_with_empty_username():
+    redactions: set[str] = set()
+    out = _sanitize_text(
+        "cache redis://:s3cret@redis.internal:6379/0 failed", redactions
+    )
+    assert ":s3cret@" not in out
+    assert "redis://[REDACTED_CREDENTIALS]@redis.internal" in out
+    assert "url_credentials" in redactions
+
+
+def test_sanitize_text_redacts_credentialed_url_with_extended_scheme():
+    redactions: set[str] = set()
+    out = _sanitize_text(
+        "dsn postgresql+psycopg2://admin:s3cret@db.internal/prod failed",
+        redactions,
+    )
+    assert "admin:s3cret@" not in out
+    assert "postgresql+psycopg2://[REDACTED_CREDENTIALS]@db.internal" in out
+    assert "url_credentials" in redactions
+
+
 def test_sanitize_text_redacts_jwt():
     redactions: set[str] = set()
     jwt = (
