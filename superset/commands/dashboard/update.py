@@ -193,6 +193,19 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
                     config=current_app.config,
                 )
 
+    def _find_reports_containing_tabs(self, tabs: list[str]) -> list[ReportSchedule]:
+        assert self._model is not None
+        seen: set[int] = set()
+        reports: list[ReportSchedule] = []
+        for tab in tabs:
+            for report in ReportScheduleDAO.find_by_extra_metadata(tab):
+                if report.dashboard_id != self._model.id:
+                    continue
+                if report.id not in seen:
+                    seen.add(report.id)
+                    reports.append(report)
+        return reports
+
     def process_tab_diff(self) -> None:
         def find_deleted_tabs() -> list[str]:
             position_json = self._properties.get("position_json", "")
@@ -204,16 +217,6 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
                 ]
                 return deleted_tabs
             return []
-
-        def find_reports_containing_tabs(tabs: list[str]) -> list[ReportSchedule]:
-            seen: set[int] = set()
-            reports: list[ReportSchedule] = []
-            for tab in tabs:
-                for report in ReportScheduleDAO.find_by_extra_metadata(tab):
-                    if report.id not in seen:
-                        seen.add(report.id)
-                        reports.append(report)
-            return reports
 
         def send_deactivated_email_warning(report: ReportSchedule) -> None:
             description = textwrap.dedent(
@@ -230,7 +233,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
                 send_deactivated_email_warning(report)
 
         deleted_tabs = find_deleted_tabs()
-        reports = find_reports_containing_tabs(deleted_tabs)
+        reports = self._find_reports_containing_tabs(deleted_tabs)
         deactivate_reports(reports)
 
     def process_native_filter_diff(self) -> None:

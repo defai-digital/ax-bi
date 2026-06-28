@@ -64,14 +64,15 @@ def test_process_native_filter_diff_ignores_malformed_current_metadata() -> None
     mock_report_dao.find_by_native_filter_id.assert_not_called()
 
 
-def test_process_tab_diff_deduplicates_reports_matching_multiple_tabs() -> None:
-    """A report matching multiple deleted tabs should only be deactivated once."""
+def test_process_tab_diff_deduplicates_current_dashboard_reports() -> None:
+    """Only matching current-dashboard reports should be deactivated once."""
     command = UpdateDashboardCommand(1, {"position_json": json.dumps({})})
     command._model = MagicMock(
         id=1,
         tabs={"all_tabs": ["TAB-A", "TAB-B"]},
     )
-    report = MagicMock(id=7)
+    report = MagicMock(id=7, dashboard_id=1)
+    other_dashboard_report = MagicMock(id=8, dashboard_id=2)
 
     with (
         patch(
@@ -79,7 +80,10 @@ def test_process_tab_diff_deduplicates_reports_matching_multiple_tabs() -> None:
         ) as mock_report_dao,
         patch.object(command, "_send_deactivated_report_email") as mock_send_email,
     ):
-        mock_report_dao.find_by_extra_metadata.side_effect = [[report], [report]]
+        mock_report_dao.find_by_extra_metadata.side_effect = [
+            [report, other_dashboard_report],
+            [report],
+        ]
 
         command.process_tab_diff()
 
