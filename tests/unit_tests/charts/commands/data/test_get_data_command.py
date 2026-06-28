@@ -22,7 +22,38 @@ import pytest
 from superset.commands.chart.data.get_data_command import ChartDataCommand
 from superset.commands.chart.exceptions import ChartDataQueryFailedError
 from superset.common.chart_data import ChartDataResultType
+from superset.common.db_query_status import QueryStatus
 from superset.common.query_context import QueryContext
+
+
+def test_get_full_tolerates_failed_payload_without_filter_metadata() -> None:
+    """
+    Failed dataframe payloads may omit optional applied/rejected filter metadata.
+    """
+    from superset.common.query_actions import _get_full
+
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.get_df_payload.return_value = {
+        "df": Mock(),
+        "status": QueryStatus.FAILED,
+        "error": "Invalid query",
+    }
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_obj = Mock()
+    mock_query_obj.result_type = ChartDataResultType.FULL
+    mock_query_obj.applied_time_extras = {}
+
+    with patch("superset.common.query_actions._get_datasource") as mock_get_datasource:
+        mock_datasource = Mock()
+        mock_datasource.columns = []
+        mock_get_datasource.return_value = mock_datasource
+
+        result = _get_full(mock_query_context, mock_query_obj)
+
+    assert result["status"] == QueryStatus.FAILED
+    assert result["error"] == "Invalid query"
+    assert result["applied_filters"] == []
+    assert result["rejected_filters"] == []
 
 
 def test_query_result_type_allows_validation_error_payload() -> None:

@@ -175,10 +175,8 @@ def _get_full(
         datasource, query_obj.applied_time_extras
     )
 
-    applied_filter_columns = payload.get("applied_filter_columns", [])
-    rejected_filter_columns = payload.get("rejected_filter_columns", [])
-    del payload["applied_filter_columns"]
-    del payload["rejected_filter_columns"]
+    applied_filter_columns = payload.pop("applied_filter_columns", [])
+    rejected_filter_columns = payload.pop("rejected_filter_columns", [])
     payload["applied_filters"] = [
         {"column": get_column_name(col)} for col in applied_filter_columns
     ] + applied_time_columns
