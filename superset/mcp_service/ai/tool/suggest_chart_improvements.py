@@ -52,6 +52,11 @@ _TIME_SERIES_TYPES = {
 }
 
 
+def _get_form_data(chart_config: dict[str, Any]) -> dict[str, Any]:
+    form_data = chart_config.get("form_data")
+    return form_data if isinstance(form_data, dict) else chart_config
+
+
 def _heuristic_analysis(  # noqa: C901
     chart_config: dict[str, Any],
     data_sample: dict[str, Any] | None,
@@ -92,7 +97,7 @@ def _heuristic_analysis(  # noqa: C901
 
     # Check for big_number without trendline
     if viz_type in ("big_number", "big_number_total"):
-        form_data = chart_config.get("form_data", chart_config)
+        form_data = _get_form_data(chart_config)
         if not form_data.get("comparison_type"):
             suggestions.append(
                 {
@@ -110,7 +115,7 @@ def _heuristic_analysis(  # noqa: C901
 
     # Check for missing time grain on time series
     if viz_type in _TIME_SERIES_TYPES:
-        form_data = chart_config.get("form_data", chart_config)
+        form_data = _get_form_data(chart_config)
         if not form_data.get("time_grain_sqla"):
             suggestions.append(
                 {
@@ -125,7 +130,7 @@ def _heuristic_analysis(  # noqa: C901
 
     # General suggestion: color palette
     if viz_type and viz_type not in _TABLE_TYPES:
-        form_data = chart_config.get("form_data", chart_config)
+        form_data = _get_form_data(chart_config)
         if not form_data.get("color_scheme"):
             suggestions.append(
                 {
@@ -327,7 +332,8 @@ async def suggest_chart_improvements(
 
             if chart.params:
                 form_data = sjson.loads(chart.params)
-                chart_config["form_data"] = form_data
+                if isinstance(form_data, dict):
+                    chart_config["form_data"] = form_data
         except Exception:  # noqa: BLE001
             logger.debug("Could not parse chart params", exc_info=True)
 
