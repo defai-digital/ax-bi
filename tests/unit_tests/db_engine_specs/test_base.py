@@ -346,19 +346,29 @@ def test_get_extra_params_invalid_json(extra: object, mocker: MockerFixture) -> 
         BaseEngineSpec.get_extra_params(database)
 
 
-@pytest.mark.parametrize("encrypted_extra", ["not-valid-json", ["not-json"]])
+@pytest.mark.parametrize(
+    "encrypted_extra",
+    [
+        "not-valid-json",
+        ["not-json"],
+        "[]",
+        json.dumps([["username", "attacker"]]),
+    ],
+)
 def test_update_params_from_encrypted_extra_invalid_json(
     encrypted_extra: object,
     mocker: MockerFixture,
 ) -> None:
     """
-    Test that malformed encrypted_extra parse errors are surfaced consistently.
+    Test that malformed encrypted_extra payloads are surfaced consistently.
     """
     database = mocker.MagicMock()
     database.encrypted_extra = encrypted_extra
 
+    params: dict[str, Any] = {}
     with pytest.raises((TypeError, ValueError)):
-        BaseEngineSpec.update_params_from_encrypted_extra(database, {})
+        BaseEngineSpec.update_params_from_encrypted_extra(database, params)
+    assert params == {}
 
 
 def test_mask_encrypted_extra() -> None:

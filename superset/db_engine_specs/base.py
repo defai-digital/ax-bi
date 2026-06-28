@@ -2398,6 +2398,8 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
             return
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
+            if not isinstance(encrypted_extra, dict):
+                raise TypeError("encrypted_extra must decode to a JSON object")
             params.update(encrypted_extra)
         except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
