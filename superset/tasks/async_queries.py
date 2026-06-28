@@ -84,6 +84,14 @@ def _load_user_from_job_metadata(job_metadata: dict[str, Any]) -> User:
     return user
 
 
+def _get_viz_errors(payload: dict[str, Any]) -> list[Any]:
+    """Return a stable async error list from a visualization payload."""
+    errors = payload.get("errors")
+    if isinstance(errors, list) and errors:
+        return errors
+    return ["Visualization returned an error"]
+
+
 @celery_app.task(name="load_chart_data_into_cache", soft_time_limit=query_timeout)
 def load_chart_data_into_cache(
     job_metadata: dict[str, Any],
@@ -154,7 +162,7 @@ def load_explore_json_into_cache(  # pylint: disable=too-many-locals
             # run query & cache results
             payload = viz_obj.get_payload()
             if viz_obj.has_error(payload):
-                raise SupersetVizException(errors=payload["errors"])
+                raise SupersetVizException(errors=_get_viz_errors(payload))
 
             # Cache the original form_data value for async retrieval
             cache_value = {
