@@ -89,6 +89,34 @@ def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _coerce_int(value: Any, default: int | None = None) -> int | None:
+    if not value:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_table_rowcount(queries: Any) -> int | None:
+    if not isinstance(queries, list) or len(queries) <= 1:
+        return None
+
+    rowcount_query = queries[1]
+    if not isinstance(rowcount_query, dict):
+        return None
+
+    data = rowcount_query.get("data")
+    if not isinstance(data, list) or not data:
+        return None
+
+    rowcount_row = data[0]
+    if not isinstance(rowcount_row, dict):
+        return None
+
+    return _coerce_int(rowcount_row.get("rowcount"))
+
+
 class ChartDataRestApi(ChartRestApi):
     include_route_methods = {"get_data", "data", "data_from_cache"}
 
@@ -685,22 +713,16 @@ class ChartDataRestApi(ChartRestApi):
 
         # For table viz, try to get actual row count from query results
         if viz_type == "table" and result.get("queries"):
-            # Check if we have rowcount in the second query result (like frontend does)
-            queries = result.get("queries", [])
-            if len(queries) > 1 and queries[1].get("data"):
-                data = queries[1]["data"]
-                if isinstance(data, list) and len(data) > 0:
-                    rowcount = data[0].get("rowcount")
-                    actual_row_count = int(rowcount) if rowcount else None
+            actual_row_count = _extract_table_rowcount(result.get("queries"))
 
         # Fallback to row_limit if actual count not available
         if actual_row_count is None:
             if form_data and "row_limit" in form_data:
-                row_limit = form_data.get("row_limit", 0)
-                actual_row_count = int(row_limit) if row_limit else 0
+                actual_row_count = _coerce_int(form_data.get("row_limit"), 0)
             elif query_context.form_data and "row_limit" in query_context.form_data:
-                row_limit = query_context.form_data.get("row_limit", 0)
-                actual_row_count = int(row_limit) if row_limit else 0
+                actual_row_count = _coerce_int(
+                    query_context.form_data.get("row_limit"), 0
+                )
 
         # Use streaming if row count meets or exceeds threshold
         return actual_row_count is not None and actual_row_count >= threshold
