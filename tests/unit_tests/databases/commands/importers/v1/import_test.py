@@ -92,6 +92,29 @@ def test_import_database_no_creds(mocker: MockerFixture, session: Session) -> No
     assert database.uuid == "2ff17edc-f3fa-4609-a5ac-b484281225bc"
 
 
+def test_import_database_without_extra(mocker: MockerFixture, session: Session) -> None:
+    """
+    Test importing a database config that omits optional extra metadata.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import database_config
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config)
+    del config["extra"]
+
+    database = import_database(config)
+
+    assert database.extra == "{}"
+
+
 def test_import_database_sqlite_invalid(
     mocker: MockerFixture, session: Session
 ) -> None:

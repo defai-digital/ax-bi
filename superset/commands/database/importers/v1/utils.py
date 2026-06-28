@@ -79,13 +79,18 @@ def import_database(  # noqa: C901
         # Default to True for backward compatibility
         config["allow_file_upload"] = True
 
-    if "schemas_allowed_for_csv_upload" in config.get("extra", {}):
-        config["extra"]["schemas_allowed_for_file_upload"] = config["extra"].pop(
+    extra = config.get("extra")
+    if not isinstance(extra, dict):
+        extra = {}
+    config["extra"] = extra
+
+    if "schemas_allowed_for_csv_upload" in extra:
+        extra["schemas_allowed_for_file_upload"] = extra.pop(
             "schemas_allowed_for_csv_upload"
         )
 
     # TODO (betodealmeida): move this logic to import_from_dict
-    config["extra"] = json.dumps(config["extra"])
+    config["extra"] = json.dumps(extra)
 
     # Convert masked_encrypted_extra → encrypted_extra before importing.
     # For existing DBs, reveal masked sensitive values from current encrypted_extra.
