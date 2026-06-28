@@ -257,6 +257,18 @@ def test_get_form_data_ignores_non_object_json_body() -> None:
     assert slc is None
 
 
+def test_get_form_data_ignores_malformed_json_body() -> None:
+    """Malformed JSON request bodies should not crash form parsing."""
+    with current_app.test_request_context(
+        data="{malformed",
+        content_type="application/json",
+    ):
+        form_data, slc = get_form_data()
+
+    assert form_data == {}
+    assert slc is None
+
+
 def test_get_form_data_ignores_non_object_query_entries() -> None:
     """Query arrays without object entries should not crash form parsing."""
     with current_app.test_request_context(

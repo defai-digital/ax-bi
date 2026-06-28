@@ -1287,6 +1287,17 @@ def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
         "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
     )
 
+    with current_app.test_request_context(
+        data="{malformed",
+        content_type="application/json",
+    ):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+
 
 def test_metric_macro_no_dataset_id_with_context_datasource_id(
     mocker: MockerFixture,

@@ -1173,7 +1173,8 @@ def _get_request_dataset_id_and_form_data() -> tuple[Any | None, dict[str, Any]]
     if not has_request_context():
         return dataset_id, form_data
 
-    if payload := request.get_json(cache=True) if request.is_json else None:
+    payload = request.get_json(cache=True, silent=True) if request.is_json else None
+    if payload:
         if isinstance(payload, dict):
             dataset_id = _get_datasource_id_from_form_data(payload)
             if isinstance(payload.get("form_data"), dict):
