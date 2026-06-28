@@ -72,3 +72,21 @@ def test_build_guest_token_audit_payload_omits_rls_clause_text() -> None:
     # Clause text (which can carry data values) is not recorded.
     assert "secret_value = 'pii'" not in str(payload)
     assert payload["rls_datasets"] == [7]
+
+
+def test_build_guest_token_audit_payload_ignores_malformed_entries() -> None:
+    body = {
+        "resources": ["bad", {"type": "dashboard", "id": "abc"}],
+        "rls": [{"dataset": 7}, "bad"],
+    }
+
+    payload = build_guest_token_audit_payload(
+        issuer_user_id=1,
+        source_ip=None,
+        body=body,
+        token="t",  # noqa: S106
+    )
+
+    assert payload["resources"] == ["dashboard:abc"]
+    assert payload["rls_datasets"] == [7]
+    assert payload["rls_rule_count"] == 1

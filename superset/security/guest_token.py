@@ -26,6 +26,13 @@ from superset.utils.backports import StrEnum
 logger = logging.getLogger(__name__)
 
 
+def _dict_items(value: Any) -> list[dict[str, Any]]:
+    """Return dict entries from a list-like payload field."""
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
 def build_guest_token_audit_payload(
     issuer_user_id: Optional[int],
     source_ip: Optional[str],
@@ -38,8 +45,8 @@ def build_guest_token_audit_payload(
     the issued token (never the raw token) so a later investigation into a
     misissued or over-scoped token can be scoped from the audit log.
     """
-    resources = body.get("resources") or []
-    rls = body.get("rls") or []
+    resources = _dict_items(body.get("resources"))
+    rls = _dict_items(body.get("rls"))
     return {
         "issuer_user_id": issuer_user_id,
         "source_ip": source_ip,
