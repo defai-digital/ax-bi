@@ -171,7 +171,7 @@ class ImportExamplesCommand(ImportModelsCommand):
                 config["database_id"] = database_ids[config["database_uuid"]]
 
                 # set schema
-                if config["schema"] is None:
+                if config.get("schema") is None:
                     config["schema"] = get_example_default_schema()
 
                 # transpile virtual dataset SQL to target database dialect

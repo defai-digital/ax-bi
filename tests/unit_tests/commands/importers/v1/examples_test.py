@@ -348,6 +348,63 @@ def test_import_passes_ignore_permissions_to_all_importers(
     assert mock_import_dashboard.call_args[1].get("ignore_permissions") is True
 
 
+@patch(
+    "superset.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships"
+)
+@patch("superset.commands.importers.v1.examples.transpile_virtual_dataset_sql")
+@patch("superset.commands.importers.v1.examples.import_dataset")
+@patch("superset.commands.importers.v1.examples.import_database")
+@patch(
+    "superset.commands.importers.v1.examples.get_example_default_schema",
+    return_value="public",
+)
+def test_import_defaults_missing_dataset_schema(
+    mock_get_default_schema,
+    mock_import_db,
+    mock_import_dataset,
+    mock_transpile,
+    mock_safe_insert,
+):
+    """Dataset configs without a schema key use the example default schema."""
+    from superset.commands.importers.v1.examples import ImportExamplesCommand
+
+    db_uuid = "a2dc77af-e654-49bb-b321-40f6b559a1ee"
+    dataset_uuid = "14f48794-ebfa-4f60-a26a-582c49132f1b"
+
+    mock_db_obj = MagicMock()
+    mock_db_obj.uuid = db_uuid
+    mock_db_obj.id = 1
+    mock_import_db.return_value = mock_db_obj
+
+    mock_dataset_obj = MagicMock()
+    mock_dataset_obj.uuid = dataset_uuid
+    mock_dataset_obj.id = 10
+    mock_dataset_obj.table_name = "test_table"
+    mock_import_dataset.return_value = mock_dataset_obj
+
+    configs = {
+        "databases/examples.yaml": {
+            "uuid": db_uuid,
+            "database_name": "examples",
+            "sqlalchemy_uri": "sqlite:///test.db",
+        },
+        "datasets/examples/test.yaml": {
+            "uuid": dataset_uuid,
+            "table_name": "test_table",
+            "database_uuid": db_uuid,
+            "sql": None,
+        },
+    }
+
+    ImportExamplesCommand._import(configs)
+
+    mock_get_default_schema.assert_called_once()
+    mock_transpile.assert_called_once_with(configs["datasets/examples/test.yaml"], 1)
+    mock_import_dataset.assert_called_once()
+    assert mock_import_dataset.call_args.args[0]["schema"] == "public"
+    mock_safe_insert.assert_called_once_with([])
+
+
 def test_normalize_dataset_schema_converts_main_to_null():
     """SQLite 'main' schema must be normalized to null in YAML content.
 
