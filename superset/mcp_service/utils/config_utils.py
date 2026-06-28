@@ -294,3 +294,9 @@ def get_superset_row_limit(config: Mapping[str, Any] | None = None) -> Any:
     """Read Superset's configured row limit behind the MCP config boundary."""
     source = config if config is not None else current_app.config
     return source["ROW_LIMIT"]
+
+
+def get_upload_max_file_size_bytes(config: Mapping[str, Any] | None = None) -> Any:
+    """Read Superset's upload file-size limit behind the MCP config boundary."""
+    source = config if config is not None else current_app.config
+    return source.get("UPLOAD_MAX_FILE_SIZE_BYTES")

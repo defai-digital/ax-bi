@@ -36,6 +36,7 @@ import uuid
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
 from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 
 from superset import db, is_feature_enabled
 from superset.commands.database.uploaders.base import (
@@ -60,6 +61,7 @@ from superset.mcp_service.dataset.schemas import (
     serialize_dataset_object,
     UploadFileRequest,
 )
+from superset.mcp_service.utils.config_utils import get_upload_max_file_size_bytes
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
@@ -76,6 +78,43 @@ FILE_TYPE_MAP: dict[str, UploadFileType] = {
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
 MAX_TABLE_NAME_LENGTH = 250
+
+
+def _safe_upload_filename(filename: str) -> str:
+    """Return a path-free filename for downstream upload readers."""
+    ext = os.path.splitext(filename)[1].lower()
+    safe_filename = secure_filename(filename)
+    if ext in FILE_TYPE_MAP:
+        stem = os.path.splitext(safe_filename)[0].strip("._")
+        if not stem or stem.lower() == ext.lstrip("."):
+            stem = "upload"
+        return f"{stem}{ext}"
+    return safe_filename or "upload"
+
+
+def _decoded_base64_size(file_content: str) -> int | None:
+    """Return decoded byte length for padded base64, or None if malformed."""
+    stripped = file_content.strip()
+    if not stripped or len(stripped) % 4:
+        return None
+    padding = len(stripped) - len(stripped.rstrip("="))
+    if padding > 2:
+        return None
+    return (len(stripped) // 4) * 3 - padding
+
+
+def _reject_oversized_base64(file_content: str) -> DatasetError | None:
+    """Reject payloads that exceed the configured decoded upload limit."""
+    max_size = get_upload_max_file_size_bytes()
+    if max_size is None:
+        return None
+    decoded_size = _decoded_base64_size(file_content)
+    if decoded_size is not None and decoded_size > max_size:
+        return DatasetError.create(
+            error="file_content exceeds the configured upload size limit",
+            error_type="FileTooLargeError",
+        )
+    return None
 
 
 def _build_file_storage(file_bytes: bytes, filename: str) -> FileStorage:
@@ -124,6 +163,9 @@ def upload_single_file(  # noqa: C901
             error_type="UnsupportedFileTypeError",
         )
 
+    if oversized_error := _reject_oversized_base64(file_content):
+        return oversized_error
+
     try:
         file_bytes = base64.b64decode(file_content, validate=True)
     except Exception:
@@ -148,7 +190,8 @@ def upload_single_file(  # noqa: C901
         derived_name = _sanitize_table_name(stem)
 
     try:
-        file_storage = _build_file_storage(file_bytes, filename)
+        safe_filename = _safe_upload_filename(filename)
+        file_storage = _build_file_storage(file_bytes, safe_filename)
         local_db = get_or_create_local_db()
 
         reader: BaseDataReader

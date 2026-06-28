@@ -325,6 +325,27 @@ class TestUploadFile:
 
         assert result is not None
 
+    @with_feature_flags(ENABLE_LOCAL_FILE_UPLOAD=True)
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    def test_oversized_base64_rejected_before_decode(
+        self, mock_get_local_db, mock_upload_cmd, app_context, monkeypatch
+    ) -> None:
+        """MCP upload should enforce upload size before decoding base64."""
+        from flask import current_app
+
+        monkeypatch.setitem(current_app.config, "UPLOAD_MAX_FILE_SIZE_BYTES", 4)
+
+        result = upload_file_module.upload_single_file(
+            file_content=base64.b64encode(b"12345").decode(),
+            filename="data.csv",
+        )
+
+        assert isinstance(result, DatasetError)
+        assert result.error_type == "FileTooLargeError"
+        mock_get_local_db.assert_not_called()
+        mock_upload_cmd.assert_not_called()
+
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -388,6 +409,42 @@ class TestUploadFile:
         # Verify UploadCommand was called with the custom table name
         call_args = mock_upload_cmd.call_args
         assert call_args[0][1] == "my_custom_table"
+
+    @patch.object(upload_file_module, "serialize_dataset_object")
+    @patch.object(upload_file_module.db, "session")
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
+    async def test_path_like_filename_is_sanitized_for_filestorage(
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
+        mcp_server,
+    ) -> None:
+        """Path-like filenames must not reach downstream upload readers."""
+        local_db = _make_mock_local_db()
+        mock_get_local_db.return_value = local_db
+        mock_cmd_instance = MagicMock()
+        mock_upload_cmd.return_value = mock_cmd_instance
+        mock_dataset = _make_mock_dataset(table_name="upload_sales_abc123")
+        _set_query_result(mock_session, mock_dataset)
+        mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
+
+        async with Client(mcp_server) as client:
+            await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": "../../sales.csv",
+                    }
+                },
+            )
+
+        file_storage = mock_upload_cmd.call_args[0][2]
+        assert file_storage.filename == "sales.csv"
 
     @patch.object(upload_file_module, "serialize_dataset_object")
     @patch.object(upload_file_module.db, "session")
