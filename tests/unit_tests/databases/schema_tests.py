@@ -566,6 +566,27 @@ def test_import_database_extra_schema_rejects_non_object_extra() -> None:
     assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
 
 
+def test_import_database_schema_rejects_non_object_payload() -> None:
+    """Non-object database imports should fail validation without crashing."""
+    from superset.databases.schemas import ImportV1DatabaseSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseSchema().load("allow_file_upload")
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_import_database_schema_renames_legacy_upload_field() -> None:
+    """Legacy import payloads should still map allow_file_upload to allow_csv_upload."""
+    from superset.databases.schemas import ImportV1DatabaseSchema
+
+    payload = {"allow_file_upload": True}
+
+    assert ImportV1DatabaseSchema().fix_allow_csv_upload(payload) == {
+        "allow_csv_upload": True
+    }
+
+
 def test_ssh_tunnel_server_address_rejects_non_hostnames() -> None:
     """server_address must look like a hostname/IP, not a URL or arbitrary text."""
     from superset.databases.schemas import DatabaseSSHTunnel

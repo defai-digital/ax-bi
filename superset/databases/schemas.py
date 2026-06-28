@@ -922,12 +922,13 @@ class ImportV1DatabaseExtraSchema(Schema):
 
 class ImportV1DatabaseSchema(Schema):
     @pre_load
-    def fix_allow_csv_upload(
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+    def fix_allow_csv_upload(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for ``allow_csv_upload`` .
         """
+        if not isinstance(data, dict):
+            return data
+
         # Fix for https://github.com/apache/superset/pull/16756, which temporarily
         # changed the V1 schema. We need to support exports made after that PR and
         # before this PR.
