@@ -29,6 +29,7 @@ from superset.utils.screenshots import (
     DashboardScreenshot,
     ScreenshotCachePayload,
     ScreenshotCachePayloadType,
+    StatusValues,
 )
 
 BASE_SCREENSHOT_PATH = "superset.utils.screenshots.BaseScreenshot"
@@ -98,6 +99,52 @@ def test_get_from_cache_key(mocker: MockerFixture, screenshot_obj):
     cache_payload = screenshot_obj.get_from_cache_key("key")
     assert isinstance(cache_payload, ScreenshotCachePayload)
     assert cache_payload._image == fake_bytes  # pylint: disable=protected-access
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"unexpected": "value"},
+        {"status": "Unknown", "timestamp": "2024-01-01T00:00:00", "image": None},
+        {"status": "Updated", "timestamp": "2024-01-01T00:00:00", "image": "%%%"},
+        {"status": "Pending", "timestamp": object(), "image": None},
+    ],
+)
+def test_get_from_cache_key_tolerates_malformed_dict_payloads(
+    payload: dict[str, object],
+    screenshot_obj: BaseScreenshot,
+):
+    """Malformed serialized cache entries should behave like pending payloads."""
+    BaseScreenshot.cache = MockCache()
+    BaseScreenshot.cache.set("key", payload)
+
+    cache_payload = screenshot_obj.get_from_cache_key("key")
+
+    assert isinstance(cache_payload, ScreenshotCachePayload)
+    assert cache_payload._image is None  # pylint: disable=protected-access
+    assert cache_payload.should_trigger_task(force=False) is True
+
+
+def test_get_from_cache_key_preserves_valid_dict_payload(
+    screenshot_obj: BaseScreenshot,
+):
+    """Serialized cache entries should still restore valid payload fields."""
+    payload = ScreenshotCachePayload(
+        image=b"fake_screenshot_data",
+        status=StatusValues.UPDATED,
+        timestamp="2024-01-01T00:00:00",
+    )
+    BaseScreenshot.cache = MockCache()
+    BaseScreenshot.cache.set("key", payload.to_dict())
+
+    cache_payload = screenshot_obj.get_from_cache_key("key")
+
+    assert isinstance(cache_payload, ScreenshotCachePayload)
+    assert (
+        cache_payload._image == b"fake_screenshot_data"  # pylint: disable=protected-access
+    )
+    assert cache_payload.get_status() == StatusValues.UPDATED.value
+    assert cache_payload.get_timestamp() == "2024-01-01T00:00:00"
 
 
 class TestComputeAndCache:

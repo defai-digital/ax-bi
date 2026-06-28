@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import logging
 from datetime import datetime
 from enum import Enum
@@ -94,10 +95,28 @@ class ScreenshotCachePayload:
 
     @classmethod
     def from_dict(cls, payload: ScreenshotCachePayloadType) -> ScreenshotCachePayload:
+        image = payload.get("image")
+        if isinstance(image, str) and image:
+            try:
+                image_bytes = base64.b64decode(image, validate=True)
+            except (binascii.Error, ValueError):
+                image_bytes = None
+        else:
+            image_bytes = None
+
+        try:
+            status = StatusValues(payload.get("status", StatusValues.PENDING.value))
+        except (TypeError, ValueError):
+            status = StatusValues.PENDING
+
+        timestamp = payload.get("timestamp") or ""
+        if not isinstance(timestamp, str):
+            timestamp = ""
+
         return cls(
-            image=base64.b64decode(payload["image"]) if payload["image"] else None,
-            status=StatusValues(payload["status"]),
-            timestamp=payload["timestamp"],
+            image=image_bytes,
+            status=status,
+            timestamp=timestamp,
         )
 
     def to_dict(self) -> ScreenshotCachePayloadType:
