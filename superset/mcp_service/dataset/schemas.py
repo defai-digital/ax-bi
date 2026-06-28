@@ -22,7 +22,7 @@ Pydantic schemas for dataset-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, cast, Dict, List, Literal
 
 from pydantic import (
     BaseModel,
@@ -801,6 +801,87 @@ class QueryDatasetResponse(BaseModel):
     warnings: List[str] = Field(
         default_factory=list, description="Any warnings encountered during execution"
     )
+
+    @field_validator("dataset_name")
+    @classmethod
+    def sanitize_dataset_name(cls, v: str) -> str:
+        """Escape delimiter tokens in dataset names before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("columns")
+    @classmethod
+    def sanitize_columns(cls, v: List[DataColumn]) -> List[DataColumn]:
+        """Escape column names and wrap sample values in query responses."""
+        sanitized_columns: list[DataColumn] = []
+        for index, column in enumerate(v):
+            payload = column.model_dump(mode="python")
+            payload["name"] = escape_llm_context_delimiters(payload.get("name"))
+            payload["display_name"] = escape_llm_context_delimiters(
+                payload.get("display_name")
+            )
+            payload["sample_values"] = sanitize_for_llm_context(
+                payload.get("sample_values", []),
+                field_path=("columns", str(index), "sample_values"),
+                excluded_field_names=frozenset(),
+            )
+            payload["statistics"] = sanitize_for_llm_context(
+                payload.get("statistics"),
+                field_path=("columns", str(index), "statistics"),
+                excluded_field_names=frozenset(),
+            )
+            sanitized_columns.append(DataColumn.model_validate(payload))
+        return sanitized_columns
+
+    @field_validator("data")
+    @classmethod
+    def sanitize_data(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Wrap query result row strings and escape delimiter tokens in row keys."""
+        return cast(
+            List[Dict[str, Any]],
+            sanitize_for_llm_context(
+                v,
+                field_path=("data",),
+                excluded_field_names=frozenset(),
+            ),
+        )
+
+    @field_validator("summary")
+    @classmethod
+    def sanitize_summary(cls, v: str) -> str:
+        """Wrap query summaries before LLM exposure."""
+        return sanitize_for_llm_context(v, field_path=("summary",))
+
+    @field_validator("applied_filters")
+    @classmethod
+    def sanitize_applied_filters(
+        cls,
+        v: List[QueryDatasetFilter],
+    ) -> List[QueryDatasetFilter]:
+        """Wrap echoed filter values without changing query execution inputs."""
+        sanitized_filters: list[QueryDatasetFilter] = []
+        for index, filter_ in enumerate(v):
+            payload = filter_.model_dump(mode="python")
+            payload["col"] = escape_llm_context_delimiters(payload.get("col"))
+            payload["val"] = sanitize_for_llm_context(
+                payload.get("val"),
+                field_path=("applied_filters", str(index), "val"),
+                excluded_field_names=frozenset(),
+            )
+            sanitized_filters.append(QueryDatasetFilter.model_validate(payload))
+        return sanitized_filters
+
+    @field_validator("warnings")
+    @classmethod
+    def sanitize_warnings(cls, v: List[str]) -> List[str]:
+        """Wrap warning strings before LLM exposure."""
+        return cast(
+            List[str],
+            sanitize_for_llm_context(
+                v,
+                field_path=("warnings",),
+                excluded_field_names=frozenset(),
+            ),
+        )
 
 
 def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
