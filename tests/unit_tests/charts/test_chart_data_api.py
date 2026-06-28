@@ -52,6 +52,21 @@ def test_load_json_object_rejects_malformed_json() -> None:
     assert _load_json_object("{malformed") is None
 
 
+def test_chart_data_post_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Malformed JSON request bodies should return the API validation response."""
+    response = client.post(
+        "/api/v1/chart/data",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": "Request is not JSON"}
+
+
 def test_map_form_data_datasource_to_dataset_id_extracts_context() -> None:
     """Chart data log context extracts dashboard, dataset, and chart IDs."""
     from superset.charts.data.api import ChartDataRestApi

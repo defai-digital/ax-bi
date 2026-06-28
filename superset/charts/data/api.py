@@ -344,7 +344,7 @@ class ChartDataRestApi(ChartRestApi):
         """
         json_body = None
         if request.is_json:
-            json_body = request.json
+            json_body = request.get_json(cache=True, silent=True)
         elif request.form.get("form_data"):
             # CSV export submits regular form data
             json_body = _load_json_object(request.form["form_data"])
