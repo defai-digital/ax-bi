@@ -110,6 +110,17 @@ def test_deserialize_results_payload_rejects_malformed_msgpack_payloads(
         _deserialize_results_payload(serialized_payload, query, use_msgpack=True)
 
 
+@pytest.mark.parametrize("payload", ["[]", "null", '"scalar"', "{"])
+def test_deserialize_results_payload_rejects_malformed_json_payloads(
+    payload: str,
+) -> None:
+    """Malformed JSON result payloads should raise SerializationError."""
+    query = MagicMock()
+
+    with pytest.raises(SerializationError):
+        _deserialize_results_payload(payload, query, use_msgpack=False)
+
+
 def test_bootstrap_user_data_allows_missing_created_on() -> None:
     """Partially populated users should still serialize for bootstrap data."""
     user = MagicMock()

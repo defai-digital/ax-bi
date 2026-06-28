@@ -345,6 +345,19 @@ def get_datasource_info(
     return datasource_id, datasource_type
 
 
+def _deserialize_json_results_payload(payload: Union[bytes, str]) -> dict[str, Any]:
+    with stats_timing("sqllab.query.results_backend_json_deserialize", stats_logger):
+        try:
+            ds_payload = json.loads(payload)
+        except (TypeError, ValueError) as ex:
+            raise SerializationError("Unable to deserialize payload") from ex
+
+    if not isinstance(ds_payload, dict):
+        raise SerializationError("Unexpected results payload")
+
+    return ds_payload
+
+
 def apply_display_max_row_limit(
     sql_results: dict[str, Any], rows: Optional[int] = None
 ) -> dict[str, Any]:
@@ -651,8 +664,7 @@ def _deserialize_results_payload(
 
         return ds_payload
 
-    with stats_timing("sqllab.query.results_backend_json_deserialize", stats_logger):
-        return json.loads(payload)
+    return _deserialize_json_results_payload(payload)
 
 
 def get_cta_schema_name(
