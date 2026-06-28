@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime, timedelta, timezone
+from typing import Any, cast
 from unittest import mock
 from unittest.mock import ANY, Mock
 
@@ -62,6 +63,18 @@ def test_parse_event_merges_json_object_payload():
 def test_parse_event_rejects_non_object_payload():
     with raises(AsyncQueryJobException):
         parse_event(("1-0", {"data": "[]"}))
+
+
+@mark.parametrize(
+    "event_data",
+    [
+        ("1-0", {}),
+        ("1-0", []),
+    ],
+)
+def test_parse_event_rejects_malformed_event_envelopes(event_data: Any):
+    with raises(AsyncQueryJobException):
+        parse_event(cast(tuple[str, dict[str, Any]], event_data))
 
 
 def test_parse_channel_id_from_request(async_query_manager):
