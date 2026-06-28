@@ -260,6 +260,38 @@ def test_get_filters_remove_not_present() -> None:
     assert cache.removed_filters == []
 
 
+def test_get_filters_ignores_malformed_adhoc_filter_entries() -> None:
+    """
+    Malformed adhoc filter entries are ignored when looking up Jinja filters.
+    """
+    with current_app.test_request_context(
+        data={
+            "form_data": json.dumps(
+                {
+                    "adhoc_filters": [
+                        "not a filter",
+                        None,
+                        {
+                            "clause": "WHERE",
+                            "comparator": "foo",
+                            "expressionType": "SIMPLE",
+                            "operator": "in",
+                            "subject": "name",
+                        },
+                    ],
+                }
+            )
+        }
+    ):
+        cache = ExtraCache()
+
+        assert cache.filter_values("name") == ["foo"]
+        assert cache.get_filters("name") == [
+            {"op": "IN", "col": "name", "val": ["foo"]}
+        ]
+        assert cache.applied_filters == ["name"]
+
+
 def test_get_filters_query_context_filters() -> None:
     """
     Test that ``get_filters`` falls back to native query_context_filters when no
@@ -274,6 +306,22 @@ def test_get_filters_query_context_filters() -> None:
     ]
     assert cache.applied_filters == ["name"]
     assert cache.removed_filters == []
+
+
+def test_get_filters_ignores_malformed_query_context_filter_entries() -> None:
+    """
+    Malformed native filter entries are ignored during query-context fallback.
+    """
+    cache = ExtraCache(
+        query_context_filters=[
+            "not a filter",
+            None,
+            {"col": "name", "op": "IN", "val": "foo"},
+        ]
+    )
+
+    assert cache.get_filters("name") == [{"op": "IN", "col": "name", "val": ["foo"]}]
+    assert cache.applied_filters == ["name"]
 
 
 def test_get_filters_query_context_filters_remove_filter() -> None:
@@ -1829,6 +1877,33 @@ def test_get_time_filter(
         assert cache.get_time_filter(*args, **kwargs) == time_filter, description
         assert cache.removed_filters == removed_filters
         assert cache.applied_filters == applied_filters
+
+
+def test_get_time_filter_ignores_malformed_adhoc_filter_entries() -> None:
+    """
+    Malformed adhoc filter entries are ignored when resolving temporal filters.
+    """
+    with current_app.test_request_context(
+        data={
+            "form_data": json.dumps(
+                {
+                    "adhoc_filters": [
+                        "not a filter",
+                        None,
+                        {
+                            "operator": "TEMPORAL_RANGE",
+                            "subject": "dttm",
+                            "comparator": "Last week",
+                        },
+                    ],
+                }
+            )
+        }
+    ):
+        cache = ExtraCache()
+
+        assert cache.get_time_filter("dttm").time_range == "Last week"
+        assert cache.applied_filters == ["dttm"]
 
 
 def test_jinja2_template_syntax_error_handling(mocker: MockerFixture) -> None:

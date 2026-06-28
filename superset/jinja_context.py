@@ -49,7 +49,6 @@ from superset.sql.parse import Table
 from superset.superset_typing import Column, QueryObjectDict
 from superset.utils import json
 from superset.utils.core import (
-    AdhocFilterClause,
     convert_legacy_filters_into_adhoc,
     FilterOperator,
     get_user_email,
@@ -459,6 +458,8 @@ class ExtraCache:
         filters: list[Filter] = []
 
         for flt in form_data.get("adhoc_filters", []):
+            if not isinstance(flt, dict):
+                continue
             val: Union[Any, list[Any]] = flt.get("comparator")
             op: str = flt["operator"].upper() if flt.get("operator") else None  # type: ignore
             if (
@@ -508,6 +509,8 @@ class ExtraCache:
     ) -> list[Filter]:
         filters: list[Filter] = []
         for flt in self.query_context_filters:
+            if not isinstance(flt, dict):
+                continue
             col = flt.get("col")
             val = flt.get("val")
             op = (flt.get("op") or FilterOperator.IN).upper()
@@ -568,12 +571,13 @@ class ExtraCache:
         merge_extra_filters(form_data)
         time_range = form_data.get("time_range")
         if column:
-            flt: AdhocFilterClause | None = next(
+            flt: dict[str, Any] | None = next(
                 (
                     flt
                     for flt in form_data.get("adhoc_filters", [])
-                    if flt["operator"] == FilterOperator.TEMPORAL_RANGE
-                    and flt["subject"] == column
+                    if isinstance(flt, dict)
+                    and flt.get("operator") == FilterOperator.TEMPORAL_RANGE
+                    and flt.get("subject") == column
                 ),
                 None,
             )
@@ -584,7 +588,7 @@ class ExtraCache:
                 if column not in self.applied_filters:
                     self.applied_filters.append(column)
 
-                time_range = cast(str, flt["comparator"])
+                time_range = cast(str, flt.get("comparator"))
                 if not target_type and self.table:
                     target_type = self.table.columns_types.get(column)
 
