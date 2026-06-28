@@ -279,7 +279,9 @@ class QueryRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            body = self.stop_query_schema.load(request.json)
+            body = self.stop_query_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             QueryDAO.stop_query(body["client_id"])
             return self.response(200, result="OK")
         except ValidationError as ex:

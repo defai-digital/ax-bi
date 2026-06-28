@@ -38,3 +38,25 @@ def test_stop_query_rejects_invalid_payload(payload: dict[str, object]) -> None:
     assert result == ("bad request", {})
     api.response_400.assert_called_once()
     stop_query_dao.assert_not_called()
+
+
+def test_stop_query_rejects_malformed_json_body() -> None:
+    """Query cancellation should reject parser failures before DAO dispatch."""
+    app = Flask(__name__)
+    api = QueryRestApi.__new__(QueryRestApi)
+    api.response_400 = MagicMock(return_value=("bad request", {}))
+    stop_query = inspect.unwrap(QueryRestApi.stop_query)
+
+    with app.test_request_context(
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        with patch("superset.queries.api.QueryDAO.stop_query") as stop_query_dao:
+            result = stop_query(api)
+
+    assert result == ("bad request", {})
+    api.response_400.assert_called_once_with(
+        message={"_schema": ["Invalid input type."]}
+    )
+    stop_query_dao.assert_not_called()
