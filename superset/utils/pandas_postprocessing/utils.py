@@ -149,6 +149,13 @@ def _get_aggregate_funcs(
     """
     agg_funcs: dict[str, NamedAgg] = {}
     for name, agg_obj in aggregates.items():
+        if not isinstance(agg_obj, dict):
+            raise InvalidPostProcessingError(
+                _(
+                    "Invalid aggregate config for: %(name)s",
+                    name=name,
+                )
+            )
         column = agg_obj.get("column", name)
         if column not in df:
             raise InvalidPostProcessingError(

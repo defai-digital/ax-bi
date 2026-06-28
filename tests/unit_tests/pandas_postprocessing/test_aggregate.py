@@ -14,6 +14,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import pytest
+
+from superset.exceptions import InvalidPostProcessingError
 from superset.utils.pandas_postprocessing import aggregate
 from tests.unit_tests.fixtures.dataframes import categories_df
 from tests.unit_tests.pandas_postprocessing.utils import series_to_list
@@ -38,3 +41,12 @@ def test_aggregate():
     assert series_to_list(df["asc sum"])[0] == 5050
     assert series_to_list(df["asc q2"])[0] == 75
     assert series_to_list(df["desc q1"])[0] == 25
+
+
+def test_aggregate_rejects_non_object_aggregate_config():
+    with pytest.raises(InvalidPostProcessingError):
+        aggregate(
+            df=categories_df,
+            groupby=["constant"],
+            aggregates={"asc sum": "sum"},
+        )
