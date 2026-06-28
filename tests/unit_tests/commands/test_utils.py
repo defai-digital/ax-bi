@@ -207,6 +207,24 @@ def test_compute_owner_list_no_owners_handle_none(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
 
 
+@pytest.mark.parametrize("params", [None, [], "not an object"])
+def test_update_chart_config_dataset_normalizes_malformed_params(
+    params: Any,
+) -> None:
+    """
+    Test that malformed chart params do not break dataset remap.
+    """
+    config: dict[str, Any] = {
+        "query_context": None,
+    }
+    if params is not None:
+        config["params"] = params
+
+    update_chart_config_dataset(config, DATASET_INFO)
+
+    assert config["params"] == {"datasource": "2__table"}
+
+
 @pytest.mark.parametrize(
     "query_context",
     [

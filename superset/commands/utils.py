@@ -205,6 +205,8 @@ def update_chart_config_dataset(
     config.update(dataset_info)
 
     dataset_uid = f"{dataset_info['datasource_id']}__{dataset_info['datasource_type']}"
+    if not isinstance(config.get("params"), dict):
+        config["params"] = {}
     config["params"].update({"datasource": dataset_uid})
 
     if "query_context" in config and config["query_context"] is not None:
