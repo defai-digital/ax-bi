@@ -77,8 +77,14 @@ class _FakeHeaders:
 class _FakeResponse:
     status = 200
 
-    def __init__(self, cookies: list[str]) -> None:
+    def __init__(
+        self,
+        cookies: list[str] | None = None,
+        body: bytes = b'{"result": "csrf-token"}',
+    ) -> None:
+        cookies = cookies or []
         self.headers = _FakeHeaders(cookies)
+        self._body = body
 
     def __enter__(self) -> "_FakeResponse":
         return self
@@ -87,7 +93,7 @@ class _FakeResponse:
         return None
 
     def read(self) -> bytes:
-        return b'{"result": "csrf-token"}'
+        return self._body
 
 
 @pytest.mark.parametrize(
@@ -625,6 +631,30 @@ def test_fetch_csrf_token_skips_malformed_cookie_headers() -> None:
         "X-CSRF-Token": "csrf-token",
         "Cookie": "session=session-value",
     }
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"{malformed",
+        b"[]",
+        b'{"result": null}',
+        b'{"result": 1}',
+        b'{"token": "csrf-token"}',
+    ],
+)
+def test_fetch_csrf_token_ignores_malformed_response_body(body: bytes) -> None:
+    """Malformed CSRF responses should return empty headers."""
+    with (
+        patch("superset.tasks.utils.get_url_path", return_value="http://example/csrf"),
+        patch(
+            "superset.tasks.utils.request.urlopen",
+            return_value=_FakeResponse(body=body),
+        ),
+    ):
+        result = fetch_csrf_token({"Cookie": "old=session"})
+
+    assert result == {}
 
 
 class TestGetCurrentUser:
