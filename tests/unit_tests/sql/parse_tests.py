@@ -18,10 +18,11 @@
 
 
 import logging
+from unittest.mock import patch
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlglot import Dialects, exp, parse_one
+from sqlglot import Dialects, errors, exp, parse_one
 
 from superset.exceptions import QueryClauseValidationException, SupersetParseError
 from superset.jinja_context import JinjaTemplateProcessor
@@ -3696,6 +3697,18 @@ def test_backtick_invalid_sql_still_fails() -> None:
     sql = "SELECT * FROM `table` WHERE"
     with pytest.raises(SupersetParseError):
         SQLScript(sql, "base")
+
+
+def test_parse_error_with_incomplete_location_metadata() -> None:
+    """Incomplete sqlglot error metadata should still raise SupersetParseError."""
+    with patch(
+        "superset.sql.parse.sqlglot.parse",
+        side_effect=errors.ParseError(
+            "missing location", errors=[{"description": "bad SQL"}]
+        ),
+    ):
+        with pytest.raises(SupersetParseError):
+            SQLScript("SELECT", "base")
 
 
 def test_backtick_fallback_logs_warning(caplog: pytest.LogCaptureFixture) -> None:

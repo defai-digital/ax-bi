@@ -738,15 +738,14 @@ class SQLStatement(BaseSQLStatement[exp.Expression]):
                 else:
                     return statements
 
-            kwargs = (
-                {
-                    "highlight": ex.errors[0]["highlight"],
-                    "line": ex.errors[0]["line"],
-                    "column": ex.errors[0]["col"],
+            kwargs = {}
+            if ex.errors and isinstance(ex.errors[0], dict):
+                error = ex.errors[0]
+                kwargs = {
+                    "highlight": error.get("highlight"),
+                    "line": error.get("line"),
+                    "column": error.get("col"),
                 }
-                if ex.errors
-                else {}
-            )
             raise SupersetParseError(script, engine, **kwargs) from ex
         except sqlglot.errors.SqlglotError as ex:
             raise SupersetParseError(
