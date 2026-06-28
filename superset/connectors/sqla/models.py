@@ -1826,13 +1826,19 @@ class SqlaTable(
                     )
                     if not col_desc:
                         raise SupersetGenericDBErrorException("Column not found")
-                    is_dttm = col_desc[0]["is_dttm"]  # type: ignore
+                    column_description = col_desc[0]
+                    if (
+                        not isinstance(column_description, dict)
+                        or "is_dttm" not in column_description
+                    ):
+                        raise SupersetGenericDBErrorException("Column not found")
+                    is_dttm = column_description["is_dttm"]  # type: ignore
                     # ResultSet already resolves the generic type from the
                     # driver's cursor.description; reuse it so callers can
                     # coerce filter values correctly (e.g. numeric IN-lists
                     # stay unquoted for numeric adhoc expressions like
                     # CAST(... AS BIGINT)).
-                    generic_type = col_desc[0].get("type_generic")
+                    generic_type = column_description.get("type_generic")
                 except SupersetGenericDBErrorException as ex:
                     raise ColumnNotFoundException(message=str(ex)) from ex
 

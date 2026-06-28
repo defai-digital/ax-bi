@@ -2682,6 +2682,37 @@ def test_adhoc_column_to_sqla_skips_probe_when_not_forced(
     assert generic_type is None
 
 
+def test_adhoc_column_to_sqla_rejects_malformed_probe_metadata(
+    database: Database,
+) -> None:
+    """Malformed DB probe metadata should raise the public column error."""
+    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from superset.exceptions import ColumnNotFoundException
+
+    table = SqlaTable(
+        database=database,
+        schema=None,
+        table_name="t",
+        columns=[TableColumn(column_name="a", type="INTEGER")],
+    )
+    adhoc_col: AdhocColumn = {
+        "sqlExpression": "CAST(a AS BIGINT)",
+        "label": "a_bigint",
+    }
+
+    def malformed_column_description(
+        *_: object, **__: object
+    ) -> list[dict[str, object]]:
+        return [{"column_name": "a_bigint", "name": "a_bigint", "type": "BIGINT"}]
+
+    with patch(
+        "superset.connectors.sqla.models.get_columns_description",
+        side_effect=malformed_column_description,
+    ):
+        with pytest.raises(ColumnNotFoundException):
+            table.adhoc_column_to_sqla(adhoc_col, force_type_check=True)
+
+
 def _normalize_df_datasource(column: object) -> MagicMock:
     """Bind ``ExploreMixin.normalize_df`` to a minimal datasource exposing a
     single temporal ``column`` via ``get_column``."""
