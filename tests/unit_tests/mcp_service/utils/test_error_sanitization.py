@@ -68,3 +68,28 @@ def test_sanitize_does_not_change_client_output_with_logging():
     assert _sanitize_validation_error(
         error, log_original=True
     ) == _sanitize_validation_error(error, log_original=False)
+
+
+def test_sanitize_redacts_where_after_select_redaction():
+    """WHERE indexes must be computed after SELECT redaction mutates the string."""
+    error = ValueError(
+        "bad SQL SELECT customer_email, ssn, secret_col FROM orders "
+        "WHERE customer_email = 'alice@example.com' LIMIT 1"
+    )
+
+    result = _sanitize_validation_error(error, log_original=False)
+
+    assert "customer_email = 'alice@example.com'" not in result
+    assert "WHERE [REDACTED] LIMIT 1" in result
+
+
+def test_sanitize_redacts_long_select_before_final_truncation():
+    """Long SELECT lists must not leak just because FROM appears after 200 chars."""
+    columns = ", ".join(f"secret_col_{i}" for i in range(40))
+    error = ValueError(f"bad SQL SELECT {columns} FROM orders")  # noqa: S608
+
+    result = _sanitize_validation_error(error, log_original=False)
+
+    assert "secret_col_0" not in result
+    assert "secret_col_39" not in result
+    assert "SELECT [REDACTED]" in result
