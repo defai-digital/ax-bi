@@ -39,6 +39,7 @@ from superset.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
 from superset.mcp_service.middleware import (
     _is_user_error,
     _sanitize_error_for_logging,
+    _sanitize_params,
     create_response_size_guard_middleware,
     GlobalErrorHandlerMiddleware,
     RBACToolVisibilityMiddleware,
@@ -69,6 +70,27 @@ def test_sanitize_error_for_logging_redacts_pathless_url_credentials() -> None:
     assert ":s3cret@" not in sanitized
     assert "redis.internal" not in sanitized
     assert "redis://[REDACTED]@[REDACTED]" in sanitized
+
+
+def test_sanitize_params_recurses_nested_request_values() -> None:
+    """Nested MCP request payloads must not leak secrets into event logs."""
+    sanitized = _sanitize_params(
+        {
+            "request": {
+                "database_id": 1,
+                "auth_token": "token-secret",
+                "filters": [
+                    {"column": "region", "value": "EMEA"},
+                    {"api-key": "api-secret"},
+                ],
+            }
+        }
+    )
+
+    assert sanitized["request"]["database_id"] == 1
+    assert sanitized["request"]["auth_token"] == "[REDACTED]"  # noqa: S105
+    assert sanitized["request"]["filters"][0]["value"] == "EMEA"
+    assert sanitized["request"]["filters"][1]["api-key"] == "[REDACTED]"
 
 
 class TestResponseSizeGuardMiddleware:

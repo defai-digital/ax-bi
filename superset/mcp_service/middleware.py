@@ -196,29 +196,44 @@ def _is_user_error(error: Exception) -> bool:
 _SENSITIVE_PARAM_KEYS = frozenset(
     {
         "password",
+        "passwd",
+        "pwd",
         "token",
         "api_key",
+        "access_key",
         "secret",
         "credentials",
+        "credential",
         "authorization",
         "cookie",
+        "session_id",
     }
 )
 
 
-def _sanitize_params(params: dict[str, Any]) -> dict[str, Any]:
+def _is_sensitive_param_key(key: Any) -> bool:
+    """Return whether a parameter key should be redacted in logs."""
+    if not isinstance(key, str):
+        return False
+    normalized = key.lower().replace("-", "_")
+    return normalized in _SENSITIVE_PARAM_KEYS or normalized.endswith("_token")
+
+
+def _sanitize_params(params: Any) -> Any:
     """Remove sensitive fields from params before logging."""
-    if not isinstance(params, dict):
-        return params
-    result: dict[str, Any] = {}
-    for k, v in params.items():
-        if k.lower() in _SENSITIVE_PARAM_KEYS:
-            result[k] = "[REDACTED]"
-        elif k == "arguments" and isinstance(v, dict):
-            result[k] = _sanitize_params(v)
-        else:
-            result[k] = v
-    return result
+    if isinstance(params, dict):
+        result: dict[Any, Any] = {}
+        for key, value in params.items():
+            if _is_sensitive_param_key(key):
+                result[key] = "[REDACTED]"
+            else:
+                result[key] = _sanitize_params(value)
+        return result
+    if isinstance(params, list):
+        return [_sanitize_params(item) for item in params]
+    if isinstance(params, tuple):
+        return tuple(_sanitize_params(item) for item in params)
+    return params
 
 
 class LoggingMiddleware(Middleware):
