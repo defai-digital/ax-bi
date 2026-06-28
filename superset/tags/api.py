@@ -394,16 +394,19 @@ class TagRestApi(BaseSupersetModelRestApi):
             500:
               $ref: '#/components/responses/500'
         """
-        try:
-            tags = request.json["properties"]["tags"]
-            # This validates custom Schema with custom validations
-            CreateCustomTagCommand(object_type, object_id, tags).run()
-            return self.response(201)
-        except KeyError:
+        payload = request.get_json(silent=True)
+        properties = payload.get("properties") if isinstance(payload, dict) else None
+        tags = properties.get("tags") if isinstance(properties, dict) else None
+        if not isinstance(tags, list) or not all(isinstance(tag, str) for tag in tags):
             return self.response(
                 400,
                 message="Missing required field 'tags' in 'properties'",
             )
+
+        try:
+            # This validates custom Schema with custom validations
+            CreateCustomTagCommand(object_type, object_id, tags).run()
+            return self.response(201)
         except TagInvalidError:
             return self.response(422, message="Invalid tag")
 
