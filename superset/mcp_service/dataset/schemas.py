@@ -559,7 +559,9 @@ class FileUploadResult(BaseModel):
     """Result for a single file in a batch upload."""
 
     filename: str = Field(..., description="Original filename")
-    success: bool = Field(..., description="Whether this file was uploaded successfully")
+    success: bool = Field(
+        ..., description="Whether this file was uploaded successfully"
+    )
     dataset: DatasetInfo | None = Field(
         None, description="Dataset info if upload succeeded"
     )
@@ -569,9 +571,7 @@ class FileUploadResult(BaseModel):
 class UploadFilesResponse(BaseModel):
     """Response schema for upload_files batch upload."""
 
-    results: List[FileUploadResult] = Field(
-        ..., description="Per-file upload results"
-    )
+    results: List[FileUploadResult] = Field(..., description="Per-file upload results")
     total: int = Field(..., description="Total number of files processed")
     succeeded: int = Field(..., description="Number of files uploaded successfully")
     failed: int = Field(..., description="Number of files that failed to upload")
@@ -814,7 +814,7 @@ def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
         except (ValueError, TypeError):
             pass
         return None
-    return value
+    return value if isinstance(value, dict) else None
 
 
 def _sanitize_dataset_info_for_llm_context(dataset_info: DatasetInfo) -> DatasetInfo:
@@ -913,6 +913,8 @@ def serialize_dataset_object(dataset: Any) -> DatasetInfo | None:
             params = json.loads(params)
         except (json.JSONDecodeError, TypeError):
             params = None
+    if not isinstance(params, dict):
+        params = None
     columns = [
         TableColumnInfo(
             column_name=getattr(col, "column_name", None) or "",

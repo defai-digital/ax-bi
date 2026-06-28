@@ -1442,6 +1442,22 @@ class TestDatasetCertificationSerialization:
         assert result.metrics[0].description == _wrapped("Row count")
         assert result.metrics[0].verbose_name == _wrapped("Count")
 
+    def test_serialize_dataset_ignores_non_object_json_fields(self):
+        """Dataset JSON metadata fields must be object-shaped when exposed."""
+        from superset.mcp_service.dataset.schemas import serialize_dataset_object
+
+        dataset = create_mock_dataset()
+        dataset.params = "[]"
+        dataset.template_params = ["not", "a", "dict"]
+        dataset.extra = "[]"
+
+        result = serialize_dataset_object(dataset)
+
+        assert result is not None
+        assert result.params is None
+        assert result.template_params is None
+        assert result.extra is None
+
     def test_serialize_dataset_wraps_tag_fields(self):
         """serialize_dataset_object wraps user-controlled tag fields."""
         from superset.mcp_service.dataset.schemas import serialize_dataset_object
