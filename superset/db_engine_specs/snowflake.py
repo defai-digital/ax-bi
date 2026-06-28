@@ -309,8 +309,14 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         :param database: instance to be mutated
         """
         extra = json.loads(database.extra or "{}")
+        if not isinstance(extra, dict):
+            extra = {}
         engine_params = extra.get("engine_params", {})
+        if not isinstance(engine_params, dict):
+            engine_params = {}
         connect_args = engine_params.get("connect_args", {})
+        if not isinstance(connect_args, dict):
+            connect_args = {}
         connect_args["validate_default_parameters"] = True
         engine_params["connect_args"] = connect_args
         extra["engine_params"] = engine_params

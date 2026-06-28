@@ -76,6 +76,27 @@ def test_database_connection_test_mutator() -> None:
     } == engine_params
 
 
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "[]",
+        json.dumps({"engine_params": []}),
+        json.dumps({"engine_params": {"connect_args": []}}),
+    ],
+)
+def test_database_connection_test_mutator_ignores_malformed_extra(extra: str) -> None:
+    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from superset.models.core import Database
+
+    database = Database(sqlalchemy_uri="snowflake://abc", extra=extra)
+    SnowflakeEngineSpec.mutate_db_for_connection_test(database)
+    engine_params = json.loads(database.extra or "{}")
+
+    assert {
+        "engine_params": {"connect_args": {"validate_default_parameters": True}}
+    } == engine_params
+
+
 def test_extract_errors() -> None:
     from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
 
