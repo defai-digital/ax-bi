@@ -470,8 +470,17 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
         payload = response.json()
         _logger.debug(payload)
 
+        if not isinstance(payload, dict):
+            raise SupersetException("Google Sheets API returned an unexpected response")
+
         if "error" in payload:
-            raise SupersetException(payload["error"]["message"])
+            error = payload["error"]
+            message = error.get("message") if isinstance(error, dict) else None
+            raise SupersetException(
+                message
+                if isinstance(message, str)
+                else "Google Sheets API returned an error"
+            )
 
         return payload
 

@@ -515,6 +515,29 @@ def test_upload_new_rejects_malformed_create_response(
         GSheetsEngineSpec.df_to_sql(database, table, df, {})
 
 
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ([], "Google Sheets API returned an unexpected response"),
+        ({"error": {}}, "Google Sheets API returned an error"),
+        ({"error": "bad request"}, "Google Sheets API returned an error"),
+    ],
+)
+def test_do_post_rejects_malformed_response_payloads(
+    mocker: MockerFixture,
+    payload: Any,
+    message: str,
+) -> None:
+    """Malformed Google API responses should not leak raw shape errors."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    session = mocker.MagicMock()
+    session.post.return_value.json.return_value = payload
+
+    with pytest.raises(SupersetException, match=message):
+        GSheetsEngineSpec._do_post(session, "https://docs.example.org", {})
+
+
 def test_upload_existing(mocker: MockerFixture) -> None:
     """
     Test file upload when the table does exist.
