@@ -19,6 +19,7 @@
 Unit tests for MCP service token utilities.
 """
 
+from math import ceil
 from typing import Any, List
 from unittest.mock import patch
 
@@ -92,7 +93,13 @@ class TestEstimateTokenCount:
         text = "x" * 100
         with patch.object(token_utils, "_ENCODING", None):
             result = estimate_token_count(text)
-        assert result == int(100 / CHARS_PER_TOKEN)
+        assert result == ceil(100 / CHARS_PER_TOKEN)
+
+    def test_fallback_rounds_up_to_avoid_under_counting(self) -> None:
+        """The char heuristic rounds up so the size guard does not fail-open."""
+        with patch.object(token_utils, "_ENCODING", None):
+            result = estimate_token_count("x" * 4)
+        assert result == 2
 
     def test_fallback_when_tiktoken_encode_raises(self) -> None:
         """A misbehaving encoding should fall back to the char heuristic
@@ -105,7 +112,7 @@ class TestEstimateTokenCount:
         text = "abc" * 50
         with patch.object(token_utils, "_ENCODING", BoomEncoding()):
             result = estimate_token_count(text)
-        assert result == int(len(text) / CHARS_PER_TOKEN)
+        assert result == ceil(len(text) / CHARS_PER_TOKEN)
 
 
 class TestEstimateResponseTokens:

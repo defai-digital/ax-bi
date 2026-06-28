@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from math import ceil
 from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel
@@ -136,7 +137,7 @@ def estimate_token_count(text: str | bytes) -> int:
             # raising — the response size guard must never fail-open.
             logger.warning("tiktoken encode failed (%s); using fallback", exc)
 
-    return max(1, int(len(text) / CHARS_PER_TOKEN))
+    return max(1, ceil(len(text) / CHARS_PER_TOKEN))
 
 
 def estimate_response_tokens(response: ToolResponse) -> int:
