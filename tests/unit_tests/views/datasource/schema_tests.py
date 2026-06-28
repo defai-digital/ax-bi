@@ -14,7 +14,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.views.datasource.schemas import ExternalMetadataSchema
+import pytest
+from marshmallow import ValidationError
+
+from superset.views.datasource.schemas import (
+    ExternalMetadataSchema,
+    SamplesRequestSchema,
+)
 
 
 def test_external_metadata_schema_defaults_optional_flags() -> None:
@@ -30,3 +36,11 @@ def test_external_metadata_schema_defaults_optional_flags() -> None:
 
     assert payload["normalize_columns"] is False
     assert payload["always_filter_main_dttm"] is False
+
+
+def test_samples_request_schema_rejects_scalar_payloads(
+    app_context: None,
+) -> None:
+    """Malformed request containers should raise Marshmallow validation errors."""
+    with pytest.raises(ValidationError):
+        SamplesRequestSchema().load("not-a-request")

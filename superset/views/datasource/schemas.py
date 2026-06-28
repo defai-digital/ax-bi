@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from collections.abc import Mapping
 from typing import Any, Optional, TypedDict
 
 from flask import current_app as app
@@ -112,8 +113,10 @@ class SamplesRequestSchema(Schema):
         # Create a mutable copy if data is immutable (e.g., request.args)
         if hasattr(data, "to_dict"):
             data = data.to_dict()
-        elif not isinstance(data, dict):
+        elif isinstance(data, Mapping):
             data = dict(data)
+        elif not isinstance(data, dict):
+            return data
 
         if "per_page" not in data:
             data["per_page"] = app.config.get("SAMPLES_ROW_LIMIT", 1000)
