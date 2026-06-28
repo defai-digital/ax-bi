@@ -371,7 +371,7 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
             serialized_encrypted_extra = data.get("masked_encrypted_extra") or "{}"
             try:
                 encrypted_extra = json.loads(serialized_encrypted_extra)
-            except json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 encrypted_extra = {}
 
             data["sqlalchemy_uri"] = engine_spec.build_sqlalchemy_uri(
