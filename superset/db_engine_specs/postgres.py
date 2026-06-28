@@ -677,7 +677,7 @@ class PostgresEngineSpec(BasicParametersMixin, PostgresBaseEngineSpec):
 
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
             raise
 

@@ -158,15 +158,18 @@ def test_update_params_from_encrypted_extra_no_encrypted_extra() -> None:
     assert params == {}
 
 
-def test_update_params_from_encrypted_extra_invalid_json() -> None:
+@pytest.mark.parametrize("encrypted_extra", ["not-valid-json", ["not-json"]])
+def test_update_params_from_encrypted_extra_invalid_json(
+    encrypted_extra: object,
+) -> None:
     from superset.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
-    database.encrypted_extra = "not-valid-json"
+    database.encrypted_extra = encrypted_extra
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises((TypeError, json.JSONDecodeError)):
         PostgresEngineSpec.update_params_from_encrypted_extra(database, params)
 
 
