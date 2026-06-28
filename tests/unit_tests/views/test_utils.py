@@ -22,12 +22,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import current_app
 
+from superset.common.db_query_status import QueryStatus
 from superset.exceptions import SupersetException
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
 from superset.views.utils import (
     add_sqllab_custom_filters,
+    apply_display_max_row_limit,
     bootstrap_user_data,
     get_dashboard_extra_filters,
     get_datasource_info,
@@ -105,6 +107,39 @@ def test_bootstrap_user_data_allows_missing_created_on() -> None:
 
     assert payload["createdOn"] is None
     assert payload["username"] == "admin"
+
+
+def test_apply_display_max_row_limit_truncates_success_payload() -> None:
+    sql_results = {
+        "status": QueryStatus.SUCCESS,
+        "query": {"rows": 3},
+        "data": [{"id": 1}, {"id": 2}, {"id": 3}],
+    }
+
+    result = apply_display_max_row_limit(sql_results, rows=2)
+
+    assert result["data"] == [{"id": 1}, {"id": 2}]
+    assert result["displayLimitReached"] is True
+
+
+@pytest.mark.parametrize(
+    "sql_results",
+    [
+        {},
+        {"status": QueryStatus.SUCCESS},
+        {"status": QueryStatus.SUCCESS, "query": None, "data": []},
+        {"status": QueryStatus.SUCCESS, "query": {"rows": "3"}, "data": []},
+        {"status": QueryStatus.SUCCESS, "query": {"rows": 3}, "data": None},
+    ],
+)
+def test_apply_display_max_row_limit_ignores_malformed_payloads(
+    sql_results: dict[str, object],
+) -> None:
+    original = dict(sql_results)
+
+    result = apply_display_max_row_limit(sql_results, rows=2)
+
+    assert result == original
 
 
 def test_is_slice_in_container_handles_malformed_chart_meta() -> None:

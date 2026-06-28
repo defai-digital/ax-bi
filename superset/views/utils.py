@@ -354,11 +354,15 @@ def apply_display_max_row_limit(
     """
 
     display_limit = rows or app.config["DISPLAY_MAX_ROW"]
+    query = sql_results.get("query")
+    result_rows = query.get("rows") if isinstance(query, dict) else None
 
     if (
         display_limit
-        and sql_results["status"] == QueryStatus.SUCCESS
-        and display_limit < sql_results["query"]["rows"]
+        and sql_results.get("status") == QueryStatus.SUCCESS
+        and isinstance(result_rows, int)
+        and display_limit < result_rows
+        and isinstance(sql_results.get("data"), list)
     ):
         sql_results["data"] = sql_results["data"][:display_limit]
         sql_results["displayLimitReached"] = True
