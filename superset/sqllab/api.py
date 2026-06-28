@@ -207,7 +207,9 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            model = self.estimate_model_schema.load(request.json)
+            model = self.estimate_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -255,7 +257,9 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            model = self.format_model_schema.load(request.json)
+            model = self.format_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             sql = model["sql"]
             template_params = model.get("template_params")
             database_id = model.get("database_id")
@@ -570,7 +574,8 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            self.execute_model_schema.load(request.json)
+            raw_payload = request.get_json(cache=True, silent=True)
+            self.execute_model_schema.load(raw_payload)
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -578,7 +583,7 @@ class SqlLabRestApi(BaseSupersetApi):
             log_params = {
                 "user_agent": cast(Optional[str], request.headers.get("USER_AGENT"))
             }
-            execution_context = SqlJsonExecutionContext(request.json)
+            execution_context = SqlJsonExecutionContext(raw_payload)
             command = self._create_sql_json_command(execution_context, log_params)
             command_result: CommandResult = command.run()
 
