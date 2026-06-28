@@ -100,6 +100,32 @@ def test_extras_with_ssl() -> None:
     assert "ssl_verify_cert" in connect_args
 
 
+def test_extras_with_ssl_ignores_non_object_extra() -> None:
+    from superset.db_engine_specs.druid import DruidEngineSpec
+    from tests.integration_tests.fixtures.certificates import ssl_certificate
+
+    database = mock.Mock()
+    database.extra = "[]"
+    database.server_cert = ssl_certificate
+    extras = DruidEngineSpec.get_extra_params(database)
+
+    connect_args = extras["engine_params"]["connect_args"]
+    assert connect_args["scheme"] == "https"
+    assert "ssl_verify_cert" in connect_args
+
+
+def test_extras_rejects_non_string_extra() -> None:
+    from superset.db_engine_specs.druid import DruidEngineSpec
+    from superset.exceptions import SupersetException
+
+    database = mock.Mock()
+    database.extra = ["not-json"]
+    database.server_cert = None
+
+    with pytest.raises(SupersetException, match="Unable to parse database extras"):
+        DruidEngineSpec.get_extra_params(database)
+
+
 # ---------------------------------------------------------------------------
 # DruidEngineSpec column normalization tests
 #
