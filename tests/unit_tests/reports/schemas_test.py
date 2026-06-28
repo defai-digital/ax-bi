@@ -414,15 +414,15 @@ def test_name_over_max_length_rejected(mocker: MockerFixture) -> None:
     assert "name" in exc.value.messages
 
 
-def test_put_schema_allows_database_on_report_type(mocker: MockerFixture) -> None:
-    """PUT schema lacks validate_report_references — database on Report type is
-    accepted (documents current behavior; POST schema correctly rejects this)."""
+def test_put_schema_rejects_database_on_report_type(mocker: MockerFixture) -> None:
+    """PUT schema should reject database references on explicit Report payloads."""
     mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
     put_schema = ReportSchedulePutSchema()
-    result = put_schema.load({"type": "Report", "database": 1})
-    assert result["database"] == 1
+    with pytest.raises(ValidationError) as exc:
+        put_schema.load({"type": "Report", "database": 1})
+    assert "database" in exc.value.messages
 
-    # POST schema rejects it (verify the asymmetry)
+    # POST schema rejects it with the same rule.
     post_schema = ReportSchedulePostSchema()
     with pytest.raises(ValidationError) as exc:
         post_schema.load({**MINIMAL_POST_PAYLOAD, "database": 1})

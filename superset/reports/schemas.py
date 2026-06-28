@@ -456,6 +456,17 @@ class ReportSchedulePutSchema(Schema):
                 )
             )
 
+    @validates_schema
+    def validate_report_references(  # pylint: disable=unused-argument
+        self,
+        data: dict[str, Any],
+        **kwargs: Any,
+    ) -> None:
+        if data.get("type") == ReportScheduleType.REPORT and "database" in data:
+            raise ValidationError(
+                {"database": ["Database reference is not allowed on a report"]}
+            )
+
 
 class SlackChannelSchema(Schema):
     """
