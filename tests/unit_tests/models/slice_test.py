@@ -16,6 +16,7 @@
 # under the License.
 
 import uuid
+from typing import Any
 from unittest.mock import MagicMock, patch, PropertyMock
 
 import pytest
@@ -163,6 +164,22 @@ class TestSlice:
 
         assert slc.get_query_context() is None
         slc.query_context_factory.create.assert_not_called()
+
+    def test_data_handles_missing_changed_on(self, app: Any):
+        """Chart data serialization should tolerate incomplete rows."""
+        slc = Slice(
+            id=1,
+            datasource_id=2,
+            datasource_type="table",
+            viz_type="table",
+            params="{}",
+            changed_on=None,
+        )
+
+        data = slc.data
+
+        assert data["changed_on"] is None
+        assert data["changed_on_humanized"] is None
 
     def test_icons_escapes_datasource_html(self):
         """icons must HTML-escape the datasource name and edit URL."""

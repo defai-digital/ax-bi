@@ -214,17 +214,18 @@ class Slice(  # pylint: disable=too-many-public-methods
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception(ex)
             data["error"] = str(ex)
+        changed_on = self.changed_on
         return {
             "cache_timeout": self.cache_timeout,
-            "changed_on": self.changed_on.isoformat(),
-            "changed_on_humanized": self.changed_on_humanized,
+            "changed_on": changed_on.isoformat() if changed_on else None,
+            "changed_on_humanized": self.changed_on_humanized if changed_on else None,
             "datasource": self.datasource_name,
             "description": self.description,
             "description_markeddown": self.description_markeddown,
             "edit_url": self.edit_url,
             "form_data": self.form_data,
             "query_context": self.query_context,
-            "modified": self.modified(),
+            "modified": self.modified() if changed_on else None,
             "owners": [owner.id for owner in self.owners],
             "extra_owners": (
                 [u["id"] for u in resolver(self)]
