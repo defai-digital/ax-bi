@@ -45,7 +45,7 @@ def _iter_dataset_uuid_targets(configs: Any) -> Any:
                 yield target
 
 
-def find_chart_uuids(position: dict[str, Any]) -> set[str]:
+def find_chart_uuids(position: Any) -> set[str]:
     return set(build_uuid_to_id_map(position))
 
 
@@ -64,7 +64,10 @@ def find_native_filter_datasets(metadata: dict[str, Any]) -> set[str]:
     return uuids
 
 
-def build_uuid_to_id_map(position: dict[str, Any]) -> dict[str, int]:
+def build_uuid_to_id_map(position: Any) -> dict[str, int]:
+    if not isinstance(position, dict):
+        return {}
+
     return {
         child["meta"]["uuid"]: child["meta"]["chartId"]
         for child in position.values()

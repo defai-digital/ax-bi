@@ -18,6 +18,8 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from superset.commands.importers.v1.examples import transpile_virtual_dataset_sql
 from superset.examples.utils import _normalize_dataset_schema
 
@@ -402,6 +404,46 @@ def test_import_defaults_missing_dataset_schema(
     mock_transpile.assert_called_once_with(configs["datasets/examples/test.yaml"], 1)
     mock_import_dataset.assert_called_once()
     assert mock_import_dataset.call_args.args[0]["schema"] == "public"
+    mock_safe_insert.assert_called_once_with([])
+
+
+@pytest.mark.parametrize(
+    "dashboard_config",
+    [
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Missing position",
+            "version": "1.0.0",
+        },
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Malformed position",
+            "position": [],
+            "version": "1.0.0",
+        },
+    ],
+)
+@patch(
+    "superset.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships"
+)
+@patch("superset.commands.importers.v1.examples.import_dashboard")
+def test_import_examples_tolerates_missing_or_malformed_dashboard_position(
+    mock_import_dashboard,
+    mock_safe_insert,
+    dashboard_config,
+):
+    """Optional dashboard layout data should not break example imports."""
+    from superset.commands.importers.v1.examples import ImportExamplesCommand
+
+    dashboard = MagicMock()
+    dashboard.id = 1
+    mock_import_dashboard.return_value = dashboard
+
+    ImportExamplesCommand._import(
+        {"dashboards/missing_position.yaml": dashboard_config}
+    )
+
+    mock_import_dashboard.assert_called_once()
     mock_safe_insert.assert_called_once_with([])
 
 

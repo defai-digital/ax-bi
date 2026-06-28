@@ -194,7 +194,7 @@ class ImportAssetsCommand(BaseCommand):
 
                 # set ref in the dashboard_slices table
                 dashboard_chart_ids: list[dict[str, int]] = []
-                for uuid in find_chart_uuids(config["position"]):
+                for uuid in find_chart_uuids(config.get("position")):
                     if uuid not in chart_ids:
                         break
                     chart_id = chart_ids[uuid]

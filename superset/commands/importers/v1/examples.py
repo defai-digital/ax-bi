@@ -231,7 +231,7 @@ class ImportExamplesCommand(ImportModelsCommand):
                 )
                 dashboard.published = True
 
-                for uuid in find_chart_uuids(config["position"]):
+                for uuid in find_chart_uuids(config.get("position")):
                     chart_id = chart_ids[uuid]
                     dashboard_chart_ids.append((dashboard.id, chart_id))
 

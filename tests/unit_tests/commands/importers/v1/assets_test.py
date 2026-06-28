@@ -385,6 +385,43 @@ def test_import_reports_missing_asset_dependencies(
         ImportAssetsCommand._import(configs)
 
 
+@pytest.mark.parametrize(
+    "dashboard_config",
+    [
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Missing position",
+            "version": "1.0.0",
+        },
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Malformed position",
+            "position": [],
+            "version": "1.0.0",
+        },
+    ],
+)
+def test_import_assets_tolerates_missing_or_malformed_dashboard_position(
+    mocker: MockerFixture,
+    dashboard_config: dict[str, object],
+) -> None:
+    """Optional dashboard layout data should not break asset imports."""
+    from superset.commands.importers.v1 import assets as assets_module
+    from superset.commands.importers.v1.assets import ImportAssetsCommand
+
+    dashboard = mocker.Mock()
+    dashboard.id = 1
+    mock_import_dashboard = mocker.patch.object(
+        assets_module, "import_dashboard", return_value=dashboard
+    )
+    mocker.patch.object(assets_module, "migrate_dashboard")
+    mocker.patch("superset.db.session.execute")
+
+    ImportAssetsCommand._import({"dashboards/missing_position.yaml": dashboard_config})
+
+    mock_import_dashboard.assert_called_once()
+
+
 def test_prevent_overwrite_flags_existing_assets(
     mocker: MockerFixture, session: Session
 ) -> None:
