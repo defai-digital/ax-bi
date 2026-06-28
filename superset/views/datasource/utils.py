@@ -172,19 +172,25 @@ def get_samples(  # pylint: disable=too-many-arguments
         count_star_instance.raise_for_access()
 
         count_star_data = count_star_instance.get_payload()["queries"][0]
+        if not isinstance(count_star_data, dict):
+            raise DatasetSamplesFailedError
 
         if count_star_data.get("status") == QueryStatus.FAILED:
-            raise DatasetSamplesFailedError(count_star_data.get("error"))
+            error = count_star_data.get("error")
+            raise DatasetSamplesFailedError(error if isinstance(error, str) else "")
 
         sample_data = samples_instance.get_payload()["queries"][0]
+        if not isinstance(sample_data, dict):
+            raise DatasetSamplesFailedError
 
         if sample_data.get("status") == QueryStatus.FAILED:
             QueryCacheManager.delete(count_star_data.get("cache_key"), CacheRegion.DATA)
-            raise DatasetSamplesFailedError(sample_data.get("error"))
+            error = sample_data.get("error")
+            raise DatasetSamplesFailedError(error if isinstance(error, str) else "")
 
         sample_data["page"] = page
         sample_data["per_page"] = per_page
         sample_data["total_count"] = count_star_data["data"][0]["COUNT(*)"]
         return sample_data
-    except (IndexError, KeyError) as exc:
+    except (IndexError, KeyError, TypeError) as exc:
         raise DatasetSamplesFailedError from exc

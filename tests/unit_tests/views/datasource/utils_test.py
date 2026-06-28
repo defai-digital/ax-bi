@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from superset.commands.dataset.exceptions import DatasetSamplesFailedError
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import SupersetSecurityException
 
@@ -215,3 +216,61 @@ def test_get_samples_count_star_access_denied(mock_get_limit_clause: MagicMock):
         mock_samples_context.raise_for_access.assert_called_once()
         # Verify count context was also checked
         mock_count_context.raise_for_access.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "count_data",
+    [
+        None,
+        "not-a-list",
+        [None],
+        [{"not_count": 100}],
+    ],
+)
+@patch("superset.views.datasource.utils.get_limit_clause")
+def test_get_samples_raises_dataset_error_for_malformed_count_data(
+    mock_get_limit_clause: MagicMock,
+    count_data: object,
+) -> None:
+    """Malformed count query payloads should not leak raw exceptions."""
+    mock_get_limit_clause.return_value = {"row_offset": 0, "row_limit": 100}
+
+    mock_datasource = MagicMock()
+    mock_datasource.type = "table"
+    mock_datasource.id = 1
+    mock_datasource.columns = []
+
+    mock_samples_context = MagicMock()
+    mock_count_context = MagicMock()
+    mock_samples_context.raise_for_access.return_value = None
+    mock_count_context.raise_for_access.return_value = None
+    mock_count_context.get_payload.return_value = {
+        "queries": [{"data": count_data, "status": "success"}]
+    }
+    mock_samples_context.get_payload.return_value = {
+        "queries": [{"data": [{"col1": "val1"}], "status": "success"}]
+    }
+
+    with (
+        patch(
+            "superset.views.datasource.utils.DatasourceDAO.get_datasource",
+            return_value=mock_datasource,
+        ),
+        patch(
+            "superset.views.datasource.utils.QueryContextFactory"
+        ) as mock_factory_class,
+    ):
+        mock_factory = MagicMock()
+        mock_factory_class.return_value = mock_factory
+        mock_factory.create.side_effect = [mock_samples_context, mock_count_context]
+
+        from superset.views.datasource.utils import get_samples
+
+        with pytest.raises(DatasetSamplesFailedError):
+            get_samples(
+                datasource_type="table",
+                datasource_id=1,
+                force=False,
+                page=1,
+                per_page=100,
+            )
