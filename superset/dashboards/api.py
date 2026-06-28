@@ -752,7 +752,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -824,7 +824,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -908,7 +910,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.update_filters_model_schema.load(request.json, partial=True)
+            item = self.update_filters_model_schema.load(
+                request.get_json(cache=True, silent=True), partial=True
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -991,7 +995,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
         """
         try:
             item = self.update_chart_customizations_model_schema.load(
-                request.json, partial=True
+                request.get_json(cache=True, silent=True), partial=True
             )
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1076,7 +1080,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.update_colors_model_schema.load(request.json, partial=True)
+            item = self.update_colors_model_schema.load(
+                request.get_json(cache=True, silent=True), partial=True
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -1423,7 +1429,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
         ) and not security_manager.can_access("can_export_image", "Superset"):
             return self.response_403()
         try:
-            payload = CacheScreenshotSchema().load(request.json)
+            payload = CacheScreenshotSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         dashboard = cast(Dashboard, self.datamodel.get(pk, self._base_filters))
@@ -2095,7 +2103,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            body = self.embedded_config_schema.load(request.json)
+            body = self.embedded_config_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
 
             embedded = EmbeddedDashboardDAO.upsert(
                 dashboard,
@@ -2204,7 +2214,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            data = DashboardCopySchema().load(request.json)
+            data = DashboardCopySchema().load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
