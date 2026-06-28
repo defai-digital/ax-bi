@@ -662,6 +662,32 @@ class CreateVirtualDatasetResponse(BaseModel):
         description="Error message if creation failed, otherwise null.",
     )
 
+    @field_validator("dataset_name")
+    @classmethod
+    def sanitize_dataset_name(cls, v: str) -> str:
+        """Escape delimiter tokens in dataset names before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("sql")
+    @classmethod
+    def sanitize_sql(cls, v: str) -> str:
+        """Wrap stored SQL text before LLM exposure."""
+        return sanitize_for_llm_context(v, field_path=("sql",))
+
+    @field_validator("columns")
+    @classmethod
+    def sanitize_columns(cls, v: List[str]) -> List[str]:
+        """Escape delimiter tokens in returned column names."""
+        return [escape_llm_context_delimiters(column) for column in v]
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap creation error text before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
+
 
 VALID_FILTER_OPS = Literal[
     "==",
