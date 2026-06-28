@@ -44,6 +44,12 @@ class _FakeError(BaseModel):
     timestamp: datetime
 
 
+class _FakeMessageError(BaseModel):
+    error_type: str
+    message: str
+    timestamp: datetime
+
+
 class _Unset:
     """Sentinel meaning "DAO has no title_column attribute at all"."""
 
@@ -190,6 +196,19 @@ def test_not_found_error_when_no_title_match() -> None:
 
     assert isinstance(result, _FakeError)
     assert result.error_type == "not_found"
+
+
+def test_not_found_error_supports_message_error_schema() -> None:
+    """Not-found responses should support MCPBaseError-style schemas."""
+    core, _ = _build_core()
+    core.error_schema = _FakeMessageError
+    _install_base_filtered_query(core, slug_result=None, title_rows=[])
+
+    result = core.run_tool("does-not-exist")
+
+    assert isinstance(result, _FakeMessageError)
+    assert result.error_type == "not_found"
+    assert result.message == "_FakeOutput with identifier 'does-not-exist' not found"
 
 
 def test_title_fallback_ilike_pattern_preserves_word_order() -> None:

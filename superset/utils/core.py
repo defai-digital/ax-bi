@@ -1039,11 +1039,17 @@ def simple_filter_to_adhoc(
     filter_clause: QueryObjectFilterClause,
     clause: str = "where",
 ) -> AdhocFilterClause:
+    operator = filter_clause["op"]
+    if isinstance(operator, str):
+        operator = operator.upper()
+        if operator == "NOT_IN":
+            operator = FilterOperator.NOT_IN
+
     result: AdhocFilterClause = {
         "clause": clause.upper(),
         "expressionType": "SIMPLE",
         "comparator": filter_clause.get("val"),
-        "operator": filter_clause["op"],
+        "operator": operator,
         "subject": cast(str, filter_clause["col"]),
     }
     if filter_clause.get("isExtra"):
@@ -1230,11 +1236,11 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:  # noqa: C901
     # interactive filters.
     # Note extra_filters only support simple filters.
     form_data.setdefault("applied_time_extras", {})
+    merge_extra_form_data(form_data)
     adhoc_filters = form_data.get("adhoc_filters", [])
     if not isinstance(adhoc_filters, list):
         adhoc_filters = []
     form_data["adhoc_filters"] = adhoc_filters
-    merge_extra_form_data(form_data)
     if "extra_filters" in form_data:
         # __form and __to are special extra_filters that target time
         # boundaries. The rest of extra_filters are simple

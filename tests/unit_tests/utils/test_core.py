@@ -799,10 +799,10 @@ def test_merge_extra_filters():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {
@@ -851,10 +851,10 @@ def test_merge_extra_filters():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {
@@ -889,10 +889,10 @@ def test_merge_extra_filters():
                 "comparator": "hello",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "2ca91524f5ab8e39d6aa5373d1f11301ad2c5b95f5aa77eb30d92f572f5b9157"
+                    "41cfa0ea71c29a9fc28f8474f4c6fca9336dde1f53bf8f6f3e6ab01d897b9d1d"
                 ),
                 "isExtra": True,
-                "operator": "like",
+                "operator": "LIKE",
                 "subject": "A",
             }
         ],
@@ -1084,10 +1084,10 @@ def test_merge_extra_filters_merges_different_val_types():
                 "comparator": ["g1", "g2"],
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "e2f7d6304169124258364916403b2d9208fce39dd7771797726111b7498bbd52"
+                    "1c44affabc8ad89546dba254ca3c8dc0687a80365d9104734db7bc330576698e"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
         ],
@@ -1138,10 +1138,10 @@ def test_merge_extra_filters_merges_different_val_types():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
         ],
@@ -1195,10 +1195,10 @@ def test_merge_extra_filters_adds_unequal_lists():
                 "comparator": ["g1", "g2", "g3"],
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "b3f17391546e130560efd1e841742bc5f154d09a7d534b8c0ec33fc1c8a146cd"
+                    "a313f94a60fffcce397fb9cd633b3e037ff27eb954f3f54dac7a54c315ff288a"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {

@@ -28,6 +28,7 @@ from superset.exceptions import SerializationError, SupersetException
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
+from superset.utils.core import merge_extra_filters
 from superset.views.utils import (
     _deserialize_results_payload,
     add_sqllab_custom_filters,
@@ -78,6 +79,42 @@ def test_get_form_data_ignores_non_object_request_form_data() -> None:
 
     assert form_data == {}
     assert slc is None
+
+
+def test_get_form_data_reads_form_encoded_extra_filters() -> None:
+    """SQL Lab filter parsing must not consume form-encoded chart form_data."""
+    with current_app.test_request_context(
+        data={
+            "form_data": json.dumps(
+                {"extra_filters": [{"col": "name", "op": "in", "val": "foo"}]}
+            )
+        }
+    ):
+        form_data, slc = get_form_data()
+
+    assert form_data == {
+        "extra_filters": [{"col": "name", "op": "in", "val": "foo"}],
+    }
+    assert slc is None
+
+
+def test_merge_extra_filters_normalizes_legacy_in_operator() -> None:
+    """Legacy lowercase extra filter operators should become adhoc operators."""
+    form_data = {
+        "extra_filters": [{"col": "name", "op": "in", "val": "foo"}],
+    }
+
+    merge_extra_filters(form_data)
+
+    assert len(form_data["adhoc_filters"]) == 1
+    adhoc_filter = form_data["adhoc_filters"][0]
+    assert adhoc_filter["clause"] == "WHERE"
+    assert adhoc_filter["comparator"] == "foo"
+    assert adhoc_filter["expressionType"] == "SIMPLE"
+    assert adhoc_filter["isExtra"] is True
+    assert adhoc_filter["operator"] == "IN"
+    assert adhoc_filter["subject"] == "name"
+    assert "extra_filters" not in form_data
 
 
 def test_loads_request_json_requires_object() -> None:

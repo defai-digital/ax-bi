@@ -869,16 +869,17 @@ def test_tool_search_permission_filter_hides_disallowed_tools():
     with app.app_context():
         g.user = SimpleNamespace(username="viewer")
         with patch(
-            "superset.mcp_service.auth.security_manager", new_callable=MagicMock
-        ) as security_manager:
-            security_manager.can_access.side_effect = [True, False]
+            "superset.mcp_service.auth.current_user_can_access",
+            new_callable=MagicMock,
+        ) as can_access:
+            can_access.side_effect = [True, False]
 
             result = _filter_tools_by_current_user_permission(
                 [permitted, denied, public]
             )
 
     assert result == [permitted, public]
-    security_manager.can_access.assert_any_call("can_get_drill_info", "Dataset")
+    can_access.assert_any_call("can_get_drill_info", "Dataset")
 
 
 def test_tool_search_permission_filter_hides_protected_tools_without_user() -> None:
@@ -971,10 +972,11 @@ def test_tool_search_permission_filter_still_applies_rbac_to_metadata_tools() ->
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.auth.security_manager", new_callable=Mock
-            ) as security_manager,
+                "superset.mcp_service.auth.current_user_can_access",
+                new_callable=Mock,
+            ) as can_access,
         ):
-            security_manager.can_access.return_value = False
+            can_access.return_value = False
             result = _filter_tools_by_current_user_permission([metadata, public])
 
     assert result == [public]
@@ -1000,10 +1002,11 @@ def test_tool_search_permission_filter_resolves_user_from_request() -> None:
                 return_value=SimpleNamespace(username="viewer"),
             ),
             patch(
-                "superset.mcp_service.auth.security_manager", new_callable=Mock
-            ) as security_manager,
+                "superset.mcp_service.auth.current_user_can_access",
+                new_callable=Mock,
+            ) as can_access,
         ):
-            security_manager.can_access.return_value = True
+            can_access.return_value = True
             result = _filter_tools_by_current_user_permission([protected])
 
     assert result == [protected]
@@ -1028,10 +1031,11 @@ def test_tool_search_permission_filter_keeps_get_schema_visible_without_metadata
                 return_value=False,
             ),
             patch(
-                "superset.mcp_service.auth.security_manager", new_callable=Mock
-            ) as security_manager,
+                "superset.mcp_service.auth.current_user_can_access",
+                new_callable=Mock,
+            ) as can_access,
         ):
-            security_manager.can_access.return_value = True
+            can_access.return_value = True
             result = _filter_tools_by_current_user_permission([schema_tool])
 
     assert result == [schema_tool]

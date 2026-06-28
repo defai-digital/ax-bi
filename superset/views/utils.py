@@ -232,8 +232,6 @@ def get_form_data(
             else None
         )
 
-        add_sqllab_custom_filters(form_data)
-
         request_form_data = request.form.get("form_data")
         request_args_data = request.args.get("form_data")
         if first_query:
@@ -249,6 +247,7 @@ def get_form_data(
         # request params can overwrite the body
         if request_args_data:
             form_data.update(loads_request_json(request_args_data))
+        add_sqllab_custom_filters(form_data)
 
     # Fallback to using the Flask globals (used for cache warmup and async queries)
     if not form_data and hasattr(g, "form_data"):

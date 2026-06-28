@@ -117,9 +117,7 @@ class TestOpenSqlLabWithContext:
                     "superset.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
-                patch.object(
-                    mod.event_logger, "log_context", return_value=nullcontext()
-                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
                     "get_superset_base_url",
@@ -170,9 +168,7 @@ class TestOpenSqlLabWithContext:
                     "superset.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
-                patch.object(
-                    mod.event_logger, "log_context", return_value=nullcontext()
-                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
                     "get_superset_base_url",
@@ -213,9 +209,7 @@ class TestOpenSqlLabWithContext:
                     "superset.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
-                patch.object(
-                    mod.event_logger, "log_context", return_value=nullcontext()
-                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
                     "get_superset_base_url",
@@ -287,9 +281,7 @@ class TestOpenSqlLabWithContext:
                     "superset.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
-                patch.object(
-                    mod.event_logger, "log_context", return_value=nullcontext()
-                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
                     "get_superset_base_url",
@@ -317,9 +309,7 @@ class TestOpenSqlLabWithContext:
                 patch(
                     "superset.daos.database.DatabaseDAO.find_by_id", return_value=None
                 ),
-                patch.object(
-                    mod.event_logger, "log_context", return_value=nullcontext()
-                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())
 

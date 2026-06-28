@@ -347,4 +347,5 @@ async def test_get_query_info_internal_error(mock_find, mcp_server):
         )
         data = json.loads(result.content[0].text)
         assert data["error_type"] == "InternalError"
-        assert data["error"] == "Failed to get query info"
+        assert "Failed to get query info" in data["error"]
+        assert "<UNTRUSTED-CONTENT>" in data["error"]

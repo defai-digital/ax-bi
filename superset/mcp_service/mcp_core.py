@@ -565,15 +565,32 @@ class ModelGetInfoCore(BaseCore):
         # If we get here, it's an invalid identifier
         return None
 
+    def _create_error_response(self, error: str, error_type: str) -> BaseModel:
+        """Build an error response matching the configured error schema shape."""
+        create = getattr(self.error_schema, "create", None)
+        if callable(create):
+            return create(error=error, error_type=error_type)
+
+        fields = getattr(self.error_schema, "model_fields", {})
+        if "message" in fields:
+            return self.error_schema(
+                error_type=error_type,
+                message=error,
+                timestamp=mcp_error_timestamp(),
+            )
+        return self.error_schema(
+            error=error,
+            error_type=error_type,
+            timestamp=mcp_error_timestamp(),
+        )
+
     def run_tool(self, identifier: int | str) -> BaseModel:
         try:
             obj = self._find_object(identifier)
             if obj is None:
-                error_data = self.error_schema.create(
-                    error=(
-                        f"{self.output_schema.__name__} with identifier "
-                        f"'{identifier}' not found"
-                    ),
+                error_data = self._create_error_response(
+                    error=f"{self.output_schema.__name__} with identifier "
+                    f"'{identifier}' not found",
                     error_type="not_found",
                 )
                 self._log_warning(

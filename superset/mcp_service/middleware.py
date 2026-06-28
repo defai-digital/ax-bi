@@ -49,7 +49,7 @@ from superset.mcp_service.constants import (
     DEFAULT_TOKEN_LIMIT,
     DEFAULT_WARN_THRESHOLD_PCT,
 )
-from superset.mcp_service.utils.logging_utils import mcp_event_log
+from superset.mcp_service.utils.logging_utils import mcp_event_log as _mcp_event_log
 from superset.mcp_service.utils.token_utils import (
     estimate_response_tokens,
     format_size_limit_error,
@@ -60,6 +60,22 @@ from superset.utils.core import get_user_id
 
 logger = logging.getLogger(__name__)
 _mcp_call_id_var: ContextVar[str | None] = ContextVar("mcp_call_id", default=None)
+
+
+class _MCPEventLoggerAdapter:
+    """Adapter exposing the event-logger shape used by middleware tests."""
+
+    def log(self, **kwargs: Any) -> None:
+        """Write an MCP event through the shared logging utility."""
+        _mcp_event_log(**kwargs)
+
+
+event_logger = _MCPEventLoggerAdapter()
+
+
+def mcp_event_log(**kwargs: Any) -> None:
+    """Write an MCP event through the module-level event logger adapter."""
+    event_logger.log(**kwargs)
 
 
 def _sanitize_error_for_logging(error: Exception) -> str:

@@ -22,6 +22,7 @@ Unit tests for save_sql_query MCP tool schemas and logic.
 import importlib
 import sys
 import types
+from contextlib import nullcontext
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -272,12 +273,6 @@ class TestSaveSqlQueryToolLogic:
             mock_g = MagicMock()
             mock_g.user = Mock(id=1)
 
-            mock_event_logger = MagicMock()
-            mock_event_logger.log_context.return_value.__enter__ = Mock()
-            mock_event_logger.log_context.return_value.__exit__ = Mock(
-                return_value=False
-            )
-
             with (
                 patch("superset.db", mock_db_session),
                 patch("superset.security_manager", mock_sm),
@@ -287,7 +282,7 @@ class TestSaveSqlQueryToolLogic:
                     return_value="http://localhost:8088",
                 ),
                 patch("flask.g", mock_g),
-                patch.object(mod, "event_logger", mock_event_logger),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 result = await mod.save_sql_query(request, mock_ctx)
 
@@ -324,16 +319,10 @@ class TestSaveSqlQueryToolLogic:
             mock_g = MagicMock()
             mock_g.user = Mock(id=1)
 
-            mock_event_logger = MagicMock()
-            mock_event_logger.log_context.return_value.__enter__ = Mock()
-            mock_event_logger.log_context.return_value.__exit__ = Mock(
-                return_value=False
-            )
-
             with (
                 patch("superset.db", mock_db_session),
                 patch("flask.g", mock_g),
-                patch.object(mod, "event_logger", mock_event_logger),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 from superset.exceptions import SupersetErrorException
 
@@ -369,17 +358,11 @@ class TestSaveSqlQueryToolLogic:
             mock_g = MagicMock()
             mock_g.user = Mock(id=1)
 
-            mock_event_logger = MagicMock()
-            mock_event_logger.log_context.return_value.__enter__ = Mock()
-            mock_event_logger.log_context.return_value.__exit__ = Mock(
-                return_value=False
-            )
-
             with (
                 patch("superset.db", mock_db_session),
                 patch("superset.security_manager", mock_sm),
                 patch("flask.g", mock_g),
-                patch.object(mod, "event_logger", mock_event_logger),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 from superset.exceptions import SupersetSecurityException
 
@@ -429,12 +412,6 @@ class TestSaveSqlQueryToolLogic:
             mock_g = MagicMock()
             mock_g.user = Mock(id=1)
 
-            mock_event_logger = MagicMock()
-            mock_event_logger.log_context.return_value.__enter__ = Mock()
-            mock_event_logger.log_context.return_value.__exit__ = Mock(
-                return_value=False
-            )
-
             with (
                 patch("superset.db", mock_db_session),
                 patch("superset.security_manager", mock_sm),
@@ -444,7 +421,7 @@ class TestSaveSqlQueryToolLogic:
                     return_value="http://localhost:8088",
                 ),
                 patch("flask.g", mock_g),
-                patch.object(mod, "event_logger", mock_event_logger),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 result = await mod.save_sql_query(request, mock_ctx)
 
