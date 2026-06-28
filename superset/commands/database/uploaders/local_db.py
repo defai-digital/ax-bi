@@ -61,7 +61,7 @@ def _get_raw_extra(database: Database) -> dict[str, object]:
     """Return raw database extra metadata, resetting malformed JSON."""
     try:
         extra = json.loads(database.extra or "{}")
-    except json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         return dict(LOCAL_DB_EXTRA)
     if not isinstance(extra, dict):
         return dict(LOCAL_DB_EXTRA)

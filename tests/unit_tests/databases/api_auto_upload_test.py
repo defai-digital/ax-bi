@@ -258,6 +258,19 @@ class TestGetOrCreateLocalDb:
             session.delete(repaired_db)
             session.commit()
 
+    def test_raw_extra_resets_non_string_extra(self) -> None:
+        """
+        Test that local DB extra metadata parser resets non-string values.
+        """
+        from superset.commands.database.uploaders.local_db import (
+            _get_raw_extra,
+            LOCAL_DB_EXTRA,
+        )
+
+        database = Database(extra=["not-json"])
+
+        assert _get_raw_extra(database) == LOCAL_DB_EXTRA
+
     def test_rejects_existing_database_name_with_different_uri(
         self,
         session: Session,
