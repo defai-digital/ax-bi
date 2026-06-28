@@ -325,6 +325,8 @@ class ThemeRestApi(BaseSupersetModelRestApi):
         try:
             if not request.json:
                 return self.response_400(message="Request body is required")
+            if not isinstance(request.json, dict):
+                return self.response_400(message="Request body must be a JSON object")
 
             # Log the incoming request for debugging
             logger.debug("PUT request data for theme %s: %s", pk, request.json)
