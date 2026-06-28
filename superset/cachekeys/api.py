@@ -76,7 +76,10 @@ class CacheRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            datasources = CacheInvalidationRequestSchema().load(request.json)
+            body = request.get_json(cache=True, silent=True)
+            if body is None:
+                return self.response_400(message="Request is incorrect")
+            datasources = CacheInvalidationRequestSchema().load(body)
         except KeyError:
             return self.response_400(message="Request is incorrect")
         except ValidationError as error:
