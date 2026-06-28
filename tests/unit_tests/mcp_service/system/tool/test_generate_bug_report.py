@@ -408,6 +408,28 @@ class TestGenerateBugReportViaMCP:
         assert "MCP Call ID" in data["report"]
 
     @pytest.mark.asyncio
+    async def test_generate_bug_report_sanitizes_mcp_call_id(self, mcp_server):
+        """mcp_call_id is user-supplied and must not bypass redaction."""
+        with patch("flask.g") as mock_g:
+            mock_g.user = None
+
+            async with Client(mcp_server) as client:
+                result = await client.call_tool(
+                    "generate_bug_report",
+                    {
+                        "request": {
+                            "tool_name": "health_check",
+                            "mcp_call_id": "call from alice@example.com",
+                        }
+                    },
+                )
+
+        data = json.loads(result.content[0].text)
+        assert "alice@example.com" not in data["report"]
+        assert "[REDACTED_EMAIL]" in data["report"]
+        assert "email" in data["redactions_applied"]
+
+    @pytest.mark.asyncio
     async def test_generate_bug_report_omits_mcp_call_id_when_absent(self, mcp_server):
         """Bug report omits MCP Call ID line when not provided."""
         with patch("flask.g") as mock_g:

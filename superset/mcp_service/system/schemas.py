@@ -323,6 +323,7 @@ class GenerateBugReportRequest(BaseModel):
     )
     mcp_call_id: str | None = Field(
         None,
+        max_length=200,
         description=(
             "Optional MCP call ID from a previous tool invocation. "
             "When provided, it will be included in the bug report "

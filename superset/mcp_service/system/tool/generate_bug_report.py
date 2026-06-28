@@ -312,6 +312,8 @@ async def generate_bug_report(
                 request.additional_context or "", redactions
             )
             or None,
+            "mcp_call_id": _sanitize_text(request.mcp_call_id or "", redactions)
+            or None,
         }
 
         environment = _collect_environment()
@@ -324,7 +326,7 @@ async def generate_bug_report(
             environment=environment,
             user_context=user_context,
             timestamp=timestamp,
-            mcp_call_id=request.mcp_call_id,
+            mcp_call_id=sanitized.get("mcp_call_id"),
         )
 
     return GenerateBugReportResponse(
