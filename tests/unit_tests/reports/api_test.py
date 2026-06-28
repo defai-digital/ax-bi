@@ -24,6 +24,29 @@ from tests.unit_tests.conftest import with_feature_flags
 
 
 @with_feature_flags(ALERT_REPORTS=True)
+def test_json_body_handlers_reject_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Report write endpoints should reject malformed JSON consistently."""
+    endpoints = [
+        ("post", "/api/v1/report/subscribe"),
+        ("post", "/api/v1/report/"),
+        ("put", "/api/v1/report/1"),
+    ]
+
+    for method, url in endpoints:
+        response = getattr(client, method)(
+            url,
+            data="{malformed",
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
+@with_feature_flags(ALERT_REPORTS=True)
 @patch("superset.reports.api.get_channels_with_search")
 def test_slack_channels_success(
     mock_search: Any,

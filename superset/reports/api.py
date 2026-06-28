@@ -365,7 +365,7 @@ class ReportScheduleRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.subscribe_schema.load(request.json)
+            item = self.subscribe_schema.load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -438,16 +438,17 @@ class ReportScheduleRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            raw_payload = request.get_json(cache=True, silent=True)
+            item = self.add_model_schema.load(raw_payload)
             # normally this would be covered by a decorator, however
             # due to this model being formatted incorrectly the data
             # needed some manipulation.
             event_logger.log_with_context(
                 action="ReportScheduleRestApi.post",
-                dashboard_id=request.json.get("dashboard", None),
-                chart_id=request.json.get("chart", None),
-                report_format=request.json.get("report_format", None),
-                active=request.json.get("active", None),
+                dashboard_id=raw_payload.get("dashboard", None),
+                chart_id=raw_payload.get("chart", None),
+                report_format=raw_payload.get("report_format", None),
+                active=raw_payload.get("active", None),
             )
         # This validates custom Schema with custom validations
         except ValidationError as error:
@@ -518,16 +519,17 @@ class ReportScheduleRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            raw_payload = request.get_json(cache=True, silent=True)
+            item = self.edit_model_schema.load(raw_payload)
             # normally this would be covered by a decorator, however
             # due to this model being formatted incorrectly the data
             # needed some manipulation.
             event_logger.log_with_context(
                 action="ReportScheduleRestApi.put",
-                dashboard_id=request.json.get("dashboard", None),
-                chart_id=request.json.get("chart", None),
-                report_format=request.json.get("report_format", None),
-                active=request.json.get("active", None),
+                dashboard_id=raw_payload.get("dashboard", None),
+                chart_id=raw_payload.get("chart", None),
+                report_format=raw_payload.get("report_format", None),
+                active=raw_payload.get("active", None),
             )
         # This validates custom Schema with custom validations
         except ValidationError as error:
