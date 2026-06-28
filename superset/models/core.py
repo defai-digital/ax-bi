@@ -409,7 +409,10 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
 
     @property
     def default_schemas(self) -> list[str]:
-        return self.get_extra().get("default_schemas", [])
+        default_schemas = self.get_extra().get("default_schemas", [])
+        if not isinstance(default_schemas, list):
+            return []
+        return [schema for schema in default_schemas if isinstance(schema, str)]
 
     @property
     def connect_args(self) -> dict[str, Any]:

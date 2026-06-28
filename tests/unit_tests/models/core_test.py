@@ -314,6 +314,21 @@ def test_database_extra_properties_ignore_non_object_values() -> None:
     assert database.connect_args == {}
 
 
+def test_database_default_schemas_ignores_malformed_values() -> None:
+    """default_schemas should always return a list of schema names."""
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="sqlite://",
+        extra=json.dumps({"default_schemas": "public"}),
+    )
+
+    assert database.default_schemas == []
+
+    database.extra = json.dumps({"default_schemas": ["public", 1, None, "analytics"]})
+
+    assert database.default_schemas == ["public", "analytics"]
+
+
 def test_get_default_catalog() -> None:
     """
     Test the `get_default_catalog` method.
