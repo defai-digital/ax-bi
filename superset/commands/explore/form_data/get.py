@@ -23,7 +23,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from superset.commands.base import BaseCommand
 from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.commands.explore.form_data.state import TemporaryExploreState
+from superset.commands.explore.form_data.state import is_temporary_explore_state
 from superset.commands.explore.form_data.utils import check_access
 from superset.commands.temporary_cache.exceptions import TemporaryCacheGetFailedError
 from superset.extensions import cache_manager
@@ -42,19 +42,17 @@ class GetFormDataCommand(BaseCommand, ABC):
     def run(self) -> Optional[str]:
         try:
             key = self._cmd_params.key
-            state: TemporaryExploreState = cache_manager.explore_form_data_cache.get(
-                key
+            state = cache_manager.explore_form_data_cache.get(key)
+            if not is_temporary_explore_state(state):
+                return None
+            check_access(
+                state["datasource_id"],
+                state["chart_id"],
+                DatasourceType(state["datasource_type"]),
             )
-            if state:
-                check_access(
-                    state["datasource_id"],
-                    state["chart_id"],
-                    DatasourceType(state["datasource_type"]),
-                )
-                if self._refresh_timeout:
-                    cache_manager.explore_form_data_cache.set(key, state)
-                return state["form_data"]
-            return None
+            if self._refresh_timeout:
+                cache_manager.explore_form_data_cache.set(key, state)
+            return state["form_data"]
         except SQLAlchemyError as ex:
             logger.exception("Error running get command")
             raise TemporaryCacheGetFailedError() from ex

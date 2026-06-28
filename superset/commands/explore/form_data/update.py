@@ -23,7 +23,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from superset.commands.base import BaseCommand
 from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.commands.explore.form_data.state import TemporaryExploreState
+from superset.commands.explore.form_data.state import (
+    is_temporary_explore_state,
+    TemporaryExploreState,
+)
 from superset.commands.explore.form_data.utils import check_access
 from superset.commands.temporary_cache.exceptions import (
     TemporaryCacheAccessDeniedError,
@@ -54,11 +57,9 @@ class UpdateFormDataCommand(BaseCommand, ABC):
             key = self._cmd_params.key
             form_data = self._cmd_params.form_data
             check_access(datasource_id, chart_id, datasource_type)
-            state: TemporaryExploreState = cache_manager.explore_form_data_cache.get(
-                key
-            )
+            state = cache_manager.explore_form_data_cache.get(key)
             owner = get_user_id()
-            if state and form_data:
+            if is_temporary_explore_state(state) and form_data:
                 if state["owner"] != owner:
                     raise TemporaryCacheAccessDeniedError()
 
