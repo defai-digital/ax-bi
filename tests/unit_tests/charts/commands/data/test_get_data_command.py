@@ -133,6 +133,42 @@ def test_results_result_type_raises_on_error() -> None:
     assert "Database connection failed" in str(exc_info.value)
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"queries": "not-a-list"},
+        {"queries": ["not-a-query"]},
+    ],
+)
+def test_run_rejects_malformed_query_payloads(payload: object) -> None:
+    """Malformed query payloads should raise a controlled command error."""
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_context.get_payload.return_value = payload
+
+    command = ChartDataCommand(mock_query_context)
+
+    with pytest.raises(ChartDataQueryFailedError) as exc_info:
+        command.run()
+
+    assert "unexpected payload" in str(exc_info.value)
+
+
+def test_run_rejects_missing_cache_key_when_cache_enabled() -> None:
+    """Cached chart-data responses must include the generated cache key."""
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_context.get_payload.return_value = {"queries": []}
+
+    command = ChartDataCommand(mock_query_context)
+
+    with pytest.raises(ChartDataQueryFailedError) as exc_info:
+        command.run(cache=True)
+
+    assert "unexpected payload" in str(exc_info.value)
+
+
 def test_query_result_type_returns_successful_query() -> None:
     """
     Test that result_type='query' without error returns query successfully.

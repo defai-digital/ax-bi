@@ -49,9 +49,17 @@ class ChartDataCommand(BaseCommand):
         except CacheLoadError as ex:
             raise ChartDataCacheLoadError(ex.message) from ex
 
+        queries = payload.get("queries") if isinstance(payload, dict) else None
+        if not isinstance(queries, list) or not all(
+            isinstance(query, dict) for query in queries
+        ):
+            raise ChartDataQueryFailedError(
+                _("Error: chart data returned an unexpected payload")
+            )
+
         # Skip error check for query-only requests - errors are returned in payload
         # This allows View Query modal to display validation errors
-        for query in payload["queries"]:
+        for query in queries:
             if (
                 query.get("error")
                 and self._query_context.result_type != ChartDataResultType.QUERY
@@ -62,10 +70,15 @@ class ChartDataCommand(BaseCommand):
 
         return_value = {
             "query_context": self._query_context,
-            "queries": payload["queries"],
+            "queries": queries,
         }
         if cache_query_context:
-            return_value.update(cache_key=payload["cache_key"])
+            cache_key = payload.get("cache_key")
+            if not cache_key:
+                raise ChartDataQueryFailedError(
+                    _("Error: chart data returned an unexpected payload")
+                )
+            return_value.update(cache_key=cache_key)
 
         return return_value
 
