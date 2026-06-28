@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import call, MagicMock, patch
 
 import pytest
 
@@ -62,6 +62,33 @@ def test_process_native_filter_diff_ignores_malformed_current_metadata() -> None
         command.process_native_filter_diff()
 
     mock_report_dao.find_by_native_filter_id.assert_not_called()
+
+
+def test_process_tab_diff_deduplicates_reports_matching_multiple_tabs() -> None:
+    """A report matching multiple deleted tabs should only be deactivated once."""
+    command = UpdateDashboardCommand(1, {"position_json": json.dumps({})})
+    command._model = MagicMock(
+        id=1,
+        tabs={"all_tabs": ["TAB-A", "TAB-B"]},
+    )
+    report = MagicMock(id=7)
+
+    with (
+        patch(
+            "superset.commands.dashboard.update.ReportScheduleDAO"
+        ) as mock_report_dao,
+        patch.object(command, "_send_deactivated_report_email") as mock_send_email,
+    ):
+        mock_report_dao.find_by_extra_metadata.side_effect = [[report], [report]]
+
+        command.process_tab_diff()
+
+    mock_report_dao.find_by_extra_metadata.assert_has_calls(
+        [call("TAB-A"), call("TAB-B")]
+    )
+    assert mock_report_dao.find_by_extra_metadata.call_count == 2
+    mock_report_dao.update.assert_called_once_with(report, {"active": False})
+    mock_send_email.assert_called_once()
 
 
 def test_validate_rejects_non_object_json_metadata() -> None:

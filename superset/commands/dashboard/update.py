@@ -206,11 +206,14 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
             return []
 
         def find_reports_containing_tabs(tabs: list[str]) -> list[ReportSchedule]:
-            alert_reports_list = []
+            seen: set[int] = set()
+            reports: list[ReportSchedule] = []
             for tab in tabs:
                 for report in ReportScheduleDAO.find_by_extra_metadata(tab):
-                    alert_reports_list.append(report)
-            return alert_reports_list
+                    if report.id not in seen:
+                        seen.add(report.id)
+                        reports.append(report)
+            return reports
 
         def send_deactivated_email_warning(report: ReportSchedule) -> None:
             description = textwrap.dedent(
