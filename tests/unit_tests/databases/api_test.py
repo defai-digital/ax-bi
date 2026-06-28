@@ -1234,6 +1234,17 @@ def test_csv_upload(
             },
             {"message": {"_schema": ["Invalid JSON format for column_data_types"]}},
         ),
+        (
+            {
+                "type": "csv",
+                "file": (create_csv_file(), "out.csv"),
+                "table_name": "table1",
+                "delimiter": ",",
+                "already_exists": "fail",
+                "column_data_types": '["col1"]',
+            },
+            {"message": {"_schema": ["column_data_types must be a JSON object"]}},
+        ),
     ],
 )
 def test_csv_upload_validation(
