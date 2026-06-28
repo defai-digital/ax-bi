@@ -53,6 +53,43 @@ def test_import_dashboards_command_validate_rejects_invalid_bundle_shape() -> No
         command.validate()
 
 
+def test_import_dashboards_command_validate_accepts_encoded_legacy_export() -> None:
+    """Validation must decode legacy model markers before checking bundle shape."""
+    content = json.dumps(
+        {
+            "datasources": [
+                {"__SqlaTable__": {"params": json.dumps({"remote_id": 42})}}
+            ],
+            "dashboards": [
+                {
+                    "__Dashboard__": {
+                        "dashboard_title": "My dashboard",
+                        "json_metadata": "{}",
+                        "position_json": "{}",
+                    }
+                }
+            ],
+        }
+    )
+    command = ImportDashboardsCommand({"dashboard.json": content})
+
+    command.validate()
+
+
+def test_import_dashboards_command_validate_rejects_malformed_model_marker() -> None:
+    """Malformed legacy object markers should fail as invalid imports."""
+    content = json.dumps(
+        {
+            "datasources": [{"__SqlaTable__": []}],
+            "dashboards": [],
+        }
+    )
+    command = ImportDashboardsCommand({"dashboard.json": content})
+
+    with pytest.raises(DashboardImportException):
+        command.validate()
+
+
 @pytest.mark.parametrize(
     "params",
     [

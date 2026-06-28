@@ -300,6 +300,15 @@ def decode_dashboards(o: dict[str, Any]) -> Any:
     return o
 
 
+def _decode_dashboard_import_content(content: str) -> dict[str, Any]:
+    try:
+        data = json.loads(content, object_hook=decode_dashboards)
+    except (TypeError, ValueError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    return _validate_dashboard_bundle_shape(data)
+
+
 def _validate_dashboard_bundle_shape(data: Any) -> dict[str, Any]:
     if not data:
         raise DashboardImportException(_("No data in file"))
@@ -410,8 +419,7 @@ def import_dashboards(
     """Imports dashboards from a stream to databases"""
     current_tt = int(time.time())
     import_time = current_tt if import_time is None else import_time
-    data = json.loads(content, object_hook=decode_dashboards)
-    data = _validate_dashboard_bundle_shape(data)
+    data = _decode_dashboard_import_content(content)
     dataset_id_mapping: dict[int, int] = {}
     for index, table in enumerate(data["datasources"]):
         new_dataset_id = import_dataset(table, database_id, import_time=import_time)
@@ -447,9 +455,4 @@ class ImportDashboardsCommand(BaseCommand):
     def validate(self) -> None:
         # ensure all files are JSON
         for content in self.contents.values():
-            try:
-                data = json.loads(content)
-            except ValueError:
-                logger.exception("Invalid JSON file")
-                raise
-            _validate_dashboard_bundle_shape(data)
+            _decode_dashboard_import_content(content)
