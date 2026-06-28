@@ -210,6 +210,8 @@ def test_find_native_filter_datasets_ignores_malformed_entries():
         find_native_filter_datasets,
     )
 
+    assert find_native_filter_datasets(["broken"]) == set()
+
     metadata = {
         "native_filter_configuration": [
             "broken",
