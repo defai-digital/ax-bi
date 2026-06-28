@@ -301,10 +301,14 @@ class SoftDeleteApiMixin:
         from the DB in a single projection query keyed by the IDs FAB
         already collected.
         """
-        ids = cast(list[Any], data.get("ids", []))
+        ids = data.get("ids", [])
+        result = data.get("result", [])
+        if not isinstance(ids, list) or not isinstance(result, list):
+            return
         deleted_at_map = self._get_deleted_at_map(ids)
-        for row, row_id in zip(data.get("result", []), ids, strict=False):
-            row["deleted_at"] = deleted_at_map.get(row_id)
+        for row, row_id in zip(result, ids, strict=False):
+            if isinstance(row, dict):
+                row["deleted_at"] = deleted_at_map.get(row_id)
 
     def _get_deleted_at_map(self, ids: list[Any]) -> dict[Any, str | None]:
         if not ids:
