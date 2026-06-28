@@ -165,6 +165,18 @@ def test_dashboard_copy_css_rejects_dangerous_constructs() -> None:
     assert "css" in exc_info.value.messages
 
 
+@pytest.mark.parametrize(
+    "schema",
+    [DashboardPostSchema(), DashboardPutSchema(), DashboardCopySchema()],
+)
+def test_dashboard_json_metadata_rejects_json_string(schema: Any) -> None:
+    """Dashboard metadata validation should reject JSON strings without crashing."""
+    with pytest.raises(ValidationError) as exc_info:
+        schema.load({"json_metadata": '"show_native_filters"'})
+
+    assert "json_metadata" in exc_info.value.messages
+
+
 def test_permalink_state_schema_accepts_null_in_active_tabs() -> None:
     """Regression test for #40934.
 
