@@ -974,6 +974,17 @@ def test_get_encrypted_extra_ignores_non_object_json() -> None:
     assert database.get_encrypted_extra() == {}
 
 
+def test_get_encrypted_extra_logs_non_string_parse_errors() -> None:
+    """
+    Test that malformed encrypted_extra parse errors use the logged error path.
+    """
+    database = Database()
+    database.encrypted_extra = ["not-json"]
+
+    with pytest.raises(TypeError):
+        database.get_encrypted_extra()
+
+
 def test_get_oauth2_config_ignores_non_object_encrypted_extra(
     app_context: None,
 ) -> None:

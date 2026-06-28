@@ -1147,7 +1147,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         if self.encrypted_extra:
             try:
                 encrypted_extra = json.loads(self.encrypted_extra)
-            except json.JSONDecodeError as ex:
+            except (TypeError, json.JSONDecodeError) as ex:
                 logger.error(ex, exc_info=True)
                 raise
             if not isinstance(encrypted_extra, dict):
