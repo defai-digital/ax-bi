@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 from superset.commands.importers.v1 import ImportModelsCommand
 from superset.commands.theme.exceptions import ThemeImportError
 from superset.daos.theme import ThemeDAO
-from superset.themes.schemas import ImportV1ThemeSchema
+from superset.themes.schemas import ImportV1ThemeSchema, sanitize_theme_json_data
 from superset.utils import json
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,9 @@ def import_theme(config: dict[str, Any], overwrite: bool = False) -> "Theme | No
         raise ThemeImportError(
             "Theme doesn't exist and user doesn't have permission to create themes"
         )
+
+    if "json_data" in config:
+        config["json_data"] = sanitize_theme_json_data(config["json_data"])
 
     # Convert json_data from dict to string if needed
     if isinstance(config.get("json_data"), dict):
