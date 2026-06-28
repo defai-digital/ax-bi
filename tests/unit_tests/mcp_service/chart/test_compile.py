@@ -41,6 +41,7 @@ from superset.mcp_service.chart.schemas import (
     TableChartConfig,
     XYChartConfig,
 )
+from superset.mcp_service.chart.validation.dataset_validator import DatasetValidator
 
 
 def _orm_dataset(
@@ -106,6 +107,31 @@ class TestBuildDatasetContextFromOrm:
 
     def test_returns_none_for_none_input(self):
         assert build_dataset_context_from_orm(None) is None
+
+
+class TestDatasetValidatorDatasetContext:
+    """Cover the DAO-backed dataset → DatasetContext helper."""
+
+    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    def test_handles_missing_database_relationship(self, mock_find_by_id):
+        """DAO-backed context creation also tolerates an unloaded database."""
+        mock_find_by_id.return_value = _orm_dataset(has_database=False)
+
+        ctx = DatasetValidator._get_dataset_context(3)
+
+        assert ctx is not None
+        assert ctx.database_name == ""
+        assert ctx.id == 3
+        assert {c["name"] for c in ctx.available_columns} == {
+            "ds",
+            "gender",
+            "name",
+            "num",
+        }
+        assert {m["name"] for m in ctx.available_metrics} == {
+            "sum_boys",
+            "sum_girls",
+        }
 
 
 class TestValidateAndCompileChartTypeCoverage:
