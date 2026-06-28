@@ -547,9 +547,22 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
                 "https://sheets.googleapis.com/v4/spreadsheets",
                 {"properties": {"title": table.table}},
             )
-            spreadsheet_id = payload["spreadsheetId"]
-            range_ = payload["sheets"][0]["properties"]["title"]
-            spreadsheet_url = payload["spreadsheetUrl"]
+            try:
+                spreadsheet_id = payload["spreadsheetId"]
+                range_ = payload["sheets"][0]["properties"]["title"]
+                spreadsheet_url = payload["spreadsheetUrl"]
+            except (IndexError, KeyError, TypeError) as ex:
+                raise SupersetException(
+                    "Google Sheets API returned an unexpected response"
+                ) from ex
+            if (
+                spreadsheet_id is None
+                or not isinstance(range_, str)
+                or not isinstance(spreadsheet_url, str)
+            ):
+                raise SupersetException(
+                    "Google Sheets API returned an unexpected response"
+                )
 
         # insert data
         data = df.fillna("").values.tolist()

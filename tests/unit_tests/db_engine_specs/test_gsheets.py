@@ -466,6 +466,55 @@ def test_upload_new(mocker: MockerFixture) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"spreadsheetId": 1, "spreadsheetUrl": "https://docs.example.org"},
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": "https://docs.example.org",
+            "sheets": [],
+        },
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": "https://docs.example.org",
+            "sheets": [{"properties": {}}],
+        },
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": None,
+            "sheets": [{"properties": {"title": "sample_data"}}],
+        },
+    ],
+)
+def test_upload_new_rejects_malformed_create_response(
+    mocker: MockerFixture,
+    payload: dict[str, Any],
+) -> None:
+    """Malformed Google Sheets create responses should raise a clear error."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    mocker.patch("superset.db_engine_specs.gsheets.db")
+    get_adapter_for_table_name = mocker.patch(
+        "shillelagh.backends.apsw.dialects.base.get_adapter_for_table_name"
+    )
+    session = get_adapter_for_table_name()._get_session()
+    session.post().json.return_value = payload
+
+    database = mocker.MagicMock()
+    database.get_extra.return_value = {}
+
+    df = pd.DataFrame({"col": [1]})
+    table = Table("sample_data")
+
+    with pytest.raises(
+        SupersetException,
+        match="Google Sheets API returned an unexpected response",
+    ):
+        GSheetsEngineSpec.df_to_sql(database, table, df, {})
+
+
 def test_upload_existing(mocker: MockerFixture) -> None:
     """
     Test file upload when the table does exist.
