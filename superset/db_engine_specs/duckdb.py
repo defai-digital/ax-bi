@@ -462,7 +462,11 @@ class MotherDuckEngineSpec(DuckDBEngineSpec):
 
     @classmethod
     def get_default_catalog(cls, database: Database) -> str | None:
-        return database.url_object.database.split(":", 1)[1]
+        database_name = database.url_object.database
+        if not database_name or not database_name.startswith("md:"):
+            return None
+
+        return database_name.split(":", 1)[1] or None
 
     @classmethod
     def get_catalog_names(

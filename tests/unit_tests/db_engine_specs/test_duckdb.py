@@ -127,6 +127,29 @@ def test_get_parameters_from_uri() -> None:
     assert parameters["access_token"] == "token"  # noqa: S105
 
 
+@pytest.mark.parametrize(
+    "database_name,expected_catalog",
+    [
+        ("md:my_db", "my_db"),
+        ("md:", None),
+        ("/path/to/duck.db", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_md_get_default_catalog(
+    mocker: MockerFixture,
+    database_name: str | None,
+    expected_catalog: str | None,
+) -> None:
+    from superset.db_engine_specs.duckdb import MotherDuckEngineSpec
+
+    database = mocker.MagicMock()
+    database.url_object.database = database_name
+
+    assert MotherDuckEngineSpec.get_default_catalog(database) == expected_catalog
+
+
 def test_column_type_recognition() -> None:
     """Test that DuckDB column types are properly recognized as numeric."""
     from superset.db_engine_specs.duckdb import DuckDBEngineSpec
