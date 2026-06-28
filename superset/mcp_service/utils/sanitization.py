@@ -388,15 +388,16 @@ def sanitize_user_input(
     # Strip all HTML tags using nh3
     value = _strip_html_tags(value)
 
+    # Remove dangerous Unicode before validation so zero-width/control
+    # characters cannot split forbidden schemes or SQL keywords.
+    value = _remove_dangerous_unicode(value)
+
     # Check for dangerous patterns (URL schemes, event handlers)
     _check_dangerous_patterns(value, field_name)
 
     # SQL keyword and shell metacharacter checks (for column names, etc.)
     if check_sql_keywords:
         _check_sql_patterns(value, field_name)
-
-    # Remove dangerous Unicode characters
-    value = _remove_dangerous_unicode(value)
 
     return value
 
@@ -436,6 +437,10 @@ def sanitize_filter_value(
     # Strip all HTML tags using nh3
     value = _strip_html_tags(value)
 
+    # Remove dangerous Unicode before validation so zero-width/control
+    # characters cannot split forbidden schemes or SQL keywords.
+    value = _remove_dangerous_unicode(value)
+
     # Check for dangerous patterns
     _check_dangerous_patterns(value, "Filter value")
 
@@ -465,9 +470,6 @@ def sanitize_filter_value(
     # Check for hex encoding
     if re.search(r"\\x[0-9a-fA-F]{2}", value):
         raise ValueError("Filter value contains hex encoding which is not allowed.")
-
-    # Remove dangerous Unicode characters
-    value = _remove_dangerous_unicode(value)
 
     return value
 
