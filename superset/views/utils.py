@@ -200,6 +200,17 @@ def loads_request_json(request_json_data: str) -> dict[Any, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _normalize_global_form_data(global_form_data: Any) -> dict[str, Any]:
+    if not isinstance(global_form_data, dict):
+        return {}
+
+    queries = global_form_data.get("queries")
+    if isinstance(queries, list) and queries and isinstance(queries[0], dict):
+        global_form_data.update(queries[0])
+
+    return global_form_data
+
+
 def get_form_data(
     slice_id: Optional[int] = None,
     use_slice_data: bool = False,
@@ -241,10 +252,7 @@ def get_form_data(
 
     # Fallback to using the Flask globals (used for cache warmup and async queries)
     if not form_data and hasattr(g, "form_data"):
-        form_data = g.form_data
-        # chart data API requests are JSON
-        json_data = form_data["queries"][0] if "queries" in form_data else {}
-        form_data.update(json_data)
+        form_data = _normalize_global_form_data(g.form_data)
 
     form_data = {k: v for k, v in form_data.items() if k not in REJECTED_FORM_DATA_KEYS}
 

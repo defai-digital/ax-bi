@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, patch
 
 import msgpack
 import pytest
-from flask import current_app
+from flask import current_app, g
 
 from superset.common.db_query_status import QueryStatus
 from superset.exceptions import SerializationError, SupersetException
@@ -254,6 +254,31 @@ def test_get_form_data_ignores_non_object_query_entries() -> None:
         form_data, slc = get_form_data()
 
     assert form_data == {"queries": ["not an object"]}
+    assert slc is None
+
+
+@pytest.mark.parametrize(
+    ("global_form_data", "expected_form_data"),
+    [
+        ({"queries": []}, {"queries": []}),
+        ({"queries": ["not an object"]}, {"queries": ["not an object"]}),
+        ({"queries": "not a list"}, {"queries": "not a list"}),
+        (["not an object"], {}),
+    ],
+)
+def test_get_form_data_ignores_malformed_global_query_entries(
+    global_form_data: Any,
+    expected_form_data: dict[str, Any],
+) -> None:
+    """Malformed global query payloads should not crash form parsing."""
+    with current_app.test_request_context():
+        g.form_data = global_form_data
+        try:
+            form_data, slc = get_form_data()
+        finally:
+            delattr(g, "form_data")
+
+    assert form_data == expected_form_data
     assert slc is None
 
 
