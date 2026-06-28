@@ -26,6 +26,7 @@ from pytest_mock import MockerFixture
 from superset.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerDeleteFailedError,
+    SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticLayerUpdateFailedError,
@@ -730,6 +731,26 @@ def test_put_semantic_layer_not_found(
 
 
 @SEMANTIC_LAYERS_APP
+def test_put_semantic_layer_forbidden(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test PUT /<uuid> returns 403 when ownership check fails."""
+    mock_command = mocker.patch(
+        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+    )
+    mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
+
+    response = client.put(
+        f"/api/v1/semantic_layer/{uuid_lib.uuid4()}",
+        json={"name": "New"},
+    )
+
+    assert response.status_code == 403
+
+
+@SEMANTIC_LAYERS_APP
 def test_put_semantic_layer_invalid(
     client: Any,
     full_api_access: None,
@@ -819,6 +840,23 @@ def test_delete_semantic_layer_not_found(
     response = client.delete(f"/api/v1/semantic_layer/{uuid_lib.uuid4()}")
 
     assert response.status_code == 404
+
+
+@SEMANTIC_LAYERS_APP
+def test_delete_semantic_layer_forbidden(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test DELETE /<uuid> returns 403 when ownership check fails."""
+    mock_command = mocker.patch(
+        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+    )
+    mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
+
+    response = client.delete(f"/api/v1/semantic_layer/{uuid_lib.uuid4()}")
+
+    assert response.status_code == 403
 
 
 @SEMANTIC_LAYERS_APP

@@ -21,7 +21,11 @@ import pytest
 from pytest_mock import MockerFixture
 
 from superset.commands.semantic_layer.delete import DeleteSemanticLayerCommand
-from superset.commands.semantic_layer.exceptions import SemanticLayerNotFoundError
+from superset.commands.semantic_layer.exceptions import (
+    SemanticLayerForbiddenError,
+    SemanticLayerNotFoundError,
+)
+from superset.exceptions import SupersetSecurityException
 
 
 def test_delete_semantic_layer_success(mocker: MockerFixture) -> None:
@@ -32,10 +36,14 @@ def test_delete_semantic_layer_success(mocker: MockerFixture) -> None:
         "superset.commands.semantic_layer.delete.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
+    raise_for_ownership = mocker.patch(
+        "superset.commands.semantic_layer.delete.security_manager.raise_for_ownership"
+    )
 
     DeleteSemanticLayerCommand("some-uuid").run()
 
     dao.find_by_uuid.assert_called_once_with("some-uuid")
+    raise_for_ownership.assert_called_once_with(mock_model)
     dao.delete.assert_called_once_with([mock_model])
 
 
@@ -48,6 +56,26 @@ def test_delete_semantic_layer_not_found(mocker: MockerFixture) -> None:
 
     with pytest.raises(SemanticLayerNotFoundError):
         DeleteSemanticLayerCommand("missing-uuid").run()
+
+
+def test_delete_semantic_layer_forbidden(mocker: MockerFixture) -> None:
+    """Test that SemanticLayerForbiddenError is raised for non-owners."""
+    mock_model = MagicMock()
+
+    dao = mocker.patch(
+        "superset.commands.semantic_layer.delete.SemanticLayerDAO",
+    )
+    dao.find_by_uuid.return_value = mock_model
+    raise_for_ownership = mocker.patch(
+        "superset.commands.semantic_layer.delete.security_manager.raise_for_ownership",
+        side_effect=SupersetSecurityException(MagicMock()),
+    )
+
+    with pytest.raises(SemanticLayerForbiddenError):
+        DeleteSemanticLayerCommand("some-uuid").run()
+
+    raise_for_ownership.assert_called_once_with(mock_model)
+    dao.delete.assert_not_called()
 
 
 def test_delete_semantic_view_success(mocker: MockerFixture) -> None:
