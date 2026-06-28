@@ -462,7 +462,10 @@ class ReportSchedulePutSchema(Schema):
         data: dict[str, Any],
         **kwargs: Any,
     ) -> None:
-        if data.get("type") == ReportScheduleType.REPORT and "database" in data:
+        if (
+            data.get("type") == ReportScheduleType.REPORT
+            and data.get("database") is not None
+        ):
             raise ValidationError(
                 {"database": ["Database reference is not allowed on a report"]}
             )

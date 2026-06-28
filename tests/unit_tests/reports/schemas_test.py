@@ -422,6 +422,9 @@ def test_put_schema_rejects_database_on_report_type(mocker: MockerFixture) -> No
         put_schema.load({"type": "Report", "database": 1})
     assert "database" in exc.value.messages
 
+    result = put_schema.load({"type": "Report", "database": None})
+    assert result["database"] is None
+
     # POST schema rejects it with the same rule.
     post_schema = ReportSchedulePostSchema()
     with pytest.raises(ValidationError) as exc:
