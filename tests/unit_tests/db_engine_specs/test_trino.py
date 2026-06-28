@@ -251,6 +251,18 @@ def test_auth_custom_auth_denied() -> None:
     )
 
 
+def test_auth_ignores_non_object_encrypted_extra() -> None:
+    from superset.db_engine_specs.trino import TrinoEngineSpec
+
+    database = Mock()
+    database.encrypted_extra = "[]"
+    params: dict[str, Any] = {}
+
+    TrinoEngineSpec.update_params_from_encrypted_extra(database, params)
+
+    assert params == {}
+
+
 @pytest.mark.parametrize(
     "native_type,sqla_type,attrs,generic_type,is_dttm",
     [

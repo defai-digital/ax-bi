@@ -448,9 +448,12 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
             return
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
             raise
+        if not isinstance(encrypted_extra, dict):
+            return
+
         auth_method = encrypted_extra.get("auth_method", None)
         auth_params = encrypted_extra.get("auth_params", {})
         if not auth_method:

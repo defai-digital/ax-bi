@@ -18,7 +18,7 @@
 # pylint: disable=import-outside-toplevel
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from unittest import mock
 
 import pytest
@@ -174,6 +174,18 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
             "connect_args": {"application": "Custom user agent", "foo": "bar"}
         }
     }
+
+
+def test_update_params_from_encrypted_extra_ignores_non_object_extra() -> None:
+    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+
+    database = mock.Mock()
+    database.encrypted_extra = "[]"
+    params: dict[str, Any] = {}
+
+    SnowflakeEngineSpec.update_params_from_encrypted_extra(database, params)
+
+    assert params == {}
 
 
 def test_get_schema_from_engine_params() -> None:
