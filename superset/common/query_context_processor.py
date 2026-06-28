@@ -300,8 +300,10 @@ class QueryContextProcessor:
         """
         datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
         date_cols = df.select_dtypes(include=["object"]).columns[
-            [pd.api.types.infer_dtype(df[col], skipna=True) == "date" for col in
-             df.select_dtypes(include=["object"]).columns]
+            [
+                pd.api.types.infer_dtype(df[col], skipna=True) == "date"
+                for col in df.select_dtypes(include=["object"]).columns
+            ]
         ]
 
         if len(datetime_cols) == 0 and len(date_cols) == 0:
@@ -325,9 +327,7 @@ class QueryContextProcessor:
             ns[null_mask] = np.nan
             ms = ns / 1e6
             with np.errstate(invalid="ignore"):
-                converted[col] = np.where(
-                    np.isnan(ms), None, ms.astype("int64")
-                )
+                converted[col] = np.where(np.isnan(ms), None, ms.astype("int64"))
 
         for col in date_cols:
             null_mask = np.asarray(pd.isna(df[col]))
@@ -336,9 +336,7 @@ class QueryContextProcessor:
             ns[null_mask] = np.nan
             ms = ns / 1e6
             with np.errstate(invalid="ignore"):
-                converted[col] = np.where(
-                    np.isnan(ms), None, ms.astype("int64")
-                )
+                converted[col] = np.where(np.isnan(ms), None, ms.astype("int64"))
 
         return df.assign(**converted).to_dict(orient="records")
 
@@ -512,6 +510,15 @@ class QueryContextProcessor:
         for layer in annotation_layers:
             layer_id = layer["value"]
             layer_name = layer["name"]
+            if not (layer_object := layer_objects.get(layer_id)):
+                raise QueryObjectValidationError(
+                    _(
+                        f"""Annotation layer with ID {layer_id} (referenced by
+                        annotation layer '{layer_name}') was not found.
+                        Please verify that the annotation layer exists and is
+                        accessible."""
+                    )
+                )
             columns = [
                 "start_dttm",
                 "end_dttm",
@@ -519,7 +526,6 @@ class QueryContextProcessor:
                 "long_descr",
                 "json_metadata",
             ]
-            layer_object = layer_objects[layer_id]
             records = [
                 {column: getattr(annotation, column) for column in columns}
                 for annotation in layer_object.annotation

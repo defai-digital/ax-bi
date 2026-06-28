@@ -25,6 +25,7 @@ import pytest
 from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
 from superset.common.db_query_status import QueryStatus
 from superset.common.query_context_processor import QueryContextProcessor
+from superset.exceptions import QueryObjectValidationError
 from superset.utils.core import GenericDataType
 
 
@@ -97,6 +98,28 @@ def test_get_data_table_like(processor, mock_query_context):
         {"col1": 3, "col2": "c"},
     ]
     assert result == expected
+
+
+@patch("superset.common.query_context_processor.AnnotationLayerDAO.find_by_ids")
+def test_get_native_annotation_data_rejects_stale_layer_reference(
+    mock_find_by_ids,
+):
+    """Missing native annotation layers should raise a validation error."""
+    mock_find_by_ids.return_value = []
+    query_obj = MagicMock()
+    query_obj.annotation_layers = [
+        {
+            "annotationType": "EVENT",
+            "sourceType": "NATIVE",
+            "name": "Deployment",
+            "value": 42,
+        }
+    ]
+
+    with pytest.raises(QueryObjectValidationError, match="Annotation layer"):
+        QueryContextProcessor.get_native_annotation_data(query_obj)
+
+    mock_find_by_ids.assert_called_once_with([42])
 
 
 @patch("superset.common.query_context_processor.csv.df_to_escaped_csv")
@@ -1882,9 +1905,7 @@ class TestDfToRecords:
         """Datetime columns should be converted to epoch milliseconds."""
         df = pd.DataFrame(
             {
-                "ts": pd.to_datetime(
-                    ["2024-01-15 12:00:00", "2024-06-15 12:00:00"]
-                ),
+                "ts": pd.to_datetime(["2024-01-15 12:00:00", "2024-06-15 12:00:00"]),
                 "value": [10, 20],
             }
         )
@@ -1898,14 +1919,9 @@ class TestDfToRecords:
 
     def test_timezone_aware_datetime_normalized_to_utc(self) -> None:
         """Timezone-aware datetimes should be normalized to UTC."""
-        import pytz
-
-        tz = pytz.timezone("US/Eastern")
         df = pd.DataFrame(
             {
-                "ts": pd.to_datetime(
-                    ["2024-01-15 07:00:00"]
-                ).tz_localize("US/Eastern"),
+                "ts": pd.to_datetime(["2024-01-15 07:00:00"]).tz_localize("US/Eastern"),
                 "value": [42],
             }
         )
@@ -1918,9 +1934,7 @@ class TestDfToRecords:
         """NaT (Not-a-Time) values should become None in records."""
         df = pd.DataFrame(
             {
-                "ts": pd.to_datetime(
-                    ["2024-01-15 12:00:00", None]
-                ),
+                "ts": pd.to_datetime(["2024-01-15 12:00:00", None]),
                 "value": [10, 20],
             }
         )
