@@ -869,11 +869,14 @@ class DatabaseFunctionNamesResponse(Schema):
 class ImportV1DatabaseExtraSchema(Schema):
     @pre_load
     def fix_schemas_allowed_for_csv_upload(  # pylint: disable=invalid-name
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+        self, data: Any, **kwargs: Any
+    ) -> Any:
         """
         Fixes for ``schemas_allowed_for_csv_upload``.
         """
+        if not isinstance(data, dict):
+            return data
+
         # Fix for https://github.com/apache/superset/pull/16756, which temporarily
         # changed the V1 schema. We need to support exports made after that PR and
         # before this PR.
@@ -887,9 +890,14 @@ class ImportV1DatabaseExtraSchema(Schema):
         # saved and exported with a string for ``schemas_allowed_for_csv_upload``.
         schemas_allowed_for_csv_upload = data.get("schemas_allowed_for_csv_upload")
         if isinstance(schemas_allowed_for_csv_upload, str):
-            data["schemas_allowed_for_csv_upload"] = json.loads(
-                schemas_allowed_for_csv_upload
-            )
+            try:
+                data["schemas_allowed_for_csv_upload"] = json.loads(
+                    schemas_allowed_for_csv_upload
+                )
+            except (TypeError, json.JSONDecodeError) as ex:
+                raise ValidationError(
+                    {"schemas_allowed_for_csv_upload": ["Invalid JSON"]}
+                ) from ex
 
         return data
 

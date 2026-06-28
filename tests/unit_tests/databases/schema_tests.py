@@ -511,6 +511,41 @@ def test_import_schema_allows_masked_fields_for_existing_db(
     schema.load(config)
 
 
+def test_import_database_extra_schema_decodes_legacy_upload_schemas() -> None:
+    """Legacy string-encoded upload schemas should load as a list."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    payload = ImportV1DatabaseExtraSchema().load(
+        {"schemas_allowed_for_csv_upload": '["public", "examples"]'}
+    )
+
+    assert payload["schemas_allowed_for_csv_upload"] == ["public", "examples"]
+
+
+def test_import_database_extra_schema_rejects_invalid_upload_schemas_json() -> None:
+    """Invalid legacy upload schema JSON should report a validation error."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseExtraSchema().load(
+            {"schemas_allowed_for_csv_upload": "not json"}
+        )
+
+    assert exc_info.value.messages == {
+        "schemas_allowed_for_csv_upload": ["Invalid JSON"]
+    }
+
+
+def test_import_database_extra_schema_rejects_non_object_extra() -> None:
+    """Non-object database extra payloads should fail validation cleanly."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseExtraSchema().load("not an object")
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
 def test_ssh_tunnel_server_address_rejects_non_hostnames() -> None:
     """server_address must look like a hostname/IP, not a URL or arbitrary text."""
     from superset.databases.schemas import DatabaseSSHTunnel
