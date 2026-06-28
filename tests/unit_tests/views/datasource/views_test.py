@@ -234,6 +234,14 @@ def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
         "null",
         "{}",
         '{"id": 1, "type": "table", "database": []}',
+        '{"id": 1, "type": "table", "database": {"id": 1}}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": {}}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": [{}]}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": ["bad"]}',
+        (
+            '{"id": 1, "type": "table", "database": {"id": 1}, '
+            '"columns": [{"column_name": 1}]}'
+        ),
     ],
 )
 @patch(

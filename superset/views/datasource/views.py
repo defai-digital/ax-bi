@@ -56,6 +56,22 @@ from superset.views.error_handling import handle_api_exception
 from superset.views.utils import sanitize_datasource_data
 
 
+def _get_column_names(datasource_dict: dict[str, Any]) -> list[str] | None:
+    columns = datasource_dict.get("columns")
+    if not isinstance(columns, list):
+        return None
+
+    column_names: list[str] = []
+    for column in columns:
+        if not isinstance(column, dict):
+            return None
+        column_name = column.get("column_name")
+        if not isinstance(column_name, str):
+            return None
+        column_names.append(column_name)
+    return column_names
+
+
 class Datasource(BaseSupersetView):
     """Datasource-related views"""
 
@@ -93,6 +109,9 @@ class Datasource(BaseSupersetView):
             or not isinstance(database, dict)
         ):
             return json_error_response(_("Invalid datasource payload."), status=400)
+        column_names = _get_column_names(datasource_dict)
+        if column_names is None:
+            return json_error_response(_("Invalid datasource payload."), status=400)
         database_id = database.get("id")
         orm_datasource = DatasourceDAO.get_datasource(
             DatasourceType(datasource_type), datasource_id
@@ -110,11 +129,7 @@ class Datasource(BaseSupersetView):
         )
 
         duplicates = [
-            name
-            for name, count in Counter(
-                [col["column_name"] for col in datasource_dict["columns"]]
-            ).items()
-            if count > 1
+            name for name, count in Counter(column_names).items() if count > 1
         ]
         if duplicates:
             return json_error_response(
