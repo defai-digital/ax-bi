@@ -70,6 +70,12 @@ class DeleteDashboardCommand(BaseCommand):
         self._models = DashboardDAO.find_by_ids(self._model_ids)
         if not self._models or len(self._models) != len(self._model_ids):
             raise DashboardNotFoundError()
+        # Check ownership
+        for model in self._models:
+            try:
+                security_manager.raise_for_ownership(model)
+            except SupersetSecurityException as ex:
+                raise DashboardForbiddenError() from ex
         # Check there are no associated ReportSchedules
         if reports := ReportScheduleDAO.find_by_dashboard_ids(self._model_ids):
             report_names = [report.name for report in reports]
@@ -79,9 +85,3 @@ class DeleteDashboardCommand(BaseCommand):
                     report_names=",".join(report_names),
                 )
             )
-        # Check ownership
-        for model in self._models:
-            try:
-                security_manager.raise_for_ownership(model)
-            except SupersetSecurityException as ex:
-                raise DashboardForbiddenError() from ex
