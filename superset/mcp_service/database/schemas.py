@@ -279,7 +279,7 @@ def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
         except (ValueError, TypeError):
             pass
         return None
-    return value
+    return value if isinstance(value, dict) else None
 
 
 def _get_backend(database: Any) -> str | None:

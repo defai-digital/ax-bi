@@ -26,7 +26,11 @@ from fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
 from superset.mcp_service.app import mcp
-from superset.mcp_service.database.schemas import DatabaseFilter, ListDatabasesRequest
+from superset.mcp_service.database.schemas import (
+    DatabaseFilter,
+    ListDatabasesRequest,
+    serialize_database_object,
+)
 from superset.mcp_service.privacy import DATA_MODEL_METADATA_ERROR_TYPE
 from superset.utils import json
 
@@ -99,6 +103,39 @@ def create_mock_database(
     database.created_on = None
     database.owners = []
     return database
+
+
+def test_serialize_database_object_keeps_dict_extra() -> None:
+    """Database extra may already be object-shaped when serialized."""
+    database = create_mock_database()
+    database.extra = {"metadata_params": {"a": 1}}
+
+    result = serialize_database_object(database)
+
+    assert result is not None
+    assert result.extra == {"metadata_params": {"a": 1}}
+
+
+def test_serialize_database_object_parses_json_extra() -> None:
+    """Database extra JSON strings should be parsed into dicts."""
+    database = create_mock_database()
+    database.extra = '{"metadata_params": {"a": 1}}'
+
+    result = serialize_database_object(database)
+
+    assert result is not None
+    assert result.extra == {"metadata_params": {"a": 1}}
+
+
+def test_serialize_database_object_ignores_non_object_extra() -> None:
+    """Database extra must be dict-shaped after parsing."""
+    database = create_mock_database()
+    database.extra = []
+
+    result = serialize_database_object(database)
+
+    assert result is not None
+    assert result.extra is None
 
 
 @pytest.fixture
