@@ -42,6 +42,20 @@ from superset.views.base_api import BaseSupersetApi, statsd_metrics
 logger = logging.getLogger(__name__)
 
 
+def _get_json_body() -> dict[str, Any]:
+    """Return the current JSON request body when it is an object."""
+    body = request.get_json(silent=True)
+    return body if isinstance(body, dict) else {}
+
+
+def _get_string_list(body: dict[str, Any], key: str) -> list[str]:
+    """Return a list of strings from a JSON body field."""
+    value = body.get(key, [])
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
+
+
 class DatasourceRestApi(BaseSupersetApi):
     allow_browser_login = True
     class_permission_name = "Datasource"
@@ -366,7 +380,7 @@ class DatasourceRestApi(BaseSupersetApi):
 
     def _parse_validation_request(self) -> tuple[str, SqlExpressionType]:
         """Parse and validate request data. Raises ValueError on error."""
-        request_data = request.json or {}
+        request_data = _get_json_body()
         expression = request_data.get("expression")
         expression_type = request_data.get("expression_type", "where")
 
@@ -476,9 +490,9 @@ class DatasourceRestApi(BaseSupersetApi):
         except SupersetSecurityException as ex:
             return self.response(403, message=ex.message)
 
-        body = request.get_json(silent=True) or {}
-        selected_metrics = body.get("selected_metrics", [])
-        selected_dimensions = body.get("selected_dimensions", [])
+        body = _get_json_body()
+        selected_metrics = _get_string_list(body, "selected_metrics")
+        selected_dimensions = _get_string_list(body, "selected_dimensions")
 
         # Build a stable cache key from the datasource identity and the
         # (sorted) selection so that order differences don't cause cache misses.
