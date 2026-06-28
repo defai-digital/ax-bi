@@ -316,10 +316,11 @@ class DatabendConnectEngineSpec(BasicParametersMixin, DatabendEngineSpec):
         cls, parameters: BasicParametersType, *_args: dict[str, str] | None
     ) -> str:
         url_params = parameters.copy()
+        raw_query = url_params.get("query") or {}
+        query = raw_query.copy() if isinstance(raw_query, dict) else {}
         if url_params.get("encryption"):
-            query = parameters.get("query", {}).copy()
             query.update(cls.encryption_parameters)
-            url_params["query"] = query
+        url_params["query"] = query
         if not url_params.get("database"):
             url_params["database"] = "__default__"
         url_params.pop("encryption", None)
