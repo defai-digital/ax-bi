@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Optional
+from typing import cast, Optional
 
 import pytest
 from pytest_mock import MockerFixture
@@ -88,6 +88,13 @@ def test_build_sqlalchemy_uri() -> None:
     uri = DuckDBEngineSpec.build_sqlalchemy_uri(parameters)
     assert "duckdb:////path/to/duck.db" == uri
 
+    parameters = cast(
+        DuckDBParametersType,
+        {"database": "/path/to/duck.db", "query": "not a query mapping"},
+    )
+    uri = DuckDBEngineSpec.build_sqlalchemy_uri(parameters)
+    assert "duckdb:////path/to/duck.db" == uri
+
 
 def test_md_build_sqlalchemy_uri() -> None:
     """Test MotherDuckEngineSpec.build_sqlalchemy_uri"""
@@ -108,6 +115,17 @@ def test_md_build_sqlalchemy_uri() -> None:
 
     # Database and access_token provided
     parameters = DuckDBParametersType(database="my_db", access_token="token")  # noqa: S106
+    uri = MotherDuckEngineSpec.build_sqlalchemy_uri(parameters)
+    assert "duckdb:///md:my_db?motherduck_token=token" == uri
+
+    parameters = cast(
+        DuckDBParametersType,
+        {
+            "database": "my_db",
+            "access_token": "token",
+            "query": "not a query mapping",
+        },
+    )
     uri = MotherDuckEngineSpec.build_sqlalchemy_uri(parameters)
     assert "duckdb:///md:my_db?motherduck_token=token" == uri
 
