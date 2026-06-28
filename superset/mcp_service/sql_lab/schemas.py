@@ -26,6 +26,7 @@ from pydantic import (
     Field,
     field_validator,
     model_serializer,
+    ValidationInfo,
 )
 
 from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
@@ -284,6 +285,14 @@ class SaveSqlQueryResponse(_SchemaFieldNormalizer):
             "URL to open this saved query in SQL Lab (e.g., /sqllab?savedQueryId=42)"
         ),
     )
+
+    @field_validator("label", "sql", "description")
+    @classmethod
+    def sanitize_response_text(cls, v: str | None, info: ValidationInfo) -> str | None:
+        """Wrap saved query text fields before exposing them to LLM clients."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=(info.field_name,))
 
 
 class OpenSqlLabRequest(BaseModel):
