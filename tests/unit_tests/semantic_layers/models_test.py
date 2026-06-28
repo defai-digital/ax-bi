@@ -413,8 +413,9 @@ def test_semantic_view_implementation_tolerates_invalid_configuration(
 ) -> None:
     """Test that semantic view implementation handles invalid configuration."""
     layer = SemanticLayer()
-    layer.__dict__["implementation"] = MagicMock()
-    layer.implementation.get_semantic_view.return_value = MagicMock()
+    implementation = MagicMock()
+    implementation.get_semantic_view.return_value = MagicMock()
+    layer.__dict__["implementation"] = implementation
 
     view = SemanticView()
     view.name = "Orders View"
@@ -423,11 +424,11 @@ def test_semantic_view_implementation_tolerates_invalid_configuration(
 
     result = view.implementation
 
-    layer.implementation.get_semantic_view.assert_called_once_with(
+    implementation.get_semantic_view.assert_called_once_with(
         "Orders View",
         expected,
     )
-    assert result == layer.implementation.get_semantic_view.return_value
+    assert result == implementation.get_semantic_view.return_value
 
 
 def test_semantic_view_table_name() -> None:

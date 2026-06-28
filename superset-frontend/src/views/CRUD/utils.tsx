@@ -165,7 +165,7 @@ const createFetchResourceMethod =
 
     return {
       data,
-      totalCount: json?.count,
+      totalCount: json.count ?? data.length,
     };
   };
 

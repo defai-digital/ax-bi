@@ -577,6 +577,32 @@ test('createFetchRelated maps API related results to select options', async () =
   expect(handleError).not.toHaveBeenCalled();
 });
 
+test('createFetchRelated uses option count when API count is missing', async () => {
+  mockSupersetClientGet({
+    json: {
+      result: [
+        { text: 'Main database', value: 1 },
+        { text: 'Archive database', value: 2 },
+      ],
+    },
+  });
+  const handleError = jest.fn();
+
+  const result = await createFetchRelated('dataset', 'database', handleError)(
+    '',
+    0,
+    25,
+  );
+
+  expect(result).toEqual({
+    data: [
+      { label: 'Main database', value: 1 },
+      { label: 'Archive database', value: 2 },
+    ],
+    totalCount: 2,
+  });
+});
+
 test('createFetchRelated calls error handler and returns empty options on failure', async () => {
   const error = 'Unable to fetch related databases';
   jest.spyOn(SupersetClient, 'get').mockRejectedValue(error);
