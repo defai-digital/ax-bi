@@ -245,6 +245,34 @@ def test_create_redis_store_handles_url_with_username_and_password():
             assert call_kwargs["password"] == test_password
 
 
+def test_create_redis_store_decodes_percent_encoded_credentials():
+    """_create_redis_store decodes URL-encoded Redis ACL credentials."""
+    decoded_password = "p@ss/word"  # noqa: S105
+    store_config = {
+        "CACHE_REDIS_URL": "redis://user%40name:p%40ss%2Fword@redis.example.com:6379/0",
+    }
+
+    mock_redis_store = MagicMock()
+    mock_redis_client = MagicMock()
+
+    with patch(
+        "key_value.aio.stores.redis.RedisStore",
+        return_value=mock_redis_store,
+    ):
+        with patch(
+            "superset.mcp_service.storage.Redis",
+            return_value=mock_redis_client,
+        ) as mock_redis_class:
+            from superset.mcp_service.storage import _create_redis_store
+
+            result = _create_redis_store(store_config, wrap=False)
+
+            assert result is mock_redis_store
+            call_kwargs = mock_redis_class.call_args[1]
+            assert call_kwargs["username"] == "user@name"
+            assert call_kwargs["password"] == decoded_password
+
+
 def test_create_redis_store_handles_url_with_only_username():
     """_create_redis_store handles URL with username but no password."""
     store_config = {
