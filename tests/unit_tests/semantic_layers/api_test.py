@@ -446,6 +446,28 @@ def test_configuration_schema_unknown_type(
 
 
 @SEMANTIC_LAYERS_APP
+def test_configuration_schema_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /schema/configuration rejects non-object bodies cleanly."""
+    mocker.patch.dict(
+        "superset.semantic_layers.api.registry",
+        {},
+        clear=True,
+    )
+
+    response = client.post(
+        "/api/v1/semantic_layer/schema/configuration",
+        json=["not", "an", "object"],
+    )
+
+    assert response.status_code == 400
+    assert "Unknown type" in response.json["message"]
+
+
+@SEMANTIC_LAYERS_APP
 def test_runtime_schema(
     client: Any,
     full_api_access: None,
@@ -507,6 +529,39 @@ def test_runtime_schema_no_body(
 
     response = client.post(
         f"/api/v1/semantic_layer/{test_uuid}/schema/runtime",
+    )
+
+    assert response.status_code == 200
+    mock_cls.get_runtime_schema.assert_called_once_with({"account": "test"}, None)
+
+
+@SEMANTIC_LAYERS_APP
+def test_runtime_schema_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/schema/runtime ignores non-object JSON bodies."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.type = "snowflake"
+    mock_layer.implementation.configuration = {"account": "test"}
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+
+    mock_cls = MagicMock()
+    mock_cls.get_runtime_schema.return_value = {"type": "object"}
+
+    mocker.patch.dict(
+        "superset.semantic_layers.api.registry",
+        {"snowflake": mock_cls},
+        clear=True,
+    )
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/schema/runtime",
+        json=["not", "an", "object"],
     )
 
     assert response.status_code == 200
@@ -1718,6 +1773,17 @@ def test_post_semantic_view_empty_views(
 
 
 @SEMANTIC_LAYERS_APP
+def test_post_semantic_view_rejects_non_object_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Test POST / rejects non-object JSON bodies cleanly."""
+    response = client.post("/api/v1/semantic_view/", json=["not", "an", "object"])
+
+    assert response.status_code == 400
+
+
+@SEMANTIC_LAYERS_APP
 def test_post_semantic_view_validation_error(
     client: Any,
     full_api_access: None,
@@ -2130,6 +2196,31 @@ def test_get_views_not_found(
     )
 
     assert response.status_code == 404
+
+
+@SEMANTIC_LAYERS_APP
+def test_get_views_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/views ignores non-object JSON bodies."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.uuid = uuid_lib.uuid4()
+    mock_layer.implementation.get_semantic_views.return_value = []
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+    mock_dao.get_semantic_views.return_value = []
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/views",
+        json=["not", "an", "object"],
+    )
+
+    assert response.status_code == 200
+    mock_layer.implementation.get_semantic_views.assert_called_once_with({})
 
 
 @SEMANTIC_LAYERS_APP

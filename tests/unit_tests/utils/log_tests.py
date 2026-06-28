@@ -24,6 +24,7 @@ from flask import Flask
 from superset.utils import json
 from superset.utils.log import (
     AbstractEventLogger,
+    collect_request_payload,
     DBEventLogger,
     get_logger_from_status,
 )
@@ -112,6 +113,15 @@ def test_log_with_context_falls_back_for_exploded_scalar_records() -> None:
             "url_rule": "None",
         }
     ]
+
+
+def test_collect_request_payload_ignores_non_object_json() -> None:
+    app = Flask(__name__)
+
+    with app.test_request_context("/log?query=1", method="POST", json=["bad"]):
+        payload = collect_request_payload()
+
+    assert payload == {"path": "/log", "query": "1", "url_rule": "None"}
 
 
 @patch("superset.db")
