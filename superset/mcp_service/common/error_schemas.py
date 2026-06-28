@@ -29,6 +29,7 @@ from pydantic import (
     computed_field,
     ConfigDict,
     Field,
+    field_serializer,
     field_validator,
     model_validator,
 )
@@ -54,6 +55,11 @@ def sanitize_error_text(value: str | None) -> str | None:
     if value is None:
         return None
     return sanitize_for_llm_context(value, field_path=("error",))
+
+
+def sanitize_prompt_value(value: Any) -> Any:
+    """Wrap every string leaf in prompt-facing structured error context."""
+    return sanitize_for_llm_context(value, excluded_field_names=frozenset())
 
 
 class MCPResourceError(BaseModel):
@@ -147,6 +153,11 @@ class ColumnSuggestion(BaseModel):
     similarity_score: float = Field(..., description="Similarity score (0-1)")
     description: str | None = Field(None, description="Column description")
 
+    @field_serializer("name", "description")
+    def _serialize_prompt_text(self, value: str | None) -> str | None:
+        """Wrap suggested column text as untrusted LLM context when serialized."""
+        return sanitize_prompt_value(value)
+
 
 class ValidationError(BaseModel):
     """Individual validation error with context"""
@@ -158,6 +169,11 @@ class ValidationError(BaseModel):
     suggestions: List[ColumnSuggestion] = Field(
         default_factory=list, description="Suggested alternatives"
     )
+
+    @field_serializer("field", "provided_value", "message")
+    def _serialize_prompt_value(self, value: Any) -> Any:
+        """Wrap validation error values as untrusted LLM context when serialized."""
+        return sanitize_prompt_value(value)
 
 
 class DatasetContext(BaseModel):
@@ -180,6 +196,17 @@ class DatasetContext(BaseModel):
     available_metrics: List[Dict[str, Any]] = Field(
         default_factory=list, description="Available metrics with metadata"
     )
+
+    @field_serializer(
+        "table_name",
+        "schema_name",
+        "database_name",
+        "available_columns",
+        "available_metrics",
+    )
+    def _serialize_prompt_value(self, value: Any) -> Any:
+        """Wrap dataset metadata as untrusted LLM context when serialized."""
+        return sanitize_prompt_value(value)
 
 
 class ChartGenerationError(MCPBaseError):
