@@ -18,6 +18,7 @@
 import copy
 from typing import Any, cast
 
+import pytest
 import yaml
 from marshmallow.exceptions import ValidationError
 from pytest_mock import MockerFixture
@@ -337,6 +338,51 @@ def test_import_threads_overwrite_flag(mocker: MockerFixture, session: Session) 
         assert call.kwargs["overwrite"] is False
     for call in mocked_dash.call_args_list:
         assert call.kwargs["overwrite"] is False
+
+
+@pytest.mark.parametrize(
+    ("configs", "expected_message"),
+    [
+        (
+            {
+                "queries/missing_db.yaml": {
+                    "uuid": "e3e4f1f0-5c9d-4a4c-a4e4-0000000000aa",
+                    "database_uuid": "missing-db",
+                },
+            },
+            "Missing database reference 'missing-db' for queries/missing_db.yaml",
+        ),
+        (
+            {
+                "datasets/missing_db.yaml": {
+                    "uuid": "53d47c0c-c03d-47f0-b9ac-81225f808283",
+                    "database_uuid": "missing-db",
+                },
+            },
+            "Missing database reference 'missing-db' for datasets/missing_db.yaml",
+        ),
+        (
+            {
+                "charts/missing_dataset.yaml": {
+                    "uuid": "dbb287ec-5d29-11ed-9b6a-0242ac120002",
+                    "dataset_uuid": "missing-dataset",
+                },
+            },
+            "Missing dataset reference 'missing-dataset' "
+            "for charts/missing_dataset.yaml",
+        ),
+    ],
+)
+def test_import_reports_missing_asset_dependencies(
+    configs: dict[str, dict[str, str]],
+    expected_message: str,
+) -> None:
+    """Missing asset references should fail with a clear import error."""
+    from superset.commands.exceptions import ImportFailedError
+    from superset.commands.importers.v1.assets import ImportAssetsCommand
+
+    with pytest.raises(ImportFailedError, match=expected_message):
+        ImportAssetsCommand._import(configs)
 
 
 def test_prevent_overwrite_flags_existing_assets(
