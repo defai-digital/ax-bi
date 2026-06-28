@@ -321,6 +321,21 @@ def test_log_retention_post_vs_put_parity(mocker: MockerFixture) -> None:
     put_schema.load({"log_retention": 0})
 
 
+@pytest.mark.parametrize("payload", [[], "not an object", 1, None])
+@pytest.mark.parametrize(
+    "schema_class", [ReportSchedulePostSchema, ReportSchedulePutSchema]
+)
+def test_report_schemas_reject_non_object_payloads(
+    mocker: MockerFixture,
+    schema_class: type,
+    payload: object,
+) -> None:
+    mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
+
+    with pytest.raises(ValidationError):
+        schema_class().load(payload)
+
+
 def test_report_type_disallows_database(mocker: MockerFixture) -> None:
     mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
     schema = ReportSchedulePostSchema()

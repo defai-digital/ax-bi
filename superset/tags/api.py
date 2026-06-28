@@ -334,7 +334,6 @@ class TagRestApi(BaseSupersetModelRestApi):
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
-        item = request.json
         try:
             changed_model = UpdateTagCommand(pk, item).run()
             response = self.response(200, id=changed_model.id, result=item)

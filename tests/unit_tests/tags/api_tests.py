@@ -72,3 +72,29 @@ def test_add_objects_accepts_valid_tag_payload(
         ObjectType.dashboard.value, 1, ["alpha", "beta"]
     )
     command.run.assert_called_once_with()
+
+
+def test_update_uses_schema_normalized_payload(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Tag updates should pass schema-coerced values to the command layer."""
+    command_class = mocker.patch("superset.tags.api.UpdateTagCommand")
+    command = command_class.return_value
+    command.run.return_value.id = 10
+
+    response = client.put(
+        "/api/v1/tag/10",
+        json={"name": "owner", "objects_to_tag": [["dashboard", "7"]]},
+    )
+
+    assert response.status_code == 200
+    command_class.assert_called_once_with(
+        "10",
+        {
+            "name": "owner",
+            "objects_to_tag": [("dashboard", 7)],
+        },
+    )
+    command.run.assert_called_once_with()
