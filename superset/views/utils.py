@@ -137,7 +137,7 @@ def bootstrap_user_data(user: User, include_perms: bool = False) -> dict[str, An
             "userId": user.id,
             "isActive": user.is_active,
             "isAnonymous": user.is_anonymous,
-            "createdOn": user.created_on.isoformat(),
+            "createdOn": user.created_on.isoformat() if user.created_on else None,
             "email": user.email,
             "loginCount": user.login_count,
         }

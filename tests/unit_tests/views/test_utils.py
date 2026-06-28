@@ -28,6 +28,7 @@ from superset.models.slice import Slice
 from superset.utils import json
 from superset.views.utils import (
     add_sqllab_custom_filters,
+    bootstrap_user_data,
     get_dashboard_extra_filters,
     get_datasource_info,
     get_form_data,
@@ -82,6 +83,28 @@ def test_loads_request_json_requires_object() -> None:
     assert loads_request_json("null") == {}
     assert loads_request_json('"scalar"') == {}
     assert loads_request_json("not json") == {}
+
+
+def test_bootstrap_user_data_allows_missing_created_on() -> None:
+    """Partially populated users should still serialize for bootstrap data."""
+    user = MagicMock()
+    user.is_anonymous = False
+    user.username = "admin"
+    user.first_name = "Admin"
+    user.last_name = "User"
+    user.id = 1
+    user.is_active = True
+    user.created_on = None
+    user.email = "admin@example.com"
+    user.login_count = 5
+
+    with patch(
+        "superset.views.utils.security_manager.is_guest_user", return_value=False
+    ):
+        payload = bootstrap_user_data(user)
+
+    assert payload["createdOn"] is None
+    assert payload["username"] == "admin"
 
 
 def test_is_slice_in_container_handles_malformed_chart_meta() -> None:
