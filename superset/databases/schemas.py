@@ -321,9 +321,7 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
     )
 
     @pre_load
-    def build_sqlalchemy_uri(
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+    def build_sqlalchemy_uri(self, data: Any, **kwargs: Any) -> Any:
         """
         Build SQLAlchemy URI from separate parameters.
 
@@ -331,6 +329,9 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
         parameters (eg, username, password, host, etc.), instead of requiring
         the constructed SQLAlchemy URI to be passed.
         """
+        if not isinstance(data, dict):
+            return data
+
         parameters = data.pop("parameters", {})
         # TODO(AAfghahi) standardize engine.
         engine = (
@@ -386,15 +387,18 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
 
 def rename_encrypted_extra(
     self: Schema,
-    data: dict[str, Any],
+    data: Any,
     **kwargs: Any,
-) -> dict[str, Any]:
+) -> Any:
     """
     Rename ``encrypted_extra`` to ``masked_encrypted_extra``.
 
     PR #21248 changed the database schema for security reasons. This pre-loader keeps
     Superset backwards compatible with older clients.
     """
+    if not isinstance(data, dict):
+        return data
+
     if "encrypted_extra" in data:
         data["masked_encrypted_extra"] = data.pop("encrypted_extra")
     return data

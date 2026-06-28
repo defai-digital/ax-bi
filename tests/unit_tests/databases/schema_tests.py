@@ -352,6 +352,26 @@ def test_rename_encrypted_extra() -> None:
     }
 
 
+def test_rename_encrypted_extra_rejects_non_object_payload() -> None:
+    """Database schemas should reject non-object payloads without crashing."""
+    from superset.databases.schemas import DatabasePostSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        DatabasePostSchema().load(["encrypted_extra"])
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_database_parameters_schema_mixin_rejects_non_object_payload() -> None:
+    """Dynamic-form pre-loading should not crash on non-object payloads."""
+    from superset.databases.schemas import DatabaseValidateParametersSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        DatabaseValidateParametersSchema().load(["parameters"])
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
 def test_extra_validator_rejects_non_object_extra() -> None:
     """Database extra must decode to a JSON object."""
     from superset.databases.schemas import extra_validator
