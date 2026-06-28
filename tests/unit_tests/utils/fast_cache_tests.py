@@ -40,9 +40,10 @@ def test_set_fast_cache_disabled(mock_app: MagicMock) -> None:
 
     mock_app.config["FAST_CACHE_ENABLED"] = False
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client"
-    ) as mock_get_client:
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client") as mock_get_client,
+    ):
         set_fast_cache("test-key", '{"result":[]}')
         mock_get_client.assert_not_called()
 
@@ -54,8 +55,9 @@ def test_set_fast_cache_writes_to_redis(mock_app: MagicMock) -> None:
     mock_redis = MagicMock()
     mock_app.config["FAST_CACHE_ENABLED"] = True
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         set_fast_cache("abc123", '{"result":[{"data":[]}]}', timeout=3600)
         mock_redis.set.assert_called_once_with(
@@ -69,13 +71,12 @@ def test_set_fast_cache_uses_default_timeout(mock_app: MagicMock) -> None:
 
     mock_redis = MagicMock()
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         set_fast_cache("key1", '{"data":true}')
-        mock_redis.set.assert_called_once_with(
-            "fc:key1", '{"data":true}', ex=86400
-        )
+        mock_redis.set.assert_called_once_with("fc:key1", '{"data":true}', ex=86400)
 
 
 def test_set_fast_cache_empty_key(mock_app: MagicMock) -> None:
@@ -84,8 +85,9 @@ def test_set_fast_cache_empty_key(mock_app: MagicMock) -> None:
 
     mock_redis = MagicMock()
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         set_fast_cache("", '{"data":true}')
         mock_redis.set.assert_not_called()
@@ -95,8 +97,9 @@ def test_set_fast_cache_no_redis_client(mock_app: MagicMock) -> None:
     """When no Redis client is available, write should be silently skipped."""
     from superset.utils.fast_cache import set_fast_cache
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=None
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=None),
     ):
         # Should not raise
         set_fast_cache("key1", '{"data":true}')
@@ -109,8 +112,9 @@ def test_set_fast_cache_redis_error(mock_app: MagicMock) -> None:
     mock_redis = MagicMock()
     mock_redis.set.side_effect = ConnectionError("Redis down")
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         # Should not raise
         set_fast_cache("key1", '{"data":true}')
@@ -123,8 +127,9 @@ def test_get_fast_cache_hit(mock_app: MagicMock) -> None:
     mock_redis = MagicMock()
     mock_redis.get.return_value = b'{"result":[{"data":[]}]}'
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         result = get_fast_cache("abc123")
         assert result == '{"result":[{"data":[]}]}'
@@ -138,8 +143,9 @@ def test_get_fast_cache_miss(mock_app: MagicMock) -> None:
     mock_redis = MagicMock()
     mock_redis.get.return_value = None
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         result = get_fast_cache("missing-key")
         assert result is None
@@ -163,8 +169,9 @@ def test_get_fast_cache_string_value(mock_app: MagicMock) -> None:
     mock_redis = MagicMock()
     mock_redis.get.return_value = '{"result":[]}'
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         result = get_fast_cache("key1")
         assert result == '{"result":[]}'
@@ -172,22 +179,22 @@ def test_get_fast_cache_string_value(mock_app: MagicMock) -> None:
 
 def test_custom_key_prefix(mock_app: MagicMock) -> None:
     """Custom key prefixes should be applied correctly."""
-    from superset.utils.fast_cache import set_fast_cache, get_fast_cache
+    from superset.utils.fast_cache import get_fast_cache, set_fast_cache
 
     mock_redis = MagicMock()
     mock_app.config["FAST_CACHE_KEY_PREFIX"] = "custom:"
 
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         set_fast_cache("key1", '{"data":1}')
-        mock_redis.set.assert_called_once_with(
-            "custom:key1", '{"data":1}', ex=86400
-        )
+        mock_redis.set.assert_called_once_with("custom:key1", '{"data":1}', ex=86400)
 
     mock_redis.get.return_value = b'{"data":1}'
-    with patch("superset.utils.fast_cache.current_app", mock_app), patch(
-        "superset.utils.fast_cache._get_redis_client", return_value=mock_redis
+    with (
+        patch("superset.utils.fast_cache.current_app", mock_app),
+        patch("superset.utils.fast_cache._get_redis_client", return_value=mock_redis),
     ):
         get_fast_cache("key1")
         mock_redis.get.assert_called_with("custom:key1")

@@ -28,6 +28,7 @@ This module is intentionally simple and fire-and-forget: failures writing
 to the fast cache are logged but never propagate to the caller, so a Redis
 outage does not affect chart data responses.
 """
+
 from __future__ import annotations
 
 import logging
@@ -92,16 +93,12 @@ def set_fast_cache(
     full_key = f"{prefix}{key}"
 
     if timeout is None:
-        timeout = current_app.config.get(
-            "CACHE_DEFAULT_TIMEOUT", 86400
-        )
+        timeout = current_app.config.get("CACHE_DEFAULT_TIMEOUT", 86400)
 
     try:
         redis_client = _get_redis_client()
         if redis_client is None:
-            logger.debug(
-                "Fast cache: no Redis client available, skipping write"
-            )
+            logger.debug("Fast cache: no Redis client available, skipping write")
             return
 
         redis_client.set(full_key, json_str, ex=timeout)
@@ -112,9 +109,7 @@ def set_fast_cache(
             timeout,
         )
     except Exception:  # pylint: disable=broad-except
-        logger.warning(
-            "Fast cache: failed to write key %s", full_key, exc_info=True
-        )
+        logger.warning("Fast cache: failed to write key %s", full_key, exc_info=True)
 
 
 def get_fast_cache(key: str) -> str | None:
@@ -147,7 +142,5 @@ def get_fast_cache(key: str) -> str | None:
             return str(value)
         return None
     except Exception:  # pylint: disable=broad-except
-        logger.warning(
-            "Fast cache: failed to read key %s", full_key, exc_info=True
-        )
+        logger.warning("Fast cache: failed to read key %s", full_key, exc_info=True)
         return None

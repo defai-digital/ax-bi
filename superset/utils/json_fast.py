@@ -31,6 +31,7 @@ Usage::
 
     response_data = dumps_fast(payload)
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,6 @@ from typing import Any
 import numpy as np
 import orjson
 import pandas as pd
-from flask_babel.speaklater import LazyString
 
 from superset.utils.dates import datetime_to_epoch, EPOCH
 from superset.utils.json import base_json_conv

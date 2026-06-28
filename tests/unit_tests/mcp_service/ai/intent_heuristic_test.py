@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock
 
 from superset.mcp_service.ai.intent_heuristic import (
@@ -28,7 +27,6 @@ from superset.mcp_service.ai.intent_heuristic import (
     _find_time_column,
     heuristic_chart_config,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers to build mock datasets
@@ -232,8 +230,8 @@ class TestHeuristicChartConfig:
             metrics=[_make_metric("revenue")],
             main_dttm_col="order_date",
         )
-        config, chart_type, confidence, explanation, warnings = (
-            heuristic_chart_config("Show total revenue", ds, [])
+        config, chart_type, confidence, explanation, warnings = heuristic_chart_config(
+            "Show total revenue", ds, []
         )
         assert config is not None
         assert config["chart_type"] == "big_number"
@@ -292,9 +290,7 @@ class TestHeuristicChartConfig:
             main_dttm_col="dt",
             columns=[_make_col("dt", "TIMESTAMP", is_dttm=True)],
         )
-        config, _, _, _, _ = heuristic_chart_config(
-            "Show yearly trend", ds, []
-        )
+        config, _, _, _, _ = heuristic_chart_config("Show yearly trend", ds, [])
         assert config is not None
         assert config["time_grain"] == "P1Y"
 

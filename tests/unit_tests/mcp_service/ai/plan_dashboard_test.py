@@ -24,9 +24,6 @@ from collections.abc import Callable
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
-
-
 # ---------------------------------------------------------------------------
 # Decorator passthrough (same pattern as describe_dataset_test.py)
 # ---------------------------------------------------------------------------
@@ -146,9 +143,7 @@ class TestBuildChartIntentsHeuristic:
         assert "pie" in chart_types
 
     def test_kpi_intent(self) -> None:
-        intents = _build_chart_intents_heuristic(
-            "Show key KPI overview", self._ds()
-        )
+        intents = _build_chart_intents_heuristic("Show key KPI overview", self._ds())
         chart_types = [i.chart_type for i in intents]
         assert "big_number" in chart_types
 

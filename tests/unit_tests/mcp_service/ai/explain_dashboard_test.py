@@ -24,7 +24,6 @@ from collections.abc import Callable
 from typing import Any
 from unittest.mock import MagicMock
 
-
 # ---------------------------------------------------------------------------
 # Decorator passthrough
 # ---------------------------------------------------------------------------
@@ -197,7 +196,10 @@ class TestBuildFollowUpSuggestions:
             {"id": 1, "viz_type": "big_number_total"},
         ]
         suggestions = _build_follow_up_suggestions(charts)
-        assert any("more chart" in s.lower() or "comprehensive" in s.lower() for s in suggestions)
+        assert any(
+            "more chart" in s.lower() or "comprehensive" in s.lower()
+            for s in suggestions
+        )
 
     def test_no_big_number_suggestion_when_present(self) -> None:
         charts = [
@@ -228,4 +230,7 @@ class TestBuildFollowUpSuggestions:
         # Should suggest everything
         assert any("big number" in s.lower() for s in suggestions)
         assert any("table" in s.lower() for s in suggestions)
-        assert any("more chart" in s.lower() or "comprehensive" in s.lower() for s in suggestions)
+        assert any(
+            "more chart" in s.lower() or "comprehensive" in s.lower()
+            for s in suggestions
+        )

@@ -119,7 +119,7 @@
       },
       {
         "name": "SIMPLIFIED_NAV",
-        "default": false,
+        "default": true,
         "lifecycle": "development",
         "description": "Simplify navigation by relocating power-user destinations (e.g. SQL Lab) out of the primary nav bar into an \"Advanced\" group. Presentation-only; does not change routes or permissions. See ax-docs/ux-simplification-*."
       },
@@ -357,6 +357,13 @@
         "lifecycle": "stable",
         "description": "Enable factory reset CLI command",
         "category": "internal"
+      },
+      {
+        "name": "ENABLE_LOCAL_FILE_UPLOAD",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Enable the dedicated Upload Data page for zero-config file analytics. When enabled, users can drag-and-drop CSV/XLSX/Parquet files and the system auto-provisions a local DuckDB database \u2014 no DB connection needed.",
+        "category": "runtime_config"
       },
       {
         "name": "ENABLE_TEMPLATE_PROCESSING",
