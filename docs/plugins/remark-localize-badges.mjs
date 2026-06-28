@@ -213,16 +213,19 @@ async function downloadBadge(url, staticDir) {
       // docs build down with it. Set REMARK_BADGES_STRICT=true to opt back
       // into hard-fail-the-build behavior (e.g. for release builds where you
       // want to catch genuinely broken badge URLs).
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (process.env.REMARK_BADGES_STRICT === 'true') {
         throw new Error(
           `[remark-localize-badges] Failed to download badge: ${url}\n` +
-            `Error: ${error.message}\n` +
+            `Error: ${errorMessage}\n` +
             `Build cannot continue with broken badges (REMARK_BADGES_STRICT=true).`,
+          { cause: error },
         );
       }
       console.warn(
         `[remark-localize-badges] Could not localize ${url} ` +
-          `(${error.message}); falling back to remote URL.`,
+          `(${errorMessage}); falling back to remote URL.`,
       );
       badgeCache.set(url, url);
       return url;
