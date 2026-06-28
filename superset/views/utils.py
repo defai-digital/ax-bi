@@ -441,6 +441,9 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
     # do not apply filters if chart is not in filter's scope or chart is immune to the
     # filter.
     for filter_id, columns in default_filters.items():
+        if not isinstance(columns, dict):
+            continue
+
         filter_slice = db.session.query(Slice).filter_by(id=filter_id).one_or_none()
 
         filter_configs: list[dict[str, Any]] = []
@@ -451,13 +454,24 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
             )
 
         scopes_by_filter_field = filter_scopes.get(filter_id, {})
+        if not isinstance(scopes_by_filter_field, dict):
+            scopes_by_filter_field = {}
         for col, val in columns.items():
             if not val:
                 continue
 
             current_field_scopes = scopes_by_filter_field.get(col, {})
-            scoped_container_ids = current_field_scopes.get("scope", ["ROOT_ID"])
+            if not isinstance(current_field_scopes, dict):
+                current_field_scopes = {}
+            if "scope" in current_field_scopes:
+                scoped_container_ids = current_field_scopes["scope"]
+                if not isinstance(scoped_container_ids, list):
+                    scoped_container_ids = []
+            else:
+                scoped_container_ids = ["ROOT_ID"]
             immune_slice_ids = current_field_scopes.get("immune", [])
+            if not isinstance(immune_slice_ids, list):
+                immune_slice_ids = []
 
             for container_id in scoped_container_ids:
                 if slice_id not in immune_slice_ids and is_slice_in_container(

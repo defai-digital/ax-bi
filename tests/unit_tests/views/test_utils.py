@@ -399,3 +399,45 @@ def test_get_dashboard_extra_filters_ignores_stale_scope_layout_node() -> None:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
+
+
+def test_get_dashboard_extra_filters_ignores_non_object_default_filter_columns() -> (
+    None
+):
+    """Malformed default filter values should not abort dashboard loads."""
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "default_filters": json.dumps({"10": ["US"]}),
+                "filter_scopes": {"10": {"country": {"scope": ["ROOT_ID"]}}},
+            }
+        ),
+        position_json="{}",
+    )
+    dashboard.slices = [Slice(id=20)]
+
+    with patch("superset.views.utils.db") as mock_db:
+        _mock_dashboard_extra_filter_queries(mock_db, dashboard)
+
+        assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
+
+
+def test_get_dashboard_extra_filters_ignores_malformed_explicit_scope() -> None:
+    """Malformed explicit scopes should not apply filters broadly."""
+    dashboard = Dashboard(
+        id=1,
+        json_metadata=json.dumps(
+            {
+                "default_filters": json.dumps({"10": {"country": ["US"]}}),
+                "filter_scopes": {"10": {"country": {"scope": "ROOT_ID"}}},
+            }
+        ),
+        position_json="{}",
+    )
+    dashboard.slices = [Slice(id=20)]
+
+    with patch("superset.views.utils.db") as mock_db:
+        _mock_dashboard_extra_filter_queries(mock_db, dashboard)
+
+        assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
