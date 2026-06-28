@@ -255,7 +255,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         """
         Return the default catalog.
         """
-        if database.url_object.database is None:
+        if not database.url_object.database:
             return None
 
         return database.url_object.database.split("/")[0]

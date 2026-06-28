@@ -251,6 +251,12 @@ def test_get_default_catalog() -> None:
     )
     assert PrestoEngineSpec.get_default_catalog(database) == "hive"
 
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="presto://localhost:8080/",
+    )
+    assert PrestoEngineSpec.get_default_catalog(database) is None
+
 
 @pytest.mark.parametrize(
     "time_grain,expected_result",

@@ -308,6 +308,12 @@ def test_get_default_catalog() -> None:
     )
     assert SnowflakeEngineSpec.get_default_catalog(database) is None
 
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="snowflake://user:pass@account/",
+    )
+    assert SnowflakeEngineSpec.get_default_catalog(database) is None
+
 
 def test_mask_encrypted_extra() -> None:
     """
