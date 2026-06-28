@@ -2368,7 +2368,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         if database.extra:
             try:
                 extra = json.loads(database.extra)
-            except json.JSONDecodeError as ex:
+            except (TypeError, json.JSONDecodeError) as ex:
                 logger.error(ex, exc_info=True)
                 raise
             if not isinstance(extra, dict):
@@ -2399,7 +2399,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
             params.update(encrypted_extra)
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
             raise
 

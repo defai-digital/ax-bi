@@ -334,6 +334,33 @@ def test_quote_table() -> None:
     )
 
 
+@pytest.mark.parametrize("extra", ["not-valid-json", ["not-json"]])
+def test_get_extra_params_invalid_json(extra: object, mocker: MockerFixture) -> None:
+    """
+    Test that malformed extra parse errors are surfaced consistently.
+    """
+    database = mocker.MagicMock()
+    database.extra = extra
+
+    with pytest.raises((TypeError, ValueError)):
+        BaseEngineSpec.get_extra_params(database)
+
+
+@pytest.mark.parametrize("encrypted_extra", ["not-valid-json", ["not-json"]])
+def test_update_params_from_encrypted_extra_invalid_json(
+    encrypted_extra: object,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test that malformed encrypted_extra parse errors are surfaced consistently.
+    """
+    database = mocker.MagicMock()
+    database.encrypted_extra = encrypted_extra
+
+    with pytest.raises((TypeError, ValueError)):
+        BaseEngineSpec.update_params_from_encrypted_extra(database, {})
+
+
 def test_mask_encrypted_extra() -> None:
     """
     Test that the private key is masked when the database is edited.
