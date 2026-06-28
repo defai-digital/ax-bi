@@ -207,13 +207,23 @@ def test_compute_owner_list_no_owners_handle_none(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
 
 
-def test_update_chart_config_dataset_clears_non_object_query_context() -> None:
+@pytest.mark.parametrize(
+    "query_context",
+    [
+        "[]",
+        [],
+        {"datasource": {"id": 1, "type": "table"}},
+    ],
+)
+def test_update_chart_config_dataset_clears_non_object_query_context(
+    query_context: Any,
+) -> None:
     """
     Test that non-object chart query contexts are cleared during dataset remap.
     """
     config: dict[str, Any] = {
         "params": {},
-        "query_context": "[]",
+        "query_context": query_context,
     }
 
     update_chart_config_dataset(config, DATASET_INFO)

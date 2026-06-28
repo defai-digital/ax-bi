@@ -210,7 +210,7 @@ def update_chart_config_dataset(
     if "query_context" in config and config["query_context"] is not None:
         try:
             query_context = json.loads(config["query_context"])
-        except json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             config["query_context"] = None
             return config
 
