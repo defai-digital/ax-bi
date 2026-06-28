@@ -2089,24 +2089,26 @@ class SqlaTable(
         :return: True if there are call(s) to an `ExtraCache` method, False otherwise
         """
         templatable_statements: list[str] = []
-        if self.sql:
-            templatable_statements.append(self.sql)
-        if self.fetch_values_predicate:
-            templatable_statements.append(self.fetch_values_predicate)
+
+        def add_templatable_statement(statement: Any) -> None:
+            if isinstance(statement, str):
+                templatable_statements.append(statement)
+
+        add_templatable_statement(self.sql)
+        add_templatable_statement(self.fetch_values_predicate)
         extras = query_obj.get("extras", {})
-        if "where" in extras:
-            templatable_statements.append(extras["where"])
-        if "having" in extras:
-            templatable_statements.append(extras["having"])
+        if isinstance(extras, dict):
+            add_templatable_statement(extras.get("where"))
+            add_templatable_statement(extras.get("having"))
         if columns := query_obj.get("columns"):
             calculated_columns: dict[str, Any] = {
                 c.column_name: c.expression for c in self.columns if c.expression
             }
             for column_ in columns:
                 if utils.is_adhoc_column(column_):
-                    templatable_statements.append(column_["sqlExpression"])
+                    add_templatable_statement(column_.get("sqlExpression"))
                 elif isinstance(column_, str) and column_ in calculated_columns:
-                    templatable_statements.append(calculated_columns[column_])
+                    add_templatable_statement(calculated_columns[column_])
         if metrics := query_obj.get("metrics"):
             metrics_by_name: dict[str, Any] = {
                 m.metric_name: m.expression for m in self.metrics
@@ -2115,9 +2117,9 @@ class SqlaTable(
                 if utils.is_adhoc_metric(metric) and (
                     sql := metric.get("sqlExpression")
                 ):
-                    templatable_statements.append(sql)
+                    add_templatable_statement(sql)
                 elif isinstance(metric, str) and metric in metrics_by_name:
-                    templatable_statements.append(metrics_by_name[metric])
+                    add_templatable_statement(metrics_by_name[metric])
         if self.is_rls_supported:
             templatable_statements += [
                 f.clause for f in security_manager.get_rls_filters(self)

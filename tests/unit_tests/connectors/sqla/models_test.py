@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from typing import Any, cast
+
 import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
@@ -119,6 +121,25 @@ def _build_sqla_table_for_query(
         return_value=mocker.MagicMock(sql=sql, labels_expected=[]),
     )
     return sqla_table
+
+
+@pytest.mark.parametrize(
+    "query_obj",
+    [
+        {"extras": "where"},
+        {"extras": {"where": 1, "having": ["{{ current_username() }}"]}},
+        {"columns": [{"label": "bad_column", "sqlExpression": 1}]},
+        {"metrics": [{"expressionType": "SQL", "sqlExpression": 1}]},
+    ],
+)
+def test_extra_cache_key_detection_ignores_malformed_statements(
+    mocker: MockerFixture,
+    query_obj: dict[str, Any],
+) -> None:
+    mocker.patch("superset.connectors.sqla.models.security_manager.get_rls_filters")
+    table = SqlaTable(table_name="my_sqla_table", sql=None)
+
+    assert table.has_extra_cache_key_calls(cast(QueryObjectDict, query_obj)) is False
 
 
 def test_sqla_table_extra_dict_returns_object_extra() -> None:
