@@ -122,6 +122,66 @@ def test_post_with_uuid(
     assert database.uuid == UUID("7c1b7880-a59d-47cd-8bf1-f1eb8d2863cb")
 
 
+@pytest.mark.parametrize(
+    ("method", "url", "status_code"),
+    [
+        ("post", "/api/v1/database/", 422),
+        ("put", "/api/v1/database/1", 400),
+        ("post", "/api/v1/database/test_connection/", 400),
+        ("post", "/api/v1/database/1/validate_sql/", 400),
+    ],
+)
+def test_database_write_endpoints_reject_malformed_json(
+    client: Any,
+    full_api_access: None,
+    method: str,
+    url: str,
+    status_code: int,
+) -> None:
+    """Database write endpoints should reject malformed JSON consistently."""
+    response = getattr(client, method)(
+        url,
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == status_code
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
+def test_validate_parameters_rejects_malformed_json(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Database parameter validation should reject malformed JSON as a schema error."""
+    response = client.post(
+        "/api/v1/database/validate_parameters/",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 422
+    assert response.json == {
+        "errors": [
+            {
+                "message": "Invalid input type.",
+                "error_type": "INVALID_PAYLOAD_SCHEMA_ERROR",
+                "level": "error",
+                "extra": {
+                    "invalid": ["_schema"],
+                    "issue_codes": [
+                        {
+                            "code": 1020,
+                            "message": "Issue 1020 - The submitted payload"
+                            " has the incorrect schema.",
+                        }
+                    ],
+                },
+            }
+        ]
+    }
+
+
 def test_password_mask(
     mocker: MockerFixture,
     app: Any,

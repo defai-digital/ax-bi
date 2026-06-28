@@ -455,7 +455,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_422(message=error.messages)
@@ -555,7 +555,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1302,7 +1304,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = DatabaseTestConnectionSchema().load(request.json)
+            item = DatabaseTestConnectionSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1436,7 +1440,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            sql_request = ValidateSQLRequest().load(request.json)
+            sql_request = ValidateSQLRequest().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -2199,7 +2205,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            payload = DatabaseValidateParametersSchema().load(request.json)
+            payload = DatabaseValidateParametersSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as ex:
             errors = [
                 SupersetError(
