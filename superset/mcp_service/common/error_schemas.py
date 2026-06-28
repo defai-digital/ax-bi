@@ -118,6 +118,12 @@ class MCPBaseError(BaseModel):
         """Wrap the human-readable error message as untrusted LLM context data."""
         return sanitize_error_text(value)
 
+    @field_validator("details")
+    @classmethod
+    def _sanitize_details_for_llm(cls, value: str | None) -> str | None:
+        """Wrap detailed error text as untrusted LLM context data."""
+        return sanitize_error_text(value)
+
     @model_validator(mode="before")
     @classmethod
     def _compat_error_to_message(cls, data: Any) -> Any:
