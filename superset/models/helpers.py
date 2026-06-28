@@ -635,7 +635,9 @@ class AuditMixinNullable(AuditMixin):
         return self.changed_on_humanized
 
     @renders("changed_on")
-    def changed_on_dttm(self) -> float:
+    def changed_on_dttm(self) -> Optional[float]:
+        if not self.changed_on:
+            return None
         return datetime_to_epoch(self.changed_on)
 
     @renders("created_on")
@@ -644,10 +646,14 @@ class AuditMixinNullable(AuditMixin):
 
     @renders("changed_on")
     def changed_on_utc(self) -> str:
+        if not self.changed_on:
+            return ""
         # Convert naive datetime to UTC
         return self.changed_on.astimezone(pytz.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
-    def _format_time_humanized(self, timestamp: datetime) -> str:
+    def _format_time_humanized(self, timestamp: Optional[datetime]) -> str:
+        if not timestamp:
+            return ""
         locale = str(get_locale())
         time_diff = datetime.now() - timestamp
         # Skip activation for 'en' locale as it's humanize's default locale

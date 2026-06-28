@@ -3118,6 +3118,22 @@ def test_format_time_humanized_skips_activation_for_english(
     mock_activate.assert_not_called()
 
 
+def test_audit_mixin_nullable_handles_missing_timestamps() -> None:
+    from superset.models.helpers import AuditMixinNullable
+
+    instance = AuditMixinNullable()
+    instance.created_on = None
+    instance.changed_on = None
+
+    assert instance.created_on_humanized == ""
+    assert instance.changed_on_humanized == ""
+    assert instance.created_on_delta_humanized() == ""
+    assert instance.changed_on_delta_humanized() == ""
+    assert instance.changed_on_utc() == ""
+    assert instance.changed_on_dttm() is None
+    assert instance.modified() == '<span class="no-wrap"></span>'
+
+
 # -----------------------------------------------------------------------------
 # _process_sql_expression denylist gate (adhoc expression validation)
 # -----------------------------------------------------------------------------
