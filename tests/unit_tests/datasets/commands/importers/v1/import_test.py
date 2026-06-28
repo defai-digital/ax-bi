@@ -27,6 +27,7 @@ from urllib import request
 import pytest
 from flask import current_app
 from flask_appbuilder.security.sqla.models import Role, User
+from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
@@ -1033,6 +1034,32 @@ def test_import_dataset_column_datetime_format(
     sqla_table = import_dataset(dataset_config)
     for column in sqla_table.columns:
         assert column.datetime_format == "%Y-%m-%d"
+
+
+def test_import_dataset_schema_rejects_non_object_column() -> None:
+    """
+    Test dataset import validation rejects malformed column entries.
+    """
+    config = copy.deepcopy(dataset_fixture)
+    config["columns"] = ["not an object"]
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatasetSchema().load(config)
+
+    assert "columns" in exc_info.value.messages
+
+
+def test_import_dataset_schema_rejects_non_object_metric() -> None:
+    """
+    Test dataset import validation rejects malformed metric entries.
+    """
+    config = copy.deepcopy(dataset_fixture)
+    config["metrics"] = ["not an object"]
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatasetSchema().load(config)
+
+    assert "metrics" in exc_info.value.messages
 
 
 def test_import_dataset_without_owner_permission(
