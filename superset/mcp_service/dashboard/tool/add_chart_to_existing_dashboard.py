@@ -499,6 +499,8 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
                 current_layout = json.loads(dashboard.position_json or "{}")
             except (json.JSONDecodeError, TypeError):
                 current_layout = {}
+            if not isinstance(current_layout, dict):
+                current_layout = {}
 
             # Generate a unique ROW ID for the new row
             row_key = _find_next_row_position(current_layout)

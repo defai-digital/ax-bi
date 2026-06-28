@@ -39,6 +39,7 @@ from fastmcp import Client
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.chart.chart_utils import DatasetValidationResult
+from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -295,6 +296,48 @@ async def test_successful_add(
     assert "/superset/dashboard/1/" in content["dashboard_url"]
     assert content["position"] is not None
     assert "chart_key" in content["position"]
+
+
+@patch("superset.commands.dashboard.update.UpdateDashboardCommand")
+@patch("superset.db.session.get")
+@patch("superset.security_manager.raise_for_ownership")
+@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@pytest.mark.asyncio
+async def test_non_object_position_json_falls_back_to_empty_layout(
+    mock_find_by_id: Mock,
+    mock_raise_for_ownership: Mock,
+    mock_session_get: Mock,
+    mock_update_cmd_cls: Mock,
+    mcp_server: object,
+) -> None:
+    """Valid but non-object dashboard layout JSON should not crash placement."""
+    chart = _mock_chart(id=10)
+    dashboard = _mock_dashboard(id=1)
+    dashboard.position_json = "[]"
+    updated_dashboard = _mock_dashboard(id=1, slices=[chart])
+
+    mock_find_by_id.side_effect = [dashboard, updated_dashboard]
+    mock_raise_for_ownership.return_value = None
+    mock_session_get.return_value = chart
+
+    mock_update_cmd = Mock()
+    mock_update_cmd.run.return_value = updated_dashboard
+    mock_update_cmd_cls.return_value = mock_update_cmd
+
+    async with Client(mcp_server) as client:
+        result = await client.call_tool(
+            "add_chart_to_existing_dashboard",
+            {"request": {"dashboard_id": 1, "chart_id": 10}},
+        )
+
+    content = result.structured_content
+    assert content["error"] is None
+    assert content["position"] is not None
+
+    update_payload = mock_update_cmd_cls.call_args.args[1]
+    position_json = json.loads(update_payload["position_json"])
+    assert isinstance(position_json, dict)
+    assert content["position"]["chart_key"] in position_json
 
 
 def test_empty_target_tab_rejected_by_schema() -> None:
