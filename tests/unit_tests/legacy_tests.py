@@ -87,3 +87,19 @@ def test_update_time_range_granularity_sqla_with_feature_flag() -> None:
     form_data = copy.deepcopy(original_form_data)
     update_time_range(form_data)
     assert form_data["time_range"] == "No filter"
+
+
+def test_update_time_range_ignores_malformed_adhoc_filter_entries() -> None:
+    """
+    Malformed adhoc filter entries do not block legacy time range normalization.
+    """
+    form_data: dict[str, Any] = copy.deepcopy(original_form_data)
+    form_data["adhoc_filters"] = [
+        "not a filter",
+        None,
+        *form_data["adhoc_filters"],
+    ]
+
+    update_time_range(form_data)
+
+    assert form_data["time_range"] == "No filter"
