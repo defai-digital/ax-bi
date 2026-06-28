@@ -567,6 +567,20 @@ class FileUploadResult(BaseModel):
     )
     error: str | None = Field(None, description="Error message if upload failed")
 
+    @field_validator("filename")
+    @classmethod
+    def sanitize_filename(cls, v: str) -> str:
+        """Escape delimiter tokens in echoed filenames before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap per-file upload error text before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
+
 
 class UploadFilesResponse(BaseModel):
     """Response schema for upload_files batch upload."""
