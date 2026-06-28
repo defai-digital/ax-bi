@@ -167,6 +167,19 @@ def test_query_columns_ignores_non_list_extra_columns() -> None:
     assert query.columns == []
 
 
+def test_query_to_dict_handles_missing_status() -> None:
+    query = Query(
+        id=1,
+        client_id="client-1",
+        database=MagicMock(database_name="examples"),
+        database_id=1,
+        status=None,
+        user=None,
+    )
+
+    assert query.to_dict()["state"] == "pending"
+
+
 def test_table_schema_to_dict_allows_null_description() -> None:
     """TableSchema serialization should tolerate a null description."""
     table_schema = TableSchema(id=1, description=None)

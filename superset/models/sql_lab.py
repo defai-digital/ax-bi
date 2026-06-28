@@ -201,7 +201,7 @@ class Query(
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "changed_on": self.changed_on.isoformat(),
+            "changed_on": self.changed_on.isoformat() if self.changed_on else None,
             "dbId": self.database_id,
             "db": self.database.database_name if self.database else None,
             "endDttm": self.end_time,
@@ -220,7 +220,7 @@ class Query(
             "sql": self.sql,
             "sqlEditorId": self.sql_editor_id,
             "startDttm": self.start_time,
-            "state": self.status.lower(),
+            "state": (self.status or QueryStatus.PENDING).lower(),
             "tab": self.tab_name,
             "tempSchema": self.tmp_schema_name,
             "tempTable": self.tmp_table_name,
