@@ -65,8 +65,8 @@ class ExternalMetadataSchema(Schema):
             catalog_name=data.get("catalog_name"),
             schema_name=data.get("schema_name", ""),
             table_name=data["table_name"],
-            normalize_columns=data["normalize_columns"],
-            always_filter_main_dttm=data["always_filter_main_dttm"],
+            normalize_columns=data.get("normalize_columns", False),
+            always_filter_main_dttm=data.get("always_filter_main_dttm", False),
         )
 
 
