@@ -112,6 +112,14 @@ def test_get_schema_from_engine_params() -> None:
         is None
     )
 
+    assert (
+        PrestoEngineSpec.get_schema_from_engine_params(
+            make_url("presto://localhost:8080"),
+            {},
+        )
+        is None
+    )
+
 
 @mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
 @pytest.mark.parametrize(

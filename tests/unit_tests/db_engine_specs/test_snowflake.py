@@ -206,6 +206,14 @@ def test_get_schema_from_engine_params() -> None:
         is None
     )
 
+    assert (
+        SnowflakeEngineSpec.get_schema_from_engine_params(
+            make_url("snowflake://user:pass@account"),
+            {},
+        )
+        is None
+    )
+
 
 def test_adjust_engine_params_fully_qualified() -> None:
     """
@@ -293,6 +301,12 @@ def test_get_default_catalog() -> None:
         sqlalchemy_uri="snowflake://user:pass@account/database_name/default",
     )
     assert SnowflakeEngineSpec.get_default_catalog(database) == "database_name"
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="snowflake://user:pass@account",
+    )
+    assert SnowflakeEngineSpec.get_default_catalog(database) is None
 
 
 def test_mask_encrypted_extra() -> None:

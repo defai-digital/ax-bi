@@ -240,6 +240,9 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         """
         Return the configured schema.
         """
+        if not sqlalchemy_uri.database:
+            return None
+
         database = sqlalchemy_uri.database.strip("/")
 
         if "/" not in database:
@@ -248,10 +251,13 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return parse.unquote(database.split("/")[1])
 
     @classmethod
-    def get_default_catalog(cls, database: "Database") -> str:
+    def get_default_catalog(cls, database: "Database") -> Optional[str]:
         """
         Return the default catalog.
         """
+        if database.url_object.database is None:
+            return None
+
         return database.url_object.database.split("/")[0]
 
     @classmethod
