@@ -20,6 +20,7 @@ import logging
 from typing import Callable, Optional
 
 from flask import current_app as app
+from marshmallow import ValidationError
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
@@ -42,6 +43,45 @@ class SlackChannelTypes(StrEnum):
 
 class SlackClientError(Exception):
     pass
+
+
+def _matches_channel_type(
+    channel: SlackChannelSchema,
+    channel_type: SlackChannelTypes,
+) -> bool:
+    is_private = channel.get("is_private")
+    if not isinstance(is_private, bool):
+        return False
+
+    if channel_type == SlackChannelTypes.PUBLIC:
+        return not is_private
+    if channel_type == SlackChannelTypes.PRIVATE:
+        return is_private
+    return False
+
+
+def _matches_channel_search(
+    channel: SlackChannelSchema,
+    search_terms: list[str],
+    exact_match: bool,
+) -> bool:
+    name = channel.get("name")
+    channel_id = channel.get("id")
+    if not isinstance(name, str) or not isinstance(channel_id, str):
+        return False
+
+    channel_values = (name.lower(), channel_id.lower())
+    if exact_match:
+        return any(
+            search_term == channel_value
+            for search_term in search_terms
+            for channel_value in channel_values
+        )
+    return any(
+        search_term in channel_value
+        for search_term in search_terms
+        for channel_value in channel_values
+    )
 
 
 def get_slack_client() -> WebClient:
@@ -91,8 +131,22 @@ def get_channels() -> list[SlackChannelSchema]:
             response = client.conversations_list(
                 limit=999, cursor=cursor, exclude_archived=True, **extra_params
             )
-            page_channels = response.data["channels"]
-            channels.extend(channel_schema.load(channel) for channel in page_channels)
+            response_data = response.data
+            page_channels = response_data.get("channels", [])
+            if not isinstance(page_channels, list):
+                raise SlackClientError("Slack API returned malformed channels payload")
+
+            for channel in page_channels:
+                if not isinstance(channel, dict):
+                    logger.warning("Skipping malformed Slack channel entry")
+                    continue
+                try:
+                    channels.append(channel_schema.load(channel))
+                except ValidationError:
+                    logger.warning(
+                        "Skipping malformed Slack channel entry",
+                        exc_info=True,
+                    )
 
             logger.debug(
                 "Fetched page %d: %d channels (total: %d)",
@@ -101,7 +155,7 @@ def get_channels() -> list[SlackChannelSchema]:
                 len(channels),
             )
 
-            response_metadata = response.data.get("response_metadata") or {}
+            response_metadata = response_data.get("response_metadata") or {}
             cursor = (
                 response_metadata.get("next_cursor")
                 if isinstance(response_metadata, dict)
@@ -158,9 +212,19 @@ def get_channels_with_search(
     if types and not len(types) == len(SlackChannelTypes):
         conditions: list[Callable[[SlackChannelSchema], bool]] = []
         if SlackChannelTypes.PUBLIC in types:
-            conditions.append(lambda channel: not channel["is_private"])
+            conditions.append(
+                lambda channel: _matches_channel_type(
+                    channel,
+                    SlackChannelTypes.PUBLIC,
+                )
+            )
         if SlackChannelTypes.PRIVATE in types:
-            conditions.append(lambda channel: channel["is_private"])
+            conditions.append(
+                lambda channel: _matches_channel_type(
+                    channel,
+                    SlackChannelTypes.PRIVATE,
+                )
+            )
 
         channels = [
             channel for channel in channels if any(cond(channel) for cond in conditions)
@@ -168,22 +232,13 @@ def get_channels_with_search(
 
     # The search string can be multiple channels separated by commas
     if search_string:
-        search_array = recipients_string_to_list(search_string)
+        search_array = [
+            search.lower() for search in recipients_string_to_list(search_string)
+        ]
         channels = [
             channel
             for channel in channels
-            if any(
-                (
-                    search.lower() == channel["name"].lower()
-                    or search.lower() == channel["id"].lower()
-                    if exact_match
-                    else (
-                        search.lower() in channel["name"].lower()
-                        or search.lower() in channel["id"].lower()
-                    )
-                )
-                for search in search_array
-            )
+            if _matches_channel_search(channel, search_array, exact_match)
         ]
     return channels
 

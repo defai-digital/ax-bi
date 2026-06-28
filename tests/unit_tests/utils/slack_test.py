@@ -131,6 +131,27 @@ class TestGetChannelsWithSearch:
             {"name": "random", "id": "C67890"},
         ]
 
+    def test_search_skips_malformed_channel_entries(self, mocker):
+        mock_data = {
+            "channels": [
+                {"name": "general", "id": "C12345"},
+                {"name": "missing-id"},
+                {"id": "C67890"},
+                {"name": ["bad-name"], "id": "CBAD"},
+                "bad-channel",
+            ],
+            "response_metadata": {"next_cursor": None},
+        }
+
+        mock_response_instance = MockResponse(mock_data)
+        mock_client = mocker.Mock()
+        mock_client.conversations_list.return_value = mock_response_instance
+        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+
+        result = get_channels_with_search(search_string="general", exact_match=True)
+
+        assert result == [{"name": "general", "id": "C12345"}]
+
     def test_handle_slack_client_error_listing_channels(self, mocker):
         from slack_sdk.errors import SlackApiError
 
@@ -190,6 +211,40 @@ The server responded with: missing scope: channels:read"""
 
         result = get_channels_with_search(types=types)
         assert {channel["id"] for channel in result} == expected_channel_ids
+
+    def test_filter_channels_by_type_skips_missing_privacy_flag(self, mocker):
+        mock_data = {
+            "channels": [
+                {
+                    "id": "public_channel_id",
+                    "name": "open",
+                    "is_member": False,
+                    "is_private": False,
+                },
+                {
+                    "id": "missing_privacy_channel_id",
+                    "name": "unknown",
+                    "is_member": False,
+                },
+            ],
+            "response_metadata": {"next_cursor": None},
+        }
+
+        mock_response_instance = MockResponse(mock_data)
+        mock_client = mocker.Mock()
+        mock_client.conversations_list.return_value = mock_response_instance
+        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+
+        result = get_channels_with_search(types=[SlackChannelTypes.PUBLIC])
+
+        assert result == [
+            {
+                "id": "public_channel_id",
+                "name": "open",
+                "is_member": False,
+                "is_private": False,
+            }
+        ]
 
     def test_handle_pagination_multiple_pages(self, mocker):
         mock_data_page1 = {
