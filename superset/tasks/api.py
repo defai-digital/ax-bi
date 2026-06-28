@@ -22,6 +22,7 @@ from uuid import UUID
 from flask import Response
 from flask_appbuilder.api import expose, protect, safe
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from marshmallow import ValidationError
 
 from superset.commands.tasks.cancel import CancelTaskCommand
 from superset.commands.tasks.exceptions import (
@@ -340,6 +341,8 @@ class TaskRestApi(BaseSupersetModelRestApi):
                 "Error cancelling task %s: %s", task_uuid_str, str(ex), exc_info=True
             )
             return self.response_422(message=str(ex))
+        except ValidationError as ex:
+            return self.response_400(message=ex.messages)
         except (ValueError, TypeError):
             return self.response_404()
 
