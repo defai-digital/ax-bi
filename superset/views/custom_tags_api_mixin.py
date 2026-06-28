@@ -97,8 +97,11 @@ class CustomTagsOptimizationMixin:
         Called by FAB before sending the list response. This ensures the frontend
         always receives 'tags' regardless of backend optimization config.
         """
-        if self._custom_tags_only and "result" in data:
-            for item in data["result"]:
+        result = data.get("result")
+        if self._custom_tags_only and isinstance(result, list):
+            for item in result:
+                if not isinstance(item, dict):
+                    continue
                 if "custom_tags" in item:
                     item["tags"] = item.pop("custom_tags")
 
