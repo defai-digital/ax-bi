@@ -93,7 +93,7 @@ def get_mcp_service_url() -> str:
         # Check for explicit MCP_SERVICE_URL first (allows override)
         mcp_service_url = get_mcp_service_url_config()
         if mcp_service_url:
-            return mcp_service_url
+            return str(mcp_service_url).rstrip("/")
 
         # In production, MCP service is accessed via main URL with /mcp prefix
         # WEBDRIVER_BASEURL_USER_FRIENDLY is the user-facing URL for the instance

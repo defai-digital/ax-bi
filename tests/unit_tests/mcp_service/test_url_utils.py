@@ -101,6 +101,18 @@ def test_get_mcp_service_url_prefers_explicit_override(
     assert get_mcp_service_url() == "https://mcp.example"
 
 
+def test_get_mcp_service_url_normalizes_explicit_override(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_mcp_service_url_config",
+        lambda: "https://mcp.example/",
+    )
+
+    assert get_mcp_service_url() == "https://mcp.example"
+
+
 def test_get_mcp_service_url_uses_public_superset_url_for_remote_host(
     monkeypatch: pytest.MonkeyPatch,
 ):
