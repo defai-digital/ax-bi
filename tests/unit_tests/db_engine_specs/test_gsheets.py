@@ -17,7 +17,7 @@
 
 # pylint: disable=import-outside-toplevel, invalid-name, line-too-long
 
-from typing import Any, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -1140,3 +1140,36 @@ def test_validate_parameters_skips_oauth2_connections_with_masked_encrypted_extr
 
     assert errors == []
     conn.execute.assert_not_called()
+
+
+@pytest.mark.parametrize("masked_encrypted_extra", ["[]", "{", ["not-json"]])
+def test_validate_parameters_ignores_malformed_masked_encrypted_extra(
+    mocker: MockerFixture,
+    masked_encrypted_extra: object,
+) -> None:
+    """Malformed masked encrypted extra should not break validation."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g.user.email = "admin@example.org"
+
+    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    conn = create_engine.return_value.connect.return_value
+    results = conn.execute.return_value
+    results.fetchall.return_value = []
+
+    properties = {
+        "parameters": {
+            "service_account_info": "",
+            "catalog": {},
+        },
+        "catalog": {
+            "sheet1": "https://docs.google.com/spreadsheets/d/1/edit",
+        },
+        "masked_encrypted_extra": masked_encrypted_extra,
+    }
+
+    errors = GSheetsEngineSpec.validate_parameters(cast(Any, properties))
+
+    assert errors == []
+    conn.execute.assert_called_once()

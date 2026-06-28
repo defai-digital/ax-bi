@@ -82,7 +82,7 @@ class ValidateDatabaseParametersCommand(BaseCommand):
             )
         try:
             encrypted_extra = json.loads(serialized_encrypted_extra)
-        except json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
             encrypted_extra = {}
 
         # try to connect
