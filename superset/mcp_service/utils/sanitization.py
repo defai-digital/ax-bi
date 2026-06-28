@@ -299,8 +299,7 @@ def _remove_dangerous_unicode(value: str) -> str:
     SQL drivers.
     """
     return re.sub(
-        r"[\u200B-\u200D\uFEFF\u0000-\u0008\u000B\u000C\u000E-\u001F"
-        r"\u0085\u2028\u2029]",
+        r"[\u200B-\u200D\uFEFF\u0000-\u001F\u007F\u0085\u2028\u2029]",
         "",
         value,
     )

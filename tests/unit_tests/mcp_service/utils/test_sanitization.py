@@ -335,6 +335,15 @@ def test_sanitize_user_input_blocks_zero_width_javascript_scheme():
         sanitize_user_input("java\u200bscript:alert(1)", "test")
 
 
+@pytest.mark.parametrize("control_char", ["\n", "\r", "\t"])
+def test_sanitize_user_input_blocks_c0_split_javascript_scheme(
+    control_char: str,
+) -> None:
+    """C0 controls must not split a forbidden URL scheme."""
+    with pytest.raises(ValueError, match="malicious URL scheme"):
+        sanitize_user_input(f"java{control_char}script:alert(1)", "test")
+
+
 def test_sanitize_user_input_blocks_zero_width_sql_keyword_when_enabled():
     """Zero-width characters must not split forbidden SQL keywords."""
     with pytest.raises(ValueError, match="unsafe SQL keywords"):
