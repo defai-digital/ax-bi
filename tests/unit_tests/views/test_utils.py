@@ -19,15 +19,17 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import msgpack
 import pytest
 from flask import current_app
 
 from superset.common.db_query_status import QueryStatus
-from superset.exceptions import SupersetException
+from superset.exceptions import SerializationError, SupersetException
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.utils import json
 from superset.views.utils import (
+    _deserialize_results_payload,
     add_sqllab_custom_filters,
     apply_display_max_row_limit,
     bootstrap_user_data,
@@ -85,6 +87,27 @@ def test_loads_request_json_requires_object() -> None:
     assert loads_request_json("null") == {}
     assert loads_request_json('"scalar"') == {}
     assert loads_request_json("not json") == {}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"selected_columns": []},
+        {"data": b"not-arrow", "selected_columns": []},
+        {"data": b"", "selected_columns": "not-columns"},
+        {"data": b"", "selected_columns": ["not-a-column"]},
+    ],
+)
+def test_deserialize_results_payload_rejects_malformed_msgpack_payloads(
+    payload: object,
+) -> None:
+    """Malformed msgpack result payloads should raise SerializationError."""
+    serialized_payload = msgpack.packb(payload)
+    query = MagicMock()
+
+    with pytest.raises(SerializationError):
+        _deserialize_results_payload(serialized_payload, query, use_msgpack=True)
 
 
 def test_bootstrap_user_data_allows_missing_created_on() -> None:

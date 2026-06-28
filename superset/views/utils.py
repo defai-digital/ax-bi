@@ -598,25 +598,44 @@ def _deserialize_results_payload(
         with stats_timing(
             "sqllab.query.results_backend_msgpack_deserialize", stats_logger
         ):
-            ds_payload = msgpack.loads(payload, raw=False)
+            try:
+                ds_payload = msgpack.loads(payload, raw=False)
+            except (
+                msgpack.exceptions.ExtraData,
+                msgpack.exceptions.FormatError,
+                msgpack.exceptions.StackError,
+                TypeError,
+                ValueError,
+            ) as ex:
+                raise SerializationError("Unable to deserialize payload") from ex
+
+        if not isinstance(ds_payload, dict):
+            raise SerializationError("Unexpected results payload")
+
+        data = ds_payload.get("data")
+        selected_columns = ds_payload.get("selected_columns")
+        if not isinstance(data, bytes) or not isinstance(selected_columns, list):
+            raise SerializationError("Unexpected results payload")
+        if not all(isinstance(column, dict) for column in selected_columns):
+            raise SerializationError("Unexpected results payload")
 
         with stats_timing("sqllab.query.results_backend_pa_deserialize", stats_logger):
             try:
-                reader = pa.BufferReader(ds_payload["data"])
+                reader = pa.BufferReader(data)
                 pa_table = pa.ipc.open_stream(reader).read_all()
-            except pa.ArrowSerializationError as ex:
+            except (pa.ArrowException, TypeError, ValueError) as ex:
                 raise SerializationError("Unable to deserialize table") from ex
 
         df = result_set.SupersetResultSet.convert_table_to_df(pa_table)
         ds_payload["data"] = dataframe.df_to_records(df) or []
 
-        for column in ds_payload["selected_columns"]:
+        for column in selected_columns:
             if "name" in column:
                 column["column_name"] = column.get("name")
 
         db_engine_spec = query.database.db_engine_spec
         all_columns, data, expanded_columns = db_engine_spec.expand_data(
-            ds_payload["selected_columns"], ds_payload["data"]
+            selected_columns, ds_payload["data"]
         )
         ds_payload.update(
             {"data": data, "columns": all_columns, "expanded_columns": expanded_columns}
