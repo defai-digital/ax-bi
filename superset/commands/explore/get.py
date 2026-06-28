@@ -91,11 +91,19 @@ class GetExploreCommand(BaseCommand, ABC):
             permalink_value = command.run()
             if not permalink_value:
                 raise ExplorePermalinkGetFailedError()
-            state = permalink_value["state"]
-            initial_form_data = state["formData"]
+            state = permalink_value.get("state")
+            if not isinstance(state, dict):
+                raise ExplorePermalinkGetFailedError()
+            form_data = state.get("formData")
+            if not isinstance(form_data, dict):
+                raise ExplorePermalinkGetFailedError()
+            initial_form_data = form_data
             url_params = state.get("urlParams")
             if url_params:
-                initial_form_data["url_params"] = dict(url_params)
+                try:
+                    initial_form_data["url_params"] = dict(url_params)
+                except (TypeError, ValueError) as ex:
+                    raise ExplorePermalinkGetFailedError() from ex
             permalink_chart_state = state.get("chartState")
         elif self._form_data_key:
             parameters = FormDataCommandParameters(key=self._form_data_key)
