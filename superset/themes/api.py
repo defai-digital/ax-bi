@@ -323,19 +323,18 @@ class ThemeRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            if not request.json:
+            body = request.get_json(cache=True, silent=True)
+            if not body:
                 return self.response_400(message="Request body is required")
-            if not isinstance(request.json, dict):
+            if not isinstance(body, dict):
                 return self.response_400(message="Request body must be a JSON object")
 
             # Log the incoming request for debugging
-            logger.debug("PUT request data for theme %s: %s", pk, request.json)
+            logger.debug("PUT request data for theme %s: %s", pk, body)
 
             # Filter out read-only fields that shouldn't be in the schema
             filtered_data = {
-                k: v
-                for k, v in request.json.items()
-                if k in ["theme_name", "json_data"]
+                k: v for k, v in body.items() if k in ["theme_name", "json_data"]
             }
 
             item = self.edit_model_schema.load(filtered_data)
@@ -398,11 +397,12 @@ class ThemeRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            if not request.json:
+            body = request.get_json(cache=True, silent=True)
+            if not body:
                 return self.response_400(message="Request body is required")
 
-            logger.debug("POST request data for new theme: %s", request.json)
-            item = self.add_model_schema.load(request.json)
+            logger.debug("POST request data for new theme: %s", body)
+            item = self.add_model_schema.load(body)
         except ValidationError as error:
             logger.exception("Validation error in POST /theme: %s", error.messages)
             return self.response_400(message=error.messages)
