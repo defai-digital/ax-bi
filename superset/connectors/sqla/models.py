@@ -854,14 +854,19 @@ class AnnotationDatasource(BaseDatasource):
 
     def query(self, query_obj: QueryObjectDict) -> QueryResult:
         error_message = None
-        qry = db.session.query(Annotation)
-        qry = qry.filter(Annotation.layer_id == query_obj["filter"][0]["val"])
-        if query_obj["from_dttm"]:
-            qry = qry.filter(Annotation.start_dttm >= query_obj["from_dttm"])
-        if query_obj["to_dttm"]:
-            qry = qry.filter(Annotation.end_dttm <= query_obj["to_dttm"])
         status = QueryStatus.SUCCESS
         try:
+            filters = query_obj.get("filter") or []
+            first_filter = filters[0] if isinstance(filters, list) and filters else None
+            if not isinstance(first_filter, dict) or "val" not in first_filter:
+                raise KeyError("filter[0].val")
+
+            qry = db.session.query(Annotation)
+            qry = qry.filter(Annotation.layer_id == first_filter["val"])
+            if query_obj.get("from_dttm"):
+                qry = qry.filter(Annotation.start_dttm >= query_obj["from_dttm"])
+            if query_obj.get("to_dttm"):
+                qry = qry.filter(Annotation.end_dttm <= query_obj["to_dttm"])
             with db.engine.connect() as con:
                 df = pd.read_sql_query(qry.statement, con)
         except Exception as ex:  # pylint: disable=broad-except
