@@ -104,7 +104,9 @@ def import_database(  # noqa: C901
             )
             config["encrypted_extra"] = json.dumps(revealed)
         else:
-            config["encrypted_extra"] = masked_encrypted_extra
+            config["encrypted_extra"] = json.dumps(
+                _load_json_object(masked_encrypted_extra)
+            )
 
     ssh_tunnel_config = config.pop("ssh_tunnel", None)
 

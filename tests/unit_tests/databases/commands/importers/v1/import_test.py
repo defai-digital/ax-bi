@@ -289,6 +289,34 @@ def test_import_database_with_masked_encrypted_extra_new_db(
     )
 
 
+def test_import_database_with_non_object_masked_encrypted_extra_new_db(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """
+    Test new database import normalizes non-object masked_encrypted_extra.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import (
+        database_config_with_masked_encrypted_extra,
+    )
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    config["masked_encrypted_extra"] = "[]"
+
+    database = import_database(config)
+
+    assert json.loads(database.encrypted_extra) == {}
+
+
 def test_import_database_with_masked_encrypted_extra_existing_db(
     mocker: MockerFixture,
     session: Session,
