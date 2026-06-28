@@ -1288,6 +1288,55 @@ def test_update_recipient_to_slack_v2_missing_channels(mocker: MockerFixture):
         mock_cmmd.update_report_schedule_slack_v2()
 
 
+def test_update_recipient_to_slack_v2_restores_all_recipients_on_failure(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test Slack v2 conversion restores earlier recipient mutations on failure.
+    """
+    mocker.patch(
+        "superset.commands.report.execute.get_channels_with_search",
+        side_effect=[
+            [
+                {
+                    "id": "channel_1_id",
+                    "name": "Channel 1",
+                    "is_member": True,
+                    "is_private": False,
+                },
+            ],
+            [],
+        ],
+    )
+    first_config = json.dumps({"target": "Channel 1"})
+    second_config = json.dumps({"target": "Missing Channel"})
+    mock_report_schedule = ReportSchedule(
+        recipients=[
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=first_config,
+            ),
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=second_config,
+            ),
+        ],
+    )
+
+    mock_cmmd: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+
+    with pytest.raises(UpdateFailedError, match="Could not find"):
+        mock_cmmd.update_report_schedule_slack_v2()
+
+    first_recipient, second_recipient = mock_cmmd._report_schedule.recipients
+    assert first_recipient.type == ReportRecipientType.SLACK
+    assert first_recipient.recipient_config_json == first_config
+    assert second_recipient.type == ReportRecipientType.SLACK
+    assert second_recipient.recipient_config_json == second_config
+
+
 def test_update_recipient_to_slack_v2_skips_malformed_channels(
     mocker: MockerFixture,
 ) -> None:

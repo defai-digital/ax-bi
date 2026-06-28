@@ -149,6 +149,10 @@ class BaseReportState:
         Update the report schedule type and channels for all slack recipients to v2.
         V2 uses ids instead of names for channels.
         """
+        original_recipients = [
+            (recipient, recipient.type, recipient.recipient_config_json)
+            for recipient in self._report_schedule.recipients
+        ]
         try:
             for recipient in self._report_schedule.recipients:
                 if recipient.type == ReportRecipientType.SLACK:
@@ -190,8 +194,14 @@ class BaseReportState:
                         }
                     )
         except Exception as ex:
-            # Revert to v1 to preserve configuration (requires manual fix)
-            recipient.type = ReportRecipientType.SLACK
+            # Revert all in-memory recipient mutations to preserve configuration.
+            for (
+                original_recipient,
+                original_type,
+                original_config,
+            ) in original_recipients:
+                original_recipient.type = original_type
+                original_recipient.recipient_config_json = original_config
             msg = f"Failed to update slack recipients to v2: {str(ex)}"
             logger.exception(msg)
             raise UpdateFailedError(msg) from ex
