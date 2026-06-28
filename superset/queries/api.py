@@ -26,6 +26,7 @@ from flask_appbuilder.api import (
     safe,
 )
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from marshmallow.exceptions import ValidationError
 
 from superset import db, event_logger
 from superset.constants import MODEL_API_RW_METHOD_PERMISSION_MAP, RouteMethod
@@ -281,5 +282,7 @@ class QueryRestApi(BaseSupersetModelRestApi):
             body = self.stop_query_schema.load(request.json)
             QueryDAO.stop_query(body["client_id"])
             return self.response(200, result="OK")
+        except ValidationError as ex:
+            return self.response_400(message=ex.messages)
         except SupersetException as ex:
             return self.response(ex.status, message=ex.message)
