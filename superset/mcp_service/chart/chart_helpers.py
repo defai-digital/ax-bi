@@ -749,6 +749,17 @@ def _load_dashboard_metadata(raw_json: str | None) -> dict[str, Any]:
     return metadata if isinstance(metadata, dict) else {}
 
 
+def _load_dashboard_position(raw_json: str | None) -> dict[str, Any]:
+    """Parse dashboard position_json, treating malformed values as empty."""
+    from superset.utils import json
+
+    try:
+        position_json = json.loads(raw_json or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    return position_json if isinstance(position_json, dict) else {}
+
+
 def build_applied_dashboard_filters(
     dashboard_id: int, chart_id: int
 ) -> list[AppliedDashboardFilter]:
@@ -773,7 +784,6 @@ def build_applied_dashboard_filters(
     from superset.commands.dashboard.exceptions import DashboardNotFoundError
     from superset.mcp_service.chart.schemas import AppliedDashboardFilter
     from superset.models.dashboard import Dashboard
-    from superset.utils import json
 
     dashboard = db.session.query(Dashboard).filter_by(id=dashboard_id).one_or_none()
     if not dashboard:
@@ -791,9 +801,7 @@ def build_applied_dashboard_filters(
     native_filter_config = metadata.get("native_filter_configuration", [])
     if not isinstance(native_filter_config, list):
         return []
-    position_json = json.loads(dashboard.position_json or "{}")
-    if not isinstance(position_json, dict):
-        position_json = {}
+    position_json = _load_dashboard_position(dashboard.position_json)
 
     applied: list[AppliedDashboardFilter] = []
     for flt in native_filter_config:

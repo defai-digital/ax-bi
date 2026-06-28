@@ -348,6 +348,74 @@ class TestBuildAppliedDashboardFilters:
 
         assert result == []
 
+    def test_malformed_position_json_uses_empty_layout(self):
+        native_filter = {
+            "id": "NATIVE_FILTER-1",
+            "name": "Country",
+            "type": "NATIVE_FILTER",
+            "filterType": "filter_select",
+            "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
+            "targets": [{"column": {"name": "country"}, "datasetId": 7}],
+            "defaultDataMask": {
+                "filterState": {"value": ["US"]},
+                "extraFormData": {
+                    "adhoc_filters": [
+                        {
+                            "subject": "country",
+                            "operator": "IN",
+                            "comparator": ["US"],
+                        }
+                    ]
+                },
+            },
+        }
+        dashboard = self._make_dashboard(
+            json_metadata='{"native_filter_configuration": %s}'
+            % _json(native_filter_list=[native_filter]),
+            position_json="{bad json",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert len(result) == 1
+        assert result[0].id == "NATIVE_FILTER-1"
+        assert result[0].operator == "IN"
+        assert result[0].value == ["US"]
+
+    def test_non_object_position_json_uses_empty_layout(self):
+        native_filter = {
+            "id": "NATIVE_FILTER-1",
+            "name": "Country",
+            "type": "NATIVE_FILTER",
+            "filterType": "filter_select",
+            "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
+            "targets": [{"column": {"name": "country"}, "datasetId": 7}],
+            "defaultDataMask": {},
+        }
+        dashboard = self._make_dashboard(
+            json_metadata='{"native_filter_configuration": %s}'
+            % _json(native_filter_list=[native_filter]),
+            position_json="[]",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert len(result) == 1
+        assert result[0].id == "NATIVE_FILTER-1"
+        assert result[0].status == "not_applied"
+
 
 def _json(native_filter_list):
     """Serialize a native_filter list as JSON string for embedding in
