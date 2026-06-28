@@ -130,6 +130,11 @@ class MCPBaseError(BaseModel):
         """Wrap detailed error text as untrusted LLM context data."""
         return sanitize_error_text(value)
 
+    @field_serializer("suggestions")
+    def _serialize_suggestions_for_llm(self, value: list[str]) -> list[str]:
+        """Wrap suggestion text as untrusted LLM context when serialized."""
+        return sanitize_prompt_value(value)
+
     @model_validator(mode="before")
     @classmethod
     def _compat_error_to_message(cls, data: Any) -> Any:
@@ -225,6 +230,13 @@ class ChartGenerationError(MCPBaseError):
     help_url: str | None = Field(
         None, description="URL to documentation for this error type"
     )
+
+    @field_serializer("query_info")
+    def _serialize_query_info_for_llm(
+        self, value: Dict[str, Any] | None
+    ) -> Dict[str, Any] | None:
+        """Wrap query execution context as untrusted LLM context when serialized."""
+        return sanitize_prompt_value(value)
 
 
 class ChartGenerationResponse(BaseModel):
