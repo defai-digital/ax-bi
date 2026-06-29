@@ -42,12 +42,18 @@ PATTERNS = {
     ],
     "ax-services": [
         r"^\.github/workflows/ax-services\.yml",
+        r"^\.github/actions/change-detector/",
         r"^ax-services/",
+        r"^scripts/change_detector\.py",
     ],
     "superset-rust": [
         r"^\.github/workflows/superset-rust\.yml",
+        r"^\.github/actions/change-detector/",
         r"^superset-rust/",
+        r"^scripts/change_detector\.py",
+        r"^superset/sql/parse\.py",
         r"^superset/runtime_modernization/rust_sql\.py",
+        r"^tests/unit_tests/sql/parse_tests\.py",
         r"^tests/unit_tests/runtime_modernization/rust_sql_test\.py",
     ],
     "docker": [
