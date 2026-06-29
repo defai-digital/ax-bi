@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "contracts:write": "ts-node scripts/write-contracts.ts",
     "dev-server": "ts-node src/index.ts",
     "start": "node dist/index.js",
     "test": "NODE_ENV=test jest -i spec",

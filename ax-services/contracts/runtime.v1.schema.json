@@ -1,0 +1,79 @@
+{
+  "healthResponseSchema": {
+    "$id": "ax-services.health.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "service",
+      "status"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "runtime.v1"
+      },
+      "service": {
+        "const": "ax-services"
+      },
+      "status": {
+        "const": "ok"
+      }
+    }
+  },
+  "readinessResponseSchema": {
+    "$id": "ax-services.readiness.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "service",
+      "status",
+      "dependencies"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "runtime.v1"
+      },
+      "service": {
+        "const": "ax-services"
+      },
+      "status": {
+        "enum": [
+          "ready",
+          "not_ready"
+        ]
+      },
+      "dependencies": {
+        "type": "object",
+        "required": [
+          "superset"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "superset": {
+            "type": "object",
+            "required": [
+              "ok",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "string"
+              },
+              "statusCode": {
+                "type": "number"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

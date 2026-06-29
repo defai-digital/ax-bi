@@ -29,6 +29,7 @@ configuration, logging, and Superset connectivity.
 npm install
 npm run type
 npm test
+npm run contracts:write
 npm run build
 npm run dev-server
 ```
@@ -57,3 +58,5 @@ Current endpoints:
 
 - `GET /health`
 - `GET /ready`
+
+Generated JSON schema artifacts live in `contracts/`.
