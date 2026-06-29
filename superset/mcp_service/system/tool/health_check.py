@@ -86,6 +86,31 @@ def _ax_services_health_candidate() -> AxServicesResponse:
     return client.health()
 
 
+def _health_response_from_ax_services(
+    service_name: str,
+    candidate: AxServicesResponse,
+) -> HealthCheckResponse | None:
+    """Convert a valid ax-services health response to the MCP health schema."""
+
+    payload = candidate.payload or {}
+    if not candidate.ok or payload.get("contractVersion") != "runtime.v1":
+        return None
+    if payload.get("service") != "ax-services" or payload.get("status") != "ok":
+        return None
+
+    return HealthCheckResponse(
+        status="healthy",
+        timestamp=str(payload.get("timestamp") or datetime.datetime.now().isoformat()),
+        service=service_name,
+        version=str(payload.get("version") or "unknown"),
+        python_version=str(payload.get("nodeVersion") or "unknown"),
+        platform=str(payload.get("platform") or "unknown"),
+        uptime_seconds=float(payload["uptimeSeconds"])
+        if isinstance(payload.get("uptimeSeconds"), (int, float))
+        else None,
+    )
+
+
 def _health_shadow_matches(
     authoritative: HealthCheckResponse,
     candidate: AxServicesResponse,
@@ -100,6 +125,20 @@ def _health_shadow_enabled() -> bool:
 
     return is_feature_enabled("RUNTIME_SHADOW_EXECUTION") and is_feature_enabled(
         "TS_MCP_ORCHESTRATION"
+    )
+
+
+def _health_serving_enabled() -> bool:
+    """Return whether MCP health should be served through ax-services."""
+
+    return is_feature_enabled("TS_MCP_ORCHESTRATION") and is_feature_enabled(
+        "TS_HEALTH_CHECK_SERVING"
+    )
+
+
+def _record_health_metric(metric: str) -> None:
+    current_app.config["STATS_LOGGER"].incr(
+        f"runtime_modernization.mcp_orchestration.health_check.{metric}"
     )
 
 
@@ -148,6 +187,19 @@ async def health_check() -> HealthCheckResponse:
         "health_check",
         current_app.config["STATS_LOGGER"],
     ):
+        if _health_serving_enabled():
+            candidate_response = _ax_services_health_candidate()
+            candidate_health = _health_response_from_ax_services(
+                service_name,
+                candidate_response,
+            )
+            if candidate_health is not None:
+                _record_health_metric("served_candidate")
+                return candidate_health
+
+            _record_health_metric("fallback")
+            return _build_health_response(service_name)
+
         return execute_with_shadow(
             area="mcp_orchestration",
             operation="health_check",

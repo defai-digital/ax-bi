@@ -166,6 +166,12 @@
         "description": "Serve MCP asset search from the TypeScript sidecar with Python fallback."
       },
       {
+        "name": "TS_HEALTH_CHECK_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP health check from the TypeScript sidecar with Python fallback."
+      },
+      {
         "name": "TS_MCP_ORCHESTRATION",
         "default": false,
         "lifecycle": "development",

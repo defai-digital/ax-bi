@@ -142,3 +142,109 @@ async def test_health_check_shadows_ax_services_when_enabled(
     stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.health_check.success"
     )
+
+
+@pytest.mark.asyncio
+async def test_health_check_serves_ax_services_when_enabled(
+    app_context: None,
+    mocker,
+):
+    """Health check serves from ax-services when serving flags are enabled."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    current_app.config["MCP_DEV_USERNAME"] = "admin"
+    mocker.patch(
+        "superset.mcp_service.auth.load_user_with_relationships",
+        return_value=MagicMock(),
+    )
+    get_version_metadata = mocker.patch(
+        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        return_value={"version_string": "python-version"},
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"TS_MCP_ORCHESTRATION", "TS_HEALTH_CHECK_SERVING"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+    ).return_value
+    ax_services_client.health.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={
+            "contractVersion": "runtime.v1",
+            "service": "ax-services",
+            "status": "ok",
+            "timestamp": "2026-06-29T12:00:00.000Z",
+            "version": "1.2.3",
+            "nodeVersion": "v24.16.0",
+            "platform": "linux",
+            "uptimeSeconds": 12.5,
+        },
+    )
+
+    response = await health_check()
+
+    assert response == HealthCheckResponse(
+        status="healthy",
+        timestamp="2026-06-29T12:00:00.000Z",
+        service="AX-BI MCP Service",
+        version="1.2.3",
+        python_version="v24.16.0",
+        platform="linux",
+        uptime_seconds=12.5,
+    )
+    ax_services_client.health.assert_called_once_with()
+    get_version_metadata.assert_not_called()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.served_candidate"
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.success"
+    )
+
+
+@pytest.mark.asyncio
+async def test_health_check_falls_back_when_ax_services_health_contract_is_invalid(
+    app_context: None,
+    mocker,
+):
+    """Invalid ax-services health output falls back to Python health."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    current_app.config["MCP_DEV_USERNAME"] = "admin"
+    mocker.patch(
+        "superset.mcp_service.auth.load_user_with_relationships",
+        return_value=MagicMock(),
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        return_value={"version_string": "python-version"},
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"TS_MCP_ORCHESTRATION", "TS_HEALTH_CHECK_SERVING"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+    ).return_value
+    ax_services_client.health.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={"contractVersion": "unknown", "status": "ok"},
+    )
+
+    response = await health_check()
+
+    assert response.status == "healthy"
+    assert response.version == "python-version"
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.fallback"
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.success"
+    )

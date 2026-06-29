@@ -76,6 +76,7 @@ github:
         # unfortunately AFAICT for `matrix:` jobs, we have to itemize every
         # combination here.
         contexts:
+          - ax-services-required
           - lint-check
           - cypress-matrix-required
           - dependency-review

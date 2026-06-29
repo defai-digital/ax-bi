@@ -44,7 +44,7 @@ jobs:
             echo "::notice title=Workflow skipped::No tags present in repository"
             exit
           fi
-          echo "HAS_TAGS=1" >> $GITHUB_ENV"
+          echo "HAS_TAGS=1" >> "$GITHUB_ENV"
           git fetch --prune --unshallow
           git tag -d `git tag | grep -E '^trigger-'`
 

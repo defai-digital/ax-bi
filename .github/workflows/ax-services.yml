@@ -1,0 +1,92 @@
+name: AX Services
+
+on:
+  push:
+    branches:
+      - "master"
+      - "[0-9].[0-9]*"
+  pull_request:
+    types: [synchronize, opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ax-services: ${{ steps.check.outputs.ax-services }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Check for file changes
+        id: check
+        uses: ./.github/actions/change-detector/
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  ax-services:
+    needs: changes
+    if: needs.changes.outputs.ax-services == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ax-services
+    steps:
+      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: "superset-frontend/.nvmrc"
+          cache: "npm"
+          cache-dependency-path: "ax-services/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript checks
+        run: npm run type
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  ax-services-required:
+    needs: [changes, ax-services]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check ax-services result
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          RESULT: ${{ needs.ax-services.result }}
+        run: |
+          if [ "$CHANGES" != "success" ]; then
+            echo "change detection did not succeed (result: $CHANGES); refusing to pass on a skipped check"
+            exit 1
+          fi
+          if [ "$RESULT" != "success" ] && [ "$RESULT" != "skipped" ]; then
+            echo "ax-services did not pass (result: $RESULT)"
+            exit 1
+          fi
+          echo "ax-services result: $RESULT (changes: $CHANGES)"

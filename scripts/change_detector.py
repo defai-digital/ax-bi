@@ -40,6 +40,10 @@ PATTERNS = {
         r"^\.github/workflows/.*(bashlib|frontend|e2e)",
         r"^superset-frontend/",
     ],
+    "ax-services": [
+        r"^\.github/workflows/ax-services\.yml",
+        r"^ax-services/",
+    ],
     "docker": [
         r"^Dockerfile$",
         r"^docker.*",

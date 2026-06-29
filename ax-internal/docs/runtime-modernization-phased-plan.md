@@ -26,7 +26,9 @@ under the License.
 
 ## Status
 
-Draft
+In progress. Phase 2 foundation is implemented, Phase 3 has two MCP workflows
+behind TypeScript routing flags, and Phase 4 has a Rust SQL kernel proof of
+concept. Phase 5 expansion and Phase 6 larger-boundary decisions remain open.
 
 ## Planning Assumptions
 
@@ -117,6 +119,15 @@ Draft
 - Contract tests run in CI.
 - Python-only development remains unaffected.
 
+### Current Evidence
+
+- `ax-services/` provides health, readiness, metadata, metrics, and MCP asset
+  search endpoints with versioned JSON contracts.
+- `.github/workflows/ax-services.yml` runs install, type checking, tests, and
+  build for the TypeScript sidecar.
+- Superset has a small `AxServicesClient` for health, readiness, metadata,
+  metrics, and asset search calls with timeouts and request IDs.
+
 ## Phase 3: First TypeScript Product Extraction
 
 **Estimated duration:** 6-10 weeks
@@ -150,6 +161,16 @@ product-specific and contract-oriented.
 - Authorization behavior matches the Python path.
 - Rollback through feature flag is tested.
 
+### Current Evidence
+
+- MCP asset search can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_ASSET_SEARCH_SERVING`, with Python fallback.
+- MCP health check can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_HEALTH_CHECK_SERVING`, with Python fallback.
+- Compatibility and fallback behavior are covered by unit tests. Production
+  rollout evidence, latency targets, and mismatch reporting still need to be
+  captured before this phase is complete.
+
 ## Phase 4: Rust Kernel Proof Of Concept
 
 **Estimated duration:** 4-8 weeks
@@ -179,6 +200,17 @@ product-specific and contract-oriented.
 - Compatibility tests pass against existing Python behavior.
 - Build process works locally and in CI.
 - Python fallback remains available.
+
+### Current Evidence
+
+- `superset-rust/` contains the `ax_sql` PyO3 proof of concept for SQL
+  whitespace normalization.
+- `superset/runtime_modernization/rust_sql.py` keeps Python fallback behavior
+  and routes to Rust only when the optional extension is importable and
+  `RUST_SQL_KERNEL` is enabled.
+- Compatibility tests cover fallback and Rust-call routing. CI/build packaging
+  and material benchmark evidence still need to be completed before this phase
+  is complete.
 
 ## Phase 5: Expand Runtime Split Selectively
 

@@ -17,6 +17,9 @@ outputs:
   docs:
     description: Whether docs-related files were changed
     value: ${{ steps.change-detector.outputs.docs }}
+  ax-services:
+    description: Whether ax-services package-related files were changed
+    value: ${{ steps.change-detector.outputs.ax-services }}
   superset-extensions-cli:
     description: Whether superset-extensions-cli package-related files were changed
     value: ${{ steps.change-detector.outputs.superset-extensions-cli }}
@@ -31,4 +34,3 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
-        GITHUB_OUTPUT: ${{ github.output }}
