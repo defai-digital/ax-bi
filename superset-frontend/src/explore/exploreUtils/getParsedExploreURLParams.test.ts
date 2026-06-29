@@ -64,6 +64,34 @@ test('get datasource and viz type from form_data search param - url when creatin
   );
 });
 
+test('maps legacy dataset search params to datasource search params', () => {
+  setupLocation(`${EXPLORE_BASE_URL}?dataset_type=table&dataset_id=42`);
+  expect(getParsedExploreURLParams().toString()).toEqual(
+    'datasource_type=table&datasource_id=42',
+  );
+});
+
+test('defaults legacy dataset_id search param to table datasource type', () => {
+  setupLocation(`${EXPLORE_BASE_URL}?dataset_id=42`);
+  expect(getParsedExploreURLParams().toString()).toEqual(
+    'datasource_id=42&datasource_type=table',
+  );
+});
+
+test('ignores malformed form_data search param', () => {
+  setupLocation(`${EXPLORE_BASE_URL}?form_data=%7Bmalformed&slice_id=56`);
+  expect(getParsedExploreURLParams().toString()).toEqual('slice_id=56');
+});
+
+test('keeps valid form_data fields when datasource is not a string', () => {
+  setupLocation(
+    `${EXPLORE_BASE_URL}?form_data=%7B%22viz_type%22%3A%22big_number%22%2C%22datasource%22%3A2%7D`,
+  );
+  expect(getParsedExploreURLParams().toString()).toEqual(
+    `viz_type=${VizType.BigNumber}&datasource=2`,
+  );
+});
+
 test('get permalink key from path params', () => {
   setupLocation(`${EXPLORE_BASE_URL}p/kpOqweaMY9R/`);
   expect(getParsedExploreURLParams().toString()).toEqual(
@@ -73,5 +101,7 @@ test('get permalink key from path params', () => {
 
 test('get dataset id from path params', () => {
   setupLocation(`${EXPLORE_BASE_URL}table/42/`);
-  expect(getParsedExploreURLParams().toString()).toEqual('datasource_id=42');
+  expect(getParsedExploreURLParams().toString()).toEqual(
+    'datasource_id=42&datasource_type=table',
+  );
 });

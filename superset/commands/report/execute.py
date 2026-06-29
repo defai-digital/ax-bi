@@ -17,7 +17,7 @@
 import logging
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import Any, Optional, Union
+from typing import Any, cast, Optional, Union
 from uuid import UUID
 
 import pandas as pd
@@ -87,6 +87,18 @@ from superset.utils.urls import get_url_path
 logger = logging.getLogger(__name__)
 
 
+def _get_slack_channel_name_and_id(channel: object) -> tuple[str, str] | None:
+    if not isinstance(channel, dict):
+        return None
+
+    name = channel.get("name")
+    channel_id = channel.get("id")
+    if not isinstance(name, str) or not isinstance(channel_id, str):
+        return None
+
+    return name, channel_id
+
+
 class BaseReportState:
     current_states: list[ReportState] = []
     initial: bool = False
@@ -137,6 +149,10 @@ class BaseReportState:
         Update the report schedule type and channels for all slack recipients to v2.
         V2 uses ids instead of names for channels.
         """
+        original_recipients = [
+            (recipient, recipient.type, recipient.recipient_config_json)
+            for recipient in self._report_schedule.recipients
+        ]
         try:
             for recipient in self._report_schedule.recipients:
                 if recipient.type == ReportRecipientType.SLACK:
@@ -155,24 +171,37 @@ class BaseReportState:
                         exact_match=True,
                     )
                     channels_list = recipients_string_to_list(channel_names)
-                    if len(channels_list) != len(channels):
+                    channel_names_and_ids = [
+                        name_and_id
+                        for channel in channels
+                        if (name_and_id := _get_slack_channel_name_and_id(channel))
+                    ]
+                    if len(channels_list) != len(channel_names_and_ids):
                         missing_channels = set(channels_list) - {
-                            channel["name"] for channel in channels
+                            name for name, _ in channel_names_and_ids
                         }
                         msg = (
                             "Could not find the following channels: "
                             f"{', '.join(missing_channels)}"
                         )
                         raise UpdateFailedError(msg)
-                    channel_ids = ",".join(channel["id"] for channel in channels)
+                    channel_ids = ",".join(
+                        channel_id for _, channel_id in channel_names_and_ids
+                    )
                     recipient.recipient_config_json = json.dumps(
                         {
                             "target": channel_ids,
                         }
                     )
         except Exception as ex:
-            # Revert to v1 to preserve configuration (requires manual fix)
-            recipient.type = ReportRecipientType.SLACK
+            # Revert all in-memory recipient mutations to preserve configuration.
+            for (
+                original_recipient,
+                original_type,
+                original_config,
+            ) in original_recipients:
+                original_recipient.type = original_type
+                original_recipient.recipient_config_json = original_config
             msg = f"Failed to update slack recipients to v2: {str(ex)}"
             logger.exception(msg)
             raise UpdateFailedError(msg) from ex
@@ -258,6 +287,21 @@ class BaseReportState:
             **kwargs,
         )
 
+    @staticmethod
+    def _normalize_dashboard_anchor(
+        dashboard_state: DashboardPermalinkState,
+    ) -> tuple[DashboardPermalinkState, str | None]:
+        anchor = dashboard_state.get("anchor")
+        if not anchor:
+            return dashboard_state, None
+        if isinstance(anchor, str):
+            return dashboard_state, anchor
+
+        logger.debug("Ignoring malformed dashboard tab anchor")
+        sanitized_dashboard_state = cast(DashboardPermalinkState, {**dashboard_state})
+        sanitized_dashboard_state.pop("anchor", None)
+        return sanitized_dashboard_state, None
+
     def get_dashboard_urls(
         self, user_friendly: bool = False, **kwargs: Any
     ) -> list[str]:
@@ -265,19 +309,27 @@ class BaseReportState:
         Retrieve the URL for the dashboard tabs, or return the dashboard URL if no tabs are available.
         """  # noqa: E501
         force = "true" if self._report_schedule.force_screenshot else "false"
+        extra = self._report_schedule.extra
+        dashboard_state = extra.get("dashboard", {}) if isinstance(extra, dict) else {}
+        if not isinstance(dashboard_state, dict):
+            dashboard_state = {}
 
-        if (
-            dashboard_state := self._report_schedule.extra.get("dashboard")
-        ) and feature_flag_manager.is_feature_enabled("ALERT_REPORT_TABS"):
+        if dashboard_state and feature_flag_manager.is_feature_enabled(
+            "ALERT_REPORT_TABS"
+        ):
             native_filter_params, filter_warnings = (
                 self._report_schedule.get_native_filters_params()
             )
             if filter_warnings:
                 self._filter_warnings.extend(filter_warnings)
-            if anchor := dashboard_state.get("anchor"):
+            dashboard_state, anchor = self._normalize_dashboard_anchor(dashboard_state)
+
+            if anchor:
                 try:
                     anchor_list = json.loads(anchor)
-                    if not isinstance(anchor_list, list):
+                    if not isinstance(anchor_list, list) or not all(
+                        isinstance(tab_anchor, str) for tab_anchor in anchor_list
+                    ):
                         raise json.JSONDecodeError(
                             "Anchor value is not a list", anchor, 0
                         )
@@ -288,7 +340,7 @@ class BaseReportState:
                         user_friendly=user_friendly,
                     )
                     return urls
-                except json.JSONDecodeError:
+                except (TypeError, json.JSONDecodeError):
                     logger.debug("Anchor value is not a list, Fall back to single tab")
 
             # Skip the permalink when there is nothing meaningful to encode —
@@ -322,12 +374,11 @@ class BaseReportState:
             # Preserve any urlParams from extra.dashboard (e.g. standalone=true)
             # set via API even when ALERT_REPORT_TABS is off — same merge
             # semantics as the protected branch above.
-            fallback_state = self._report_schedule.extra.get("dashboard") or {}
             return [
                 self._get_tab_url(
                     {
                         "urlParams": self._merge_native_filters_into_url_params(
-                            fallback_state.get("urlParams"),
+                            dashboard_state.get("urlParams"),
                             native_filter_params,
                         )
                     },
@@ -378,9 +429,15 @@ class BaseReportState:
         report's value wins. All other params (e.g. ``standalone=true``)
         survive in their original order.
         """
-        merged: list[Sequence[str]] = [
-            list(p) for p in (existing or []) if p[0] != "native_filters"
-        ]
+        merged: list[Sequence[str]] = []
+        for param in existing or []:
+            if (
+                isinstance(param, Sequence)
+                and not isinstance(param, (str, bytes))
+                and param
+                and param[0] != "native_filters"
+            ):
+                merged.append(list(param))
         merged.append(["native_filters", native_filter_params or ""])
         return merged
 

@@ -199,9 +199,15 @@ class BaseViz:  # pylint: disable=too-many-public-methods
     @staticmethod
     @deprecated(deprecated_in="3.0")
     def handle_js_int_overflow(
-        data: dict[str, list[dict[str, Any]]],
-    ) -> dict[str, list[dict[str, Any]]]:
-        for record in data.get("records", {}):
+        data: dict[str, Any],
+    ) -> dict[str, Any]:
+        records = data.get("records")
+        if not isinstance(records, list):
+            return data
+
+        for record in records:
+            if not isinstance(record, dict):
+                continue
             for k, v in list(record.items()):
                 if isinstance(v, int):
                     # if an int is too big for Java Script to handle
@@ -1895,12 +1901,16 @@ class BaseDeckGLViz(BaseViz):
             and self._has_layer_scoped_filters(form_data)
         )
 
+    def _get_adhoc_filter_items(self, form_data: dict[str, Any]) -> list[Any]:
+        """Return list-shaped adhoc filters from form data."""
+        filters = form_data.get("adhoc_filters", [])
+        return filters if isinstance(filters, list) else []
+
     def _has_layer_scoped_filters(self, form_data: dict[str, Any]) -> bool:
         """Check if any filter has layerFilterScope (indicates multilayer context)."""
-        for filter_item in form_data.get("adhoc_filters", []):
-            if (
-                isinstance(filter_item, dict)
-                and filter_item.get("layerFilterScope") is not None
+        for filter_item in self._get_adhoc_filter_items(form_data):
+            if isinstance(filter_item, dict) and isinstance(
+                filter_item.get("layerFilterScope"), list
             ):
                 return True
         return False
@@ -1924,7 +1934,7 @@ class BaseDeckGLViz(BaseViz):
         layer_index = deck_slices.index(slice_id)
         filtered_adhoc_filters = []
 
-        for filter_item in form_data.get("adhoc_filters", []):
+        for filter_item in self._get_adhoc_filter_items(form_data):
             layer_scope = self._get_filter_layer_scope(filter_item)
 
             # Include global filters (no layer scope) or filters scoped to this layer
@@ -1939,16 +1949,21 @@ class BaseDeckGLViz(BaseViz):
         self, form_data: dict[str, Any]
     ) -> list[int] | None:
         """Extract deck_slices from any filter that contains it."""
-        for filter_item in form_data.get("adhoc_filters", []):
-            if isinstance(filter_item, dict) and "deck_slices" in filter_item:
-                return filter_item["deck_slices"]
+        for filter_item in self._get_adhoc_filter_items(form_data):
+            if isinstance(filter_item, dict):
+                deck_slices = filter_item.get("deck_slices")
+                if isinstance(deck_slices, list):
+                    return deck_slices
         return None
 
     def _get_filter_layer_scope(self, filter_item: Any) -> list[int] | None:
         """Extract layerFilterScope from a filter item."""
+        scope = None
         if isinstance(filter_item, dict):
-            return filter_item.get("layerFilterScope")
-        return getattr(filter_item, "layerFilterScope", None)
+            scope = filter_item.get("layerFilterScope")
+        else:
+            scope = getattr(filter_item, "layerFilterScope", None)
+        return scope if isinstance(scope, list) else None
 
     @deprecated(deprecated_in="3.0")
     def get_metrics(self) -> list[str]:
@@ -2584,7 +2599,11 @@ class DeckGeoJson(BaseDeckGLViz):
     @deprecated(deprecated_in="3.0")
     def get_properties(self, data: dict[str, Any]) -> dict[str, Any]:
         geojson = data[get_column_name(self.form_data["geojson"])]
-        return json.loads(geojson)
+        try:
+            properties = json.loads(geojson)
+        except (TypeError, json.JSONDecodeError):
+            return {}
+        return properties if isinstance(properties, dict) else {}
 
 
 class DeckArc(BaseDeckGLViz):

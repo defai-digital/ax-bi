@@ -27,7 +27,7 @@ Reusable across caching middleware, OAuth providers, EventStore, etc.
 import logging
 from importlib import import_module
 from typing import Any, Callable, Dict
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from redis.asyncio import Redis
 
@@ -132,6 +132,9 @@ def _create_redis_store(
             except ValueError:
                 db = 0
 
+        username = unquote(parsed.username) if parsed.username is not None else None
+        password = unquote(parsed.password) if parsed.password is not None else None
+
         redis_client: Redis[str]
         if use_ssl:
             # For ElastiCache with self-signed certs, disable cert verification.
@@ -141,8 +144,8 @@ def _create_redis_store(
                 host=parsed.hostname or "localhost",
                 port=parsed.port or 6379,
                 db=db,
-                username=parsed.username,  # Support Redis 6+ ACLs
-                password=parsed.password,
+                username=username,  # Support Redis 6+ ACLs
+                password=password,
                 decode_responses=True,
                 ssl=True,
                 ssl_cert_reqs="none",
@@ -153,8 +156,8 @@ def _create_redis_store(
                 host=parsed.hostname or "localhost",
                 port=parsed.port or 6379,
                 db=db,
-                username=parsed.username,  # Support Redis 6+ ACLs
-                password=parsed.password,
+                username=username,  # Support Redis 6+ ACLs
+                password=password,
                 decode_responses=True,
             )
             logger.info("Created async Redis client")

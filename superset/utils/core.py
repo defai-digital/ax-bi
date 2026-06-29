@@ -657,11 +657,15 @@ def generic_find_fk_constraint_name(
 ) -> str | None:
     """Utility to find a foreign-key constraint name in alembic migrations"""
     for fk in insp.get_foreign_keys(table):
+        referred_columns = fk.get("referred_columns")
+        name = fk.get("name")
         if (
-            fk["referred_table"] == referenced
-            and set(fk["referred_columns"]) == columns
+            fk.get("referred_table") == referenced
+            and isinstance(referred_columns, list)
+            and set(referred_columns) == columns
+            and isinstance(name, str)
         ):
-            return fk["name"]
+            return name
 
     return None
 
@@ -673,11 +677,15 @@ def generic_find_fk_constraint_names(  # pylint: disable=invalid-name
     names = set()
 
     for fk in insp.get_foreign_keys(table):
+        referred_columns = fk.get("referred_columns")
+        name = fk.get("name")
         if (
-            fk["referred_table"] == referenced
-            and set(fk["referred_columns"]) == columns
+            fk.get("referred_table") == referenced
+            and isinstance(referred_columns, list)
+            and set(referred_columns) == columns
+            and isinstance(name, str)
         ):
-            names.add(fk["name"])
+            names.add(name)
 
     return names
 
@@ -688,8 +696,14 @@ def generic_find_uq_constraint_name(
     """Utility to find a unique constraint name in alembic migrations"""
 
     for uq in insp.get_unique_constraints(table):
-        if columns == set(uq["column_names"]):
-            return uq["name"]
+        column_names = uq.get("column_names")
+        name = uq.get("name")
+        if (
+            isinstance(column_names, list)
+            and columns == set(column_names)
+            and isinstance(name, str)
+        ):
+            return name
 
     return None
 
@@ -1025,11 +1039,17 @@ def simple_filter_to_adhoc(
     filter_clause: QueryObjectFilterClause,
     clause: str = "where",
 ) -> AdhocFilterClause:
+    operator = filter_clause["op"]
+    if isinstance(operator, str):
+        operator = operator.upper()
+        if operator == "NOT_IN":
+            operator = FilterOperator.NOT_IN
+
     result: AdhocFilterClause = {
         "clause": clause.upper(),
         "expressionType": "SIMPLE",
         "comparator": filter_clause.get("val"),
-        "operator": filter_clause["op"],
+        "operator": operator,
         "subject": cast(str, filter_clause["col"]),
     }
     if filter_clause.get("isExtra"):
@@ -1092,15 +1112,43 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
     """
     filter_keys = ["filters", "adhoc_filters"]
     extra_form_data = form_data.pop("extra_form_data", {})
-    append_filters: list[QueryObjectFilterClause] = extra_form_data.get("filters", None)
+    if not isinstance(extra_form_data, dict):
+        extra_form_data = {}
+    raw_append_filters = extra_form_data.get("filters")
+    append_filters: list[QueryObjectFilterClause] = (
+        [
+            cast(QueryObjectFilterClause, fltr)
+            for fltr in raw_append_filters
+            if (
+                isinstance(fltr, dict)
+                and "col" in fltr
+                and "op" in fltr
+                and "val" in fltr
+            )
+        ]
+        if isinstance(raw_append_filters, list)
+        else []
+    )
 
     # merge append extras
-    for key in [key for key in EXTRA_FORM_DATA_APPEND_KEYS if key not in filter_keys]:
-        extra_value = getattr(extra_form_data, key, {})
-        form_value = getattr(form_data, key, {})
-        form_value.update(extra_value)
-        if form_value:
-            form_data["key"] = extra_value
+    for key in EXTRA_FORM_DATA_APPEND_KEYS - {*filter_keys, "custom_form_data"}:
+        extra_value = extra_form_data.get(key)
+        if not isinstance(extra_value, list):
+            continue
+        form_value = form_data.get(key)
+        if not isinstance(form_value, list):
+            form_value = []
+        form_data[key] = [*form_value, *extra_value]
+
+    custom_form_data = extra_form_data.get("custom_form_data")
+    if isinstance(custom_form_data, dict):
+        form_custom_form_data = form_data.get("custom_form_data")
+        if not isinstance(form_custom_form_data, dict):
+            form_custom_form_data = {}
+        form_data["custom_form_data"] = {
+            **form_custom_form_data,
+            **custom_form_data,
+        }
 
     # map regular extras that apply to form data properties
     for src_key, target_key in EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS.items():
@@ -1110,6 +1158,8 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
 
     # map extras that apply to form data extra properties
     extras = form_data.get("extras", {})
+    if not isinstance(extras, dict):
+        extras = {}
     for key in EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS:
         value = extra_form_data.get(key)
         if value is not None:
@@ -1117,17 +1167,33 @@ def merge_extra_form_data(form_data: dict[str, Any]) -> None:  # noqa: C901
     if extras:
         form_data["extras"] = extras
 
-    adhoc_filters: list[AdhocFilterClause] = form_data.get("adhoc_filters", [])
+    raw_adhoc_filters = form_data.get("adhoc_filters", [])
+    adhoc_filters: list[AdhocFilterClause] = (
+        [
+            cast(AdhocFilterClause, adhoc_filter)
+            for adhoc_filter in raw_adhoc_filters
+            if isinstance(adhoc_filter, dict)
+        ]
+        if isinstance(raw_adhoc_filters, list)
+        else []
+    )
     form_data["adhoc_filters"] = adhoc_filters
-    append_adhoc_filters: list[AdhocFilterClause] = extra_form_data.get(
-        "adhoc_filters", []
+    raw_append_adhoc_filters = extra_form_data.get("adhoc_filters", [])
+    append_adhoc_filters: list[AdhocFilterClause] = (
+        [
+            cast(AdhocFilterClause, adhoc_filter)
+            for adhoc_filter in raw_append_adhoc_filters
+            if isinstance(adhoc_filter, dict)
+        ]
+        if isinstance(raw_append_adhoc_filters, list)
+        else []
     )
     adhoc_filters.extend(
         {"isExtra": True, **adhoc_filter} for adhoc_filter in append_adhoc_filters
     )
     if append_filters:
         for key, value in form_data.items():
-            if re.match("adhoc_filter.*", key):
+            if re.match("adhoc_filter.*", key) and isinstance(value, list):
                 value.extend(
                     simple_filter_to_adhoc({"isExtra": True, **fltr})
                     for fltr in append_filters
@@ -1170,9 +1236,11 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:  # noqa: C901
     # interactive filters.
     # Note extra_filters only support simple filters.
     form_data.setdefault("applied_time_extras", {})
-    adhoc_filters = form_data.get("adhoc_filters", [])
-    form_data["adhoc_filters"] = adhoc_filters
     merge_extra_form_data(form_data)
+    adhoc_filters = form_data.get("adhoc_filters", [])
+    if not isinstance(adhoc_filters, list):
+        adhoc_filters = []
+    form_data["adhoc_filters"] = adhoc_filters
     if "extra_filters" in form_data:
         # __form and __to are special extra_filters that target time
         # boundaries. The rest of extra_filters are simple
@@ -1195,15 +1263,26 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:  # noqa: C901
         existing_filters = {}
         for existing in adhoc_filters:
             if (
-                existing["expressionType"] == "SIMPLE"
+                isinstance(existing, dict)
+                and existing.get("expressionType") == "SIMPLE"
                 and existing.get("comparator") is not None
                 and existing.get("subject") is not None
             ):
                 existing_filters[get_filter_key(existing)] = existing["comparator"]
 
-        for filtr in form_data[  # pylint: disable=too-many-nested-blocks
-            "extra_filters"
-        ]:
+        extra_filters = form_data["extra_filters"]
+        if not isinstance(extra_filters, list):
+            extra_filters = []
+
+        for filtr in extra_filters:  # pylint: disable=too-many-nested-blocks
+            if (
+                not isinstance(filtr, dict)
+                or "col" not in filtr
+                or "op" not in filtr
+                or "val" not in filtr
+            ):
+                continue
+            filtr = cast(QueryObjectFilterClause, filtr)
             filtr["isExtra"] = True
             # Pull out time filters/options and merge into form data
             filter_column = filtr["col"]
@@ -1352,7 +1431,10 @@ def get_metric_name(metric: Metric, verbose_map: dict[str, Any] | None = None) -
             if sql_expression := metric.get("sqlExpression"):
                 return sql_expression
         if expression_type == "SIMPLE":
-            column: AdhocMetricColumn = metric.get("column") or {}
+            column_value = metric.get("column")
+            column: AdhocMetricColumn = (
+                column_value if isinstance(column_value, dict) else {}
+            )
             column_name = column.get("column_name")
             aggregate = metric.get("aggregate")
             if column and aggregate:
@@ -2172,8 +2254,11 @@ def remove_extra_adhoc_filters(form_data: dict[str, Any]) -> None:
         key: value for key, value in form_data.items() if ADHOC_FILTERS_REGEX.match(key)
     }
     for key, value in adhoc_filters.items():
+        filter_items = value if isinstance(value, list) else []
         form_data[key] = [
-            filter_ for filter_ in value or [] if not filter_.get("isExtra")
+            filter_
+            for filter_ in filter_items
+            if isinstance(filter_, dict) and not filter_.get("isExtra")
         ]
 
 

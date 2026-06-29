@@ -1747,6 +1747,22 @@ describe('dbReducer', () => {
     });
   });
 
+  test('it recovers from malformed extra on extra input change', () => {
+    const action: DBReducerActionType = {
+      type: ActionType.ExtraInputChange,
+      payload: { name: 'foo', value: 'bar' },
+    };
+    const currentState = dbReducer(
+      { ...databaseFixture, extra: '{malformed' },
+      action,
+    );
+
+    expect(currentState).toEqual({
+      ...databaseFixture,
+      extra: '{"foo":"bar"}',
+    });
+  });
+
   test('it will set state to payload from encrypted extra input change', () => {
     const action: DBReducerActionType = {
       type: ActionType.EncryptedExtraInputChange,

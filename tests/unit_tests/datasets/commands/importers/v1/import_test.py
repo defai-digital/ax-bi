@@ -27,6 +27,7 @@ from urllib import request
 import pytest
 from flask import current_app
 from flask_appbuilder.security.sqla.models import Role, User
+from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
@@ -395,6 +396,45 @@ def test_import_dataset_skips_catalog_validation_for_trusted_imports(
 
     sqla_table = import_dataset(config, ignore_permissions=True)
     assert sqla_table.catalog == "other_catalog"
+
+
+def test_import_dataset_ignores_malformed_column_metric_entries(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """Malformed column/metric entries should not crash dataset import."""
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+
+    engine = db.session.get_bind()
+    SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
+
+    database = Database(database_name="my_database", sqlalchemy_uri="sqlite://")
+    db.session.add(database)
+    db.session.flush()
+
+    config = {
+        "table_name": "my_table",
+        "schema": "my_schema",
+        "uuid": uuid.uuid4(),
+        "metrics": 10,
+        "columns": [
+            "bad-column",
+            {
+                "column_name": "profit",
+                "type": "INTEGER",
+                "extra": {"certified_by": "User"},
+            },
+        ],
+        "database_uuid": database.uuid,
+        "database_id": database.id,
+    }
+
+    sqla_table = import_dataset(config)
+
+    assert sqla_table.metrics == []
+    assert len(sqla_table.columns) == 1
+    assert sqla_table.columns[0].column_name == "profit"
+    assert sqla_table.columns[0].extra == '{"certified_by": "User"}'
 
 
 def test_import_command_surfaces_non_default_catalog_as_validation_error(
@@ -994,6 +1034,32 @@ def test_import_dataset_column_datetime_format(
     sqla_table = import_dataset(dataset_config)
     for column in sqla_table.columns:
         assert column.datetime_format == "%Y-%m-%d"
+
+
+def test_import_dataset_schema_rejects_non_object_column() -> None:
+    """
+    Test dataset import validation rejects malformed column entries.
+    """
+    config = copy.deepcopy(dataset_fixture)
+    config["columns"] = ["not an object"]
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatasetSchema().load(config)
+
+    assert "columns" in exc_info.value.messages
+
+
+def test_import_dataset_schema_rejects_non_object_metric() -> None:
+    """
+    Test dataset import validation rejects malformed metric entries.
+    """
+    config = copy.deepcopy(dataset_fixture)
+    config["metrics"] = ["not an object"]
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatasetSchema().load(config)
+
+    assert "metrics" in exc_info.value.messages
 
 
 def test_import_dataset_without_owner_permission(

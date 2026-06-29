@@ -76,6 +76,13 @@ class UpdateReportScheduleCommand(UpdateMixin, BaseReportScheduleCommand):
         if not self._model:
             raise ReportScheduleNotFoundError()
 
+        # Check ownership before validating payload details to avoid exposing
+        # report-related state to non-owners through validation errors.
+        try:
+            security_manager.raise_for_ownership(self._model)
+        except SupersetSecurityException as ex:
+            raise ReportScheduleForbiddenError() from ex
+
         # Required fields for validation
         cron_schedule = self._properties.get("crontab", self._model.crontab)
         name = self._properties.get("name", self._model.name)
@@ -165,12 +172,6 @@ class UpdateReportScheduleCommand(UpdateMixin, BaseReportScheduleCommand):
             self._properties["validator_config_json"] = json.dumps(
                 self._properties["validator_config_json"]
             )
-
-        # Check ownership
-        try:
-            security_manager.raise_for_ownership(self._model)
-        except SupersetSecurityException as ex:
-            raise ReportScheduleForbiddenError() from ex
 
         # Validate/Populate owner
         try:

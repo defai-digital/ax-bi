@@ -1,3 +1,5 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file
 # to you under the Apache License, Version 2.0 (the
@@ -60,7 +62,7 @@ def load_yaml(file_name: str, content: str) -> dict[str, Any]:
     """Try to load a YAML file"""
     try:
         return yaml.safe_load(content)
-    except yaml.parser.ParserError as ex:
+    except yaml.YAMLError as ex:
         logger.exception("Invalid YAML in %s", file_name)
         raise ValidationError({file_name: "Not a valid YAML file"}) from ex
 
@@ -154,8 +156,14 @@ def load_configs(
         prefix = file_name.split("/")[0]
         schema = schemas.get(f"{prefix}/")
         if schema:
+            config: Any = None
             try:
                 config = load_yaml(file_name, content)
+                if not isinstance(config, dict):
+                    raise ValidationError({"_schema": ["Invalid config file"]})
+                config_uuid = (
+                    str(config["uuid"]) if config.get("uuid") is not None else None
+                )
 
                 # populate passwords from the request, from YAML config,
                 # or from existing DBs
@@ -164,11 +172,16 @@ def load_configs(
                 elif prefix == "databases" and config.get("password"):
                     # password already in YAML config, keep it
                     pass
-                elif prefix == "databases" and config["uuid"] in db_passwords:
-                    config["password"] = db_passwords[config["uuid"]]
+                elif (
+                    prefix == "databases"
+                    and config_uuid is not None
+                    and config_uuid in db_passwords
+                ):
+                    config["password"] = db_passwords[config_uuid]
 
                 ssh_tunnel = config.get("ssh_tunnel") or {}
-                config_uuid = str(config["uuid"])
+                if not isinstance(ssh_tunnel, dict):
+                    ssh_tunnel = {}
 
                 # populate masked ssh_tunnel_passwords from the request or from
                 # the same existing database. Do not add credentials absent from
@@ -179,6 +192,7 @@ def load_configs(
                         ssh_tunnel["password"] = ssh_tunnel_passwords[file_name]
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_passwords.get(config_uuid) is not None
                     ):
                         ssh_tunnel["password"] = db_ssh_tunnel_passwords[config_uuid]
@@ -190,6 +204,7 @@ def load_configs(
                         ssh_tunnel["private_key"] = ssh_tunnel_private_keys[file_name]
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_private_keys.get(config_uuid) is not None
                     ):
                         ssh_tunnel["private_key"] = db_ssh_tunnel_private_keys[
@@ -205,6 +220,7 @@ def load_configs(
                         )
                     elif (
                         prefix == "databases"
+                        and config_uuid is not None
                         and db_ssh_tunnel_priv_key_passws.get(config_uuid) is not None
                     ):
                         ssh_tunnel["private_key_password"] = (
@@ -224,7 +240,16 @@ def load_configs(
                         else value
                         for path, value in encrypted_extra_secrets[file_name].items()
                     }
-                    temp_dict = json.loads(config["masked_encrypted_extra"])
+                    try:
+                        temp_dict = json.loads(config["masked_encrypted_extra"])
+                    except (TypeError, ValueError) as ex:
+                        raise ValidationError(
+                            {"masked_encrypted_extra": ["Invalid JSON"]}
+                        ) from ex
+                    if not isinstance(temp_dict, dict):
+                        raise ValidationError(
+                            {"masked_encrypted_extra": ["Invalid JSON object"]}
+                        )
                     temp_dict = json.set_masked_fields(temp_dict, normalized_secrets)
                     config["masked_encrypted_extra"] = json.dumps(temp_dict)
 
@@ -298,7 +323,15 @@ def import_tag(
             logger.error("Error parsing tags.yaml: %s", err)
             tags_config = {}
 
-        for tag_info in tags_config.get("tags", []):
+        if not isinstance(tags_config, dict):
+            tags_config = {}
+        tag_entries = tags_config.get("tags", [])
+        if not isinstance(tag_entries, list):
+            tag_entries = []
+
+        for tag_info in tag_entries:
+            if not isinstance(tag_info, dict):
+                continue
             tag_name = tag_info.get("tag_name")
             description = tag_info.get("description", None)
             if tag_name:

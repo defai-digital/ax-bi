@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, cast, Optional
 from unittest.mock import Mock
 
 import pytest
@@ -34,6 +34,7 @@ from sqlalchemy.types import (
 from urllib3.connection import HTTPConnection
 from urllib3.exceptions import NewConnectionError
 
+from superset.db_engine_specs.base import BasicParametersType
 from superset.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
@@ -210,6 +211,47 @@ def test_connect_get_column_spec(
     )
 
     assert_column_spec(spec, native_type, sqla_type, attrs, generic_type, is_dttm)
+
+
+def test_connect_build_sqlalchemy_uri_ignores_malformed_query_params() -> None:
+    from superset.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
+
+    parameters = cast(
+        BasicParametersType,
+        {
+            "host": "localhost",
+            "port": 443,
+            "database": "analytics",
+            "query": "not a query mapping",
+        },
+    )
+
+    assert (
+        ClickHouseConnectEngineSpec.build_sqlalchemy_uri(parameters)
+        == "clickhousedb+connect://localhost:443/analytics"
+    )
+
+
+def test_connect_build_sqlalchemy_uri_encryption_ignores_malformed_query_params() -> (
+    None
+):
+    from superset.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
+
+    parameters = cast(
+        BasicParametersType,
+        {
+            "host": "localhost",
+            "port": 443,
+            "database": "analytics",
+            "query": "not a query mapping",
+            "encryption": True,
+        },
+    )
+
+    assert (
+        ClickHouseConnectEngineSpec.build_sqlalchemy_uri(parameters)
+        == "clickhousedb+connect://localhost:443/analytics?secure=true"
+    )
 
 
 @pytest.mark.parametrize(

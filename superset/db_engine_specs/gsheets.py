@@ -98,6 +98,15 @@ class GSheetsPropertiesType(TypedDict, total=False):
     masked_encrypted_extra: str
 
 
+def _load_masked_encrypted_extra(value: Any) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, json.JSONDecodeError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
 class GSheetsEngineSpec(ShillelaghEngineSpec):
     """Engine for Google spreadsheets"""
 
@@ -396,7 +405,7 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
         # Check for OAuth2 config. Skip URL access for OAuth2 connections (user
         # might not have a token, or admin adding a sheet they don't have access to)
         oauth2_config_in_params = parameters.get("oauth2_client_info")
-        oauth2_config_in_secure_extra = json.loads(
+        oauth2_config_in_secure_extra = _load_masked_encrypted_extra(
             properties.get("masked_encrypted_extra", "{}")
         ).get("oauth2_client_info")
         is_oauth2_conn = bool(oauth2_config_in_params or oauth2_config_in_secure_extra)
@@ -470,8 +479,17 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
         payload = response.json()
         _logger.debug(payload)
 
+        if not isinstance(payload, dict):
+            raise SupersetException("Google Sheets API returned an unexpected response")
+
         if "error" in payload:
-            raise SupersetException(payload["error"]["message"])
+            error = payload["error"]
+            message = error.get("message") if isinstance(error, dict) else None
+            raise SupersetException(
+                message
+                if isinstance(message, str)
+                else "Google Sheets API returned an error"
+            )
 
         return payload
 
@@ -547,9 +565,22 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
                 "https://sheets.googleapis.com/v4/spreadsheets",
                 {"properties": {"title": table.table}},
             )
-            spreadsheet_id = payload["spreadsheetId"]
-            range_ = payload["sheets"][0]["properties"]["title"]
-            spreadsheet_url = payload["spreadsheetUrl"]
+            try:
+                spreadsheet_id = payload["spreadsheetId"]
+                range_ = payload["sheets"][0]["properties"]["title"]
+                spreadsheet_url = payload["spreadsheetUrl"]
+            except (IndexError, KeyError, TypeError) as ex:
+                raise SupersetException(
+                    "Google Sheets API returned an unexpected response"
+                ) from ex
+            if (
+                spreadsheet_id is None
+                or not isinstance(range_, str)
+                or not isinstance(spreadsheet_url, str)
+            ):
+                raise SupersetException(
+                    "Google Sheets API returned an unexpected response"
+                )
 
         # insert data
         data = df.fillna("").values.tolist()

@@ -25,12 +25,21 @@ and certification status.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
+from flask import current_app, has_app_context
 from sqlalchemy import or_
 
+from superset import is_feature_enabled
 from superset.extensions import db
 from superset.mcp_service.ai.schemas import AssetResult
+from superset.runtime_modernization.ax_services import (
+    AxServicesClient,
+    AxServicesConfig,
+    AxServicesResponse,
+)
+from superset.runtime_modernization.measurement import runtime_metric_key
+from superset.runtime_modernization.shadow import execute_with_shadow
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +49,7 @@ _DESCRIPTION_MATCH_SCORE = 0.5
 _CERTIFIED_BONUS = 0.2
 
 _VALID_ASSET_TYPES = frozenset({"dataset", "chart", "dashboard", "metric"})
+_ASSET_SEARCH_CONTRACT_VERSION = "asset-search.v1"
 
 
 def _escape_like_pattern(value: str) -> str:
@@ -101,7 +111,7 @@ def _search_datasets(
     escaped_query = _escape_like_pattern(query)
     search_filter = or_(
         SqlaTable.table_name.ilike(f"%{escaped_query}%"),
-        SqlaTable.description.ilike(f"%{escaped_query}%"),
+        cast(Any, SqlaTable.description).ilike(f"%{escaped_query}%"),
     )
 
     session = db.session
@@ -248,7 +258,7 @@ def _build_reason(name: str | None, description: str | None, query: str) -> str:
     return ", ".join(parts) if parts else "tag/owner match"
 
 
-def search_assets(
+def _search_assets_python(
     query: str,
     asset_types: list[str] | None = None,
     include_certified_only: bool = False,
@@ -297,3 +307,198 @@ def search_assets(
     # Sort by relevance score descending and apply final limit
     all_results.sort(key=lambda r: r.relevance_score or 0.0, reverse=True)
     return all_results[:limit]
+
+
+def _asset_search_shadow_enabled() -> bool:
+    """Return whether asset search should shadow through ax-services."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("RUNTIME_SHADOW_EXECUTION")
+        and is_feature_enabled("TS_MCP_ORCHESTRATION")
+    )
+
+
+def _asset_search_serving_enabled() -> bool:
+    """Return whether asset search should serve from ax-services."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("TS_MCP_ORCHESTRATION")
+        and is_feature_enabled("TS_ASSET_SEARCH_SERVING")
+    )
+
+
+def _ax_services_asset_search_candidate(
+    query: str,
+    asset_types: list[str] | None,
+    include_certified_only: bool,
+    limit: int,
+) -> AxServicesResponse:
+    """Run the TypeScript sidecar asset search candidate."""
+
+    client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
+    return client.asset_search(
+        {
+            "contractVersion": _ASSET_SEARCH_CONTRACT_VERSION,
+            "query": query,
+            "assetTypes": asset_types or [],
+            "includeCertifiedOnly": include_certified_only,
+            "limit": limit,
+        }
+    )
+
+
+def _is_string_list(value: object) -> bool:
+    """Return whether value is a list of strings."""
+
+    return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+
+def _asset_results_from_ax_services_response(
+    response: AxServicesResponse,
+) -> list[AssetResult] | None:
+    """Convert a TypeScript sidecar asset-search response into Python schemas."""
+
+    if not response.ok or not response.payload:
+        return None
+
+    assets = response.payload.get("assets")
+    if not isinstance(assets, list):
+        return None
+
+    results: list[AssetResult] = []
+    for asset in assets:
+        if not isinstance(asset, dict):
+            return None
+
+        asset_type = asset.get("assetType")
+        asset_id = asset.get("id")
+        name = asset.get("name")
+        if not isinstance(asset_type, str) or not isinstance(asset_id, int):
+            return None
+        if not isinstance(name, str):
+            return None
+
+        owners = asset.get("owners", [])
+        tags = asset.get("tags", [])
+        if not _is_string_list(owners) or not _is_string_list(tags):
+            return None
+
+        relevance_score = asset.get("relevanceScore")
+        results.append(
+            AssetResult(
+                asset_type=asset_type,
+                id=asset_id,
+                uuid=asset.get("uuid") if isinstance(asset.get("uuid"), str) else "",
+                name=name,
+                description=asset.get("description")
+                if isinstance(asset.get("description"), str)
+                else "",
+                certified=asset.get("certified") is True,
+                relevance_score=relevance_score
+                if isinstance(relevance_score, (int, float))
+                and not isinstance(relevance_score, bool)
+                else None,
+                relevance_reason=asset.get("relevanceReason")
+                if isinstance(asset.get("relevanceReason"), str)
+                else None,
+                owners=owners,
+                tags=tags,
+            )
+        )
+
+    return results
+
+
+def _asset_search_shadow_matches(
+    authoritative: list[AssetResult],
+    candidate: AxServicesResponse,
+) -> bool:
+    """Compare Python and TypeScript asset search outputs by type and ID."""
+
+    if not candidate.ok or not candidate.payload:
+        return False
+
+    candidate_assets = candidate.payload.get("assets")
+    if not isinstance(candidate_assets, list):
+        return False
+
+    authoritative_keys = [(asset.asset_type, asset.id) for asset in authoritative]
+    candidate_keys: list[tuple[str, int]] = []
+    for asset in candidate_assets:
+        if not isinstance(asset, dict):
+            return False
+        asset_type = asset.get("assetType")
+        asset_id = asset.get("id")
+        if not isinstance(asset_type, str) or not isinstance(asset_id, int):
+            return False
+        candidate_keys.append((asset_type, asset_id))
+
+    return authoritative_keys == candidate_keys
+
+
+def _record_asset_search_metric(metric: str) -> None:
+    """Record an asset-search migration metric when Flask context is available."""
+
+    if has_app_context():
+        current_app.config["STATS_LOGGER"].incr(
+            runtime_metric_key("mcp_orchestration", "search_assets", metric)
+        )
+
+
+def search_assets(
+    query: str,
+    asset_types: list[str] | None = None,
+    include_certified_only: bool = False,
+    limit: int = 10,
+) -> list[AssetResult]:
+    """Search business assets with optional TypeScript shadow execution."""
+
+    if not has_app_context():
+        return _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        )
+
+    if _asset_search_serving_enabled():
+        candidate_response = _ax_services_asset_search_candidate(
+            query,
+            asset_types,
+            include_certified_only,
+            limit,
+        )
+        candidate_assets = _asset_results_from_ax_services_response(candidate_response)
+        if candidate_assets is not None:
+            _record_asset_search_metric("served_candidate")
+            return candidate_assets
+
+        _record_asset_search_metric("fallback")
+        return _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        )
+
+    return execute_with_shadow(
+        area="mcp_orchestration",
+        operation="search_assets",
+        authoritative=lambda: _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        ),
+        candidate=lambda: _ax_services_asset_search_candidate(
+            query,
+            asset_types,
+            include_certified_only,
+            limit,
+        ),
+        compare=_asset_search_shadow_matches,
+        stats_logger=current_app.config["STATS_LOGGER"],
+        shadow_enabled=_asset_search_shadow_enabled(),
+    )

@@ -162,9 +162,10 @@ class Task(CoreTask, AuditMixinNullable, Model):
         :returns: Dictionary containing payload data
         """
         try:
-            return json.loads(self.payload or "{}")
+            payload = json.loads(self.payload or "{}")
         except (json.JSONDecodeError, TypeError):
             return {}
+        return payload if isinstance(payload, dict) else {}
 
     def set_payload(self, data: dict[str, Any]) -> None:
         """

@@ -38,14 +38,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:
-    import polib
+_POEntry = Any
 
 TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
 DEFAULT_OUTPUT = (
@@ -56,7 +56,7 @@ DEFAULT_OUTPUT = (
 )
 
 
-def _is_translated(entry: polib.POEntry) -> bool:
+def _is_translated(entry: _POEntry) -> bool:
     """Return True if the entry has a non-empty, non-fuzzy translation."""
     if "fuzzy" in entry.flags:
         return False
@@ -65,7 +65,7 @@ def _is_translated(entry: polib.POEntry) -> bool:
     return bool(entry.msgstr)
 
 
-def _plural_key(entry: polib.POEntry) -> str:
+def _plural_key(entry: _POEntry) -> str:
     """Build the combined key used for plural translation entries."""
     return f"{entry.msgid}\x00{entry.msgid_plural}"
 
@@ -73,7 +73,7 @@ def _plural_key(entry: polib.POEntry) -> str:
 def build_index(translations_dir: Path) -> dict[str, Any]:
     """Read all .po files and build a combined translation index."""
     try:
-        import polib  # type: ignore[import-untyped]
+        polib: Any = importlib.import_module("polib")
     except ImportError:
         print("polib is required. Install with: pip install polib", file=sys.stderr)
         sys.exit(1)

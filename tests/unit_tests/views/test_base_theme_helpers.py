@@ -256,6 +256,34 @@ class TestThemeHelpers:
             "Invalid JSON in system %s theme %s", "default", 1
         )
 
+    @patch("superset.views.base.logger")
+    def test_load_theme_from_model_null_json(self, mock_logger):
+        """Test _load_theme_from_model with null JSON data"""
+        mock_model = MagicMock()
+        mock_model.json_data = None
+        mock_model.id = 1
+        fallback = {"token": {"colorPrimary": "#111"}}
+
+        result = _load_theme_from_model(mock_model, fallback, ThemeMode.DEFAULT)
+        assert result == fallback
+        mock_logger.error.assert_called_once_with(
+            "Invalid JSON in system %s theme %s", "default", 1
+        )
+
+    @patch("superset.views.base.logger")
+    def test_load_theme_from_model_non_object_json(self, mock_logger):
+        """Test _load_theme_from_model with non-object JSON"""
+        mock_model = MagicMock()
+        mock_model.json_data = "[]"
+        mock_model.id = 1
+        fallback = {"token": {"colorPrimary": "#111"}}
+
+        result = _load_theme_from_model(mock_model, fallback, ThemeMode.DEFAULT)
+        assert result == fallback
+        mock_logger.error.assert_called_once_with(
+            "Invalid JSON object in system %s theme %s", "default", 1
+        )
+
     def test_process_theme_none(self):
         """Test _process_theme with None theme"""
         result = _process_theme(None, ThemeMode.DEFAULT)
@@ -890,6 +918,56 @@ class TestBrandAppNameFallback:
 
         # Should handle gracefully and use default title
         assert result["default_title"] == "Superset"
+
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_common_payload(
+        self, mock_app, mock_payload
+    ):
+        """Test handling when common payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Superset"}
+        mock_payload.return_value = {"common": ["bad-common"]}
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Superset"
+        assert result["theme_tokens"] == {}
+
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_theme_payload(self, mock_app, mock_payload):
+        """Test handling when theme payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Superset"}
+        mock_payload.return_value = {"common": {"theme": ["bad-theme"]}}
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Superset"
+        assert result["theme_tokens"] == {}
+
+    @patch("superset.views.base.get_spa_payload")
+    @patch("superset.views.base.app")
+    def test_brandappname_handles_malformed_token_payload(self, mock_app, mock_payload):
+        """Test handling when theme token payload is not a dict"""
+        from superset.views.base import get_spa_template_context
+
+        mock_app.config = {"APP_NAME": "Custom App"}
+        mock_payload.return_value = {
+            "common": {
+                "theme": {
+                    "default": {"token": ["bad-token"]},
+                }
+            }
+        }
+
+        result = get_spa_template_context("app")
+
+        assert result["default_title"] == "Custom App"
+        assert result["theme_tokens"] == {"brandAppName": "Custom App"}
 
 
 class TestGetDefaultSpinnerSvg:

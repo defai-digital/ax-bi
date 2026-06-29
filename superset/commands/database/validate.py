@@ -37,6 +37,15 @@ from superset.utils import json
 BYPASS_VALIDATION_ENGINES = {"bigquery", "datastore", "snowflake"}
 
 
+def _load_encrypted_extra(value: Any) -> dict[str, Any]:
+    """Decode encrypted extra JSON, returning an object or an empty dict."""
+    try:
+        encrypted_extra = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return {}
+    return encrypted_extra if isinstance(encrypted_extra, dict) else {}
+
+
 class ValidateDatabaseParametersCommand(BaseCommand):
     def __init__(self, properties: dict[str, Any]):
         self._properties = properties.copy()
@@ -80,10 +89,7 @@ class ValidateDatabaseParametersCommand(BaseCommand):
                 self._model.encrypted_extra,
                 serialized_encrypted_extra,
             )
-        try:
-            encrypted_extra = json.loads(serialized_encrypted_extra)
-        except json.JSONDecodeError:
-            encrypted_extra = {}
+        encrypted_extra = _load_encrypted_extra(serialized_encrypted_extra)
 
         # try to connect
         sqlalchemy_uri = engine_spec.build_sqlalchemy_uri(  # type: ignore

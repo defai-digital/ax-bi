@@ -39,6 +39,7 @@ from superset.mcp_service.common.error_schemas import MCPResourceError
 from superset.mcp_service.constants import MAX_PAGE_SIZE
 from superset.mcp_service.system.schemas import PaginationInfo
 from superset.mcp_service.utils.response_utils import filter_serialized_response_fields
+from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
 from superset.mcp_service.utils.schema_utils import (
     ensure_search_and_filters_not_combined,
     parse_filters,
@@ -135,6 +136,14 @@ class QueryInfo(BaseModel):
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
+
+    @field_validator("sql", "executed_sql", "tab_name", "error_message")
+    @classmethod
+    def sanitize_llm_text(cls, v: str | None, info: Any) -> str | None:
+        """Wrap user/database-controlled query text before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=(info.field_name,))
 
 
 class QueryList(BaseModel):

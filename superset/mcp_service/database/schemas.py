@@ -22,7 +22,7 @@ Pydantic schemas for database-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, cast, Dict, List, Literal
 
 from pydantic import (
     BaseModel,
@@ -46,6 +46,7 @@ from superset.mcp_service.utils.response_utils import (
     filter_serialized_response_fields,
     humanize_timestamp,
 )
+from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
 from superset.mcp_service.utils.schema_utils import (
     ensure_search_and_filters_not_combined,
     parse_filters,
@@ -142,6 +143,29 @@ class DatabaseInfo(BaseModel):
     @model_serializer(mode="wrap")
     def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
+
+    @field_validator("database_name")
+    @classmethod
+    def sanitize_database_name(cls, v: str | None) -> str | None:
+        """Escape delimiter tokens in database names before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("database_name",))
+
+    @field_validator("extra")
+    @classmethod
+    def sanitize_extra(cls, v: Dict[str, Any | None] | None) -> Dict[str, Any] | None:
+        """Wrap string values in database extra metadata before LLM exposure."""
+        if v is None:
+            return None
+        return cast(
+            Dict[str, Any],
+            sanitize_for_llm_context(
+                v,
+                field_path=("extra",),
+                excluded_field_names=frozenset(),
+            ),
+        )
 
 
 class DatabaseList(BaseModel):
@@ -279,7 +303,7 @@ def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
         except (ValueError, TypeError):
             pass
         return None
-    return value
+    return value if isinstance(value, dict) else None
 
 
 def _get_backend(database: Any) -> str | None:

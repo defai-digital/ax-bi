@@ -38,14 +38,37 @@ from superset.explore.exceptions import WrongEndpointError
 from superset.explore.permalink.exceptions import ExplorePermalinkGetFailedError
 from superset.extensions import security_manager
 from superset.superset_typing import ExplorableData
-from superset.utils import core as utils, json
+from superset.utils import core as utils
 from superset.views.utils import (
     get_datasource_info,
     get_form_data,
+    loads_request_json,
     sanitize_datasource_data,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _get_slice_metadata(slc: Any) -> dict[str, Any]:
+    extra_owners = []
+    if resolver := current_app.config.get("EXTRA_OWNERS_RESOLVER"):
+        extra_owners = resolver(slc)
+
+    metadata = {
+        "created_on_humanized": (slc.created_on_humanized if slc.created_on else None),
+        "changed_on_humanized": (slc.changed_on_humanized if slc.changed_on else None),
+        "owners": [owner.get_full_name() for owner in slc.owners],
+        "extra_owners": extra_owners,
+        "dashboards": [
+            {"id": dashboard.id, "dashboard_title": dashboard.dashboard_title}
+            for dashboard in slc.dashboards
+        ],
+    }
+    if slc.created_by:
+        metadata["created_by"] = slc.created_by.get_full_name()
+    if slc.changed_by:
+        metadata["changed_by"] = slc.changed_by.get_full_name()
+    return metadata
 
 
 class GetExploreCommand(BaseCommand, ABC):
@@ -68,16 +91,24 @@ class GetExploreCommand(BaseCommand, ABC):
             permalink_value = command.run()
             if not permalink_value:
                 raise ExplorePermalinkGetFailedError()
-            state = permalink_value["state"]
-            initial_form_data = state["formData"]
+            state = permalink_value.get("state")
+            if not isinstance(state, dict):
+                raise ExplorePermalinkGetFailedError()
+            form_data = state.get("formData")
+            if not isinstance(form_data, dict):
+                raise ExplorePermalinkGetFailedError()
+            initial_form_data = form_data
             url_params = state.get("urlParams")
             if url_params:
-                initial_form_data["url_params"] = dict(url_params)
+                try:
+                    initial_form_data["url_params"] = dict(url_params)
+                except (TypeError, ValueError) as ex:
+                    raise ExplorePermalinkGetFailedError() from ex
             permalink_chart_state = state.get("chartState")
         elif self._form_data_key:
             parameters = FormDataCommandParameters(key=self._form_data_key)
             value = GetFormDataCommand(parameters).run()
-            initial_form_data = json.loads(value) if value else {}
+            initial_form_data = loads_request_json(value) if value else {}
 
         message = None
 
@@ -160,24 +191,7 @@ class GetExploreCommand(BaseCommand, ABC):
         metadata = None
 
         if slc:
-            extra_owners = []
-            if resolver := current_app.config.get("EXTRA_OWNERS_RESOLVER"):
-                extra_owners = resolver(slc)
-
-            metadata = {
-                "created_on_humanized": slc.created_on_humanized,
-                "changed_on_humanized": slc.changed_on_humanized,
-                "owners": [owner.get_full_name() for owner in slc.owners],
-                "extra_owners": extra_owners,
-                "dashboards": [
-                    {"id": dashboard.id, "dashboard_title": dashboard.dashboard_title}
-                    for dashboard in slc.dashboards
-                ],
-            }
-            if slc.created_by:
-                metadata["created_by"] = slc.created_by.get_full_name()
-            if slc.changed_by:
-                metadata["changed_by"] = slc.changed_by.get_full_name()
+            metadata = _get_slice_metadata(slc)
 
         result: dict[str, Any] = {
             "dataset": sanitize_datasource_data(datasource_data),

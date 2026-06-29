@@ -445,6 +445,32 @@ test('cannot drop non-saved metrics when disallow_adhoc_metrics', () => {
   expect(onChange).toHaveBeenLastCalledWith(['metric_b', 'metric_a']);
 });
 
+test('cannot drop non-saved metrics when parsed extra disallows ad-hoc metrics', () => {
+  const onChange = jest.fn();
+  render(
+    <DndMetricSelect
+      {...defaultProps}
+      value={['metric_b']}
+      onChange={onChange}
+      multi
+      datasource={{ extra: { disallow_adhoc_metrics: true } } as any}
+    />,
+    { useDndKit: true, useRedux: true },
+  );
+
+  simulateDrop(captured, {
+    type: DndItemType.Column,
+    value: { column_name: 'column_a' } as any,
+  });
+  expect(onChange).not.toHaveBeenCalled();
+
+  simulateDrop(captured, {
+    type: DndItemType.Metric,
+    value: { metric_name: 'metric_a' } as any,
+  });
+  expect(onChange).toHaveBeenLastCalledWith(['metric_b', 'metric_a']);
+});
+
 test('title changes on custom SQL text change', async () => {
   let metricValues = [adhocMetricA, 'metric_b'];
   const onChange = (val: any[]) => {

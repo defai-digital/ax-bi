@@ -41,6 +41,7 @@ from superset.commands.semantic_layer.delete import (
 from superset.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerDeleteFailedError,
+    SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticLayerUpdateFailedError,
@@ -60,7 +61,11 @@ from superset.daos.semantic_layer import SemanticLayerDAO
 from superset.datasets.schemas import get_delete_ids_schema
 from superset.exceptions import SupersetSecurityException
 from superset.models.core import Database
-from superset.semantic_layers.models import SemanticLayer, SemanticView
+from superset.semantic_layers.models import (
+    load_configuration,
+    SemanticLayer,
+    SemanticView,
+)
 from superset.semantic_layers.registry import registry
 from superset.semantic_layers.schemas import (
     SemanticLayerPostSchema,
@@ -80,10 +85,14 @@ from superset.views.base_api import (
 logger = logging.getLogger(__name__)
 
 
+def _get_json_body() -> dict[str, Any]:
+    """Return the current JSON request body when it is an object."""
+    body = request.get_json(silent=True)
+    return body if isinstance(body, dict) else {}
+
+
 def _serialize_layer(layer: SemanticLayer) -> dict[str, Any]:
-    config = layer.configuration
-    if isinstance(config, str):
-        config = json.loads(config)
+    config = load_configuration(layer.configuration)
     return {
         "uuid": str(layer.uuid),
         "name": layer.name,
@@ -93,6 +102,58 @@ def _serialize_layer(layer: SemanticLayer) -> dict[str, Any]:
         "configuration": config or {},
         "changed_on_delta_humanized": layer.changed_on_delta_humanized(),
     }
+
+
+def _get_schema_defs(schema: dict[str, Any]) -> dict[str, Any]:
+    defs = schema.get("$defs", {})
+    return defs if isinstance(defs, dict) else {}
+
+
+def _get_schema_properties(schema: dict[str, Any]) -> dict[str, Any]:
+    properties = schema.get("properties", {})
+    return properties if isinstance(properties, dict) else {}
+
+
+def _get_discriminator_mapping(
+    prop_schema: dict[str, Any],
+) -> tuple[str, dict[str, Any]] | None:
+    discriminator = prop_schema.get("discriminator")
+    if not isinstance(discriminator, dict):
+        return None
+
+    mapping = discriminator.get("mapping")
+    discriminator_field = discriminator.get("propertyName")
+    if (
+        not isinstance(mapping, dict)
+        or not mapping
+        or not isinstance(discriminator_field, str)
+        or not discriminator_field
+    ):
+        return None
+
+    return discriminator_field, mapping
+
+
+def _get_required_fields(
+    defs: dict[str, Any],
+    ref: Any,
+    discriminator_field: str,
+) -> set[str]:
+    if not isinstance(ref, str):
+        return set()
+
+    ref_name = ref.rsplit("/", 1)[-1] if "/" in ref else ref
+    variant_def = defs.get(ref_name, {})
+    if not isinstance(variant_def, dict):
+        return set()
+
+    required_values = variant_def.get("required", [])
+    if not isinstance(required_values, list):
+        return set()
+
+    required = {field for field in required_values if isinstance(field, str)}
+    required.discard(discriminator_field)
+    return required
 
 
 def _infer_discriminators(
@@ -107,32 +168,26 @@ def _infer_discriminators(
     against one of the variants by checking which variant's required fields are
     present, then injects the discriminator value.
     """
-    defs = schema.get("$defs", {})
-    for prop_name, prop_schema in schema.get("properties", {}).items():
+    defs = _get_schema_defs(schema)
+    for prop_name, prop_schema in _get_schema_properties(schema).items():
+        if not isinstance(prop_schema, dict):
+            continue
+
         value = data.get(prop_name)
         if not isinstance(value, dict):
             continue
 
         # Find discriminated union via discriminator mapping
-        mapping = (
-            prop_schema.get("discriminator", {}).get("mapping")
-            if "discriminator" in prop_schema
-            else None
-        )
-        if not mapping:
+        discriminator = _get_discriminator_mapping(prop_schema)
+        if not discriminator:
             continue
-
-        discriminator_field = prop_schema["discriminator"].get("propertyName")
-        if not discriminator_field or discriminator_field in value:
-            continue
+        discriminator_field, mapping = discriminator
 
         # Try each variant: match by required fields present in the data
         for disc_value, ref in mapping.items():
-            ref_name = ref.rsplit("/", 1)[-1] if "/" in ref else ref
-            variant_def = defs.get(ref_name, {})
-            required = set(variant_def.get("required", []))
-            # Exclude the discriminator itself from the check
-            required.discard(discriminator_field)
+            if discriminator_field in value:
+                continue
+            required = _get_required_fields(defs, ref, discriminator_field)
             if required and required.issubset(value.keys()):
                 data = {
                     **data,
@@ -310,7 +365,7 @@ class SemanticViewRestApi(BaseSupersetModelRestApi):
         if not is_feature_enabled("SEMANTIC_LAYERS"):
             return self.response_404()
 
-        body = request.json or {}
+        body = _get_json_body()
         views_data = body.get("views", [])
         if not views_data:
             return self.response_400(message="No views provided")
@@ -396,7 +451,9 @@ class SemanticViewRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -593,7 +650,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
             401:
               $ref: '#/components/responses/401'
         """
-        body = request.json or {}
+        body = _get_json_body()
         sl_type = body.get("type")
 
         cls = registry.get(sl_type)  # type: ignore[arg-type]
@@ -658,7 +715,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
         if not layer:
             return self.response_404()
 
-        body = request.get_json(silent=True) or {}
+        body = _get_json_body()
         runtime_data = body.get("runtime_data")
 
         cls = registry.get(layer.type)
@@ -712,7 +769,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
         if not layer:
             return self.response_404()
 
-        body = request.get_json(silent=True) or {}
+        body = _get_json_body()
         runtime_data = body.get("runtime_data", {})
 
         try:
@@ -734,9 +791,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
         existing = SemanticLayerDAO.get_semantic_views(str(layer.uuid))
         existing_keys: set[tuple[str, str]] = set()
         for v in existing:
-            config = v.configuration
-            if isinstance(config, str):
-                config = json.loads(config)
+            config = load_configuration(v.configuration)
             existing_keys.add((v.name, json.dumps(config or {}, sort_keys=True)))
         runtime_key = json.dumps(runtime_data or {}, sort_keys=True)
 
@@ -787,7 +842,7 @@ class SemanticLayerRestApi(BaseSupersetApi):
               $ref: '#/components/responses/422'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -847,7 +902,9 @@ class SemanticLayerRestApi(BaseSupersetApi):
               $ref: '#/components/responses/422'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -856,6 +913,8 @@ class SemanticLayerRestApi(BaseSupersetApi):
             return self.response(200, result={"uuid": str(changed_model.uuid)})
         except SemanticLayerNotFoundError:
             return self.response_404()
+        except SemanticLayerForbiddenError:
+            return self.response_403()
         except SemanticLayerInvalidError as ex:
             return self.response_422(message=str(ex))
         except SemanticLayerUpdateFailedError as ex:
@@ -895,6 +954,8 @@ class SemanticLayerRestApi(BaseSupersetApi):
             return self.response(200, message="OK")
         except SemanticLayerNotFoundError:
             return self.response_404()
+        except SemanticLayerForbiddenError:
+            return self.response_403()
         except SemanticLayerDeleteFailedError as ex:
             logger.error(
                 "Error deleting semantic layer: %s",

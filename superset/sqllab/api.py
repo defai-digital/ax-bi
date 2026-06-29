@@ -73,6 +73,27 @@ from superset.views.base_api import BaseSupersetApi, requires_json, statsd_metri
 logger = logging.getLogger(__name__)
 
 
+def _load_template_params(template_params: Any) -> dict[str, Any]:
+    if isinstance(template_params, dict):
+        return template_params
+    try:
+        parsed = json.loads(template_params) if isinstance(template_params, str) else {}
+    except json.JSONDecodeError:
+        logger.warning(
+            "Invalid template parameter %s. Skipping processing",
+            str(template_params),
+        )
+        return {}
+
+    if not isinstance(parsed, dict):
+        logger.warning(
+            "Invalid template parameter %s. Skipping processing",
+            str(template_params),
+        )
+        return {}
+    return parsed
+
+
 class SqlLabRestApi(BaseSupersetApi):
     method_permission_name = MODEL_API_RW_METHOD_PERMISSION_MAP
     datamodel = SQLAInterface(Query)
@@ -186,7 +207,9 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            model = self.estimate_model_schema.load(request.json)
+            model = self.estimate_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -234,7 +257,9 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            model = self.format_model_schema.load(request.json)
+            model = self.format_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             sql = model["sql"]
             template_params = model.get("template_params")
             database_id = model.get("database_id")
@@ -248,23 +273,13 @@ class SqlLabRestApi(BaseSupersetApi):
                     database_engine = database.db_engine_spec.engine
 
                     if template_params:
-                        try:
-                            template_params = (
-                                json.loads(template_params)
-                                if isinstance(template_params, str)
-                                else template_params
+                        template_params = _load_template_params(template_params)
+                        if template_params:
+                            template_processor = get_template_processor(
+                                database=database
                             )
-                            if template_params:
-                                template_processor = get_template_processor(
-                                    database=database
-                                )
-                                sql = template_processor.process_template(
-                                    sql, **template_params
-                                )
-                        except json.JSONDecodeError:
-                            logger.warning(
-                                "Invalid template parameter %s. Skipping processing",
-                                str(template_params),
+                            sql = template_processor.process_template(
+                                sql, **template_params
                             )
 
             result = SQLScript(sql, model.get("engine", database_engine)).format()
@@ -559,7 +574,8 @@ class SqlLabRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            self.execute_model_schema.load(request.json)
+            raw_payload = request.get_json(cache=True, silent=True)
+            self.execute_model_schema.load(raw_payload)
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -567,7 +583,7 @@ class SqlLabRestApi(BaseSupersetApi):
             log_params = {
                 "user_agent": cast(Optional[str], request.headers.get("USER_AGENT"))
             }
-            execution_context = SqlJsonExecutionContext(request.json)
+            execution_context = SqlJsonExecutionContext(raw_payload)
             command = self._create_sql_json_command(execution_context, log_params)
             command_result: CommandResult = command.run()
 

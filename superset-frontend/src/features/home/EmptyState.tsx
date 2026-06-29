@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useSelector } from 'react-redux';
+import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import {
   Button,
   EmptyState as EmptyStateComponent,
@@ -24,6 +26,8 @@ import { TableTab } from 'src/views/CRUD/types';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
 import { navigateTo } from 'src/utils/navigationUtils';
+import { findPermission } from 'src/utils/findPermission';
+import type { RootState } from 'src/views/store';
 import { WelcomeTable } from './types';
 
 const EmptyContainer = styled.div`
@@ -76,6 +80,20 @@ export interface EmptyStateProps {
 }
 
 export default function EmptyState({ tableName, tab }: EmptyStateProps) {
+  // Surface a discoverable path to the streamlined upload page at the moment of
+  // confusion (an empty Charts/Dashboards surface = "no data yet"). Gated by the
+  // same predicate the "+" Create menu uses, so it can never widen access.
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
+  );
+  const uploadEnabled =
+    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
+  const showUploadCta =
+    uploadEnabled &&
+    tab !== TableTab.Favorite &&
+    (tableName === WelcomeTable.Charts ||
+      tableName === WelcomeTable.Dashboards);
+
   const getActionButton = () => {
     if (tableName === WelcomeTable.Recents) {
       return null;
@@ -115,6 +133,15 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
         description={t('Nothing here yet')}
       >
         {getActionButton()}
+        {showUploadCta && (
+          <Button
+            buttonStyle="link"
+            onClick={() => navigateTo('/upload/')}
+            data-test="empty-state-upload-data"
+          >
+            {t('Upload data')}
+          </Button>
+        )}
       </EmptyStateComponent>
     </EmptyContainer>
   );

@@ -51,7 +51,8 @@ def collect_request_payload() -> dict[str, Any]:
 
     if request.is_json:
         json_payload = request.get_json(cache=True, silent=True) or {}
-        payload.update(json_payload)
+        if isinstance(json_payload, dict):
+            payload.update(json_payload)
 
     # save URL match pattern in addition to the request path
     url_rule = str(request.url_rule)
@@ -67,6 +68,21 @@ def collect_request_payload() -> dict[str, Any]:
         del payload["rison"]
 
     return payload
+
+
+def _normalize_records(
+    records: Any,
+    fallback: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    if isinstance(records, dict):
+        return [records]
+
+    if isinstance(records, list):
+        normalized = [record for record in records if isinstance(record, dict)]
+        if normalized:
+            return normalized
+
+    return [fallback] if fallback else []
 
 
 def get_logger_from_status(
@@ -231,7 +247,10 @@ class AbstractEventLogger(ABC):
         try:
             # bulk insert
             explode_by = payload.get("explode")
-            records = json.loads(payload.get(explode_by))  # type: ignore
+            records = _normalize_records(
+                json.loads(payload.get(explode_by)),  # type: ignore
+                payload,
+            )
         except Exception:  # pylint: disable=broad-except
             records = [payload]
 
@@ -383,13 +402,8 @@ class DBEventLogger(AbstractEventLogger):
         from superset import db
         from superset.models.core import Log
 
-        records = kwargs.get("records", [])
         curated_payload = kwargs.get("curated_payload")
-
-        # If no records but curated_payload exists, use it as a single record
-        # This enables MCP middleware logging which passes curated_payload
-        if not records and curated_payload:
-            records = [curated_payload]
+        records = _normalize_records(kwargs.get("records", []), curated_payload)
 
         logs = []
         for record in records:

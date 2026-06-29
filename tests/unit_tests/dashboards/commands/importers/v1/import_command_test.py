@@ -24,6 +24,7 @@ This addresses GitHub issue #22127.
 
 import copy
 
+import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select
@@ -84,6 +85,45 @@ def test_dashboard_import_with_overwrite_replaces_charts(
     # Verify final state: only 1 chart (replaced, not merged)
     final_chart_ids = db.session.scalars(select(dashboard_slices.c.slice_id)).all()
     assert len(final_chart_ids) == 1
+
+
+@pytest.mark.parametrize(
+    "dashboard_config",
+    [
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Missing position",
+            "version": "1.0.0",
+        },
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Malformed position",
+            "position": [],
+            "version": "1.0.0",
+        },
+    ],
+)
+def test_dashboard_import_tolerates_missing_or_malformed_position(
+    mocker: MockerFixture,
+    dashboard_config: dict[str, object],
+) -> None:
+    """Dashboard import should not require optional layout data."""
+    from superset.commands.dashboard import importers as dashboard_importers
+    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
+
+    dashboard = mocker.Mock()
+    dashboard.id = 1
+    mock_import_dashboard = mocker.patch.object(
+        dashboard_importers.v1, "import_dashboard", return_value=dashboard
+    )
+    mocker.patch.object(dashboard_importers.v1, "migrate_dashboard")
+
+    ImportDashboardsCommand._import(
+        {"dashboards/missing_position.yaml": dashboard_config},
+        overwrite=True,
+    )
+
+    mock_import_dashboard.assert_called_once()
 
 
 def test_dashboard_import_without_overwrite_merges_charts(

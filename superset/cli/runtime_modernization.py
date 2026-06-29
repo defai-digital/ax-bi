@@ -1,0 +1,297 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+"""CLI commands for AX-BI runtime modernization planning."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import click
+from flask import current_app
+from flask.cli import with_appcontext
+
+from superset.runtime_modernization.ax_services import (
+    AxServicesClient,
+    AxServicesConfig,
+    AxServicesResponse,
+)
+from superset.runtime_modernization.benchmarks import (
+    benchmark_sql_parsing_normalization,
+    benchmark_sql_whitespace_kernel,
+    RuntimeBenchmarkResult,
+    RuntimeKernelBenchmarkResult,
+)
+from superset.runtime_modernization.inventory import (
+    get_runtime_inventory,
+    MigrationDisposition,
+    RuntimeInventoryItem,
+)
+from superset.utils import json
+
+
+@click.group()
+def runtime_modernization() -> None:
+    """Runtime modernization planning commands."""
+
+
+def _inventory_item_to_dict(item: RuntimeInventoryItem) -> dict[str, Any]:
+    """Serialize a runtime inventory item for CLI output."""
+
+    return {
+        "area": item.area,
+        "module_patterns": list(item.module_patterns),
+        "current_runtime": item.current_runtime.value,
+        "target_runtime": item.target_runtime.value,
+        "disposition": item.disposition.value,
+        "rationale": item.rationale,
+        "required_evidence": list(item.required_evidence),
+    }
+
+
+def _format_table(items: tuple[RuntimeInventoryItem, ...]) -> str:
+    """Render runtime inventory items as a compact table."""
+
+    rows = [
+        (
+            item.area,
+            item.current_runtime.value,
+            item.target_runtime.value,
+            item.disposition.value,
+        )
+        for item in items
+    ]
+    header = ("area", "current", "target", "disposition")
+    widths = [
+        max(len(str(row[index])) for row in (header, *rows))
+        for index in range(len(header))
+    ]
+    lines = [
+        "  ".join(value.ljust(widths[index]) for index, value in enumerate(header)),
+        "  ".join("-" * width for width in widths),
+    ]
+    lines.extend(
+        "  ".join(value.ljust(widths[index]) for index, value in enumerate(row))
+        for row in rows
+    )
+    return "\n".join(lines)
+
+
+def _response_to_dict(response: AxServicesResponse) -> dict[str, Any]:
+    """Serialize an ax-services response for CLI output."""
+
+    return {
+        "ok": response.ok,
+        "status_code": response.status_code,
+        "payload": response.payload,
+        "error": response.error,
+    }
+
+
+def _benchmark_result_to_dict(result: RuntimeBenchmarkResult) -> dict[str, Any]:
+    """Serialize a runtime benchmark result for CLI output."""
+
+    return {
+        "area": result.area,
+        "operation": result.operation,
+        "engine": result.engine,
+        "iterations": result.iterations,
+        "duration_ms": result.duration_ms,
+        "operations_per_second": result.operations_per_second,
+        "statement_count": result.statement_count,
+        "formatted_bytes": result.formatted_bytes,
+        "table_check_matched": result.table_check_matched,
+        "has_mutation": result.has_mutation,
+    }
+
+
+def _kernel_benchmark_result_to_dict(
+    result: RuntimeKernelBenchmarkResult,
+) -> dict[str, Any]:
+    """Serialize a runtime kernel benchmark result for CLI output."""
+
+    return {
+        "area": result.area,
+        "operation": result.operation,
+        "iterations": result.iterations,
+        "python_duration_ms": result.python_duration_ms,
+        "python_operations_per_second": result.python_operations_per_second,
+        "rust_available": result.rust_available,
+        "rust_duration_ms": result.rust_duration_ms,
+        "rust_operations_per_second": result.rust_operations_per_second,
+        "speedup": result.speedup,
+        "output_matched": result.output_matched,
+        "output_bytes": result.output_bytes,
+    }
+
+
+@runtime_modernization.command()
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("table", "json")),
+    default="table",
+    show_default=True,
+    help="Output format.",
+)
+@click.option(
+    "--disposition",
+    type=click.Choice(tuple(disposition.value for disposition in MigrationDisposition)),
+    help="Filter by migration disposition.",
+)
+def inventory(output_format: str, disposition: str | None) -> None:
+    """Print the runtime modernization inventory."""
+
+    items = get_runtime_inventory()
+    if disposition:
+        items = tuple(item for item in items if item.disposition.value == disposition)
+
+    if output_format == "json":
+        click.echo(
+            json.dumps(
+                [_inventory_item_to_dict(item) for item in items],
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return
+
+    click.echo(_format_table(items))
+
+
+@runtime_modernization.command("benchmark")
+@click.option(
+    "--candidate",
+    type=click.Choice(("sql_parsing_normalization", "sql_whitespace_kernel")),
+    default="sql_parsing_normalization",
+    show_default=True,
+    help="Runtime modernization candidate to benchmark.",
+)
+@click.option(
+    "--iterations",
+    type=click.IntRange(min=1),
+    default=50,
+    show_default=True,
+    help="Number of benchmark iterations.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def benchmark(candidate: str, iterations: int, output_format: str) -> None:
+    """Run a local runtime modernization benchmark."""
+
+    if candidate == "sql_parsing_normalization":
+        result = benchmark_sql_parsing_normalization(iterations=iterations)
+
+        if output_format == "json":
+            click.echo(
+                json.dumps(_benchmark_result_to_dict(result), sort_keys=True, indent=2)
+            )
+            return
+
+        click.echo(
+            f"{result.area} {result.operation}: "
+            f"{result.iterations} iterations in {result.duration_ms:.2f} ms "
+            f"({result.operations_per_second:.2f} ops/s)"
+        )
+        return
+
+    if candidate != "sql_whitespace_kernel":
+        raise click.ClickException(f"Unsupported benchmark candidate: {candidate}")
+
+    kernel_result = benchmark_sql_whitespace_kernel(iterations=iterations)
+
+    if output_format == "json":
+        click.echo(
+            json.dumps(
+                _kernel_benchmark_result_to_dict(kernel_result),
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return
+
+    rust_summary = "rust unavailable"
+    if kernel_result.rust_available:
+        rust_duration_ms = kernel_result.rust_duration_ms or 0
+        rust_operations_per_second = kernel_result.rust_operations_per_second or 0
+        speedup = (
+            f"{kernel_result.speedup:.2f}x"
+            if kernel_result.speedup is not None
+            else "n/a"
+        )
+        rust_summary = (
+            f"rust {rust_duration_ms:.2f} ms "
+            f"({rust_operations_per_second:.2f} ops/s), "
+            f"speedup {speedup}, "
+            f"matched={kernel_result.output_matched}"
+        )
+
+    click.echo(
+        f"{kernel_result.area} {kernel_result.operation}: "
+        f"{kernel_result.iterations} iterations, "
+        f"python {kernel_result.python_duration_ms:.2f} ms "
+        f"({kernel_result.python_operations_per_second:.2f} ops/s), "
+        f"{rust_summary}"
+    )
+
+
+@runtime_modernization.command("ax-services")
+@click.option(
+    "--check",
+    type=click.Choice(("health", "metadata", "metrics", "ready")),
+    default="ready",
+    show_default=True,
+    help="Sidecar endpoint to check.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+@click.option("--request-id", help="Optional request ID to forward.")
+@with_appcontext
+def ax_services(check: str, output_format: str, request_id: str | None) -> None:
+    """Check AX services sidecar runtime endpoints."""
+
+    client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
+    if check == "health":
+        response = client.health(request_id=request_id)
+    elif check == "metadata":
+        response = client.metadata(request_id=request_id)
+    elif check == "metrics":
+        response = client.metrics(request_id=request_id)
+    else:
+        response = client.ready(request_id=request_id)
+
+    if output_format == "json":
+        click.echo(json.dumps(_response_to_dict(response), sort_keys=True, indent=2))
+    elif response.ok:
+        click.echo(f"ax-services {check}: ok")
+    else:
+        message = response.error or response.payload or "not ready"
+        click.echo(f"ax-services {check}: failed ({message})", err=True)
+
+    if not response.ok:
+        raise click.ClickException(f"ax-services {check} check failed")

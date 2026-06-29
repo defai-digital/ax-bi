@@ -2115,3 +2115,38 @@ test('fetchSystemDefaultTheme: second named-theme fallback fetch succeeds when f
     mockGet.mockRestore();
   }
 });
+
+test('fetchSystemDefaultTheme: named-theme fallback succeeds after malformed default theme', async () => {
+  const originalFetch = global.fetch;
+
+  const mockGet = jest
+    .spyOn(SupersetClient, 'get')
+    .mockRejectedValue(new Error('Client not configured'));
+
+  const namedTheme = { token: { colorPrimary: '#named-theme' } };
+
+  const mockFetch = jest
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ result: [{ json_data: '{malformed' }] }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        result: [{ json_data: JSON.stringify(namedTheme) }],
+      }),
+    });
+  global.fetch = mockFetch;
+
+  try {
+    const controller = createController();
+    const result = await (controller as any).fetchSystemDefaultTheme();
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(namedTheme);
+  } finally {
+    global.fetch = originalFetch;
+    mockGet.mockRestore();
+  }
+});

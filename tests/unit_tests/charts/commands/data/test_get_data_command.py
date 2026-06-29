@@ -22,7 +22,38 @@ import pytest
 from superset.commands.chart.data.get_data_command import ChartDataCommand
 from superset.commands.chart.exceptions import ChartDataQueryFailedError
 from superset.common.chart_data import ChartDataResultType
+from superset.common.db_query_status import QueryStatus
 from superset.common.query_context import QueryContext
+
+
+def test_get_full_tolerates_failed_payload_without_filter_metadata() -> None:
+    """
+    Failed dataframe payloads may omit optional applied/rejected filter metadata.
+    """
+    from superset.common.query_actions import _get_full
+
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.get_df_payload.return_value = {
+        "df": Mock(),
+        "status": QueryStatus.FAILED,
+        "error": "Invalid query",
+    }
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_obj = Mock()
+    mock_query_obj.result_type = ChartDataResultType.FULL
+    mock_query_obj.applied_time_extras = {}
+
+    with patch("superset.common.query_actions._get_datasource") as mock_get_datasource:
+        mock_datasource = Mock()
+        mock_datasource.columns = []
+        mock_get_datasource.return_value = mock_datasource
+
+        result = _get_full(mock_query_context, mock_query_obj)
+
+    assert result["status"] == QueryStatus.FAILED
+    assert result["error"] == "Invalid query"
+    assert result["applied_filters"] == []
+    assert result["rejected_filters"] == []
 
 
 def test_query_result_type_allows_validation_error_payload() -> None:
@@ -100,6 +131,42 @@ def test_results_result_type_raises_on_error() -> None:
         command.run()
 
     assert "Database connection failed" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"queries": "not-a-list"},
+        {"queries": ["not-a-query"]},
+    ],
+)
+def test_run_rejects_malformed_query_payloads(payload: object) -> None:
+    """Malformed query payloads should raise a controlled command error."""
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_context.get_payload.return_value = payload
+
+    command = ChartDataCommand(mock_query_context)
+
+    with pytest.raises(ChartDataQueryFailedError) as exc_info:
+        command.run()
+
+    assert "unexpected payload" in str(exc_info.value)
+
+
+def test_run_rejects_missing_cache_key_when_cache_enabled() -> None:
+    """Cached chart-data responses must include the generated cache key."""
+    mock_query_context = Mock(spec=QueryContext)
+    mock_query_context.result_type = ChartDataResultType.FULL
+    mock_query_context.get_payload.return_value = {"queries": []}
+
+    command = ChartDataCommand(mock_query_context)
+
+    with pytest.raises(ChartDataQueryFailedError) as exc_info:
+        command.run(cache=True)
+
+    assert "unexpected payload" in str(exc_info.value)
 
 
 def test_query_result_type_returns_successful_query() -> None:

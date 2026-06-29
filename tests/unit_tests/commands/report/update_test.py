@@ -447,6 +447,68 @@ def test_ownership_check_raises_forbidden(mocker: MockerFixture) -> None:
         cmd.validate()
 
 
+def test_ownership_check_runs_before_payload_validation(
+    mocker: MockerFixture,
+) -> None:
+    """Non-owners should not reach payload validation or state mutation."""
+    model = _make_model(mocker, model_type=ReportScheduleType.ALERT, database_id=1)
+    model.last_state = ReportState.WORKING
+    find_by_id = mocker.patch(
+        "superset.commands.report.update.ReportScheduleDAO.find_by_id",
+        return_value=model,
+    )
+    database_lookup = mocker.patch(
+        "superset.commands.report.update.DatabaseDAO.find_by_id",
+    )
+    validate_chart_dashboard = mocker.patch.object(
+        UpdateReportScheduleCommand,
+        "validate_chart_dashboard",
+    )
+    validate_report_frequency = mocker.patch.object(
+        UpdateReportScheduleCommand,
+        "validate_report_frequency",
+    )
+    compute_owners = mocker.patch.object(
+        UpdateReportScheduleCommand,
+        "compute_owners",
+    )
+    raise_for_ownership = mocker.patch(
+        "superset.commands.report.update.security_manager.raise_for_ownership",
+        side_effect=SupersetSecurityException(
+            SupersetError(
+                message="Forbidden",
+                error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+                level=ErrorLevel.ERROR,
+            )
+        ),
+    )
+
+    cmd = UpdateReportScheduleCommand(
+        model_id=1,
+        data={
+            "active": False,
+            "database": 2,
+            "recipients": [
+                {
+                    "type": "Email",
+                    "recipient_config_json": {"target": "x@example.com"},
+                }
+            ],
+        },
+    )
+
+    with pytest.raises(ReportScheduleForbiddenError):
+        cmd.validate()
+
+    find_by_id.assert_called_once_with(1)
+    raise_for_ownership.assert_called_once_with(model)
+    database_lookup.assert_not_called()
+    validate_chart_dashboard.assert_not_called()
+    validate_report_frequency.assert_not_called()
+    compute_owners.assert_not_called()
+    assert "last_state" not in cmd._properties
+
+
 # --- Dashboard extra (activeTabs) validation on update ---
 
 
@@ -482,6 +544,64 @@ def test_update_accepts_valid_active_tab_ids(mocker: MockerFixture) -> None:
         data={"extra": {"dashboard": {"activeTabs": ["TAB-valid"]}}},
     )
     cmd.validate()  # should not raise
+
+
+def test_update_rejects_malformed_dashboard_position_json(
+    mocker: MockerFixture,
+) -> None:
+    model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
+    model.dashboard.position_json = "{malformed"
+    _setup_mocks(mocker, model)
+
+    cmd = UpdateReportScheduleCommand(
+        model_id=1,
+        data={"extra": {"dashboard": {"activeTabs": ["TAB-valid"]}}},
+    )
+
+    with pytest.raises(ReportScheduleInvalidError) as exc_info:
+        cmd.validate()
+    messages = exc_info.value.normalized_messages()
+    assert "extra" in messages
+    assert any(
+        "layout metadata is invalid" in str(message).lower()
+        for message in messages["extra"]
+    )
+
+
+def test_update_rejects_malformed_dashboard_native_filter_metadata(
+    mocker: MockerFixture,
+) -> None:
+    model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
+    model.dashboard.position_json = "{}"
+    model.dashboard.json_metadata = "{malformed"
+    _setup_mocks(mocker, model)
+
+    cmd = UpdateReportScheduleCommand(
+        model_id=1,
+        data={
+            "extra": {
+                "dashboard": {
+                    "nativeFilters": [
+                        {
+                            "nativeFilterId": "filter-1",
+                            "filterType": "select",
+                            "columnName": "country_name",
+                            "filterValues": ["USA"],
+                        }
+                    ]
+                }
+            }
+        },
+    )
+
+    with pytest.raises(ReportScheduleInvalidError) as exc_info:
+        cmd.validate()
+    messages = exc_info.value.normalized_messages()
+    assert "extra" in messages
+    assert any(
+        "native filter metadata is invalid" in str(message).lower()
+        for message in messages["extra"]
+    )
 
 
 # --- Database not found for alert ---

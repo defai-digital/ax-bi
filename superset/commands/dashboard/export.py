@@ -48,6 +48,24 @@ DEFAULT_CHART_HEIGHT = 50
 DEFAULT_CHART_WIDTH = 4
 
 
+def _load_json_object(value: str, key: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        logger.info("Unable to decode `%s` field: %s", key, value)
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _iter_dicts(value: Any) -> Iterator[dict[str, Any]]:
+    """Yield dictionary entries from a list-like metadata field."""
+    if not isinstance(value, list):
+        return
+    for item in value:
+        if isinstance(item, dict):
+            yield item
+
+
 def get_default_position(title: str) -> dict[str, Any]:
     return {
         "DASHBOARD_VERSION_KEY": "v2",
@@ -67,9 +85,17 @@ def append_charts(position: dict[str, Any], charts: set[Slice]) -> dict[str, Any
 
     # if we have ROOT_ID/GRID_ID, append orphan charts to a new row inside the grid
     row_hash = None
-    if "ROOT_ID" in position and "GRID_ID" in position["ROOT_ID"]["children"]:
-        row_hash = f"ROW-N-{len(position['GRID_ID']['children'])}"
-        position["GRID_ID"]["children"].append(row_hash)
+    root = position.get("ROOT_ID")
+    grid = position.get("GRID_ID")
+    root_children = root.get("children") if isinstance(root, dict) else None
+    grid_children = grid.get("children") if isinstance(grid, dict) else None
+    if (
+        isinstance(root_children, list)
+        and isinstance(grid_children, list)
+        and "GRID_ID" in root_children
+    ):
+        row_hash = f"ROW-N-{len(grid_children)}"
+        grid_children.append(row_hash)
         position[row_hash] = {
             "children": chart_hashes,
             "id": row_hash,
@@ -303,18 +329,14 @@ class ExportDashboardsCommand(ExportModelsCommand):
         for key, new_name in JSON_KEYS.items():
             value: Optional[str] = payload.pop(key, None)
             if value:
-                try:
-                    payload[new_name] = json.loads(value)
-                except (TypeError, json.JSONDecodeError):
-                    logger.info("Unable to decode `%s` field: %s", key, value)
-                    payload[new_name] = {}
+                payload[new_name] = _load_json_object(value, key)
 
         # Extract all native filter datasets and replace native
         # filter dataset references with uuid
-        for native_filter in payload.get("metadata", {}).get(
-            "native_filter_configuration", []
+        for native_filter in _iter_dicts(
+            payload.get("metadata", {}).get("native_filter_configuration")
         ):
-            for target in native_filter.get("targets", []):
+            for target in _iter_dicts(native_filter.get("targets")):
                 dataset_id = target.pop("datasetId", None)
                 if dataset_id is not None:
                     dataset = DatasetDAO.find_by_id(dataset_id)
@@ -325,10 +347,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
         # datasetId is intentionally preserved alongside datasetUuid so that
         # bundles remain importable by older versions that do not yet understand
         # datasetUuid for display-control targets.
-        for customization in (
-            payload.get("metadata", {}).get("chart_customization_config") or []
+        for customization in _iter_dicts(
+            payload.get("metadata", {}).get("chart_customization_config")
         ):
-            for target in customization.get("targets") or []:
+            for target in _iter_dicts(customization.get("targets")):
                 dataset_id = target.get("datasetId")
                 if dataset_id is not None:
                     dataset = DatasetDAO.find_by_id(dataset_id)
@@ -424,18 +446,14 @@ class ExportDashboardsCommand(ExportModelsCommand):
         for key, new_name in JSON_KEYS.items():
             value: Optional[str] = payload.pop(key, None)
             if value:
-                try:
-                    payload[new_name] = json.loads(value)
-                except (TypeError, json.JSONDecodeError):
-                    logger.info("Unable to decode `%s` field: %s", key, value)
-                    payload[new_name] = {}
+                payload[new_name] = _load_json_object(value, key)
 
         if export_related:
             # Extract all native filter datasets and export referenced datasets
-            for native_filter in payload.get("metadata", {}).get(
-                "native_filter_configuration", []
+            for native_filter in _iter_dicts(
+                payload.get("metadata", {}).get("native_filter_configuration")
             ):
-                for target in native_filter.get("targets", []):
+                for target in _iter_dicts(native_filter.get("targets")):
                     dataset_id = target.pop("datasetId", None)
                     if dataset_id is not None:
                         dataset = DatasetDAO.find_by_id(dataset_id)
@@ -443,10 +461,10 @@ class ExportDashboardsCommand(ExportModelsCommand):
                             yield from ExportDatasetsCommand([dataset_id]).run()
 
             # Export datasets referenced by display controls
-            for customization in (
-                payload.get("metadata", {}).get("chart_customization_config") or []
+            for customization in _iter_dicts(
+                payload.get("metadata", {}).get("chart_customization_config")
             ):
-                for target in customization.get("targets") or []:
+                for target in _iter_dicts(customization.get("targets")):
                     dataset_id = target.get("datasetId")
                     if dataset_id is not None:
                         dataset = DatasetDAO.find_by_id(dataset_id)

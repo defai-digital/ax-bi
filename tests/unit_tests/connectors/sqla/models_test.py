@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from typing import Any, cast
+
 import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
@@ -119,6 +121,38 @@ def _build_sqla_table_for_query(
         return_value=mocker.MagicMock(sql=sql, labels_expected=[]),
     )
     return sqla_table
+
+
+@pytest.mark.parametrize(
+    "query_obj",
+    [
+        {"extras": "where"},
+        {"extras": {"where": 1, "having": ["{{ current_username() }}"]}},
+        {"columns": [{"label": "bad_column", "sqlExpression": 1}]},
+        {"metrics": [{"expressionType": "SQL", "sqlExpression": 1}]},
+    ],
+)
+def test_extra_cache_key_detection_ignores_malformed_statements(
+    mocker: MockerFixture,
+    query_obj: dict[str, Any],
+) -> None:
+    mocker.patch("superset.connectors.sqla.models.security_manager.get_rls_filters")
+    table = SqlaTable(table_name="my_sqla_table", sql=None)
+
+    assert table.has_extra_cache_key_calls(cast(QueryObjectDict, query_obj)) is False
+
+
+def test_sqla_table_extra_dict_returns_object_extra() -> None:
+    table = SqlaTable(extra='{"warning_markdown": "Use carefully"}')
+
+    assert table.extra_dict == {"warning_markdown": "Use carefully"}
+
+
+@pytest.mark.parametrize("extra", ["[]", '"bad"', "1", "null", None, "{malformed"])
+def test_sqla_table_extra_dict_ignores_non_object_extra(extra: str | None) -> None:
+    table = SqlaTable(extra=extra)
+
+    assert table.extra_dict == {}
 
 
 def test_query_blocks_disallowed_function_on_chart_data_path(
@@ -1065,6 +1099,127 @@ def test_data_for_slices_handles_missing_datasource(mocker: MockerFixture) -> No
     assert "columns" in result
     assert "metrics" in result
     assert "verbose_map" in result
+
+
+def test_data_for_slices_ignores_malformed_adhoc_metric_column(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed adhoc metric columns should not break dashboard datasource data."""
+    database = mocker.MagicMock()
+    database.id = 1
+
+    table = SqlaTable(
+        table_name="test_table",
+        database=database,
+        columns=[],
+        metrics=[],
+    )
+
+    mock_slice = mocker.MagicMock()
+    mock_slice.id = 1
+    mock_slice.slice_name = "Test Chart"
+    mock_slice.form_data = {
+        "metrics": [
+            {
+                "expressionType": "SIMPLE",
+                "label": "Bad metric column",
+                "column": "not-a-column-object",
+                "aggregate": "SUM",
+            }
+        ]
+    }
+    mock_slice.get_query_context.side_effect = DatasourceNotFound()
+
+    mocker.patch.object(SqlaTable, "columns", [])
+    mocker.patch.object(SqlaTable, "metrics", [])
+
+    result = table.data_for_slices([mock_slice])
+
+    assert result["columns"] == []
+
+
+def test_data_for_slices_ignores_malformed_filter_entries(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed saved filter entries should not break datasource data."""
+    database = mocker.MagicMock()
+    database.id = 1
+
+    table = SqlaTable(
+        table_name="test_table",
+        database=database,
+        columns=[
+            TableColumn(column_name="region"),
+            TableColumn(column_name="country"),
+        ],
+        metrics=[],
+    )
+
+    mock_slice = mocker.MagicMock()
+    mock_slice.id = 1
+    mock_slice.slice_name = "Test Chart"
+    mock_slice.form_data = {
+        "adhoc_filters": [
+            "bad-filter",
+            {"clause": "WHERE", "subject": "region"},
+        ],
+        "filter_configs": [
+            "column",
+            {"column": "country"},
+        ],
+    }
+    mock_slice.get_query_context.side_effect = DatasourceNotFound()
+
+    result = table.data_for_slices([mock_slice])
+
+    assert {column["column_name"] for column in result["columns"]} == {
+        "country",
+        "region",
+    }
+
+
+def test_data_for_slices_ignores_malformed_column_entries(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed saved column entries should not break datasource data."""
+    database = mocker.MagicMock()
+    database.id = 1
+
+    table = SqlaTable(
+        table_name="test_table",
+        database=database,
+        columns=[
+            TableColumn(column_name="country"),
+            TableColumn(column_name="region"),
+        ],
+        metrics=[],
+    )
+
+    mock_slice = mocker.MagicMock()
+    mock_slice.id = 1
+    mock_slice.slice_name = "Test Chart"
+    mock_slice.form_data = {
+        "columns": [
+            ["bad-column"],
+            {"bad": "column"},
+            "country",
+        ],
+        "groupby": ["region"],
+        "adhoc_filters": [
+            {"clause": "WHERE", "subject": ["bad-filter-subject"]},
+        ],
+        "filter_configs": [
+            {"column": {"bad": "filter-column"}},
+        ],
+    }
+    mock_slice.get_query_context.side_effect = DatasourceNotFound()
+
+    result = table.data_for_slices([mock_slice])
+
+    assert {column["column_name"] for column in result["columns"]} == {
+        "country",
+        "region",
+    }
 
 
 def test_owners_data_includes_email(mocker: MockerFixture) -> None:

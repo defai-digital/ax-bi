@@ -15,9 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import inspect
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+from flask import Flask
 from sqlalchemy.orm.session import Session
 
 from superset import db
@@ -163,3 +166,61 @@ def test_handle_filters_args_returns_request_scoped_filters(
     fresh_filters = api.datamodel.get_filters.return_value
     assert fresh_filters.rest_add_filters.call_count == 2
     assert fresh_filters.get_joined_filters.call_count == 2
+
+
+@pytest.mark.parametrize(
+    ("method_name", "args", "uses_response"),
+    [
+        ("post", (), False),
+        ("duplicate", (), False),
+        ("get_or_create_dataset", (), True),
+        ("warm_up_cache", (), False),
+    ],
+)
+def test_json_body_handlers_reject_malformed_json_body(
+    method_name: str,
+    args: tuple[object, ...],
+    uses_response: bool,
+) -> None:
+    """Dataset JSON handlers should reject parser failures as validation errors."""
+    from superset.datasets.api import DatasetRestApi
+
+    app = Flask(__name__)
+    api = DatasetRestApi.__new__(DatasetRestApi)
+    api.response = MagicMock(return_value="bad request")
+    api.response_400 = MagicMock(return_value="bad request")
+    method = inspect.unwrap(getattr(DatasetRestApi, method_name))
+
+    with app.test_request_context(
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        response = method(api, *args)
+
+    assert response == "bad request"
+    expected_message = {"_schema": ["Invalid input type."]}
+    if uses_response:
+        api.response.assert_called_once_with(400, message=expected_message)
+        api.response_400.assert_not_called()
+    else:
+        api.response_400.assert_called_once_with(message=expected_message)
+        api.response.assert_not_called()
+
+
+def test_put_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Dataset updates should reject parser failures through the API wrapper."""
+    response = client.put(
+        "/api/v1/dataset/1",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 422
+    assert response.json["errors"][0]["error_type"] == "MARSHMALLOW_ERROR"
+    assert response.json["errors"][0]["extra"]["messages"] == {
+        "_schema": ["Invalid input type."]
+    }

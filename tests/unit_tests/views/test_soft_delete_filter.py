@@ -226,6 +226,42 @@ def test_mixin_pre_get_list_injects_deleted_at_when_flag_set(
     assert data["result"][1]["deleted_at"] == "2026-05-14T12:00:00"
 
 
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"ids": None, "result": []},
+        {"ids": [1], "result": None},
+        {"ids": "not-a-list", "result": []},
+        {"ids": [1], "result": "not-a-list"},
+    ],
+)
+def test_mixin_pre_get_list_ignores_malformed_result_containers(
+    flask_request_ctx: None,
+    data: dict[str, Any],
+) -> None:
+    """Malformed FAB list payload shapes should not break response handling."""
+    setattr(g, AUGMENT_RESPONSE_WITH_DELETED_AT, True)
+    api = _ConcreteApi(deleted_at_map={1: None})
+
+    api.pre_get_list(data)
+
+    assert getattr(g, AUGMENT_RESPONSE_WITH_DELETED_AT) is False
+
+
+def test_mixin_pre_get_list_skips_non_dict_result_rows(
+    flask_request_ctx: None,
+) -> None:
+    """Only mutable row dictionaries are augmented with ``deleted_at``."""
+    setattr(g, AUGMENT_RESPONSE_WITH_DELETED_AT, True)
+    api = _ConcreteApi(deleted_at_map={1: None, 2: "2026-05-14T12:00:00"})
+    data: dict[str, Any] = {"ids": [1, 2], "result": [{"id": 1}, None]}
+
+    api.pre_get_list(data)
+
+    assert data["result"][0]["deleted_at"] is None
+    assert data["result"][1] is None
+
+
 def test_mixin_pre_get_list_consumes_flag(flask_request_ctx: None) -> None:
     """The augmentation flag is read-and-cleared. A second list
     operation within the same request (e.g., a batch endpoint

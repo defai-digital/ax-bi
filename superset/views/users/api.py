@@ -150,7 +150,9 @@ class CurrentUserRestApi(BaseSupersetApi):
               $ref: '#/components/responses/401'
         """
         try:
-            item = self.current_user_put_schema.load(request.json)
+            item = self.current_user_put_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             if not item:
                 return self.response_400(message="At least one field must be provided.")
 

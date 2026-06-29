@@ -18,7 +18,7 @@
 # pylint: disable=import-outside-toplevel
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from unittest import mock
 
 import pytest
@@ -68,6 +68,27 @@ def test_database_connection_test_mutator() -> None:
     from superset.models.core import Database
 
     database = Database(sqlalchemy_uri="snowflake://abc")
+    SnowflakeEngineSpec.mutate_db_for_connection_test(database)
+    engine_params = json.loads(database.extra or "{}")
+
+    assert {
+        "engine_params": {"connect_args": {"validate_default_parameters": True}}
+    } == engine_params
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "[]",
+        json.dumps({"engine_params": []}),
+        json.dumps({"engine_params": {"connect_args": []}}),
+    ],
+)
+def test_database_connection_test_mutator_ignores_malformed_extra(extra: str) -> None:
+    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from superset.models.core import Database
+
+    database = Database(sqlalchemy_uri="snowflake://abc", extra=extra)
     SnowflakeEngineSpec.mutate_db_for_connection_test(database)
     engine_params = json.loads(database.extra or "{}")
 
@@ -176,6 +197,18 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     }
 
 
+def test_update_params_from_encrypted_extra_ignores_non_object_extra() -> None:
+    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+
+    database = mock.Mock()
+    database.encrypted_extra = "[]"
+    params: dict[str, Any] = {}
+
+    SnowflakeEngineSpec.update_params_from_encrypted_extra(database, params)
+
+    assert params == {}
+
+
 def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
@@ -201,6 +234,14 @@ def test_get_schema_from_engine_params() -> None:
     assert (
         SnowflakeEngineSpec.get_schema_from_engine_params(
             make_url("snowflake://user:pass@account/"),
+            {},
+        )
+        is None
+    )
+
+    assert (
+        SnowflakeEngineSpec.get_schema_from_engine_params(
+            make_url("snowflake://user:pass@account"),
             {},
         )
         is None
@@ -293,6 +334,18 @@ def test_get_default_catalog() -> None:
         sqlalchemy_uri="snowflake://user:pass@account/database_name/default",
     )
     assert SnowflakeEngineSpec.get_default_catalog(database) == "database_name"
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="snowflake://user:pass@account",
+    )
+    assert SnowflakeEngineSpec.get_default_catalog(database) is None
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="snowflake://user:pass@account/",
+    )
+    assert SnowflakeEngineSpec.get_default_catalog(database) is None
 
 
 def test_mask_encrypted_extra() -> None:

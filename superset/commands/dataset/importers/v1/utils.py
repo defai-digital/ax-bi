@@ -78,6 +78,23 @@ VARCHAR = re.compile(r"VARCHAR\((\d+)\)", re.IGNORECASE)
 JSON_KEYS = {"params", "template_params", "extra"}
 
 
+def _coerce_attribute_configs(config: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    """Return dict attributes for metrics/columns, dropping malformed entries."""
+    attributes = config.get(key)
+    if attributes is None:
+        return []
+    if not isinstance(attributes, list):
+        config[key] = []
+        return []
+
+    valid_attributes = [
+        attribute for attribute in attributes if isinstance(attribute, dict)
+    ]
+    if len(valid_attributes) != len(attributes):
+        config[key] = valid_attributes
+    return valid_attributes
+
+
 type_map = {
     "BOOLEAN": Boolean(),
     "VARCHAR": String(255),
@@ -236,7 +253,7 @@ def import_dataset(  # noqa: C901
             except TypeError:
                 logger.info("Unable to encode `%s` field: %s", key, config[key])
     for key in ("metrics", "columns"):
-        for attributes in config.get(key, []):
+        for attributes in _coerce_attribute_configs(config, key):
             if attributes.get("extra") is not None:
                 try:
                     attributes["extra"] = json.dumps(attributes["extra"])

@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 from zipfile import is_zipfile, ZipFile
 
+import pytest
 from pytest_mock import MockerFixture
 
 from superset import security_manager
@@ -170,6 +171,45 @@ def test_import_assets_with_encrypted_extra_secrets(
         ssh_tunnel_priv_key_passwords=None,
         encrypted_extra_secrets=secrets,
     )
+
+
+@pytest.mark.parametrize(("payload",), [("{",), ("[]",)])
+def test_import_assets_rejects_invalid_json_object_form_field(
+    payload: str,
+    mocker: MockerFixture,
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """
+    Test that optional JSON form fields must contain JSON objects.
+    """
+    mocked_contents = {
+        "metadata.yaml": (
+            "version: 1.0.0\ntype: assets\ntimestamp: '2022-01-01T00:00:00+00:00'\n"
+        ),
+        "databases/example.yaml": "<DATABASE CONTENTS>",
+    }
+
+    ImportAssetsCommand = mocker.patch("superset.importexport.api.ImportAssetsCommand")  # noqa: N806
+
+    root = Path("assets_export")
+    buf = BytesIO()
+    with ZipFile(buf, "w") as bundle:
+        for path, contents in mocked_contents.items():
+            with bundle.open(str(root / path), "w") as fp:
+                fp.write(contents.encode())
+    buf.seek(0)
+
+    form_data = {
+        "bundle": (buf, "assets_export.zip"),
+        "passwords": payload,
+    }
+    response = client.post(
+        "/api/v1/assets/import/", data=form_data, content_type="multipart/form-data"
+    )
+    assert response.status_code == 400
+    assert response.json == {"message": "Invalid JSON object for form field: passwords"}
+    ImportAssetsCommand.assert_not_called()
 
 
 def test_import_assets_overwrite_false(

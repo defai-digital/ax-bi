@@ -93,7 +93,7 @@ class ExploreFormDataRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
             tab_id = request.args.get("tab_id")
             args = CommandParameters(
                 datasource_id=item["datasource_id"],
@@ -163,7 +163,9 @@ class ExploreFormDataRestApi(BaseSupersetApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             tab_id = request.args.get("tab_id")
             args = CommandParameters(
                 datasource_id=item["datasource_id"],

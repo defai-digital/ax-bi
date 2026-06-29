@@ -21,6 +21,7 @@ import functools
 import logging
 import os
 import traceback
+from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Callable, cast
 
@@ -128,6 +129,37 @@ FRONTEND_CONF_KEYS = (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_auth_provider(
+    provider: object,
+    default_icon: str | None = None,
+) -> dict[str, str] | None:
+    if not isinstance(provider, dict):
+        return None
+
+    name = provider.get("name")
+    icon = provider.get("icon", default_icon)
+    if not isinstance(name, str) or not isinstance(icon, str):
+        return None
+
+    return {"name": name, "icon": icon}
+
+
+def _serialize_auth_providers(
+    providers: Iterable[object],
+    default_icon: str = "fa-sign-in",
+) -> list[dict[str, str]]:
+    return [
+        serialized_provider
+        for provider in providers
+        if (
+            serialized_provider := _serialize_auth_provider(
+                provider,
+                default_icon=default_icon,
+            )
+        )
+    ]
 
 
 def get_error_msg() -> str:
@@ -341,11 +373,18 @@ def _load_theme_from_model(
     if theme_model:
         try:
             db_theme = json.loads(theme_model.json_data)
+            if not isinstance(db_theme, dict):
+                logger.error(
+                    "Invalid JSON object in system %s theme %s",
+                    theme_type.value,
+                    theme_model.id,
+                )
+                return fallback_theme
             if fallback_theme:
                 merged = _merge_theme_dicts(dict(fallback_theme), db_theme)
                 return cast(Theme, merged)
-            return db_theme
-        except json.JSONDecodeError:
+            return cast(Theme, db_theme)
+        except (TypeError, json.JSONDecodeError):
             logger.error(
                 "Invalid JSON in system %s theme %s", theme_type.value, theme_model.id
             )
@@ -512,25 +551,13 @@ def cached_common_bootstrap_data(  # pylint: disable=unused-argument
 
     frontend_config["AUTH_TYPE"] = auth_type
     if auth_type == AUTH_OAUTH:
-        oauth_providers = []
-        for provider in appbuilder.sm.oauth_providers:
-            oauth_providers.append(
-                {
-                    "name": provider["name"],
-                    "icon": provider["icon"],
-                }
-            )
-        frontend_config["AUTH_PROVIDERS"] = oauth_providers
+        frontend_config["AUTH_PROVIDERS"] = _serialize_auth_providers(
+            appbuilder.sm.oauth_providers
+        )
     elif auth_type == AUTH_SAML:
-        saml_providers = []
-        for provider in appbuilder.sm.saml_providers:
-            saml_providers.append(
-                {
-                    "name": provider["name"],
-                    "icon": provider.get("icon", "fa-sign-in"),
-                }
-            )
-        frontend_config["AUTH_PROVIDERS"] = saml_providers
+        frontend_config["AUTH_PROVIDERS"] = _serialize_auth_providers(
+            appbuilder.sm.saml_providers
+        )
 
     bootstrap_data = {
         "application_root": app.config["APPLICATION_ROOT"],
@@ -582,6 +609,34 @@ def get_spa_payload(extra_data: dict[str, Any] | None = None) -> dict[str, Any]:
     return payload
 
 
+def _normalize_spa_theme_payload(
+    payload: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Normalize SPA bootstrap theme payload objects."""
+    common_data = payload.get("common", {})
+    if not isinstance(common_data, dict):
+        common_data = {}
+
+    theme_data = copy.deepcopy(common_data.get("theme", {}))
+    if not isinstance(theme_data, dict):
+        theme_data = {}
+
+    default_theme = theme_data.get("default", {})
+    if not isinstance(default_theme, dict):
+        default_theme = {}
+        theme_data["default"] = default_theme
+
+    dark_theme = theme_data.get("dark", {})
+    if not isinstance(dark_theme, dict):
+        dark_theme = {}
+        theme_data["dark"] = dark_theme
+
+    payload["common"] = common_data
+    payload["common"]["theme"] = theme_data
+
+    return theme_data, default_theme, dark_theme
+
+
 def get_spa_template_context(
     entry: str | None = "spa",
     extra_bootstrap_data: dict[str, Any] | None = None,
@@ -602,10 +657,7 @@ def get_spa_template_context(
     """
     payload = get_spa_payload(extra_bootstrap_data)
 
-    # Deep copy theme data to avoid mutating cached bootstrap payload
-    theme_data = copy.deepcopy(payload.get("common", {}).get("theme", {}))
-    default_theme = theme_data.get("default", {})
-    dark_theme = theme_data.get("dark", {})
+    theme_data, default_theme, dark_theme = _normalize_spa_theme_payload(payload)
 
     # Apply brandAppName fallback to both default and dark themes
     # Priority: theme brandAppName > APP_NAME config > "Superset" default
@@ -614,7 +666,7 @@ def get_spa_template_context(
         if not theme_config:
             continue
         # Get or create token dict
-        if "token" not in theme_config:
+        if not isinstance(theme_config.get("token"), dict):
             theme_config["token"] = {}
         theme_tokens = theme_config["token"]
 
@@ -626,11 +678,6 @@ def get_spa_template_context(
             if app_name_from_config != "Superset":
                 # User has customized APP_NAME, use it as brandAppName
                 theme_tokens["brandAppName"] = app_name_from_config
-
-    # Write the modified theme data back to payload
-    if "common" not in payload:
-        payload["common"] = {}
-    payload["common"]["theme"] = theme_data
 
     # Extract theme tokens for template access (after fallback applied)
     # Use the direct reference to ensure we get the modified token dict

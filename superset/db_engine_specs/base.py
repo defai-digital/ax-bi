@@ -2368,9 +2368,19 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         if database.extra:
             try:
                 extra = json.loads(database.extra)
-            except json.JSONDecodeError as ex:
+            except (TypeError, json.JSONDecodeError) as ex:
                 logger.error(ex, exc_info=True)
                 raise
+            if not isinstance(extra, dict):
+                return {}
+            for key in (
+                "engine_params",
+                "metadata_cache_timeout",
+                "metadata_params",
+                "schema_options",
+            ):
+                if not isinstance(extra.get(key), dict):
+                    extra.pop(key, None)
         return extra
 
     @staticmethod
@@ -2388,8 +2398,10 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
             return
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
+            if not isinstance(encrypted_extra, dict):
+                raise TypeError("encrypted_extra must decode to a JSON object")
             params.update(encrypted_extra)
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
             raise
 
@@ -2719,7 +2731,8 @@ class BasicParametersMixin:
     ) -> str:
         # TODO (betodealmeida): this method should also build `connect_args`
         # make a copy so that we don't update the original
-        query = parameters.get("query", {}).copy()
+        raw_query = parameters.get("query") or {}
+        query = raw_query.copy() if isinstance(raw_query, dict) else {}
         if parameters.get("encryption"):
             if not cls.encryption_parameters:
                 raise Exception(  # pylint: disable=broad-exception-raised

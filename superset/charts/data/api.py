@@ -63,6 +63,8 @@ from superset.utils.core import (
     get_user_id,
 )
 from superset.utils.decorators import logs_context
+from superset.utils.fast_cache import set_fast_cache
+from superset.utils.json_fast import dumps_fast
 from superset.views.base import CsvResponse, generate_download_headers, XlsxResponse
 from superset.views.base_api import statsd_metrics
 
@@ -70,6 +72,49 @@ if TYPE_CHECKING:
     from superset.common.query_context import QueryContext
 
 logger = logging.getLogger(__name__)
+
+
+def _load_json_object(value: str | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    """Return a dict value, or an empty dict for malformed containers."""
+    return value if isinstance(value, dict) else {}
+
+
+def _coerce_int(value: Any, default: int | None = None) -> int | None:
+    if not value:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_table_rowcount(queries: Any) -> int | None:
+    if not isinstance(queries, list) or len(queries) <= 1:
+        return None
+
+    rowcount_query = queries[1]
+    if not isinstance(rowcount_query, dict):
+        return None
+
+    data = rowcount_query.get("data")
+    if not isinstance(data, list) or not data:
+        return None
+
+    rowcount_row = data[0]
+    if not isinstance(rowcount_row, dict):
+        return None
+
+    return _coerce_int(rowcount_row.get("rowcount"))
 
 
 class ChartDataRestApi(ChartRestApi):
@@ -158,10 +203,7 @@ class ChartDataRestApi(ChartRestApi):
         if not chart:
             return self.response_404()
 
-        try:
-            json_body = json.loads(chart.query_context)
-        except (TypeError, json.JSONDecodeError):
-            json_body = None
+        json_body = _load_json_object(chart.query_context)
 
         if json_body is None:
             return self.response_400(
@@ -241,10 +283,7 @@ class ChartDataRestApi(ChartRestApi):
         if use_async:
             return self._run_async(json_body, command, add_extra_log_payload)
 
-        try:
-            form_data = json.loads(chart.params)
-        except (TypeError, json.JSONDecodeError):
-            form_data = {}
+        form_data = _load_json_object(chart.params) or {}
 
         return self._get_data_response(
             command=command,
@@ -305,11 +344,10 @@ class ChartDataRestApi(ChartRestApi):
         """
         json_body = None
         if request.is_json:
-            json_body = request.json
+            json_body = request.get_json(cache=True, silent=True)
         elif request.form.get("form_data"):
             # CSV export submits regular form data
-            with contextlib.suppress(TypeError, json.JSONDecodeError):
-                json_body = json.loads(request.form["form_data"])
+            json_body = _load_json_object(request.form["form_data"])
         if json_body is None:
             return self.response_400(message=_("Request is not JSON"))
 
@@ -524,11 +562,19 @@ class ChartDataRestApi(ChartRestApi):
                 payload["dashboard_filters"] = dashboard_filter_context.to_dict()
 
             with event_logger.log_context(f"{self.__class__.__name__}.json_dumps"):
-                response_data = json.dumps(
-                    payload,
-                    default=json.json_int_dttm_ser,
-                    ignore_nan=True,
+                response_data = dumps_fast(payload)
+
+            # Write the serialized JSON to the fast-cache Redis key so the
+            # Node.js gateway (superset-websocket) can serve it directly,
+            # bypassing Flask for subsequent cache hits.
+            if queries and queries[0].get("cache_key"):
+                cache_timeout = queries[0].get("cache_timeout")
+                set_fast_cache(
+                    key=queries[0]["cache_key"],
+                    json_str=response_data,
+                    timeout=cache_timeout,
                 )
+
             resp = make_response(response_data, 200)
             resp.headers["Content-Type"] = "application/json; charset=utf-8"
             return resp
@@ -618,16 +664,16 @@ class ChartDataRestApi(ChartRestApi):
     def _map_form_data_datasource_to_dataset_id(
         self, form_data: dict[str, Any]
     ) -> dict[str, Any]:
+        nested_form_data = _as_dict(form_data.get("form_data"))
+        datasource = _as_dict(form_data.get("datasource"))
         return {
-            "dashboard_id": form_data.get("form_data", {}).get("dashboardId"),
+            "dashboard_id": nested_form_data.get("dashboardId"),
             "dataset_id": (
-                form_data.get("datasource", {}).get("id")
-                if isinstance(form_data.get("datasource"), dict)
-                and form_data.get("datasource", {}).get("type")
-                == DatasourceType.TABLE.value
+                datasource.get("id")
+                if datasource.get("type") == DatasourceType.TABLE.value
                 else None
             ),
-            "slice_id": form_data.get("form_data", {}).get("slice_id"),
+            "slice_id": nested_form_data.get("slice_id"),
         }
 
     @logs_context(context_func=_map_form_data_datasource_to_dataset_id)
@@ -667,22 +713,16 @@ class ChartDataRestApi(ChartRestApi):
 
         # For table viz, try to get actual row count from query results
         if viz_type == "table" and result.get("queries"):
-            # Check if we have rowcount in the second query result (like frontend does)
-            queries = result.get("queries", [])
-            if len(queries) > 1 and queries[1].get("data"):
-                data = queries[1]["data"]
-                if isinstance(data, list) and len(data) > 0:
-                    rowcount = data[0].get("rowcount")
-                    actual_row_count = int(rowcount) if rowcount else None
+            actual_row_count = _extract_table_rowcount(result.get("queries"))
 
         # Fallback to row_limit if actual count not available
         if actual_row_count is None:
             if form_data and "row_limit" in form_data:
-                row_limit = form_data.get("row_limit", 0)
-                actual_row_count = int(row_limit) if row_limit else 0
+                actual_row_count = _coerce_int(form_data.get("row_limit"), 0)
             elif query_context.form_data and "row_limit" in query_context.form_data:
-                row_limit = query_context.form_data.get("row_limit", 0)
-                actual_row_count = int(row_limit) if row_limit else 0
+                actual_row_count = _coerce_int(
+                    query_context.form_data.get("row_limit"), 0
+                )
 
         # Use streaming if row count meets or exceeds threshold
         return actual_row_count is not None and actual_row_count >= threshold

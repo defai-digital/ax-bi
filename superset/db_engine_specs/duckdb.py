@@ -47,6 +47,11 @@ DEFAULT_ACCESS_TOKEN_URL = (
 )
 
 
+def _get_query_params(parameters: DuckDBParametersType) -> dict[str, Any]:
+    raw_query = parameters.get("query") or {}
+    return raw_query.copy() if isinstance(raw_query, dict) else {}
+
+
 # schema for adding a database by providing parameters instead of the
 # full SQLAlchemy URI
 class DuckDBParametersSchema(Schema):
@@ -116,7 +121,7 @@ class DuckDBParametersMixin:
         """  # noqa: E501
         if parameters is None:
             parameters = {}
-        query = parameters.get("query", {})
+        query = _get_query_params(parameters)
         database = parameters.get("database", ":memory:")
         token = parameters.get("access_token")
 
@@ -430,7 +435,7 @@ class MotherDuckEngineSpec(DuckDBEngineSpec):
         Build SQLAlchemy URI for connecting to a MotherDuck database
         """
         # make a copy so that we don't update the original
-        query = parameters.get("query", {}).copy()
+        query = _get_query_params(parameters)
         database = parameters.get("database", "")
         token = parameters.get("access_token", "")
 
@@ -462,7 +467,11 @@ class MotherDuckEngineSpec(DuckDBEngineSpec):
 
     @classmethod
     def get_default_catalog(cls, database: Database) -> str | None:
-        return database.url_object.database.split(":", 1)[1]
+        database_name = database.url_object.database
+        if not database_name or not database_name.startswith("md:"):
+            return None
+
+        return database_name.split(":", 1)[1] or None
 
     @classmethod
     def get_catalog_names(

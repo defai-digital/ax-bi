@@ -19,6 +19,7 @@
 import logging
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from superset.utils.core import JS_MAX_INTEGER
@@ -53,12 +54,87 @@ def _is_na(val: Any) -> bool:
         return False
 
 
+def _get_columns_by_dtype(
+    dframe: pd.DataFrame,
+) -> tuple[pd.Index, pd.Index, pd.Index]:
+    """Return columns that need specialized record conversion."""
+    return (
+        dframe.select_dtypes(include=["floating"]).columns,
+        dframe.select_dtypes(include=["integer"]).columns,
+        dframe.select_dtypes(include=["object"]).columns,
+    )
+
+
+def _get_float_conversions(
+    dframe: pd.DataFrame,
+    float_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for float columns containing NaN values."""
+    converted: dict[str, Any] = {}
+    for col in float_cols:
+        arr = dframe[col].values
+        mask = np.isnan(arr)
+        if mask.any():
+            result = arr.astype(object)
+            result[mask] = None
+            converted[col] = result
+    return converted
+
+
+def _get_integer_conversions(
+    dframe: pd.DataFrame,
+    int_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for integer columns containing JS-unsafe values."""
+    converted: dict[str, Any] = {}
+    for col in int_cols:
+        arr = dframe[col].values
+        big_mask = np.abs(arr) > JS_MAX_INTEGER
+        if big_mask.any():
+            result = arr.astype(object)
+            result[big_mask] = arr[big_mask].astype(str)
+            converted[col] = result
+    return converted
+
+
+def _get_object_conversions(
+    dframe: pd.DataFrame,
+    object_cols: pd.Index,
+) -> dict[str, Any]:
+    """Build replacements for object columns containing null values."""
+    converted: dict[str, Any] = {}
+    for col in object_cols:
+        series = dframe[col]
+        null_mask = series.isna()
+        if null_mask.any():
+            result = series.values.copy()
+            result[null_mask] = None
+            converted[col] = result
+    return converted
+
+
+def _convert_object_column_big_integers(
+    records: list[dict[str, Any]],
+    object_cols: pd.Index,
+) -> None:
+    """Convert JS-unsafe integers that live inside object columns."""
+    object_col_set = set(object_cols)
+    for record in records:
+        for key in object_col_set:
+            if key in record:
+                record[key] = _convert_big_integers(record[key])
+
+
 def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
     """
     Convert a DataFrame to a set of records.
 
     NaN values are converted to None for JSON compatibility.
     This handles division by zero and other operations that produce NaN.
+    Big integers (> JS_MAX_INTEGER) are converted to strings.
+
+    Uses vectorized numpy operations for float and integer columns where
+    possible, falling back to per-value checks only for object columns.
 
     :param dframe: the DataFrame to convert
     :returns: a list of dictionaries reflecting each single row of the DataFrame
@@ -67,12 +143,32 @@ def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
         logger.warning(
             "DataFrame columns are not unique, some columns will be omitted."
         )
-    records = dframe.to_dict(orient="records")
 
-    for record in records:
-        for key in record:
-            record[key] = (
-                None if _is_na(record[key]) else _convert_big_integers(record[key])
-            )
+    float_cols, int_cols, object_cols = _get_columns_by_dtype(dframe)
+
+    needs_processing = len(float_cols) > 0 or len(int_cols) > 0 or len(object_cols) > 0
+
+    if not needs_processing:
+        return dframe.to_dict(orient="records")
+
+    converted = {
+        **_get_float_conversions(dframe, float_cols),
+        **_get_integer_conversions(dframe, int_cols),
+        **_get_object_conversions(dframe, object_cols),
+    }
+
+    # Apply conversions and build records
+    if converted:
+        df_processed = dframe.assign(**converted)
+    else:
+        df_processed = dframe
+
+    records = df_processed.to_dict(orient="records")
+
+    # Post-process: big-int check for integer columns that were NOT
+    # vectorized (e.g., int values in object columns) and any remaining
+    # edge cases in object columns.
+    if len(object_cols) > 0:
+        _convert_object_column_big_integers(records, object_cols)
 
     return records

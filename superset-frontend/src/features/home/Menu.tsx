@@ -65,11 +65,9 @@ const StyledHeader = styled.header`
 
 const StyledBrandText = styled.div`
   ${({ theme }) => css`
-    border-left: 1px solid ${theme.colorBorderSecondary};
-    border-right: 1px solid ${theme.colorBorderSecondary};
     height: 100%;
-    color: ${theme.colorText};
-    padding-left: ${theme.sizeUnit * 4}px;
+    color: ${theme.colorTextSecondary};
+    padding-left: ${theme.sizeUnit * 2}px;
     padding-right: ${theme.sizeUnit * 4}px;
     font-size: ${theme.fontSizeLG}px;
     float: left;

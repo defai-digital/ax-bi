@@ -135,6 +135,8 @@ Dashboard Management:
 - get_dashboard_layout: Get parsed tabs and chart positions for a dashboard (companion to get_dashboard_info when its omitted_fields hint flags position_json)
 - generate_dashboard: Create a dashboard from chart IDs (requires write access)
 - add_chart_to_existing_dashboard: Add a chart to an existing dashboard (requires write access)
+- update_dashboard: Update dashboard title, description, published status, slug, CSS, or JSON metadata (requires write access)
+- add_dashboard_filter: Add a native filter (dropdown, time range, numeric range) to an existing dashboard (requires write access)
 
 Annotation Layers:
 - list_annotation_layers: List annotation layers with advanced filters (1-based pagination)
@@ -163,6 +165,7 @@ Row Level Security (Admin only):
 Alerts & Reports:
 - list_reports: List alerts and reports with filtering and search (1-based pagination)
 - get_report_info: Get detailed alert/report schedule info by ID
+- create_report: Create a scheduled email/Slack report or threshold alert for dashboards or charts (requires write access)
 
 Dataset Management:
 - list_datasets: List datasets with advanced filters (1-based pagination)
@@ -170,6 +173,8 @@ Dataset Management:
 - create_dataset: Register a physical table as a dataset against an existing DB connection (requires write access)
 - create_virtual_dataset: Save a SQL query as a virtual dataset for charting (requires write access)
 - query_dataset: Query a dataset using its semantic layer (saved metrics, dimensions, filters) without needing a saved chart
+- upload_file: Upload a CSV/Excel/Parquet file and create a dataset with zero config (auto-provisions DuckDB, requires Database upload access)
+- upload_files: Upload multiple files in one call and create a dataset for each (batch version of upload_file, max 10 files, requires Database upload access)
 
 Chart Management:
 - list_charts: List charts with advanced filters (1-based pagination)
@@ -204,6 +209,18 @@ System Information:
 - health_check: Simple health check tool (takes NO parameters, call without arguments)
 - generate_bug_report: Build a PII-sanitized bug report to send to Preset support
   (use when the user says the MCP is broken or asks how to report an issue)
+
+AI-Powered Tools (GenAI):
+- create_chart_from_intent: Create a chart from natural language — automatically discovers
+  the best dataset, maps metrics/dimensions, selects chart type, and saves the chart.
+  Preferred over the multi-step list_datasets -> generate_chart flow.
+- plan_dashboard: Produce a dashboard plan from a prompt without creating anything.
+  Review the plan, then call compose_dashboard to execute.
+- compose_dashboard: Create a dashboard from a plan + chart IDs (from create_chart_from_intent).
+- explain_dashboard: Summarize an existing dashboard or answer questions about it.
+- suggest_chart_improvements: Analyze a chart and suggest better visualizations.
+- search_business_assets: Semantic search across datasets, charts, dashboards, and metrics.
+- describe_dataset_for_ai: Get AI-ready dataset metadata (columns, metrics, types).
 
 Available Resources:
 - instance://metadata: Instance configuration, stats, and available dataset IDs
@@ -271,6 +288,34 @@ To create a chart:
      "config": {{...}}, "save_chart": true
    }}) -> save permanently
 
+To create a chart from natural language (PREFERRED):
+1. create_chart_from_intent(request={{
+     "prompt": "Show me monthly revenue trend for the last year"
+   }}) -> automatically discovers dataset, selects chart type, saves chart
+   Use dataset_id to pin to a specific dataset.
+
+To create a dashboard from a prompt:
+1. plan_dashboard(request={{
+     "prompt": "Create an executive sales dashboard with revenue trends and top products"
+   }}) -> returns a plan (no artifacts created)
+2. Review the plan's chart_intents and clarifying_questions
+3. For each chart_intent, call create_chart_from_intent to create the charts
+4. compose_dashboard(request={{
+     "plan": <plan from step 1>,
+     "chart_ids": [<ids from step 3>]
+   }}) -> creates the dashboard
+
+To update an existing dashboard:
+- update_dashboard(dashboard_id, title, description, published) -> rename, describe, publish
+- add_dashboard_filter(dashboard_id, filter_type, name, targets) -> add native filters
+
+To explain or improve a dashboard/chart:
+- explain_dashboard(dashboard_id, question) -> summarize or answer questions
+- suggest_chart_improvements(chart_id, goal) -> get visualization improvement suggestions
+
+To schedule a report:
+- create_report(name, dashboard_id, crontab, recipients) -> create scheduled email/Slack report
+
 To find your own charts/dashboards/datasets/databases:
 - list_charts(request={{"created_by_me": true}})      — items you created
 - list_dashboards(request={{"created_by_me": true}})  — items you created
@@ -321,6 +366,23 @@ To chart from a SQL query (JOIN, CTE, aggregation):
      "dataset_name": "name"
    }}) -> save as chartable dataset
 4. generate_explore_link or generate_chart with the new dataset
+
+To upload a file and create a chart from it (zero-config, no database needed):
+1. upload_file(request={{"file_content": "<base64>", "filename": "data.csv"}})
+   -> auto-provisions local DuckDB, returns DatasetInfo with id and columns
+2. generate_chart(request={{"dataset_id": <id>, ...}}) -> build a chart on the uploaded data
+3. Optionally compose_dashboard to combine multiple uploaded datasets
+
+To upload multiple files at once (batch, up to 10 files):
+1. upload_files(request={{"files": [
+     {{"file_content": "<base64>", "filename": "sales.csv"}},
+     {{"file_content": "<base64>", "filename": "inventory.xlsx"}}
+   ]}})
+   -> returns UploadFilesResponse with per-file results (each with dataset_id)
+2. Use individual dataset_ids to build charts or compose a multi-dataset dashboard
+
+Supported file types: .csv, .tsv, .txt, .xls, .xlsx, .parquet.
+The file_content must be base64-encoded before sending.
 
 generate_explore_link vs generate_chart:
 - Use generate_explore_link for exploration (no permanent chart created)
@@ -428,10 +490,13 @@ Input format:
 {_feature_availability}Permission Awareness:
 {_instance_info_role_bullet}- ALWAYS check the user's roles BEFORE suggesting write operations (creating datasets,
   charts, or dashboards). SQL execution is a separate permission — see execute_sql below.
-- Write tools (generate_chart, generate_dashboard, update_chart, create_dataset, create_virtual_dataset,
-  save_sql_query, add_chart_to_existing_dashboard, update_chart_preview) require write
+- Write tools (generate_chart, generate_dashboard, update_chart, update_dashboard, create_dataset, create_virtual_dataset,
+  save_sql_query, add_chart_to_existing_dashboard, add_dashboard_filter, update_chart_preview, create_report,
+  create_chart_from_intent, compose_dashboard) require write
   permissions. These tools are only listed for users who have the necessary access.
   If a write tool does not appear in the tool list, the current user lacks write access.
+- Upload tools (upload_file, upload_files) require Database upload access. If an
+  upload tool does not appear in the tool list, the current user lacks upload access.
 - execute_sql requires SQL Lab access (execute_sql_query permission), which is separate
   from write access. A user may have SQL Lab access without having write access to charts
   or dashboards, and vice versa.
@@ -673,8 +738,13 @@ warnings.filterwarnings(
 # Prompts use @mcp.prompt decorators and resources use @mcp.resource decorators.
 # They register automatically on import, similar to tools.
 from superset.mcp_service.ai.tool import (  # noqa: F401, E402
+    compose_dashboard,
+    create_chart_from_intent,
     describe_dataset_for_ai,
+    explain_dashboard,
+    plan_dashboard,
     search_business_assets,
+    suggest_chart_improvements,
 )
 from superset.mcp_service.annotation_layer.tool import (  # noqa: F401, E402
     get_annotation_layer_info,
@@ -699,10 +769,12 @@ from superset.mcp_service.chart.tool import (  # noqa: F401, E402
 )
 from superset.mcp_service.dashboard.tool import (  # noqa: F401, E402
     add_chart_to_existing_dashboard,
+    add_dashboard_filter,
     generate_dashboard,
     get_dashboard_info,
     get_dashboard_layout,
     list_dashboards,
+    update_dashboard,
 )
 from superset.mcp_service.database.tool import (  # noqa: F401, E402
     get_database_info,
@@ -714,6 +786,8 @@ from superset.mcp_service.dataset.tool import (  # noqa: F401, E402
     get_dataset_info,
     list_datasets,
     query_dataset,
+    upload_file,
+    upload_files,
 )
 from superset.mcp_service.explore.tool import (  # noqa: F401, E402
     generate_explore_link,
@@ -723,6 +797,7 @@ from superset.mcp_service.query.tool import (  # noqa: F401, E402
     list_queries,
 )
 from superset.mcp_service.report.tool import (  # noqa: F401, E402
+    create_report,
     get_report_info,
     list_reports,
 )

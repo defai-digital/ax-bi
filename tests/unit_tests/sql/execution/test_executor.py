@@ -1522,6 +1522,62 @@ def test_async_handle_get_result_with_results_backend(
     assert sum(s.row_count for s in query_result.statements) == 2
 
 
+def test_async_handle_get_result_ignores_malformed_statement_payload(
+    mocker: MockerFixture,
+    database: Database,
+    app_context: None,
+    mock_db_session: MagicMock,
+) -> None:
+    """Malformed statement metadata should not break async result loading."""
+    from superset.models.sql_lab import Query
+
+    mock_query = MagicMock(spec=Query)
+    mock_query.status = "success"
+    mock_query.error_message = None
+    mock_query.executed_sql = "SELECT * FROM users"
+    mock_query.results_key = "result_key_123"
+
+    filter_mock = mock_db_session.query.return_value.filter_by.return_value
+    filter_mock.one_or_none.return_value = mock_query
+
+    payload = msgpack.dumps(
+        {
+            "statements": [
+                "bad-statement",
+                {
+                    "data": [{"id": 1}],
+                    "columns": ["bad-column", {"name": "id"}],
+                    "row_count": 1,
+                },
+            ],
+            "total_execution_time_ms": 10.0,
+        }
+    )
+    compressed_payload = b"compressed_data"
+
+    mock_results_backend = MagicMock()
+    mock_results_backend.get.return_value = compressed_payload
+
+    mock_results_backend_manager = MagicMock()
+    mock_results_backend_manager.results_backend = mock_results_backend
+
+    mocker.patch("superset.results_backend_manager", mock_results_backend_manager)
+    mocker.patch("superset.utils.core.zlib_decompress", return_value=payload)
+    mocker.patch.dict(
+        current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
+    )
+    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+
+    result = database.execute_async("SELECT * FROM users")
+    query_result = result.get_result()
+
+    assert query_result.status == QueryStatus.SUCCESS
+    assert len(query_result.statements) == 1
+    assert query_result.statements[0].data is not None
+    assert list(query_result.statements[0].data.columns) == ["id"]
+    assert query_result.statements[0].row_count == 1
+
+
 def test_async_handle_get_result_backend_load_error(
     mocker: MockerFixture,
     database: Database,
@@ -2216,6 +2272,38 @@ def test_get_from_cache_returns_cached_result(
     assert result.status == QueryStatus.SUCCESS
     assert result.is_cached is True
     assert sum(s.row_count for s in result.statements) == 2
+
+
+def test_get_from_cache_ignores_malformed_payloads(
+    mocker: MockerFixture, database: Database, app_context: None
+) -> None:
+    """Malformed cached result payloads should not break cache lookup."""
+    from superset.extensions import cache_manager
+    from superset.sql.execution.executor import SQLExecutor
+
+    executor = SQLExecutor(database)
+
+    mocker.patch.object(cache_manager.data_cache, "get", return_value=["bad-cache"])
+    assert executor._get_from_cache("SELECT * FROM users", QueryOptions()) is None
+
+    mocker.patch.object(
+        cache_manager.data_cache,
+        "get",
+        return_value={
+            "statements": [
+                "bad-statement",
+                {"data": pd.DataFrame({"id": [1]}), "row_count": 1},
+            ],
+        },
+    )
+
+    result = executor._get_from_cache("SELECT * FROM users", QueryOptions())
+
+    assert result is not None
+    assert result.is_cached is True
+    assert len(result.statements) == 1
+    assert result.statements[0].original_sql == ""
+    assert result.statements[0].row_count == 1
 
 
 def test_cached_async_result_get_result_returns_cached(

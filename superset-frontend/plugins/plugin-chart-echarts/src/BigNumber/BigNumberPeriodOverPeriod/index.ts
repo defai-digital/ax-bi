@@ -18,9 +18,7 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { ChartMetadata, ChartPlugin } from '@superset-ui/core';
-import buildQuery from './buildQuery';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 
@@ -44,11 +42,11 @@ export default class PopKPIPlugin extends ChartPlugin {
     });
 
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./PopKPI'),
       metadata,
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

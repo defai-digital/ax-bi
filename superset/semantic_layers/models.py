@@ -55,6 +55,21 @@ if TYPE_CHECKING:
     from superset.superset_typing import ExplorableData, QueryObjectDict
 
 
+def load_configuration(value: Any) -> dict[str, Any]:
+    """
+    Load a semantic layer configuration value into an object.
+    """
+    if isinstance(value, dict):
+        return value
+    if not isinstance(value, str):
+        return {}
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def get_column_type(semantic_type: pa.DataType) -> GenericDataType:
     """
     Map Arrow data types to generic data types.
@@ -184,7 +199,7 @@ class SemanticLayer(AuditMixinNullable, Model):
         # TODO (betodealmeida):
         # return extension_manager.get_contribution("semanticLayers", self.type)
         class_ = registry[self.type]
-        return class_.from_configuration(json.loads(self.configuration))
+        return class_.from_configuration(load_configuration(self.configuration))
 
 
 class SemanticView(AuditMixinNullable, Model):
@@ -273,7 +288,7 @@ class SemanticView(AuditMixinNullable, Model):
         """
         return self.semantic_layer.implementation.get_semantic_view(
             self.name,
-            json.loads(self.configuration),
+            load_configuration(self.configuration),
         )
 
     # =========================================================================

@@ -290,6 +290,49 @@ def test_load_explore_json_into_cache_preserves_superset_viz_exception(
     assert errors == payload_errors
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"status": "failed"},
+        {"status": "failed", "errors": "broken"},
+        {"status": "failed", "errors": []},
+    ],
+)
+@mock.patch("superset.tasks.async_queries.security_manager")
+@mock.patch("superset.tasks.async_queries.async_query_manager")
+@mock.patch("superset.tasks.async_queries.get_viz")
+@mock.patch("superset.tasks.async_queries.get_datasource_info")
+def test_load_explore_json_into_cache_falls_back_for_malformed_viz_errors(
+    mock_get_datasource_info,
+    mock_get_viz,
+    mock_async_query_manager,
+    mock_security_manager,
+    payload,
+):
+    """
+    Malformed visualization error payloads should not become raw KeyErrors.
+    """
+    from superset.tasks.async_queries import load_explore_json_into_cache
+
+    job_metadata = {"user_id": 1}
+    form_data: dict = {}
+
+    mock_get_datasource_info.return_value = (1, "table")
+    mock_security_manager.get_user_by_id.return_value = mock.MagicMock()
+    mock_async_query_manager.STATUS_ERROR = "error"
+
+    viz_obj = mock.MagicMock()
+    viz_obj.get_payload.return_value = payload
+    viz_obj.has_error.return_value = True
+    mock_get_viz.return_value = viz_obj
+
+    with pytest.raises(SupersetVizException):
+        load_explore_json_into_cache(job_metadata, form_data)
+
+    errors = mock_async_query_manager.update_job.call_args[1]["errors"]
+    assert errors == ["Visualization returned an error"]
+
+
 @mock.patch("superset.tasks.async_queries.security_manager")
 @mock.patch("superset.tasks.async_queries.async_query_manager")
 @mock.patch("superset.tasks.async_queries.get_viz")

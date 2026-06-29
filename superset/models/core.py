@@ -298,7 +298,15 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
     @property
     def schema_options(self) -> dict[str, Any]:
         """Additional schema display config for engines with complex schemas"""
-        return self.get_extra().get("schema_options", {})
+        return self.get_extra_dict("schema_options")
+
+    def get_extra_dict(
+        self,
+        key: str,
+        source: utils.QuerySource | None = None,
+    ) -> dict[str, Any]:
+        value = self.get_extra(source).get(key)
+        return value if isinstance(value, dict) else {}
 
     @property
     def data(self) -> dict[str, Any]:
@@ -351,6 +359,8 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         if (masked_encrypted_extra := self.masked_encrypted_extra) is not None:
             with suppress(TypeError, json.JSONDecodeError):
                 encrypted_config = json.loads(masked_encrypted_extra)
+                if not isinstance(encrypted_config, dict):
+                    encrypted_config = {}
         try:
             parameters = self.db_engine_spec.get_parameters_from_uri(  # type: ignore
                 masked_uri,
@@ -371,7 +381,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
 
     @property
     def metadata_cache_timeout(self) -> dict[str, Any]:
-        return self.get_extra().get("metadata_cache_timeout", {})
+        return self.get_extra_dict("metadata_cache_timeout")
 
     @property
     def catalog_cache_enabled(self) -> bool:
@@ -399,11 +409,16 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
 
     @property
     def default_schemas(self) -> list[str]:
-        return self.get_extra().get("default_schemas", [])
+        default_schemas = self.get_extra().get("default_schemas", [])
+        if not isinstance(default_schemas, list):
+            return []
+        return [schema for schema in default_schemas if isinstance(schema, str)]
 
     @property
     def connect_args(self) -> dict[str, Any]:
-        return self.get_extra().get("engine_params", {}).get("connect_args", {})
+        engine_params = self.get_extra_dict("engine_params")
+        connect_args = engine_params.get("connect_args")
+        return connect_args if isinstance(connect_args, dict) else {}
 
     @property
     def engine_information(self) -> dict[str, Any]:
@@ -544,11 +559,12 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         )
         self.db_engine_spec.validate_database_uri(sqlalchemy_url)
 
-        extra = self.get_extra(source)
-        engine_kwargs = extra.get("engine_params", {})
+        engine_kwargs = self.get_extra_dict("engine_params", source=source)
         if nullpool:
             engine_kwargs["poolclass"] = NullPool
-        connect_args = engine_kwargs.setdefault("connect_args", {})
+        if not isinstance(engine_kwargs.get("connect_args"), dict):
+            engine_kwargs["connect_args"] = {}
+        connect_args = engine_kwargs["connect_args"]
 
         # modify URL/args for a specific catalog/schema
         sqlalchemy_url, connect_args = self.db_engine_spec.adjust_engine_params(
@@ -1131,9 +1147,11 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         if self.encrypted_extra:
             try:
                 encrypted_extra = json.loads(self.encrypted_extra)
-            except json.JSONDecodeError as ex:
+            except (TypeError, json.JSONDecodeError) as ex:
                 logger.error(ex, exc_info=True)
                 raise
+            if not isinstance(encrypted_extra, dict):
+                encrypted_extra = {}
         return encrypted_extra
 
     # pylint: disable=invalid-name
@@ -1141,8 +1159,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         self.db_engine_spec.update_params_from_encrypted_extra(self, params)
 
     def get_table(self, table: Table) -> SqlaTable:
-        extra = self.get_extra()
-        meta = MetaData(**extra.get("metadata_params", {}))
+        meta = MetaData(**self.get_extra_dict("metadata_params"))
         with self.get_sqla_engine(catalog=table.catalog, schema=table.schema) as engine:
             return SqlaTable(
                 table.table,
@@ -1339,7 +1356,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         admins to create custom OAuth2 clients from the Superset UI, and assign them to
         specific databases.
         """
-        encrypted_extra = json.loads(self.encrypted_extra or "{}")
+        encrypted_extra = self.get_encrypted_extra()
         if oauth2_client_info := encrypted_extra.get("oauth2_client_info"):
             schema = OAuth2ClientConfigSchema()
             client_config = schema.load(oauth2_client_info)

@@ -83,12 +83,26 @@ export const Actions = styled.div`
   color: ${({ theme }) => theme.colorText};
 `;
 
+type FetchResourceError = Parameters<typeof getClientErrorObject>[0];
+type FetchResourceErrorHandler = (
+  error: FetchResourceError,
+) => void | Promise<void>;
+type FetchResourceOption = {
+  text: string;
+  value: string | number;
+  extra?: Record<string, unknown>;
+};
+type FetchResourceJson = {
+  result?: FetchResourceOption[];
+  count?: number;
+};
+
 const createFetchResourceMethod =
   (method: string) =>
   (
     resource: string,
     relation: string,
-    handleError: (error: Response) => void,
+    handleError: FetchResourceErrorHandler,
     user?: { userId: string | number; firstName: string; lastName: string },
   ) =>
   async (filterValue = '', page: number, pageSize: number) => {
@@ -98,9 +112,19 @@ const createFetchResourceMethod =
       page,
       page_size: pageSize,
     });
-    const { json = {} } = await SupersetClient.get({
-      endpoint: `${resourceEndpoint}?q=${queryParams}`,
-    });
+    let json: FetchResourceJson = {};
+    try {
+      const response = await SupersetClient.get({
+        endpoint: `${resourceEndpoint}?q=${queryParams}`,
+      });
+      json = (response.json ?? {}) as FetchResourceJson;
+    } catch (error) {
+      await handleError(error as FetchResourceError);
+      return {
+        data: [],
+        totalCount: 0,
+      };
+    }
 
     let fetchedLoggedUser = false;
     let loggedUserExtra: Record<string, unknown> | undefined;
@@ -117,33 +141,23 @@ const createFetchResourceMethod =
       extra?: Record<string, unknown>;
     }[] = [];
     json?.result
-      ?.filter(({ text }: { text: string }) => text.trim().length > 0)
-      .forEach(
-        ({
-          text,
-          value,
-          extra,
-        }: {
-          text: string;
-          value: string | number;
-          extra?: Record<string, unknown>;
-        }) => {
-          if (
-            loggedUser &&
-            value === loggedUser.value &&
-            text === loggedUser.label
-          ) {
-            fetchedLoggedUser = true;
-            loggedUserExtra = extra;
-          } else {
-            data.push({
-              label: text,
-              value,
-              extra,
-            });
-          }
-        },
-      );
+      ?.filter(({ text }) => text.trim().length > 0)
+      .forEach(({ text, value, extra }) => {
+        if (
+          loggedUser &&
+          value === loggedUser.value &&
+          text === loggedUser.label
+        ) {
+          fetchedLoggedUser = true;
+          loggedUserExtra = extra;
+        } else {
+          data.push({
+            label: text,
+            value,
+            extra,
+          });
+        }
+      });
 
     if (loggedUser && (!filterValue || fetchedLoggedUser)) {
       data.unshift({ ...loggedUser, extra: loggedUserExtra });
@@ -151,7 +165,7 @@ const createFetchResourceMethod =
 
     return {
       data,
-      totalCount: json?.count,
+      totalCount: json.count ?? data.length,
     };
   };
 
@@ -271,7 +285,7 @@ export const createFetchDistinct = createFetchResourceMethod('distinct');
 
 export const createFetchOwners = (
   resource: string,
-  handleError: (error: Response) => void,
+  handleError: FetchResourceErrorHandler,
   user?: { userId: string | number; firstName: string; lastName: string },
 ) => {
   const fetchRelated = createFetchRelated(

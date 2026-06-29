@@ -201,7 +201,7 @@ class Query(
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "changed_on": self.changed_on.isoformat(),
+            "changed_on": self.changed_on.isoformat() if self.changed_on else None,
             "dbId": self.database_id,
             "db": self.database.database_name if self.database else None,
             "endDttm": self.end_time,
@@ -220,7 +220,7 @@ class Query(
             "sql": self.sql,
             "sqlEditorId": self.sql_editor_id,
             "startDttm": self.start_time,
-            "state": self.status.lower(),
+            "state": (self.status or QueryStatus.PENDING).lower(),
             "tab": self.tab_name,
             "tempSchema": self.tmp_schema_name,
             "tempTable": self.tmp_table_name,
@@ -254,17 +254,25 @@ class Query(
             TableColumn,
         )
 
-        return [
-            TableColumn(
-                column_name=col["column_name"],
-                database=self.database,
-                is_dttm=col["is_dttm"],
-                filterable=True,
-                groupby=True,
-                type=col["type"],
+        columns = self.extra.get("columns", [])
+        if not isinstance(columns, list):
+            return []
+
+        table_columns = []
+        for col in columns:
+            if not isinstance(col, dict) or not isinstance(col.get("column_name"), str):
+                continue
+            table_columns.append(
+                TableColumn(
+                    column_name=col["column_name"],
+                    database=self.database,
+                    is_dttm=bool(col.get("is_dttm")),
+                    filterable=True,
+                    groupby=True,
+                    type=col.get("type"),
+                )
             )
-            for col in self.extra.get("columns", [])
-        ]
+        return table_columns
 
     @property
     def db_extra(self) -> Optional[dict[str, Any]]:
@@ -653,7 +661,9 @@ class TableSchema(AuditMixinNullable, ExtraJSONMixin, Model):
     def to_dict(self) -> dict[str, Any]:
         try:
             description = json.loads(self.description)
-        except json.JSONDecodeError:
+        except (TypeError, json.JSONDecodeError):
+            description = None
+        if not isinstance(description, dict):
             description = None
 
         return {

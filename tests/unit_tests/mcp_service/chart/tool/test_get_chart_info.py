@@ -318,6 +318,104 @@ class TestBuildAppliedDashboardFilters:
 
         assert result == []
 
+    def test_non_object_json_metadata_returns_empty_list(self):
+        dashboard = self._make_dashboard(
+            json_metadata="[]",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert result == []
+
+    def test_malformed_json_metadata_returns_empty_list(self):
+        dashboard = self._make_dashboard(
+            json_metadata="{bad json",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert result == []
+
+    def test_malformed_position_json_uses_empty_layout(self):
+        native_filter = {
+            "id": "NATIVE_FILTER-1",
+            "name": "Country",
+            "type": "NATIVE_FILTER",
+            "filterType": "filter_select",
+            "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
+            "targets": [{"column": {"name": "country"}, "datasetId": 7}],
+            "defaultDataMask": {
+                "filterState": {"value": ["US"]},
+                "extraFormData": {
+                    "adhoc_filters": [
+                        {
+                            "subject": "country",
+                            "operator": "IN",
+                            "comparator": ["US"],
+                        }
+                    ]
+                },
+            },
+        }
+        dashboard = self._make_dashboard(
+            json_metadata='{"native_filter_configuration": %s}'
+            % _json(native_filter_list=[native_filter]),
+            position_json="{bad json",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert len(result) == 1
+        assert result[0].id == "NATIVE_FILTER-1"
+        assert result[0].operator == "IN"
+        assert result[0].value == ["US"]
+
+    def test_non_object_position_json_uses_empty_layout(self):
+        native_filter = {
+            "id": "NATIVE_FILTER-1",
+            "name": "Country",
+            "type": "NATIVE_FILTER",
+            "filterType": "filter_select",
+            "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
+            "targets": [{"column": {"name": "country"}, "datasetId": 7}],
+            "defaultDataMask": {},
+        }
+        dashboard = self._make_dashboard(
+            json_metadata='{"native_filter_configuration": %s}'
+            % _json(native_filter_list=[native_filter]),
+            position_json="[]",
+            slice_ids=[1],
+        )
+
+        with (
+            patch("superset.db") as mock_db,
+            patch("superset.security_manager"),
+        ):
+            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+            result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+
+        assert len(result) == 1
+        assert result[0].id == "NATIVE_FILTER-1"
+        assert result[0].status == "not_applied"
+
 
 def _json(native_filter_list):
     """Serialize a native_filter list as JSON string for embedding in
@@ -336,8 +434,8 @@ class TestGetChartInfoPrivacy:
 
         with (
             patch.object(
-                get_chart_info_module.event_logger,
-                "log_context",
+                get_chart_info_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             patch.object(
@@ -438,6 +536,46 @@ class TestGetChartInfoPrivacy:
         assert result.filters.adhoc_filters[0].subject == _wrapped("region")
         assert result.filters.adhoc_filters[0].comparator == _wrapped("EMEA")
 
+    def test_form_data_override_ignores_non_object_cached_form_data(self) -> None:
+        """Malformed cached unsaved state falls back to the saved chart config."""
+        result = ChartInfo(
+            id=7,
+            slice_name="Saved Chart",
+            viz_type="line",
+            datasource_name="sales",
+            datasource_type="table",
+            form_data={
+                "viz_type": "line",
+                "datasource": "1__table",
+                "where": "country = 'US'",
+            },
+            filters=extract_filters_from_form_data(
+                {
+                    "viz_type": "line",
+                    "datasource": "1__table",
+                    "where": "country = 'US'",
+                }
+            ),
+        )
+
+        with patch.object(
+            get_chart_info_module,
+            "get_cached_form_data",
+            return_value=json.dumps([]),
+        ):
+            get_chart_info_module._apply_unsaved_state_override(
+                result,
+                "cached-key-7",
+            )
+
+        assert result.form_data_key is None
+        assert result.is_unsaved_state is False
+        assert result.viz_type == "line"
+        assert result.form_data is not None
+        assert result.form_data["viz_type"] == "line"
+        assert result.filters is not None
+        assert result.filters.where == _wrapped("country = 'US'")
+
     def test_chart_datasource_name_escapes_delimiters_without_wrapping(self) -> None:
         result = sanitize_chart_info_for_llm_context(
             ChartInfo(
@@ -465,8 +603,8 @@ class TestGetChartInfoPrivacy:
 
         with (
             patch.object(
-                get_chart_info_module.event_logger,
-                "log_context",
+                get_chart_info_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             patch.object(
@@ -513,8 +651,8 @@ class TestGetChartInfoPrivacy:
 
         with (
             patch.object(
-                get_chart_info_module.event_logger,
-                "log_context",
+                get_chart_info_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             patch.object(
@@ -558,8 +696,8 @@ class TestGetChartInfoPrivacy:
 
         with (
             patch.object(
-                get_chart_info_module.event_logger,
-                "log_context",
+                get_chart_info_module,
+                "mcp_event_log_context",
                 return_value=nullcontext(),
             ),
             patch.object(

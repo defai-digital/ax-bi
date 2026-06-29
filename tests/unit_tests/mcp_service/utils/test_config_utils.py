@@ -59,6 +59,7 @@ from superset.mcp_service.utils.config_utils import (
     get_superset_app_name,
     get_superset_row_limit,
     get_superset_webserver_address,
+    get_upload_max_file_size_bytes,
     get_webdriver_baseurl_user_friendly,
     get_webdriver_pool_config,
     get_webdriver_type,
@@ -519,3 +520,11 @@ def test_get_superset_row_limit_reads_supplied_config() -> None:
 def test_get_superset_row_limit_preserves_missing_key_error() -> None:
     with pytest.raises(KeyError):
         get_superset_row_limit({})
+
+
+def test_get_upload_max_file_size_bytes_reads_supplied_config() -> None:
+    assert get_upload_max_file_size_bytes({"UPLOAD_MAX_FILE_SIZE_BYTES": 1024}) == 1024
+
+
+def test_get_upload_max_file_size_bytes_returns_none_when_unset() -> None:
+    assert get_upload_max_file_size_bytes({}) is None

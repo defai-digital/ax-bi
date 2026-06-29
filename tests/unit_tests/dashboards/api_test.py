@@ -15,10 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from __future__ import annotations
+
+import inspect
 from unittest.mock import MagicMock
 
 import pytest
+from flask import Flask
+from pytest_mock import MockerFixture
 
+from superset.dashboards.api import DashboardRestApi
 from superset.dashboards.schemas import DashboardGetResponseSchema
 
 
@@ -102,3 +108,43 @@ def test_data_key_mapping_logic() -> None:
     # fields without data_key map to themselves
     assert key_to_name["id"] == "id"
     assert key_to_name["thumbnail_url"] == "thumbnail_url"
+
+
+@pytest.mark.parametrize(
+    ("method_name", "args", "kwargs"),
+    [
+        ("post", (), {}),
+        ("put", (1,), {}),
+        ("put_filters", (1,), {}),
+        ("put_chart_customizations", (1,), {}),
+        ("put_colors", (1,), {}),
+        ("cache_dashboard_screenshot", (1,), {"rison": {}}),
+        ("set_embedded", (MagicMock(),), {}),
+        ("copy_dash", (MagicMock(),), {}),
+    ],
+)
+def test_json_body_handlers_reject_malformed_json_body(
+    mocker: MockerFixture,
+    method_name: str,
+    args: tuple[object, ...],
+    kwargs: dict[str, object],
+) -> None:
+    """Dashboard JSON handlers should reject parser failures as validation errors."""
+    mocker.patch("superset.dashboards.api.is_feature_enabled", return_value=False)
+    mocker.patch("superset.dashboards.api.db.session.rollback")
+    app = Flask(__name__)
+    api = DashboardRestApi.__new__(DashboardRestApi)
+    api.response_400 = MagicMock(return_value="bad request")
+    method = inspect.unwrap(getattr(DashboardRestApi, method_name))
+
+    with app.test_request_context(
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        response = method(api, *args, **kwargs)
+
+    assert response == "bad request"
+    api.response_400.assert_called_once_with(
+        message={"_schema": ["Invalid input type."]}
+    )

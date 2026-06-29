@@ -105,6 +105,106 @@ def test_database_parameters_schema_mixin(
     }
 
 
+def test_database_parameters_schema_mixin_malformed_masked_encrypted_extra(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed masked encrypted extras should not fail URI pre-loading."""
+    from superset.databases.schemas import DatabaseParametersSchemaMixin
+    from superset.db_engine_specs.base import BasicParametersMixin, BasicParametersType
+    from superset.models.core import ConfigurationMethod
+
+    captured_encrypted_extra: dict[str, object] = {}
+
+    class DummyEngine(BasicParametersMixin):
+        engine = "dummy"
+        default_driver = "dummy"
+
+        @classmethod
+        def build_sqlalchemy_uri(
+            cls,
+            parameters: BasicParametersType,
+            encrypted_extra: dict[str, str] | None = None,
+        ) -> str:
+            captured_encrypted_extra["value"] = encrypted_extra or {}
+            return super().build_sqlalchemy_uri(parameters, encrypted_extra)
+
+    class DummySchema(DatabaseParametersSchemaMixin, Schema):
+        sqlalchemy_uri = fields.String()
+        masked_encrypted_extra = fields.String(allow_none=True)
+
+    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+
+    schema = DummySchema()
+    payload = {
+        "engine": "dummy_engine",
+        "configuration_method": ConfigurationMethod.DYNAMIC_FORM,
+        "masked_encrypted_extra": ["not-json"],
+        "parameters": {
+            "username": "username",
+            "password": "password",
+            "host": "localhost",
+            "port": 12345,
+            "database": "dbname",
+        },
+    }
+
+    with pytest.raises(ValidationError) as exc_info:
+        schema.load(payload)
+
+    assert captured_encrypted_extra["value"] == {}
+    assert exc_info.value.messages == {
+        "masked_encrypted_extra": ["Not a valid string."]
+    }
+
+
+def test_database_parameters_schema_mixin_non_object_masked_encrypted_extra(
+    mocker: MockerFixture,
+) -> None:
+    """Non-object masked encrypted extras should not reach engine specs."""
+    from superset.databases.schemas import DatabaseParametersSchemaMixin
+    from superset.db_engine_specs.base import BasicParametersMixin, BasicParametersType
+    from superset.models.core import ConfigurationMethod
+
+    captured_encrypted_extra: dict[str, object] = {}
+
+    class DummyEngine(BasicParametersMixin):
+        engine = "dummy"
+        default_driver = "dummy"
+
+        @classmethod
+        def build_sqlalchemy_uri(
+            cls,
+            parameters: BasicParametersType,
+            encrypted_extra: dict[str, str] | None = None,
+        ) -> str:
+            captured_encrypted_extra["value"] = encrypted_extra or {}
+            return super().build_sqlalchemy_uri(parameters, encrypted_extra)
+
+    class DummySchema(DatabaseParametersSchemaMixin, Schema):
+        sqlalchemy_uri = fields.String()
+        masked_encrypted_extra = fields.String(allow_none=True)
+
+    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+
+    schema = DummySchema()
+    payload = {
+        "engine": "dummy_engine",
+        "configuration_method": ConfigurationMethod.DYNAMIC_FORM,
+        "masked_encrypted_extra": "[]",
+        "parameters": {
+            "username": "username",
+            "password": "password",
+            "host": "localhost",
+            "port": 12345,
+            "database": "dbname",
+        },
+    }
+
+    schema.load(payload)
+
+    assert captured_encrypted_extra["value"] == {}
+
+
 def test_database_parameters_schema_mixin_no_engine(
     dummy_schema: "Schema",
 ) -> None:
@@ -252,6 +352,57 @@ def test_rename_encrypted_extra() -> None:
     }
 
 
+def test_rename_encrypted_extra_rejects_non_object_payload() -> None:
+    """Database schemas should reject non-object payloads without crashing."""
+    from superset.databases.schemas import DatabasePostSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        DatabasePostSchema().load(["encrypted_extra"])
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_database_parameters_schema_mixin_rejects_non_object_payload() -> None:
+    """Dynamic-form pre-loading should not crash on non-object payloads."""
+    from superset.databases.schemas import DatabaseValidateParametersSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        DatabaseValidateParametersSchema().load(["parameters"])
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_extra_validator_rejects_non_object_extra() -> None:
+    """Database extra must decode to a JSON object."""
+    from superset.databases.schemas import extra_validator
+
+    with pytest.raises(ValidationError) as exc_info:
+        extra_validator("[]")
+
+    assert exc_info.value.messages == ["Extra field must be a JSON object."]
+
+
+def test_extra_validator_rejects_non_object_metadata_params() -> None:
+    """metadata_params must be an object before keys are validated."""
+    from superset.databases.schemas import extra_validator
+
+    with pytest.raises(ValidationError) as exc_info:
+        extra_validator(json.dumps({"metadata_params": ["schema"]}))
+
+    assert exc_info.value.messages == [
+        "The metadata_params in Extra field must be a JSON object."
+    ]
+
+
+def test_extra_validator_accepts_object_metadata_params() -> None:
+    """Valid metadata_params objects should keep passing validation."""
+    from superset.databases.schemas import extra_validator
+
+    value = json.dumps({"metadata_params": {"schema": "public"}})
+
+    assert extra_validator(value) == value
+
+
 def test_oauth2_schema_success() -> None:
     """
     Test a successful redirect.
@@ -378,6 +529,62 @@ def test_import_schema_allows_masked_fields_for_existing_db(
     }
     # Should not raise - masked values are allowed for existing DBs
     schema.load(config)
+
+
+def test_import_database_extra_schema_decodes_legacy_upload_schemas() -> None:
+    """Legacy string-encoded upload schemas should load as a list."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    payload = ImportV1DatabaseExtraSchema().load(
+        {"schemas_allowed_for_csv_upload": '["public", "examples"]'}
+    )
+
+    assert payload["schemas_allowed_for_csv_upload"] == ["public", "examples"]
+
+
+def test_import_database_extra_schema_rejects_invalid_upload_schemas_json() -> None:
+    """Invalid legacy upload schema JSON should report a validation error."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseExtraSchema().load(
+            {"schemas_allowed_for_csv_upload": "not json"}
+        )
+
+    assert exc_info.value.messages == {
+        "schemas_allowed_for_csv_upload": ["Invalid JSON"]
+    }
+
+
+def test_import_database_extra_schema_rejects_non_object_extra() -> None:
+    """Non-object database extra payloads should fail validation cleanly."""
+    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseExtraSchema().load("not an object")
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_import_database_schema_rejects_non_object_payload() -> None:
+    """Non-object database imports should fail validation without crashing."""
+    from superset.databases.schemas import ImportV1DatabaseSchema
+
+    with pytest.raises(ValidationError) as exc_info:
+        ImportV1DatabaseSchema().load("allow_file_upload")
+
+    assert exc_info.value.messages == {"_schema": ["Invalid input type."]}
+
+
+def test_import_database_schema_renames_legacy_upload_field() -> None:
+    """Legacy import payloads should still map allow_file_upload to allow_csv_upload."""
+    from superset.databases.schemas import ImportV1DatabaseSchema
+
+    payload = {"allow_file_upload": True}
+
+    assert ImportV1DatabaseSchema().fix_allow_csv_upload(payload) == {
+        "allow_csv_upload": True
+    }
 
 
 def test_ssh_tunnel_server_address_rejects_non_hostnames() -> None:

@@ -26,7 +26,10 @@ from pydantic import (
     Field,
     field_validator,
     model_serializer,
+    ValidationInfo,
 )
+
+from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
 
 
 class _SchemaFieldNormalizer(BaseModel):
@@ -159,6 +162,18 @@ class StatementInfo(BaseModel):
         ),
     )
 
+    @field_validator("original_sql")
+    @classmethod
+    def sanitize_original_sql(cls, v: str) -> str:
+        """Wrap submitted SQL text before exposing it to LLM clients."""
+        return sanitize_for_llm_context(v, field_path=("original_sql",))
+
+    @field_validator("executed_sql")
+    @classmethod
+    def sanitize_executed_sql(cls, v: str) -> str:
+        """Wrap transformed SQL text before exposing it to LLM clients."""
+        return sanitize_for_llm_context(v, field_path=("executed_sql",))
+
 
 class ExecuteSqlResponse(BaseModel):
     """Response schema for SQL execution results."""
@@ -199,6 +214,14 @@ class ExecuteSqlResponse(BaseModel):
             "with literal '{{ var }}' placeholders unrendered."
         ),
     )
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap SQL error text before exposing it to LLM clients."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
 
 
 class SaveSqlQueryRequest(BaseModel):
@@ -262,6 +285,14 @@ class SaveSqlQueryResponse(_SchemaFieldNormalizer):
             "URL to open this saved query in SQL Lab (e.g., /sqllab?savedQueryId=42)"
         ),
     )
+
+    @field_validator("label", "sql", "description")
+    @classmethod
+    def sanitize_response_text(cls, v: str | None, info: ValidationInfo) -> str | None:
+        """Wrap saved query text fields before exposing them to LLM clients."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=(info.field_name,))
 
 
 class OpenSqlLabRequest(BaseModel):

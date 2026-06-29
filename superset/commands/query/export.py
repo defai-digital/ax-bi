@@ -23,12 +23,12 @@ from typing import Callable
 import yaml
 from werkzeug.utils import secure_filename
 
+from superset.commands.database.export import parse_extra
 from superset.commands.export.models import ExportModelsCommand
 from superset.models.sql_lab import SavedQuery
 from superset.commands.query.exceptions import SavedQueryNotFoundError
 from superset.daos.query import SavedQueryDAO
 from superset.utils.dict_import_export import EXPORT_VERSION
-from superset.utils import json
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +88,7 @@ class ExportSavedQueriesCommand(ExportModelsCommand):
             # TODO (betodealmeida): move this logic to export_to_dict once this
             # becomes the default export endpoint
             if "extra" in payload:
-                try:
-                    payload["extra"] = json.loads(payload["extra"])
-                except json.JSONDecodeError:
-                    logger.info("Unable to decode `extra` field: %s", payload["extra"])
+                payload["extra"] = parse_extra(payload["extra"])
 
             payload["version"] = EXPORT_VERSION
 

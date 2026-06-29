@@ -229,6 +229,7 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         from superset.views.tags import TagModelView, TagView
         from superset.views.tasks import TaskModelView
         from superset.views.themes import ThemeModelView
+        from superset.views.upload import UploadDataView
         from superset.views.user_info import UserInfoView
         from superset.views.user_registrations import UserRegistrationsView
         from superset.views.users.api import CurrentUserRestApi, UserRestApi
@@ -465,6 +466,9 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_view_no_menu(RedirectView)
         appbuilder.add_view_no_menu(RoleRestAPI)
         appbuilder.add_view_no_menu(UserInfoView)
+
+        if feature_flag_manager.is_feature_enabled("ENABLE_LOCAL_FILE_UPLOAD"):
+            appbuilder.add_view_no_menu(UploadDataView)
 
         #
         # Add links

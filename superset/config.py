@@ -180,7 +180,7 @@ BUILD_NUMBER = None
 DEFAULT_VIZ_TYPE = "table"
 
 # default row limit when requesting chart data
-ROW_LIMIT = 50000
+ROW_LIMIT = 10000
 # default row limit when requesting samples from datasource in explore view
 SAMPLES_ROW_LIMIT = 1000
 # default row limit for native filters
@@ -428,6 +428,7 @@ APP_NAME = "AX-BI"
 # superset_config.py, you must also override THEME_DEFAULT to see the change,
 # or set THEME_DEFAULT["token"]["brandLogoUrl"] directly.
 APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png?v=20260626-4"
+APP_ICON_DARK = "/static/assets/images/ax-bi-logo-horiz-dark.png?v=20260629-1"
 
 # Specify where clicking the logo would take the user
 # Default value of None will take you to '/superset/welcome'
@@ -695,11 +696,32 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enable embedded dashboard AI assistant flows
     # @lifecycle: development
     "GENAI_EMBEDDED_ASSISTANT": False,
+    # Parent flag for runtime modernization experiments.
+    # @lifecycle: development
+    "RUNTIME_MODERNIZATION": False,
+    # Route selected MCP workflows through a TypeScript orchestration service.
+    # @lifecycle: development
+    "TS_MCP_ORCHESTRATION": False,
+    # Serve MCP asset search from the TypeScript sidecar with Python fallback.
+    # @lifecycle: development
+    "TS_ASSET_SEARCH_SERVING": False,
+    # Enable a TypeScript-derived metadata index for AX-BI search workflows.
+    # @lifecycle: development
+    "TS_METADATA_INDEX": False,
+    # Enable Rust-backed SQL parsing or normalization kernels.
+    # @lifecycle: development
+    "RUST_SQL_KERNEL": False,
+    # Enable Rust-backed chart validation kernels.
+    # @lifecycle: development
+    "RUST_CHART_VALIDATION_KERNEL": False,
+    # Run candidate runtime paths beside authoritative Python paths.
+    # @lifecycle: development
+    "RUNTIME_SHADOW_EXECUTION": False,
     # Simplify navigation by relocating power-user destinations (e.g. SQL Lab)
     # out of the primary nav bar into an "Advanced" group. Presentation-only;
     # does not change routes or permissions. See ax-docs/ux-simplification-*.
     # @lifecycle: development
-    "SIMPLIFIED_NAV": False,
+    "SIMPLIFIED_NAV": True,
     # Offer a guided, stepped chart builder in Explore (data -> measures ->
     # group by -> filters -> limit -> visualize) as a simpler alternative to the
     # full control panel. Compiles to the same form_data / query_context; the
@@ -857,6 +879,12 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @lifecycle: stable
     # @category: runtime_config
     "EMBEDDED_SUPERSET": False,
+    # Enable the dedicated Upload Data page for zero-config file analytics.
+    # When enabled, users can drag-and-drop CSV/XLSX/Parquet files and the
+    # system auto-provisions a local DuckDB database — no DB connection needed.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "ENABLE_LOCAL_FILE_UPLOAD": True,
     # Enable Jinja templating in SQL queries
     # @lifecycle: stable
     # @category: runtime_config
@@ -1103,6 +1131,7 @@ _THEME_DARK_BASE: Theme = {
     **_THEME_DEFAULT_BASE,
     "token": {
         **_THEME_DEFAULT_BASE["token"],
+        "brandLogoUrl": APP_ICON_DARK,
         # Darker selection color for dark mode
         "colorEditorSelection": "#5c4d1a",
     },
@@ -1270,6 +1299,10 @@ SCREENSHOT_TILED_VIEWPORT_HEIGHT = 2000  # Height of each tile in pixels
 UPLOAD_FOLDER = BASE_DIR + "/static/uploads/"
 UPLOAD_CHUNK_SIZE = 4096
 
+# Local file analytics: auto-provisioned DuckDB for zero-config uploads
+LOCAL_DB_NAME = "Local Files"
+LOCAL_DB_PATH = UPLOAD_FOLDER + "local_files.duckdb"
+
 # Upper bound, in bytes, on the size of a single uploaded data file (e.g. CSV,
 # Excel, columnar). Files larger than this are rejected before their contents
 # are buffered into memory, keeping the resources consumed by a single upload
@@ -1288,6 +1321,14 @@ CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
 
 # Cache for datasource metadata and query results
 DATA_CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
+
+# Fast Data API Gateway cache configuration.
+# When enabled, the Python backend writes a pre-serialized JSON copy of chart
+# data responses to Redis alongside the DataFrame cache. The Node.js sidecar
+# (superset-websocket) reads this key and serves it directly, bypassing Flask
+# for cache hits.
+FAST_CACHE_ENABLED: bool = False
+FAST_CACHE_KEY_PREFIX: str = "fc:"
 
 # Cache for dashboard filter state. `CACHE_TYPE` defaults to `SupersetMetastoreCache`
 # that stores the values in the key-value table in the Superset metastore, as it's
@@ -2505,6 +2546,12 @@ STATIC_ASSETS_PREFIX = ""
 # Typically these should not be allowed.
 PREVENT_UNSAFE_DB_CONNECTIONS = True
 
+# Allow DuckDB connections for local file analytics. When True, DuckDB is
+# exempted from the security blocklist in analytics_db_safety.py.
+# DuckDB is safe for single-tenant / trusted deployments where users
+# already have filesystem access.
+ALLOW_DUCKDB_CONNECTIONS = True
+
 # If true all default urls on datasets will be handled as relative URLs by the frontend
 PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET = True
 
@@ -2562,6 +2609,13 @@ GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
     timedelta(milliseconds=500).total_seconds() * 1000
 )
 GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
+
+# AX-BI runtime modernization sidecar config.
+# These settings are inert until runtime modernization feature flags route
+# selected workflows to the TypeScript sidecar.
+AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"
+AX_SERVICES_TIMEOUT_SECONDS = 2.0
+AX_SERVICES_INTERNAL_TOKEN: str | None = None
 
 # Global async queries cache backend configuration options:
 # - Set 'CACHE_TYPE' to 'RedisCache' for RedisCacheBackend.

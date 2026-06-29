@@ -32,6 +32,7 @@ from superset.extensions import appbuilder
 from superset.models.slice import Slice
 from superset.security.manager import (
     _collect_sortable_identifiers,
+    _dashboard_native_filter_has_datasource,
     freeze_value,
     query_context_modified,
     SupersetSecurityManager,
@@ -659,6 +660,37 @@ def test_query_context_modified_tampered(
     assert query_context_modified(query_context)
 
 
+@pytest.mark.parametrize(
+    "stored_query_context",
+    [
+        "{malformed",
+        "[]",
+        json.dumps({"queries": [1]}),
+    ],
+)
+def test_query_context_modified_invalid_stored_query_context_fails_closed(
+    mocker: MockerFixture,
+    stored_metrics: list[AdhocMetric],
+    stored_query_context: str,
+) -> None:
+    """
+    Invalid saved query context should be treated as modified for guest access.
+    """
+    query_context = mocker.MagicMock()
+    query_context.slice_.id = 42
+    query_context.slice_.query_context = stored_query_context
+    query_context.slice_.params_dict = {
+        "metrics": stored_metrics,
+    }
+    query_context.form_data = {
+        "slice_id": 42,
+        "metrics": stored_metrics,
+    }
+    query_context.queries = [QueryObject(metrics=stored_metrics)]  # type: ignore
+
+    assert query_context_modified(query_context)
+
+
 def _native_filter_ctx(
     mocker: MockerFixture,
     queries: list[Any],
@@ -668,6 +700,7 @@ def _native_filter_ctx(
     dataset_id: int = 20,
     targets: list[Any] | None = None,
     control_values: dict[str, Any] | None = None,
+    json_metadata: str | None = None,
 ) -> Any:
     """Build a native-filter query context (no slice_) + patched dashboard."""
     if targets is None:
@@ -682,7 +715,7 @@ def _native_filter_ctx(
     qc.datasource.data = {"id": dataset_id}
     qc.queries = queries
     dash = mocker.MagicMock()
-    dash.json_metadata = json.dumps(
+    dash.json_metadata = json_metadata or json.dumps(
         {
             "native_filter_configuration": [
                 {
@@ -735,6 +768,25 @@ def test_query_context_modified_native_filter_simple_metric_on_target_allowed(
     assert not query_context_modified(qc)
 
 
+def test_query_context_modified_native_filter_malformed_simple_metric_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """A SIMPLE metric with malformed column metadata is modified."""
+    query = SimpleNamespace(
+        columns=[],
+        metrics=[
+            {
+                "expressionType": "SIMPLE",
+                "column": "region",
+                "aggregate": "MIN",
+            }
+        ],
+        groupby=[],
+    )
+    qc = _native_filter_ctx(mocker, [query])
+    assert query_context_modified(qc)
+
+
 def test_query_context_modified_native_filter_adhoc_metric_blocked(
     mocker: MockerFixture,
 ) -> None:
@@ -768,6 +820,65 @@ def test_query_context_modified_native_filter_no_filter_context_blocked(
     assert query_context_modified(qc)
 
 
+def test_query_context_modified_native_filter_malformed_metadata_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed dashboard metadata fails closed for native-filter requests."""
+    query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
+    qc = _native_filter_ctx(mocker, [query], json_metadata="{malformed")
+    assert query_context_modified(qc)
+
+
+def test_query_context_modified_native_filter_skips_malformed_entries(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed entries do not block a valid native-filter target entry."""
+    query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
+    qc = _native_filter_ctx(
+        mocker,
+        [query],
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    123,
+                    {
+                        "id": "F1",
+                        "targets": [
+                            "bad-target",
+                            {"datasetId": 20, "column": {"name": "region"}},
+                        ],
+                    },
+                ]
+            }
+        ),
+    )
+    assert not query_context_modified(qc)
+
+
+def test_dashboard_native_filter_has_datasource_malformed_metadata() -> None:
+    """Malformed dashboard metadata does not grant native-filter datasource access."""
+    dashboard = SimpleNamespace(json_metadata="{malformed")
+    assert not _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
+
+
+def test_dashboard_native_filter_has_datasource_matching_filter() -> None:
+    dashboard = SimpleNamespace(
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "bad-filter",
+                    {
+                        "id": "F1",
+                        "targets": ["bad-target", {"datasetId": 20}],
+                    },
+                ]
+            }
+        )
+    )
+    assert _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
+
+
 def test_query_context_modified_native_filter_configured_sort_metric_allowed(
     mocker: MockerFixture,
 ) -> None:
@@ -780,6 +891,36 @@ def test_query_context_modified_native_filter_configured_sort_metric_allowed(
     )
     qc = _native_filter_ctx(mocker, [query], control_values={"sortMetric": "total"})
     assert not query_context_modified(qc)
+
+
+def test_query_context_modified_native_filter_malformed_control_values_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed controlValues do not authorize saved-metric sorting."""
+    query = SimpleNamespace(
+        columns=["region"],
+        metrics=["total"],
+        groupby=[],
+        orderby=[["total", True]],
+    )
+    qc = _native_filter_ctx(
+        mocker,
+        [query],
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    {
+                        "id": "F1",
+                        "targets": [
+                            {"datasetId": 20, "column": {"name": "region"}},
+                        ],
+                        "controlValues": "bad",
+                    }
+                ]
+            }
+        ),
+    )
+    assert query_context_modified(qc)
 
 
 def test_query_context_modified_native_filter_arbitrary_saved_metric_blocked(
@@ -2003,6 +2144,36 @@ def test_validate_child_in_parent_multilayer_malformed_json(
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = "not valid json {{"
+
+    assert not sm._validate_child_in_parent_multilayer(
+        child_slice_id=1, parent_slice=parent_slice
+    )
+
+
+def test_validate_child_in_parent_multilayer_scalar_params(
+    app_context: None, mocker: MockerFixture
+) -> None:
+    """Test validation fails gracefully with non-object JSON params"""
+    sm = SupersetSecurityManager(appbuilder)
+
+    parent_slice = mocker.MagicMock(spec=Slice)
+    parent_slice.params = json.dumps(["not", "an", "object"])
+
+    assert not sm._validate_child_in_parent_multilayer(
+        child_slice_id=1, parent_slice=parent_slice
+    )
+
+
+def test_validate_child_in_parent_multilayer_scalar_deck_slices(
+    app_context: None, mocker: MockerFixture
+) -> None:
+    """Test validation fails gracefully with non-list deck_slices"""
+    sm = SupersetSecurityManager(appbuilder)
+
+    parent_slice = mocker.MagicMock(spec=Slice)
+    parent_slice.params = json.dumps(
+        {"viz_type": "deck_multi", "deck_slices": "bad-slices"}
+    )
 
     assert not sm._validate_child_in_parent_multilayer(
         child_slice_id=1, parent_slice=parent_slice

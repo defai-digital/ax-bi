@@ -16,6 +16,7 @@
 # under the License.
 # pylint: disable=invalid-name, unused-argument, import-outside-toplevel
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -182,3 +183,36 @@ def test_export_tags_with_charts_dashboards(
         assert all(
             file_content_func() != "tag:\n- tag_1" for _, file_content_func in result
         )
+
+
+def test_export_tags_for_charts_filters_by_custom_tag_type(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Chart tag export should exclude implicit system tags regardless of tag name.
+    """
+    from superset.commands.tag.export import ExportTagsCommand
+    from superset.tags.models import TagType
+
+    mocker.patch(
+        "superset.commands.tag.export.ChartDAO.find_by_id"
+    ).return_value = SimpleNamespace(
+        tags=[
+            SimpleNamespace(
+                name="regional sales",
+                description="custom chart tag",
+                type=TagType.custom,
+            ),
+            SimpleNamespace(
+                name="alice",
+                description="implicit favorite tag",
+                type=TagType.favorited_by,
+            ),
+        ]
+    )
+
+    payload = yaml.safe_load(ExportTagsCommand._file_content(chart_ids=[1]))
+
+    assert payload["tags"] == [
+        {"tag_name": "regional sales", "description": "custom chart tag"}
+    ]

@@ -156,3 +156,29 @@ def test_import_v1_metric_schema_parses_currency_string() -> None:
     }
     result = schema.load(data)
     assert result["currency"] == {"symbol": "CAD", "symbolPosition": "suffix"}
+
+
+@pytest.mark.parametrize("extra", ["{malformed", "[]", "1", " "])
+def test_import_v1_column_schema_ignores_malformed_extra(extra: str) -> None:
+    from superset.datasets.schemas import ImportV1ColumnSchema
+
+    schema = ImportV1ColumnSchema()
+    result = schema.load({"column_name": "profit", "extra": extra})
+
+    assert result["extra"] is None
+
+
+@pytest.mark.parametrize("extra", ["{malformed", "[]", "1", " "])
+def test_import_v1_metric_schema_ignores_malformed_extra(extra: str) -> None:
+    from superset.datasets.schemas import ImportV1MetricSchema
+
+    schema = ImportV1MetricSchema()
+    result = schema.load(
+        {
+            "metric_name": "sum_profit",
+            "expression": "SUM(profit)",
+            "extra": extra,
+        }
+    )
+
+    assert result["extra"] is None

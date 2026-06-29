@@ -19,7 +19,7 @@ from typing import cast, Optional
 from flask import session
 
 from superset.commands.dashboard.filter_state.utils import check_access
-from superset.commands.temporary_cache.entry import Entry
+from superset.commands.temporary_cache.entry import Entry, is_entry
 from superset.commands.temporary_cache.exceptions import TemporaryCacheAccessDeniedError
 from superset.commands.temporary_cache.parameters import CommandParameters
 from superset.commands.temporary_cache.update import UpdateTemporaryCacheCommand
@@ -35,9 +35,9 @@ class UpdateFilterStateCommand(UpdateTemporaryCacheCommand):
         key = cmd_params.key
         value = cast(str, cmd_params.value)  # schema ensures that value is not optional
         check_access(resource_id)
-        entry: Entry = cache_manager.filter_state_cache.get(cache_key(resource_id, key))
+        entry = cache_manager.filter_state_cache.get(cache_key(resource_id, key))
         owner = get_user_id()
-        if entry:
+        if is_entry(entry):
             if entry["owner"] != owner:
                 raise TemporaryCacheAccessDeniedError()
 

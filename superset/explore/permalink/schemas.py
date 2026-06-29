@@ -74,4 +74,8 @@ class ExplorePermalinkSchema(Schema):
         allow_none=True,
         metadata={"description": "The fully qualified datasource reference"},
     )
-    state = fields.Nested(ExplorePermalinkStateSchema())
+    state = fields.Nested(
+        ExplorePermalinkStateSchema(),
+        required=True,
+        allow_none=False,
+    )

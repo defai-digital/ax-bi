@@ -127,27 +127,31 @@ def import_dashboard(  # noqa: C901
             },
         }
         """
-        position_data = json.loads(dashboard.position_json)
+        position_data = _load_dashboard_json_object(dashboard.position_json)
         position_json = position_data.values()
         for value in position_json:
-            if (
-                isinstance(value, dict)
-                and value.get("meta")
-                and value.get("meta", {}).get("chartId")
-            ):
-                old_slice_id = value["meta"]["chartId"]
+            meta = value.get("meta") if isinstance(value, dict) else None
+            if isinstance(meta, dict) and meta.get("chartId"):
+                old_slice_id = meta["chartId"]
 
                 if old_slice_id in old_to_new_slc_id_dict:
-                    value["meta"]["chartId"] = old_to_new_slc_id_dict[old_slice_id]
+                    meta["chartId"] = old_to_new_slc_id_dict[old_slice_id]
         dashboard.position_json = json.dumps(position_data)
 
     def alter_native_filters(dashboard: Dashboard) -> None:
-        json_metadata = json.loads(dashboard.json_metadata)
+        json_metadata = _load_dashboard_json_object(dashboard.json_metadata)
         native_filter_configuration = json_metadata.get("native_filter_configuration")
         if not native_filter_configuration:
             return
         for native_filter in native_filter_configuration:
-            for target in native_filter.get("targets", []):
+            if not isinstance(native_filter, dict):
+                continue
+            targets = native_filter.get("targets", [])
+            if not isinstance(targets, list):
+                continue
+            for target in targets:
+                if not isinstance(target, dict):
+                    continue
                 old_dataset_id = target.get("datasetId")
                 if dataset_id_mapping and old_dataset_id is not None:
                     target["datasetId"] = dataset_id_mapping.get(
@@ -165,7 +169,7 @@ def import_dashboard(  # noqa: C901
     # Clearing the slug to avoid conflicts
     dashboard_to_import.slug = None
 
-    old_json_metadata = json.loads(dashboard_to_import.json_metadata or "{}")
+    old_json_metadata = _load_dashboard_json_object(dashboard_to_import.json_metadata)
     old_to_new_slc_id_dict: dict[int, int] = {}
     new_timed_refresh_immune_slices = []
     new_expanded_slices = {}
@@ -215,7 +219,10 @@ def import_dashboard(  # noqa: C901
         filter_scopes = convert_filter_scopes(old_json_metadata, slices)
 
     if "filter_scopes" in i_params_dict:
-        filter_scopes = old_json_metadata.get("filter_scopes")
+        metadata_filter_scopes = old_json_metadata.get("filter_scopes")
+        filter_scopes = (
+            metadata_filter_scopes if isinstance(metadata_filter_scopes, dict) else {}
+        )
 
     # then replace old slice id to new slice id:
     if filter_scopes:
@@ -293,6 +300,117 @@ def decode_dashboards(o: dict[str, Any]) -> Any:
     return o
 
 
+def _decode_dashboard_import_content(content: str) -> dict[str, Any]:
+    try:
+        data = json.loads(content, object_hook=decode_dashboards)
+    except (TypeError, ValueError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    return _validate_dashboard_bundle_shape(data)
+
+
+def _validate_dashboard_bundle_shape(data: Any) -> dict[str, Any]:
+    if not data:
+        raise DashboardImportException(_("No data in file"))
+
+    if not isinstance(data, dict):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    if not isinstance(data.get("datasources"), list) or not isinstance(
+        data.get("dashboards"),
+        list,
+    ):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    for index, datasource in enumerate(data["datasources"]):
+        _load_datasource_remote_id(datasource, index)
+
+    for dashboard in data["dashboards"]:
+        _validate_dashboard_import_object(dashboard)
+
+    return data
+
+
+def _load_dashboard_json_object(value: Any) -> dict[str, Any]:
+    if not value:
+        return {}
+
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    if not isinstance(parsed, dict):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    return parsed
+
+
+def _validate_native_filter_configuration(
+    native_filter_configuration: Any,
+) -> None:
+    """Validate v0 native filter metadata has the container shapes import expects."""
+    if native_filter_configuration is None:
+        return
+
+    if not isinstance(native_filter_configuration, list):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    for native_filter in native_filter_configuration:
+        if not isinstance(native_filter, dict):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+        targets = native_filter.get("targets")
+        if targets is None:
+            continue
+        if not isinstance(targets, list) or not all(
+            isinstance(target, dict) for target in targets
+        ):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+
+
+def _validate_dashboard_position(position_json: dict[str, Any]) -> None:
+    for node in position_json.values():
+        if not isinstance(node, dict):
+            continue
+        meta = node.get("meta")
+        if meta is not None and not isinstance(meta, dict):
+            raise DashboardImportException(_("Invalid dashboard import file"))
+
+
+def _validate_dashboard_import_object(dashboard: Any) -> None:
+    if not isinstance(dashboard, Dashboard):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    json_metadata = _load_dashboard_json_object(dashboard.json_metadata)
+    _validate_native_filter_configuration(
+        json_metadata.get("native_filter_configuration")
+    )
+
+    filter_scopes = json_metadata.get("filter_scopes")
+    if filter_scopes is not None and not isinstance(filter_scopes, dict):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    if dashboard.position_json:
+        _validate_dashboard_position(
+            _load_dashboard_json_object(dashboard.position_json)
+        )
+
+
+def _load_datasource_remote_id(datasource: Any, index: int) -> Any:
+    if not isinstance(datasource, SqlaTable):
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    try:
+        params = json.loads(datasource.params or "{}")
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise DashboardImportException(_("Invalid dashboard import file")) from ex
+
+    if not isinstance(params, dict) or "remote_id" not in params:
+        raise DashboardImportException(_("Invalid dashboard import file"))
+
+    return params["remote_id"]
+
+
 def import_dashboards(
     content: str,
     database_id: Optional[int] = None,
@@ -301,14 +419,11 @@ def import_dashboards(
     """Imports dashboards from a stream to databases"""
     current_tt = int(time.time())
     import_time = current_tt if import_time is None else import_time
-    data = json.loads(content, object_hook=decode_dashboards)
-    if not data:
-        raise DashboardImportException(_("No data in file"))
+    data = _decode_dashboard_import_content(content)
     dataset_id_mapping: dict[int, int] = {}
-    for table in data["datasources"]:
+    for index, table in enumerate(data["datasources"]):
         new_dataset_id = import_dataset(table, database_id, import_time=import_time)
-        params = json.loads(table.params)
-        dataset_id_mapping[params["remote_id"]] = new_dataset_id
+        dataset_id_mapping[_load_datasource_remote_id(table, index)] = new_dataset_id
 
     for dashboard in data["dashboards"]:
         import_dashboard(dashboard, dataset_id_mapping, import_time=import_time)
@@ -340,8 +455,4 @@ class ImportDashboardsCommand(BaseCommand):
     def validate(self) -> None:
         # ensure all files are JSON
         for content in self.contents.values():
-            try:
-                json.loads(content)
-            except ValueError:
-                logger.exception("Invalid JSON file")
-                raise
+            _decode_dashboard_import_content(content)

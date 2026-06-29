@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-import contextlib
 import logging
 from collections import defaultdict
 from functools import wraps
@@ -43,6 +42,7 @@ from superset.extensions import cache_manager, feature_flag_manager, security_ma
 from superset.legacy import update_time_range
 from superset.models.core import Database
 from superset.models.dashboard import Dashboard
+from superset.models.helpers import json_to_dict
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query
 from superset.superset_typing import (
@@ -137,7 +137,7 @@ def bootstrap_user_data(user: User, include_perms: bool = False) -> dict[str, An
             "userId": user.id,
             "isActive": user.is_active,
             "isAnonymous": user.is_anonymous,
-            "createdOn": user.created_on.isoformat(),
+            "createdOn": user.created_on.isoformat() if user.created_on else None,
             "email": user.email,
             "loginCount": user.login_count,
         }
@@ -194,9 +194,21 @@ def get_viz(
 
 def loads_request_json(request_json_data: str) -> dict[Any, Any]:
     try:
-        return json.loads(request_json_data)
+        data = json.loads(request_json_data)
     except (TypeError, json.JSONDecodeError):
         return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _normalize_global_form_data(global_form_data: Any) -> dict[str, Any]:
+    if not isinstance(global_form_data, dict):
+        return {}
+
+    queries = global_form_data.get("queries")
+    if isinstance(queries, list) and queries and isinstance(queries[0], dict):
+        global_form_data.update(queries[0])
+
+    return global_form_data
 
 
 def get_form_data(
@@ -207,16 +219,18 @@ def get_form_data(
     form_data: dict[str, Any] = initial_form_data or {}
 
     if has_request_context():
-        json_data = request.get_json(cache=True) if request.is_json else {}
+        json_data = request.get_json(cache=True, silent=True) if request.is_json else {}
+        if not isinstance(json_data, dict):
+            json_data = {}
 
         # chart data API requests are JSON
         first_query = (
             json_data["queries"][0]
-            if "queries" in json_data and json_data["queries"]
+            if isinstance(json_data.get("queries"), list)
+            and json_data["queries"]
+            and isinstance(json_data["queries"][0], dict)
             else None
         )
-
-        add_sqllab_custom_filters(form_data)
 
         request_form_data = request.form.get("form_data")
         request_args_data = request.args.get("form_data")
@@ -226,20 +240,18 @@ def get_form_data(
             parsed_form_data = loads_request_json(request_form_data)
             # some chart data api requests are form_data
             queries = parsed_form_data.get("queries")
-            if isinstance(queries, list):
+            if isinstance(queries, list) and queries and isinstance(queries[0], dict):
                 form_data.update(queries[0])
             else:
                 form_data.update(parsed_form_data)
         # request params can overwrite the body
         if request_args_data:
             form_data.update(loads_request_json(request_args_data))
+        add_sqllab_custom_filters(form_data)
 
     # Fallback to using the Flask globals (used for cache warmup and async queries)
     if not form_data and hasattr(g, "form_data"):
-        form_data = g.form_data
-        # chart data API requests are JSON
-        json_data = form_data["queries"][0] if "queries" in form_data else {}
-        form_data.update(json_data)
+        form_data = _normalize_global_form_data(g.form_data)
 
     form_data = {k: v for k, v in form_data.items() if k not in REJECTED_FORM_DATA_KEYS}
 
@@ -281,8 +293,12 @@ def add_sqllab_custom_filters(form_data: dict[Any, Any]) -> Any:
                 params = json.loads(params_str)
                 if isinstance(params, dict):
                     filters = params.get("_filters")
-                    if filters:
-                        form_data.update({"filters": filters})
+                    if isinstance(filters, list):
+                        valid_filters = [
+                            filter_ for filter_ in filters if isinstance(filter_, dict)
+                        ]
+                        if valid_filters:
+                            form_data.update({"filters": valid_filters})
     except (TypeError, json.JSONDecodeError):
         data = {}
 
@@ -305,19 +321,40 @@ def get_datasource_info(
     :raises SupersetException: If the datasource no longer exists
     """
 
-    if "__" in (datasource := form_data.get("datasource", "")):
-        datasource_id, datasource_type = datasource.split("__")
+    raw_datasource_id: Any = datasource_id
+    if isinstance(datasource := form_data.get("datasource"), str):
+        parts = datasource.split("__")
+        if len(parts) == 2:
+            raw_datasource_id, datasource_type = parts
         # The case where the datasource has been deleted
-        if datasource_id == "None":
-            datasource_id = None
+        if raw_datasource_id == "None":
+            raw_datasource_id = None
 
-    if not datasource_id:
+    if not raw_datasource_id:
         raise SupersetException(
             _("The dataset associated with this chart no longer exists")
         )
 
-    datasource_id = int(datasource_id)
+    try:
+        datasource_id = int(raw_datasource_id)
+    except (TypeError, ValueError) as ex:
+        raise SupersetException(
+            _("The dataset associated with this chart no longer exists")
+        ) from ex
     return datasource_id, datasource_type
+
+
+def _deserialize_json_results_payload(payload: Union[bytes, str]) -> dict[str, Any]:
+    with stats_timing("sqllab.query.results_backend_json_deserialize", stats_logger):
+        try:
+            ds_payload = json.loads(payload)
+        except (TypeError, ValueError) as ex:
+            raise SerializationError("Unable to deserialize payload") from ex
+
+    if not isinstance(ds_payload, dict):
+        raise SerializationError("Unexpected results payload")
+
+    return ds_payload
 
 
 def apply_display_max_row_limit(
@@ -337,11 +374,15 @@ def apply_display_max_row_limit(
     """
 
     display_limit = rows or app.config["DISPLAY_MAX_ROW"]
+    query = sql_results.get("query")
+    result_rows = query.get("rows") if isinstance(query, dict) else None
 
     if (
         display_limit
-        and sql_results["status"] == QueryStatus.SUCCESS
-        and display_limit < sql_results["query"]["rows"]
+        and sql_results.get("status") == QueryStatus.SUCCESS
+        and isinstance(result_rows, int)
+        and display_limit < result_rows
+        and isinstance(sql_results.get("data"), list)
     ):
         sql_results["data"] = sql_results["data"][:display_limit]
         sql_results["displayLimitReached"] = True
@@ -367,23 +408,24 @@ def get_dashboard_extra_filters(
     ):
         return []
 
-    with contextlib.suppress(json.JSONDecodeError):
-        # does this dashboard have default filters?
-        json_metadata = json.loads(dashboard.json_metadata)
-        default_filters = json.loads(json_metadata.get("default_filters", "null"))
-        if not default_filters:
-            return []
+    # does this dashboard have default filters?
+    json_metadata = json_to_dict(dashboard.json_metadata)
+    raw_default_filters = json_metadata.get("default_filters")
+    if isinstance(raw_default_filters, str):
+        default_filters = json_to_dict(raw_default_filters)
+    elif isinstance(raw_default_filters, dict):
+        default_filters = raw_default_filters
+    else:
+        default_filters = {}
+    if not default_filters:
+        return []
 
-        # are default filters applicable to the given slice?
-        filter_scopes = json_metadata.get("filter_scopes", {})
-        layout = json.loads(dashboard.position_json or "{}")
-
-        if (
-            isinstance(layout, dict)
-            and isinstance(filter_scopes, dict)
-            and isinstance(default_filters, dict)
-        ):
-            return build_extra_filters(layout, filter_scopes, default_filters, slice_id)
+    # are default filters applicable to the given slice?
+    filter_scopes = json_metadata.get("filter_scopes", {})
+    if isinstance(filter_scopes, dict):
+        return build_extra_filters(
+            dashboard.position, filter_scopes, default_filters, slice_id
+        )
     return []
 
 
@@ -398,22 +440,37 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
     # do not apply filters if chart is not in filter's scope or chart is immune to the
     # filter.
     for filter_id, columns in default_filters.items():
+        if not isinstance(columns, dict):
+            continue
+
         filter_slice = db.session.query(Slice).filter_by(id=filter_id).one_or_none()
 
         filter_configs: list[dict[str, Any]] = []
         if filter_slice:
+            raw_filter_configs = filter_slice.params_dict.get("filter_configs") or []
             filter_configs = (
-                json.loads(filter_slice.params or "{}").get("filter_configs") or []
+                raw_filter_configs if isinstance(raw_filter_configs, list) else []
             )
 
         scopes_by_filter_field = filter_scopes.get(filter_id, {})
+        if not isinstance(scopes_by_filter_field, dict):
+            scopes_by_filter_field = {}
         for col, val in columns.items():
             if not val:
                 continue
 
             current_field_scopes = scopes_by_filter_field.get(col, {})
-            scoped_container_ids = current_field_scopes.get("scope", ["ROOT_ID"])
+            if not isinstance(current_field_scopes, dict):
+                current_field_scopes = {}
+            if "scope" in current_field_scopes:
+                scoped_container_ids = current_field_scopes["scope"]
+                if not isinstance(scoped_container_ids, list):
+                    scoped_container_ids = []
+            else:
+                scoped_container_ids = ["ROOT_ID"]
             immune_slice_ids = current_field_scopes.get("immune", [])
+            if not isinstance(immune_slice_ids, list):
+                immune_slice_ids = []
 
             for container_id in scoped_container_ids:
                 if slice_id not in immune_slice_ids and is_slice_in_container(
@@ -422,8 +479,10 @@ def build_extra_filters(  # pylint: disable=too-many-locals,too-many-nested-bloc
                     # Ensure that the filter value encoding adheres to the filter select
                     # type.
                     for filter_config in filter_configs:
-                        if filter_config["column"] == col:
-                            is_multiple = filter_config["multiple"]
+                        if not isinstance(filter_config, dict):
+                            continue
+                        if filter_config.get("column") == col:
+                            is_multiple = filter_config.get("multiple")
 
                             if not is_multiple and isinstance(val, list):
                                 val = val[0]
@@ -448,13 +507,22 @@ def is_slice_in_container(
     if container_id == "ROOT_ID":
         return True
 
-    node = layout[container_id]
+    node = layout.get(container_id)
+    if not isinstance(node, dict):
+        return False
     node_type = node.get("type")
-    if node_type == "CHART" and node.get("meta", {}).get("chartId") == slice_id:
+    meta = node.get("meta")
+    if (
+        node_type == "CHART"
+        and isinstance(meta, dict)
+        and meta.get("chartId") == slice_id
+    ):
         return True
 
     if node_type in CONTAINER_TYPES:
         children = node.get("children", [])
+        if not isinstance(children, list):
+            return False
         return any(
             is_slice_in_container(layout, child_id, slice_id) for child_id in children
         )
@@ -564,25 +632,44 @@ def _deserialize_results_payload(
         with stats_timing(
             "sqllab.query.results_backend_msgpack_deserialize", stats_logger
         ):
-            ds_payload = msgpack.loads(payload, raw=False)
+            try:
+                ds_payload = msgpack.loads(payload, raw=False)
+            except (
+                msgpack.exceptions.ExtraData,
+                msgpack.exceptions.FormatError,
+                msgpack.exceptions.StackError,
+                TypeError,
+                ValueError,
+            ) as ex:
+                raise SerializationError("Unable to deserialize payload") from ex
+
+        if not isinstance(ds_payload, dict):
+            raise SerializationError("Unexpected results payload")
+
+        data = ds_payload.get("data")
+        selected_columns = ds_payload.get("selected_columns")
+        if not isinstance(data, bytes) or not isinstance(selected_columns, list):
+            raise SerializationError("Unexpected results payload")
+        if not all(isinstance(column, dict) for column in selected_columns):
+            raise SerializationError("Unexpected results payload")
 
         with stats_timing("sqllab.query.results_backend_pa_deserialize", stats_logger):
             try:
-                reader = pa.BufferReader(ds_payload["data"])
+                reader = pa.BufferReader(data)
                 pa_table = pa.ipc.open_stream(reader).read_all()
-            except pa.ArrowSerializationError as ex:
+            except (pa.ArrowException, TypeError, ValueError) as ex:
                 raise SerializationError("Unable to deserialize table") from ex
 
         df = result_set.SupersetResultSet.convert_table_to_df(pa_table)
         ds_payload["data"] = dataframe.df_to_records(df) or []
 
-        for column in ds_payload["selected_columns"]:
+        for column in selected_columns:
             if "name" in column:
                 column["column_name"] = column.get("name")
 
         db_engine_spec = query.database.db_engine_spec
         all_columns, data, expanded_columns = db_engine_spec.expand_data(
-            ds_payload["selected_columns"], ds_payload["data"]
+            selected_columns, ds_payload["data"]
         )
         ds_payload.update(
             {"data": data, "columns": all_columns, "expanded_columns": expanded_columns}
@@ -590,8 +677,7 @@ def _deserialize_results_payload(
 
         return ds_payload
 
-    with stats_timing("sqllab.query.results_backend_json_deserialize", stats_logger):
-        return json.loads(payload)
+    return _deserialize_json_results_payload(payload)
 
 
 def get_cta_schema_name(

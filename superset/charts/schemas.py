@@ -1467,7 +1467,10 @@ class ChartDataQueryObjectSchema(Schema):
             ("timeseries_limit_metric", "series_limit_metric"),
         )
         for old, new in _renames:
-            if value := data.pop(old, None):
+            if old == "timeseries_limit":
+                if (value := data.pop(old, None)) is not None:
+                    data[new] = value
+            elif value := data.pop(old, None):
                 data[new] = value
         return data
 

@@ -115,6 +115,19 @@ def test_guest_token_not_revoked_when_resource_unresolvable() -> None:
         assert SupersetSecurityManager._is_guest_token_revoked(_token(1000)) is False
 
 
+def test_guest_token_revocation_ignores_malformed_resources() -> None:
+    token = {
+        "type": "guest",
+        "iat": 1000,
+        "resources": ["malformed", _DASHBOARD_RESOURCE],
+    }
+    with patch(
+        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        return_value=_embedded(None),
+    ):
+        assert SupersetSecurityManager._is_guest_token_revoked(token) is False
+
+
 def _manager() -> SupersetSecurityManager:
     # Build an instance without running the (heavy) FAB __init__: we only
     # exercise revoke_guest_token_access, which depends on nothing but

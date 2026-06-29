@@ -151,6 +151,26 @@ const DEFAULT_EXTRA_DASHBOARD_OPTIONS: Extra = {
   },
 };
 
+const parseConfigObject = (value: unknown): Record<string, unknown> => {
+  if (!value) {
+    return {};
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== 'string') {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+};
+
 const CONDITIONS = [
   {
     label: t('< (Smaller than)'),
@@ -1973,16 +1993,17 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
 
       // Add notification settings
       const settings = (resource.recipients || []).map(setting => {
-        const config =
-          typeof setting.recipient_config_json === 'string'
-            ? JSON.parse(setting.recipient_config_json)
-            : {};
+        const config = parseConfigObject(setting.recipient_config_json);
+        const target =
+          typeof config.target === 'string'
+            ? config.target
+            : setting.recipient_config_json;
         return {
           method: setting.type,
-          recipients: config.target || setting.recipient_config_json,
+          recipients: typeof target === 'string' ? target : '',
           options: allowedNotificationMethods,
-          cc: config.ccTarget || '',
-          bcc: config.bccTarget || '',
+          cc: typeof config.ccTarget === 'string' ? config.ccTarget : '',
+          bcc: typeof config.bccTarget === 'string' ? config.bccTarget : '',
         };
       });
 
@@ -1996,10 +2017,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
         resource.chart ? ContentType.Chart : ContentType.Dashboard,
       );
       setReportFormat(resource.report_format || DEFAULT_NOTIFICATION_FORMAT);
-      const validatorConfig =
-        typeof resource.validator_config_json === 'string'
-          ? JSON.parse(resource.validator_config_json)
-          : resource.validator_config_json;
+      const validatorConfig = parseConfigObject(resource.validator_config_json);
 
       setConditionNotNull(resource.validator_type === 'not null');
 

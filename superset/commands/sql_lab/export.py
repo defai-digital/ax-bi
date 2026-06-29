@@ -26,7 +26,11 @@ from flask_babel import gettext as __
 from superset import db, results_backend, results_backend_use_msgpack
 from superset.commands.base import BaseCommand
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetErrorException, SupersetSecurityException
+from superset.exceptions import (
+    SerializationError,
+    SupersetErrorException,
+    SupersetSecurityException,
+)
 from superset.models.sql_lab import Query
 from superset.sql.parse import SQLScript
 from superset.sqllab.limiting_factor import LimitingFactor
@@ -34,6 +38,21 @@ from superset.utils import core as utils, csv
 from superset.views.utils import _deserialize_results_payload
 
 logger = logging.getLogger(__name__)
+
+
+def _raise_results_backend_error(ex: Exception) -> None:
+    raise SupersetErrorException(
+        SupersetError(
+            message=__(
+                "Data could not be deserialized from the results backend. The "
+                "storage format might have changed, rendering the old data "
+                "stake. You need to re-run the original query."
+            ),
+            error_type=SupersetErrorType.RESULTS_BACKEND_ERROR,
+            level=ErrorLevel.ERROR,
+        ),
+        status=404,
+    ) from ex
 
 
 class SqlExportResult(TypedDict):
@@ -96,15 +115,24 @@ class SqlResultExportCommand(BaseCommand):
             payload = utils.zlib_decompress(
                 blob, decode=not results_backend_use_msgpack
             )
-            obj = _deserialize_results_payload(
-                payload, self._query, cast(bool, results_backend_use_msgpack)
-            )
-
-            df = pd.DataFrame(
-                data=obj["data"],
-                dtype=object,
-                columns=[c["name"] for c in obj["columns"]],
-            )
+            try:
+                obj = _deserialize_results_payload(
+                    payload, self._query, cast(bool, results_backend_use_msgpack)
+                )
+                data = obj["data"]
+                columns = obj["columns"]
+                if not isinstance(columns, list) or not all(
+                    isinstance(column, dict) and isinstance(column.get("name"), str)
+                    for column in columns
+                ):
+                    raise SerializationError("Unexpected results payload")
+                df = pd.DataFrame(
+                    data=data,
+                    dtype=object,
+                    columns=[column["name"] for column in columns],
+                )
+            except (KeyError, SerializationError, TypeError, ValueError) as ex:
+                _raise_results_backend_error(ex)
 
             logger.info("Using pandas to convert to CSV")
         else:

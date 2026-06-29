@@ -328,26 +328,36 @@ def export_chart(chart: Slice, dataset_uuid: str) -> dict[str, Any]:
     }
 
 
+def _iter_dicts(value: Any) -> Iterator[dict[str, Any]]:
+    """Yield dictionary entries from a list-like persisted metadata value."""
+    if not isinstance(value, list):
+        return
+
+    for item in value:
+        if isinstance(item, dict):
+            yield item
+
+
 def remap_native_filters(
-    filters: list[dict[str, Any]],
+    filters: Any,
     chart_id_to_uuid: dict[int, str],
     dataset_id_to_uuid: dict[int, str],
 ) -> list[dict[str, Any]]:
     """Remap IDs to UUIDs in native filter configuration."""
     remapped = []
-    for f in filters:
+    for f in _iter_dicts(filters):
         new_filter = f.copy()
 
         # Remap chartsInScope from IDs to UUIDs
-        if "chartsInScope" in new_filter:
+        if isinstance(new_filter.get("chartsInScope"), list):
             new_filter["chartsInScope"] = [
                 chart_id_to_uuid.get(cid, cid) for cid in new_filter["chartsInScope"]
             ]
 
         # Remap targets to use datasetUuid
-        if "targets" in new_filter:
+        if isinstance(new_filter.get("targets"), list):
             new_targets = []
-            for target in new_filter["targets"]:
+            for target in _iter_dicts(new_filter["targets"]):
                 new_target = target.copy()
                 if "datasetId" in new_target:
                     dataset_id = new_target.pop("datasetId")
@@ -361,14 +371,23 @@ def remap_native_filters(
 
 
 def remap_chart_configuration(
-    chart_config: dict[str, Any],
+    chart_config: Any,
     chart_id_to_uuid: dict[int, str],
 ) -> dict[str, Any]:
     """Remap chart IDs to UUIDs in chart_configuration (cross-filters)."""
     remapped: dict[str, Any] = {}
+    if not isinstance(chart_config, dict):
+        return remapped
+
     for chart_id_str, config in chart_config.items():
-        chart_id = int(chart_id_str)
+        try:
+            chart_id = int(chart_id_str)
+        except (TypeError, ValueError):
+            continue
+
         if chart_id not in chart_id_to_uuid:
+            continue
+        if not isinstance(config, dict):
             continue
 
         new_config = config.copy()
@@ -379,8 +398,11 @@ def remap_chart_configuration(
 
         # Remap chartsInScope
         cross_filters = new_config.get("crossFilters", {})
-        if "chartsInScope" in cross_filters:
-            new_config["crossFilters"] = new_config["crossFilters"].copy()
+        if isinstance(cross_filters, dict) and isinstance(
+            cross_filters.get("chartsInScope"),
+            list,
+        ):
+            new_config["crossFilters"] = cross_filters.copy()
             new_config["crossFilters"]["chartsInScope"] = [
                 chart_id_to_uuid.get(cid, cid)
                 for cid in new_config["crossFilters"]["chartsInScope"]
@@ -392,12 +414,15 @@ def remap_chart_configuration(
 
 
 def remap_global_chart_configuration(
-    global_config: dict[str, Any],
+    global_config: Any,
     chart_id_to_uuid: dict[int, str],
 ) -> dict[str, Any]:
     """Remap chart IDs in global_chart_configuration."""
+    if not isinstance(global_config, dict):
+        return {}
+
     new_config = global_config.copy()
-    if "chartsInScope" in new_config:
+    if isinstance(new_config.get("chartsInScope"), list):
         new_config["chartsInScope"] = [
             chart_id_to_uuid.get(cid, cid) for cid in new_config["chartsInScope"]
         ]
@@ -414,7 +439,7 @@ def export_dashboard_yaml(
         json as superset_json,  # pylint: disable=import-outside-toplevel
     )
 
-    position = dashboard.position or {}
+    position = dashboard.position if isinstance(dashboard.position, dict) else {}
 
     # Update position to use UUIDs
     updated_position = {}
@@ -434,6 +459,8 @@ def export_dashboard_yaml(
     if dashboard.json_metadata:
         try:
             json_metadata = superset_json.loads(dashboard.json_metadata)
+            if not isinstance(json_metadata, dict):
+                json_metadata = {}
         except Exception:
             logger.debug("Could not parse json_metadata")
 

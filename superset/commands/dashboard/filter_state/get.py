@@ -19,6 +19,7 @@ from typing import Optional
 from flask import current_app as app
 
 from superset.commands.dashboard.filter_state.utils import check_access
+from superset.commands.temporary_cache.entry import is_entry
 from superset.commands.temporary_cache.get import GetTemporaryCacheCommand
 from superset.commands.temporary_cache.parameters import CommandParameters
 from superset.extensions import cache_manager
@@ -36,7 +37,9 @@ class GetFilterStateCommand(GetTemporaryCacheCommand):
         resource_id = cmd_params.resource_id
         key = cache_key(resource_id, cmd_params.key)
         check_access(resource_id)
-        entry = cache_manager.filter_state_cache.get(key) or {}
+        entry = cache_manager.filter_state_cache.get(key)
+        if not is_entry(entry):
+            return None
         if entry and self._refresh_timeout:
             cache_manager.filter_state_cache.set(key, entry)
-        return entry.get("value")
+        return entry["value"]

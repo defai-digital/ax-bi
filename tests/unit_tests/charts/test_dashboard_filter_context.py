@@ -132,6 +132,20 @@ def test_find_chart_layout_item_skips_non_dict_entries() -> None:
     assert result is not None
 
 
+def test_find_chart_layout_item_skips_malformed_meta() -> None:
+    position = {
+        **SAMPLE_POSITION_JSON,
+        "CHART-broken": {
+            "id": "CHART-broken",
+            "type": "CHART",
+            "meta": "not-an-object",
+        },
+    }
+    result = _find_chart_layout_item(10, position)
+    assert result is not None
+    assert result["id"] == "CHART-xyz"
+
+
 # --- _is_filter_in_scope_for_chart ---
 
 
@@ -209,6 +223,17 @@ def test_filter_in_scope_chart_not_in_layout_empty_position_json() -> None:
     assert _is_filter_in_scope_for_chart(flt, 999, {}) is True
 
 
+def test_filter_scope_malformed_containers_are_ignored() -> None:
+    """Malformed scope data should not abort dashboard filter context building."""
+    flt = _make_filter()
+    flt["scope"] = "not-an-object"
+    assert _is_filter_in_scope_for_chart(flt, 999, SAMPLE_POSITION_JSON) is False
+
+    flt = _make_filter()
+    flt["scope"] = {"rootPath": "ROOT_ID", "excluded": "10"}
+    assert _is_filter_in_scope_for_chart(flt, 10, SAMPLE_POSITION_JSON) is False
+
+
 # --- _extract_filter_extra_form_data ---
 
 
@@ -257,6 +282,21 @@ def test_extract_filter_state_value_but_no_extra_form_data() -> None:
     assert extra_form_data is None
 
 
+def test_extract_filter_extra_form_data_ignores_malformed_nested_values() -> None:
+    """Malformed nested filter metadata should not abort extraction."""
+    flt = _make_filter()
+    flt["defaultDataMask"] = {
+        "filterState": "not-an-object",
+        "extraFormData": "not-an-object",
+    }
+    flt["controlValues"] = "not-an-object"
+
+    extra_form_data, status = _extract_filter_extra_form_data(flt)
+
+    assert status == DashboardFilterStatus.NOT_APPLIED
+    assert extra_form_data is None
+
+
 # --- _merge_extra_form_data ---
 
 
@@ -276,6 +316,13 @@ def test_merge_extra_form_data_overrides_scalars() -> None:
 
 def test_merge_extra_form_data_empty_inputs() -> None:
     assert _merge_extra_form_data({}, {}) == {}
+
+
+def test_merge_extra_form_data_ignores_scalar_append_values() -> None:
+    base = {"filters": "not-a-list"}
+    new = {"filters": [{"col": "b", "op": "IN", "val": ["y"]}]}
+    merged = _merge_extra_form_data(base, new)
+    assert merged["filters"] == [{"col": "b", "op": "IN", "val": ["y"]}]
 
 
 def test_merge_extra_form_data_merges_custom_form_data_dicts() -> None:
@@ -301,6 +348,14 @@ def test_target_column_no_targets() -> None:
 
     flt = _make_filter(target_column=None)
     flt["targets"] = []
+    assert _get_filter_target_column(flt) is None
+
+
+def test_target_column_ignores_malformed_targets() -> None:
+    from superset.charts.data.dashboard_filter_context import _get_filter_target_column
+
+    flt = _make_filter()
+    flt["targets"] = ["not-an-object"]
     assert _get_filter_target_column(flt) is None
 
 
@@ -426,6 +481,150 @@ def test_get_dashboard_filter_context_static_defaults(
     assert ctx.filters[0].column == "region"
     assert len(ctx.extra_form_data.get("filters", [])) == 1
     assert ctx.extra_form_data["filters"][0]["val"] == ["US", "UK"]
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_ignores_malformed_metadata(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = "{malformed"
+    dashboard.position_json = json.dumps(SAMPLE_POSITION_JSON)
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert ctx.filters == []
+    assert ctx.extra_form_data == {}
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_ignores_malformed_position_json(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    filter_config = [
+        _make_filter(
+            flt_id="f1",
+            name="Region",
+            scope_root=["ROOT_ID"],
+            default_value=["US"],
+            target_column="region",
+        ),
+    ]
+    metadata = {"native_filter_configuration": filter_config}
+
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = json.dumps(metadata)
+    dashboard.position_json = "{malformed"
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert len(ctx.filters) == 1
+    assert ctx.filters[0].status == DashboardFilterStatus.APPLIED
+    assert ctx.extra_form_data["filters"][0]["val"] == ["US"]
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_skips_malformed_filter_entries(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    filter_config = [
+        "bad-filter",
+        123,
+        _make_filter(
+            flt_id="f1",
+            name="Region",
+            scope_root=["ROOT_ID"],
+            default_value=["US"],
+            target_column="region",
+        ),
+    ]
+    metadata = {"native_filter_configuration": filter_config}
+
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = json.dumps(metadata)
+    dashboard.position_json = json.dumps(SAMPLE_POSITION_JSON)
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert len(ctx.filters) == 1
+    assert ctx.filters[0].id == "f1"
+
+
+@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("superset.charts.data.dashboard_filter_context.db")
+def test_get_dashboard_filter_context_skips_malformed_nested_filter_metadata(
+    mock_db: MagicMock,
+    mock_check_access: MagicMock,
+) -> None:
+    valid_filter = _make_filter(
+        flt_id="f1",
+        name="Region",
+        scope_root=["ROOT_ID"],
+        default_value=["US"],
+        target_column="region",
+    )
+    malformed_filter = _make_filter(flt_id="bad", name="Bad filter")
+    malformed_filter["scope"] = {"rootPath": "ROOT_ID", "excluded": "10"}
+    malformed_filter["targets"] = ["not-an-object"]
+    malformed_filter["controlValues"] = "not-an-object"
+    malformed_filter["defaultDataMask"] = {
+        "filterState": "not-an-object",
+        "extraFormData": "not-an-object",
+    }
+    filter_config = [malformed_filter, valid_filter]
+    metadata = {"native_filter_configuration": filter_config}
+
+    position = {
+        **SAMPLE_POSITION_JSON,
+        "CHART-broken": {
+            "id": "CHART-broken",
+            "type": "CHART",
+            "meta": "not-an-object",
+        },
+    }
+    dashboard = MagicMock()
+    dashboard.id = 1
+    slice_obj = MagicMock()
+    slice_obj.id = 10
+    dashboard.slices = [slice_obj]
+    dashboard.json_metadata = json.dumps(metadata)
+    dashboard.position_json = json.dumps(position)
+    (
+        mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value
+    ) = dashboard
+
+    ctx = get_dashboard_filter_context(dashboard_id=1, chart_id=10)
+
+    assert len(ctx.filters) == 1
+    assert ctx.filters[0].id == "f1"
+    assert ctx.extra_form_data["filters"][0]["val"] == ["US"]
 
 
 @patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")

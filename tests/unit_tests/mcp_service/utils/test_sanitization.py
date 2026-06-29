@@ -329,6 +329,27 @@ def test_sanitize_user_input_entity_encoded_javascript():
         sanitize_user_input("&#106;avascript:alert(1)", "test")
 
 
+def test_sanitize_user_input_blocks_zero_width_javascript_scheme():
+    """Zero-width characters must not split a forbidden URL scheme."""
+    with pytest.raises(ValueError, match="malicious URL scheme"):
+        sanitize_user_input("java\u200bscript:alert(1)", "test")
+
+
+@pytest.mark.parametrize("control_char", ["\n", "\r", "\t"])
+def test_sanitize_user_input_blocks_c0_split_javascript_scheme(
+    control_char: str,
+) -> None:
+    """C0 controls must not split a forbidden URL scheme."""
+    with pytest.raises(ValueError, match="malicious URL scheme"):
+        sanitize_user_input(f"java{control_char}script:alert(1)", "test")
+
+
+def test_sanitize_user_input_blocks_zero_width_sql_keyword_when_enabled():
+    """Zero-width characters must not split forbidden SQL keywords."""
+    with pytest.raises(ValueError, match="unsafe SQL keywords"):
+        sanitize_user_input("DR\u200bOP TABLE users", "test", check_sql_keywords=True)
+
+
 # --- sanitize_filter_value tests ---
 
 
@@ -366,9 +387,21 @@ def test_sanitize_filter_value_blocks_javascript():
         sanitize_filter_value("javascript:alert(1)")
 
 
+def test_sanitize_filter_value_blocks_zero_width_javascript_scheme():
+    """Zero-width characters must not split a forbidden URL scheme."""
+    with pytest.raises(ValueError, match="malicious URL scheme"):
+        sanitize_filter_value("java\u200bscript:alert(1)")
+
+
 def test_sanitize_filter_value_blocks_xp_cmdshell():
     with pytest.raises(ValueError, match="malicious SQL procedures"):
         sanitize_filter_value("xp_cmdshell('dir')")
+
+
+def test_sanitize_filter_value_blocks_zero_width_xp_cmdshell():
+    """Zero-width characters must not split forbidden stored procedures."""
+    with pytest.raises(ValueError, match="malicious SQL procedures"):
+        sanitize_filter_value("xp_\u200bcmdshell('dir')")
 
 
 def test_sanitize_filter_value_blocks_sp_executesql():

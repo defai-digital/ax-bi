@@ -634,14 +634,27 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             # whose ``nbf`` is in the future must be rejected explicitly, just
             # like ``exp`` above.
             nbf = claims.get("nbf")
-            if nbf is not None and nbf > time.time():
-                reason = "Token not yet valid"
-                _jwt_failure_reason.set(reason)
-                logger.debug(
-                    "Token not yet valid for client '%s': nbf is in the future",
-                    _sanitize_for_log(client_id),
-                )
-                return None
+            if nbf is not None:
+                if (
+                    not isinstance(nbf, (int, float))
+                    or isinstance(nbf, bool)
+                    or not math.isfinite(nbf)
+                ):
+                    reason = "Token has invalid not-before"
+                    _jwt_failure_reason.set(reason)
+                    logger.debug(
+                        "Token nbf claim is not a finite number for client '%s'",
+                        _sanitize_for_log(client_id),
+                    )
+                    return None
+                if nbf > time.time():
+                    reason = "Token not yet valid"
+                    _jwt_failure_reason.set(reason)
+                    logger.debug(
+                        "Token not yet valid for client '%s': nbf is in the future",
+                        _sanitize_for_log(client_id),
+                    )
+                    return None
 
             # Step 5: Validate issuer
             if self.issuer:

@@ -50,6 +50,7 @@ Options:
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import re
 import shutil
@@ -59,10 +60,13 @@ from pathlib import Path
 from typing import Any
 
 try:
-    import polib  # type: ignore[import-untyped]
+    polib: Any = importlib.import_module("polib")
 except ImportError:
     print("polib is required. Run: pip install polib", file=sys.stderr)
     sys.exit(1)
+
+_POEntry = Any
+_POFile = Any
 
 TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
 DEFAULT_INDEX = TRANSLATIONS_DIR / "translation_index.json"
@@ -137,7 +141,7 @@ def _plural_key(msgid: str, msgid_plural: str) -> str:
     return f"{msgid}\x00{msgid_plural}"
 
 
-def _is_missing(entry: polib.POEntry) -> bool:
+def _is_missing(entry: _POEntry) -> bool:
     """Return True for entries that need a translation."""
     if entry.obsolete:
         return False
@@ -346,7 +350,7 @@ def translate_batch(
     return parse_response(result.stdout.strip(), len(batch))
 
 
-def _apply_plural_translation(entry: polib.POEntry, translation: str) -> None:
+def _apply_plural_translation(entry: _POEntry, translation: str) -> None:
     """Distribute a model response across the entry's plural forms.
 
     Model may return a JSON dict ({"0": "form0", "1": "form1"}), a JSON list
@@ -381,7 +385,7 @@ def _apply_plural_translation(entry: polib.POEntry, translation: str) -> None:
 
 
 def _apply_translation(
-    entry: polib.POEntry,
+    entry: _POEntry,
     translation: str,
     item: dict[str, Any],
     model: str,
@@ -407,7 +411,7 @@ def _apply_translation(
 
 
 def _build_batch_items(
-    entries: list[polib.POEntry],
+    entries: list[_POEntry],
     index: dict[str, Any],
     lang: str,
 ) -> list[dict[str, Any]]:
@@ -434,14 +438,14 @@ def _build_batch_items(
 
 
 def _process_batches(
-    missing: list[polib.POEntry],
+    missing: list[_POEntry],
     index: dict[str, Any],
     lang: str,
     batch_size: int,
     model: str,
     dry_run: bool,
     mark_fuzzy: bool,
-    cat: polib.POFile | None = None,
+    cat: _POFile | None = None,
     po_path: Path | None = None,
 ) -> tuple[int, int]:
     """Translate missing entries in batches. Returns (translated, failed) counts.
@@ -547,7 +551,7 @@ def backfill(
     print(f"Loading {po_path} …", file=sys.stderr)
     cat = polib.pofile(str(po_path))
 
-    missing: list[polib.POEntry] = [e for e in cat if e.msgid and _is_missing(e)]
+    missing: list[_POEntry] = [e for e in cat if e.msgid and _is_missing(e)]
     print(f"Found {len(missing)} untranslated entries for '{lang}'.", file=sys.stderr)
 
     if min_context > 0:

@@ -22,7 +22,7 @@ Pydantic schemas for dataset-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, cast, Dict, List, Literal
 
 from pydantic import (
     BaseModel,
@@ -484,6 +484,113 @@ class CreateDatasetRequest(BaseModel):
         return v
 
 
+class UploadFileRequest(BaseModel):
+    """Request schema for upload_file to upload a CSV/Excel/Parquet file
+    and create a dataset from it with zero-config (auto-provisions DuckDB)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    file_content: str = Field(
+        ...,
+        description="Base64-encoded file content. The AI agent should encode "
+        "the file bytes as base64 before sending.",
+    )
+    filename: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Original filename including extension (e.g. 'sales.csv', "
+        "'report.xlsx', 'data.parquet'). Used to detect file type and derive "
+        "the table name.",
+    )
+    table_name: str | None = Field(
+        default=None,
+        max_length=250,
+        description="Optional custom table name. If omitted, a name is derived "
+        "from the filename with a random suffix to avoid collisions.",
+    )
+
+
+class FileItem(BaseModel):
+    """A single file within a batch upload request."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    file_content: str = Field(
+        ...,
+        description="Base64-encoded file content.",
+    )
+    filename: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Original filename including extension.",
+    )
+    table_name: str | None = Field(
+        default=None,
+        max_length=250,
+        description="Optional custom table name for this file.",
+    )
+
+
+class UploadFilesRequest(BaseModel):
+    """Request schema for upload_files to upload multiple CSV/Excel/Parquet files
+    and create datasets from them with zero-config (auto-provisions DuckDB)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    files: List[FileItem] = Field(
+        ...,
+        min_length=1,
+        description="List of files to upload. Each file is processed independently "
+        "and gets its own dataset. Maximum 10 files per batch.",
+    )
+
+    @field_validator("files", mode="after")
+    @classmethod
+    def _limit_batch_size(cls, v: List[FileItem]) -> List[FileItem]:
+        """Enforce a maximum batch size of 10 files."""
+        if len(v) > 10:
+            raise ValueError("Maximum 10 files per batch upload")
+        return v
+
+
+class FileUploadResult(BaseModel):
+    """Result for a single file in a batch upload."""
+
+    filename: str = Field(..., description="Original filename")
+    success: bool = Field(
+        ..., description="Whether this file was uploaded successfully"
+    )
+    dataset: DatasetInfo | None = Field(
+        None, description="Dataset info if upload succeeded"
+    )
+    error: str | None = Field(None, description="Error message if upload failed")
+
+    @field_validator("filename")
+    @classmethod
+    def sanitize_filename(cls, v: str) -> str:
+        """Escape delimiter tokens in echoed filenames before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap per-file upload error text before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
+
+
+class UploadFilesResponse(BaseModel):
+    """Response schema for upload_files batch upload."""
+
+    results: List[FileUploadResult] = Field(..., description="Per-file upload results")
+    total: int = Field(..., description="Total number of files processed")
+    succeeded: int = Field(..., description="Number of files uploaded successfully")
+    failed: int = Field(..., description="Number of files that failed to upload")
+
+
 class CreateVirtualDatasetRequest(BaseModel):
     """Request schema for create_virtual_dataset."""
 
@@ -568,6 +675,32 @@ class CreateVirtualDatasetResponse(BaseModel):
         None,
         description="Error message if creation failed, otherwise null.",
     )
+
+    @field_validator("dataset_name")
+    @classmethod
+    def sanitize_dataset_name(cls, v: str) -> str:
+        """Escape delimiter tokens in dataset names before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("sql")
+    @classmethod
+    def sanitize_sql(cls, v: str) -> str:
+        """Wrap stored SQL text before LLM exposure."""
+        return sanitize_for_llm_context(v, field_path=("sql",))
+
+    @field_validator("columns")
+    @classmethod
+    def sanitize_columns(cls, v: List[str]) -> List[str]:
+        """Escape delimiter tokens in returned column names."""
+        return [escape_llm_context_delimiters(column) for column in v]
+
+    @field_validator("error")
+    @classmethod
+    def sanitize_error(cls, v: str | None) -> str | None:
+        """Wrap creation error text before LLM exposure."""
+        if v is None:
+            return None
+        return sanitize_for_llm_context(v, field_path=("error",))
 
 
 VALID_FILTER_OPS = Literal[
@@ -709,6 +842,87 @@ class QueryDatasetResponse(BaseModel):
         default_factory=list, description="Any warnings encountered during execution"
     )
 
+    @field_validator("dataset_name")
+    @classmethod
+    def sanitize_dataset_name(cls, v: str) -> str:
+        """Escape delimiter tokens in dataset names before LLM exposure."""
+        return escape_llm_context_delimiters(v)
+
+    @field_validator("columns")
+    @classmethod
+    def sanitize_columns(cls, v: List[DataColumn]) -> List[DataColumn]:
+        """Escape column names and wrap sample values in query responses."""
+        sanitized_columns: list[DataColumn] = []
+        for index, column in enumerate(v):
+            payload = column.model_dump(mode="python")
+            payload["name"] = escape_llm_context_delimiters(payload.get("name"))
+            payload["display_name"] = escape_llm_context_delimiters(
+                payload.get("display_name")
+            )
+            payload["sample_values"] = sanitize_for_llm_context(
+                payload.get("sample_values", []),
+                field_path=("columns", str(index), "sample_values"),
+                excluded_field_names=frozenset(),
+            )
+            payload["statistics"] = sanitize_for_llm_context(
+                payload.get("statistics"),
+                field_path=("columns", str(index), "statistics"),
+                excluded_field_names=frozenset(),
+            )
+            sanitized_columns.append(DataColumn.model_validate(payload))
+        return sanitized_columns
+
+    @field_validator("data")
+    @classmethod
+    def sanitize_data(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Wrap query result row strings and escape delimiter tokens in row keys."""
+        return cast(
+            List[Dict[str, Any]],
+            sanitize_for_llm_context(
+                v,
+                field_path=("data",),
+                excluded_field_names=frozenset(),
+            ),
+        )
+
+    @field_validator("summary")
+    @classmethod
+    def sanitize_summary(cls, v: str) -> str:
+        """Wrap query summaries before LLM exposure."""
+        return sanitize_for_llm_context(v, field_path=("summary",))
+
+    @field_validator("applied_filters")
+    @classmethod
+    def sanitize_applied_filters(
+        cls,
+        v: List[QueryDatasetFilter],
+    ) -> List[QueryDatasetFilter]:
+        """Wrap echoed filter values without changing query execution inputs."""
+        sanitized_filters: list[QueryDatasetFilter] = []
+        for index, filter_ in enumerate(v):
+            payload = filter_.model_dump(mode="python")
+            payload["col"] = escape_llm_context_delimiters(payload.get("col"))
+            payload["val"] = sanitize_for_llm_context(
+                payload.get("val"),
+                field_path=("applied_filters", str(index), "val"),
+                excluded_field_names=frozenset(),
+            )
+            sanitized_filters.append(QueryDatasetFilter.model_validate(payload))
+        return sanitized_filters
+
+    @field_validator("warnings")
+    @classmethod
+    def sanitize_warnings(cls, v: List[str]) -> List[str]:
+        """Wrap warning strings before LLM exposure."""
+        return cast(
+            List[str],
+            sanitize_for_llm_context(
+                v,
+                field_path=("warnings",),
+                excluded_field_names=frozenset(),
+            ),
+        )
+
 
 def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
     """Parse a field that may be stored as a JSON string into a dict."""
@@ -721,7 +935,7 @@ def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
         except (ValueError, TypeError):
             pass
         return None
-    return value
+    return value if isinstance(value, dict) else None
 
 
 def _sanitize_dataset_info_for_llm_context(dataset_info: DatasetInfo) -> DatasetInfo:
@@ -820,6 +1034,8 @@ def serialize_dataset_object(dataset: Any) -> DatasetInfo | None:
             params = json.loads(params)
         except (json.JSONDecodeError, TypeError):
             params = None
+    if not isinstance(params, dict):
+        params = None
     columns = [
         TableColumnInfo(
             column_name=getattr(col, "column_name", None) or "",

@@ -256,6 +256,38 @@ def test_semantic_layer_implementation() -> None:
     assert result == mock_impl
 
 
+@pytest.mark.parametrize(
+    ("configuration", "expected"),
+    [
+        ({"key": "value"}, {"key": "value"}),
+        (None, {}),
+        ("[]", {}),
+        ("{malformed", {}),
+    ],
+)
+def test_semantic_layer_implementation_tolerates_invalid_configuration(
+    configuration: Any,
+    expected: dict[str, Any],
+) -> None:
+    """Test that semantic layer implementation handles invalid configuration."""
+    layer = SemanticLayer()
+    layer.type = "test_type"
+    layer.configuration = configuration
+
+    mock_class = MagicMock()
+    mock_impl = MagicMock()
+    mock_class.from_configuration.return_value = mock_impl
+
+    with patch.dict(
+        "superset.semantic_layers.models.registry",
+        {"test_type": mock_class},
+    ):
+        result = layer.implementation
+
+    mock_class.from_configuration.assert_called_once_with(expected)
+    assert result == mock_impl
+
+
 # =============================================================================
 # SemanticView tests
 # =============================================================================
@@ -364,6 +396,39 @@ def test_semantic_view_type() -> None:
     """Test SemanticView type property."""
     view = SemanticView()
     assert view.type == "semantic_view"
+
+
+@pytest.mark.parametrize(
+    ("configuration", "expected"),
+    [
+        ({"key": "value"}, {"key": "value"}),
+        (None, {}),
+        ("[]", {}),
+        ("{malformed", {}),
+    ],
+)
+def test_semantic_view_implementation_tolerates_invalid_configuration(
+    configuration: Any,
+    expected: dict[str, Any],
+) -> None:
+    """Test that semantic view implementation handles invalid configuration."""
+    layer = SemanticLayer()
+    implementation = MagicMock()
+    implementation.get_semantic_view.return_value = MagicMock()
+    layer.__dict__["implementation"] = implementation
+
+    view = SemanticView()
+    view.name = "Orders View"
+    view.semantic_layer = layer
+    view.configuration = configuration
+
+    result = view.implementation
+
+    implementation.get_semantic_view.assert_called_once_with(
+        "Orders View",
+        expected,
+    )
+    assert result == implementation.get_semantic_view.return_value
 
 
 def test_semantic_view_table_name() -> None:

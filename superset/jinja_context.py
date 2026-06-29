@@ -49,7 +49,6 @@ from superset.sql.parse import Table
 from superset.superset_typing import Column, QueryObjectDict
 from superset.utils import json
 from superset.utils.core import (
-    AdhocFilterClause,
     convert_legacy_filters_into_adhoc,
     FilterOperator,
     get_user_email,
@@ -459,6 +458,8 @@ class ExtraCache:
         filters: list[Filter] = []
 
         for flt in form_data.get("adhoc_filters", []):
+            if not isinstance(flt, dict):
+                continue
             val: Union[Any, list[Any]] = flt.get("comparator")
             op: str = flt["operator"].upper() if flt.get("operator") else None  # type: ignore
             if (
@@ -508,6 +509,8 @@ class ExtraCache:
     ) -> list[Filter]:
         filters: list[Filter] = []
         for flt in self.query_context_filters:
+            if not isinstance(flt, dict):
+                continue
             col = flt.get("col")
             val = flt.get("val")
             op = (flt.get("op") or FilterOperator.IN).upper()
@@ -568,12 +571,13 @@ class ExtraCache:
         merge_extra_filters(form_data)
         time_range = form_data.get("time_range")
         if column:
-            flt: AdhocFilterClause | None = next(
+            flt: dict[str, Any] | None = next(
                 (
                     flt
                     for flt in form_data.get("adhoc_filters", [])
-                    if flt["operator"] == FilterOperator.TEMPORAL_RANGE
-                    and flt["subject"] == column
+                    if isinstance(flt, dict)
+                    and flt.get("operator") == FilterOperator.TEMPORAL_RANGE
+                    and flt.get("subject") == column
                 ),
                 None,
             )
@@ -584,7 +588,7 @@ class ExtraCache:
                 if column not in self.applied_filters:
                     self.applied_filters.append(column)
 
-                time_range = cast(str, flt["comparator"])
+                time_range = cast(str, flt.get("comparator"))
                 if not target_type and self.table:
                     target_type = self.table.columns_types.get(column)
 
@@ -1139,6 +1143,53 @@ def dataset_macro(
     return f"(\n{sql}\n) AS dataset_{dataset_id}"
 
 
+def _get_datasource_id_from_form_data(form_data: dict[str, Any]) -> Any | None:
+    datasource_info = form_data.get("datasource")
+    if isinstance(datasource_info, dict):
+        return datasource_info.get("id")
+    if isinstance(datasource_info, str):
+        return datasource_info.split("__")[0]
+    return None
+
+
+def _get_url_params_from_form_data(form_data: dict[str, Any]) -> dict[str, Any]:
+    queries = form_data.get("queries", [])
+    if not isinstance(queries, list) or not queries:
+        return {}
+    first_query = queries[0]
+    if not isinstance(first_query, dict):
+        return {}
+    url_params = first_query.get("url_params", {})
+    return url_params if isinstance(url_params, dict) else {}
+
+
+def _get_request_dataset_id_and_form_data() -> tuple[Any | None, dict[str, Any]]:
+    # pylint: disable=import-outside-toplevel
+    from superset.views.utils import loads_request_json
+
+    form_data: dict[str, Any] = {}
+    dataset_id: Any | None = None
+
+    if not has_request_context():
+        return dataset_id, form_data
+
+    payload = request.get_json(cache=True, silent=True) if request.is_json else None
+    if payload:
+        if isinstance(payload, dict):
+            dataset_id = _get_datasource_id_from_form_data(payload)
+            if isinstance(payload.get("form_data"), dict):
+                form_data.update(payload["form_data"])
+
+    request_form = loads_request_json(request.form.get("form_data"))
+    if isinstance(request_form, dict):
+        form_data.update(request_form)
+    request_args = loads_request_json(request.args.get("form_data"))
+    if isinstance(request_args, dict):
+        form_data.update(request_args)
+
+    return dataset_id, form_data
+
+
 def get_dataset_id_from_context(metric_key: str) -> int:
     """
     Retrieves the Dataset ID from the request context.
@@ -1148,33 +1199,26 @@ def get_dataset_id_from_context(metric_key: str) -> int:
     """
     # pylint: disable=import-outside-toplevel
     from superset.daos.chart import ChartDAO
-    from superset.views.utils import loads_request_json
 
-    form_data: dict[str, Any] = {}
     exc_message = _(
         "Please specify the Dataset ID for the ``%(name)s`` metric in the Jinja macro.",
         name=metric_key,
     )
 
-    if has_request_context():
-        if payload := request.get_json(cache=True) if request.is_json else None:
-            if dataset_id := payload.get("datasource", {}).get("id"):
-                return dataset_id
-            form_data.update(payload.get("form_data", {}))
-        request_form = loads_request_json(request.form.get("form_data"))
-        form_data.update(request_form)
-        request_args = loads_request_json(request.args.get("form_data"))
-        form_data.update(request_args)
+    dataset_id, form_data = _get_request_dataset_id_and_form_data()
+    if dataset_id:
+        return dataset_id
 
-    if form_data := (form_data or getattr(g, "form_data", {})):
-        if datasource_info := form_data.get("datasource"):
-            if isinstance(datasource_info, dict):
-                return datasource_info["id"]
-            return datasource_info.split("__")[0]
-        url_params = form_data.get("queries", [{}])[0].get("url_params", {})
+    context_form_data = form_data or getattr(g, "form_data", {})
+    if isinstance(context_form_data, dict) and context_form_data:
+        if dataset_id := _get_datasource_id_from_form_data(context_form_data):
+            return dataset_id
+        url_params = _get_url_params_from_form_data(context_form_data)
         if dataset_id := url_params.get("datasource_id"):
             return dataset_id
-        if chart_id := (form_data.get("slice_id") or url_params.get("slice_id")):
+        if chart_id := (
+            context_form_data.get("slice_id") or url_params.get("slice_id")
+        ):
             chart_data = ChartDAO.find_by_id(chart_id)
             if not chart_data:
                 raise SupersetTemplateException(exc_message)

@@ -137,6 +137,30 @@ def _sanitize_chart_preview_for_llm_context(
     return ChartPreview.model_validate(payload)
 
 
+def _load_saved_chart_form_data(params: str | None) -> dict[str, Any] | ChartError:
+    """Load saved chart params as a JSON object."""
+    if not params:
+        return {}
+
+    from superset.utils import json as utils_json
+
+    try:
+        parsed = utils_json.loads(params)
+    except (TypeError, ValueError) as ex:
+        return ChartError(
+            error=f"Failed to parse saved chart params: {ex}",
+            error_type="ParseError",
+        )
+
+    if not isinstance(parsed, dict):
+        return ChartError(
+            error="Saved chart params are not a valid JSON object.",
+            error_type="ParseError",
+        )
+
+    return parsed
+
+
 class ChartLike(Protocol):
     """Protocol for chart-like objects with required attributes for preview."""
 
@@ -268,10 +292,10 @@ class ASCIIPreviewStrategy(PreviewFormatStrategy):
 
     def generate(self) -> ASCIIPreview | ChartError:
         try:
-            from superset.commands.chart.data.get_data_command import ChartDataCommand
-            from superset.utils import json as utils_json
-
-            form_data = utils_json.loads(self.chart.params) if self.chart.params else {}
+            form_data_result = _load_saved_chart_form_data(self.chart.params)
+            if isinstance(form_data_result, ChartError):
+                return form_data_result
+            form_data = form_data_result
 
             logger.info("Chart form_data keys: %s", list(form_data.keys()))
             logger.info("Chart viz_type: %s", self.chart.viz_type)
@@ -284,6 +308,8 @@ class ASCIIPreviewStrategy(PreviewFormatStrategy):
                     error="Chart has no datasource_id - cannot generate preview",
                     error_type="InvalidChart",
                 )
+
+            from superset.commands.chart.data.get_data_command import ChartDataCommand
 
             query_context = build_query_context_from_form_data(
                 form_data,
@@ -334,10 +360,10 @@ class TablePreviewStrategy(PreviewFormatStrategy):
 
     def generate(self) -> TablePreview | ChartError:
         try:
-            from superset.commands.chart.data.get_data_command import ChartDataCommand
-            from superset.utils import json as utils_json
-
-            form_data = utils_json.loads(self.chart.params) if self.chart.params else {}
+            form_data_result = _load_saved_chart_form_data(self.chart.params)
+            if isinstance(form_data_result, ChartError):
+                return form_data_result
+            form_data = form_data_result
 
             # Check if datasource_id is None
             if self.chart.datasource_id is None:
@@ -345,6 +371,8 @@ class TablePreviewStrategy(PreviewFormatStrategy):
                     error="Chart has no datasource_id - cannot generate table preview",
                     error_type="InvalidChart",
                 )
+
+            from superset.commands.chart.data.get_data_command import ChartDataCommand
 
             query_context = build_query_context_from_form_data(
                 form_data,
@@ -387,16 +415,11 @@ class TablePreviewStrategy(PreviewFormatStrategy):
 class VegaLitePreviewStrategy(PreviewFormatStrategy):
     """Generate Vega-Lite specification for interactive chart preview."""
 
-    def _get_form_data(self) -> Dict[str, Any] | None:
+    def _get_form_data(self) -> dict[str, Any] | ChartError | None:
         """Extract form_data from chart params."""
-        try:
-            if hasattr(self.chart, "params") and self.chart.params:
-                from superset.utils import json as utils_json
-
-                return utils_json.loads(self.chart.params)
-            return None
-        except (ValueError, TypeError):
-            return None
+        if hasattr(self.chart, "params") and self.chart.params:
+            return _load_saved_chart_form_data(self.chart.params)
+        return None
 
     def generate(self) -> VegaLitePreview | ChartError:
         """Generate Vega-Lite JSON specification from chart data."""
@@ -405,7 +428,6 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
             # but without calling the MCP tool wrapper
             from superset.commands.chart.data.get_data_command import ChartDataCommand
             from superset.daos.chart import ChartDAO
-            from superset.utils import json as utils_json
 
             # Get the chart object if we don't have form_data access
             if not hasattr(self.chart, "params") or not self.chart.params:
@@ -428,13 +450,12 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
                         error_type="ChartNotFound",
                     )
 
-                form_data = (
-                    utils_json.loads(chart_obj.params) if chart_obj.params else {}
-                )
+                form_data_result = _load_saved_chart_form_data(chart_obj.params)
             else:
-                form_data = (
-                    utils_json.loads(self.chart.params) if self.chart.params else {}
-                )
+                form_data_result = _load_saved_chart_form_data(self.chart.params)
+            if isinstance(form_data_result, ChartError):
+                return form_data_result
+            form_data = form_data_result
 
             query_context = build_query_context_from_form_data(
                 form_data,
@@ -1283,11 +1304,14 @@ async def _get_chart_preview_internal(  # noqa: C901
                     cmd_params = CommandParameters(key=request.form_data_key)
                     cached_form_data = GetFormDataCommand(cmd_params).run()
                     if cached_form_data:
-                        chart.params = cached_form_data
                         from superset.utils import json as utils_json
 
                         parsed = utils_json.loads(cached_form_data)
-                        if isinstance(parsed, dict) and "viz_type" in parsed:
+                        if not isinstance(parsed, dict):
+                            raise ValueError("cached form_data is not a JSON object")
+
+                        chart.params = cached_form_data
+                        if "viz_type" in parsed:
                             chart.viz_type = parsed["viz_type"]
                         await ctx.info(
                             "Chart params overridden with unsaved state from cache"

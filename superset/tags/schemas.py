@@ -78,7 +78,7 @@ class TagObjectSchema(Schema):
 
 
 class TagPostBulkSchema(Schema):
-    tags = fields.List(fields.Nested(TagObjectSchema()))
+    tags = fields.List(fields.Nested(TagObjectSchema()), required=True)
 
 
 class TagPostBulkResponseObjectSchema(Schema):

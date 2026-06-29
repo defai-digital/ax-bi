@@ -76,7 +76,7 @@ class JsonKeyValueCodec(KeyValueCodec):
     def decode(self, value: bytes) -> dict[Any, Any]:
         try:
             return json.loads(value)
-        except TypeError as ex:
+        except (TypeError, ValueError) as ex:
             raise KeyValueCodecDecodeException(str(ex)) from ex
 
 
@@ -104,4 +104,4 @@ class MarshmallowKeyValueCodec(JsonKeyValueCodec):
             obj = super().decode(value)
             return self.schema.load(obj)
         except ValidationError as ex:
-            raise KeyValueCodecEncodeException(message=str(ex)) from ex
+            raise KeyValueCodecDecodeException(message=str(ex)) from ex

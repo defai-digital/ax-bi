@@ -151,7 +151,8 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
         parameters: BaseBasicParametersType,
         encrypted_extra: Optional[dict[str, Any]] = None,
     ) -> str:
-        query_params = parameters.get("query", {}).copy()
+        raw_query = parameters.get("query") or {}
+        query_params = raw_query.copy() if isinstance(raw_query, dict) else {}
         if parameters.get("encryption"):
             query_params["ssl"] = "true"
         else:
@@ -175,7 +176,6 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
                 port=parameters.get("port"),
                 query=query_params,
             )
-        print(uri)
         return str(uri)
 
     @classmethod

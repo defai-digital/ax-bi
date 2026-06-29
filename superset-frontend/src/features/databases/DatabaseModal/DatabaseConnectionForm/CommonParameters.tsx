@@ -23,7 +23,7 @@ import {
   InfoTooltip,
   LabeledErrorBoundInput as ValidatedInput,
 } from '@superset-ui/core/components';
-import { FieldPropTypes } from '../../types';
+import { FieldPropTypes, parseExtraJson } from '../../types';
 import { toggleStyle, infoTooltip } from '../styles';
 
 export const hostField = ({
@@ -86,7 +86,7 @@ export const httpPath = ({
   db,
   isValidating,
 }: FieldPropTypes) => {
-  const extraJson = JSON.parse(db?.extra || '{}');
+  const extraJson = parseExtraJson(db?.extra);
   return (
     <ValidatedInput
       isValidating={isValidating}

@@ -134,6 +134,26 @@ test('Should render correct elements for disallow ad-hoc metrics', () => {
   expect(screen.getByRole('tabpanel', { name: 'Saved' })).toBeVisible();
 });
 
+test('Should respect parsed datasource extra when disallowing ad-hoc metrics', () => {
+  const props = {
+    ...createProps(),
+    datasource: { extra: { disallow_adhoc_metrics: true } },
+  };
+  render(<AdhocMetricEditPopover {...props} />, {
+    useRedux: true,
+    initialState: { explore: {} },
+  });
+  expect(screen.getByRole('tab', { name: 'Custom SQL' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  expect(screen.getByRole('tab', { name: 'Simple' })).toHaveAttribute(
+    'aria-disabled',
+    'true',
+  );
+  expect(screen.getByRole('tab', { name: 'Saved' })).toBeEnabled();
+});
+
 test('Clicking on "Close" should call onClose', () => {
   const props = createProps();
   render(<AdhocMetricEditPopover {...props} />, {

@@ -23,7 +23,7 @@ import json  # noqa: TID251
 import re
 from datetime import timedelta
 from textwrap import dedent
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -33,7 +33,12 @@ from sqlalchemy.dialects import sqlite
 from sqlalchemy.engine.url import make_url, URL
 from sqlalchemy.sql import sqltypes
 
-from superset.db_engine_specs.base import BaseEngineSpec, convert_inspector_columns
+from superset.db_engine_specs.base import (
+    BaseEngineSpec,
+    BasicParametersMixin,
+    BasicParametersType,
+    convert_inspector_columns,
+)
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import OAuth2RedirectError
 from superset.sql.parse import Table
@@ -100,6 +105,26 @@ def test_validate_db_uri(mocker: MockerFixture) -> None:
 
     with pytest.raises(ValueError):  # noqa: PT011
         BaseEngineSpec.validate_database_uri(URL.create("sqlite"))
+
+
+def test_basic_parameters_mixin_ignores_malformed_query_params() -> None:
+    class ExampleEngineSpec(BasicParametersMixin):
+        engine = "example"
+        default_driver = "driver"
+
+    uri = ExampleEngineSpec.build_sqlalchemy_uri(
+        cast(
+            BasicParametersType,
+            {
+                "host": "example.com",
+                "port": 1234,
+                "database": "analytics",
+                "query": "not a query mapping",
+            },
+        )
+    )
+
+    assert uri == "example+driver://example.com:1234/analytics"
 
 
 @pytest.mark.parametrize(
@@ -307,6 +332,43 @@ def test_quote_table() -> None:
         BaseEngineSpec.quote_table(Table("ta ble", "sche.ma", 'cata"log'), dialect)
         == '"cata""log"."sche.ma"."ta ble"'
     )
+
+
+@pytest.mark.parametrize("extra", ["not-valid-json", ["not-json"]])
+def test_get_extra_params_invalid_json(extra: object, mocker: MockerFixture) -> None:
+    """
+    Test that malformed extra parse errors are surfaced consistently.
+    """
+    database = mocker.MagicMock()
+    database.extra = extra
+
+    with pytest.raises((TypeError, ValueError)):
+        BaseEngineSpec.get_extra_params(database)
+
+
+@pytest.mark.parametrize(
+    "encrypted_extra",
+    [
+        "not-valid-json",
+        ["not-json"],
+        "[]",
+        json.dumps([["username", "attacker"]]),
+    ],
+)
+def test_update_params_from_encrypted_extra_invalid_json(
+    encrypted_extra: object,
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test that malformed encrypted_extra payloads are surfaced consistently.
+    """
+    database = mocker.MagicMock()
+    database.encrypted_extra = encrypted_extra
+
+    params: dict[str, Any] = {}
+    with pytest.raises((TypeError, ValueError)):
+        BaseEngineSpec.update_params_from_encrypted_extra(database, params)
+    assert params == {}
 
 
 def test_mask_encrypted_extra() -> None:

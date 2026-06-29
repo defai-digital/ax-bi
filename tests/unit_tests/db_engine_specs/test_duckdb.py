@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Optional
+from typing import cast, Optional
 
 import pytest
 from pytest_mock import MockerFixture
@@ -88,6 +88,13 @@ def test_build_sqlalchemy_uri() -> None:
     uri = DuckDBEngineSpec.build_sqlalchemy_uri(parameters)
     assert "duckdb:////path/to/duck.db" == uri
 
+    parameters = cast(
+        DuckDBParametersType,
+        {"database": "/path/to/duck.db", "query": "not a query mapping"},
+    )
+    uri = DuckDBEngineSpec.build_sqlalchemy_uri(parameters)
+    assert "duckdb:////path/to/duck.db" == uri
+
 
 def test_md_build_sqlalchemy_uri() -> None:
     """Test MotherDuckEngineSpec.build_sqlalchemy_uri"""
@@ -111,6 +118,17 @@ def test_md_build_sqlalchemy_uri() -> None:
     uri = MotherDuckEngineSpec.build_sqlalchemy_uri(parameters)
     assert "duckdb:///md:my_db?motherduck_token=token" == uri
 
+    parameters = cast(
+        DuckDBParametersType,
+        {
+            "database": "my_db",
+            "access_token": "token",
+            "query": "not a query mapping",
+        },
+    )
+    uri = MotherDuckEngineSpec.build_sqlalchemy_uri(parameters)
+    assert "duckdb:///md:my_db?motherduck_token=token" == uri
+
 
 def test_get_parameters_from_uri() -> None:
     from superset.db_engine_specs.duckdb import DuckDBEngineSpec
@@ -125,6 +143,29 @@ def test_get_parameters_from_uri() -> None:
 
     assert parameters["database"] == "md:my_db"
     assert parameters["access_token"] == "token"  # noqa: S105
+
+
+@pytest.mark.parametrize(
+    "database_name,expected_catalog",
+    [
+        ("md:my_db", "my_db"),
+        ("md:", None),
+        ("/path/to/duck.db", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_md_get_default_catalog(
+    mocker: MockerFixture,
+    database_name: str | None,
+    expected_catalog: str | None,
+) -> None:
+    from superset.db_engine_specs.duckdb import MotherDuckEngineSpec
+
+    database = mocker.MagicMock()
+    database.url_object.database = database_name
+
+    assert MotherDuckEngineSpec.get_default_catalog(database) == expected_catalog
 
 
 def test_column_type_recognition() -> None:

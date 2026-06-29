@@ -38,11 +38,59 @@ from superset.mcp_service.auth import MCPNoAuthSourceError, MCPPermissionDeniedE
 from superset.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
 from superset.mcp_service.middleware import (
     _is_user_error,
+    _sanitize_error_for_logging,
+    _sanitize_params,
     create_response_size_guard_middleware,
     GlobalErrorHandlerMiddleware,
     RBACToolVisibilityMiddleware,
     ResponseSizeGuardMiddleware,
 )
+
+
+def test_sanitize_error_for_logging_redacts_extended_scheme_credentials() -> None:
+    """Driver schemes with '+' must not leak connection credentials."""
+    sanitized = _sanitize_error_for_logging(
+        RuntimeError(
+            "failed postgresql+psycopg2://admin:s3cret@db.internal/prod on retry"
+        )
+    )
+
+    assert "admin:s3cret" not in sanitized
+    assert "db.internal" not in sanitized
+    assert "prod" not in sanitized
+    assert "postgresql+psycopg2://[REDACTED]@[REDACTED]/[REDACTED]" in sanitized
+
+
+def test_sanitize_error_for_logging_redacts_pathless_url_credentials() -> None:
+    """Pathless Redis-style URLs must not leak password-only credentials."""
+    sanitized = _sanitize_error_for_logging(
+        RuntimeError("failed redis://:s3cret@redis.internal:6379")
+    )
+
+    assert ":s3cret@" not in sanitized
+    assert "redis.internal" not in sanitized
+    assert "redis://[REDACTED]@[REDACTED]" in sanitized
+
+
+def test_sanitize_params_recurses_nested_request_values() -> None:
+    """Nested MCP request payloads must not leak secrets into event logs."""
+    sanitized = _sanitize_params(
+        {
+            "request": {
+                "database_id": 1,
+                "auth_token": "token-secret",
+                "filters": [
+                    {"column": "region", "value": "EMEA"},
+                    {"api-key": "api-secret"},
+                ],
+            }
+        }
+    )
+
+    assert sanitized["request"]["database_id"] == 1
+    assert sanitized["request"]["auth_token"] == "[REDACTED]"  # noqa: S105
+    assert sanitized["request"]["filters"][0]["value"] == "EMEA"
+    assert sanitized["request"]["filters"][1]["api-key"] == "[REDACTED]"
 
 
 class TestResponseSizeGuardMiddleware:
@@ -330,6 +378,35 @@ class TestResponseSizeGuardMiddleware:
         mock_event_logger.log.assert_called()
         call_args = mock_event_logger.log.call_args
         assert call_args.kwargs["action"] == "mcp_response_truncated"
+
+    def test_rejects_truncation_when_metadata_exceeds_limit(self) -> None:
+        """The final size check must include truncation metadata fields."""
+        middleware = ResponseSizeGuardMiddleware(token_limit=10)
+        truncated_payload = {"id": 1}
+
+        def estimate_after_metadata(payload: Any) -> int:
+            if isinstance(payload, dict) and payload.get("_response_truncated"):
+                return 11
+            return 1
+
+        with (
+            patch(
+                "superset.mcp_service.middleware.truncate_oversized_response",
+                return_value=(truncated_payload, True, ["long truncation note"]),
+            ),
+            patch(
+                "superset.mcp_service.middleware.estimate_response_tokens",
+                side_effect=estimate_after_metadata,
+            ),
+        ):
+            result = middleware._try_truncate_info_response(
+                "get_dashboard_info",
+                {"description": "x" * 1000},
+                estimated_tokens=100,
+            )
+
+        assert result is None
+        assert truncated_payload["_response_truncated"] is True
 
 
 class TestCreateResponseSizeGuardMiddleware:

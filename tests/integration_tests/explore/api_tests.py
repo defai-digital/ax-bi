@@ -158,6 +158,38 @@ def test_get_from_cache_unknown_key_dataset(test_client, login_as_admin, dataset
     assert result["slice"] is None  # noqa: E711
 
 
+def test_get_from_cache_non_object_form_data(
+    test_client, login_as_admin, chart_id, admin_id, dataset
+):
+    cache_key = "non_object_form_data_key"
+    entry: TemporaryExploreState = {
+        "owner": admin_id,
+        "datasource_id": dataset.id,
+        "datasource_type": dataset.type,
+        "chart_id": chart_id,
+        "form_data": json.dumps([]),
+    }
+    cache_manager.explore_form_data_cache.set(cache_key, entry)
+
+    try:
+        resp = test_client.get(
+            f"api/v1/explore/?form_data_key={cache_key}&datasource_id={dataset.id}&datasource_type={dataset.type}"
+        )
+
+        assert resp.status_code == 200
+        data = json.loads(resp.data.decode("utf-8"))
+        result = data.get("result")
+        assert_dataset(result, dataset.id)
+        assert result["form_data"]["datasource"] == f"{dataset.id}__table"
+        assert (
+            result["message"]
+            == "Form data not found in cache, reverting to dataset metadata."
+        )
+        assert result["slice"] is None  # noqa: E711
+    finally:
+        cache_manager.explore_form_data_cache.delete(cache_key)
+
+
 def test_get_from_cache_unknown_key_no_extra_parameters(test_client, login_as_admin):
     unknown_key = "unknown_key"
     resp = test_client.get(f"api/v1/explore/?form_data_key={unknown_key}")

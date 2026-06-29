@@ -56,6 +56,19 @@ from superset.queries.saved_queries.schemas import ImportV1SavedQuerySchema
 from superset.utils.decorators import on_error, transaction
 
 
+def _get_required_mapping(
+    mapping: dict[str, Any],
+    key: Any,
+    file_name: str,
+    dependency_name: str,
+) -> Any:
+    if key not in mapping:
+        raise ImportFailedError(
+            f"Missing {dependency_name} reference {key!r} for {file_name}"
+        )
+    return mapping[key]
+
+
 class ImportAssetsCommand(BaseCommand):
     """
     Command for importing databases, datasets, charts, dashboards and saved queries.
@@ -127,13 +140,23 @@ class ImportAssetsCommand(BaseCommand):
         # import saved queries
         for file_name, config in configs.items():
             if file_name.startswith("queries/"):
-                config["db_id"] = database_ids[config["database_uuid"]]
+                config["db_id"] = _get_required_mapping(
+                    database_ids,
+                    config.get("database_uuid"),
+                    file_name,
+                    "database",
+                )
                 import_saved_query(config, overwrite=overwrite)
 
         # import datasets
         for file_name, config in configs.items():
             if file_name.startswith("datasets/"):
-                config["database_id"] = database_ids[config["database_uuid"]]
+                config["database_id"] = _get_required_mapping(
+                    database_ids,
+                    config.get("database_uuid"),
+                    file_name,
+                    "database",
+                )
                 dataset = import_dataset(config, overwrite=overwrite)
                 dataset_info[str(dataset.uuid)] = {
                     "datasource_id": dataset.id,
@@ -145,7 +168,12 @@ class ImportAssetsCommand(BaseCommand):
         charts = []
         for file_name, config in configs.items():
             if file_name.startswith("charts/"):
-                dataset_dict = dataset_info[config["dataset_uuid"]]
+                dataset_dict = _get_required_mapping(
+                    dataset_info,
+                    config.get("dataset_uuid"),
+                    file_name,
+                    "dataset",
+                )
                 config = update_chart_config_dataset(config, dataset_dict)
                 chart = import_chart(config, overwrite=overwrite)
                 charts.append(chart)
@@ -166,7 +194,7 @@ class ImportAssetsCommand(BaseCommand):
 
                 # set ref in the dashboard_slices table
                 dashboard_chart_ids: list[dict[str, int]] = []
-                for uuid in find_chart_uuids(config["position"]):
+                for uuid in find_chart_uuids(config.get("position")):
                     if uuid not in chart_ids:
                         break
                     chart_id = chart_ids[uuid]

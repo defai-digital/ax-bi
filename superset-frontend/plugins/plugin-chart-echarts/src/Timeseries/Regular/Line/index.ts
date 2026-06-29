@@ -23,9 +23,7 @@ import {
   EchartsTimeseriesFormData,
   EchartsTimeseriesSeriesType,
 } from '../../types';
-import buildQuery from '../../buildQuery';
 import controlPanel from './controlPanel';
-import transformProps from '../../transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import example1 from './images/Line1.png';
@@ -34,13 +32,17 @@ import example2 from './images/Line2.png';
 import example2Dark from './images/Line2-dark.png';
 import { EchartsChartPlugin } from '../../../types';
 
-const lineTransformProps = (chartProps: EchartsTimeseriesChartProps) =>
-  transformProps({
-    ...chartProps,
-    formData: {
-      ...chartProps.formData,
-      seriesType: EchartsTimeseriesSeriesType.Line,
-    },
+const loadLineTransformProps = () =>
+  import('../../transformProps').then(mod => {
+    const baseTransformProps = mod.default;
+    return (chartProps: EchartsTimeseriesChartProps) =>
+      baseTransformProps({
+        ...chartProps,
+        formData: {
+          ...chartProps.formData,
+          seriesType: EchartsTimeseriesSeriesType.Line,
+        },
+      });
   });
 
 export default class EchartsTimeseriesLineChartPlugin extends EchartsChartPlugin<
@@ -49,7 +51,7 @@ export default class EchartsTimeseriesLineChartPlugin extends EchartsChartPlugin
 > {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('../../buildQuery'),
       controlPanel,
       loadChart: () => import('../../EchartsTimeseries'),
       metadata: {
@@ -85,7 +87,7 @@ export default class EchartsTimeseriesLineChartPlugin extends EchartsChartPlugin
         thumbnail,
         thumbnailDark,
       },
-      transformProps: lineTransformProps,
+      loadTransformProps: loadLineTransformProps,
     });
   }
 }

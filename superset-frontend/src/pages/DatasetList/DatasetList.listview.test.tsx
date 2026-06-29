@@ -1156,12 +1156,6 @@ test('dataset links use internal routing when PREVENT_UNSAFE_DEFAULT_URLS_ON_DAT
   });
 });
 
-// Note: These delete error tests verify that the modal doesn't open when fetching
-// related_objects fails. The component's openDatasetDeleteModal error handler
-// (index.tsx:262-268) returns a string but doesn't call addDangerToast(), so no
-// error toast is shown. This is a component bug documented for a separate fix.
-// The tests correctly verify current behavior: API call made, modal prevented.
-
 test('delete action gracefully handles 403 forbidden error', async () => {
   const dataset = mockDatasets[0];
 
@@ -1193,6 +1187,10 @@ test('delete action gracefully handles 403 forbidden error', async () => {
 
   // Verify modal did NOT open (error prevented it)
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+  expect(mockAddDangerToast).toHaveBeenCalledWith(
+    'An error occurred while fetching dataset related data: Failed to fetch related objects',
+  );
 
   // Verify dataset still in list (not removed)
   expect(screen.getByText(dataset.table_name)).toBeInTheDocument();
@@ -1229,6 +1227,10 @@ test('delete action gracefully handles 500 internal server error', async () => {
 
   // Verify modal did NOT open
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+  expect(mockAddDangerToast).toHaveBeenCalledWith(
+    'An error occurred while fetching dataset related data: Internal Server Error',
+  );
 
   // Verify table state unchanged
   expect(screen.getByText(dataset.table_name)).toBeInTheDocument();

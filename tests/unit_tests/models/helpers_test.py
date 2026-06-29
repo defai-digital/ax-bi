@@ -40,6 +40,72 @@ if TYPE_CHECKING:
     from superset.models.core import Database
 
 
+def test_json_to_dict_returns_dict() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('{"metric": "sum__num"}') == {"metric": "sum__num"}
+
+
+def test_json_to_dict_tolerates_trailing_commas() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('{"metrics": ["count", ]\n}') == {"metrics": ["count"]}
+
+
+def test_json_to_dict_ignores_malformed_json() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict("{malformed") == {}
+
+
+def test_json_to_dict_ignores_non_object_json() -> None:
+    from superset.models.helpers import json_to_dict
+
+    assert json_to_dict('["count"]') == {}
+
+
+def test_extra_json_mixin_ignores_non_object_extra() -> None:
+    from superset.models.helpers import ExtraJSONMixin
+
+    obj = ExtraJSONMixin()
+    obj.extra_json = "[]"
+
+    assert obj.extra == {}
+
+
+def test_extra_json_mixin_set_key_after_non_object_extra() -> None:
+    from superset.models.helpers import ExtraJSONMixin
+    from superset.utils import json
+
+    obj = ExtraJSONMixin()
+    obj.extra_json = "[]"
+
+    obj.set_extra_json_key("owner", "admin")
+
+    assert json.loads(obj.extra_json) == {"owner": "admin"}
+
+
+def test_certification_mixin_ignores_non_object_extra() -> None:
+    from superset.models.helpers import CertificationMixin
+
+    obj = CertificationMixin()
+    obj.extra = "[]"
+
+    assert obj.get_extra_dict() == {}
+    assert obj.is_certified is False
+
+
+def test_certification_mixin_ignores_non_object_certification_details() -> None:
+    from superset.models.helpers import CertificationMixin
+
+    obj = CertificationMixin()
+    obj.extra = '{"certification": 1}'
+
+    assert obj.is_certified is True
+    assert obj.certified_by is None
+    assert obj.certification_details is None
+
+
 @pytest.fixture
 def database(mocker: MockerFixture, session: Session) -> Database:
     from superset.connectors.sqla.models import SqlaTable
@@ -2616,6 +2682,37 @@ def test_adhoc_column_to_sqla_skips_probe_when_not_forced(
     assert generic_type is None
 
 
+def test_adhoc_column_to_sqla_rejects_malformed_probe_metadata(
+    database: Database,
+) -> None:
+    """Malformed DB probe metadata should raise the public column error."""
+    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from superset.exceptions import ColumnNotFoundException
+
+    table = SqlaTable(
+        database=database,
+        schema=None,
+        table_name="t",
+        columns=[TableColumn(column_name="a", type="INTEGER")],
+    )
+    adhoc_col: AdhocColumn = {
+        "sqlExpression": "CAST(a AS BIGINT)",
+        "label": "a_bigint",
+    }
+
+    def malformed_column_description(
+        *_: object, **__: object
+    ) -> list[dict[str, object]]:
+        return [{"column_name": "a_bigint", "name": "a_bigint", "type": "BIGINT"}]
+
+    with patch(
+        "superset.connectors.sqla.models.get_columns_description",
+        side_effect=malformed_column_description,
+    ):
+        with pytest.raises(ColumnNotFoundException):
+            table.adhoc_column_to_sqla(adhoc_col, force_type_check=True)
+
+
 def _normalize_df_datasource(column: object) -> MagicMock:
     """Bind ``ExploreMixin.normalize_df`` to a minimal datasource exposing a
     single temporal ``column`` via ``get_column``."""
@@ -3050,6 +3147,22 @@ def test_format_time_humanized_skips_activation_for_english(
     instance._format_time_humanized(datetime.now() - timedelta(hours=2))
 
     mock_activate.assert_not_called()
+
+
+def test_audit_mixin_nullable_handles_missing_timestamps() -> None:
+    from superset.models.helpers import AuditMixinNullable
+
+    instance = AuditMixinNullable()
+    instance.created_on = None
+    instance.changed_on = None
+
+    assert instance.created_on_humanized == ""
+    assert instance.changed_on_humanized == ""
+    assert instance.created_on_delta_humanized() == ""
+    assert instance.changed_on_delta_humanized() == ""
+    assert instance.changed_on_utc() == ""
+    assert instance.changed_on_dttm() is None
+    assert instance.modified() == '<span class="no-wrap"></span>'
 
 
 # -----------------------------------------------------------------------------

@@ -34,6 +34,8 @@ from superset.utils.core import (
     FilterOperator,
     generic_find_constraint_name,
     generic_find_fk_constraint_name,
+    generic_find_fk_constraint_names,
+    generic_find_uq_constraint_name,
     get_datasource_full_name,
     get_query_source_from_request,
     get_stacktrace,
@@ -116,6 +118,14 @@ class MockZipInfo:
                     EXTRA_FILTER,
                 ],
             },
+        ),
+        (
+            {"foo": "bar", "adhoc_filters": "bad-filters"},
+            {"foo": "bar", "adhoc_filters": []},
+        ),
+        (
+            {"foo": "bar", "adhoc_filters": [ADHOC_FILTER, "bad-filter"]},
+            {"foo": "bar", "adhoc_filters": [ADHOC_FILTER]},
         ),
     ],
 )
@@ -605,6 +615,78 @@ def test_generic_find_fk_constraint_none_exist():
     assert result is None
 
 
+def test_generic_find_fk_constraint_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+    referenced_table_name = "other_table"
+
+    insp_mock.get_foreign_keys.return_value = [
+        {
+            "name": None,
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+        {
+            "name": "missing_columns",
+            "referred_table": referenced_table_name,
+        },
+        {
+            "name": "valid_constraint",
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+    ]
+
+    result = generic_find_fk_constraint_name(
+        table_name, columns, referenced_table_name, insp_mock
+    )
+
+    assert result == "valid_constraint"
+
+
+def test_generic_find_fk_constraint_names_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+    referenced_table_name = "other_table"
+
+    insp_mock.get_foreign_keys.return_value = [
+        {
+            "name": None,
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+        {
+            "name": "valid_constraint",
+            "referred_table": referenced_table_name,
+            "referred_columns": list(columns),
+        },
+    ]
+
+    result = generic_find_fk_constraint_names(
+        table_name, columns, referenced_table_name, insp_mock
+    )
+
+    assert result == {"valid_constraint"}
+
+
+def test_generic_find_uq_constraint_skips_malformed_matches():
+    insp_mock = MagicMock()
+    table_name = "my_table"
+    columns = {"column1", "column2"}
+
+    insp_mock.get_unique_constraints.return_value = [
+        {"name": None, "column_names": list(columns)},
+        {"name": "missing_columns"},
+        {"name": "valid_constraint", "column_names": list(columns)},
+    ]
+
+    result = generic_find_uq_constraint_name(table_name, columns, insp_mock)
+
+    assert result == "valid_constraint"
+
+
 def test_get_datasource_full_name():
     """
     Test the `get_datasource_full_name` function.
@@ -717,10 +799,10 @@ def test_merge_extra_filters():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {
@@ -769,10 +851,10 @@ def test_merge_extra_filters():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {
@@ -807,10 +889,10 @@ def test_merge_extra_filters():
                 "comparator": "hello",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "2ca91524f5ab8e39d6aa5373d1f11301ad2c5b95f5aa77eb30d92f572f5b9157"
+                    "41cfa0ea71c29a9fc28f8474f4c6fca9336dde1f53bf8f6f3e6ab01d897b9d1d"
                 ),
                 "isExtra": True,
-                "operator": "like",
+                "operator": "LIKE",
                 "subject": "A",
             }
         ],
@@ -837,6 +919,35 @@ def test_merge_extra_filters_ignores_empty_filters():
     expected = {"adhoc_filters": [], "applied_time_extras": {}}
     merge_extra_filters(form_data)
     assert form_data == expected
+
+
+@pytest.mark.parametrize(
+    "extra_filters",
+    [
+        ("not a list",),
+        ({"col": "a", "op": "in", "val": "x"},),
+        ([None, "bad", {"col": "a"}, {"op": "in", "val": "x"}],),
+    ],
+)
+def test_merge_extra_filters_ignores_malformed_extra_filters(
+    extra_filters: object,
+) -> None:
+    form_data = {"extra_filters": extra_filters}
+    merge_extra_filters(form_data)
+
+    assert form_data == {"adhoc_filters": [], "applied_time_extras": {}}
+
+
+def test_merge_extra_filters_ignores_malformed_adhoc_filters() -> None:
+    form_data: dict[str, Any] = {
+        "adhoc_filters": "not a list",
+        "extra_filters": [{"col": "a", "op": "in", "val": "someval"}],
+    }
+    merge_extra_filters(form_data)
+
+    assert form_data["adhoc_filters"][0]["subject"] == "a"
+    assert form_data["applied_time_extras"] == {}
+    assert "extra_filters" not in form_data
 
 
 def test_merge_extra_filters_ignores_nones():
@@ -973,10 +1084,10 @@ def test_merge_extra_filters_merges_different_val_types():
                 "comparator": ["g1", "g2"],
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "e2f7d6304169124258364916403b2d9208fce39dd7771797726111b7498bbd52"
+                    "1c44affabc8ad89546dba254ca3c8dc0687a80365d9104734db7bc330576698e"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
         ],
@@ -1027,10 +1138,10 @@ def test_merge_extra_filters_merges_different_val_types():
                 "comparator": "someval",
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "eb77ff8188437d8722af8c932727da1e83ec37e88aaf800a3859ed352d87119f"
+                    "2b1da0ff2b4603f46bb93b0dc6d524eb746abe7ba9d0e85578722c53b2cc9d09"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
         ],
@@ -1084,10 +1195,10 @@ def test_merge_extra_filters_adds_unequal_lists():
                 "comparator": ["g1", "g2", "g3"],
                 "expressionType": "SIMPLE",
                 "filterOptionName": (
-                    "b3f17391546e130560efd1e841742bc5f154d09a7d534b8c0ec33fc1c8a146cd"
+                    "a313f94a60fffcce397fb9cd633b3e037ff27eb954f3f54dac7a54c315ff288a"
                 ),
                 "isExtra": True,
-                "operator": "in",
+                "operator": "IN",
                 "subject": "a",
             },
             {
@@ -1364,6 +1475,127 @@ def test_merge_extra_form_data_removes_extra_form_data():
     assert "extra_form_data" not in form_data
     assert form_data["granularity"] == "event_date"
     assert form_data["time_range"] == "Last week"
+
+
+@pytest.mark.parametrize(
+    "extra_form_data",
+    [
+        ([],),
+        ("not an object",),
+        (None,),
+    ],
+)
+def test_merge_extra_form_data_ignores_malformed_extra_form_data(
+    extra_form_data: object,
+) -> None:
+    """
+    Test that non-object extra_form_data does not crash form data merging.
+    """
+    form_data = {
+        "time_range": "Last 10 days",
+        "extra_form_data": extra_form_data,
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data == {
+        "time_range": "Last 10 days",
+        "adhoc_filters": [],
+    }
+
+
+def test_merge_extra_form_data_merges_append_fields() -> None:
+    """
+    Test that list append fields and custom_form_data merge into form data.
+    """
+    form_data = {
+        "interactive_groupby": ["country"],
+        "custom_form_data": {"existing": True},
+        "extra_form_data": {
+            "interactive_groupby": ["state"],
+            "interactive_highlight": ["segment"],
+            "custom_form_data": {"added": "value"},
+        },
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data["interactive_groupby"] == ["country", "state"]
+    assert form_data["interactive_highlight"] == ["segment"]
+    assert form_data["custom_form_data"] == {"existing": True, "added": "value"}
+    assert form_data["adhoc_filters"] == []
+    assert "extra_form_data" not in form_data
+
+
+def test_merge_extra_form_data_resets_malformed_extras() -> None:
+    """
+    Test that non-object extras does not crash extra override merging.
+    """
+    form_data: dict[str, Any] = {
+        "extras": [],
+        "extra_form_data": {"relative_start": "now"},
+    }
+    merge_extra_form_data(form_data)
+
+    assert form_data["extras"] == {"relative_start": "now"}
+    assert form_data["adhoc_filters"] == []
+    assert "extra_form_data" not in form_data
+
+
+def test_merge_extra_form_data_ignores_malformed_nested_filter_values() -> None:
+    """
+    Test that malformed nested filter lists do not crash extra form data merging.
+    """
+    form_data: dict[str, Any] = {
+        "adhoc_filters": [None],
+        "adhoc_filter_b": [],
+        "extra_form_data": {
+            "adhoc_filters": [
+                "bad",
+                {
+                    "expressionType": "SQL",
+                    "clause": "WHERE",
+                    "sqlExpression": "1 = 0",
+                },
+            ],
+            "filters": [
+                None,
+                {"col": "missing-op", "val": "x"},
+                {"op": "IN", "val": "x"},
+                {"col": "foo", "op": "IN"},
+                {"col": "foo", "op": "IN", "val": ["bar"]},
+            ],
+        },
+    }
+    merge_extra_form_data(form_data)
+
+    converted_adhoc_filter = form_data["adhoc_filters"][1]
+    del converted_adhoc_filter["filterOptionName"]
+    assert form_data["adhoc_filters"] == [
+        {
+            "isExtra": True,
+            "expressionType": "SQL",
+            "clause": "WHERE",
+            "sqlExpression": "1 = 0",
+        },
+        {
+            "clause": "WHERE",
+            "comparator": ["bar"],
+            "expressionType": "SIMPLE",
+            "isExtra": True,
+            "operator": "IN",
+            "subject": "foo",
+        },
+    ]
+    converted_filter = form_data["adhoc_filter_b"][0]
+    del converted_filter["filterOptionName"]
+    assert converted_filter == {
+        "clause": "WHERE",
+        "comparator": ["bar"],
+        "expressionType": "SIMPLE",
+        "isExtra": True,
+        "operator": "IN",
+        "subject": "foo",
+    }
+    assert "extra_form_data" not in form_data
 
 
 def test_merge_extra_form_data_creates_temporal_filter_when_none_exists():

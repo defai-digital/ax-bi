@@ -14,9 +14,22 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional, TypedDict
+from typing import Any, Optional, TypedDict, TypeGuard
 
 
 class Entry(TypedDict):
     owner: Optional[int]
     value: str
+
+
+def is_entry(value: Any) -> TypeGuard[Entry]:
+    """Return true when a cached dashboard filter-state entry is usable."""
+    if not isinstance(value, dict):
+        return False
+
+    owner = value.get("owner")
+    return (
+        (owner is None or isinstance(owner, int))
+        and not isinstance(owner, bool)
+        and isinstance(value.get("value"), str)
+    )

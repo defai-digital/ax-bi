@@ -207,6 +207,37 @@ def test_get_native_filters_params_missing_required_fields():
     assert all("Skipping malformed native filter" in w for w in warnings)
 
 
+def test_get_native_filters_params_skips_non_list_filter_values():
+    report_schedule = ReportSchedule()
+    report_schedule.extra = {
+        "dashboard": {
+            "nativeFilters": [
+                {
+                    "nativeFilterId": "range_filter",
+                    "columnName": "price",
+                    "filterType": "filter_range",
+                    "filterValues": "10,100",
+                },
+                {
+                    "nativeFilterId": "valid_filter",
+                    "columnName": "country",
+                    "filterType": "filter_select",
+                    "filterValues": ["US"],
+                },
+            ]
+        }
+    }
+
+    result, warnings = report_schedule.get_native_filters_params()
+
+    assert "valid_filter" in result
+    assert "US" in result
+    assert "range_filter" not in result
+    assert len(warnings) == 1
+    assert "Skipping malformed native filterValues" in warnings[0]
+    assert "range_filter" in warnings[0]
+
+
 def test_report_generate_native_filter():
     """
     Test the ``_generate_native_filter`` method.

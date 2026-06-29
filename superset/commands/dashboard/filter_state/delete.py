@@ -18,7 +18,7 @@ from flask import session
 
 from superset.commands.dashboard.filter_state.utils import check_access
 from superset.commands.temporary_cache.delete import DeleteTemporaryCacheCommand
-from superset.commands.temporary_cache.entry import Entry
+from superset.commands.temporary_cache.entry import is_entry
 from superset.commands.temporary_cache.exceptions import TemporaryCacheAccessDeniedError
 from superset.commands.temporary_cache.parameters import CommandParameters
 from superset.extensions import cache_manager
@@ -31,8 +31,8 @@ class DeleteFilterStateCommand(DeleteTemporaryCacheCommand):
         resource_id = cmd_params.resource_id
         key = cache_key(resource_id, cmd_params.key)
         check_access(resource_id)
-        entry: Entry = cache_manager.filter_state_cache.get(key)
-        if entry:
+        entry = cache_manager.filter_state_cache.get(key)
+        if is_entry(entry):
             if entry["owner"] != get_user_id():
                 raise TemporaryCacheAccessDeniedError()
             tab_id = cmd_params.tab_id

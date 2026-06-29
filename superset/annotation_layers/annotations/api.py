@@ -293,7 +293,7 @@ class AnnotationRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
             item["layer"] = pk
         # This validates custom Schema with custom validations
         except ValidationError as error:
@@ -367,7 +367,9 @@ class AnnotationRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
             item["layer"] = pk
         # This validates custom Schema with custom validations
         except ValidationError as error:

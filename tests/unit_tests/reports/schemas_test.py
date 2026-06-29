@@ -321,6 +321,21 @@ def test_log_retention_post_vs_put_parity(mocker: MockerFixture) -> None:
     put_schema.load({"log_retention": 0})
 
 
+@pytest.mark.parametrize("payload", [[], "not an object", 1, None])
+@pytest.mark.parametrize(
+    "schema_class", [ReportSchedulePostSchema, ReportSchedulePutSchema]
+)
+def test_report_schemas_reject_non_object_payloads(
+    mocker: MockerFixture,
+    schema_class: type,
+    payload: object,
+) -> None:
+    mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
+
+    with pytest.raises(ValidationError):
+        schema_class().load(payload)
+
+
 def test_report_type_disallows_database(mocker: MockerFixture) -> None:
     mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
     schema = ReportSchedulePostSchema()
@@ -399,15 +414,18 @@ def test_name_over_max_length_rejected(mocker: MockerFixture) -> None:
     assert "name" in exc.value.messages
 
 
-def test_put_schema_allows_database_on_report_type(mocker: MockerFixture) -> None:
-    """PUT schema lacks validate_report_references — database on Report type is
-    accepted (documents current behavior; POST schema correctly rejects this)."""
+def test_put_schema_rejects_database_on_report_type(mocker: MockerFixture) -> None:
+    """PUT schema should reject database references on explicit Report payloads."""
     mocker.patch("flask.current_app.config", CUSTOM_WIDTH_CONFIG)
     put_schema = ReportSchedulePutSchema()
-    result = put_schema.load({"type": "Report", "database": 1})
-    assert result["database"] == 1
+    with pytest.raises(ValidationError) as exc:
+        put_schema.load({"type": "Report", "database": 1})
+    assert "database" in exc.value.messages
 
-    # POST schema rejects it (verify the asymmetry)
+    result = put_schema.load({"type": "Report", "database": None})
+    assert result["database"] is None
+
+    # POST schema rejects it with the same rule.
     post_schema = ReportSchedulePostSchema()
     with pytest.raises(ValidationError) as exc:
         post_schema.load({**MINIMAL_POST_PAYLOAD, "database": 1})

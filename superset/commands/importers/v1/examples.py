@@ -171,7 +171,7 @@ class ImportExamplesCommand(ImportModelsCommand):
                 config["database_id"] = database_ids[config["database_uuid"]]
 
                 # set schema
-                if config["schema"] is None:
+                if config.get("schema") is None:
                     config["schema"] = get_example_default_schema()
 
                 # transpile virtual dataset SQL to target database dialect
@@ -231,7 +231,7 @@ class ImportExamplesCommand(ImportModelsCommand):
                 )
                 dashboard.published = True
 
-                for uuid in find_chart_uuids(config["position"]):
+                for uuid in find_chart_uuids(config.get("position")):
                     chart_id = chart_ids[uuid]
                     dashboard_chart_ids.append((dashboard.id, chart_id))
 

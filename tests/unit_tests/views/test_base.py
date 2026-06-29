@@ -16,9 +16,47 @@
 # under the License.
 """Tests for superset.views.base module"""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+
+def test_load_optional_json_object_form_field_returns_none_when_missing(
+    app: Any,
+) -> None:
+    """Test that missing JSON object form fields are optional."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context("/", method="POST", data={}):
+        assert load_optional_json_object_form_field("missing") is None
+
+
+def test_load_optional_json_object_form_field_loads_object(app: Any) -> None:
+    """Test that JSON object form fields are decoded."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context(
+        "/", method="POST", data={"passwords": '{"database.yaml": "SECRET"}'}
+    ):
+        assert load_optional_json_object_form_field("passwords") == {
+            "database.yaml": "SECRET"
+        }
+
+
+@pytest.mark.parametrize(("payload",), [("{",), ("[]",), ("null",)])
+def test_load_optional_json_object_form_field_rejects_invalid_payload(
+    app: Any,
+    payload: str,
+) -> None:
+    """Test that JSON form fields must be objects."""
+    from superset.views.base_api import load_optional_json_object_form_field
+
+    with app.test_request_context("/", method="POST", data={"passwords": payload}):
+        with pytest.raises(
+            ValueError, match="Invalid JSON object for form field: passwords"
+        ):
+            load_optional_json_object_form_field("passwords")
 
 
 @patch("superset.views.base.utils.get_user_id", return_value=1)
@@ -177,6 +215,33 @@ def test_api_query_returns_json_content_type() -> None:
 
     assert response.mimetype == "application/json"
     assert response.content_type.startswith("application/json")
+
+
+@pytest.mark.parametrize(
+    ("form_data",), [({},), ({"query_context": "{"},), ({"query_context": "[]"},)]
+)
+def test_api_query_rejects_invalid_query_context(form_data: dict[str, str]) -> None:
+    """``Api.query`` rejects invalid form-encoded query contexts."""
+    from flask import current_app
+
+    from superset.views.api import Api
+
+    # Unwrap the decorator stack (event logger, auth, etc.) to exercise the
+    # handler body directly without app/DB auth context.
+    handler = Api.query
+    while hasattr(handler, "__wrapped__"):
+        handler = handler.__wrapped__
+
+    factory = MagicMock()
+    api_view = Api()
+
+    with patch.object(api_view, "get_query_context_factory", return_value=factory):
+        with current_app.test_request_context(data=form_data):
+            response = handler(api_view)
+
+    assert response.status_code == 400
+    assert response.json == {"error": "Invalid query_context"}
+    factory.create.assert_not_called()
 
 
 @pytest.mark.parametrize(

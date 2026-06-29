@@ -167,7 +167,14 @@ def _build_preview_form_data(
     existing_form_data: dict[str, Any] = {}
     if getattr(chart, "params", None):
         try:
-            existing_form_data = json.loads(chart.params) or {}
+            parsed_form_data = json.loads(chart.params) or {}
+            if isinstance(parsed_form_data, dict):
+                existing_form_data = parsed_form_data
+            else:
+                logger.warning(
+                    "Existing chart.params for chart %s is not a JSON object",
+                    chart.id,
+                )
         except (ValueError, TypeError):
             logger.warning(
                 "Failed to parse existing chart.params for chart %s", chart.id

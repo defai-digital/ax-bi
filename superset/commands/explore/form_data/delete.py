@@ -23,7 +23,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from superset.commands.base import BaseCommand
 from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.commands.explore.form_data.state import TemporaryExploreState
+from superset.commands.explore.form_data.state import is_temporary_explore_state
 from superset.commands.explore.form_data.utils import check_access
 from superset.commands.temporary_cache.exceptions import (
     TemporaryCacheAccessDeniedError,
@@ -43,10 +43,8 @@ class DeleteFormDataCommand(BaseCommand, ABC):
     def run(self) -> bool:
         try:
             key = self._cmd_params.key
-            state: TemporaryExploreState = cache_manager.explore_form_data_cache.get(
-                key
-            )
-            if state:
+            state = cache_manager.explore_form_data_cache.get(key)
+            if is_temporary_explore_state(state):
                 datasource_id: int = state["datasource_id"]
                 chart_id: Optional[int] = state["chart_id"]
                 datasource_type = DatasourceType(state["datasource_type"])

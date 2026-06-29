@@ -18,6 +18,7 @@
 import copy
 from typing import Any, cast
 
+import pytest
 import yaml
 from marshmallow.exceptions import ValidationError
 from pytest_mock import MockerFixture
@@ -208,6 +209,38 @@ def test_import_assets_imports_tags(mocker: MockerFixture, session: Session) -> 
         assert assocs[0].tag.name == "dashboard_tag"
 
 
+def test_import_tag_ignores_malformed_tags_yaml(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """Malformed tags.yaml metadata should not abort tag import."""
+    from superset import db
+    from superset.commands.importers.v1.assets import feature_flag_manager
+    from superset.commands.importers.v1.utils import import_tag
+    from superset.tags.models import ObjectType, Tag, TaggedObject
+
+    mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=True)
+
+    engine = db.session.get_bind()
+    Tag.metadata.create_all(engine)  # pylint: disable=no-member
+
+    tag_ids = import_tag(
+        ["chart_tag"],
+        {"tags.yaml": yaml.dump({"tags": ["bad", {"description": "missing name"}]})},
+        object_id=42,
+        object_type="chart",
+        db_session=db.session,
+    )
+
+    tag = db.session.query(Tag).filter_by(name="chart_tag").one()
+    assoc = db.session.query(TaggedObject).filter_by(tag_id=tag.id).one()
+
+    assert tag_ids == [tag.id]
+    assert tag.description is None
+    assert assoc.object_id == 42
+    assert assoc.object_type == ObjectType.chart
+
+
 def test_import_assets_skips_tags_when_feature_disabled(
     mocker: MockerFixture, session: Session
 ) -> None:
@@ -305,6 +338,88 @@ def test_import_threads_overwrite_flag(mocker: MockerFixture, session: Session) 
         assert call.kwargs["overwrite"] is False
     for call in mocked_dash.call_args_list:
         assert call.kwargs["overwrite"] is False
+
+
+@pytest.mark.parametrize(
+    ("configs", "expected_message"),
+    [
+        (
+            {
+                "queries/missing_db.yaml": {
+                    "uuid": "e3e4f1f0-5c9d-4a4c-a4e4-0000000000aa",
+                    "database_uuid": "missing-db",
+                },
+            },
+            "Missing database reference 'missing-db' for queries/missing_db.yaml",
+        ),
+        (
+            {
+                "datasets/missing_db.yaml": {
+                    "uuid": "53d47c0c-c03d-47f0-b9ac-81225f808283",
+                    "database_uuid": "missing-db",
+                },
+            },
+            "Missing database reference 'missing-db' for datasets/missing_db.yaml",
+        ),
+        (
+            {
+                "charts/missing_dataset.yaml": {
+                    "uuid": "dbb287ec-5d29-11ed-9b6a-0242ac120002",
+                    "dataset_uuid": "missing-dataset",
+                },
+            },
+            "Missing dataset reference 'missing-dataset' "
+            "for charts/missing_dataset.yaml",
+        ),
+    ],
+)
+def test_import_reports_missing_asset_dependencies(
+    configs: dict[str, dict[str, str]],
+    expected_message: str,
+) -> None:
+    """Missing asset references should fail with a clear import error."""
+    from superset.commands.exceptions import ImportFailedError
+    from superset.commands.importers.v1.assets import ImportAssetsCommand
+
+    with pytest.raises(ImportFailedError, match=expected_message):
+        ImportAssetsCommand._import(configs)
+
+
+@pytest.mark.parametrize(
+    "dashboard_config",
+    [
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Missing position",
+            "version": "1.0.0",
+        },
+        {
+            "uuid": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+            "dashboard_title": "Malformed position",
+            "position": [],
+            "version": "1.0.0",
+        },
+    ],
+)
+def test_import_assets_tolerates_missing_or_malformed_dashboard_position(
+    mocker: MockerFixture,
+    dashboard_config: dict[str, object],
+) -> None:
+    """Optional dashboard layout data should not break asset imports."""
+    from superset.commands.importers.v1 import assets as assets_module
+    from superset.commands.importers.v1.assets import ImportAssetsCommand
+
+    dashboard = mocker.Mock()
+    dashboard.id = 1
+    mock_import_dashboard = mocker.patch.object(
+        assets_module, "import_dashboard", return_value=dashboard
+    )
+    mocker.patch.object(assets_module, "migrate_dashboard")
+    mocker.patch("superset.db.session.execute")
+
+    ImportAssetsCommand._import({"dashboards/missing_position.yaml": dashboard_config})
+
+    mock_import_dashboard.assert_called_once()
 
 
 def test_prevent_overwrite_flags_existing_assets(

@@ -92,6 +92,29 @@ def test_import_database_no_creds(mocker: MockerFixture, session: Session) -> No
     assert database.uuid == "2ff17edc-f3fa-4609-a5ac-b484281225bc"
 
 
+def test_import_database_without_extra(mocker: MockerFixture, session: Session) -> None:
+    """
+    Test importing a database config that omits optional extra metadata.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import database_config
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config)
+    del config["extra"]
+
+    database = import_database(config)
+
+    assert database.extra == "{}"
+
+
 def test_import_database_sqlite_invalid(
     mocker: MockerFixture, session: Session
 ) -> None:
@@ -289,6 +312,34 @@ def test_import_database_with_masked_encrypted_extra_new_db(
     )
 
 
+def test_import_database_with_non_object_masked_encrypted_extra_new_db(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """
+    Test new database import normalizes non-object masked_encrypted_extra.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import (
+        database_config_with_masked_encrypted_extra,
+    )
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    config["masked_encrypted_extra"] = "[]"
+
+    database = import_database(config)
+
+    assert json.loads(database.encrypted_extra) == {}
+
+
 def test_import_database_with_masked_encrypted_extra_existing_db(
     mocker: MockerFixture,
     session: Session,
@@ -339,6 +390,82 @@ def test_import_database_with_masked_encrypted_extra_existing_db(
         "-----BEGIN PRIVATE KEY-----\nMyPriVaTeKeY\n-----END PRIVATE KEY-----\n"
     )
     assert encrypted["credentials_info"]["private_key"] != PASSWORD_MASK
+
+
+def test_import_database_with_masked_encrypted_extra_missing_existing_secret(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """
+    Test masked imports tolerate existing encrypted_extra missing the secret path.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.constants import PASSWORD_MASK
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import (
+        database_config_with_masked_encrypted_extra,
+    )
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    database = import_database(config)
+    database.encrypted_extra = json.dumps({})
+    db.session.flush()
+
+    config2 = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    config2["masked_encrypted_extra"] = json.dumps(
+        {
+            "credentials_info": {
+                "type": "service_account",
+                "project_id": "updated-project",
+                "private_key": PASSWORD_MASK,
+            }
+        }
+    )
+
+    database2 = import_database(config2, overwrite=True)
+
+    encrypted = json.loads(database2.encrypted_extra)
+    assert encrypted["credentials_info"]["private_key"] == PASSWORD_MASK
+    assert encrypted["credentials_info"]["project_id"] == "updated-project"
+
+
+def test_import_database_with_non_object_masked_encrypted_extra_existing_db(
+    mocker: MockerFixture,
+    session: Session,
+) -> None:
+    """
+    Test existing database import tolerates non-object masked_encrypted_extra.
+    """
+    from superset import security_manager
+    from superset.commands.database.importers.v1.utils import import_database
+    from superset.models.core import Database
+    from tests.integration_tests.fixtures.importexport import (
+        database_config_with_masked_encrypted_extra,
+    )
+
+    mocker.patch.object(security_manager, "can_access", return_value=True)
+    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+
+    engine = db.session.get_bind()
+    Database.metadata.create_all(engine)  # pylint: disable=no-member
+
+    config = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    import_database(config)
+    db.session.flush()
+
+    config2 = copy.deepcopy(database_config_with_masked_encrypted_extra)
+    config2["masked_encrypted_extra"] = "[]"
+
+    database2 = import_database(config2, overwrite=True)
+
+    assert json.loads(database2.encrypted_extra) == {}
 
 
 def test_import_database_oauth2_redirect_is_nonfatal(

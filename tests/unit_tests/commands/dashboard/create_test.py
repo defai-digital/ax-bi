@@ -21,6 +21,7 @@ from flask_appbuilder.security.sqla.models import Role, User
 from pytest_mock import MockerFixture
 
 from superset.commands.dashboard.create import CreateDashboardCommand
+from superset.commands.dashboard.exceptions import DashboardInvalidError
 from superset.extensions import security_manager
 from tests.unit_tests.fixtures.common import admin_user, after_each  # noqa: F401
 
@@ -96,3 +97,11 @@ def test_validate_custom_role_and_user_class(
 
     for owner in command._properties["owners"]:
         assert isinstance(owner, CustomUserModel)
+
+
+@pytest.mark.parametrize("field_name", ["json_metadata", "position_json"])
+def test_validate_rejects_non_object_json_fields(field_name: str) -> None:
+    command = CreateDashboardCommand(data={field_name: "[]"})
+
+    with pytest.raises(DashboardInvalidError):
+        command.validate()

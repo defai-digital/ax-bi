@@ -93,6 +93,54 @@ def test_bootstrap_oauth_providers(app_context: None) -> None:
     assert providers[0] == {"name": "github", "icon": "fa-github"}
 
 
+def test_bootstrap_oauth_provider_default_icon(app_context: None) -> None:
+    """OAuth providers without an icon get a default icon."""
+    from flask import current_app
+
+    current_app.config["AUTH_TYPE"] = AUTH_OAUTH
+    current_app.config["AUTH_USER_REGISTRATION"] = False
+    current_app.config["OAUTH_PROVIDERS"] = [
+        {"name": "github"},
+    ]
+
+    payload = _get_bootstrap()
+
+    providers = payload["conf"]["AUTH_PROVIDERS"]
+    assert providers[0] == {"name": "github", "icon": "fa-sign-in"}
+
+
+@pytest.mark.parametrize(
+    "auth_type,providers_config_key",
+    [
+        (AUTH_OAUTH, "OAUTH_PROVIDERS"),
+        (AUTH_SAML, "SAML_PROVIDERS"),
+    ],
+)
+def test_bootstrap_skips_malformed_auth_providers(
+    app_context: None,
+    auth_type: int,
+    providers_config_key: str,
+) -> None:
+    """Malformed auth provider entries are skipped during bootstrap."""
+    from flask import current_app
+
+    current_app.config["AUTH_TYPE"] = auth_type
+    current_app.config["AUTH_USER_REGISTRATION"] = False
+    current_app.config[providers_config_key] = [
+        {"name": "github", "icon": "fa-github"},
+        {"icon": "fa-missing-name"},
+        {"name": 123, "icon": "fa-bad-name"},
+        {"name": "bad-icon", "icon": 123},
+        "bad-provider",
+    ]
+
+    payload = _get_bootstrap()
+
+    assert payload["conf"]["AUTH_PROVIDERS"] == [
+        {"name": "github", "icon": "fa-github"}
+    ]
+
+
 @pytest.mark.parametrize(
     "auth_type",
     [AUTH_OAUTH, AUTH_SAML],

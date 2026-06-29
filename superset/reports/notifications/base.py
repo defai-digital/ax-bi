@@ -20,6 +20,8 @@ from typing import Any, Optional
 import pandas as pd
 
 from superset.reports.models import ReportRecipients, ReportRecipientType
+from superset.reports.notifications.exceptions import NotificationParamException
+from superset.utils import json
 from superset.utils.core import HeaderDataType
 
 
@@ -63,3 +65,28 @@ class BaseNotification:  # pylint: disable=too-few-public-methods
 
     def send(self) -> None:
         raise NotImplementedError()
+
+
+def parse_recipient_config(
+    config_json: str | None, error_message: str
+) -> dict[str, Any]:
+    try:
+        config = json.loads(config_json or "{}")
+    except (TypeError, ValueError) as ex:
+        raise NotificationParamException(error_message) from ex
+    if not isinstance(config, dict):
+        raise NotificationParamException(error_message)
+    return config
+
+
+def get_recipient_config_target(
+    config_json: str | None,
+    error_message: str,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    config = parse_recipient_config(config_json, error_message)
+    target = config.get("target")
+    if not isinstance(target, str) or (not target and not allow_empty):
+        raise NotificationParamException(error_message)
+    return target

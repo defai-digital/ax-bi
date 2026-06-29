@@ -38,7 +38,7 @@ from flask_appbuilder.models.sqla.interface import SQLAInterface
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoSuchTableError, OperationalError, SQLAlchemyError
 
-from superset import event_logger
+from superset import db, event_logger, is_feature_enabled
 from superset.commands.database.create import CreateDatabaseCommand
 from superset.commands.database.delete import DeleteDatabaseCommand
 from superset.commands.database.exceptions import (
@@ -68,9 +68,16 @@ from superset.commands.database.uploaders.base import (
     UploadCommand,
     UploadFileType,
 )
-from superset.commands.database.uploaders.columnar_reader import ColumnarReader
-from superset.commands.database.uploaders.csv_reader import CSVReader
-from superset.commands.database.uploaders.excel_reader import ExcelReader
+from superset.commands.database.uploaders.columnar_reader import (
+    ColumnarReader,
+    ColumnarReaderOptions,
+)
+from superset.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
+from superset.commands.database.uploaders.excel_reader import (
+    ExcelReader,
+    ExcelReaderOptions,
+)
+from superset.commands.database.uploaders.local_db import get_or_create_local_db
 from superset.commands.database.validate import ValidateDatabaseParametersCommand
 from superset.commands.database.validate_sql import ValidateSQLCommand
 from superset.commands.importers.exceptions import (
@@ -78,6 +85,7 @@ from superset.commands.importers.exceptions import (
     NoValidFilesFoundError,
 )
 from superset.commands.importers.v1.utils import get_contents_from_bundle
+from superset.connectors.sqla.models import SqlaTable
 from superset.constants import MODEL_API_RW_METHOD_PERMISSION_MAP, RouteMethod
 from superset.daos.database import DatabaseDAO
 from superset.databases.decorators import check_table_access
@@ -126,7 +134,6 @@ from superset.extensions import security_manager
 from superset.models.core import Database
 from superset.sql.parse import Partition, Table
 from superset.superset_typing import FlaskResponse
-from superset.utils import json
 from superset.utils.core import (
     error_msg_from_exception,
     get_username,
@@ -138,6 +145,7 @@ from superset.utils.oauth2 import decode_oauth2_state
 from superset.utils.ssh_tunnel import mask_password_info
 from superset.views.base_api import (
     BaseSupersetModelRestApi,
+    load_optional_json_object_form_field,
     RelatedFieldFilter,
     requires_form_data,
     requires_json,
@@ -176,6 +184,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         "get_connection",
         "upload_metadata",
         "upload",
+        "auto_upload",
         "oauth2",
         "sync_permissions",
     }
@@ -446,7 +455,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_422(message=error.messages)
@@ -546,7 +555,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1293,7 +1304,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = DatabaseTestConnectionSchema().load(request.json)
+            item = DatabaseTestConnectionSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1427,7 +1440,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            sql_request = ValidateSQLRequest().load(request.json)
+            sql_request = ValidateSQLRequest().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -1655,32 +1670,23 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         if not contents:
             raise NoValidFilesFoundError()
 
-        passwords = (
-            json.loads(request.form["passwords"])
-            if "passwords" in request.form
-            else None
-        )
         overwrite = request.form.get("overwrite") == "true"
-        ssh_tunnel_passwords = (
-            json.loads(request.form["ssh_tunnel_passwords"])
-            if "ssh_tunnel_passwords" in request.form
-            else None
-        )
-        ssh_tunnel_private_keys = (
-            json.loads(request.form["ssh_tunnel_private_keys"])
-            if "ssh_tunnel_private_keys" in request.form
-            else None
-        )
-        ssh_tunnel_priv_key_passwords = (
-            json.loads(request.form["ssh_tunnel_private_key_passwords"])
-            if "ssh_tunnel_private_key_passwords" in request.form
-            else None
-        )
-        encrypted_extra_secrets = (
-            json.loads(request.form["encrypted_extra_secrets"])
-            if "encrypted_extra_secrets" in request.form
-            else None
-        )
+        try:
+            passwords = load_optional_json_object_form_field("passwords")
+            ssh_tunnel_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_passwords"
+            )
+            ssh_tunnel_private_keys = load_optional_json_object_form_field(
+                "ssh_tunnel_private_keys"
+            )
+            ssh_tunnel_priv_key_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_private_key_passwords"
+            )
+            encrypted_extra_secrets = load_optional_json_object_form_field(
+                "encrypted_extra_secrets"
+            )
+        except ValueError as ex:
+            return self.response_400(message=str(ex))
 
         command = ImportDatabasesCommand(
             contents,
@@ -1837,6 +1843,172 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         except ValidationError as error:
             return self.response_400(message=error.messages)
         return self.response(201, message="OK")
+
+    @expose("/auto_upload/", methods=("POST",))
+    @protect()
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.auto_upload",
+        log_to_statsd=False,
+    )
+    @requires_form_data
+    def auto_upload(self) -> Response:  # noqa: C901
+        """Upload a file to the auto-provisioned local DuckDB database.
+        ---
+        post:
+          summary: Upload a file with zero-config (auto-provisions DuckDB)
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: The file to upload (CSV, XLSX, or Parquet)
+                    table_name:
+                      type: string
+                      description: >-
+                        Optional table name (derived from filename if omitted)
+                  required:
+                    - file
+          responses:
+            201:
+              description: File uploaded successfully
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      database_id:
+                        type: integer
+                      dataset_id:
+                        type: integer
+                      table_name:
+                        type: string
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            413:
+              description: Payload too large
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+            500:
+              $ref: '#/components/responses/500'
+        """
+        import os
+        import re
+        import uuid
+
+        if not is_feature_enabled("ENABLE_LOCAL_FILE_UPLOAD"):
+            return self.response_404()
+
+        try:
+            file = request.files.get("file")
+            if not file or not file.filename:
+                return self.response_400(message="No file provided")
+
+            # Validate file size
+            UploadCommand.validate_file_size(file)
+
+            # Detect file type from extension
+            filename = file.filename
+            ext = os.path.splitext(filename)[1].lower()
+            file_type_map = {
+                ".csv": UploadFileType.CSV,
+                ".tsv": UploadFileType.CSV,
+                ".txt": UploadFileType.CSV,
+                ".xls": UploadFileType.EXCEL,
+                ".xlsx": UploadFileType.EXCEL,
+                ".parquet": UploadFileType.COLUMNAR,
+            }
+            file_type = file_type_map.get(ext)
+            if not file_type:
+                return self.response_400(
+                    message=f"Unsupported file type: {ext}. "
+                    "Supported types: CSV, TSV, TXT, XLS, XLSX, Parquet"
+                )
+
+            # Derive table name from filename (sanitized)
+            table_name = request.form.get("table_name") or os.path.splitext(filename)[0]
+            # Sanitize: keep only alphanumeric and underscores, prefix with 'upload_'
+            table_name = re.sub(r"[^\w]", "_", table_name).strip("_").lower()
+            if not table_name:
+                table_name = (
+                    re.sub(r"[^\w]", "_", os.path.splitext(filename)[0])
+                    .strip("_")
+                    .lower()
+                )
+            if not table_name:
+                table_name = "upload"
+            # Append a short suffix to avoid collisions
+            short_id = uuid.uuid4().hex[:6]
+            suffix = f"_{short_id}"
+            prefix = "upload_"
+            max_name_length = 250 - len(prefix) - len(suffix)
+            table_name = f"{prefix}{table_name[:max_name_length]}{suffix}"
+
+            # Get or create the local DuckDB database
+            local_db = get_or_create_local_db()
+
+            # Create appropriate reader with sensible defaults
+            reader: BaseDataReader
+            if file_type == UploadFileType.CSV:
+                csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
+                reader = CSVReader(csv_reader_options)
+            elif file_type == UploadFileType.EXCEL:
+                excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+                reader = ExcelReader(excel_reader_options)
+            elif file_type == UploadFileType.COLUMNAR:
+                columnar_reader_options: ColumnarReaderOptions = {
+                    "already_exists": "replace"
+                }
+                reader = ColumnarReader(columnar_reader_options)
+            else:
+                return self.response_400(message="Unexpected Invalid file type")
+
+            # Run upload
+            UploadCommand(
+                local_db.id,
+                table_name,
+                file,
+                None,  # schema
+                reader,
+            ).run()
+
+            # Find the created dataset
+            sqla_table = (
+                db.session.query(SqlaTable)
+                .filter_by(
+                    table_name=table_name,
+                    database_id=local_db.id,
+                )
+                .one_or_none()
+            )
+            if sqla_table is None:
+                return self.response_500(
+                    message="Upload succeeded but dataset could not be found"
+                )
+
+            return self.response(
+                201,
+                database_id=local_db.id,
+                dataset_id=sqla_table.id,
+                table_name=table_name,
+            )
+        except SupersetException as ex:
+            return self.response(ex.status, message=ex.message)
+        except Exception as ex:
+            logger.exception("Auto upload failed")
+            return self.response_400(message=str(ex))
 
     @expose("/<int:pk>/function_names/", methods=("GET",))
     @protect()
@@ -2033,7 +2205,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            payload = DatabaseValidateParametersSchema().load(request.json)
+            payload = DatabaseValidateParametersSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as ex:
             errors = [
                 SupersetError(

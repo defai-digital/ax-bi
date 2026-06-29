@@ -44,7 +44,7 @@ from superset.exceptions import (
 )
 from superset.extensions import event_logger
 from superset.models.core import Database
-from superset.utils.ssh_tunnel import unmask_password_info
+from superset.utils.ssh_tunnel import get_default_port, unmask_password_info
 
 logger = logging.getLogger(__name__)
 
@@ -261,5 +261,6 @@ class TestConnectionDatabaseCommand(BaseCommand):
         if self._properties.get("ssh_tunnel"):
             if not is_feature_enabled("SSH_TUNNELING"):
                 raise SSHTunnelingNotEnabledError()
-            if not self._context.get("port"):
+            backend = make_url_safe(self._uri).get_backend_name()
+            if not self._context.get("port") and not get_default_port(backend):
                 raise SSHTunnelDatabasePortError()

@@ -254,6 +254,11 @@ def test_chart_data_query_object_schema_deprecated_fields_renamed(
     assert result.get("series_limit") == 5
     assert "timeseries_limit" not in result
 
+    # timeseries_limit=0 is a valid explicit limit value
+    result = schema.load({"timeseries_limit": 0})
+    assert result.get("series_limit") == 0
+    assert "timeseries_limit" not in result
+
     # timeseries_limit_metric → series_limit_metric
     result = schema.load({"timeseries_limit_metric": "count"})
     assert result.get("series_limit_metric") == "count"

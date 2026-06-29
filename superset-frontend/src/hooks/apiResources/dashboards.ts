@@ -49,6 +49,31 @@ const DASHBOARD_GET_COLUMNS = [
   'uuid',
 ];
 
+function parseJsonObject(value?: string | null) {
+  if (!value) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function parsePositionData(value?: string | null) {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export const useDashboard = (idOrSlug: string | number) => {
   const q = rison.encode({ columns: DASHBOARD_GET_COLUMNS });
   return useTransformedResource(
@@ -56,10 +81,8 @@ export const useDashboard = (idOrSlug: string | number) => {
     dashboard => ({
       ...dashboard,
       // TODO: load these at the API level
-      metadata:
-        (dashboard.json_metadata && JSON.parse(dashboard.json_metadata)) || {},
-      position_data:
-        dashboard.position_json && JSON.parse(dashboard.position_json),
+      metadata: parseJsonObject(dashboard.json_metadata),
+      position_data: parsePositionData(dashboard.position_json),
       owners: dashboard.owners || [],
     }),
   );

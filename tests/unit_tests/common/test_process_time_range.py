@@ -46,3 +46,13 @@ def test_process_time_range():
     assert (
         QueryObjectFactory._process_time_range(None, filters, columns) == "2002 : 2003"
     )
+
+
+def test_process_time_range_ignores_malformed_filter_entries():
+    filters = [
+        "not a filter",
+        None,
+        {"col": "dttm", "op": "TEMPORAL_RANGE", "val": "2001 : 2002"},
+    ]
+
+    assert QueryObjectFactory._process_time_range(None, filters) == "2001 : 2002"

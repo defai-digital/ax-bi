@@ -68,6 +68,14 @@ def validate_python_date_format(dt_format: str) -> bool:
     return True
 
 
+def load_optional_json_dict(value: str) -> dict[str, Any] | None:
+    try:
+        parsed = json.loads(value) if value.strip() else None
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
 class DatasetColumnsPutSchema(Schema):
     id = fields.Integer(required=False)
     column_name = fields.String(required=True, validate=Length(1, 255))
@@ -253,12 +261,15 @@ class DatasetRelatedObjectsResponse(Schema):
 class ImportV1ColumnSchema(Schema):
     # pylint: disable=unused-argument
     @pre_load
-    def fix_extra(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+    def fix_extra(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for extra initially being exported as a string.
         """
+        if not isinstance(data, dict):
+            return data
+
         if isinstance(data.get("extra"), str):
-            data["extra"] = json.loads(data["extra"])
+            data["extra"] = load_optional_json_dict(data["extra"])
 
         return data
 
@@ -285,22 +296,26 @@ class ImportMetricCurrencySchema(Schema):
 class ImportV1MetricSchema(Schema):
     # pylint: disable=unused-argument
     @pre_load
-    def fix_fields(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+    def fix_fields(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for extra and currency initially being exported as a string.
         """
+        if not isinstance(data, dict):
+            return data
+
         if isinstance(data.get("extra"), str):
-            data["extra"] = json.loads(data["extra"])
+            data["extra"] = load_optional_json_dict(data["extra"])
 
         return data
 
     @pre_load
-    def fix_template_params(
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+    def fix_template_params(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for template_params initially being exported as an empty string.
         """
+        if not isinstance(data, dict):
+            return data
+
         if (
             isinstance(data.get("template_params"), str)
             and data["template_params"].strip() == ""
@@ -322,17 +337,16 @@ class ImportV1MetricSchema(Schema):
 class ImportV1DatasetSchema(Schema):
     # pylint: disable=unused-argument
     @pre_load
-    def fix_extra(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+    def fix_extra(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for extra initially being exported as a string.
         And fixed bug when exporting template_params as empty string.
         """
+        if not isinstance(data, dict):
+            return data
+
         if isinstance(data.get("extra"), str):
-            try:
-                extra = data["extra"]
-                data["extra"] = json.loads(extra) if extra.strip() else None
-            except ValueError:
-                data["extra"] = None
+            data["extra"] = load_optional_json_dict(data["extra"])
 
         if "template_params" in data and data["template_params"] == "":
             data["template_params"] = None

@@ -547,6 +547,21 @@ test('should show missing dataset state', () => {
   ).toBeVisible();
 });
 
+test('should treat legacy dataset_id URL param as a dataset reference', () => {
+  jest.spyOn(window, 'location', 'get').mockReturnValue({
+    ...window.location,
+    search: '?dataset_id=152',
+  } as Location);
+  const props = createProps({ datasource: fallbackExploreInitialData.dataset });
+  render(<DatasourceControl {...props} />, { useRedux: true, useRouter: true });
+  expect(screen.queryByText(/missing url parameters/i)).not.toBeInTheDocument();
+  expect(
+    screen.getByText(
+      /the dataset linked to this chart may have been deleted\./i,
+    ),
+  ).toBeVisible();
+});
+
 test('should show forbidden dataset state', () => {
   jest.spyOn(window, 'location', 'get').mockReturnValue({
     ...window.location,

@@ -1,0 +1,122 @@
+{
+  "assetSearchRequestSchema": {
+    "$id": "ax-services.asset-search.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "query",
+      "assetTypes",
+      "includeCertifiedOnly",
+      "limit"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "asset-search.v1"
+      },
+      "query": {
+        "type": "string"
+      },
+      "assetTypes": {
+        "type": "array",
+        "items": {
+          "enum": [
+            "chart",
+            "dashboard",
+            "dataset",
+            "metric"
+          ]
+        }
+      },
+      "includeCertifiedOnly": {
+        "type": "boolean"
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100
+      }
+    }
+  },
+  "assetSearchResponseSchema": {
+    "$id": "ax-services.asset-search.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "assets",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "asset-search.v1"
+      },
+      "assets": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "assetType",
+            "id",
+            "uuid",
+            "name",
+            "certified",
+            "relevanceScore",
+            "owners",
+            "tags"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "assetType": {
+              "enum": [
+                "chart",
+                "dashboard",
+                "dataset",
+                "metric"
+              ]
+            },
+            "id": {
+              "type": "number"
+            },
+            "uuid": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "certified": {
+              "type": "boolean"
+            },
+            "relevanceScore": {
+              "type": "number"
+            },
+            "relevanceReason": {
+              "type": "string"
+            },
+            "owners": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -37,6 +37,34 @@ logger = logging.getLogger(__name__)
 CHART_TYPE = "CHART"
 
 
+def _parse_json_object(value: str | None) -> dict[str, Any]:
+    if not value:
+        return {}
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        logger.warning("Failed to parse dashboard filter context JSON")
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _iter_dicts(value: Any) -> list[dict[str, Any]]:
+    """Return dict items from a list-like value."""
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    """Return a dict value, or an empty dict for malformed containers."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value: Any) -> list[Any]:
+    """Return a list value, or an empty list for malformed containers."""
+    return value if isinstance(value, list) else []
+
+
 class DashboardFilterStatus(str, Enum):
     APPLIED = "applied"
     NOT_APPLIED = "not_applied"
@@ -86,8 +114,10 @@ def _is_filter_in_scope_for_chart(
     on every load, so it can be stale).
     """
     scope = filter_config.get("scope", {})
-    root_path: list[str] = scope.get("rootPath", [])
-    excluded: list[int] = scope.get("excluded", [])
+    if not isinstance(scope, dict):
+        scope = {}
+    root_path = _as_list(scope.get("rootPath", []))
+    excluded = _as_list(scope.get("excluded", []))
 
     if chart_id in excluded:
         return False
@@ -109,9 +139,11 @@ def _find_chart_layout_item(
     for item in position_json.values():
         if not isinstance(item, dict):
             continue
+        meta = item.get("meta", {})
         if (
             item.get("type") == CHART_TYPE
-            and item.get("meta", {}).get("chartId") == chart_id
+            and isinstance(meta, dict)
+            and meta.get("chartId") == chart_id
         ):
             return item
     return None
@@ -135,8 +167,8 @@ def _merge_extra_form_data(
     merged: dict[str, Any] = {}
 
     for key in append_keys:
-        base_val = base.get(key, [])
-        new_val = new.get(key, [])
+        base_val = _as_list(base.get(key, []))
+        new_val = _as_list(new.get(key, []))
         combined = list(base_val) + list(new_val)
         if combined:
             merged[key] = combined
@@ -180,11 +212,11 @@ def _extract_filter_extra_form_data(
 
     Returns (extra_form_data, status).
     """
-    default_data_mask = filter_config.get("defaultDataMask", {})
-    control_values = filter_config.get("controlValues", {})
+    default_data_mask = _as_dict(filter_config.get("defaultDataMask", {}))
+    control_values = _as_dict(filter_config.get("controlValues", {}))
 
-    extra_form_data = default_data_mask.get("extraFormData")
-    filter_state = default_data_mask.get("filterState", {})
+    extra_form_data = _as_dict(default_data_mask.get("extraFormData"))
+    filter_state = _as_dict(default_data_mask.get("filterState", {}))
     has_static_default = filter_state.get("value") is not None
 
     if control_values.get("defaultToFirstItem"):
@@ -201,7 +233,8 @@ def _extract_filter_extra_form_data(
 
 def _get_filter_target_column(filter_config: dict[str, Any]) -> str | None:
     """Extract the target column name from a native filter configuration."""
-    if targets := filter_config.get("targets", []):
+    targets = _as_list(filter_config.get("targets", []))
+    if targets and isinstance(targets[0], dict):
         column = targets[0].get("column", {})
         if isinstance(column, dict):
             return column.get("name")
@@ -267,16 +300,19 @@ def get_dashboard_filter_context(
     _check_dashboard_access(dashboard)
     _validate_chart_on_dashboard(dashboard, chart_id)
 
-    metadata = json.loads(dashboard.json_metadata or "{}")
-    native_filter_config: list[dict[str, Any]] = metadata.get(
-        "native_filter_configuration", []
-    )
+    metadata = _parse_json_object(dashboard.json_metadata)
+    native_filter_config = metadata.get("native_filter_configuration", [])
+    if not isinstance(native_filter_config, list):
+        native_filter_config = []
 
-    position_json: dict[str, Any] = json.loads(dashboard.position_json or "{}")
+    position_json = _parse_json_object(dashboard.position_json)
 
     context = DashboardFilterContext()
 
     for flt in native_filter_config:
+        if not isinstance(flt, dict):
+            continue
+
         flt_type = flt.get("type", "")
         if flt_type == "DIVIDER":
             continue
@@ -320,15 +356,17 @@ def apply_dashboard_filter_context(  # noqa: C901
     :param extra_form_data: The dashboard's merged extra_form_data to apply. It's
     also mutated in place.
     """
-    extra_filters = extra_form_data.pop("filters", [])
-    for query in query_context.get("queries", []):
+    extra_filters = _iter_dicts(extra_form_data.pop("filters", []))
+    for query in _iter_dicts(query_context.get("queries", [])):
         if extra_filters:
-            existing_filters = query.get("filters") or []
+            existing_filters = _iter_dicts(query.get("filters", []))
             query["filters"] = existing_filters + [
                 {**flt, "isExtra": True} for flt in extra_filters
             ]
 
         extras = query.get("extras") or {}
+        if not isinstance(extras, dict):
+            extras = {}
         for key in EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS:
             if key in extra_form_data:
                 extras[key] = extra_form_data[key]

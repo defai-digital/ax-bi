@@ -219,6 +219,31 @@ async def test_token_with_future_nbf_rejected(hs256_verifier):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("nbf", [float("nan"), float("inf"), "soon", True])
+async def test_invalid_nbf_rejected(hs256_verifier, nbf):
+    """Malformed nbf values must not bypass not-before validation."""
+    claims = {
+        "sub": "user1",
+        "iss": "test-issuer",
+        "aud": "test-audience",
+        "exp": int(time.time()) + 7200,
+        "nbf": nbf,
+    }
+    token = _make_token(
+        {"alg": "HS256", "typ": "JWT"},
+        {**claims, "nbf": 0},
+    )
+
+    with patch.object(hs256_verifier.jwt, "decode", return_value=claims):
+        result = await hs256_verifier.load_access_token(token)
+
+    assert result is None
+    reason = _jwt_failure_reason.get()
+    assert reason == "Token has invalid not-before"
+    assert "user1" not in reason
+
+
+@pytest.mark.asyncio
 async def test_issuer_mismatch(hs256_verifier):
     """Token with wrong issuer should report issuer mismatch."""
     token = _make_token(

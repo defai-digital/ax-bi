@@ -381,6 +381,22 @@ def freeze_value(value: Any) -> str:
     return json.dumps(_strip_overridable_keys(value), sort_keys=True)
 
 
+def _get_native_filter_config(json_metadata: str | None) -> list[dict[str, Any]]:
+    if not json_metadata:
+        return []
+    try:
+        metadata = json.loads(json_metadata)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(metadata, dict):
+        return []
+
+    filters = metadata.get("native_filter_configuration", [])
+    if not isinstance(filters, list):
+        return []
+    return [flt for flt in filters if isinstance(flt, dict)]
+
+
 def _native_filter_allowed_targets(
     query_context: "QueryContext", form_data: dict[str, Any]
 ) -> Optional[tuple[set[str], set[str]]]:
@@ -406,11 +422,7 @@ def _native_filter_allowed_targets(
     dashboard = (
         db.session.query(Dashboard).filter(Dashboard.id == dashboard_id).one_or_none()
     )
-    if dashboard is None or not dashboard.json_metadata:
-        return None
-    try:
-        metadata = json.loads(dashboard.json_metadata)
-    except (TypeError, ValueError):
+    if dashboard is None:
         return None
 
     datasource = getattr(query_context, "datasource", None)
@@ -418,10 +430,12 @@ def _native_filter_allowed_targets(
 
     allowed_columns: set[str] = set()
     allowed_metrics: set[str] = set()
-    for fltr in metadata.get("native_filter_configuration", []):
+    for fltr in _get_native_filter_config(dashboard.json_metadata):
         if fltr.get("id") != native_filter_id:
             continue
         for target in fltr.get("targets", []):
+            if not isinstance(target, dict):
+                continue
             column = target.get("column")
             if (
                 target.get("datasetId") == datasource_id
@@ -431,15 +445,32 @@ def _native_filter_allowed_targets(
                 allowed_columns.add(column["name"])
         # The filter may be configured to sort its values by a saved metric; a
         # legitimate value lookup then sends that metric name.
-        sort_metric = (fltr.get("controlValues") or {}).get("sortMetric") or fltr.get(
-            "sortMetric"
-        )
+        control_values = fltr.get("controlValues")
+        sort_metric = (
+            control_values.get("sortMetric")
+            if isinstance(control_values, dict)
+            else None
+        ) or fltr.get("sortMetric")
         if isinstance(sort_metric, str):
             allowed_metrics.add(sort_metric)
         # Filter ids are unique, so the matching filter is the only one.
         break
 
     return allowed_columns, allowed_metrics
+
+
+def _dashboard_native_filter_has_datasource(
+    dashboard: Any,
+    native_filter_id: str,
+    datasource_id: int | str,
+) -> bool:
+    return any(
+        target.get("datasetId") == datasource_id
+        for fltr in _get_native_filter_config(dashboard.json_metadata)
+        if isinstance(fltr, dict) and native_filter_id == fltr.get("id")
+        for target in fltr.get("targets", [])
+        if isinstance(target, dict)
+    )
 
 
 def _native_filter_term_allowed(
@@ -454,7 +485,8 @@ def _native_filter_term_allowed(
     if isinstance(term, str):
         return term in allowed_columns or term in allowed_metrics
     if isinstance(term, dict) and term.get("expressionType") == "SIMPLE":
-        return (term.get("column") or {}).get("column_name") in allowed_columns
+        column = term.get("column")
+        return isinstance(column, dict) and column.get("column_name") in allowed_columns
     return False
 
 
@@ -671,11 +703,20 @@ def query_context_modified(query_context: "QueryContext") -> bool:
     if form_data.get("slice_id") != stored_chart.id:
         return True
 
-    stored_query_context = (
-        json.loads(cast(str, stored_chart.query_context))
-        if stored_chart.query_context
-        else None
-    )
+    stored_query_context = None
+    if stored_chart.query_context:
+        try:
+            stored_query_context = json.loads(cast(str, stored_chart.query_context))
+        except (TypeError, ValueError):
+            return True
+        if not isinstance(stored_query_context, dict):
+            return True
+        stored_queries = stored_query_context.get("queries")
+        if stored_queries is not None and not (
+            isinstance(stored_queries, list)
+            and all(isinstance(query, dict) for query in stored_queries)
+        ):
+            return True
 
     # compare columns and metrics in form_data with stored values. Order-by is
     # handled separately: a strict subset check there would reject a guest
@@ -1241,6 +1282,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         try:
             # Parse the parent chart's configuration
             parent_form_data = json.loads(parent_slice.params or "{}")
+            if not isinstance(parent_form_data, dict):
+                return False
 
             # Check if this is actually a multi-layer deck.gl chart
             if parent_form_data.get("viz_type") != "deck_multi":
@@ -1248,6 +1291,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
             # Get the configured child slices
             deck_slices = parent_form_data.get("deck_slices", [])
+            if not isinstance(deck_slices, list):
+                return False
 
             # Validate the child is in the parent's configuration
             return child_slice_id in deck_slices
@@ -3532,16 +3577,10 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                             # Native filter.
                             form_data.get("type") == "NATIVE_FILTER"
                             and (native_filter_id := form_data.get("native_filter_id"))
-                            and dashboard_.json_metadata
-                            and (json_metadata := json.loads(dashboard_.json_metadata))
-                            and any(
-                                target.get("datasetId") == datasource.data["id"]
-                                for fltr in json_metadata.get(
-                                    "native_filter_configuration",
-                                    [],
-                                )
-                                for target in fltr.get("targets", [])
-                                if native_filter_id == fltr.get("id")
+                            and _dashboard_native_filter_has_datasource(
+                                dashboard_,
+                                native_filter_id,
+                                datasource.data["id"],
                             )
                         )
                         or (
@@ -4130,6 +4169,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         from superset.models.dashboard import Dashboard
 
         for resource in token.get("resources") or []:
+            if not isinstance(resource, dict):
+                continue
             if resource.get("type") != GuestTokenResourceType.DASHBOARD.value:
                 continue
             resource_id = str(resource.get("id"))

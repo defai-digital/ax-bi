@@ -64,6 +64,21 @@ def test_csrf_exempt_blueprints_with_api_key(app: Any, app_context: None) -> Non
     assert "ApiKeyApi" in {blueprint.name for blueprint in csrf._exempt_blueprints}
 
 
+def test_guest_token_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Guest token creation should reject malformed JSON as schema validation."""
+    response = client.post(
+        "/api/v1/security/guest_token/",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
 def test_rls_rule_schema_accepts_dataset_scoped_rule() -> None:
     """A rule with an integer ``dataset`` and a ``clause`` loads unchanged."""
     result = RlsRuleSchema().load({"dataset": 41, "clause": "tenant_id = 1"})

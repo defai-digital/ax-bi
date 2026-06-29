@@ -171,8 +171,10 @@ class DruidEngineSpec(BaseEngineSpec):
         """
         try:
             extra = json.loads(database.extra or "{}")
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             raise SupersetException("Unable to parse database extras") from ex
+        if not isinstance(extra, dict):
+            extra = {}
 
         if database.server_cert:
             engine_params = extra.get("engine_params", {})

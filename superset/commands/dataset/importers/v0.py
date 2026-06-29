@@ -42,6 +42,30 @@ from superset.utils.dict_import_export import DATABASES_KEY
 logger = logging.getLogger(__name__)
 
 
+def _load_ui_export_dataset_params(
+    file_name: str,
+    index: int,
+    dataset: Any,
+) -> dict[str, Any]:
+    """
+    Load params from a v0 UI export dataset entry.
+    """
+    if not isinstance(dataset, dict):
+        raise IncorrectVersionError(
+            f"{file_name} has invalid dataset entry at index {index}"
+        )
+
+    try:
+        params = json.loads(dataset["params"])
+    except (KeyError, TypeError, json.JSONDecodeError) as ex:
+        raise IncorrectVersionError(f"{file_name} has invalid dataset params") from ex
+
+    if not isinstance(params, dict) or not isinstance(params.get("database_name"), str):
+        raise IncorrectVersionError(f"{file_name} has invalid dataset params")
+
+    return params
+
+
 def lookup_sqla_table(table: SqlaTable) -> Optional[SqlaTable]:
     return (
         db.session.query(SqlaTable)
@@ -265,10 +289,10 @@ class ImportDatasetsCommand(BaseCommand):
             if isinstance(config, dict):
                 import_from_dict(config, sync=self.sync)
             else:  # list
-                for dataset in config:
+                for index, dataset in enumerate(config):
                     # UI exports don't have the database metadata, so we assume
                     # the DB exists and has the same name
-                    params = json.loads(dataset["params"])
+                    params = _load_ui_export_dataset_params(file_name, index, dataset)
                     database = (
                         db.session.query(Database)
                         .filter_by(database_name=params["database_name"])
@@ -296,8 +320,8 @@ class ImportDatasetsCommand(BaseCommand):
 
             # UI export
             elif isinstance(config, list):
-                # TODO (betodealmeida): validate with Marshmallow
-                pass
+                for index, dataset in enumerate(config):
+                    _load_ui_export_dataset_params(file_name, index, dataset)
 
             else:
                 raise IncorrectVersionError(f"{file_name} is not a valid file")

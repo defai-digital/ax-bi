@@ -17,6 +17,7 @@
 
 import json  # noqa: TID251
 from datetime import datetime, timedelta
+from typing import Any, cast
 from unittest.mock import patch
 from uuid import UUID, uuid4
 
@@ -446,6 +447,35 @@ def test_get_dashboard_urls_url_params_only_creates_permalink(
     assert ["standalone", "true"] in state["urlParams"]
     assert len(result) == 1
     assert "/dashboard/p/" in result[0]
+
+
+@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@with_feature_flags(ALERT_REPORT_TABS=True)
+def test_get_dashboard_urls_ignores_non_object_dashboard_state(
+    mock_permalink_cls,
+    mocker: MockerFixture,
+) -> None:
+    mock_report_schedule: ReportSchedule = mocker.Mock(spec=ReportSchedule)
+    mock_report_schedule.chart = False
+    mock_report_schedule.force_screenshot = False
+    mock_report_schedule.extra = cast(Any, {"dashboard": []})
+    mock_report_schedule.get_native_filters_params.return_value = ("()", [])  # type: ignore
+
+    mock_dashboard = mocker.MagicMock()
+    mock_dashboard.uuid = UUID("12345678-1234-1234-1234-123456789abc")
+    mock_report_schedule.dashboard = mock_dashboard
+
+    class_instance: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+    class_instance._report_schedule = mock_report_schedule
+
+    result: list[str] = class_instance.get_dashboard_urls()
+
+    mock_permalink_cls.assert_not_called()
+    assert len(result) == 1
+    assert "/dashboard/p/" not in result[0]
+    assert "12345678-1234-1234-1234-123456789abc" in result[0]
 
 
 @patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
@@ -986,6 +1016,93 @@ def test_get_dashboard_urls_flag_off_preserves_url_params(
     ]
 
 
+@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@with_feature_flags(ALERT_REPORT_TABS=False)
+def test_get_dashboard_urls_ignores_malformed_url_params(
+    mock_permalink_cls,
+    mocker: MockerFixture,
+) -> None:
+    mock_report_schedule: ReportSchedule = mocker.Mock(spec=ReportSchedule)
+    mock_report_schedule.chart = False
+    mock_report_schedule.chart_id = None
+    mock_report_schedule.dashboard_id = 123
+    native_filter_rison = "(NATIVE_FILTER-abc:!(val1))"
+    mock_report_schedule.extra = cast(
+        Any,
+        {
+            "dashboard": {
+                "urlParams": [
+                    "standalone=true",
+                    1,
+                    [],
+                    ["standalone", "true"],
+                    ["native_filters", "(STALE_FILTER:!(stale))"],
+                ],
+            }
+        },
+    )
+    mock_report_schedule.get_native_filters_params.return_value = (  # type: ignore[attr-defined]
+        native_filter_rison,
+        [],
+    )
+
+    class_instance: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+    class_instance._report_schedule = mock_report_schedule
+    mock_permalink_cls.return_value.run.return_value = "permalink_key"
+
+    class_instance.get_dashboard_urls()
+
+    state = mock_permalink_cls.call_args_list[0].kwargs["state"]
+    assert state["urlParams"] == [
+        ["standalone", "true"],
+        ["native_filters", native_filter_rison],
+    ]
+
+
+@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@with_feature_flags(ALERT_REPORT_TABS=True)
+def test_get_dashboard_urls_ignores_malformed_anchor(
+    mock_permalink_cls,
+    mocker: MockerFixture,
+) -> None:
+    mock_report_schedule: ReportSchedule = mocker.Mock(spec=ReportSchedule)
+    mock_report_schedule.chart = False
+    mock_report_schedule.force_screenshot = False
+    mock_report_schedule.extra = cast(Any, {"dashboard": {"anchor": ["TAB-1"]}})
+    mock_report_schedule.get_native_filters_params.return_value = ("()", [])  # type: ignore[attr-defined]
+
+    mock_dashboard = mocker.MagicMock()
+    mock_dashboard.uuid = UUID("12345678-1234-1234-1234-123456789abc")
+    mock_report_schedule.dashboard = mock_dashboard
+
+    class_instance: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+    class_instance._report_schedule = mock_report_schedule
+
+    result = class_instance.get_dashboard_urls()
+
+    mock_permalink_cls.assert_not_called()
+    assert len(result) == 1
+    assert "/dashboard/p/" not in result[0]
+    assert "12345678-1234-1234-1234-123456789abc" in result[0]
+
+
+def test_get_native_filters_params_skips_malformed_filter_entries() -> None:
+    report_schedule = ReportSchedule()
+    report_schedule.extra = cast(
+        Any,
+        {"dashboard": {"nativeFilters": ["bad-filter"]}},
+    )
+
+    native_filter_params, warnings = report_schedule.get_native_filters_params()
+
+    assert native_filter_params == "()"
+    assert warnings == ["Skipping malformed native filter: bad-filter"]
+
+
 def create_report_schedule(
     mocker: MockerFixture,
     custom_width: int | None = None,
@@ -1169,6 +1286,100 @@ def test_update_recipient_to_slack_v2_missing_channels(mocker: MockerFixture):
     )
     with pytest.raises(UpdateFailedError):
         mock_cmmd.update_report_schedule_slack_v2()
+
+
+def test_update_recipient_to_slack_v2_restores_all_recipients_on_failure(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test Slack v2 conversion restores earlier recipient mutations on failure.
+    """
+    mocker.patch(
+        "superset.commands.report.execute.get_channels_with_search",
+        side_effect=[
+            [
+                {
+                    "id": "channel_1_id",
+                    "name": "Channel 1",
+                    "is_member": True,
+                    "is_private": False,
+                },
+            ],
+            [],
+        ],
+    )
+    first_config = json.dumps({"target": "Channel 1"})
+    second_config = json.dumps({"target": "Missing Channel"})
+    mock_report_schedule = ReportSchedule(
+        recipients=[
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=first_config,
+            ),
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=second_config,
+            ),
+        ],
+    )
+
+    mock_cmmd: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+
+    with pytest.raises(UpdateFailedError, match="Could not find"):
+        mock_cmmd.update_report_schedule_slack_v2()
+
+    first_recipient, second_recipient = mock_cmmd._report_schedule.recipients
+    assert first_recipient.type == ReportRecipientType.SLACK
+    assert first_recipient.recipient_config_json == first_config
+    assert second_recipient.type == ReportRecipientType.SLACK
+    assert second_recipient.recipient_config_json == second_config
+
+
+def test_update_recipient_to_slack_v2_skips_malformed_channels(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Test converting Slack recipients treats malformed channel lookup results
+    as missing channels instead of raising a raw lookup error.
+    """
+    mocker.patch(
+        "superset.commands.report.execute.get_channels_with_search",
+        return_value=[
+            {
+                "id": "abc124f",
+                "name": "Channel 1",
+                "is_member": True,
+                "is_private": False,
+            },
+            {
+                "name": "Channel 2",
+                "is_member": True,
+                "is_private": False,
+            },
+        ],
+    )
+    mock_report_schedule = ReportSchedule(
+        recipients=[
+            ReportRecipients(
+                type=ReportRecipientType.SLACK,
+                recipient_config_json=json.dumps({"target": "Channel 1, Channel 2"}),
+            ),
+        ],
+    )
+
+    mock_cmmd: BaseReportState = BaseReportState(
+        mock_report_schedule, "January 1, 2021", "execution_id_example"
+    )
+
+    with pytest.raises(UpdateFailedError, match="Could not find"):
+        mock_cmmd.update_report_schedule_slack_v2()
+
+    assert mock_cmmd._report_schedule.recipients[0].type == ReportRecipientType.SLACK
+    assert mock_cmmd._report_schedule.recipients[0].recipient_config_json == json.dumps(
+        {"target": "Channel 1, Channel 2"}
+    )
 
 
 # ---------------------------------------------------------------------------

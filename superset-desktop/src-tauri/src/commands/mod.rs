@@ -20,6 +20,8 @@
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, Runtime};
 
+use crate::navigation::build_navigation_script;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub server_url: String,
@@ -27,11 +29,13 @@ pub struct AppConfig {
     pub version: String,
 }
 
+const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
+
 #[tauri::command]
 pub async fn get_app_config<R: Runtime>(_app: AppHandle<R>) -> Result<AppConfig, String> {
     Ok(AppConfig {
         server_url: std::env::var("AXBI_SERVER_URL")
-            .unwrap_or_else(|_| "https://your-axbi-instance.com".to_string()),
+            .unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string()),
         sso_enabled: true,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
@@ -40,11 +44,10 @@ pub async fn get_app_config<R: Runtime>(_app: AppHandle<R>) -> Result<AppConfig,
 #[tauri::command]
 pub async fn navigate_to<R: Runtime>(app: AppHandle<R>, path: String) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
-        let js = format!(
-            "window.location.href = '{}';",
-            path.replace('\'', "\\'")
-        );
-        window.eval(&js).map_err(|e| format!("Failed to navigate: {}", e))?;
+        let js = build_navigation_script(&path)?;
+        window
+            .eval(&js)
+            .map_err(|e| format!("Failed to navigate: {}", e))?;
     }
     Ok(())
 }

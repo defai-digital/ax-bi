@@ -61,9 +61,13 @@ def apply_display_max_row_configuration_if_require(  # pylint: disable=invalid-n
     """
 
     def is_require_to_apply() -> bool:
+        query = sql_results.get("query")
+        rows = query.get("rows") if isinstance(query, dict) else None
         return (
-            sql_results["status"] == QueryStatus.SUCCESS
-            and sql_results["query"]["rows"] > max_rows_in_result
+            sql_results.get("status") == QueryStatus.SUCCESS
+            and isinstance(rows, int)
+            and rows > max_rows_in_result
+            and isinstance(sql_results.get("data"), list)
         )
 
     if is_require_to_apply():

@@ -31,6 +31,72 @@ if TYPE_CHECKING:
     from superset.app import SupersetApp
 
 
+def test_load_json_object_accepts_json_objects() -> None:
+    """Saved chart payload parsing accepts object JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object('{"queries": []}') == {"queries": []}
+
+
+def test_load_json_object_rejects_non_object_json() -> None:
+    """Saved chart payload parsing rejects non-object JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object("[]") is None
+
+
+def test_load_json_object_rejects_malformed_json() -> None:
+    """Saved chart payload parsing rejects malformed JSON."""
+    from superset.charts.data.api import _load_json_object
+
+    assert _load_json_object("{malformed") is None
+
+
+def test_chart_data_post_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Malformed JSON request bodies should return the API validation response."""
+    response = client.post(
+        "/api/v1/chart/data",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": "Request is not JSON"}
+
+
+def test_map_form_data_datasource_to_dataset_id_extracts_context() -> None:
+    """Chart data log context extracts dashboard, dataset, and chart IDs."""
+    from superset.charts.data.api import ChartDataRestApi
+
+    context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
+        MagicMock(),
+        {
+            "datasource": {"id": 5, "type": "table"},
+            "form_data": {"dashboardId": 7, "slice_id": 9},
+        },
+    )
+
+    assert context == {"dashboard_id": 7, "dataset_id": 5, "slice_id": 9}
+
+
+def test_map_form_data_datasource_to_dataset_id_ignores_malformed_context() -> None:
+    """Malformed chart data log context containers should not raise."""
+    from superset.charts.data.api import ChartDataRestApi
+
+    context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
+        MagicMock(),
+        {
+            "datasource": "5__table",
+            "form_data": "not-an-object",
+        },
+    )
+
+    assert context == {"dashboard_id": None, "dataset_id": None, "slice_id": None}
+
+
 def test_get_data_sets_g_form_data_without_dashboard_filter() -> None:
     """
     Regression test: GET /api/v1/chart/<pk>/data/ must populate g.form_data
@@ -113,6 +179,43 @@ def test_apply_dashboard_filter_context_does_not_duplicate_filters(
         assert ExtraCache().filter_values("country") == ["USA"]
 
 
+def test_apply_dashboard_filter_context_ignores_malformed_query_entries() -> None:
+    """
+    Malformed query containers should not prevent valid query context updates.
+    """
+    query_context_json: dict[str, Any] = {
+        "queries": [
+            "bad-query",
+            {"filters": "bad-existing-filters"},
+        ],
+    }
+    extra_form_data: dict[str, Any] = {
+        "filters": [
+            "bad-filter",
+            {"col": "country", "op": "IN", "val": ["USA"]},
+        ],
+    }
+
+    apply_dashboard_filter_context(query_context_json, extra_form_data)
+
+    assert query_context_json["queries"][0] == "bad-query"
+    assert query_context_json["queries"][1]["filters"] == [
+        {"col": "country", "op": "IN", "val": ["USA"], "isExtra": True},
+    ]
+    assert query_context_json["queries"][1]["extra_form_data"] == {}
+
+
+def test_apply_dashboard_filter_context_ignores_scalar_containers() -> None:
+    """Scalar query/filter containers should be treated as empty."""
+    query_context_json: dict[str, Any] = {"queries": "bad-queries"}
+    extra_form_data: dict[str, Any] = {"filters": "bad-filters"}
+
+    apply_dashboard_filter_context(query_context_json, extra_form_data)
+
+    assert query_context_json == {"queries": "bad-queries"}
+    assert extra_form_data == {}
+
+
 def test_apply_dashboard_filter_context_applies_time_grain_to_extras() -> None:
     """
     A dashboard time-grain filter must land in ``query["extras"]``, where
@@ -125,6 +228,23 @@ def test_apply_dashboard_filter_context_applies_time_grain_to_extras() -> None:
     apply_dashboard_filter_context(query_context_json, {"time_grain_sqla": "P1M"})
 
     assert query_context_json["queries"][0]["extras"]["time_grain_sqla"] == "P1M"
+
+
+def test_apply_dashboard_filter_context_resets_malformed_extras() -> None:
+    """Malformed query extras should not crash dashboard context application."""
+    query_context_json: dict[str, Any] = {
+        "queries": [{"extras": "bad-extras"}],
+    }
+
+    apply_dashboard_filter_context(
+        query_context_json,
+        {"relative_start": "now", "time_grain_sqla": "P1M"},
+    )
+
+    assert query_context_json["queries"][0]["extras"] == {
+        "relative_start": "now",
+        "time_grain_sqla": "P1M",
+    }
 
 
 def test_apply_dashboard_filter_context_overrides_x_axis_time_grain() -> None:

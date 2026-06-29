@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, cast, Dict, List
 
 from flask import g
 from flask_appbuilder.models.sqla.interface import SQLAInterface
@@ -55,6 +55,43 @@ DASHBOARD_CUSTOM_FIELDS = {
     "owner": ["eq", "in"],
     "favorite": ["eq"],
 }
+
+
+def _load_dashboard_json_metadata(dashboard: Dashboard) -> dict[str, Any]:
+    try:
+        metadata = json.loads(dashboard.json_metadata or "{}")
+    except (TypeError, ValueError):
+        logger.warning(
+            "Ignoring malformed dashboard json_metadata",
+            extra={"dashboard_id": dashboard.id},
+        )
+        return {}
+
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _load_json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _load_json_object_list(metadata: dict[str, Any], key: str) -> list[dict[str, Any]]:
+    value = metadata.get(key, [])
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def _as_list(value: Any) -> list[Any]:
+    """Return a list value, or an empty list for malformed containers."""
+    return value if isinstance(value, list) else []
 
 
 class DashboardDAO(BaseDAO[Dashboard]):
@@ -268,12 +305,15 @@ class DashboardDAO(BaseDAO[Dashboard]):
         new_filter_scopes = {}
         md = dashboard.params_dict
 
-        if (positions := data.get("positions")) is not None:
+        if data.get("positions") is not None:
+            positions = _load_json_object(data["positions"])
             # find slices in the position data
             slice_ids = [
                 value.get("meta", {}).get("chartId")
                 for value in positions.values()
                 if isinstance(value, dict)
+                and isinstance(value.get("meta"), dict)
+                and value.get("meta", {}).get("chartId")
             ]
 
             current_slices = (
@@ -287,8 +327,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
             for obj in positions.values():
                 if (
                     isinstance(obj, dict)
-                    and obj["type"] == "CHART"
-                    and obj["meta"]["chartId"]
+                    and obj.get("type") == "CHART"
+                    and isinstance(obj.get("meta"), dict)
+                    and obj["meta"].get("chartId")
                 ):
                     chart_id = obj["meta"]["chartId"]
                     obj["meta"]["uuid"] = uuid_map.get(chart_id)
@@ -310,18 +351,20 @@ class DashboardDAO(BaseDAO[Dashboard]):
                     }
                 else:
                     slc_id_dict = {sid: sid for sid in slice_ids}
+                old_filter_scopes = cast(
+                    dict[int, dict[str, dict[str, Any]]],
+                    _load_json_object(data["filter_scopes"]),
+                )
                 new_filter_scopes = copy_filter_scopes(
                     old_to_new_slc_id_dict=slc_id_dict,
-                    old_filter_scopes=json.loads(data["filter_scopes"] or "{}")
-                    if isinstance(data["filter_scopes"], str)
-                    else data["filter_scopes"],
+                    old_filter_scopes=old_filter_scopes,
                 )
 
-            default_filters_data = json.loads(data.get("default_filters", "{}"))
+            default_filters_data = _load_json_object(data.get("default_filters"))
             applicable_filters = {
                 key: v
                 for key, v in default_filters_data.items()
-                if int(key) in slice_ids
+                if str(key).isdigit() and int(key) in slice_ids
             }
             md["default_filters"] = json.dumps(applicable_filters)
 
@@ -378,7 +421,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dash.dashboard_title = data["dashboard_title"]
         dash.css = data.get("css")
 
-        metadata = json.loads(data["json_metadata"])
+        metadata = _load_json_object(data.get("json_metadata"))
         old_to_new_slice_ids: dict[int, int] = {}
         if data.get("duplicate_slices"):
             # Duplicating slices as well, mapping old ids to new ones
@@ -391,11 +434,13 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 old_to_new_slice_ids[slc.id] = new_slice.id
 
             # update chartId of layout entities
-            for value in metadata["positions"].values():
-                if isinstance(value, dict) and value.get("meta", {}).get("chartId"):
-                    old_id = value["meta"]["chartId"]
+            positions = _load_json_object(metadata.get("positions"))
+            for value in positions.values():
+                meta = value.get("meta") if isinstance(value, dict) else None
+                if isinstance(meta, dict) and meta.get("chartId"):
+                    old_id = meta["chartId"]
                     new_id = old_to_new_slice_ids.get(old_id)
-                    value["meta"]["chartId"] = new_id
+                    meta["chartId"] = new_id
         else:
             dash.slices = original_dash.slices
 
@@ -409,12 +454,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
         cls, id: str
     ) -> dict[str, list[dict[str, Any]]]:
         dashboard = cls.get_by_id_or_slug(id)
-        metadata = json.loads(dashboard.json_metadata or "{}")
-        native_filter_configuration = metadata.get("native_filter_configuration", [])
+        metadata = _load_dashboard_json_metadata(dashboard)
+        native_filter_configuration = _load_json_object_list(
+            metadata,
+            "native_filter_configuration",
+        )
 
         tab_filters = defaultdict(list)
         for filter in native_filter_configuration:
-            if tabs_in_scope := filter.get("tabsInScope", []):
+            tabs_in_scope = filter.get("tabsInScope", [])
+            if isinstance(tabs_in_scope, list):
                 for tab_key in tabs_in_scope:
                     tab_filters[tab_key].append(filter)
             tab_filters["all"].append(filter)
@@ -430,29 +479,33 @@ class DashboardDAO(BaseDAO[Dashboard]):
         if not dashboard:
             raise DashboardUpdateFailedError("Dashboard not found")
 
+        updated_configuration: list[dict[str, Any]] = []
         if attributes:
-            metadata = json.loads(dashboard.json_metadata or "{}")
-            native_filter_configuration = metadata.get(
-                "native_filter_configuration", []
+            metadata = _load_dashboard_json_metadata(dashboard)
+            native_filter_configuration = _load_json_object_list(
+                metadata,
+                "native_filter_configuration",
             )
-            reordered_filter_ids: list[int] = attributes.get("reordered", [])
+            reordered_filter_ids = _as_list(attributes.get("reordered", []))
+            modified_filters = [
+                item
+                for item in _as_list(attributes.get("modified", []))
+                if isinstance(item, dict)
+            ]
+            deleted_filter_ids = _as_list(attributes.get("deleted", []))
             updated_configuration = []
 
             # Modify / Delete existing filters
             for conf in native_filter_configuration:
                 deleted_filter = next(
-                    (f for f in attributes.get("deleted", []) if f == conf.get("id")),
+                    (f for f in deleted_filter_ids if f == conf.get("id")),
                     None,
                 )
                 if deleted_filter:
                     continue
 
                 modified_filter = next(
-                    (
-                        f
-                        for f in attributes.get("modified", [])
-                        if f.get("id") == conf.get("id")
-                    ),
+                    (f for f in modified_filters if f.get("id") == conf.get("id")),
                     None,
                 )
                 if modified_filter:
@@ -463,13 +516,14 @@ class DashboardDAO(BaseDAO[Dashboard]):
                     updated_configuration.append(conf)
 
             # Append new filters
-            for new_filter in attributes.get("modified", []):
+            for new_filter in modified_filters:
                 new_filter_id = new_filter.get("id")
                 if new_filter_id not in [f.get("id") for f in updated_configuration]:
                     updated_configuration.append(new_filter)
 
                     if (
                         reordered_filter_ids
+                        and isinstance(new_filter_id, int)
                         and new_filter_id not in reordered_filter_ids
                     ):
                         reordered_filter_ids.append(new_filter_id)
@@ -477,8 +531,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
             # Reorder filters
             if reordered_filter_ids:
                 filter_map = {
-                    filter_config["id"]: filter_config
+                    filter_id: filter_config
                     for filter_config in updated_configuration
+                    if (filter_id := filter_config.get("id")) is not None
                 }
 
                 updated_configuration = [
@@ -498,16 +553,25 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dashboard: Dashboard,
         attributes: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        metadata = json.loads(dashboard.json_metadata or "{}")
+        metadata = _load_dashboard_json_metadata(dashboard)
         updated_configuration = []
 
         if attributes:
-            chart_customization_config = metadata.get("chart_customization_config", [])
-            reordered_customization_ids: list[str] = attributes.get("reordered", [])
+            chart_customization_config = _load_json_object_list(
+                metadata,
+                "chart_customization_config",
+            )
+            reordered_customization_ids = _as_list(attributes.get("reordered", []))
+            modified_customizations = [
+                item
+                for item in _as_list(attributes.get("modified", []))
+                if isinstance(item, dict)
+            ]
+            deleted_customization_ids = _as_list(attributes.get("deleted", []))
 
             for conf in chart_customization_config:
                 deleted_customization = next(
-                    (c for c in attributes.get("deleted", []) if c == conf.get("id")),
+                    (c for c in deleted_customization_ids if c == conf.get("id")),
                     None,
                 )
                 if deleted_customization:
@@ -516,7 +580,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 modified_customization = next(
                     (
                         c
-                        for c in attributes.get("modified", [])
+                        for c in modified_customizations
                         if c.get("id") == conf.get("id")
                     ),
                     None,
@@ -526,7 +590,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
                 else:
                     updated_configuration.append(conf)
 
-            for new_customization in attributes.get("modified", []):
+            for new_customization in modified_customizations:
                 new_customization_id = new_customization.get("id")
                 if new_customization_id not in [
                     c.get("id") for c in updated_configuration
@@ -535,14 +599,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
 
                     if (
                         reordered_customization_ids
+                        and isinstance(new_customization_id, str)
                         and new_customization_id not in reordered_customization_ids
                     ):
                         reordered_customization_ids.append(new_customization_id)
 
             if reordered_customization_ids:
                 customization_map = {
-                    customization_config["id"]: customization_config
+                    customization_id: customization_config
                     for customization_config in updated_configuration
+                    if (customization_id := customization_config.get("id")) is not None
                 }
 
                 updated_configuration = [
@@ -560,7 +626,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
     def update_colors_config(
         cls, dashboard: Dashboard, attributes: dict[str, Any]
     ) -> None:
-        metadata = json.loads(dashboard.json_metadata or "{}")
+        metadata = _load_dashboard_json_metadata(dashboard)
 
         for key in [
             "color_scheme_domain",

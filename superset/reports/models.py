@@ -202,9 +202,19 @@ class ReportSchedule(AuditMixinNullable, ExtraJSONMixin, Model):
         params: dict[str, Any] = {}
         warnings: list[str] = []
         dashboard = self.extra.get("dashboard")
-        if dashboard and dashboard.get("nativeFilters"):
+        if isinstance(dashboard, dict) and dashboard.get("nativeFilters"):
             native_filters = dashboard.get("nativeFilters") or []
-            for native_filter in native_filters:  # type: ignore
+            if not isinstance(native_filters, list):
+                warning_msg = "Skipping malformed native filters payload"
+                warnings.append(warning_msg)
+                logger.warning(warning_msg)
+                return rison.dumps(params), warnings
+            for native_filter in native_filters:
+                if not isinstance(native_filter, dict):
+                    warning_msg = f"Skipping malformed native filter: {native_filter}"
+                    warnings.append(warning_msg)
+                    logger.warning(warning_msg)
+                    continue
                 native_filter_id = native_filter.get("nativeFilterId")
                 filter_type = native_filter.get("filterType")
 
@@ -217,11 +227,21 @@ class ReportSchedule(AuditMixinNullable, ExtraJSONMixin, Model):
                     logger.warning(warning_msg)
                     continue
 
+                filter_values = native_filter.get("filterValues") or []
+                if not isinstance(filter_values, list):
+                    warning_msg = (
+                        f"Skipping malformed native filterValues for "
+                        f"filter_id: {native_filter_id}"
+                    )
+                    warnings.append(warning_msg)
+                    logger.warning(warning_msg)
+                    continue
+
                 filter_config, filter_warning = self._generate_native_filter(
                     native_filter_id,
                     filter_type,
                     native_filter.get("columnName") or "",
-                    native_filter.get("filterValues") or [],
+                    filter_values,
                 )
                 if filter_warning:
                     warnings.append(filter_warning)

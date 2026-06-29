@@ -24,6 +24,7 @@ from flask_appbuilder.security.decorators import has_access, has_access_api
 from flask_babel import _
 from marshmallow import ValidationError
 from sqlalchemy.exc import NoResultFound, NoSuchTableError
+from werkzeug.exceptions import BadRequest
 
 from superset import db, event_logger, security_manager
 from superset.commands.dataset.exceptions import (
@@ -56,6 +57,22 @@ from superset.views.error_handling import handle_api_exception
 from superset.views.utils import sanitize_datasource_data
 
 
+def _get_column_names(datasource_dict: dict[str, Any]) -> list[str] | None:
+    columns = datasource_dict.get("columns")
+    if not isinstance(columns, list):
+        return None
+
+    column_names: list[str] = []
+    for column in columns:
+        if not isinstance(column, dict):
+            return None
+        column_name = column.get("column_name")
+        if not isinstance(column_name, str):
+            return None
+        column_names.append(column_name)
+    return column_names
+
+
 class Datasource(BaseSupersetView):
     """Datasource-related views"""
 
@@ -73,14 +90,30 @@ class Datasource(BaseSupersetView):
         if not isinstance(data, str):
             return json_error_response(_("Request missing data field."), status=500)
 
-        datasource_dict = json.loads(data)
+        try:
+            datasource_dict = json.loads(data)
+        except (TypeError, ValueError):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+        if not isinstance(datasource_dict, dict):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+
         normalize_columns = datasource_dict.get("normalize_columns", False)
         always_filter_main_dttm = datasource_dict.get("always_filter_main_dttm", False)
         datasource_dict["normalize_columns"] = normalize_columns
         datasource_dict["always_filter_main_dttm"] = always_filter_main_dttm
         datasource_id = datasource_dict.get("id")
         datasource_type = datasource_dict.get("type")
-        database_id = datasource_dict["database"].get("id")
+        database = datasource_dict.get("database")
+        if (
+            datasource_id is None
+            or not isinstance(datasource_type, str)
+            or not isinstance(database, dict)
+        ):
+            return json_error_response(_("Invalid datasource payload."), status=400)
+        column_names = _get_column_names(datasource_dict)
+        if column_names is None:
+            return json_error_response(_("Invalid datasource payload."), status=400)
+        database_id = database.get("id")
         orm_datasource = DatasourceDAO.get_datasource(
             DatasourceType(datasource_type), datasource_id
         )
@@ -93,15 +126,11 @@ class Datasource(BaseSupersetView):
                 raise DatasetForbiddenError() from ex
 
         datasource_dict["owners"] = populate_owner_list(
-            datasource_dict["owners"], default_to_user=False
+            datasource_dict.get("owners"), default_to_user=False
         )
 
         duplicates = [
-            name
-            for name, count in Counter(
-                [col["column_name"] for col in datasource_dict["columns"]]
-            ).items()
-            if count > 1
+            name for name, count in Counter(column_names).items() if count > 1
         ]
         if duplicates:
             return json_error_response(
@@ -205,9 +234,13 @@ class Datasource(BaseSupersetView):
     def samples(self) -> FlaskResponse:
         try:
             params = SamplesRequestSchema().load(request.args)
-            payload = SamplesPayloadSchema().load(request.json)
+            try:
+                raw_payload = request.get_json(cache=True) if request.is_json else None
+            except BadRequest as ex:
+                raise ValidationError({"_schema": ["Invalid input type."]}) from ex
+            payload = SamplesPayloadSchema().load(raw_payload)
         except ValidationError as err:
-            return json_error_response(err.messages, status=400)
+            return json_error_response(payload={"message": err.messages}, status=400)
         dashboard_id = None
         if security_manager.is_guest_user():
             if not params["dashboard_id"]:

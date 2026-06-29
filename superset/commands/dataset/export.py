@@ -18,12 +18,13 @@
 
 import logging
 from collections.abc import Iterator
-from typing import Callable
+from typing import Any, Callable
 
 import yaml
 
 from superset.commands.export.models import ExportModelsCommand
 from superset.connectors.sqla.models import SqlaTable
+from superset.commands.database.export import parse_extra
 from superset.commands.dataset.exceptions import DatasetNotFoundError
 from superset.daos.dataset import DatasetDAO
 from superset.utils.dict_import_export import EXPORT_VERSION
@@ -34,6 +35,40 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 JSON_KEYS = {"params", "template_params", "extra"}
+
+
+def _coerce_attribute_payloads(
+    payload: dict[str, Any],
+    key: str,
+) -> list[dict[str, Any]]:
+    """Return dict attributes for metrics/columns, dropping malformed entries."""
+    attributes = payload.get(key)
+    if attributes is None:
+        return []
+    if not isinstance(attributes, list):
+        payload[key] = []
+        return []
+
+    valid_attributes = [
+        attribute for attribute in attributes if isinstance(attribute, dict)
+    ]
+    if len(valid_attributes) != len(attributes):
+        payload[key] = valid_attributes
+    return valid_attributes
+
+
+def _load_json_object(
+    value: Any,
+    key: str,
+    default: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    try:
+        parsed = json.loads(value)
+    except (TypeError, json.JSONDecodeError):
+        logger.info("Unable to decode `%s` field: %s", key, value)
+        return default
+
+    return parsed if isinstance(parsed, dict) else default
 
 
 class ExportDatasetsCommand(ExportModelsCommand):
@@ -59,20 +94,16 @@ class ExportDatasetsCommand(ExportModelsCommand):
         # TODO (betodealmeida): move this logic to export_to_dict once this
         # becomes the default export endpoint
         for key in JSON_KEYS:
-            if payload.get(key):
-                try:
-                    payload[key] = json.loads(payload[key])
-                except json.JSONDecodeError:
-                    logger.info("Unable to decode `%s` field: %s", key, payload[key])
+            if payload.get(key) is not None:
+                payload[key] = _load_json_object(payload[key], key, {})
         for key in ("metrics", "columns"):
-            for attributes in payload.get(key, []):
-                if attributes.get("extra"):
-                    try:
-                        attributes["extra"] = json.loads(attributes["extra"])
-                    except json.JSONDecodeError:
-                        logger.info(
-                            "Unable to decode `extra` field: %s", attributes["extra"]
-                        )
+            for attributes in _coerce_attribute_payloads(payload, key):
+                if attributes.get("extra") is not None:
+                    attributes["extra"] = _load_json_object(
+                        attributes["extra"],
+                        "extra",
+                        None,
+                    )
 
         payload["version"] = EXPORT_VERSION
         payload["database_uuid"] = str(model.database.uuid)
@@ -112,10 +143,7 @@ class ExportDatasetsCommand(ExportModelsCommand):
             # TODO (betodealmeida): move this logic to export_to_dict once this
             # becomes the default export endpoint
             if payload.get("extra"):
-                try:
-                    payload["extra"] = json.loads(payload["extra"])
-                except json.JSONDecodeError:
-                    logger.info("Unable to decode `extra` field: %s", payload["extra"])
+                payload["extra"] = parse_extra(payload["extra"])
 
             if ssh_tunnel := model.database.ssh_tunnel:
                 ssh_tunnel_payload = ssh_tunnel.export_to_dict(

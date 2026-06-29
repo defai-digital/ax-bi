@@ -26,6 +26,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from superset import security_manager
 from superset.commands.base import BaseCommand
 from superset.commands.semantic_layer.exceptions import (
+    SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticLayerUpdateFailedError,
@@ -41,6 +42,16 @@ from superset.utils import json
 from superset.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
+
+
+def _load_json_object(value: str | None) -> dict[str, Any]:
+    """Parse a JSON object string, returning an empty object for invalid shapes."""
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
 
 
 class UpdateSemanticViewCommand(BaseCommand):
@@ -75,7 +86,7 @@ class UpdateSemanticViewCommand(BaseCommand):
         layer_uuid = str(self._model.semantic_layer_uuid)
         configuration = self._properties.get(
             "configuration",
-            json.loads(self._model.configuration),
+            _load_json_object(self._model.configuration),
         )
         if not SemanticViewDAO.validate_update_uniqueness(
             view_uuid=str(self._model.uuid),
@@ -115,6 +126,11 @@ class UpdateSemanticLayerCommand(BaseCommand):
         self._model = SemanticLayerDAO.find_by_uuid(self._uuid)
         if not self._model:
             raise SemanticLayerNotFoundError()
+
+        try:
+            security_manager.raise_for_ownership(self._model)
+        except SupersetSecurityException as ex:
+            raise SemanticLayerForbiddenError() from ex
 
         name = self._properties.get("name")
         if name and not SemanticLayerDAO.validate_update_uniqueness(self._uuid, name):

@@ -87,9 +87,9 @@ _BEARER_RE = re.compile(r"(?i)\b(bearer|token|api[_-]?key)\s+(?!\[REDACTED_)\S+"
 _KEY_VALUE_SECRET_RE = re.compile(
     r"(?i)\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?key|"
     r"auth[_-]?token|authorization|bearer|session[_-]?id)"
-    r"(\s*[:=]\s*)\"?([^\"\s,;]+)\"?"
+    r"(\s*[:=]\s*)(?:\"[^\"]*\"|'[^']*'|[^\s,;]+)"
 )
-_URL_CREDENTIALS_RE = re.compile(r"(\b\w+://)[^\s/@]+:[^\s/@]+@")
+_URL_CREDENTIALS_RE = re.compile(r"(\b[A-Za-z][A-Za-z0-9+.-]*://)[^\s/@]*:[^\s/@]*@")
 _LONG_HEX_RE = re.compile(r"\b[A-Fa-f0-9]{32,}\b")
 _JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b")
 
@@ -312,6 +312,8 @@ async def generate_bug_report(
                 request.additional_context or "", redactions
             )
             or None,
+            "mcp_call_id": _sanitize_text(request.mcp_call_id or "", redactions)
+            or None,
         }
 
         environment = _collect_environment()
@@ -324,7 +326,7 @@ async def generate_bug_report(
             environment=environment,
             user_context=user_context,
             timestamp=timestamp,
-            mcp_call_id=request.mcp_call_id,
+            mcp_call_id=sanitized.get("mcp_call_id"),
         )
 
     return GenerateBugReportResponse(

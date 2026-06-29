@@ -16,6 +16,7 @@
 # under the License.
 # pylint: disable=import-outside-toplevel, unused-argument, unused-import
 
+from unittest.mock import MagicMock
 from uuid import UUID
 
 import yaml
@@ -356,3 +357,113 @@ def test_export_two_datasets_same_table_name_different_schema(
     assert schemas_in_yaml == {"prod", "dev"}, (
         f"Expected both prod and dev schemas in export, got {schemas_in_yaml}"
     )
+
+
+def test_export_related_database_replaces_non_object_extra(
+    session: Session,
+) -> None:
+    """
+    Test exporting a dataset with malformed related database extra metadata.
+    """
+    from superset.commands.dataset.export import ExportDatasetsCommand
+    from superset.connectors.sqla.models import SqlaTable
+    from superset.models.core import Database
+
+    engine = db.session.get_bind()
+    SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
+
+    database = Database(
+        database_name="my_database",
+        sqlalchemy_uri="sqlite://",
+        extra="[]",
+    )
+    sqla_table = SqlaTable(table_name="my_table", database=database)
+    db.session.add_all([database, sqla_table])
+    db.session.flush()
+
+    export = dict(
+        ExportDatasetsCommand._export(  # pylint: disable=protected-access
+            sqla_table
+        )
+    )
+    database_payload = yaml.safe_load(export["databases/my_database.yaml"]())
+
+    assert database_payload["extra"] == {}
+
+
+def test_file_content_replaces_non_object_json_fields(
+    session: Session,
+) -> None:
+    """
+    Test exporting a dataset with JSON fields that decode to non-object values.
+    """
+    from superset.commands.dataset.export import ExportDatasetsCommand
+    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from superset.models.core import Database
+
+    engine = db.session.get_bind()
+    SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
+
+    database = Database(database_name="my_database", sqlalchemy_uri="sqlite://")
+    sqla_table = SqlaTable(
+        table_name="my_table",
+        database=database,
+        params="[]",
+        template_params="[]",
+        extra="[]",
+        columns=[
+            TableColumn(
+                column_name="my_col",
+                type="INTEGER",
+                extra="[]",
+            ),
+        ],
+        metrics=[
+            SqlMetric(
+                metric_name="count",
+                expression="COUNT(*)",
+                extra="[]",
+            ),
+        ],
+    )
+    db.session.add_all([database, sqla_table])
+    db.session.flush()
+
+    content = ExportDatasetsCommand._file_content(  # pylint: disable=protected-access
+        sqla_table
+    )
+    payload = yaml.safe_load(content)
+
+    assert payload["params"] == {}
+    assert payload["template_params"] == {}
+    assert payload["extra"] == {}
+    assert payload["columns"][0]["extra"] is None
+    assert payload["metrics"][0]["extra"] is None
+
+
+def test_file_content_ignores_malformed_column_metric_entries() -> None:
+    """Malformed column/metric entries should not crash dataset export."""
+    from superset.commands.dataset.export import ExportDatasetsCommand
+
+    model = MagicMock()
+    model.cache_timeout = None
+    model.database.uuid = UUID("00000000-0000-0000-0000-000000000010")
+    model.export_to_dict.return_value = {
+        "table_name": "my_table",
+        "params": "{}",
+        "template_params": "{}",
+        "extra": "{}",
+        "metrics": 10,
+        "columns": [
+            "bad-column",
+            {"column_name": "profit", "extra": '{"certified_by": "User"}'},
+        ],
+    }
+
+    content = ExportDatasetsCommand._file_content(model)  # pylint: disable=protected-access
+    payload = yaml.safe_load(content)
+
+    assert payload["metrics"] == []
+    assert payload["columns"] == [
+        {"column_name": "profit", "extra": {"certified_by": "User"}}
+    ]

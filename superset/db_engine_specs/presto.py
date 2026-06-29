@@ -312,7 +312,7 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         """
         Return the default catalog.
         """
-        if database.url_object.database is None:
+        if not database.url_object.database:
             return None
 
         return database.url_object.database.split("/")[0]
@@ -369,6 +369,9 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
             presto://localhost:8080/hive[/default]
 
         """
+        if not sqlalchemy_uri.database:
+            return None
+
         database = sqlalchemy_uri.database.strip("/")
 
         if "/" not in database:

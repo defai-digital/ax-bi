@@ -16,11 +16,12 @@
 # under the License.
 
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, cast, Optional, Union
 
 import pytest
 from sqlalchemy import types
 
+from superset.db_engine_specs.base import BasicParametersType
 from superset.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
@@ -67,6 +68,26 @@ def test_convert_dttm(
     )
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
+
+
+def test_build_sqlalchemy_uri_ignores_malformed_query_params(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+
+    parameters = cast(
+        BasicParametersType,
+        {
+            "host": "localhost",
+            "query": "not a query mapping",
+        },
+    )
+
+    assert (
+        CouchbaseEngineSpec.build_sqlalchemy_uri(parameters)
+        == "couchbase://localhost?ssl=false"
+    )
+    assert capsys.readouterr().out == ""
 
 
 @pytest.mark.parametrize(

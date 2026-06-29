@@ -122,6 +122,66 @@ def test_post_with_uuid(
     assert database.uuid == UUID("7c1b7880-a59d-47cd-8bf1-f1eb8d2863cb")
 
 
+@pytest.mark.parametrize(
+    ("method", "url", "status_code"),
+    [
+        ("post", "/api/v1/database/", 422),
+        ("put", "/api/v1/database/1", 400),
+        ("post", "/api/v1/database/test_connection/", 400),
+        ("post", "/api/v1/database/1/validate_sql/", 400),
+    ],
+)
+def test_database_write_endpoints_reject_malformed_json(
+    client: Any,
+    full_api_access: None,
+    method: str,
+    url: str,
+    status_code: int,
+) -> None:
+    """Database write endpoints should reject malformed JSON consistently."""
+    response = getattr(client, method)(
+        url,
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == status_code
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
+def test_validate_parameters_rejects_malformed_json(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Database parameter validation should reject malformed JSON as a schema error."""
+    response = client.post(
+        "/api/v1/database/validate_parameters/",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 422
+    assert response.json == {
+        "errors": [
+            {
+                "message": "Invalid input type.",
+                "error_type": "INVALID_PAYLOAD_SCHEMA_ERROR",
+                "level": "error",
+                "extra": {
+                    "invalid": ["_schema"],
+                    "issue_codes": [
+                        {
+                            "code": 1020,
+                            "message": "Issue 1020 - The submitted payload"
+                            " has the incorrect schema.",
+                        }
+                    ],
+                },
+            }
+        ]
+    }
+
+
 def test_password_mask(
     mocker: MockerFixture,
     app: Any,
@@ -345,9 +405,9 @@ def test_database_connection(
     }
 
 
-@pytest.mark.skip(reason="Works locally but fails on CI")
 def test_update_with_password_mask(
     app: Any,
+    mocker: MockerFixture,
     session: Session,
     client: Any,
     full_api_access: None,
@@ -359,6 +419,7 @@ def test_update_with_password_mask(
     from superset.models.core import Database
 
     DatabaseRestApi.datamodel._session = session
+    mocker.patch("superset.commands.database.update.SyncPermissionsCommand")
 
     # create table for databases
     Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
@@ -378,8 +439,8 @@ def test_update_with_password_mask(
     db.session.add(database)
     db.session.commit()
 
-    client.put(
-        "/api/v1/database/1",
+    response = client.put(
+        f"/api/v1/database/{database.id}",
         json={
             "encrypted_extra": json.dumps(
                 {
@@ -391,11 +452,14 @@ def test_update_with_password_mask(
             ),
         },
     )
-    database = db.session.query(Database).one()
-    assert (
-        database.encrypted_extra
-        == '{"service_account_info": {"project_id": "yellow-unicorn-314419", "private_key": "SECRET"}}'  # noqa: E501
-    )
+    assert response.status_code == 200
+    updated_database = db.session.query(Database).filter_by(id=database.id).one()
+    assert json.loads(updated_database.encrypted_extra) == {
+        "service_account_info": {
+            "project_id": "yellow-unicorn-314419",
+            "private_key": "SECRET",
+        },
+    }
 
 
 def test_import(
@@ -524,6 +588,55 @@ def test_import_with_encrypted_extra_secrets(
         ssh_tunnel_priv_key_passwords=None,
         encrypted_extra_secrets=secrets,
     )
+
+
+@pytest.mark.parametrize(("payload",), [("{",), ("[]",)])
+def test_import_rejects_invalid_json_object_form_field(
+    payload: str,
+    mocker: MockerFixture,
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """
+    Test that optional JSON form fields must contain JSON objects.
+    """
+    contents = {
+        "metadata.yaml": yaml.safe_dump(
+            {
+                "version": "1.0.0",
+                "type": "Database",
+                "timestamp": "2021-01-01T00:00:00Z",
+            }
+        ),
+        "databases/test.yaml": yaml.safe_dump(
+            {
+                "database_name": "test",
+                "sqlalchemy_uri": "bigquery://gcp-project-id/",
+                "uuid": "00000000-0000-0000-0000-123456789001",
+            }
+        ),
+    }
+    mocker.patch("superset.databases.api.is_zipfile", return_value=True)
+    mocker.patch("superset.databases.api.ZipFile")
+    mocker.patch(
+        "superset.databases.api.get_contents_from_bundle",
+        return_value=contents,
+    )
+    command = mocker.patch("superset.databases.api.ImportDatabasesCommand")
+
+    form_data = {
+        "formData": (BytesIO(b"test"), "test.zip"),
+        "passwords": payload,
+    }
+    response = client.post(
+        "/api/v1/database/import/",
+        data=form_data,
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": "Invalid JSON object for form field: passwords"}
+    command.assert_not_called()
 
 
 def test_non_zip_import(client: Any, full_api_access: None) -> None:
@@ -1063,7 +1176,17 @@ def test_csv_upload(
                 "delimiter": ",",
                 "already_exists": "fail",
             },
-            {"message": {"table_name": ["Length must be between 1 and 10000."]}},
+            {"message": {"table_name": ["Length must be between 1 and 250."]}},
+        ),
+        (
+            {
+                "type": "csv",
+                "file": (create_csv_file(), "out.csv"),
+                "table_name": "a" * 251,
+                "delimiter": ",",
+                "already_exists": "fail",
+            },
+            {"message": {"table_name": ["Length must be between 1 and 250."]}},
         ),
         (
             {
@@ -1171,6 +1294,17 @@ def test_csv_upload(
             },
             {"message": {"_schema": ["Invalid JSON format for column_data_types"]}},
         ),
+        (
+            {
+                "type": "csv",
+                "file": (create_csv_file(), "out.csv"),
+                "table_name": "table1",
+                "delimiter": ",",
+                "already_exists": "fail",
+                "column_data_types": '["col1"]',
+            },
+            {"message": {"_schema": ["column_data_types must be a JSON object"]}},
+        ),
     ],
 )
 def test_csv_upload_validation(
@@ -1267,6 +1401,31 @@ def test_csv_upload_file_extension_valid(
         content_type="multipart/form-data",
     )
     assert response.status_code == 201
+
+
+def test_upload_rejects_file_extension_that_does_not_match_type(
+    mocker: MockerFixture,
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """
+    Test upload validation fails when the file extension is allowed globally but
+    does not match the requested reader type.
+    """
+    run = mocker.patch.object(UploadCommand, "run")
+    response = client.post(
+        "/api/v1/database/1/upload/",
+        data={
+            "type": "csv",
+            "file": create_excel_file(filename="workbook.xlsx"),
+            "table_name": "table1",
+            "delimiter": ",",
+        },
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.json == {"message": {"file": ["File extension is not allowed."]}}
+    run.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -1403,7 +1562,7 @@ def test_excel_upload(
                 "sheet_name": "Sheet1",
                 "already_exists": "fail",
             },
-            {"message": {"table_name": ["Length must be between 1 and 10000."]}},
+            {"message": {"table_name": ["Length must be between 1 and 250."]}},
         ),
         (
             {"type": "excel", "table_name": "table1", "already_exists": "fail"},
@@ -1619,7 +1778,7 @@ def test_columnar_upload(
                 "table_name": "",
                 "already_exists": "fail",
             },
-            {"message": {"table_name": ["Length must be between 1 and 10000."]}},
+            {"message": {"table_name": ["Length must be between 1 and 250."]}},
         ),
         (
             {"type": "columnar", "table_name": "table1", "already_exists": "fail"},
@@ -1759,6 +1918,24 @@ def test_csv_metadata_bad_extension(
     )
     assert response.status_code == 400
     assert response.json == {"message": {"file": ["File extension is not allowed."]}}
+
+
+def test_metadata_rejects_file_extension_that_does_not_match_type(
+    mocker: MockerFixture, client: Any, full_api_access: None
+) -> None:
+    """
+    Test metadata validation fails when the file extension is allowed globally
+    but does not match the requested reader type.
+    """
+    file_metadata = mocker.patch.object(CSVReader, "file_metadata")
+    response = client.post(
+        "/api/v1/database/upload_metadata/",
+        data={"type": "csv", "file": create_excel_file(filename="workbook.xlsx")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.json == {"message": {"file": ["File extension is not allowed."]}}
+    file_metadata.assert_not_called()
 
 
 def test_csv_metadata_validation(

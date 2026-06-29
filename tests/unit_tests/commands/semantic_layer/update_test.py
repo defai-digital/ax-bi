@@ -21,6 +21,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from superset.commands.semantic_layer.exceptions import (
+    SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticViewForbiddenError,
@@ -31,6 +32,12 @@ from superset.commands.semantic_layer.update import (
     UpdateSemanticViewCommand,
 )
 from superset.exceptions import SupersetSecurityException
+
+
+def _allow_semantic_layer_ownership(mocker: MockerFixture) -> MagicMock:
+    return mocker.patch(
+        "superset.commands.semantic_layer.update.security_manager",
+    ).raise_for_ownership
 
 
 def test_update_semantic_view_success(mocker: MockerFixture) -> None:
@@ -126,12 +133,14 @@ def test_update_semantic_layer_success(mocker: MockerFixture) -> None:
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
+    raise_for_ownership = _allow_semantic_layer_ownership(mocker)
 
     data = {"name": "Updated", "description": "New desc"}
     result = UpdateSemanticLayerCommand("some-uuid", data).run()
 
     assert result == mock_model
     dao.find_by_uuid.assert_called_once_with("some-uuid")
+    raise_for_ownership.assert_called_once_with(mock_model)
     dao.update.assert_called_once_with(mock_model, attributes=data)
 
 
@@ -146,6 +155,28 @@ def test_update_semantic_layer_not_found(mocker: MockerFixture) -> None:
         UpdateSemanticLayerCommand("missing-uuid", {"name": "test"}).run()
 
 
+def test_update_semantic_layer_forbidden(mocker: MockerFixture) -> None:
+    """Test that SemanticLayerForbiddenError is raised on ownership failure."""
+    mock_model = MagicMock()
+    mock_model.type = "snowflake"
+
+    dao = mocker.patch(
+        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+    )
+    dao.find_by_uuid.return_value = mock_model
+    raise_for_ownership = mocker.patch(
+        "superset.commands.semantic_layer.update.security_manager.raise_for_ownership",
+        side_effect=SupersetSecurityException(MagicMock()),
+    )
+
+    with pytest.raises(SemanticLayerForbiddenError):
+        UpdateSemanticLayerCommand("some-uuid", {"name": "test"}).run()
+
+    raise_for_ownership.assert_called_once_with(mock_model)
+    dao.validate_update_uniqueness.assert_not_called()
+    dao.update.assert_not_called()
+
+
 def test_update_semantic_layer_duplicate_name(mocker: MockerFixture) -> None:
     """Test that SemanticLayerInvalidError is raised for duplicate names."""
     mock_model = MagicMock()
@@ -156,6 +187,7 @@ def test_update_semantic_layer_duplicate_name(mocker: MockerFixture) -> None:
     )
     dao.find_by_uuid.return_value = mock_model
     dao.validate_update_uniqueness.return_value = False
+    _allow_semantic_layer_ownership(mocker)
 
     with pytest.raises(SemanticLayerInvalidError):
         UpdateSemanticLayerCommand("some-uuid", {"name": "Duplicate"}).run()
@@ -173,6 +205,7 @@ def test_update_semantic_layer_validates_configuration(
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
+    _allow_semantic_layer_ownership(mocker)
 
     mock_cls = MagicMock()
     mocker.patch.dict(
@@ -198,6 +231,7 @@ def test_update_semantic_layer_skips_name_check_when_no_name(
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
+    _allow_semantic_layer_ownership(mocker)
 
     UpdateSemanticLayerCommand("some-uuid", {"description": "Updated"}).run()
 
@@ -214,6 +248,7 @@ def test_update_semantic_layer_copies_data(mocker: MockerFixture) -> None:
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
+    _allow_semantic_layer_ownership(mocker)
 
     original_data = {"description": "Original"}
     UpdateSemanticLayerCommand("some-uuid", original_data).run()
@@ -291,6 +326,34 @@ def test_update_uniqueness_same_config_different_name(
         name="renamed_view",
         layer_uuid="layer-uuid-1",
         configuration={"schema": "prod"},
+    )
+
+
+def test_update_uniqueness_uses_empty_config_for_non_object_stored_config(
+    mocker: MockerFixture,
+) -> None:
+    """Non-object stored configuration is treated as an empty object."""
+    mock_model = _make_view_model(configuration="[]")
+
+    dao = mocker.patch(
+        "superset.commands.semantic_layer.update.SemanticViewDAO",
+    )
+    dao.find_by_id.return_value = mock_model
+    dao.update.return_value = mock_model
+    dao.validate_update_uniqueness.return_value = True
+
+    mocker.patch(
+        "superset.commands.semantic_layer.update.security_manager",
+    )
+
+    result = UpdateSemanticViewCommand(1, {"description": "updated"}).run()
+
+    assert result == mock_model
+    dao.validate_update_uniqueness.assert_called_once_with(
+        view_uuid="view-uuid-1",
+        name="my_view",
+        layer_uuid="layer-uuid-1",
+        configuration={},
     )
 
 

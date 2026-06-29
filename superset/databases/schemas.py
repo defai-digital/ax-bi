@@ -264,8 +264,17 @@ def extra_validator(value: str) -> str:
                 [_("Field cannot be decoded by JSON. %(msg)s", msg=str(ex))]
             ) from ex
 
+        if not isinstance(extra_, dict):
+            raise ValidationError([_("Extra field must be a JSON object.")])
+
+        metadata_params = extra_.get("metadata_params", {})
+        if not isinstance(metadata_params, dict):
+            raise ValidationError(
+                [_("The metadata_params in Extra field must be a JSON object.")]
+            )
+
         metadata_signature = inspect.signature(MetaData)
-        for key in extra_.get("metadata_params", {}):
+        for key in metadata_params:
             if key not in metadata_signature.parameters:
                 raise ValidationError(
                     [
@@ -312,9 +321,7 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
     )
 
     @pre_load
-    def build_sqlalchemy_uri(
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+    def build_sqlalchemy_uri(self, data: Any, **kwargs: Any) -> Any:
         """
         Build SQLAlchemy URI from separate parameters.
 
@@ -322,6 +329,9 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
         parameters (eg, username, password, host, etc.), instead of requiring
         the constructed SQLAlchemy URI to be passed.
         """
+        if not isinstance(data, dict):
+            return data
+
         parameters = data.pop("parameters", {})
         # TODO(AAfghahi) standardize engine.
         engine = (
@@ -362,7 +372,9 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
             serialized_encrypted_extra = data.get("masked_encrypted_extra") or "{}"
             try:
                 encrypted_extra = json.loads(serialized_encrypted_extra)
-            except json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
+                encrypted_extra = {}
+            if not isinstance(encrypted_extra, dict):
                 encrypted_extra = {}
 
             data["sqlalchemy_uri"] = engine_spec.build_sqlalchemy_uri(
@@ -375,15 +387,18 @@ class DatabaseParametersSchemaMixin:  # pylint: disable=too-few-public-methods
 
 def rename_encrypted_extra(
     self: Schema,
-    data: dict[str, Any],
+    data: Any,
     **kwargs: Any,
-) -> dict[str, Any]:
+) -> Any:
     """
     Rename ``encrypted_extra`` to ``masked_encrypted_extra``.
 
     PR #21248 changed the database schema for security reasons. This pre-loader keeps
     Superset backwards compatible with older clients.
     """
+    if not isinstance(data, dict):
+        return data
+
     if "encrypted_extra" in data:
         data["masked_encrypted_extra"] = data.pop("encrypted_extra")
     return data
@@ -858,11 +873,14 @@ class DatabaseFunctionNamesResponse(Schema):
 class ImportV1DatabaseExtraSchema(Schema):
     @pre_load
     def fix_schemas_allowed_for_csv_upload(  # pylint: disable=invalid-name
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+        self, data: Any, **kwargs: Any
+    ) -> Any:
         """
         Fixes for ``schemas_allowed_for_csv_upload``.
         """
+        if not isinstance(data, dict):
+            return data
+
         # Fix for https://github.com/apache/superset/pull/16756, which temporarily
         # changed the V1 schema. We need to support exports made after that PR and
         # before this PR.
@@ -876,9 +894,14 @@ class ImportV1DatabaseExtraSchema(Schema):
         # saved and exported with a string for ``schemas_allowed_for_csv_upload``.
         schemas_allowed_for_csv_upload = data.get("schemas_allowed_for_csv_upload")
         if isinstance(schemas_allowed_for_csv_upload, str):
-            data["schemas_allowed_for_csv_upload"] = json.loads(
-                schemas_allowed_for_csv_upload
-            )
+            try:
+                data["schemas_allowed_for_csv_upload"] = json.loads(
+                    schemas_allowed_for_csv_upload
+                )
+            except (TypeError, json.JSONDecodeError) as ex:
+                raise ValidationError(
+                    {"schemas_allowed_for_csv_upload": ["Invalid JSON"]}
+                ) from ex
 
         return data
 
@@ -899,12 +922,13 @@ class ImportV1DatabaseExtraSchema(Schema):
 
 class ImportV1DatabaseSchema(Schema):
     @pre_load
-    def fix_allow_csv_upload(
-        self, data: dict[str, Any], **kwargs: Any
-    ) -> dict[str, Any]:
+    def fix_allow_csv_upload(self, data: Any, **kwargs: Any) -> Any:
         """
         Fix for ``allow_csv_upload`` .
         """
+        if not isinstance(data, dict):
+            return data
+
         # Fix for https://github.com/apache/superset/pull/16756, which temporarily
         # changed the V1 schema. We need to support exports made after that PR and
         # before this PR.
@@ -1207,9 +1231,43 @@ class DelimitedListField(fields.List):
 
 
 class BaseUploadFilePostSchemaMixin(Schema):
+    type_extension_config_keys = {
+        UploadFileType.CSV.value: "CSV_EXTENSIONS",
+        UploadFileType.EXCEL.value: "EXCEL_EXTENSIONS",
+        UploadFileType.COLUMNAR.value: "COLUMNAR_EXTENSIONS",
+    }
+
     @validates("file")
     def validate_file_extension(self, file: FileStorage, **kwargs: Any) -> None:
         allowed_extensions = current_app.config["ALLOWED_EXTENSIONS"]
+        self._validate_file_extension(file, allowed_extensions)
+
+    @validates_schema
+    def validate_file_extension_matches_type(
+        self, data: dict[str, Any], **kwargs: Any
+    ) -> None:
+        """Validate that the extension matches the selected upload reader type."""
+        file = data.get("file")
+        upload_type = data.get("type")
+        if not file or not upload_type:
+            return
+        if isinstance(upload_type, UploadFileType):
+            upload_type = upload_type.value
+        extension_config_key = self.type_extension_config_keys.get(upload_type)
+        if not extension_config_key:
+            return
+        try:
+            self._validate_file_extension(
+                file, current_app.config[extension_config_key]
+            )
+        except ValidationError as ex:
+            raise ValidationError({"file": ex.messages}) from ex
+
+    @staticmethod
+    def _validate_file_extension(
+        file: FileStorage, allowed_extensions: set[str]
+    ) -> None:
+        """Validate a file extension against an allowed extension set."""
         file_suffix = Path(file.filename).suffix
         if not file_suffix:
             raise ValidationError([_("File extension is not allowed.")])
@@ -1248,7 +1306,7 @@ class UploadPostSchema(BaseUploadFilePostSchemaMixin):
     )
     table_name = fields.String(
         required=True,
-        validate=[Length(min=1, max=10000)],
+        validate=[Length(min=1, max=250)],
         allow_none=False,
         metadata={"description": "The name of the table to be created/appended"},
     )
@@ -1351,11 +1409,14 @@ class UploadPostSchema(BaseUploadFilePostSchemaMixin):
     ) -> dict[str, Any]:
         if "column_data_types" in data and data["column_data_types"]:
             try:
-                data["column_data_types"] = json.loads(data["column_data_types"])
+                column_data_types = json.loads(data["column_data_types"])
             except json.JSONDecodeError as ex:
                 raise ValidationError(
                     "Invalid JSON format for column_data_types"
                 ) from ex
+            if not isinstance(column_data_types, dict):
+                raise ValidationError("column_data_types must be a JSON object")
+            data["column_data_types"] = column_data_types
         return data
 
 

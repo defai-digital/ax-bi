@@ -15,6 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import inspect
+from unittest.mock import MagicMock
+
+from flask import Flask
 
 from superset.themes.api import ThemeRestApi
 
@@ -121,3 +125,17 @@ class TestThemeRestApi:
         expected_new_fields = ["is_system", "uuid"]
         for field in expected_new_fields:
             assert field in ThemeRestApi.list_columns
+
+    def test_put_rejects_non_object_body(self):
+        """Test theme updates reject non-object JSON bodies."""
+        app = Flask(__name__)
+        api = ThemeRestApi()
+        api.response_400 = MagicMock(return_value="bad request")
+
+        with app.test_request_context(json=["not", "an", "object"]):
+            result = inspect.unwrap(ThemeRestApi.put)(api, 1)
+
+        assert result == "bad request"
+        api.response_400.assert_called_once_with(
+            message="Request body must be a JSON object"
+        )

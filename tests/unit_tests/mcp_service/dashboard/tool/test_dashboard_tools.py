@@ -26,7 +26,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
-from flask import g
+from flask import current_app, g
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.dashboard.schemas import (
@@ -1432,8 +1432,17 @@ class TestDashboardSortableColumns:
 async def test_list_dashboards_no_arguments(mock_list, mcp_server):
     """Regression test: list_dashboards must accept zero arguments without raising
     pydantic_core.ValidationError: Missing required argument: request."""
+    stats_logger = Mock()
+    current_app.config["STATS_LOGGER"] = stats_logger
     mock_list.return_value = ([], 0)
     async with Client(mcp_server) as client:
         result = await client.call_tool("list_dashboards", {})
     data = json.loads(result.content[0].text)
     assert "dashboards" in data
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_dashboards.success"
+    )
+    stats_logger.timing.assert_called_once()
+    assert stats_logger.timing.call_args.args[0] == (
+        "runtime_modernization.mcp_orchestration.list_dashboards.duration"
+    )

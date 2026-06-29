@@ -35,7 +35,7 @@ from superset.legacy import update_time_range
 from superset.superset_typing import FlaskResponse
 from superset.utils import json
 from superset.utils.date_parser import get_since_until
-from superset.views.base import api, BaseSupersetView
+from superset.views.base import api, BaseSupersetView, json_error_response
 from superset.views.error_handling import handle_api_exception
 
 if TYPE_CHECKING:
@@ -53,6 +53,21 @@ get_time_range_schema = {
 }
 
 
+def _load_query_context_form_data() -> dict[str, Any]:
+    """
+    Load the legacy query endpoint's form-encoded query context.
+    """
+    try:
+        query_context = json.loads(request.form["query_context"])
+    except (KeyError, TypeError, json.JSONDecodeError) as ex:
+        raise ValueError("Invalid query_context") from ex
+
+    if not isinstance(query_context, dict):
+        raise ValueError("Invalid query_context")
+
+    return query_context
+
+
 class Api(BaseSupersetView):
     query_context_factory = None
 
@@ -68,9 +83,12 @@ class Api(BaseSupersetView):
 
         raises SupersetSecurityException: If the user cannot access the resource
         """
-        query_context = self.get_query_context_factory().create(
-            **json.loads(request.form["query_context"])
-        )
+        try:
+            query_context_data = _load_query_context_form_data()
+        except ValueError:
+            return json_error_response("Invalid query_context", status=400)
+
+        query_context = self.get_query_context_factory().create(**query_context_data)
         query_context.raise_for_access()
         result = query_context.get_payload()
         payload_json = result["queries"]

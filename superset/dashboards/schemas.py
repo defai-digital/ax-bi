@@ -221,15 +221,18 @@ class DashboardJSONMetadataSchema(Schema):
     @pre_load
     def remove_show_native_filters(  # pylint: disable=unused-argument
         self,
-        data: dict[str, Any],
+        data: Any,
         **kwargs: Any,
-    ) -> dict[str, Any]:
+    ) -> Any:
         """
         Remove ``show_native_filters`` from the JSON metadata.
 
         This field was removed in https://github.com/apache/superset/pull/23228, but might
         be present in old exports.
         """  # noqa: E501
+        if not isinstance(data, dict):
+            return data
+
         if "show_native_filters" in data:
             del data["show_native_filters"]
 

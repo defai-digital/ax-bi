@@ -18,8 +18,10 @@
  */
 
 import '@testing-library/jest-dom';
-import { render, screen } from '@superset-ui/core/spec';
-import { triggerResizeObserver } from 'resize-observer-polyfill';
+import { act, render, screen, waitFor } from '@superset-ui/core/spec';
+import MockResizeObserver, {
+  triggerResizeObserver,
+} from 'resize-observer-polyfill';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { promiseTimeout, SuperChart } from '@superset-ui/core';
@@ -64,6 +66,7 @@ function getDimensionText(container: HTMLElement) {
 
 describe('SuperChart', () => {
   jest.setTimeout(5000);
+  let originalResizeObserver: typeof window.ResizeObserver | undefined;
 
   const plugins = [
     new DiligentChartPlugin().configure({ key: ChartKeys.DILIGENT }),
@@ -71,9 +74,20 @@ describe('SuperChart', () => {
   ];
 
   beforeAll(() => {
+    originalResizeObserver = window.ResizeObserver;
+    window.ResizeObserver =
+      MockResizeObserver as unknown as typeof window.ResizeObserver;
     plugins.forEach(p => {
       p.unregister().register();
     });
+  });
+
+  afterAll(() => {
+    if (originalResizeObserver === undefined) {
+      delete (window as Partial<typeof window>).ResizeObserver;
+    } else {
+      window.ResizeObserver = originalResizeObserver;
+    }
   });
 
   beforeEach(() => {
@@ -225,57 +239,61 @@ describe('SuperChart', () => {
     return wrapper;
   };
 
-  // Update dimension tests to wait for resize observer
-  // First, increase the timeout for all tests
   jest.setTimeout(20000);
 
-  // Update the waitForDimensions helper to include a retry mechanism
-  // Update waitForDimensions to avoid await in loop
   const waitForDimensions = async (
     container: HTMLElement,
     expectedWidth: number,
     expectedHeight: number,
-  ) => {
-    const maxAttempts = 5;
-    const interval = 100;
+  ) =>
+    waitFor(() => {
+      const testComponent = container.querySelector('.test-component');
+      const dimensionEl = container.querySelector('.dimension');
 
-    return new Promise<void>((resolve, reject) => {
-      let attempts = 0;
+      expect(testComponent).toBeInTheDocument();
+      expect(dimensionEl).toHaveTextContent(
+        `${expectedWidth}x${expectedHeight}`,
+      );
+    });
 
-      const checkDimension = () => {
-        const testComponent = container.querySelector('.test-component');
-        const dimensionEl = container.querySelector('.dimension');
-
-        if (!testComponent || !dimensionEl) {
-          if (attempts >= maxAttempts) {
-            reject(new Error('Elements not found'));
-            return;
-          }
-          attempts += 1;
-          setTimeout(checkDimension, interval);
-          return;
-        }
-
-        if (dimensionEl.textContent !== `${expectedWidth}x${expectedHeight}`) {
-          if (attempts >= maxAttempts) {
-            reject(new Error('Dimension mismatch'));
-            return;
-          }
-          attempts += 1;
-          setTimeout(checkDimension, interval);
-          return;
-        }
-
-        resolve();
-      };
-
-      checkDimension();
+  const triggerSuperChartResize = (width: number, height: number) => {
+    act(() => {
+      triggerResizeObserver([
+        {
+          contentRect: {
+            width,
+            height,
+            top: 0,
+            left: 0,
+            right: width,
+            bottom: height,
+            x: 0,
+            y: 0,
+            toJSON() {
+              return {
+                width: this.width,
+                height: this.height,
+                top: this.top,
+                left: this.left,
+                right: this.right,
+                bottom: this.bottom,
+                x: this.x,
+                y: this.y,
+              };
+            },
+          },
+          borderBoxSize: [{ blockSize: height, inlineSize: width }],
+          contentBoxSize: [{ blockSize: height, inlineSize: width }],
+          devicePixelContentBoxSize: [{ blockSize: height, inlineSize: width }],
+          target: document.createElement('div'),
+        },
+      ]);
     });
   };
 
-  // Update the resize observer trigger to ensure it's called after component mount
-  /* oxlint-disable-next-line jest/no-disabled-tests, jest/expect-expect -- skipped test */
-  test.skip('works when width and height are percent', async () => {
+  test('works when width and height are percent', async () => {
+    expect.hasAssertions();
+
     const { container } = render(
       <SuperChart
         chartType={ChartKeys.DILIGENT}
@@ -287,39 +305,7 @@ describe('SuperChart', () => {
       />,
     );
 
-    // Wait for initial render
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    triggerResizeObserver([
-      {
-        contentRect: {
-          width: 300,
-          height: 300,
-          top: 0,
-          left: 0,
-          right: 300,
-          bottom: 300,
-          x: 0,
-          y: 0,
-          toJSON() {
-            return {
-              width: this.width,
-              height: this.height,
-              top: this.top,
-              left: this.left,
-              right: this.right,
-              bottom: this.bottom,
-              x: this.x,
-              y: this.y,
-            };
-          },
-        },
-        borderBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-        contentBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-        devicePixelContentBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-        target: document.createElement('div'),
-      },
-    ]);
+    triggerSuperChartResize(300, 300);
 
     await waitForDimensions(container, 300, 300);
   });
@@ -405,8 +391,9 @@ describe('SuperChart', () => {
       });
     });
 
-    /* oxlint-disable-next-line jest/no-disabled-tests */
-    test.skip('works when width and height are percent', async () => {
+    test('works when width and height are percent', async () => {
+      expect.hasAssertions();
+
       const wrapper = createSizedWrapper();
       document.body.appendChild(wrapper);
 
@@ -426,40 +413,13 @@ describe('SuperChart', () => {
 
       wrapper.appendChild(container);
 
-      // Wait for initial render
-      await new Promise(resolve => setTimeout(resolve, 100));
+      triggerSuperChartResize(300, 300);
 
-      // Trigger resize
-      triggerResizeObserver([
-        {
-          contentRect: {
-            width: 300,
-            height: 300,
-            top: 0,
-            left: 0,
-            right: 300,
-            bottom: 300,
-            x: 0,
-            y: 0,
-            toJSON() {
-              return this;
-            },
-          },
-          borderBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-          contentBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-          devicePixelContentBoxSize: [{ blockSize: 300, inlineSize: 300 }],
-          target: wrapper,
-        },
-      ]);
-
-      // Wait for resize to be processed
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Check dimensions
-      const wrapperInsert = container.querySelector('.wrapper-insert');
-      expect(wrapperInsert).not.toBeNull();
-      expect(wrapperInsert).toBeInTheDocument();
-      expect(wrapperInsert).toHaveTextContent('300x300');
+      await waitFor(() => {
+        expect(container.querySelector('.wrapper-insert')).toHaveTextContent(
+          '300x300',
+        );
+      });
 
       await waitForDimensions(container, 300, 300);
 

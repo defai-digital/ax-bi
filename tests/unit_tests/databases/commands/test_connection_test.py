@@ -15,10 +15,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import pytest
 from parameterized import parameterized
 
-from superset.commands.database.test_connection import get_log_connection_action
+from superset.commands.database.ssh_tunnel.exceptions import SSHTunnelDatabasePortError
+from superset.commands.database.test_connection import (
+    get_log_connection_action,
+    TestConnectionDatabaseCommand,
+)
 from superset.databases.ssh_tunnel.models import SSHTunnel
+from tests.unit_tests.conftest import with_feature_flags
 
 
 @parameterized.expand(
@@ -30,3 +36,44 @@ from superset.databases.ssh_tunnel.models import SSHTunnel
 )
 def test_get_log_connection_action(action, tunnel, exc, expected_result):
     assert expected_result == get_log_connection_action(action, tunnel, exc)
+
+
+@with_feature_flags(SSH_TUNNELING=True)
+def test_ssh_tunnel_allows_uri_without_port_when_backend_has_default() -> None:
+    """
+    Database URIs can omit the port when the backend has a known SSH default port.
+    """
+    command = TestConnectionDatabaseCommand(
+        {
+            "sqlalchemy_uri": "postgresql://user:password@localhost/test-db",
+            "ssh_tunnel": {
+                "server_address": "tunnel.example.com",
+                "server_port": 22,
+                "username": "user",
+                "password": "password",
+            },
+        }
+    )
+
+    command.validate()
+
+
+@with_feature_flags(SSH_TUNNELING=True)
+def test_ssh_tunnel_requires_port_when_backend_has_no_default() -> None:
+    """
+    Database URIs need an explicit port when Superset has no backend default.
+    """
+    command = TestConnectionDatabaseCommand(
+        {
+            "sqlalchemy_uri": "weird+db://user:password@localhost/test-db",
+            "ssh_tunnel": {
+                "server_address": "tunnel.example.com",
+                "server_port": 22,
+                "username": "user",
+                "password": "password",
+            },
+        }
+    )
+
+    with pytest.raises(SSHTunnelDatabasePortError):
+        command.validate()

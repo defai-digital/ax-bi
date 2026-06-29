@@ -57,6 +57,12 @@ class SeedSystemThemesCommand(BaseCommand):
             if referenced_theme and referenced_theme.json_data:
                 try:
                     theme_config = json.loads(referenced_theme.json_data)
+                    if not isinstance(theme_config, dict):
+                        logger.error(
+                            "Theme JSON for UUID %s must be an object",
+                            original_uuid,
+                        )
+                        return
                     # Add a note about the theme being copied from UUID reference
                     theme_config["NOTE"] = (
                         "Copied at startup from theme UUID %s based on config reference"

@@ -29,7 +29,8 @@ from superset.exceptions import (
     SupersetTemplateException,
 )
 from superset.models import sql_lab as sql_lab_module
-from superset.models.sql_lab import Query, SavedQuery
+from superset.models.sql_lab import Query, SavedQuery, TableSchema
+from superset.utils import json
 
 
 @pytest.mark.parametrize(
@@ -133,3 +134,71 @@ def test_sql_tables_mixin_invalid_sql_returns_empty_list(
         else klass(database=MagicMock())
     )
     assert instance.sql_tables == []
+
+
+def test_query_columns_tolerates_malformed_extra_columns() -> None:
+    query = Query(
+        database=MagicMock(),
+        extra_json=json.dumps(
+            {
+                "columns": [
+                    {"column_name": "ds", "is_dttm": True, "type": "TIMESTAMP"},
+                    {"column_name": "category"},
+                    {"is_dttm": False, "type": "INTEGER"},
+                    ["not", "a", "dict"],
+                    "bad",
+                ]
+            }
+        ),
+    )
+
+    columns = query.columns
+
+    assert [column.column_name for column in columns] == ["ds", "category"]
+    assert columns[0].is_dttm is True
+    assert columns[0].type == "TIMESTAMP"
+    assert columns[1].is_dttm is False
+    assert columns[1].type is None
+
+
+def test_query_columns_ignores_non_list_extra_columns() -> None:
+    query = Query(database=MagicMock(), extra_json=json.dumps({"columns": {}}))
+
+    assert query.columns == []
+
+
+def test_query_to_dict_handles_missing_status() -> None:
+    query = Query(
+        id=1,
+        client_id="client-1",
+        database=MagicMock(database_name="examples"),
+        database_id=1,
+        status=None,
+        user=None,
+    )
+
+    assert query.to_dict()["state"] == "pending"
+
+
+def test_table_schema_to_dict_allows_null_description() -> None:
+    """TableSchema serialization should tolerate a null description."""
+    table_schema = TableSchema(id=1, description=None)
+
+    assert table_schema.to_dict()["description"] is None
+
+
+def test_table_schema_to_dict_allows_malformed_description() -> None:
+    """TableSchema serialization should tolerate malformed JSON."""
+    table_schema = TableSchema(id=1, description="{malformed")
+
+    assert table_schema.to_dict()["description"] is None
+
+
+@pytest.mark.parametrize("description", ['["bad"]', '"bad"', "1", "null"])
+def test_table_schema_to_dict_ignores_non_object_description(
+    description: str,
+) -> None:
+    """TableSchema serialization should ignore non-object JSON descriptions."""
+    table_schema = TableSchema(id=1, description=description)
+
+    assert table_schema.to_dict()["description"] is None

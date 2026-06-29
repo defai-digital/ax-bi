@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/defai-digital/ax-code/main/packages/ax-code/config.schema.json",
+  "provider": {
+    "ax-engine": {
+      "name": "AX Engine (Local)"
+    }
+  },
+  "isolation": {
+    "mode": "full-access",
+    "network": true
+  }
+}

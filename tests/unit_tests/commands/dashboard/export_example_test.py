@@ -30,6 +30,7 @@ from superset.commands.dashboard.export_example import (
     _make_bytes_generator,
     _make_yaml_generator,
     export_chart,
+    export_dashboard_yaml,
     export_dataset_data,
     export_dataset_yaml,
     ExportExampleCommand,
@@ -38,6 +39,7 @@ from superset.commands.dashboard.export_example import (
 from superset.common.db_query_status import QueryStatus
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import SupersetSecurityException
+from superset.utils import json as superset_json
 
 
 def test_sanitize_filename_basic():
@@ -79,6 +81,108 @@ def test_make_bytes_generator():
 
     result = generator()
     assert result == data
+
+
+def test_export_dashboard_yaml_ignores_non_object_json_metadata():
+    """Non-object dashboard metadata should not break example export."""
+    mock_dashboard = MagicMock()
+    mock_dashboard.position = {}
+    mock_dashboard.json_metadata = "[]"
+    mock_dashboard.dashboard_title = "Test Dashboard"
+    mock_dashboard.description = None
+    mock_dashboard.css = ""
+    mock_dashboard.slug = None
+    mock_dashboard.certified_by = None
+    mock_dashboard.certification_details = None
+    mock_dashboard.published = False
+    mock_dashboard.uuid = uuid4()
+
+    result = export_dashboard_yaml(mock_dashboard, {}, {})
+
+    assert result["metadata"]["native_filter_configuration"] == []
+    assert result["metadata"]["chart_configuration"] == {}
+
+
+def test_export_dashboard_yaml_ignores_malformed_nested_metadata():
+    """Malformed nested metadata should not break example export."""
+    mock_dashboard = MagicMock()
+    mock_dashboard.position = "not-a-dict"
+    mock_dashboard.json_metadata = superset_json.dumps(
+        {
+            "native_filter_configuration": [
+                "not-a-filter",
+                {
+                    "name": "Valid filter",
+                    "chartsInScope": [1, 99],
+                    "targets": [
+                        "not-a-target",
+                        {"datasetId": 10, "column": {"name": "country"}},
+                    ],
+                },
+                {
+                    "name": "Malformed nested fields",
+                    "chartsInScope": "not-a-list",
+                    "targets": "not-a-list",
+                },
+            ],
+            "chart_configuration": {
+                "not-a-chart-id": {"id": "bad"},
+                "1": "not-a-config",
+                "2": {
+                    "id": 2,
+                    "crossFilters": {"chartsInScope": [1, 2, 99]},
+                },
+                "4": {"id": 4, "crossFilters": "not-a-dict"},
+            },
+            "global_chart_configuration": "not-a-dict",
+        }
+    )
+    mock_dashboard.dashboard_title = "Test Dashboard"
+    mock_dashboard.description = None
+    mock_dashboard.css = ""
+    mock_dashboard.slug = None
+    mock_dashboard.certified_by = None
+    mock_dashboard.certification_details = None
+    mock_dashboard.published = False
+    mock_dashboard.uuid = uuid4()
+
+    result = export_dashboard_yaml(
+        mock_dashboard,
+        {1: "chart-uuid-1", 2: "chart-uuid-2", 4: "chart-uuid-4"},
+        {10: "dataset-uuid-10"},
+    )
+
+    assert result["position"] == {}
+    assert result["metadata"]["native_filter_configuration"] == [
+        {
+            "name": "Valid filter",
+            "chartsInScope": ["chart-uuid-1", 99],
+            "targets": [
+                {
+                    "datasetUuid": "dataset-uuid-10",
+                    "column": {"name": "country"},
+                }
+            ],
+        },
+        {
+            "name": "Malformed nested fields",
+            "chartsInScope": "not-a-list",
+            "targets": "not-a-list",
+        },
+    ]
+    assert result["metadata"]["chart_configuration"] == {
+        "chart-uuid-2": {
+            "id": "chart-uuid-2",
+            "crossFilters": {
+                "chartsInScope": ["chart-uuid-1", "chart-uuid-2", 99],
+            },
+        },
+        "chart-uuid-4": {
+            "id": "chart-uuid-4",
+            "crossFilters": "not-a-dict",
+        },
+    }
+    assert result["metadata"]["global_chart_configuration"] == {}
 
 
 def test_export_dataset_yaml():

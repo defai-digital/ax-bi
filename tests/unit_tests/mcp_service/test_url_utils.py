@@ -50,6 +50,10 @@ def test_extract_permalink_key_from_url_empty():
     assert extract_permalink_key_from_url("") is None
 
 
+def test_extract_permalink_key_from_url_malformed_url():
+    assert extract_permalink_key_from_url("http://[invalid/explore/p/abc123/") is None
+
+
 def test_extract_permalink_key_from_url_with_path_prefix():
     url = "https://example.com/superset/explore/p/xyz789/"
     assert extract_permalink_key_from_url(url) == "xyz789"
@@ -63,6 +67,30 @@ def test_get_superset_base_url_reads_user_friendly_url(monkeypatch: pytest.Monke
     )
 
     assert get_superset_base_url() == "https://superset.example"
+
+
+def test_get_superset_base_url_strips_whitespace(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: " https://superset.example/ ",
+    )
+
+    assert get_superset_base_url() == "https://superset.example"
+
+
+def test_get_superset_base_url_falls_back_for_blank_config(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: "   ",
+    )
+
+    assert get_superset_base_url() == "http://localhost:9001"
 
 
 def test_get_superset_base_url_falls_back_when_config_read_fails(
@@ -97,6 +125,43 @@ def test_get_mcp_service_url_prefers_explicit_override(
     assert get_mcp_service_url() == "https://mcp.example"
 
 
+def test_get_mcp_service_url_normalizes_explicit_override(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_mcp_service_url_config",
+        lambda: "https://mcp.example/",
+    )
+
+    assert get_mcp_service_url() == "https://mcp.example"
+
+
+def test_get_mcp_service_url_strips_whitespace_from_explicit_override(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_mcp_service_url_config",
+        lambda: " https://mcp.example/ ",
+    )
+
+    assert get_mcp_service_url() == "https://mcp.example"
+
+
+def test_get_mcp_service_url_ignores_blank_explicit_override(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(url_utils, "get_mcp_service_url_config", lambda: "   ")
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: "https://superset.example/",
+    )
+
+    assert get_mcp_service_url() == "https://superset.example/mcp"
+
+
 def test_get_mcp_service_url_uses_public_superset_url_for_remote_host(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -118,6 +183,19 @@ def test_get_mcp_service_url_falls_back_for_local_host(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
         lambda: "http://localhost:9001",
+    )
+
+    assert get_mcp_service_url() == "http://localhost:5008"
+
+
+def test_get_mcp_service_url_falls_back_for_ipv6_loopback(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(url_utils, "get_mcp_service_url_config", lambda: None)
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: "http://[::1]:9001",
     )
 
     assert get_mcp_service_url() == "http://localhost:5008"

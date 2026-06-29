@@ -26,6 +26,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from fastmcp import Context
+from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 if TYPE_CHECKING:
@@ -51,6 +52,7 @@ from superset.mcp_service.privacy import (
 )
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.response_utils import finalize_list_response
+from superset.runtime_modernization.measurement import measure_runtime_candidate
 
 logger = logging.getLogger(__name__)
 
@@ -163,61 +165,67 @@ async def list_datasets(
             error_type=DATA_MODEL_METADATA_ERROR_TYPE,
         )
 
-    try:
-        from superset.daos.dataset import DatasetDAO
-        from superset.mcp_service.common.schema_discovery import (
-            DATASET_SORTABLE_COLUMNS,
-            get_all_column_names,
-            get_dataset_columns,
-        )
-
-        # Get all column names dynamically from the model
-        all_columns = get_all_column_names(get_dataset_columns())
-
-        def _serialize_dataset(
-            obj: "SqlaTable | None", cols: list[str] | None
-        ) -> DatasetInfo | None:
-            """Serialize dataset (filtering via model_serializer)."""
-            return serialize_dataset_object(obj)
-
-        # Create tool with standard serialization
-        tool = ModelListCore(
-            dao_class=DatasetDAO,
-            output_schema=DatasetInfo,
-            item_serializer=_serialize_dataset,
-            filter_type=DatasetFilter,
-            default_columns=DEFAULT_DATASET_COLUMNS,
-            search_columns=["schema", "sql", "table_name", "uuid"],
-            list_field_name="datasets",
-            output_list_schema=DatasetList,
-            all_columns=all_columns,
-            sortable_columns=DATASET_SORTABLE_COLUMNS,
-            logger=logger,
-        )
-
-        with mcp_event_log_context(action="mcp.list_datasets.query"):
-            result = tool.run_tool(
-                filters=request.filters,
-                search=request.search,
-                select_columns=request.select_columns,
-                order_column=request.order_column,
-                order_direction=request.order_direction,
-                page=to_zero_based_page(request.page),
-                page_size=request.page_size,
-                created_by_me=request.created_by_me,
-                owned_by_me=request.owned_by_me,
+    with measure_runtime_candidate(
+        "mcp_orchestration",
+        "list_datasets",
+        current_app.config["STATS_LOGGER"],
+    ):
+        try:
+            from superset.daos.dataset import DatasetDAO
+            from superset.mcp_service.common.schema_discovery import (
+                DATASET_SORTABLE_COLUMNS,
+                get_all_column_names,
+                get_dataset_columns,
             )
 
-        return await finalize_list_response(result, "datasets", "Datasets", ctx)
+            # Get all column names dynamically from the model
+            all_columns = get_all_column_names(get_dataset_columns())
 
-    except Exception as e:
-        await ctx.error(
-            "Dataset listing failed: page=%s, page_size=%s, error=%s, error_type=%s"
-            % (
-                request.page,
-                request.page_size,
-                str(e),
-                type(e).__name__,
+            def _serialize_dataset(
+                obj: "SqlaTable | None", cols: list[str] | None
+            ) -> DatasetInfo | None:
+                """Serialize dataset (filtering via model_serializer)."""
+                return serialize_dataset_object(obj)
+
+            # Create tool with standard serialization
+            tool = ModelListCore(
+                dao_class=DatasetDAO,
+                output_schema=DatasetInfo,
+                item_serializer=_serialize_dataset,
+                filter_type=DatasetFilter,
+                default_columns=DEFAULT_DATASET_COLUMNS,
+                search_columns=["schema", "sql", "table_name", "uuid"],
+                list_field_name="datasets",
+                output_list_schema=DatasetList,
+                all_columns=all_columns,
+                sortable_columns=DATASET_SORTABLE_COLUMNS,
+                logger=logger,
             )
-        )
-        raise
+
+            with mcp_event_log_context(action="mcp.list_datasets.query"):
+                result = tool.run_tool(
+                    filters=request.filters,
+                    search=request.search,
+                    select_columns=request.select_columns,
+                    order_column=request.order_column,
+                    order_direction=request.order_direction,
+                    page=to_zero_based_page(request.page),
+                    page_size=request.page_size,
+                    created_by_me=request.created_by_me,
+                    owned_by_me=request.owned_by_me,
+                )
+
+            return await finalize_list_response(result, "datasets", "Datasets", ctx)
+
+        except Exception as e:
+            await ctx.error(
+                "Dataset listing failed: page=%s, page_size=%s, error=%s, "
+                "error_type=%s"
+                % (
+                    request.page,
+                    request.page_size,
+                    str(e),
+                    type(e).__name__,
+                )
+            )
+            raise

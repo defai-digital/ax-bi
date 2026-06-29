@@ -155,3 +155,4 @@ oxc-custom-build/
 
 # Tauri desktop build artifacts
 superset-desktop/src-tauri/target/
+superset-rust/target/

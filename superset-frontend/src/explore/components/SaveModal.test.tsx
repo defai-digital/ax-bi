@@ -281,6 +281,23 @@ test('disables overwrite option for new slice', () => {
   expect(getByRole('radio', { name: 'Save (Overwrite)' })).toBeDisabled();
 });
 
+test('disables overwrite option for new slice when user has overwrite permission', () => {
+  const { getByRole } = setup(
+    {},
+    mockStore({
+      ...initialState,
+      explore: {
+        ...initialState.explore,
+        can_overwrite: true,
+        slice: null,
+      },
+    }),
+  );
+
+  expect(getByRole('radio', { name: 'Save (Overwrite)' })).toBeDisabled();
+  expect(getByRole('radio', { name: 'Save as...' })).toBeChecked();
+});
+
 test('disables overwrite option for non-owner', () => {
   const { getByRole, getByText } = setup(
     {},

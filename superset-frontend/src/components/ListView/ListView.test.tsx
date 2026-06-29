@@ -202,6 +202,24 @@ test('redirects to first page when page index is invalid', async () => {
   fetchData.mockClear();
 });
 
+test('ignores malformed filters query parameter', async () => {
+  const fetchData = jest.fn();
+  window.history.pushState({}, '', '/?filters=not-rison');
+  render(<ListView {...mockedPropsComprehensive} fetchData={fetchData} />, {
+    useRouter: true,
+    useQueryParams: true,
+  });
+
+  await waitFor(() =>
+    expect(fetchData).toHaveBeenCalledWith({
+      filters: [],
+      pageIndex: 0,
+      pageSize: 1,
+      sortBy: [],
+    }),
+  );
+});
+
 // Comprehensive test suite from original JSX file
 const factory = (overrides?: Partial<ListViewProps>) => {
   const props = { ...mockedPropsComprehensive, ...overrides };

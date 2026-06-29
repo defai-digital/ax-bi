@@ -438,6 +438,19 @@ export const setDashboardMetadata =
     );
   };
 
+const parseDashboardMetadata = (
+  jsonMetadata: string | undefined,
+): JsonObject | undefined => {
+  if (!jsonMetadata) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(jsonMetadata) as JsonObject;
+  } catch {
+    return undefined;
+  }
+};
+
 // ---------------------------------------------------------------------------
 // saveDashboardRequest
 // ---------------------------------------------------------------------------
@@ -592,10 +605,10 @@ export function saveDashboardRequest(
       const lastModifiedTime = (response.json as JsonObject)
         .last_modified_time as number;
       // syncing with the backend transformations of the metadata
-      if (updatedDashboard.json_metadata) {
-        const parsedMetadata: JsonObject = JSON.parse(
-          updatedDashboard.json_metadata as string,
-        );
+      const parsedMetadata = parseDashboardMetadata(
+        updatedDashboard.json_metadata as string | undefined,
+      );
+      if (parsedMetadata) {
         dispatch(setDashboardMetadata(parsedMetadata));
         if (parsedMetadata.chart_configuration) {
           dispatch({

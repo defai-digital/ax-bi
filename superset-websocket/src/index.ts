@@ -25,10 +25,14 @@ import jwt, { Algorithm } from 'jsonwebtoken';
 import { parse } from 'cookie';
 import Redis, { RedisOptions } from 'ioredis';
 import StatsD from 'hot-shots';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
 
 import { createLogger } from './logger';
 import { buildConfig, RedisConfig } from './config';
 import { checkServerIdentity, PeerCertificate } from 'tls';
+import { registerRoutes } from './routes';
+import { initFastCacheRedis, closeFastCacheRedis } from './fastCache';
 
 export type StreamResult = [
   recordId: string,
@@ -632,6 +636,15 @@ export const cleanChannel = (channel: string) => {
   }
 };
 
+// Fastify HTTP API server (Fast Data API Gateway)
+const fastify = Fastify({
+  logger: false,
+  // Disable Fastify's own body limit; chart data payloads can be large
+  bodyLimit: 0,
+});
+
+export const getFastify = (): ReturnType<typeof Fastify> => fastify;
+
 // server startup
 
 if (startServer) {
@@ -662,7 +675,32 @@ if (startServer) {
   httpServer.on('request', httpRequest);
   httpServer.on('upgrade', httpUpgrade);
   httpServer.listen(opts.port);
-  logger.info(`Server started on port ${opts.port}`);
+  logger.info(`WebSocket server started on port ${opts.port}`);
+
+  // Initialize fast-cache Redis connection for the Data API Gateway
+  initFastCacheRedis();
+
+  // Register HTTP API routes (Fast Data API Gateway)
+  const corsOrigins =
+    opts.httpCorsOrigins.length > 0
+      ? opts.httpCorsOrigins
+      : opts.allowedOrigins;
+  fastify.register(cors, {
+    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    credentials: true,
+  });
+  registerRoutes(fastify);
+
+  // Start Fastify HTTP server on its own port
+  fastify
+    .listen({ port: opts.httpPort, host: '0.0.0.0' })
+    .then(() => {
+      logger.info(`HTTP API gateway started on port ${opts.httpPort}`);
+    })
+    .catch(err => {
+      logger.error(`Failed to start HTTP API gateway: ${err}`);
+      process.exit(1);
+    });
 
   // start reading from event stream
   subscribeToGlobalStream(GLOBAL_EVENT_STREAM_NAME, processStreamResults);
@@ -675,6 +713,17 @@ if (startServer) {
       cleanChannel(channel);
     }
   }, opts.gcChannelsIntervalMs);
+
+  // Graceful shutdown
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}, shutting down gracefully`);
+    await closeFastCacheRedis();
+    await fastify.close();
+    httpServer.close();
+    process.exit(0);
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 // test utilities

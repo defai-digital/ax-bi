@@ -30,6 +30,18 @@ from superset.utils import json
 from .base import BaseSupersetView
 
 
+def _load_requested_query(form_data: str | None) -> dict[str, Any] | None:
+    if not form_data:
+        return None
+
+    with contextlib.suppress(TypeError, json.JSONDecodeError):
+        requested_query = json.loads(form_data)
+        if isinstance(requested_query, dict):
+            return requested_query
+
+    return None
+
+
 class SqllabView(BaseSupersetView):
     route_base = "/sqllab"
     class_permission_name = "SQLLab"
@@ -43,9 +55,9 @@ class SqllabView(BaseSupersetView):
     def root(self, **kwargs: Any) -> FlaskResponse:
         """Handles the default SQL Lab page."""
         payload = {}
-        if form_data := request.form.get("form_data"):
-            with contextlib.suppress(json.JSONDecodeError):
-                payload["requested_query"] = json.loads(form_data)
+        requested_query = _load_requested_query(request.form.get("form_data"))
+        if requested_query is not None:
+            payload["requested_query"] = requested_query
         return self.render_app_template(payload)
 
     @expose("/p/<string:permalink>/", methods=["GET"])

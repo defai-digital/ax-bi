@@ -37,9 +37,18 @@ def filter_chart_annotations(chart_config: dict[str, Any]) -> None:
       annotation layers objects.
     """
     params = chart_config.get("params", {})
+    if not isinstance(params, dict):
+        return
+
     als = params.get("annotation_layers", [])
+    if not isinstance(als, list):
+        params["annotation_layers"] = []
+        return
+
     params["annotation_layers"] = [
-        al for al in als if al.get("annotationType") == AnnotationType.FORMULA
+        al
+        for al in als
+        if isinstance(al, dict) and al.get("annotationType") == AnnotationType.FORMULA
     ]
 
 
@@ -71,7 +80,8 @@ def import_chart(
     filter_chart_annotations(config)
 
     # TODO (betodealmeida): move this logic to import_from_dict
-    config["params"] = json.dumps(config["params"])
+    params = config.get("params")
+    config["params"] = json.dumps(params if isinstance(params, dict) else {})
 
     # migrate old viz types to new ones
     config = migrate_chart(config)
@@ -122,7 +132,7 @@ def migrate_chart(config: dict[str, Any]) -> dict[str, Any]:
         query_context = json.loads(output.get("query_context") or "{}")
     except (json.JSONDecodeError, TypeError):
         query_context = {}
-    if "form_data" in query_context:
+    if isinstance(query_context, dict) and "form_data" in query_context:
         query_context["form_data"] = params
         output["query_context"] = json.dumps(query_context)
 

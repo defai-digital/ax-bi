@@ -21,17 +21,86 @@ import logging
 import platform
 import time
 
+from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
+from superset import is_feature_enabled
 from superset.mcp_service.common.error_schemas import mcp_error_timestamp
 from superset.mcp_service.system.schemas import HealthCheckResponse
 from superset.mcp_service.utils.config_utils import get_superset_app_name
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.runtime_modernization.ax_services import (
+    AxServicesClient,
+    AxServicesConfig,
+    AxServicesResponse,
+)
+from superset.runtime_modernization.measurement import measure_runtime_candidate
+from superset.runtime_modernization.shadow import execute_with_shadow
 from superset.utils.version import get_version_metadata
 
 logger = logging.getLogger(__name__)
 
 _start_time = time.monotonic()
+
+
+def _build_health_response(service_name: str) -> HealthCheckResponse:
+    """Build the authoritative Python MCP health response."""
+
+    try:
+        with mcp_event_log_context(action="mcp.health_check.status"):
+            # Get version from Superset version metadata
+            version_metadata = get_version_metadata()
+            version = version_metadata.get("version_string", "unknown")
+
+        response = HealthCheckResponse(
+            status="healthy",
+            timestamp=mcp_error_timestamp().isoformat(),
+            service=service_name,
+            version=version,
+            python_version=platform.python_version(),
+            platform=platform.system(),
+            uptime_seconds=round(time.monotonic() - _start_time, 1),
+        )
+
+        logger.info("Health check completed successfully")
+        return response
+
+    except Exception as e:
+        logger.error("Health check failed: %s", e)
+        # Return error status but don't raise to keep tool working
+        response = HealthCheckResponse(
+            status="error",
+            timestamp=mcp_error_timestamp().isoformat(),
+            service=service_name,
+            version="unknown",
+            python_version=platform.python_version(),
+            platform=platform.system(),
+        )
+        return response
+
+
+def _ax_services_health_candidate() -> AxServicesResponse:
+    """Run the TypeScript sidecar health candidate."""
+
+    client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
+    return client.health()
+
+
+def _health_shadow_matches(
+    authoritative: HealthCheckResponse,
+    candidate: AxServicesResponse,
+) -> bool:
+    """Compare Python MCP health with the TypeScript sidecar candidate."""
+
+    return authoritative.status == "healthy" and candidate.ok
+
+
+def _health_shadow_enabled() -> bool:
+    """Return whether MCP health should shadow through ax-services."""
+
+    return is_feature_enabled("RUNTIME_SHADOW_EXECUTION") and is_feature_enabled(
+        "TS_MCP_ORCHESTRATION"
+    )
 
 
 @tool(
@@ -74,34 +143,17 @@ async def health_check() -> HealthCheckResponse:
     app_name = get_superset_app_name()
     service_name = f"{app_name} MCP Service"
 
-    try:
-        with mcp_event_log_context(action="mcp.health_check.status"):
-            # Get version from Superset version metadata
-            version_metadata = get_version_metadata()
-            version = version_metadata.get("version_string", "unknown")
-
-        response = HealthCheckResponse(
-            status="healthy",
-            timestamp=mcp_error_timestamp().isoformat(),
-            service=service_name,
-            version=version,
-            python_version=platform.python_version(),
-            platform=platform.system(),
-            uptime_seconds=round(time.monotonic() - _start_time, 1),
+    with measure_runtime_candidate(
+        "mcp_orchestration",
+        "health_check",
+        current_app.config["STATS_LOGGER"],
+    ):
+        return execute_with_shadow(
+            area="mcp_orchestration",
+            operation="health_check",
+            authoritative=lambda: _build_health_response(service_name),
+            candidate=_ax_services_health_candidate,
+            compare=_health_shadow_matches,
+            stats_logger=current_app.config["STATS_LOGGER"],
+            shadow_enabled=_health_shadow_enabled(),
         )
-
-        logger.info("Health check completed successfully")
-        return response
-
-    except Exception as e:
-        logger.error("Health check failed: %s", e)
-        # Return error status but don't raise to keep tool working
-        response = HealthCheckResponse(
-            status="error",
-            timestamp=mcp_error_timestamp().isoformat(),
-            service=service_name,
-            version="unknown",
-            python_version=platform.python_version(),
-            platform=platform.system(),
-        )
-        return response

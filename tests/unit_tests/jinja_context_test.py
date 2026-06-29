@@ -260,6 +260,38 @@ def test_get_filters_remove_not_present() -> None:
     assert cache.removed_filters == []
 
 
+def test_get_filters_ignores_malformed_adhoc_filter_entries() -> None:
+    """
+    Malformed adhoc filter entries are ignored when looking up Jinja filters.
+    """
+    with current_app.test_request_context(
+        data={
+            "form_data": json.dumps(
+                {
+                    "adhoc_filters": [
+                        "not a filter",
+                        None,
+                        {
+                            "clause": "WHERE",
+                            "comparator": "foo",
+                            "expressionType": "SIMPLE",
+                            "operator": "in",
+                            "subject": "name",
+                        },
+                    ],
+                }
+            )
+        }
+    ):
+        cache = ExtraCache()
+
+        assert cache.filter_values("name") == ["foo"]
+        assert cache.get_filters("name") == [
+            {"op": "IN", "col": "name", "val": ["foo"]}
+        ]
+        assert cache.applied_filters == ["name"]
+
+
 def test_get_filters_query_context_filters() -> None:
     """
     Test that ``get_filters`` falls back to native query_context_filters when no
@@ -274,6 +306,22 @@ def test_get_filters_query_context_filters() -> None:
     ]
     assert cache.applied_filters == ["name"]
     assert cache.removed_filters == []
+
+
+def test_get_filters_ignores_malformed_query_context_filter_entries() -> None:
+    """
+    Malformed native filter entries are ignored during query-context fallback.
+    """
+    cache = ExtraCache(
+        query_context_filters=[
+            "not a filter",
+            None,
+            {"col": "name", "op": "IN", "val": "foo"},
+        ]
+    )
+
+    assert cache.get_filters("name") == [{"op": "IN", "col": "name", "val": ["foo"]}]
+    assert cache.applied_filters == ["name"]
 
 
 def test_get_filters_query_context_filters_remove_filter() -> None:
@@ -1208,6 +1256,49 @@ def test_metric_macro_no_dataset_id_with_context_missing_info(
         DatasetDAO.find_by_id.assert_not_called()
 
 
+def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed context containers should raise the normal template error."""
+    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    ChartDAO = mocker.patch("superset.daos.chart.ChartDAO")  # noqa: N806
+    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g.form_data = {"queries": [], "datasource": []}
+
+    env = SandboxedEnvironment(undefined=DebugUndefined)
+    with current_app.test_request_context(
+        data={"form_data": json.dumps([])},
+        query_string={"form_data": json.dumps("not-an-object")},
+    ):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+    DatasetDAO.find_by_id.assert_not_called()
+    ChartDAO.find_by_id.assert_not_called()
+
+    with current_app.test_request_context(json=["not-an-object"]):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+
+    with current_app.test_request_context(
+        data="{malformed",
+        content_type="application/json",
+    ):
+        with pytest.raises(SupersetTemplateException) as excinfo:
+            metric_macro(env, {}, "macro_key")
+
+    assert str(excinfo.value) == (
+        "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
+    )
+
+
 def test_metric_macro_no_dataset_id_with_context_datasource_id(
     mocker: MockerFixture,
 ) -> None:
@@ -1258,6 +1349,28 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id(
         ],
     }
     with current_app.test_request_context():
+        assert metric_macro(env, {}, "macro_key") == "COUNT(*)"
+
+
+def test_metric_macro_no_dataset_id_with_request_datasource_string(
+    mocker: MockerFixture,
+) -> None:
+    """The metric macro accepts the combined datasource string in JSON bodies."""
+    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO.find_by_id.return_value = SqlaTable(
+        table_name="test_dataset",
+        metrics=[
+            SqlMetric(metric_name="macro_key", expression="COUNT(*)"),
+        ],
+        database=Database(database_name="my_database", sqlalchemy_uri="sqlite://"),
+        schema="my_schema",
+        sql=None,
+    )
+    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g.form_data = {}
+
+    env = SandboxedEnvironment(undefined=DebugUndefined)
+    with current_app.test_request_context(json={"datasource": "1__table"}):
         assert metric_macro(env, {}, "macro_key") == "COUNT(*)"
 
 
@@ -1775,6 +1888,33 @@ def test_get_time_filter(
         assert cache.get_time_filter(*args, **kwargs) == time_filter, description
         assert cache.removed_filters == removed_filters
         assert cache.applied_filters == applied_filters
+
+
+def test_get_time_filter_ignores_malformed_adhoc_filter_entries() -> None:
+    """
+    Malformed adhoc filter entries are ignored when resolving temporal filters.
+    """
+    with current_app.test_request_context(
+        data={
+            "form_data": json.dumps(
+                {
+                    "adhoc_filters": [
+                        "not a filter",
+                        None,
+                        {
+                            "operator": "TEMPORAL_RANGE",
+                            "subject": "dttm",
+                            "comparator": "Last week",
+                        },
+                    ],
+                }
+            )
+        }
+    ):
+        cache = ExtraCache()
+
+        assert cache.get_time_filter("dttm").time_range == "Last week"
+        assert cache.applied_filters == ["dttm"]
 
 
 def test_jinja2_template_syntax_error_handling(mocker: MockerFixture) -> None:

@@ -219,9 +219,77 @@ def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
     assert call_kwargs["table"].schema == "public"
 
 
+def test_samples_rejects_malformed_json_body() -> None:
+    """Malformed samples payloads should return schema validation errors."""
+    from flask import Flask
+
+    raw_samples = _get_view_func("samples")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/samples?datasource_id=1&datasource_type=table",
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        response = raw_samples(_view_self())
+
+    assert response.status_code == 400
+    assert response.get_json() == {"message": {"_schema": ["Invalid input type."]}}
+
+
 # ---------------------------------------------------------------------------
 # Datasource.save — ownership bypass prevention
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "{bad json",
+        "[]",
+        '"bad"',
+        "1",
+        "null",
+        "{}",
+        '{"id": 1, "type": "table", "database": []}',
+        '{"id": 1, "type": "table", "database": {"id": 1}}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": {}}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": [{}]}',
+        '{"id": 1, "type": "table", "database": {"id": 1}, "columns": ["bad"]}',
+        (
+            '{"id": 1, "type": "table", "database": {"id": 1}, '
+            '"columns": [{"column_name": 1}]}'
+        ),
+    ],
+)
+@patch(
+    "superset.views.datasource.views._", side_effect=lambda message, **kwargs: message
+)
+@patch("superset.views.datasource.views.json_error_response", return_value="error")
+@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+def test_save_rejects_malformed_datasource_payload(
+    mock_get_datasource: MagicMock,
+    mock_json_error_response: MagicMock,
+    mock_gettext: MagicMock,
+    payload: str,
+) -> None:
+    """Malformed datasource payloads should fail before datasource lookup."""
+    from flask import Flask
+
+    raw_save = _get_view_func("save")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/save/",
+        method="POST",
+        data={"data": payload},
+    ):
+        assert raw_save(_view_self()) == "error"
+
+    mock_get_datasource.assert_not_called()
+    mock_json_error_response.assert_called_once_with(
+        "Invalid datasource payload.", status=400
+    )
+    mock_gettext.assert_called_once_with("Invalid datasource payload.")
 
 
 @patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
@@ -267,6 +335,47 @@ def test_save_always_checks_ownership_even_without_owners_field(
             raw_save(_view_self())
 
     mock_security_manager.raise_for_ownership.assert_called_once_with(mock_orm)
+
+
+@patch("superset.views.datasource.views.sanitize_datasource_data", return_value={})
+@patch("superset.views.datasource.views.populate_owner_list", return_value=[])
+@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("superset.views.datasource.views.db")
+def test_save_accepts_missing_owners_after_ownership_check(
+    mock_db: MagicMock,
+    mock_get_datasource: MagicMock,
+    mock_populate_owner_list: MagicMock,
+    mock_sanitize_datasource_data: MagicMock,
+) -> None:
+    """Omitted owners should use the owner helper's default handling."""
+    mock_orm = MagicMock()
+    mock_orm.owner_class = None
+    mock_orm.data = {"id": 1}
+    mock_get_datasource.return_value = mock_orm
+
+    from flask import Flask
+
+    raw_save = _get_view_func("save")
+    app = Flask(__name__)
+    with app.test_request_context(
+        "/datasource/save/",
+        method="POST",
+        data={
+            "data": superset_json.dumps(
+                {
+                    "id": 1,
+                    "type": "table",
+                    "database": {"id": 1},
+                    "columns": [],
+                }
+            )
+        },
+    ):
+        assert raw_save(_view_self()) == "ok"
+
+    mock_populate_owner_list.assert_called_once_with(None, default_to_user=False)
+    mock_orm.update_from_object.assert_called_once()
+    mock_db.session.commit.assert_called_once()
 
 
 @patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)

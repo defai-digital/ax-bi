@@ -40,7 +40,7 @@ import {
   StyledExpandableForm,
   no_margin_bottom,
 } from './styles';
-import { DatabaseObject, ExtraJson } from '../types';
+import { DatabaseObject, ExtraJson, parseExtraJson } from '../types';
 
 const ExtraOptions = ({
   db,
@@ -72,7 +72,7 @@ const ExtraOptions = ({
 
   // JSON.parse will deep parse engine_params
   // if it's an object, and we want to keep it a string
-  const extraJson: ExtraJson = JSON.parse(db?.extra || '{}', (key, value) => {
+  const extraJson: ExtraJson = parseExtraJson(db?.extra, (key, value) => {
     if (key === 'engine_params' && typeof value === 'object') {
       // keep this as a string
       return JSON.stringify(value);

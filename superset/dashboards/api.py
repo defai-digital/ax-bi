@@ -129,7 +129,6 @@ from superset.tasks.thumbnails import (
     cache_dashboard_thumbnail,
 )
 from superset.tasks.utils import get_current_user
-from superset.utils import json
 from superset.utils.core import parse_boolean_string, sanitize_cookie_token
 from superset.utils.file import get_filename
 from superset.utils.pdf import build_pdf_from_screenshots
@@ -141,6 +140,7 @@ from superset.utils.screenshots import (
 from superset.utils.urls import get_url_path
 from superset.views.base_api import (
     BaseSupersetModelRestApi,
+    load_optional_json_object_form_field,
     RelatedFieldFilter,
     requires_form_data,
     requires_json,
@@ -752,7 +752,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -824,7 +824,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -908,7 +910,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.update_filters_model_schema.load(request.json, partial=True)
+            item = self.update_filters_model_schema.load(
+                request.get_json(cache=True, silent=True), partial=True
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -991,7 +995,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
         """
         try:
             item = self.update_chart_customizations_model_schema.load(
-                request.json, partial=True
+                request.get_json(cache=True, silent=True), partial=True
             )
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1076,7 +1080,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.update_colors_model_schema.load(request.json, partial=True)
+            item = self.update_colors_model_schema.load(
+                request.get_json(cache=True, silent=True), partial=True
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
 
@@ -1423,7 +1429,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
         ) and not security_manager.can_access("can_export_image", "Superset"):
             return self.response_403()
         try:
-            payload = CacheScreenshotSchema().load(request.json)
+            payload = CacheScreenshotSchema().load(
+                request.get_json(cache=True, silent=True)
+            )
         except ValidationError as error:
             return self.response_400(message=error.messages)
         dashboard = cast(Dashboard, self.datamodel.get(pk, self._base_filters))
@@ -1955,28 +1963,21 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
         if not contents:
             raise NoValidFilesFoundError()
 
-        passwords = (
-            json.loads(request.form["passwords"])
-            if "passwords" in request.form
-            else None
-        )
         overwrite = request.form.get("overwrite") == "true"
 
-        ssh_tunnel_passwords = (
-            json.loads(request.form["ssh_tunnel_passwords"])
-            if "ssh_tunnel_passwords" in request.form
-            else None
-        )
-        ssh_tunnel_private_keys = (
-            json.loads(request.form["ssh_tunnel_private_keys"])
-            if "ssh_tunnel_private_keys" in request.form
-            else None
-        )
-        ssh_tunnel_priv_key_passwords = (
-            json.loads(request.form["ssh_tunnel_private_key_passwords"])
-            if "ssh_tunnel_private_key_passwords" in request.form
-            else None
-        )
+        try:
+            passwords = load_optional_json_object_form_field("passwords")
+            ssh_tunnel_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_passwords"
+            )
+            ssh_tunnel_private_keys = load_optional_json_object_form_field(
+                "ssh_tunnel_private_keys"
+            )
+            ssh_tunnel_priv_key_passwords = load_optional_json_object_form_field(
+                "ssh_tunnel_private_key_passwords"
+            )
+        except ValueError as ex:
+            return self.response_400(message=str(ex))
 
         command = ImportDashboardsCommand(
             contents,
@@ -2102,7 +2103,9 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            body = self.embedded_config_schema.load(request.json)
+            body = self.embedded_config_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
 
             embedded = EmbeddedDashboardDAO.upsert(
                 dashboard,
@@ -2211,7 +2214,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            data = DashboardCopySchema().load(request.json)
+            data = DashboardCopySchema().load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
 

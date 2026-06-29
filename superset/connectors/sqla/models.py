@@ -514,7 +514,7 @@ class BaseDatasource(
         # Cast to dict[str, Any] since we'll be mutating with del and .update()
         data = cast(dict[str, Any], self.data)
         metric_names = set()
-        column_names = set()
+        column_names: set[str] = set()
         for slc in slices:
             form_data = slc.form_data
             # pull out all required metrics from the form_data
@@ -522,22 +522,31 @@ class BaseDatasource(
                 for metric in utils.as_list(form_data.get(metric_param) or []):
                     metric_names.add(utils.get_metric_name(metric, self.verbose_map))
                     if utils.is_adhoc_metric(metric):
-                        column_ = metric.get("column") or {}
-                        if column_name := column_.get("column_name"):
-                            column_names.add(column_name)
+                        metric_column = metric.get("column")
+                        if (
+                            isinstance(metric_column, dict)
+                            and (metric_column_name := metric_column.get("column_name"))
+                            and isinstance(metric_column_name, str)
+                        ):
+                            column_names.add(metric_column_name)
 
             # Columns used in query filters
             column_names.update(
                 filter_["subject"]
-                for filter_ in form_data.get("adhoc_filters") or []
-                if filter_.get("clause") == "WHERE" and filter_.get("subject")
+                for filter_ in utils.as_list(form_data.get("adhoc_filters") or [])
+                if isinstance(filter_, dict)
+                and filter_.get("clause") == "WHERE"
+                and isinstance(filter_.get("subject"), str)
             )
 
             # columns used by Filter Box
             column_names.update(
                 filter_config["column"]
-                for filter_config in form_data.get("filter_configs") or []
-                if "column" in filter_config
+                for filter_config in utils.as_list(
+                    form_data.get("filter_configs") or []
+                )
+                if isinstance(filter_config, dict)
+                and isinstance(filter_config.get("column"), str)
             )
 
             # for legacy dashboard imports which have the wrong query_context in them
@@ -554,25 +563,29 @@ class BaseDatasource(
 
             # legacy charts don't have query_context charts
             if query_context:
-                column_names.update(
-                    [
-                        utils.get_column_name(column_)
-                        for query in query_context.queries
-                        for column_ in query.columns
-                    ]
-                    or []
-                )
+                for query in query_context.queries:
+                    for query_column in query.columns:
+                        try:
+                            query_column_name = utils.get_column_name(query_column)
+                        except ValueError:
+                            continue
+                        if isinstance(query_column_name, str):
+                            column_names.add(query_column_name)
             else:
-                _columns = [
-                    (
-                        utils.get_column_name(column_)
-                        if utils.is_adhoc_column(column_)
-                        else column_
-                    )
-                    for column_param in COLUMN_FORM_DATA_PARAMS
-                    for column_ in utils.as_list(form_data.get(column_param) or [])
-                ]
-                column_names.update(_columns)
+                for column_param in COLUMN_FORM_DATA_PARAMS:
+                    for saved_column in utils.as_list(
+                        form_data.get(column_param) or []
+                    ):
+                        try:
+                            saved_column_name = (
+                                utils.get_column_name(saved_column)
+                                if utils.is_adhoc_column(saved_column)
+                                else saved_column
+                            )
+                        except ValueError:
+                            continue
+                        if isinstance(saved_column_name, str):
+                            column_names.add(saved_column_name)
 
         filtered_metrics = [
             metric
@@ -841,14 +854,19 @@ class AnnotationDatasource(BaseDatasource):
 
     def query(self, query_obj: QueryObjectDict) -> QueryResult:
         error_message = None
-        qry = db.session.query(Annotation)
-        qry = qry.filter(Annotation.layer_id == query_obj["filter"][0]["val"])
-        if query_obj["from_dttm"]:
-            qry = qry.filter(Annotation.start_dttm >= query_obj["from_dttm"])
-        if query_obj["to_dttm"]:
-            qry = qry.filter(Annotation.end_dttm <= query_obj["to_dttm"])
         status = QueryStatus.SUCCESS
         try:
+            filters = query_obj.get("filter") or []
+            first_filter = filters[0] if isinstance(filters, list) and filters else None
+            if not isinstance(first_filter, dict) or "val" not in first_filter:
+                raise KeyError("filter[0].val")
+
+            qry = db.session.query(Annotation)
+            qry = qry.filter(Annotation.layer_id == first_filter["val"])
+            if query_obj.get("from_dttm"):
+                qry = qry.filter(Annotation.start_dttm >= query_obj["from_dttm"])
+            if query_obj.get("to_dttm"):
+                qry = qry.filter(Annotation.end_dttm <= query_obj["to_dttm"])
             with db.engine.connect() as con:
                 df = pd.read_sql_query(qry.statement, con)
         except Exception as ex:  # pylint: disable=broad-except
@@ -1576,9 +1594,10 @@ class SqlaTable(
     @property
     def extra_dict(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra)
+            extra = json.loads(self.extra)
         except (TypeError, json.JSONDecodeError):
             return {}
+        return extra if isinstance(extra, dict) else {}
 
     def get_fetch_values_predicate(
         self,
@@ -1807,13 +1826,19 @@ class SqlaTable(
                     )
                     if not col_desc:
                         raise SupersetGenericDBErrorException("Column not found")
-                    is_dttm = col_desc[0]["is_dttm"]  # type: ignore
+                    column_description = col_desc[0]
+                    if (
+                        not isinstance(column_description, dict)
+                        or "is_dttm" not in column_description
+                    ):
+                        raise SupersetGenericDBErrorException("Column not found")
+                    is_dttm = column_description["is_dttm"]  # type: ignore
                     # ResultSet already resolves the generic type from the
                     # driver's cursor.description; reuse it so callers can
                     # coerce filter values correctly (e.g. numeric IN-lists
                     # stay unquoted for numeric adhoc expressions like
                     # CAST(... AS BIGINT)).
-                    generic_type = col_desc[0].get("type_generic")
+                    generic_type = column_description.get("type_generic")
                 except SupersetGenericDBErrorException as ex:
                     raise ColumnNotFoundException(message=str(ex)) from ex
 
@@ -2075,24 +2100,26 @@ class SqlaTable(
         :return: True if there are call(s) to an `ExtraCache` method, False otherwise
         """
         templatable_statements: list[str] = []
-        if self.sql:
-            templatable_statements.append(self.sql)
-        if self.fetch_values_predicate:
-            templatable_statements.append(self.fetch_values_predicate)
+
+        def add_templatable_statement(statement: Any) -> None:
+            if isinstance(statement, str):
+                templatable_statements.append(statement)
+
+        add_templatable_statement(self.sql)
+        add_templatable_statement(self.fetch_values_predicate)
         extras = query_obj.get("extras", {})
-        if "where" in extras:
-            templatable_statements.append(extras["where"])
-        if "having" in extras:
-            templatable_statements.append(extras["having"])
+        if isinstance(extras, dict):
+            add_templatable_statement(extras.get("where"))
+            add_templatable_statement(extras.get("having"))
         if columns := query_obj.get("columns"):
             calculated_columns: dict[str, Any] = {
                 c.column_name: c.expression for c in self.columns if c.expression
             }
             for column_ in columns:
                 if utils.is_adhoc_column(column_):
-                    templatable_statements.append(column_["sqlExpression"])
+                    add_templatable_statement(column_.get("sqlExpression"))
                 elif isinstance(column_, str) and column_ in calculated_columns:
-                    templatable_statements.append(calculated_columns[column_])
+                    add_templatable_statement(calculated_columns[column_])
         if metrics := query_obj.get("metrics"):
             metrics_by_name: dict[str, Any] = {
                 m.metric_name: m.expression for m in self.metrics
@@ -2101,9 +2128,9 @@ class SqlaTable(
                 if utils.is_adhoc_metric(metric) and (
                     sql := metric.get("sqlExpression")
                 ):
-                    templatable_statements.append(sql)
+                    add_templatable_statement(sql)
                 elif isinstance(metric, str) and metric in metrics_by_name:
-                    templatable_statements.append(metrics_by_name[metric])
+                    add_templatable_statement(metrics_by_name[metric])
         if self.is_rls_supported:
             templatable_statements += [
                 f.clause for f in security_manager.get_rls_filters(self)

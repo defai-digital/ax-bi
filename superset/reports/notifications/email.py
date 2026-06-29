@@ -29,9 +29,13 @@ from pytz import timezone
 from superset import is_feature_enabled
 from superset.exceptions import SupersetErrorsException
 from superset.reports.models import ReportRecipients, ReportRecipientType
-from superset.reports.notifications.base import BaseNotification, NotificationContent
+from superset.reports.notifications.base import (
+    BaseNotification,
+    get_recipient_config_target,
+    NotificationContent,
+    parse_recipient_config,
+)
 from superset.reports.notifications.exceptions import NotificationError
-from superset.utils import json
 from superset.utils.core import HeaderDataType, send_email_smtp
 from superset.utils.decorators import statsd_gauge
 from superset.utils.link_redirect import process_html_links
@@ -241,15 +245,26 @@ class EmailNotification(BaseNotification):  # pylint: disable=too-few-public-met
         return __(current_app.config["EMAIL_REPORTS_CTA"])
 
     def _get_to(self) -> str:
-        return json.loads(self._recipient.recipient_config_json)["target"]
+        return get_recipient_config_target(
+            self._recipient.recipient_config_json,
+            "Email recipient is required",
+        )
 
     def _get_cc(self) -> str:
         # To accommodate backward compatibility
-        return json.loads(self._recipient.recipient_config_json).get("ccTarget", "")
+        cc = parse_recipient_config(
+            self._recipient.recipient_config_json,
+            "Email recipient is required",
+        ).get("ccTarget", "")
+        return cc if isinstance(cc, str) else ""
 
     def _get_bcc(self) -> str:
         # To accommodate backward compatibility
-        return json.loads(self._recipient.recipient_config_json).get("bccTarget", "")
+        bcc = parse_recipient_config(
+            self._recipient.recipient_config_json,
+            "Email recipient is required",
+        ).get("bccTarget", "")
+        return bcc if isinstance(bcc, str) else ""
 
     @statsd_gauge("reports.email.send")
     def send(self) -> None:

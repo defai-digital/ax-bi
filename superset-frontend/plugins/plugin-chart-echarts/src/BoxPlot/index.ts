@@ -18,9 +18,7 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
-import buildQuery from './buildQuery';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
 import example from './images/BoxPlot.jpg';
 import exampleDark from './images/BoxPlot-dark.jpg';
 import thumbnail from './images/thumbnail.png';
@@ -44,7 +42,7 @@ export default class EchartsBoxPlotChartPlugin extends EchartsChartPlugin<
    */
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsBoxPlot'),
       metadata: {
@@ -64,7 +62,7 @@ export default class EchartsBoxPlotChartPlugin extends EchartsChartPlugin<
         thumbnail,
         thumbnailDark,
       },
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

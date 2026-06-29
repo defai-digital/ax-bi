@@ -265,6 +265,20 @@ export interface ExtraJson {
   version?: string;
 }
 
+export function parseExtraJson(
+  extra?: string | null,
+  reviver?: Parameters<typeof JSON.parse>[1],
+): ExtraJson {
+  try {
+    const parsed: unknown = JSON.parse(extra || '{}', reviver);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as ExtraJson)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 export type CustomTextType = {
   value?: string | boolean | number | object;
   type?: string | null;

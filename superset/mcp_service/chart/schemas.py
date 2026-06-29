@@ -542,6 +542,8 @@ def serialize_chart_object(chart: ChartLike | None) -> ChartInfo | None:
             pass
     elif isinstance(chart_params, dict):
         chart_form_data = chart_params
+    if not isinstance(chart_form_data, dict):
+        chart_form_data = None
 
     # Extract structured filter information
     filters_info = extract_filters_from_form_data(chart_form_data)

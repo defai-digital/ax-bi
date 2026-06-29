@@ -17,10 +17,25 @@
 from datetime import datetime
 
 import pandas as pd
+import pytest
 from freezegun import freeze_time
 from pytz import timezone
 
+from superset.utils.core import HeaderDataType
 from tests.unit_tests.conftest import with_feature_flags
+
+
+def _header_data() -> HeaderDataType:
+    return {
+        "notification_format": "PNG",
+        "notification_type": "Alert",
+        "owners": [1],
+        "notification_source": None,
+        "chart_id": None,
+        "dashboard_id": None,
+        "slack_channels": None,
+        "execution_id": "test-execution-id",
+    }
 
 
 def test_render_description_with_html() -> None:
@@ -63,6 +78,42 @@ def test_render_description_with_html() -> None:
         in email_body
     )
     assert '<td>&lt;a href="http://www.example.com"&gt;333&lt;/a&gt;</td>' in email_body
+
+
+def test_email_recipient_config_malformed_json_raises_param_exception() -> None:
+    from superset.reports.models import ReportRecipients, ReportRecipientType
+    from superset.reports.notifications.base import NotificationContent
+    from superset.reports.notifications.email import EmailNotification
+    from superset.reports.notifications.exceptions import NotificationParamException
+
+    notification = EmailNotification(
+        recipient=ReportRecipients(
+            type=ReportRecipientType.EMAIL,
+            recipient_config_json="{malformed",
+        ),
+        content=NotificationContent(name="test alert", header_data=_header_data()),
+    )
+
+    with pytest.raises(NotificationParamException, match="Email recipient is required"):
+        notification._get_to()
+
+
+def test_email_recipient_config_missing_target_raises_param_exception() -> None:
+    from superset.reports.models import ReportRecipients, ReportRecipientType
+    from superset.reports.notifications.base import NotificationContent
+    from superset.reports.notifications.email import EmailNotification
+    from superset.reports.notifications.exceptions import NotificationParamException
+
+    notification = EmailNotification(
+        recipient=ReportRecipients(
+            type=ReportRecipientType.EMAIL,
+            recipient_config_json="{}",
+        ),
+        content=NotificationContent(name="test alert", header_data=_header_data()),
+    )
+
+    with pytest.raises(NotificationParamException, match="Email recipient is required"):
+        notification._get_to()
 
 
 def test_error_template_sanitizes_html() -> None:

@@ -46,7 +46,7 @@ from superset_core.common.models import Dashboard as CoreDashboard
 from superset import db, is_feature_enabled, security_manager
 from superset.connectors.sqla.models import BaseDatasource, SqlaTable
 from superset.daos.datasource import DatasourceDAO
-from superset.models.helpers import AuditMixinNullable, ImportExportMixin
+from superset.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
 from superset.models.slice import Slice
 from superset.models.user_attributes import UserAttribute
 from superset.tasks.thumbnails import cache_dashboard_thumbnail
@@ -56,6 +56,74 @@ from superset.utils import core as utils, json
 
 metadata = Model.metadata  # pylint: disable=no-member
 logger = logging.getLogger(__name__)
+
+
+def _get_position_node(
+    position: dict[str, Any],
+    node_id: str,
+) -> dict[str, Any] | None:
+    node = position.get(node_id)
+    return node if isinstance(node, dict) else None
+
+
+def _iter_layout_children(
+    position: dict[str, Any],
+    node: dict[str, Any],
+) -> list[dict[str, Any]]:
+    node_children = node.get("children", [])
+    if not isinstance(node_children, list):
+        return []
+
+    children: list[dict[str, Any]] = []
+    for child_id in node_children:
+        if not isinstance(child_id, str):
+            continue
+        child = _get_position_node(position, child_id)
+        if isinstance(child, dict) and isinstance(child.get("type"), str):
+            children.append(child)
+    return children
+
+
+def _apply_tab_metadata(
+    node: dict[str, Any],
+    children: list[dict[str, Any]],
+    all_tabs: dict[str, str],
+) -> None:
+    node_id = node.get("id")
+    if not isinstance(node_id, str):
+        return
+
+    meta = node.get("meta")
+    title = meta.get("text") if isinstance(meta, dict) else None
+    if not isinstance(title, str):
+        title = node_id
+
+    node["children"] = children
+    node["title"] = title
+    node["value"] = node_id
+    all_tabs[node_id] = title
+
+
+def _build_tab_tree_node(
+    position: dict[str, Any],
+    node: dict[str, Any],
+    children: list[dict[str, Any]],
+    queue: deque[tuple[dict[str, Any], list[dict[str, Any]]]],
+    all_tabs: dict[str, str],
+) -> None:
+    new_children: list[dict[str, Any]] = []
+    node_type = node.get("type")
+    for child in _iter_layout_children(position, node):
+        if node_type == "TABS":
+            children.append(child)
+            queue.append((child, new_children))
+        elif node_type in ["GRID", "ROOT"]:
+            queue.append((child, children))
+        elif node_type == "TAB":
+            queue.append((child, new_children))
+
+    if node_type == "TAB":
+        _apply_tab_metadata(node, new_children, all_tabs)
 
 
 def copy_dashboard(_mapper: Mapper, _connection: Connection, target: Dashboard) -> None:
@@ -126,6 +194,34 @@ DashboardRoles = Table(
         nullable=False,
     ),
 )
+
+
+def _get_native_filter_datasource_ids(
+    json_metadata: str | None,
+) -> set[tuple[int, str]]:
+    json_metadata_dict = json_to_dict(json_metadata or "")
+    native_filter_configuration = json_metadata_dict.get(
+        "native_filter_configuration", []
+    )
+    if not isinstance(native_filter_configuration, list):
+        return set()
+
+    datasource_ids: set[tuple[int, str]] = set()
+    for native_filter in native_filter_configuration:
+        if not isinstance(native_filter, dict):
+            continue
+        targets = native_filter.get("targets", [])
+        if not isinstance(targets, list):
+            continue
+        for target in targets:
+            if not isinstance(target, dict):
+                continue
+            id_ = target.get("datasetId")
+            if id_ is None:
+                continue
+            datasource = DatasourceDAO.get_datasource(utils.DatasourceType.TABLE, id_)
+            datasource_ids.add((datasource.id, datasource.type))
+    return datasource_ids
 
 
 class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
@@ -249,9 +345,6 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def data(self) -> dict[str, Any]:
-        positions = self.position_json
-        if positions:
-            positions = json.loads(positions)
         return {
             "id": self.id,
             "metadata": self.params_dict,
@@ -262,7 +355,7 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
             "published": self.published,
             "slug": self.slug,
             "slices": [slc.data for slc in self.slices],
-            "position_json": positions,
+            "position_json": self.position,
             "last_modified_time": self.changed_on.replace(microsecond=0).timestamp(),
             "is_managed_externally": self.is_managed_externally,
         }
@@ -297,55 +390,24 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def position(self) -> dict[str, Any]:
-        if self.position_json:
-            return json.loads(self.position_json)
-        return {}
+        return json_to_dict(self.position_json)
 
     @property
     def tabs(self) -> dict[str, Any]:
-        if self.position == {}:
+        position = self.position
+        if not position or "ROOT_ID" not in position:
             return {}
 
-        def get_node(node_id: str) -> dict[str, Any]:
-            """
-            Helper function for getting a node from the position_data
-            """
-            return self.position[node_id]
-
-        def build_tab_tree(
-            node: dict[str, Any], children: list[dict[str, Any]]
-        ) -> None:
-            """
-            Function for building the tab tree structure and list of all tabs
-            """
-
-            new_children: list[dict[str, Any]] = []
-            # new children to overwrite parent's children
-            for child_id in node.get("children", []):
-                child = get_node(child_id)
-                if node["type"] == "TABS":
-                    # if TABS add create a new list and append children to it
-                    # new_children.append(child)
-                    children.append(child)
-                    queue.append((child, new_children))
-                elif node["type"] in ["GRID", "ROOT"]:
-                    queue.append((child, children))
-                elif node["type"] == "TAB":
-                    queue.append((child, new_children))
-            if node["type"] == "TAB":
-                node["children"] = new_children
-                node["title"] = node["meta"]["text"]
-                node["value"] = node["id"]
-                all_tabs[node["id"]] = node["title"]
-
-        root = get_node("ROOT_ID")
+        root = _get_position_node(position, "ROOT_ID")
+        if root is None:
+            return {}
         tab_tree: list[dict[str, Any]] = []
         all_tabs: dict[str, str] = {}
         queue: deque[tuple[dict[str, Any], list[dict[str, Any]]]] = deque()
         queue.append((root, tab_tree))
         while queue:
             node, children = queue.popleft()
-            build_tab_tree(node, children)
+            _build_tab_tree_node(position, node, children, queue, all_tabs)
 
         return {"all_tabs": all_tabs, "tab_tree": tab_tree}
 
@@ -391,19 +453,9 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
                 slices = copied_dashboard.__dict__.setdefault("slices", [])
                 slices.append(copied_slc)
 
-            json_metadata = json.loads(dashboard.json_metadata)
-            native_filter_configuration: list[dict[str, Any]] = json_metadata.get(
-                "native_filter_configuration", []
+            datasource_ids.update(
+                _get_native_filter_datasource_ids(dashboard.json_metadata)
             )
-            for native_filter in native_filter_configuration:
-                for target in native_filter.get("targets", []):
-                    id_ = target.get("datasetId")
-                    if id_ is None:
-                        continue
-                    datasource = DatasourceDAO.get_datasource(
-                        utils.DatasourceType.TABLE, id_
-                    )
-                    datasource_ids.add((datasource.id, datasource.type))
 
             copied_dashboard.alter_params(remote_id=dashboard_id)
             copied_dashboards.append(copied_dashboard)

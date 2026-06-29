@@ -89,10 +89,24 @@ jest.mock(
 jest.mock(
   'src/dashboard/components/menu/WithPopoverMenu',
   () =>
-    ({ children }: { children: React.ReactNode }) => (
-      <div data-test="mock-with-popover-menu">{children}</div>
+    ({
+      children,
+      isFocused,
+      menuItems = [],
+    }: {
+      children: React.ReactNode;
+      isFocused: boolean;
+      menuItems?: React.ReactNode[];
+    }) => (
+      <div data-test="mock-with-popover-menu">
+        {children}
+        {isFocused && <div data-test="mock-popover-menu">{menuItems}</div>}
+      </div>
     ),
 );
+jest.mock('src/dashboard/components/menu/BackgroundStyleDropdown', () => () => (
+  <div data-test="background-style-dropdown" />
+));
 
 jest.mock(
   'src/dashboard/components/DeleteComponentButton',
@@ -219,12 +233,10 @@ test('should render a DeleteComponentButton in editMode', () => {
   expect(getByTestId('mock-delete-component-button')).toBeInTheDocument();
 });
 
-/* oxlint-disable-next-line jest/no-disabled-tests */
-test.skip('should render a BackgroundStyleDropdown when focused', () => {
+test('should render a BackgroundStyleDropdown when focused', () => {
   const { rerender } = setup({ component: rowWithoutChildren });
   expect(screen.queryByTestId('background-style-dropdown')).toBeFalsy();
 
-  // we cannot set props on the Row because of the WithDragDropContext wrapper
   rerender(<Row {...props} component={rowWithoutChildren} editMode />);
   const buttons = screen.getAllByRole('button');
   const settingsButton = buttons[1];

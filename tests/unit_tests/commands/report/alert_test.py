@@ -168,6 +168,33 @@ def test_malformed_config_raises_error_with_valid_result(
         command.run()
 
 
+def test_non_object_config_raises_error_with_valid_result(
+    mocker: MockerFixture,
+) -> None:
+    """Test that non-object config is detected when result is valid"""
+    mocker.patch(
+        "superset.commands.report.alert.retry_call",
+        side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
+    )
+    mocker.patch(
+        "superset.commands.report.alert.AlertCommand._execute_query",
+        return_value=pd.DataFrame({"value": [0.5]}),
+    )
+
+    report_schedule_mock = mocker.Mock()
+    report_schedule_mock.validator_type = ReportScheduleValidatorType.OPERATOR
+    report_schedule_mock.validator_config_json = "[]"
+    report_schedule_mock.id = 1
+
+    command = AlertCommand(
+        report_schedule=report_schedule_mock,
+        execution_id=uuid4(),
+    )
+
+    with pytest.raises(AlertValidatorConfigError):
+        command.run()
+
+
 def test_query_returning_null_value_returns_false_with_message(
     mocker: MockerFixture,
 ) -> None:

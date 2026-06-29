@@ -18,9 +18,7 @@
  */
 import { t } from '@apache-superset/core/translation';
 import { AnnotationType, Behavior } from '@superset-ui/core';
-import buildQuery from '../buildQuery';
 import controlPanel from './controlPanel';
-import transformProps from '../transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import {
@@ -31,10 +29,14 @@ import example1 from './images/Area1.png';
 import example1Dark from './images/Area1-dark.png';
 import { EchartsChartPlugin } from '../../types';
 
-const areaTransformProps = (chartProps: EchartsTimeseriesChartProps) =>
-  transformProps({
-    ...chartProps,
-    formData: { ...chartProps.formData, area: true },
+const loadAreaTransformProps = () =>
+  import('../transformProps').then(mod => {
+    const baseTransformProps = mod.default;
+    return (chartProps: EchartsTimeseriesChartProps) =>
+      baseTransformProps({
+        ...chartProps,
+        formData: { ...chartProps.formData, area: true },
+      });
   });
 
 export default class EchartsAreaChartPlugin extends EchartsChartPlugin<
@@ -43,7 +45,7 @@ export default class EchartsAreaChartPlugin extends EchartsChartPlugin<
 > {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('../buildQuery'),
       controlPanel,
       loadChart: () => import('../EchartsTimeseries'),
       metadata: {
@@ -78,7 +80,7 @@ export default class EchartsAreaChartPlugin extends EchartsChartPlugin<
         thumbnail,
         thumbnailDark,
       },
-      transformProps: areaTransformProps,
+      loadTransformProps: loadAreaTransformProps,
     });
   }
 }

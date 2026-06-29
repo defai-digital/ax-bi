@@ -1,5 +1,6 @@
 {
   "port": 8080,
+  "httpPort": 8081,
   "logLevel": "info",
   "logToFile": false,
   "logFilename": "app.log",
@@ -19,5 +20,8 @@
   "jwtAlgorithms": ["HS256"],
   "jwtSecret": "CHANGE-ME",
   "jwtCookieName": "async-token",
-  "allowedOrigins": []
+  "allowedOrigins": [],
+  "fastCacheEnabled": true,
+  "fastCacheKeyPrefix": "fc:",
+  "httpCorsOrigins": []
 }

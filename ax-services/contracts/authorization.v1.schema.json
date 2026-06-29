@@ -1,0 +1,98 @@
+{
+  "permissionCheckRequestSchema": {
+    "$id": "ax-services.permission-check.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "principal",
+      "resource",
+      "action"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "authorization.v1"
+      },
+      "principal": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "user",
+              "guest",
+              "service"
+            ]
+          },
+          "userId": {
+            "type": "number"
+          },
+          "username": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "resource": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "chart",
+              "dashboard",
+              "database",
+              "dataset",
+              "query"
+            ]
+          },
+          "id": {
+            "type": "number"
+          },
+          "uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "action": {
+        "enum": [
+          "create",
+          "delete",
+          "read",
+          "write"
+        ]
+      }
+    }
+  },
+  "permissionCheckResponseSchema": {
+    "$id": "ax-services.permission-check.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "allowed"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "authorization.v1"
+      },
+      "allowed": {
+        "type": "boolean"
+      },
+      "reason": {
+        "type": "string"
+      }
+    }
+  }
+}

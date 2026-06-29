@@ -132,8 +132,17 @@ class UpdateDatabaseCommand(BaseCommand):
         if not current_config:
             return
 
-        encrypted_extra = json.loads(self._properties["encrypted_extra"])
+        try:
+            encrypted_extra = json.loads(self._properties["encrypted_extra"])
+        except (TypeError, ValueError):
+            encrypted_extra = {}
+
+        if not isinstance(encrypted_extra, dict):
+            encrypted_extra = {}
+
         new_config = encrypted_extra.get("oauth2_client_info", {})
+        if not isinstance(new_config, dict):
+            new_config = {}
 
         # Keys that require purging personal tokens because they probably are no longer
         # valid. For example, if the scope has changed the existing tokens are still

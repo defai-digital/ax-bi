@@ -212,3 +212,34 @@ def test_migrate_chart_query_context_form_data_is_dict() -> None:
 
     assert query_context["form_data"]["viz_type"] == "pivot_table_v2"
     assert isinstance(query_context["form_data"], dict)
+
+
+def test_migrate_chart_ignores_non_object_query_context() -> None:
+    """
+    Test scalar query_context JSON does not break chart migration.
+    """
+    chart_config = {
+        "slice_name": "Pivot Table with Bad Query Context",
+        "description": None,
+        "certified_by": None,
+        "certification_details": None,
+        "viz_type": "pivot_table",
+        "params": json.dumps(
+            {
+                "columns": ["state"],
+                "groupby": ["name"],
+                "metrics": ["count"],
+                "viz_type": "pivot_table",
+            }
+        ),
+        "query_context": json.dumps("form_data"),
+        "cache_timeout": None,
+        "uuid": "a18b9cb0-b8d3-42ed-bd33-0f0fadbf0f6d",
+        "version": "1.0.0",
+        "dataset_uuid": "ffd15af2-2188-425c-b6b4-df28aac45872",
+    }
+
+    new_config = migrate_chart(chart_config)
+
+    assert new_config["viz_type"] == "pivot_table_v2"
+    assert new_config["query_context"] == json.dumps("form_data")

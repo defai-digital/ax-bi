@@ -238,6 +238,19 @@ def test_get_db_engine_spec(mocker: MockerFixture) -> None:
         ),
         (
             datetime(2023, 1, 1, 1, 23, 45, 600000),
+            TableColumn(column_name="ds"),
+            Database(
+                extra=json.dumps(
+                    {
+                        "python_date_format_by_column_name": "bad",
+                    },
+                ),
+                sqlalchemy_uri="foo://",
+            ),
+            "'2023-01-01 01:23:45.600000'",
+        ),
+        (
+            datetime(2023, 1, 1, 1, 23, 45, 600000),
             TableColumn(),
             Database(sqlalchemy_uri="foo://"),
             "'2023-01-01 01:23:45.600000'",
@@ -276,6 +289,44 @@ def test_catalog_cache() -> None:
 
     assert database.catalog_cache_enabled
     assert database.catalog_cache_timeout == 10
+
+
+def test_database_extra_properties_ignore_non_object_values() -> None:
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="sqlite://",
+        extra=json.dumps(
+            {
+                "metadata_cache_timeout": [],
+                "engine_params": [],
+                "schema_options": [],
+            }
+        ),
+    )
+
+    assert database.metadata_cache_timeout == {}
+    assert database.catalog_cache_enabled is False
+    assert database.catalog_cache_timeout is None
+    assert database.connect_args == {}
+    assert database.schema_options == {}
+
+    database.extra = json.dumps({"engine_params": {"connect_args": []}})
+    assert database.connect_args == {}
+
+
+def test_database_default_schemas_ignores_malformed_values() -> None:
+    """default_schemas should always return a list of schema names."""
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="sqlite://",
+        extra=json.dumps({"default_schemas": "public"}),
+    )
+
+    assert database.default_schemas == []
+
+    database.extra = json.dumps({"default_schemas": ["public", 1, None, "analytics"]})
+
+    assert database.default_schemas == ["public", "analytics"]
 
 
 def test_get_default_catalog() -> None:
@@ -530,6 +581,30 @@ def test_get_sqla_engine(mocker: MockerFixture) -> None:
     create_engine = mocker.patch("superset.models.core.create_engine")
 
     database = Database(database_name="my_db", sqlalchemy_uri="trino://")
+    database._get_sqla_engine(nullpool=False)
+
+    create_engine.assert_called_with(
+        make_url("trino:///"),
+        connect_args={"source": "Apache Superset"},
+    )
+
+
+def test_get_sqla_engine_ignores_non_object_engine_params(
+    mocker: MockerFixture,
+) -> None:
+    from superset.models.core import Database
+
+    mocker.patch(
+        "superset.models.core.security_manager.find_user",
+        return_value=None,
+    )
+    create_engine = mocker.patch("superset.models.core.create_engine")
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="trino://",
+        extra=json.dumps({"engine_params": []}),
+    )
     database._get_sqla_engine(nullpool=False)
 
     create_engine.assert_called_with(
@@ -888,6 +963,41 @@ def test_get_oauth2_config(app_context: None) -> None:
         "redirect_uri": "http://example.com/api/v1/database/oauth2/",
         "request_content_type": "data",  # Default value from BaseEngineSpec
     }
+
+
+def test_get_encrypted_extra_ignores_non_object_json() -> None:
+    """
+    Test that encrypted_extra must deserialize to a dictionary.
+    """
+    database = Database(encrypted_extra="[]")
+
+    assert database.get_encrypted_extra() == {}
+
+
+def test_get_encrypted_extra_logs_non_string_parse_errors() -> None:
+    """
+    Test that malformed encrypted_extra parse errors use the logged error path.
+    """
+    database = Database()
+    database.encrypted_extra = ["not-json"]
+
+    with pytest.raises(TypeError):
+        database.get_encrypted_extra()
+
+
+def test_get_oauth2_config_ignores_non_object_encrypted_extra(
+    app_context: None,
+) -> None:
+    """
+    Test that OAuth2 config lookup tolerates non-object encrypted_extra.
+    """
+    database = Database(
+        database_name="db",
+        sqlalchemy_uri="postgresql://user:password@host:5432/examples",
+        encrypted_extra="[]",
+    )
+
+    assert database.get_oauth2_config() is None
 
 
 def test_get_oauth2_config_token_request_type_from_db_engine_specs(

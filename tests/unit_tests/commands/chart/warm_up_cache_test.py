@@ -253,7 +253,7 @@ def test_handles_empty_dashboard_filters(
 
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
 def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
-    """Verify that invalid JSON in extra_filters raises appropriate error"""
+    """Verify that invalid JSON in extra_filters raises a controlled error."""
     chart = Slice(
         id=128,
         slice_name="Test Chart",
@@ -277,16 +277,65 @@ def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
         ):
             result = ChartWarmUpCacheCommand(chart, 42, invalid_json).run()
 
-            assert result["viz_error"] is not None, "Should return an error"
-            assert result["chart_id"] == 128
-            # JSONDecodeError messages vary across Python versions
-            error_str = str(result["viz_error"]).lower()
-            assert (
-                "json" in error_str
-                or "decode" in error_str
-                or "expecting" in error_str
-                or "delimiter" in error_str
-            ), f"Error should be a JSON decode issue: {result['viz_error']}"
+            assert result["viz_error"] == "Extra filters must be a list of objects"
+
+
+@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+def test_non_list_extra_filters_raises_error(mock_chart_data_command):
+    """Verify that non-list extra_filters JSON raises a controlled error."""
+    chart = Slice(
+        id=228,
+        slice_name="Test Chart",
+        viz_type="pie",
+        datasource_id=1,
+        datasource_type="table",
+    )
+
+    mock_query = Mock()
+    mock_query.filter = []
+    mock_qc = Mock()
+    mock_qc.queries = [mock_query]
+
+    with patch.object(chart, "get_query_context", return_value=mock_qc):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "pie"}],
+        ):
+            result = ChartWarmUpCacheCommand(
+                chart,
+                42,
+                '{"col": "state", "op": "==", "val": "CA"}',
+            ).run()
+
+    assert result["viz_error"] == "Extra filters must be a list of objects"
+    assert mock_query.filter == []
+
+
+@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+def test_extra_filters_with_non_object_entries_raises_error(mock_chart_data_command):
+    """Verify that extra_filters list entries must be objects."""
+    chart = Slice(
+        id=229,
+        slice_name="Test Chart",
+        viz_type="pie",
+        datasource_id=1,
+        datasource_type="table",
+    )
+
+    mock_query = Mock()
+    mock_query.filter = []
+    mock_qc = Mock()
+    mock_qc.queries = [mock_query]
+
+    with patch.object(chart, "get_query_context", return_value=mock_qc):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "pie"}],
+        ):
+            result = ChartWarmUpCacheCommand(chart, 42, '["state"]').run()
+
+    assert result["viz_error"] == "Extra filters must be a list of objects"
+    assert mock_query.filter == []
 
 
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
@@ -433,6 +482,45 @@ def test_legacy_chart_warm_up_without_dashboard(mock_g, mock_get_viz):
             assert result["viz_status"] == "success"
 
 
+@pytest.mark.parametrize("payload", [{}, {"errors": None}, []])
+@patch("superset.commands.chart.warm_up_cache.get_viz")
+@patch("superset.commands.chart.warm_up_cache.viz_types", ["table"])
+@patch("superset.commands.chart.warm_up_cache.g")
+def test_legacy_chart_rejects_malformed_warm_up_payload(
+    mock_g,
+    mock_get_viz,
+    payload,
+):
+    """Malformed legacy warm-up payloads should return a controlled error."""
+    chart = Slice(
+        id=135,
+        slice_name="Legacy Table",
+        viz_type="table",
+        datasource_id=1,
+        datasource_type="table",
+    )
+    mock_datasource = Mock()
+    mock_datasource.type = "table"
+    mock_datasource.id = 1
+    mock_get_viz.return_value.get_payload.return_value = payload
+
+    with patch.object(
+        type(chart),
+        "datasource",
+        new_callable=lambda: property(lambda self: mock_datasource),
+    ):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "table"}],
+        ):
+            result = ChartWarmUpCacheCommand(chart, None, None).run()
+
+    assert result["chart_id"] == 135
+    assert result["viz_error"] == "Chart warm-up returned an unexpected payload"
+    assert result["viz_status"] is None
+    assert hasattr(mock_g, "form_data") is False
+
+
 @patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
 def test_non_legacy_chart_returns_first_error(mock_chart_data_command):
     """Test that first query error is returned when multiple queries exist"""
@@ -466,6 +554,46 @@ def test_non_legacy_chart_returns_first_error(mock_chart_data_command):
             assert result["chart_id"] == 132
             assert result["viz_error"] == "Database connection failed"
             assert result["viz_status"] == "failed"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"queries": "not-a-list"},
+        {"queries": ["not-a-query"]},
+    ],
+)
+@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+def test_non_legacy_chart_rejects_malformed_warm_up_payload(
+    mock_chart_data_command,
+    payload,
+):
+    """Malformed non-legacy warm-up payloads should return a controlled error."""
+    chart = Slice(
+        id=136,
+        slice_name="Malformed payload chart",
+        viz_type="echarts_timeseries",
+        datasource_id=1,
+        datasource_type="table",
+    )
+    mock_query = Mock()
+    mock_query.filter = []
+    mock_qc = Mock()
+    mock_qc.queries = [mock_query]
+
+    with patch.object(chart, "get_query_context", return_value=mock_qc):
+        with patch(
+            "superset.commands.chart.warm_up_cache.get_form_data",
+            return_value=[{"viz_type": "echarts_timeseries"}],
+        ):
+            mock_chart_data_command.return_value.run.return_value = payload
+
+            result = ChartWarmUpCacheCommand(chart, None, None).run()
+
+    assert result["chart_id"] == 136
+    assert result["viz_error"] == "Chart warm-up returned an unexpected payload"
+    assert result["viz_status"] is None
 
 
 @patch("superset.commands.chart.warm_up_cache.db")

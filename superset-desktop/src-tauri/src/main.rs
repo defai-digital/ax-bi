@@ -21,6 +21,7 @@
 
 mod commands;
 mod deep_link;
+mod navigation;
 mod tray;
 
 use log::info;

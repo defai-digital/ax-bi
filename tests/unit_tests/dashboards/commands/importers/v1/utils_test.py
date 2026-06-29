@@ -18,6 +18,8 @@
 
 from typing import Any
 
+from superset.utils import json
+
 
 def test_update_id_refs_immune_missing(  # pylint: disable=invalid-name
     app_context: None,
@@ -80,6 +82,148 @@ def test_update_id_refs_immune_missing(  # pylint: disable=invalid-name
             "native_filter_configuration": [],
         },
     }
+
+
+def test_update_id_refs_ignores_malformed_metadata_entries(app_context: None):
+    """
+    Malformed or stale dashboard metadata should not abort dashboard import.
+    """
+    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+
+    config = {
+        "position": {
+            "ROOT": {"type": "ROOT"},
+            "CHART1": {
+                "id": "CHART1",
+                "meta": {"chartId": 101, "uuid": "uuid1"},
+                "type": "CHART",
+            },
+            "BROKEN_CHART": {"id": "BROKEN_CHART", "type": "CHART"},
+            "BROKEN_META": {"id": "BROKEN_META", "type": "CHART", "meta": []},
+        },
+        "metadata": {
+            "timed_refresh_immune_slices": [101, 999],
+            "filter_scopes": {
+                "101": {
+                    "filter_name": {"immune": [101, 999]},
+                    "broken": [],
+                },
+                "stale": {"filter_name": {"immune": [101]}},
+            },
+            "expanded_slices": {"101": True, "999": True, "stale": True},
+            "default_filters": "[]",
+            "native_filter_configuration": [
+                "broken",
+                {
+                    "targets": ["broken", {"datasetUuid": "missing"}],
+                    "scope": [],
+                    "chartsInScope": [101, 999],
+                },
+            ],
+            "chart_customization_config": [
+                "broken",
+                {"targets": ["broken", {"datasetUuid": "missing", "datasetId": 42}]},
+            ],
+        },
+    }
+
+    fixed = update_id_refs(config, {"uuid1": 1}, {})
+
+    assert fixed["position"]["CHART1"]["meta"]["chartId"] == 1
+    assert fixed["metadata"]["timed_refresh_immune_slices"] == [1]
+    assert fixed["metadata"]["filter_scopes"] == {
+        "1": {"filter_name": {"immune": [1]}, "broken": []},
+    }
+    assert fixed["metadata"]["expanded_slices"] == {"1": True}
+    assert json.loads(fixed["metadata"]["default_filters"]) == {}
+    assert fixed["metadata"]["native_filter_configuration"][1]["chartsInScope"] == [1]
+    assert fixed["metadata"]["chart_customization_config"][1]["targets"][1] == {}
+
+
+def test_update_id_refs_ignores_scalar_metadata_containers(app_context: None):
+    """Scalar metadata containers should not abort dashboard import."""
+    from superset.commands.dashboard.importers.v1.utils import (
+        find_native_filter_datasets,
+        update_id_refs,
+    )
+
+    config: dict[str, Any] = {
+        "position": {
+            "CHART1": {
+                "id": "CHART1",
+                "meta": {"chartId": 101, "uuid": "uuid1"},
+                "type": "CHART",
+            },
+        },
+        "metadata": {
+            "timed_refresh_immune_slices": 101,
+            "filter_scopes": {"101": {"filter_name": {"immune": 101}}},
+            "native_filter_configuration": [
+                {
+                    "targets": 10,
+                    "scope": {"excluded": 101},
+                    "chartsInScope": 101,
+                },
+            ],
+            "chart_customization_config": [{"targets": 10}],
+            "chart_configuration": {
+                "101": {
+                    "id": 101,
+                    "crossFilters": {
+                        "scope": {"excluded": 101},
+                        "chartsInScope": 101,
+                    },
+                }
+            },
+            "global_chart_configuration": {
+                "scope": {"excluded": 101},
+                "chartsInScope": 101,
+            },
+        },
+    }
+
+    fixed = update_id_refs(config, {"uuid1": 1}, {})
+
+    metadata = fixed["metadata"]
+    assert metadata["timed_refresh_immune_slices"] == 101
+    assert metadata["filter_scopes"]["1"]["filter_name"]["immune"] == 101
+    assert metadata["native_filter_configuration"][0]["scope"]["excluded"] == 101
+    assert metadata["native_filter_configuration"][0]["chartsInScope"] == 101
+    assert metadata["chart_configuration"]["1"]["crossFilters"] == {
+        "scope": {"excluded": 101},
+        "chartsInScope": 101,
+    }
+    assert metadata["global_chart_configuration"] == {
+        "scope": {"excluded": 101},
+        "chartsInScope": 101,
+    }
+    assert (
+        find_native_filter_datasets(
+            {"native_filter_configuration": 10, "chart_customization_config": 10}
+        )
+        == set()
+    )
+
+
+def test_find_native_filter_datasets_ignores_malformed_entries():
+    from superset.commands.dashboard.importers.v1.utils import (
+        find_native_filter_datasets,
+    )
+
+    assert find_native_filter_datasets(["broken"]) == set()
+
+    metadata = {
+        "native_filter_configuration": [
+            "broken",
+            {"targets": ["broken", {"datasetUuid": "dataset-1"}]},
+        ],
+        "chart_customization_config": [
+            "broken",
+            {"targets": ["broken", {"datasetUuid": "dataset-2"}]},
+        ],
+    }
+
+    assert find_native_filter_datasets(metadata) == {"dataset-1", "dataset-2"}
 
 
 def test_update_native_filter_config_scope_excluded():
@@ -444,6 +588,27 @@ def test_update_id_refs_cross_filter_handles_string_excluded():
     fixed = update_id_refs(config, chart_ids, dataset_info)
     # Should not raise and should remap key
     assert "1" in fixed["metadata"]["chart_configuration"]
+
+
+def test_update_id_refs_ignores_non_object_chart_configuration():
+    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+
+    config: dict[str, Any] = {
+        "position": {
+            "CHART1": {
+                "id": "CHART1",
+                "meta": {"chartId": 101, "uuid": "uuid1"},
+                "type": "CHART",
+            },
+        },
+        "metadata": {
+            "chart_configuration": [],
+        },
+    }
+
+    fixed = update_id_refs(config, {"uuid1": 1}, {})
+
+    assert fixed["metadata"]["chart_configuration"] == []
 
 
 def test_update_id_refs_preserves_time_grains_in_native_filters():

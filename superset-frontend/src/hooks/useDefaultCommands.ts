@@ -17,9 +17,13 @@
  * under the License.
  */
 import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { RootState } from 'src/dashboard/types';
 import { useCommandPalette, Command } from 'src/components/CommandPalette';
+import { findPermission } from 'src/utils/findPermission';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 
 /**
@@ -31,6 +35,9 @@ export function useDefaultCommands(): void {
   const history = useHistory();
   const { registerCommand } = useCommandPalette();
   const appRoot = ensureAppRoot('');
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
+  );
 
   const navigate = (path: string) => {
     history.push(path);
@@ -137,6 +144,20 @@ export function useDefaultCommands(): void {
         keywords: ['create', 'new', 'sql', 'query', 'editor'],
         action: () => navigate(`${appRoot}/sqllab?new=true`),
       },
+      ...(canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload)
+        ? [
+            {
+              id: 'action-upload-data',
+              name: t('Upload Data'),
+              description: t(
+                'Upload a CSV, Excel, or Parquet file to start exploring',
+              ),
+              type: 'action',
+              keywords: ['upload', 'csv', 'excel', 'file', 'import'],
+              action: () => navigate(`${appRoot}/upload/`),
+            },
+          ]
+        : []),
     ];
 
     const cleanups = commands.map(cmd => registerCommand(cmd));
@@ -144,7 +165,7 @@ export function useDefaultCommands(): void {
     return () => {
       cleanups.forEach(cleanup => cleanup());
     };
-  }, [registerCommand, history, appRoot]);
+  }, [registerCommand, history, appRoot, canUploadData]);
 }
 
 export default useDefaultCommands;

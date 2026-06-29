@@ -253,13 +253,13 @@ class DatasetValidator:
                     }
                 )
 
+            database = getattr(dataset, "database", None)
+            database_name = getattr(database, "database_name", None) or ""
             return DatasetContext(
                 id=dataset.id,
                 table_name=dataset.table_name,
                 schema=dataset.schema,
-                database_name=dataset.database.database_name
-                if dataset.database
-                else None,
+                database_name=database_name,
                 available_columns=columns,
                 available_metrics=metrics,
             )

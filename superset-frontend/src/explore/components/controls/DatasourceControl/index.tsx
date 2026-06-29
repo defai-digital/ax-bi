@@ -364,9 +364,10 @@ class DatasourceControl extends PureComponent<
     let isMissingParams = false;
     if (isMissingDatasource) {
       const datasourceId = getUrlParam(URL_PARAMS.datasourceId);
+      const datasetId = getUrlParam(URL_PARAMS.datasetId);
       const sliceId = getUrlParam(URL_PARAMS.sliceId);
 
-      if (!datasourceId && !sliceId) {
+      if (!datasourceId && !datasetId && !sliceId) {
         isMissingParams = true;
       }
     }

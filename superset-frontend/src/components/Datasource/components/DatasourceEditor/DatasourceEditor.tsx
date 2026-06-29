@@ -888,6 +888,17 @@ type DatasourceEditorProps = DatasourceEditorOwnProps &
     theme?: SupersetTheme;
   };
 
+const parseMetricExtra = (extra?: string) => {
+  if (!extra) {
+    return {};
+  }
+  try {
+    return JSON.parse(extra);
+  } catch {
+    return {};
+  }
+};
+
 class DatasourceEditor extends PureComponent<
   DatasourceEditorProps,
   DatasourceEditorState
@@ -931,7 +942,7 @@ class DatasourceEditor extends PureComponent<
               certified_by: certifiedBy = undefined,
             } = {},
             warning_markdown: warningMarkdown,
-          } = JSON.parse(metric.extra || '{}') || {};
+          } = parseMetricExtra(metric.extra);
           return {
             ...metric,
             certification_details: certificationDetails || details,

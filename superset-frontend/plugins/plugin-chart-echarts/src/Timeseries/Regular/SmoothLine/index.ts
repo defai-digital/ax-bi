@@ -23,22 +23,24 @@ import {
   EchartsTimeseriesFormData,
   EchartsTimeseriesSeriesType,
 } from '../../types';
-import buildQuery from '../../buildQuery';
 import controlPanel from './controlPanel';
-import transformProps from '../../transformProps';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
 import example1 from './images/SmoothLine1.png';
 import example1Dark from './images/SmoothLine1-dark.png';
 import { EchartsChartPlugin } from '../../../types';
 
-const smoothTransformProps = (chartProps: EchartsTimeseriesChartProps) =>
-  transformProps({
-    ...chartProps,
-    formData: {
-      ...chartProps.formData,
-      seriesType: EchartsTimeseriesSeriesType.Smooth,
-    },
+const loadSmoothTransformProps = () =>
+  import('../../transformProps').then(mod => {
+    const baseTransformProps = mod.default;
+    return (chartProps: EchartsTimeseriesChartProps) =>
+      baseTransformProps({
+        ...chartProps,
+        formData: {
+          ...chartProps.formData,
+          seriesType: EchartsTimeseriesSeriesType.Smooth,
+        },
+      });
   });
 
 export default class EchartsTimeseriesSmoothLineChartPlugin extends EchartsChartPlugin<
@@ -47,7 +49,7 @@ export default class EchartsTimeseriesSmoothLineChartPlugin extends EchartsChart
 > {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('../../buildQuery'),
       controlPanel,
       loadChart: () => import('../../EchartsTimeseries'),
       metadata: {
@@ -80,7 +82,7 @@ export default class EchartsTimeseriesSmoothLineChartPlugin extends EchartsChart
         thumbnail,
         thumbnailDark,
       },
-      transformProps: smoothTransformProps,
+      loadTransformProps: loadSmoothTransformProps,
     });
   }
 }

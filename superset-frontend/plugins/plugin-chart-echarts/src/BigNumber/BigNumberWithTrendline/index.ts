@@ -19,8 +19,6 @@
 import { t } from '@apache-superset/core/translation';
 import { Behavior } from '@superset-ui/core';
 import controlPanel from './controlPanel';
-import transformProps from './transformProps';
-import buildQuery from './buildQuery';
 import example from './images/Big_Number_Trendline.jpg';
 import exampleDark from './images/Big_Number_Trendline-dark.jpg';
 import thumbnail from './images/thumbnail.png';
@@ -60,8 +58,8 @@ export default class BigNumberWithTrendlineChartPlugin extends EchartsChartPlugi
     super({
       loadChart: () => import('../BigNumberViz'),
       metadata,
-      buildQuery,
-      transformProps,
+      loadBuildQuery: () => import('./buildQuery'),
+      loadTransformProps: () => import('./transformProps'),
       controlPanel,
     });
   }

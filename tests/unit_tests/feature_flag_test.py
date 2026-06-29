@@ -17,6 +17,12 @@
 from pytest_mock import MockerFixture
 
 from superset import is_feature_enabled
+from superset.config import (
+    AX_SERVICES_BASE_URL,
+    AX_SERVICES_INTERNAL_TOKEN,
+    AX_SERVICES_TIMEOUT_SECONDS,
+    DEFAULT_FEATURE_FLAGS,
+)
 
 
 def dummy_is_feature_enabled(feature_flag_name: str, default: bool = True) -> bool:
@@ -63,3 +69,27 @@ def test_is_feature_enabled(mocker: MockerFixture) -> None:
     assert is_feature_enabled("True_Flag2") is True
     assert is_feature_enabled("Flag3") is False
     assert is_feature_enabled("Flag4") is True
+
+
+def test_runtime_modernization_feature_flags_default_disabled() -> None:
+    """
+    Test runtime modernization flags are opt-in.
+    """
+
+    assert DEFAULT_FEATURE_FLAGS["RUNTIME_MODERNIZATION"] is False
+    assert DEFAULT_FEATURE_FLAGS["TS_MCP_ORCHESTRATION"] is False
+    assert DEFAULT_FEATURE_FLAGS["TS_ASSET_SEARCH_SERVING"] is False
+    assert DEFAULT_FEATURE_FLAGS["TS_METADATA_INDEX"] is False
+    assert DEFAULT_FEATURE_FLAGS["RUST_SQL_KERNEL"] is False
+    assert DEFAULT_FEATURE_FLAGS["RUST_CHART_VALIDATION_KERNEL"] is False
+    assert DEFAULT_FEATURE_FLAGS["RUNTIME_SHADOW_EXECUTION"] is False
+
+
+def test_ax_services_config_defaults() -> None:
+    """
+    Test AX services sidecar defaults are local and opt-in.
+    """
+
+    assert AX_SERVICES_BASE_URL == "http://127.0.0.1:5010"
+    assert AX_SERVICES_TIMEOUT_SECONDS == 2.0
+    assert AX_SERVICES_INTERNAL_TOKEN is None

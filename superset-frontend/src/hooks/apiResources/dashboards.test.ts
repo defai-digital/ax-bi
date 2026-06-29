@@ -18,6 +18,7 @@
  */
 import { renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import { ResourceStatus } from './apiResources';
 import { useDashboard, useDashboardDatasets } from './dashboards';
 
 test('useDashboard excludes thumbnail_url from request', async () => {
@@ -41,6 +42,32 @@ test('useDashboard excludes thumbnail_url from request', async () => {
   const calledUrl = fetchMock.callHistory.lastCall()?.url ?? '';
   expect(calledUrl).toContain('?q=');
   expect(calledUrl).not.toContain('thumbnail_url');
+
+  fetchMock.clearHistory().removeRoutes();
+});
+
+test('useDashboard tolerates malformed metadata and position data', async () => {
+  fetchMock.get('glob:*/api/v1/dashboard/7?q=*', {
+    result: {
+      id: 7,
+      dashboard_title: 'Malformed dashboard',
+      json_metadata: '{malformed',
+      position_json: '{malformed',
+    },
+  });
+
+  const { result } = renderHook(() => useDashboard(7));
+
+  await waitFor(() => {
+    expect(result.current.status).toBe(ResourceStatus.Complete);
+  });
+
+  expect(result.current.result).toMatchObject({
+    id: 7,
+    metadata: {},
+    owners: [],
+    position_data: undefined,
+  });
 
   fetchMock.clearHistory().removeRoutes();
 });

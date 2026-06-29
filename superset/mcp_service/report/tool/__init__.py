@@ -15,10 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from .create_report import create_report
 from .get_report_info import get_report_info
 from .list_reports import list_reports
 
 __all__ = [
     "list_reports",
     "get_report_info",
+    "create_report",
 ]

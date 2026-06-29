@@ -66,8 +66,14 @@ def build_job_metadata(
 
 def parse_event(event_data: tuple[str, dict[str, Any]]) -> dict[str, Any]:
     event_id = event_data[0]
-    event_payload = event_data[1]["data"]
-    return {"id": event_id, **json.loads(event_payload)}
+    try:
+        event_payload = event_data[1]["data"]
+        payload = json.loads(event_payload)
+    except (IndexError, KeyError, TypeError, json.JSONDecodeError) as ex:
+        raise AsyncQueryJobException("Invalid async event payload") from ex
+    if not isinstance(payload, dict):
+        raise AsyncQueryJobException("Invalid async event payload")
+    return {"id": event_id, **payload}
 
 
 def increment_id(entry_id: str) -> str:

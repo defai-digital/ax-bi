@@ -131,6 +131,37 @@ PARAMETER_MISSING_ERR = __(
 SqlResults = dict[str, Any]
 
 
+def _parse_datasource_key(
+    datasource_key: Any,
+) -> tuple[int, DatasourceType] | None:
+    if not isinstance(datasource_key, str) or not datasource_key:
+        return None
+
+    parts = datasource_key.split("__")
+    if len(parts) != 2:
+        return None
+
+    raw_datasource_id, raw_datasource_type = parts
+    try:
+        return int(raw_datasource_id), DatasourceType(raw_datasource_type)
+    except ValueError:
+        return None
+
+
+def _get_selected_column_names(selected_columns: object) -> list[str]:
+    if not isinstance(selected_columns, list):
+        return []
+
+    column_names: list[str] = []
+    for column in selected_columns:
+        if not isinstance(column, dict):
+            continue
+        name = column.get("name")
+        if isinstance(name, str):
+            column_names.append(name)
+    return column_names
+
+
 class Superset(BaseSupersetView):
     """The base views for Superset!"""
 
@@ -403,14 +434,15 @@ class Superset(BaseSupersetView):
                 "slice_id", int(request.args.get("slice_id", 0))
             )
             if datasource := parsed_form_data.get("datasource"):
-                datasource_id, datasource_type = datasource.split("__")
-                parameters = CommandParameters(
-                    datasource_id=datasource_id,
-                    datasource_type=datasource_type,
-                    chart_id=slice_id,
-                    form_data=request_form_data,
-                )
-                form_data_key = CreateFormDataCommand(parameters).run()
+                if datasource_info := _parse_datasource_key(datasource):
+                    datasource_id, datasource_type = datasource_info
+                    parameters = CommandParameters(
+                        datasource_id=datasource_id,
+                        datasource_type=datasource_type,
+                        chart_id=slice_id,
+                        form_data=request_form_data,
+                    )
+                    form_data_key = CreateFormDataCommand(parameters).run()
         if form_data_key:
             url = parse.urlparse(redirect_url)
             query = parse.parse_qs(url.query)
@@ -472,7 +504,7 @@ class Superset(BaseSupersetView):
         elif form_data_key := request.args.get("form_data_key"):
             parameters = CommandParameters(key=form_data_key)
             value = GetFormDataCommand(parameters).run()
-            initial_form_data = json.loads(value) if value else {}
+            initial_form_data = loads_request_json(value) if value else {}
 
         if not initial_form_data:
             slice_id = request.args.get("slice_id")
@@ -518,10 +550,7 @@ class Superset(BaseSupersetView):
         if "viz_type" not in form_data:
             form_data["viz_type"] = app.config["DEFAULT_VIZ_TYPE"]
             if app.config["DEFAULT_VIZ_TYPE"] == "table":
-                all_columns = []
-                for x in selectedColumns:
-                    all_columns.append(x["name"])
-                form_data["all_columns"] = all_columns
+                form_data["all_columns"] = _get_selected_column_names(selectedColumns)
 
         # slc perms
         slice_add_perm = security_manager.can_access("can_write", "Chart")
@@ -898,10 +927,12 @@ class Superset(BaseSupersetView):
         :returns: The Flask response
         :raises SupersetSecurityException: If the user cannot access the resource
         """
-        datasource_id, datasource_type = request.args["datasourceKey"].split("__")
-        datasource = DatasourceDAO.get_datasource(
-            DatasourceType(datasource_type), int(datasource_id)
-        )
+        datasource_info = _parse_datasource_key(request.args.get("datasourceKey"))
+        if not datasource_info:
+            return json_error_response(DATASOURCE_MISSING_ERR, status=400)
+
+        datasource_id, datasource_type = datasource_info
+        datasource = DatasourceDAO.get_datasource(datasource_type, datasource_id)
         # Check if datasource exists
         if not datasource:
             return json_error_response(DATASOURCE_MISSING_ERR)

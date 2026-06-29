@@ -83,7 +83,7 @@ class ImportDashboardsCommand(ImportModelsCommand):
         theme_uuids: set[str] = set()
         for file_name, config in configs.items():
             if file_name.startswith("dashboards/"):
-                chart_uuids.update(find_chart_uuids(config["position"]))
+                chart_uuids.update(find_chart_uuids(config.get("position")))
                 dataset_uuids.update(
                     find_native_filter_datasets(config.get("metadata", {}))
                 )
@@ -193,7 +193,7 @@ class ImportDashboardsCommand(ImportModelsCommand):
                     )
 
                 # Collect chart IDs to associate with this dashboard
-                for uuid in find_chart_uuids(config["position"]):
+                for uuid in find_chart_uuids(config.get("position")):
                     if uuid not in chart_ids:
                         continue
                     chart_id = chart_ids[uuid]

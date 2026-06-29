@@ -20,8 +20,6 @@ import { t } from '@apache-superset/core/translation';
 import { ChartMetadata, ChartPlugin } from '@superset-ui/core';
 import thumbnail from './images/thumbnail.png';
 import thumbnailDark from './images/thumbnail-dark.png';
-import transformProps from './transformProps';
-import buildQuery from './buildQuery';
 import controlPanel from './controlPanel';
 import example1 from './images/example1.png';
 import example1Dark from './images/example1-dark.png';
@@ -36,7 +34,7 @@ export default class EchartsBubbleChartPlugin extends ChartPlugin<
 > {
   constructor() {
     super({
-      buildQuery,
+      loadBuildQuery: () => import('./buildQuery'),
       controlPanel,
       loadChart: () => import('./EchartsBubble'),
       metadata: new ChartMetadata({
@@ -62,7 +60,7 @@ export default class EchartsBubbleChartPlugin extends ChartPlugin<
         thumbnail,
         thumbnailDark,
       }),
-      transformProps,
+      loadTransformProps: () => import('./transformProps'),
     });
   }
 }

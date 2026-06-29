@@ -240,6 +240,9 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         """
         Return the configured schema.
         """
+        if not sqlalchemy_uri.database:
+            return None
+
         database = sqlalchemy_uri.database.strip("/")
 
         if "/" not in database:
@@ -248,10 +251,13 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return parse.unquote(database.split("/")[1])
 
     @classmethod
-    def get_default_catalog(cls, database: "Database") -> str:
+    def get_default_catalog(cls, database: "Database") -> Optional[str]:
         """
         Return the default catalog.
         """
+        if not database.url_object.database:
+            return None
+
         return database.url_object.database.split("/")[0]
 
     @classmethod
@@ -303,8 +309,14 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         :param database: instance to be mutated
         """
         extra = json.loads(database.extra or "{}")
+        if not isinstance(extra, dict):
+            extra = {}
         engine_params = extra.get("engine_params", {})
+        if not isinstance(engine_params, dict):
+            engine_params = {}
         connect_args = engine_params.get("connect_args", {})
+        if not isinstance(connect_args, dict):
+            connect_args = {}
         connect_args["validate_default_parameters"] = True
         engine_params["connect_args"] = connect_args
         extra["engine_params"] = engine_params
@@ -442,9 +454,12 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
             return
         try:
             encrypted_extra = json.loads(database.encrypted_extra)
-        except json.JSONDecodeError as ex:
+        except (TypeError, json.JSONDecodeError) as ex:
             logger.error(ex, exc_info=True)
             raise
+        if not isinstance(encrypted_extra, dict):
+            return
+
         auth_method = encrypted_extra.get("auth_method", None)
         auth_params = encrypted_extra.get("auth_params", {})
         if not auth_method:

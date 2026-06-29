@@ -112,6 +112,14 @@ def test_get_schema_from_engine_params() -> None:
         is None
     )
 
+    assert (
+        PrestoEngineSpec.get_schema_from_engine_params(
+            make_url("presto://localhost:8080"),
+            {},
+        )
+        is None
+    )
+
 
 @mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
 @pytest.mark.parametrize(
@@ -242,6 +250,12 @@ def test_get_default_catalog() -> None:
         sqlalchemy_uri="presto://localhost:8080/hive/default",
     )
     assert PrestoEngineSpec.get_default_catalog(database) == "hive"
+
+    database = Database(
+        database_name="my_db",
+        sqlalchemy_uri="presto://localhost:8080/",
+    )
+    assert PrestoEngineSpec.get_default_catalog(database) is None
 
 
 @pytest.mark.parametrize(

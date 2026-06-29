@@ -20,14 +20,20 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 from functools import wraps
+from types import SimpleNamespace
 from typing import Any, Callable
 from unittest.mock import patch
 
 import pytest
 
-from superset.commands.report.base import BaseReportScheduleCommand
+from superset.commands.report.base import (
+    _get_dashboard_native_filter_ids,
+    _get_dashboard_state_invalid_tab_ids,
+    BaseReportScheduleCommand,
+)
 from superset.commands.report.exceptions import ReportScheduleFrequencyNotAllowed
 from superset.reports.models import ReportScheduleType
+from superset.utils import json
 
 REPORT_TYPES = {
     ReportScheduleType.ALERT,
@@ -50,6 +56,38 @@ TEST_SCHEDULES_SINGLE_MINUTES = {
 }
 
 TEST_SCHEDULES = TEST_SCHEDULES_EVERY_MINUTE.union(TEST_SCHEDULES_SINGLE_MINUTES)
+
+
+def test_get_dashboard_state_invalid_tab_ids_rejects_malformed_anchor_list() -> None:
+    """
+    Test malformed JSON anchor lists produce validation data instead of TypeError.
+    """
+    invalid_tab_ids = _get_dashboard_state_invalid_tab_ids(
+        {"activeTabs": ["TAB-VALID"], "anchor": "[{}]"},
+        {"TAB-VALID": {}},
+    )
+
+    assert invalid_tab_ids == {"[{}]"}
+
+
+def test_get_dashboard_native_filter_ids_ignores_malformed_entries() -> None:
+    """
+    Test malformed dashboard native filter metadata entries are skipped.
+    """
+    dashboard = SimpleNamespace(
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    "id",
+                    {"name": "Missing ID"},
+                    {"id": 123},
+                    {"id": "NATIVE_FILTER-valid"},
+                ]
+            }
+        )
+    )
+
+    assert _get_dashboard_native_filter_ids(dashboard, []) == {"NATIVE_FILTER-valid"}
 
 
 def dynamic_alert_minimum_interval(**kwargs) -> int:

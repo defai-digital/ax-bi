@@ -26,6 +26,7 @@ from pytest_mock import MockerFixture
 from superset.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerDeleteFailedError,
+    SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticLayerUpdateFailedError,
@@ -71,6 +72,22 @@ def test_put_semantic_view(
     assert response.json["id"] == 1
     assert response.json["result"] == payload
     mock_command.assert_called_once_with(1, payload)
+
+
+@SEMANTIC_LAYERS_APP
+def test_put_semantic_view_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """PUT /semantic_view/<id> rejects malformed JSON before command dispatch."""
+    response = client.put(
+        "/api/v1/semantic_view/1",
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
 
 
 @SEMANTIC_LAYERS_APP
@@ -445,6 +462,28 @@ def test_configuration_schema_unknown_type(
 
 
 @SEMANTIC_LAYERS_APP
+def test_configuration_schema_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /schema/configuration rejects non-object bodies cleanly."""
+    mocker.patch.dict(
+        "superset.semantic_layers.api.registry",
+        {},
+        clear=True,
+    )
+
+    response = client.post(
+        "/api/v1/semantic_layer/schema/configuration",
+        json=["not", "an", "object"],
+    )
+
+    assert response.status_code == 400
+    assert "Unknown type" in response.json["message"]
+
+
+@SEMANTIC_LAYERS_APP
 def test_runtime_schema(
     client: Any,
     full_api_access: None,
@@ -506,6 +545,39 @@ def test_runtime_schema_no_body(
 
     response = client.post(
         f"/api/v1/semantic_layer/{test_uuid}/schema/runtime",
+    )
+
+    assert response.status_code == 200
+    mock_cls.get_runtime_schema.assert_called_once_with({"account": "test"}, None)
+
+
+@SEMANTIC_LAYERS_APP
+def test_runtime_schema_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/schema/runtime ignores non-object JSON bodies."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.type = "snowflake"
+    mock_layer.implementation.configuration = {"account": "test"}
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+
+    mock_cls = MagicMock()
+    mock_cls.get_runtime_schema.return_value = {"type": "object"}
+
+    mocker.patch.dict(
+        "superset.semantic_layers.api.registry",
+        {"snowflake": mock_cls},
+        clear=True,
+    )
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/schema/runtime",
+        json=["not", "an", "object"],
     )
 
     assert response.status_code == 200
@@ -683,6 +755,31 @@ def test_post_semantic_layer_missing_required_fields(
 
 
 @SEMANTIC_LAYERS_APP
+@pytest.mark.parametrize(
+    ("method", "url"),
+    [
+        ("post", "/api/v1/semantic_layer/"),
+        ("put", f"/api/v1/semantic_layer/{uuid_lib.uuid4()}"),
+    ],
+)
+def test_semantic_layer_write_rejects_malformed_json_body(
+    client: Any,
+    full_api_access: None,
+    method: str,
+    url: str,
+) -> None:
+    """Semantic layer writes reject malformed JSON before command dispatch."""
+    response = getattr(client, method)(
+        url,
+        data="{malformed",
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.json == {"message": {"_schema": ["Invalid input type."]}}
+
+
+@SEMANTIC_LAYERS_APP
 def test_put_semantic_layer(
     client: Any,
     full_api_access: None,
@@ -727,6 +824,26 @@ def test_put_semantic_layer_not_found(
     )
 
     assert response.status_code == 404
+
+
+@SEMANTIC_LAYERS_APP
+def test_put_semantic_layer_forbidden(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test PUT /<uuid> returns 403 when ownership check fails."""
+    mock_command = mocker.patch(
+        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+    )
+    mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
+
+    response = client.put(
+        f"/api/v1/semantic_layer/{uuid_lib.uuid4()}",
+        json={"name": "New"},
+    )
+
+    assert response.status_code == 403
 
 
 @SEMANTIC_LAYERS_APP
@@ -819,6 +936,23 @@ def test_delete_semantic_layer_not_found(
     response = client.delete(f"/api/v1/semantic_layer/{uuid_lib.uuid4()}")
 
     assert response.status_code == 404
+
+
+@SEMANTIC_LAYERS_APP
+def test_delete_semantic_layer_forbidden(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test DELETE /<uuid> returns 403 when ownership check fails."""
+    mock_command = mocker.patch(
+        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+    )
+    mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
+
+    response = client.delete(f"/api/v1/semantic_layer/{uuid_lib.uuid4()}")
+
+    assert response.status_code == 403
 
 
 @SEMANTIC_LAYERS_APP
@@ -1014,6 +1148,33 @@ def test_serialize_layer_none_config(
     assert response.json["result"]["configuration"] == {}
 
 
+@SEMANTIC_LAYERS_APP
+@pytest.mark.parametrize("configuration", ["{malformed", "[]"])
+def test_serialize_layer_malformed_config(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+    configuration: str,
+) -> None:
+    """Test _serialize_layer tolerates persisted malformed configuration."""
+    layer = MagicMock()
+    layer.uuid = uuid_lib.uuid4()
+    layer.name = "Layer"
+    layer.description = None
+    layer.type = "snowflake"
+    layer.cache_timeout = None
+    layer.configuration = configuration
+    layer.changed_on_delta_humanized.return_value = "1 day ago"
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = layer
+
+    response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
+
+    assert response.status_code == 200
+    assert response.json["result"]["configuration"] == {}
+
+
 def test_infer_discriminators_injects_discriminator() -> None:
     """Test _infer_discriminators injects discriminator values."""
     from superset.semantic_layers.api import _infer_discriminators
@@ -1102,6 +1263,68 @@ def test_infer_discriminators_no_discriminator() -> None:
     data = {"auth": {"key": "val"}}
     result = _infer_discriminators(schema, data)
     assert result == data
+
+
+@pytest.mark.parametrize(
+    "schema",
+    [
+        {"properties": []},
+        {"properties": {"auth": []}},
+        {"properties": {"auth": {"discriminator": []}}},
+        {
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": [],
+                    },
+                },
+            },
+        },
+        {
+            "$defs": [],
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": "#/$defs/VariantA"},
+                    },
+                },
+            },
+        },
+        {
+            "$defs": {"VariantA": {"required": "field_a"}},
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": "#/$defs/VariantA"},
+                    },
+                },
+            },
+        },
+        {
+            "$defs": {"VariantA": {"required": ["field_a"]}},
+            "properties": {
+                "auth": {
+                    "discriminator": {
+                        "propertyName": "disc",
+                        "mapping": {"a": None},
+                    },
+                },
+            },
+        },
+    ],
+)
+def test_infer_discriminators_skips_malformed_schema_fragments(
+    schema: dict[str, Any],
+) -> None:
+    """Malformed schema fragments should not crash discriminator inference."""
+    from superset.semantic_layers.api import _infer_discriminators
+
+    data = {"auth": {"field_a": "value"}}
+
+    assert _infer_discriminators(schema, data) == data
 
 
 def test_parse_partial_config_strict_success() -> None:
@@ -1591,6 +1814,17 @@ def test_post_semantic_view_empty_views(
 
 
 @SEMANTIC_LAYERS_APP
+def test_post_semantic_view_rejects_non_object_body(
+    client: Any,
+    full_api_access: None,
+) -> None:
+    """Test POST / rejects non-object JSON bodies cleanly."""
+    response = client.post("/api/v1/semantic_view/", json=["not", "an", "object"])
+
+    assert response.status_code == 400
+
+
+@SEMANTIC_LAYERS_APP
 def test_post_semantic_view_validation_error(
     client: Any,
     full_api_access: None,
@@ -2006,6 +2240,31 @@ def test_get_views_not_found(
 
 
 @SEMANTIC_LAYERS_APP
+def test_get_views_ignores_non_object_body(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/views ignores non-object JSON bodies."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.uuid = uuid_lib.uuid4()
+    mock_layer.implementation.get_semantic_views.return_value = []
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+    mock_dao.get_semantic_views.return_value = []
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/views",
+        json=["not", "an", "object"],
+    )
+
+    assert response.status_code == 200
+    mock_layer.implementation.get_semantic_views.assert_called_once_with({})
+
+
+@SEMANTIC_LAYERS_APP
 def test_get_views_exception(
     client: Any,
     full_api_access: None,
@@ -2063,6 +2322,39 @@ def test_get_views_existing_dict_config(
     assert response.status_code == 200
     result = response.json["result"]
     assert result[0]["already_added"] is True
+
+
+@SEMANTIC_LAYERS_APP
+def test_get_views_existing_malformed_config(
+    client: Any,
+    full_api_access: None,
+    mocker: MockerFixture,
+) -> None:
+    """Test POST /<uuid>/views tolerates malformed existing view configuration."""
+    test_uuid = str(uuid_lib.uuid4())
+    mock_layer = MagicMock()
+    mock_layer.uuid = uuid_lib.uuid4()
+
+    mock_view = MagicMock()
+    mock_view.name = "View X"
+    mock_layer.implementation.get_semantic_views.return_value = [mock_view]
+
+    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao.find_by_uuid.return_value = mock_layer
+
+    existing_view = MagicMock()
+    existing_view.name = "View X"
+    existing_view.configuration = "{malformed"
+
+    mock_dao.get_semantic_views.return_value = [existing_view]
+
+    response = client.post(
+        f"/api/v1/semantic_layer/{test_uuid}/views",
+        json={"runtime_data": {"key": "val"}},
+    )
+
+    assert response.status_code == 200
+    assert response.json["result"][0]["already_added"] is False
 
 
 @pytest.mark.parametrize(

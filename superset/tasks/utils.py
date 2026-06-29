@@ -137,14 +137,24 @@ def fetch_csrf_token(
         if cookie_headers:
             for cookie in cookie_headers:
                 cookie = cookie.split(";", 1)[0]
+                if "=" not in cookie:
+                    continue
                 name, value = cookie.split("=", 1)
                 if name == session_cookie_name:
                     session_cookie = value
                     break
 
         if response.status == 200:
-            data = json.loads(body)
-            res = {"X-CSRF-Token": data["result"]}
+            try:
+                data = json.loads(body)
+            except (TypeError, json.JSONDecodeError):
+                logger.error("Error decoding CSRF token response")
+                return {}
+            token = data.get("result") if isinstance(data, dict) else None
+            if not isinstance(token, str):
+                logger.error("Error fetching CSRF token, malformed response")
+                return {}
+            res = {"X-CSRF-Token": token}
             if session_cookie is not None:
                 res["Cookie"] = f"{session_cookie_name}={session_cookie}"
             return res

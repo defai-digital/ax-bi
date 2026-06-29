@@ -164,7 +164,11 @@ def _apply_unsaved_state_override(result: ChartInfo, form_data_key: str) -> None
 
     if cached_form_data := get_cached_form_data(form_data_key):
         try:
-            result.form_data = utils_json.loads(cached_form_data)
+            form_data = utils_json.loads(cached_form_data)
+            if not isinstance(form_data, dict):
+                raise ValueError("cached form_data is not a JSON object")
+
+            result.form_data = form_data
             result.form_data_key = form_data_key
             result.is_unsaved_state = True
 

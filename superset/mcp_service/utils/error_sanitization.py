@@ -29,6 +29,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+_MAX_SANITIZATION_INPUT_CHARS = 4000
+_MAX_CLIENT_ERROR_CHARS = 200
+
 
 def sanitize_for_log(value: Any) -> str:
     """Escape control characters in attacker-controlled values before logging.
@@ -50,11 +53,18 @@ def sanitize_for_log(value: Any) -> str:
 
 def _redact_sql_select(error_str: str, error_str_upper: str) -> str:
     """Redact SELECT...FROM clause content to prevent data disclosure."""
-    if "SELECT" in error_str_upper and "FROM" in error_str_upper:
+    if "SELECT" in error_str_upper:
         select_idx = error_str_upper.find("SELECT")
         from_idx = error_str_upper.find("FROM", select_idx)
-        if select_idx != -1 and from_idx != -1:
-            return error_str[: select_idx + 7] + " [REDACTED] " + error_str[from_idx:]
+        if select_idx == -1:
+            return error_str
+        if from_idx != -1:
+            return (
+                error_str[: select_idx + len("SELECT")]
+                + " [REDACTED] "
+                + error_str[from_idx:].lstrip()
+            )
+        return error_str[: select_idx + len("SELECT")] + " [REDACTED]"
     return error_str
 
 
@@ -70,7 +80,11 @@ def _redact_sql_where(error_str: str, error_str_upper: str) -> str:
         idx = error_str_upper.find(term, where_idx)
         if idx != -1 and idx < term_idx:
             term_idx = idx
-    return error_str[: where_idx + 6] + " [REDACTED]" + error_str[term_idx:]
+    return (
+        error_str[: where_idx + len("WHERE")]
+        + " [REDACTED] "
+        + error_str[term_idx:].lstrip()
+    )
 
 
 def _get_generic_error_message(error_str: str) -> str | None:
@@ -123,9 +137,9 @@ def _sanitize_validation_error(error: Exception, log_original: bool = True) -> s
             end = footer_idx if footer_idx != -1 else len(error_str)
             error_str = error_str[idx:end].strip()
 
-    # SECURITY FIX: Limit length FIRST to prevent ReDoS attacks
-    if len(error_str) > 200:
-        error_str = error_str[:200] + "...[truncated]"
+    was_truncated = len(error_str) > _MAX_SANITIZATION_INPUT_CHARS
+    if was_truncated:
+        error_str = error_str[:_MAX_SANITIZATION_INPUT_CHARS]
 
     # Remove potentially sensitive schema information
     sensitive_patterns = [
@@ -140,10 +154,14 @@ def _sanitize_validation_error(error: Exception, log_original: bool = True) -> s
     # SECURITY FIX: SQL sanitization without ReDoS-vulnerable patterns
     error_str_upper = error_str.upper()
     error_str = _redact_sql_select(error_str, error_str_upper)
+    error_str_upper = error_str.upper()
     error_str = _redact_sql_where(error_str, error_str_upper)
 
     # Return generic message for common error types
     if generic := _get_generic_error_message(error_str):
         return generic
+
+    if was_truncated or len(error_str) > _MAX_CLIENT_ERROR_CHARS:
+        error_str = error_str[:_MAX_CLIENT_ERROR_CHARS] + "...[truncated]"
 
     return error_str

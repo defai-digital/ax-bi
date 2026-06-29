@@ -16,9 +16,11 @@
 # under the License.
 from __future__ import annotations
 
+import inspect
 import re
 from unittest.mock import MagicMock, patch
 
+import pytest
 from flask import Flask
 
 
@@ -62,3 +64,53 @@ def test_streaming_csv_falls_back_when_filename_empty() -> None:
 
     assert filename.startswith("sqllab_abc123_")
     assert filename.endswith(".csv")
+
+
+@pytest.mark.parametrize(
+    "template_params, expected",
+    [
+        ('{"region": "APAC"}', {"region": "APAC"}),
+        ({"region": "APAC"}, {"region": "APAC"}),
+        ("[]", {}),
+        (["bad"], {}),
+        ("{malformed", {}),
+    ],
+)
+def test_load_template_params_accepts_only_objects(
+    template_params: object,
+    expected: dict[str, object],
+) -> None:
+    """SQL formatting template params should only expand mapping values."""
+    from superset.sqllab.api import _load_template_params
+
+    assert _load_template_params(template_params) == expected
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "estimate_query_cost",
+        "format_sql",
+        "execute_sql_query",
+    ],
+)
+def test_json_post_handlers_reject_malformed_json_body(method_name: str) -> None:
+    """SQL Lab JSON handlers should reject parser failures as validation errors."""
+    from superset.sqllab.api import SqlLabRestApi
+
+    app = Flask(__name__)
+    api = SqlLabRestApi.__new__(SqlLabRestApi)
+    api.response_400 = MagicMock(return_value=("bad request", {}))
+    method = inspect.unwrap(getattr(SqlLabRestApi, method_name))
+
+    with app.test_request_context(
+        method="POST",
+        data="{malformed",
+        content_type="application/json",
+    ):
+        result = method(api)
+
+    assert result == ("bad request", {})
+    api.response_400.assert_called_once_with(
+        message={"_schema": ["Invalid input type."]}
+    )

@@ -1,0 +1,11 @@
+order_id,order_date,region,segment,product,quantity,unit_price,discount,is_priority,customer_note
+1001,2026-01-05,North,Enterprise,Analytics Starter,3,199.00,0.00,true,First dashboard rollout
+1002,2026-01-07,West,SMB,Embedded BI,1,499.00,0.10,false,Requested CSV import test
+1003,2026-01-09,South,Mid-Market,MCP Connector,5,89.50,0.05,true,Needs follow-up
+1004,2026-01-12,East,Enterprise,AI Dashboard Pack,2,1299.00,0.15,true,Executive sponsor
+1005,2026-01-15,North,SMB,Analytics Starter,7,199.00,0.00,false,
+1006,2026-01-18,West,Mid-Market,Data Modeling,4,349.00,0.08,false,Renewal expansion
+1007,2026-01-21,South,Enterprise,MCP Connector,10,89.50,0.12,true,Security review complete
+1008,2026-01-23,East,SMB,Embedded BI,2,499.00,0.00,false,Trial conversion
+1009,2026-01-25,North,Mid-Market,AI Dashboard Pack,1,1299.00,0.05,true,Board reporting
+1010,2026-01-28,West,Enterprise,Data Modeling,6,349.00,0.10,false,Data warehouse migration

@@ -239,7 +239,12 @@ def json_to_dict(json_str: str) -> dict[Any, Any]:
     if json_str:
         val = re.sub(",[ \t\r\n]+}", "}", json_str)
         val = re.sub(",[ \t\r\n]+\\]", "]", val)
-        return json.loads(val)
+        try:
+            parsed = json.loads(val)
+        except (TypeError, ValueError):
+            logger.warning("Ignoring malformed JSON metadata")
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
 
     return {}
 
@@ -630,7 +635,9 @@ class AuditMixinNullable(AuditMixin):
         return self.changed_on_humanized
 
     @renders("changed_on")
-    def changed_on_dttm(self) -> float:
+    def changed_on_dttm(self) -> Optional[float]:
+        if not self.changed_on:
+            return None
         return datetime_to_epoch(self.changed_on)
 
     @renders("created_on")
@@ -639,10 +646,14 @@ class AuditMixinNullable(AuditMixin):
 
     @renders("changed_on")
     def changed_on_utc(self) -> str:
+        if not self.changed_on:
+            return ""
         # Convert naive datetime to UTC
         return self.changed_on.astimezone(pytz.utc).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
-    def _format_time_humanized(self, timestamp: datetime) -> str:
+    def _format_time_humanized(self, timestamp: Optional[datetime]) -> str:
+        if not timestamp:
+            return ""
         locale = str(get_locale())
         time_diff = datetime.now() - timestamp
         # Skip activation for 'en' locale as it's humanize's default locale
@@ -955,12 +966,13 @@ class ExtraJSONMixin:
     @property
     def extra(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra_json or "{}") or {}
+            extra = json.loads(self.extra_json or "{}") or {}
         except (TypeError, json.JSONDecodeError) as exc:
             logger.error(
                 "Unable to load an extra json: %r. Leaving empty.", exc, exc_info=True
             )
             return {}
+        return extra if isinstance(extra, dict) else {}
 
     @extra.setter
     def extra(self, extras: dict[str, Any]) -> None:
@@ -989,9 +1001,14 @@ class CertificationMixin:
 
     def get_extra_dict(self) -> dict[str, Any]:
         try:
-            return json.loads(self.extra)
+            extra = json.loads(self.extra)
         except (TypeError, json.JSONDecodeError):
             return {}
+        return extra if isinstance(extra, dict) else {}
+
+    def get_certification_dict(self) -> dict[str, Any]:
+        certification = self.get_extra_dict().get("certification")
+        return certification if isinstance(certification, dict) else {}
 
     @property
     def is_certified(self) -> bool:
@@ -999,11 +1016,11 @@ class CertificationMixin:
 
     @property
     def certified_by(self) -> Optional[str]:
-        return self.get_extra_dict().get("certification", {}).get("certified_by")
+        return self.get_certification_dict().get("certified_by")
 
     @property
     def certification_details(self) -> Optional[str]:
-        return self.get_extra_dict().get("certification", {}).get("details")
+        return self.get_certification_dict().get("details")
 
     @property
     def warning_markdown(self) -> Optional[str]:
@@ -2766,9 +2783,11 @@ class ExploreMixin:  # pylint: disable=too-many-public-methods
 
         # Fallback to the default format (if defined).
         if not tf and self.db_extra:
-            tf = self.db_extra.get("python_date_format_by_column_name", {}).get(
-                col.column_name
+            date_format_by_column = self.db_extra.get(
+                "python_date_format_by_column_name",
             )
+            if isinstance(date_format_by_column, dict):
+                tf = date_format_by_column.get(col.column_name)
 
         if tf:
             if tf in {"epoch_ms", "epoch_s"}:

@@ -53,7 +53,7 @@ class ExportThemesCommand(ExportModelsCommand):
         if payload.get("json_data"):
             try:
                 json_data = json.loads(payload["json_data"])
-                payload["json_data"] = json_data
+                payload["json_data"] = json_data if isinstance(json_data, dict) else {}
             except (TypeError, json.JSONDecodeError):
                 logger.info(
                     "Unable to decode `json_data` field: %s", payload["json_data"]

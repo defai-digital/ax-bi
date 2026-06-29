@@ -128,6 +128,25 @@ def test_sanitize_text_redacts_key_value_secret():
     assert "secret" in redactions
 
 
+@pytest.mark.parametrize(
+    ("input_text", "leaked_fragment", "expected"),
+    [
+        ('connected with password="hunter two" to db', "hunter two", "password="),
+        ("connected with secret='alpha beta' to db", "alpha beta", "secret="),
+    ],
+)
+def test_sanitize_text_redacts_quoted_key_value_secret_with_spaces(
+    input_text: str,
+    leaked_fragment: str,
+    expected: str,
+) -> None:
+    redactions: set[str] = set()
+    out = _sanitize_text(input_text, redactions)
+    assert leaked_fragment not in out
+    assert f"{expected}[REDACTED_SECRET]" in out
+    assert "secret" in redactions
+
+
 def test_sanitize_text_preserves_original_separator():
     """password: foo stays 'password: [REDACTED_SECRET]' — don't rewrite to '='."""
     redactions: set[str] = set()
@@ -144,6 +163,27 @@ def test_sanitize_text_redacts_credentialed_url():
     )
     assert "admin:s3cret@" not in out
     assert "[REDACTED_CREDENTIALS]" in out
+    assert "url_credentials" in redactions
+
+
+def test_sanitize_text_redacts_credentialed_url_with_empty_username():
+    redactions: set[str] = set()
+    out = _sanitize_text(
+        "cache redis://:s3cret@redis.internal:6379/0 failed", redactions
+    )
+    assert ":s3cret@" not in out
+    assert "redis://[REDACTED_CREDENTIALS]@redis.internal" in out
+    assert "url_credentials" in redactions
+
+
+def test_sanitize_text_redacts_credentialed_url_with_extended_scheme():
+    redactions: set[str] = set()
+    out = _sanitize_text(
+        "dsn postgresql+psycopg2://admin:s3cret@db.internal/prod failed",
+        redactions,
+    )
+    assert "admin:s3cret@" not in out
+    assert "postgresql+psycopg2://[REDACTED_CREDENTIALS]@db.internal" in out
     assert "url_credentials" in redactions
 
 
@@ -366,6 +406,28 @@ class TestGenerateBugReportViaMCP:
         data = json.loads(result.content[0].text)
         assert "abc123def456" in data["report"]
         assert "MCP Call ID" in data["report"]
+
+    @pytest.mark.asyncio
+    async def test_generate_bug_report_sanitizes_mcp_call_id(self, mcp_server):
+        """mcp_call_id is user-supplied and must not bypass redaction."""
+        with patch("flask.g") as mock_g:
+            mock_g.user = None
+
+            async with Client(mcp_server) as client:
+                result = await client.call_tool(
+                    "generate_bug_report",
+                    {
+                        "request": {
+                            "tool_name": "health_check",
+                            "mcp_call_id": "call from alice@example.com",
+                        }
+                    },
+                )
+
+        data = json.loads(result.content[0].text)
+        assert "alice@example.com" not in data["report"]
+        assert "[REDACTED_EMAIL]" in data["report"]
+        assert "email" in data["redactions_applied"]
 
     @pytest.mark.asyncio
     async def test_generate_bug_report_omits_mcp_call_id_when_absent(self, mcp_server):

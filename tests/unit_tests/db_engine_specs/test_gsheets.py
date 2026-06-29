@@ -17,7 +17,7 @@
 
 # pylint: disable=import-outside-toplevel, invalid-name, line-too-long
 
-from typing import Any, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -464,6 +464,78 @@ def test_upload_new(mocker: MockerFixture) -> None:
     assert database.extra == json.dumps(
         {"engine_params": {"catalog": {"sample_data": "https://docs.example.org"}}}
     )
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"spreadsheetId": 1, "spreadsheetUrl": "https://docs.example.org"},
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": "https://docs.example.org",
+            "sheets": [],
+        },
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": "https://docs.example.org",
+            "sheets": [{"properties": {}}],
+        },
+        {
+            "spreadsheetId": 1,
+            "spreadsheetUrl": None,
+            "sheets": [{"properties": {"title": "sample_data"}}],
+        },
+    ],
+)
+def test_upload_new_rejects_malformed_create_response(
+    mocker: MockerFixture,
+    payload: dict[str, Any],
+) -> None:
+    """Malformed Google Sheets create responses should raise a clear error."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    mocker.patch("superset.db_engine_specs.gsheets.db")
+    get_adapter_for_table_name = mocker.patch(
+        "shillelagh.backends.apsw.dialects.base.get_adapter_for_table_name"
+    )
+    session = get_adapter_for_table_name()._get_session()
+    session.post().json.return_value = payload
+
+    database = mocker.MagicMock()
+    database.get_extra.return_value = {}
+
+    df = pd.DataFrame({"col": [1]})
+    table = Table("sample_data")
+
+    with pytest.raises(
+        SupersetException,
+        match="Google Sheets API returned an unexpected response",
+    ):
+        GSheetsEngineSpec.df_to_sql(database, table, df, {})
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ([], "Google Sheets API returned an unexpected response"),
+        ({"error": {}}, "Google Sheets API returned an error"),
+        ({"error": "bad request"}, "Google Sheets API returned an error"),
+    ],
+)
+def test_do_post_rejects_malformed_response_payloads(
+    mocker: MockerFixture,
+    payload: Any,
+    message: str,
+) -> None:
+    """Malformed Google API responses should not leak raw shape errors."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    session = mocker.MagicMock()
+    session.post.return_value.json.return_value = payload
+
+    with pytest.raises(SupersetException, match=message):
+        GSheetsEngineSpec._do_post(session, "https://docs.example.org", {})
 
 
 def test_upload_existing(mocker: MockerFixture) -> None:
@@ -1068,3 +1140,36 @@ def test_validate_parameters_skips_oauth2_connections_with_masked_encrypted_extr
 
     assert errors == []
     conn.execute.assert_not_called()
+
+
+@pytest.mark.parametrize("masked_encrypted_extra", ["[]", "{", ["not-json"]])
+def test_validate_parameters_ignores_malformed_masked_encrypted_extra(
+    mocker: MockerFixture,
+    masked_encrypted_extra: object,
+) -> None:
+    """Malformed masked encrypted extra should not break validation."""
+    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+
+    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g.user.email = "admin@example.org"
+
+    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    conn = create_engine.return_value.connect.return_value
+    results = conn.execute.return_value
+    results.fetchall.return_value = []
+
+    properties = {
+        "parameters": {
+            "service_account_info": "",
+            "catalog": {},
+        },
+        "catalog": {
+            "sheet1": "https://docs.google.com/spreadsheets/d/1/edit",
+        },
+        "masked_encrypted_extra": masked_encrypted_extra,
+    }
+
+    errors = GSheetsEngineSpec.validate_parameters(cast(Any, properties))
+
+    assert errors == []
+    conn.execute.assert_called_once()

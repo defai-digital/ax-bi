@@ -49,15 +49,6 @@ export interface RightMenuProps {
   children?: ReactNode;
 }
 
-export enum GlobalMenuDataOptions {
-  GoogleSheets = 'gsheets',
-  DbConnection = 'dbconnection',
-  DatasetCreation = 'datasetCreation',
-  CSVUpload = 'csvUpload',
-  ExcelUpload = 'excelUpload',
-  ColumnarUpload = 'columnarUpload',
-}
-
 /**
  * Return result from /api/v1/log/recent_activity/
  */

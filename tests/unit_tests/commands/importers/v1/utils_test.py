@@ -20,6 +20,159 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from marshmallow import fields, Schema, ValidationError
+from pytest_mock import MockerFixture
+
+
+class RequiredNameSchema(Schema):
+    name = fields.String(required=True)
+
+
+class MaskedEncryptedExtraSchema(Schema):
+    name = fields.String(required=True)
+    masked_encrypted_extra = fields.String(required=False)
+
+
+class SshTunnelSchema(Schema):
+    name = fields.String(required=True)
+    ssh_tunnel = fields.Dict(required=False)
+
+
+def _mock_empty_import_queries(mocker: MockerFixture) -> None:
+    query = mocker.patch("superset.commands.importers.v1.utils.db").session.query
+    query.return_value.all.return_value = []
+
+
+def test_load_yaml_wraps_scanner_errors() -> None:
+    from superset.commands.importers.v1.utils import load_yaml
+
+    with pytest.raises(ValidationError) as excinfo:
+        load_yaml("databases/bad.yaml", "name: [")
+
+    assert excinfo.value.messages == {
+        "databases/bad.yaml": "Not a valid YAML file",
+    }
+
+
+def test_load_configs_rejects_non_object_yaml(mocker: MockerFixture) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/bad.yaml": "- item"},
+        {"databases/": RequiredNameSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/bad.yaml": {"_schema": ["Invalid config file"]},
+    }
+
+
+def test_load_configs_schema_error_does_not_require_config_assignment(
+    mocker: MockerFixture,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/bad.yaml": "{}"},
+        {"databases/": RequiredNameSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/bad.yaml": {"name": ["Missing data for required field."]},
+    }
+
+
+@pytest.mark.parametrize(
+    ("masked_encrypted_extra", "expected_message"),
+    [
+        ("{bad json", "Invalid JSON"),
+        ("[]", "Invalid JSON object"),
+    ],
+)
+def test_load_configs_rejects_bad_masked_encrypted_extra_when_applying_secrets(
+    mocker: MockerFixture,
+    masked_encrypted_extra: str,
+    expected_message: str,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+    from superset.utils import json
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {
+            "databases/database.yaml": (
+                "name: test_db\n"
+                f"masked_encrypted_extra: {json.dumps(masked_encrypted_extra)}\n"
+            )
+        },
+        {"databases/": MaskedEncryptedExtraSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {"databases/database.yaml": {"$.secret": "secret-value"}},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/database.yaml": {
+            "masked_encrypted_extra": [expected_message],
+        },
+    }
+
+
+def test_load_configs_rejects_non_object_ssh_tunnel_without_crashing(
+    mocker: MockerFixture,
+) -> None:
+    from superset.commands.importers.v1.utils import load_configs
+
+    _mock_empty_import_queries(mocker)
+    exceptions: list[ValidationError] = []
+
+    configs = load_configs(
+        {"databases/database.yaml": "name: test_db\nssh_tunnel: []\n"},
+        {"databases/": SshTunnelSchema()},
+        {},
+        exceptions,
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert configs == {}
+    assert len(exceptions) == 1
+    assert exceptions[0].messages == {
+        "databases/database.yaml": {
+            "ssh_tunnel": ["Not a valid mapping type."],
+        },
+    }
 
 
 class TestConvertTemporalColumns:

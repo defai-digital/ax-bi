@@ -21,7 +21,10 @@ import pytest
 from marshmallow import Schema
 
 from superset.dashboards.permalink.schemas import DashboardPermalinkSchema
-from superset.key_value.exceptions import KeyValueCodecEncodeException
+from superset.key_value.exceptions import (
+    KeyValueCodecDecodeException,
+    KeyValueCodecEncodeException,
+)
 from superset.key_value.types import (
     JsonKeyValueCodec,
     MarshmallowKeyValueCodec,
@@ -62,6 +65,20 @@ def test_json_codec(input_: Any, expected_result: Any):
         assert expected_result == codec.decode(encoded_value)
 
 
+def test_json_codec_decode_wraps_malformed_json() -> None:
+    codec = JsonKeyValueCodec()
+
+    with pytest.raises(KeyValueCodecDecodeException):
+        codec.decode(b"{malformed")
+
+
+def test_marshmallow_codec_decode_wraps_schema_errors() -> None:
+    codec = MarshmallowKeyValueCodec(DashboardPermalinkSchema())
+
+    with pytest.raises(KeyValueCodecDecodeException):
+        codec.decode(JsonKeyValueCodec().encode({"foo": "bar"}))
+
+
 @pytest.mark.parametrize(
     "schema,input_,expected_result",
     [
@@ -83,7 +100,7 @@ def test_json_codec(input_: Any, expected_result: Any):
         (
             DashboardPermalinkSchema(),
             {"foo": "bar"},
-            KeyValueCodecEncodeException(),
+            KeyValueCodecDecodeException(),
         ),
     ],
 )

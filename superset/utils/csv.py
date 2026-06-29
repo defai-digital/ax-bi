@@ -110,6 +110,32 @@ def get_chart_csv_data(
     return None
 
 
+def _get_first_result(result: Any) -> dict[str, Any] | None:
+    if not isinstance(result, dict):
+        return None
+    query_results = result.get("result")
+    if not isinstance(query_results, list) or not query_results:
+        return None
+    first_result = query_results[0]
+    return first_result if isinstance(first_result, dict) else None
+
+
+def _get_result_metadata(
+    first_result: dict[str, Any],
+    df: pd.DataFrame,
+) -> tuple[list[Any], list[Any], list[Any]] | None:
+    coltypes = first_result.get("coltypes", [])
+    colnames = first_result.get("colnames", [])
+    indexnames = first_result.get("indexnames", [])
+    if not isinstance(coltypes, list):
+        coltypes = []
+    if not isinstance(colnames, list) or not isinstance(indexnames, list):
+        return None
+    if len(colnames) != len(df.columns) or len(indexnames) != len(df.index):
+        return None
+    return coltypes, colnames, indexnames
+
+
 def get_chart_dataframe(
     chart_url: str,
     auth_cookies: Optional[dict[str, str]] = None,
@@ -121,33 +147,43 @@ def get_chart_dataframe(
     if content is None:
         return None
 
-    result = json.loads(content.decode("utf-8"))
+    try:
+        result = json.loads(content.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    first_result = _get_first_result(result)
+    if first_result is None:
+        return None
+
     # need to convert float value to string to show full long number
     pd.set_option("display.float_format", lambda x: str(x))
-    df = pd.DataFrame.from_dict(result["result"][0]["data"])
+    df = pd.DataFrame.from_dict(first_result.get("data") or {})
 
     if df.empty:
         return None
 
+    metadata = _get_result_metadata(first_result, df)
+    if metadata is None:
+        return None
+    coltypes, colnames, indexnames = metadata
+
     try:
         # if any column type is equal to 2, need to convert data into
         # datetime timestamp for that column.
-        if GenericDataType.TEMPORAL in result["result"][0]["coltypes"]:
-            for i in range(len(result["result"][0]["coltypes"])):
-                if result["result"][0]["coltypes"][i] == GenericDataType.TEMPORAL:
-                    df[result["result"][0]["colnames"][i]] = df[
-                        result["result"][0]["colnames"][i]
-                    ].astype("datetime64[ms]")
+        if GenericDataType.TEMPORAL in coltypes:
+            for i in range(len(coltypes)):
+                if coltypes[i] == GenericDataType.TEMPORAL:
+                    df[colnames[i]] = df[colnames[i]].astype("datetime64[ms]")
     except BaseException as err:
         logger.error(err)
 
     # rebuild hierarchical columns and index
     df.columns = pd.MultiIndex.from_tuples(
         tuple(colname) if isinstance(colname, list) else (colname,)
-        for colname in result["result"][0]["colnames"]
+        for colname in colnames
     )
     df.index = pd.MultiIndex.from_tuples(
         tuple(indexname) if isinstance(indexname, list) else (indexname,)
-        for indexname in result["result"][0]["indexnames"]
+        for indexname in indexnames
     )
     return df

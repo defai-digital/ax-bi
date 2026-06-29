@@ -16,15 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useState, useEffect, FC, PureComponent, useMemo } from 'react';
-import rison from 'rison';
+import { FC, PureComponent, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { useQueryParams, BooleanParam } from 'use-query-params';
-import { isEmpty } from 'lodash';
 import { t } from '@apache-superset/core/translation';
 import {
-  SupersetClient,
   getExtensionsRegistry,
   isFeatureEnabled,
   FeatureFlag,
@@ -46,27 +42,14 @@ import {
 } from '@superset-ui/core/components';
 import type { ItemType, MenuItem } from '@superset-ui/core/components/Menu';
 import { ensureAppRoot } from 'src/utils/pathUtils';
-import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 import { findPermission } from 'src/utils/findPermission';
-import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
-import {
-  MenuObjectProps,
-  UserWithPermissionsAndRoles,
-  MenuObjectChildProps,
-} from 'src/types/bootstrapTypes';
+import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 import { RootState } from 'src/dashboard/types';
-import DatabaseModal from 'src/features/databases/DatabaseModal';
-import UploadDataModal from 'src/features/databases/UploadDataModel';
-import { uploadUserPerms } from 'src/views/CRUD/utils';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useThemeMenuItems } from 'src/hooks/useThemeMenuItems';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 import { useLanguageMenuItems } from './LanguagePicker';
-import {
-  ExtensionConfigs,
-  GlobalMenuDataOptions,
-  RightMenuProps,
-} from './types';
+import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
 
 const extensionsRegistry = getExtensionsRegistry();
@@ -86,86 +69,22 @@ const StyledMenuItemWithIcon = styled.div`
   align-items: center;
 `;
 
-const StyledAnchor = styled.a`
-  padding-right: ${({ theme }) => theme.sizeUnit}px;
-  padding-left: ${({ theme }) => theme.sizeUnit}px;
-`;
-
-const StyledMenuItem = styled.div<{ disabled?: boolean }>`
-  ${({ theme, disabled }) => css`
-    &&:hover {
-      color: ${!disabled && theme.colorPrimary};
-      cursor: ${!disabled ? 'pointer' : 'not-allowed'};
-    }
-    ${disabled &&
-    css`
-      color: ${theme.colorTextDisabled};
-    `}
-  `}
-`;
-
 const RightMenu = ({
   align,
   settings,
   navbarRight,
   isFrontendRoute,
   environmentTag,
-  setQuery,
-}: RightMenuProps & {
-  setQuery: ({
-    databaseAdded,
-    datasetAdded,
-  }: {
-    databaseAdded?: boolean;
-    datasetAdded?: boolean;
-  }) => void;
-}) => {
+}: RightMenuProps) => {
   const theme = useTheme();
   const commandPalette = useOptionalCommandPalette();
   const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
-  const user = useSelector<any, UserWithPermissionsAndRoles>(
-    state => state.user,
-  );
   const dashboardId = useSelector<RootState, number | undefined>(
     state => state.dashboardInfo?.id,
   );
-  const userValues = user || {};
-  const { roles } = userValues;
-  const {
-    CSV_EXTENSIONS,
-    COLUMNAR_EXTENSIONS,
-    EXCEL_EXTENSIONS,
-    ALLOWED_EXTENSIONS,
-    HAS_GSHEETS_INSTALLED,
-  } = useSelector<any, ExtensionConfigs>(state => state.common.conf);
-  const [showDatabaseModal, setShowDatabaseModal] = useState<boolean>(false);
-  const [showCSVUploadModal, setShowCSVUploadModal] = useState<boolean>(false);
-  const [showExcelUploadModal, setShowExcelUploadModal] =
-    useState<boolean>(false);
-  const [showColumnarUploadModal, setShowColumnarUploadModal] =
-    useState<boolean>(false);
-  const [engine, setEngine] = useState<string>('');
-  const canSql = findPermission('can_sqllab', 'Superset', roles);
-  const canDashboard = findPermission('can_write', 'Dashboard', roles);
-  const canChart = findPermission('can_write', 'Chart', roles);
-  const canDatabase = findPermission('can_write', 'Database', roles);
-  const canDataset = findPermission('can_write', 'Dataset', roles);
-
-  const { canUploadData, canUploadCSV, canUploadColumnar, canUploadExcel } =
-    uploadUserPerms(
-      roles,
-      CSV_EXTENSIONS,
-      COLUMNAR_EXTENSIONS,
-      EXCEL_EXTENSIONS,
-      ALLOWED_EXTENSIONS,
-    );
-
-  const showActionDropdown = canSql || canChart || canDashboard;
-  const [allowUploads, setAllowUploads] = useState<boolean>(false);
-  const [nonExamplesDBConnected, setNonExamplesDBConnected] =
-    useState<boolean>(false);
-  const isAdmin = isUserAdmin(user);
-  const showUploads = allowUploads || isAdmin;
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
+  );
   const {
     setThemeMode,
     themeMode,
@@ -174,184 +93,10 @@ const RightMenu = ({
     canSetMode,
     canDetectOSPreference,
   } = useThemeContext();
-  const dropdownItems: MenuObjectProps[] = [
-    {
-      label: t('Data'),
-      icon: <Icons.DatabaseOutlined data-test={`menu-item-${t('Data')}`} />,
-      childs: [
-        {
-          label: t('Connect database'),
-          name: GlobalMenuDataOptions.DbConnection,
-          perm: canDatabase && !nonExamplesDBConnected,
-        },
-        {
-          label: t('Create dataset'),
-          name: GlobalMenuDataOptions.DatasetCreation,
-          url: '/dataset/add/',
-          perm: canDataset && nonExamplesDBConnected,
-        },
-        {
-          label: t('Connect Google Sheet'),
-          name: GlobalMenuDataOptions.GoogleSheets,
-          perm: canDatabase && HAS_GSHEETS_INSTALLED,
-        },
-        {
-          label: t('Upload CSV to database'),
-          name: GlobalMenuDataOptions.CSVUpload,
-          perm: canUploadCSV && showUploads,
-          disable: isAdmin && !allowUploads,
-        },
-        {
-          label: t('Upload Excel to database'),
-          name: GlobalMenuDataOptions.ExcelUpload,
-          perm: canUploadExcel && showUploads,
-          disable: isAdmin && !allowUploads,
-        },
-        {
-          label: t('Upload Columnar file to database'),
-          name: GlobalMenuDataOptions.ColumnarUpload,
-          perm: canUploadColumnar && showUploads,
-          disable: isAdmin && !allowUploads,
-        },
-      ],
-    },
-    {
-      label: t('SQL query'),
-      // Keep the URL relative so isFrontendRoute() matches and Link navigates
-      // via React Router; the <Typography.Link> fallback applies ensureAppRoot
-      // exactly once for non-frontend routes.
-      url: '/sqllab?new=true',
-      icon: <Icons.SearchOutlined data-test={`menu-item-${t('SQL query')}`} />,
-      perm: 'can_sqllab',
-      view: 'Superset',
-    },
-    {
-      label: t('Chart'),
-      url: Number.isInteger(dashboardId)
-        ? `/chart/add?dashboard_id=${dashboardId}`
-        : '/chart/add',
-      icon: <Icons.BarChartOutlined data-test={`menu-item-${t('Chart')}`} />,
-      perm: 'can_write',
-      view: 'Chart',
-    },
-    {
-      label: t('Dashboard'),
-      url: '/dashboard/new/',
-      icon: (
-        <Icons.DashboardOutlined data-test={`menu-item-${t('Dashboard')}`} />
-      ),
-      perm: 'can_write',
-      view: 'Dashboard',
-    },
-  ];
-
-  const checkAllowUploads = () => {
-    const payload = {
-      filters: [
-        { col: 'allow_file_upload', opr: 'upload_is_enabled', value: true },
-      ],
-    };
-    SupersetClient.get({
-      endpoint: `/api/v1/database/?q=${rison.encode(payload)}`,
-    }).then(({ json }: Record<string, any>) => {
-      // There might be some existing Gsheets and Clickhouse DBs
-      // with allow_file_upload set as True which is not possible from now on
-      const allowedDatabasesWithFileUpload =
-        json?.result?.filter(
-          (database: any) => database?.engine_information?.supports_file_upload,
-        ) || [];
-      setAllowUploads(allowedDatabasesWithFileUpload?.length >= 1);
-    });
-  };
-
-  const existsNonExamplesDatabases = () => {
-    const payload = {
-      filters: [{ col: 'database_name', opr: 'neq', value: 'examples' }],
-    };
-    SupersetClient.get({
-      endpoint: `/api/v1/database/?q=${rison.encode(payload)}`,
-    }).then(({ json }: Record<string, any>) => {
-      setNonExamplesDBConnected(json.count >= 1);
-    });
-  };
-
-  useEffect(() => {
-    if (canUploadData) {
-      checkAllowUploads();
-    }
-  }, [canUploadData]);
-
-  useEffect(() => {
-    if (canDatabase || canDataset) {
-      existsNonExamplesDatabases();
-    }
-  }, [canDatabase, canDataset]);
-
-  const handleMenuSelection = (itemChose: any) => {
-    if (itemChose.key === GlobalMenuDataOptions.DbConnection) {
-      setShowDatabaseModal(true);
-    } else if (itemChose.key === GlobalMenuDataOptions.GoogleSheets) {
-      setShowDatabaseModal(true);
-      setEngine('Google Sheets');
-    } else if (itemChose.key === GlobalMenuDataOptions.CSVUpload) {
-      setShowCSVUploadModal(true);
-    } else if (itemChose.key === GlobalMenuDataOptions.ExcelUpload) {
-      setShowExcelUploadModal(true);
-    } else if (itemChose.key === GlobalMenuDataOptions.ColumnarUpload) {
-      setShowColumnarUploadModal(true);
-    }
-  };
-
-  const handleOnHideModal = () => {
-    setEngine('');
-    setShowDatabaseModal(false);
-  };
-
-  const tooltipText = t(
-    "Enable 'Allow file uploads to database' in any database's settings",
-  );
-
-  const buildMenuItem = (item: MenuObjectChildProps): MenuItem => ({
-    key: item.name || item.label,
-    label: item.disable ? (
-      <StyledMenuItem disabled>
-        <Tooltip placement="top" title={tooltipText}>
-          {item.label}
-        </Tooltip>
-      </StyledMenuItem>
-    ) : item.url ? (
-      <Typography.Link href={ensureAppRoot(item.url)}>
-        {item.label}
-      </Typography.Link>
-    ) : (
-      item.label
-    ),
-    disabled: item.disable,
-  });
-
-  const onMenuOpen = (openKeys: string[]) => {
-    // We should query the API only if opening Data submenus
-    // because the rest don't need this information. Not using
-    // "Data" directly since we might change the label later on?
-    if (
-      openKeys.length > 1 &&
-      !isEmpty(
-        openKeys?.filter((key: string) =>
-          key.includes(`sub2_${dropdownItems?.[0]?.label}`),
-        ),
-      )
-    ) {
-      if (canUploadData) checkAllowUploads();
-      if (canDatabase || canDataset) existsNonExamplesDatabases();
-    }
-    return null;
-  };
   const RightMenuExtension = extensionsRegistry.get('navbar.right');
   const RightMenuItemIconExtension = extensionsRegistry.get(
     'navbar.right-menu.item.icon',
   );
-
-  const handleDatabaseAdd = () => setQuery({ databaseAdded: true });
 
   const handleLogout = () => {
     try {
@@ -386,74 +131,58 @@ const RightMenu = ({
 
   // Build main menu items
   const menuItems = useMemo(() => {
-    // Build menu items for the new dropdown
-    const buildNewDropdownItems = (): MenuItem[] => {
-      const items: MenuItem[] = [];
-
-      dropdownItems?.forEach(menu => {
-        const canShowChild = menu.childs?.some(
-          item => typeof item === 'object' && !!item.perm,
-        );
-
-        if (menu.childs) {
-          if (canShowChild) {
-            const childItems: MenuItem[] = [];
-            menu.childs.forEach((item, idx) => {
-              if (typeof item !== 'string' && item.name && item.perm) {
-                if (idx === 3) {
-                  childItems.push({ type: 'divider', key: `divider-${idx}` });
-                }
-                childItems.push(buildMenuItem(item));
-              }
-            });
-
-            items.push({
-              key: `sub2_${menu.label}`,
-              label: menu.label,
-              icon: menu.icon,
-              children: childItems,
-              popupOffset: NAVBAR_MENU_POPUP_OFFSET,
-            });
-          } else if (menu.url) {
-            if (
-              findPermission(menu.perm as string, menu.view as string, roles)
-            ) {
-              items.push({
-                key: menu.label,
-                label: isFrontendRoute(menu.url) ? (
-                  <Link to={menu.url || ''}>{menu.label}</Link>
-                ) : (
-                  <Typography.Link href={ensureAppRoot(menu.url || '')}>
-                    {menu.label}
-                  </Typography.Link>
-                ),
-                icon: menu.icon,
-              });
-            }
-          }
-        } else if (
-          findPermission(menu.perm as string, menu.view as string, roles)
-        ) {
-          items.push({
-            key: menu.label,
-            label: isFrontendRoute(menu.url) ? (
-              <Link to={menu.url || ''}>{menu.label}</Link>
-            ) : (
-              <Typography.Link href={ensureAppRoot(menu.url || '')}>
-                {menu.label}
-              </Typography.Link>
-            ),
-            icon: menu.icon,
-          });
-        }
-      });
-
-      return items;
-    };
-
     // Build settings menu items
     const buildSettingsMenuItems = (): MenuItem[] => {
       const items: MenuItem[] = [];
+
+      // Create group (previously in the "+" dropdown)
+      const createItems: MenuItem[] = [];
+      if (!navbarRight.user_is_anonymous) {
+        createItems.push({
+          key: 'create-sql',
+          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
+          icon: <Icons.SearchOutlined />,
+        });
+        createItems.push({
+          key: 'create-chart',
+          label: (
+            <Link
+              to={
+                Number.isInteger(dashboardId)
+                  ? `/chart/add?dashboard_id=${dashboardId}`
+                  : '/chart/add'
+              }
+            >
+              {t('Chart')}
+            </Link>
+          ),
+          icon: <Icons.BarChartOutlined />,
+        });
+        createItems.push({
+          key: 'create-dashboard',
+          label: <Link to="/dashboard/new/">{t('Dashboard')}</Link>,
+          icon: <Icons.DashboardOutlined />,
+        });
+        if (
+          canUploadData &&
+          isFeatureEnabled(FeatureFlag.EnableLocalFileUpload)
+        ) {
+          createItems.push({
+            key: 'create-upload-data',
+            label: <Link to="/upload/">{t('Upload data')}</Link>,
+            icon: <Icons.UploadOutlined />,
+          });
+        }
+      }
+      if (createItems.length > 0) {
+        items.push({
+          type: 'group',
+          label: t('Create'),
+          key: 'create-section',
+          children: createItems,
+        });
+        items.push({ type: 'divider', key: 'create-divider' });
+      }
 
       settings?.forEach((section, index) => {
         const sectionItems: MenuItem[] = [];
@@ -540,6 +269,39 @@ const RightMenu = ({
         });
       }
 
+      // Environment tag (moved from top-level navbar)
+      if (environmentTag?.text) {
+        items.push({ type: 'divider', key: 'env-divider' });
+        items.push({
+          type: 'group',
+          label: t('Environment'),
+          key: 'env-section',
+          children: [
+            {
+              key: 'env-tag',
+              style: { height: 'auto', minHeight: 'auto' },
+              label: (
+                <Tag
+                  color={
+                    [
+                      'error',
+                      'warning',
+                      'success',
+                      'processing',
+                      'default',
+                    ].includes(environmentTag.color)
+                      ? environmentTag.color
+                      : 'default'
+                  }
+                >
+                  {environmentTag.text}
+                </Tag>
+              ),
+            },
+          ],
+        });
+      }
+
       if (navbarRight.version_string || navbarRight.version_sha) {
         items.push({ type: 'divider', key: 'version-info-divider' });
 
@@ -578,6 +340,53 @@ const RightMenu = ({
         };
         items.push(aboutItem);
       }
+
+      // Help group (documentation and bug report links moved from top-level navbar)
+      const helpItems: MenuItem[] = [];
+      if (navbarRight.documentation_url) {
+        helpItems.push({
+          key: 'documentation',
+          label: (
+            <Typography.Link
+              href={navbarRight.documentation_url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {navbarRight.documentation_text || t('Documentation')}
+            </Typography.Link>
+          ),
+          icon: navbarRight.documentation_icon ? (
+            <Icons.BookOutlined />
+          ) : (
+            <Icons.QuestionCircleOutlined />
+          ),
+        });
+      }
+      if (navbarRight.bug_report_url) {
+        helpItems.push({
+          key: 'bug-report',
+          label: (
+            <Typography.Link
+              href={navbarRight.bug_report_url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {navbarRight.bug_report_text || t('Report a bug')}
+            </Typography.Link>
+          ),
+          icon: navbarRight.bug_report_icon ? undefined : <Icons.BugOutlined />,
+        });
+      }
+      if (helpItems.length > 0) {
+        items.push({ type: 'divider', key: 'help-divider' });
+        items.push({
+          type: 'group',
+          label: t('Help'),
+          key: 'help-section',
+          children: helpItems,
+        });
+      }
+
       return items;
     };
 
@@ -604,17 +413,6 @@ const RightMenu = ({
       });
     }
 
-    if (!navbarRight.user_is_anonymous && showActionDropdown) {
-      items.push({
-        key: 'new-dropdown',
-        label: <Icons.PlusOutlined data-test="new-dropdown-icon" />,
-        className: 'submenu-with-caret',
-        icon: <Icons.DownOutlined iconSize="xs" />,
-        children: buildNewDropdownItems(),
-        popupOffset: NAVBAR_MENU_POPUP_OFFSET,
-      });
-    }
-
     if (canSetMode()) {
       items.push(themeMenuItem);
     }
@@ -637,80 +435,22 @@ const RightMenu = ({
     commandPalette,
     isMac,
     RightMenuExtension,
+    RightMenuItemIconExtension,
     navbarRight,
-    showActionDropdown,
+    dashboardId,
+    canUploadData,
     canSetMode,
-    theme.colorPrimary,
     themeMenuItem,
     languageMenuItem,
-    dropdownItems,
-    roles,
     settings,
-    RightMenuItemIconExtension,
-    buildMenuItem,
+    isFrontendRoute,
+    theme,
+    environmentTag,
     handleLogout,
   ]);
 
   return (
     <StyledDiv align={align}>
-      {canDatabase && (
-        <DatabaseModal
-          onHide={handleOnHideModal}
-          show={showDatabaseModal}
-          dbEngine={engine}
-          onDatabaseAdd={handleDatabaseAdd}
-        />
-      )}
-      {canUploadCSV && (
-        <UploadDataModal
-          onHide={() => setShowCSVUploadModal(false)}
-          show={showCSVUploadModal}
-          allowedExtensions={CSV_EXTENSIONS}
-          type="csv"
-        />
-      )}
-      {canUploadExcel && (
-        <UploadDataModal
-          onHide={() => setShowExcelUploadModal(false)}
-          show={showExcelUploadModal}
-          allowedExtensions={EXCEL_EXTENSIONS}
-          type="excel"
-        />
-      )}
-      {canUploadColumnar && (
-        <UploadDataModal
-          onHide={() => setShowColumnarUploadModal(false)}
-          show={showColumnarUploadModal}
-          allowedExtensions={COLUMNAR_EXTENSIONS}
-          type="columnar"
-        />
-      )}
-      {environmentTag?.text &&
-        (() => {
-          // Map color values to Ant Design semantic colors
-          const validAntDesignColors = [
-            'error',
-            'warning',
-            'success',
-            'processing',
-            'default',
-          ];
-
-          const tagColor = validAntDesignColors.includes(environmentTag.color)
-            ? environmentTag.color
-            : 'default';
-
-          return (
-            <Tag
-              color={tagColor}
-              css={css`
-                border-radius: ${theme.sizeUnit * 125}px;
-              `}
-            >
-              {environmentTag.text}
-            </Tag>
-          );
-        })()}
       <Menu
         css={css`
           display: flex;
@@ -718,11 +458,17 @@ const RightMenu = ({
           align-items: center;
           height: 100%;
           border-bottom: none !important;
+          gap: ${theme.sizeUnit}px;
 
           /* Remove the underline from menu items */
           .ant-menu-item:after,
           .ant-menu-submenu:after {
             content: none !important;
+          }
+
+          .ant-menu-item,
+          .ant-menu-submenu {
+            padding: 0 ${theme.sizeUnit}px;
           }
 
           .submenu-with-caret {
@@ -731,7 +477,7 @@ const RightMenu = ({
             .ant-menu-submenu-title {
               align-items: center;
               display: flex;
-              gap: ${theme.sizeUnit * 2}px;
+              gap: ${theme.sizeUnit}px;
               flex-direction: row-reverse;
               height: 100%;
             }
@@ -748,50 +494,9 @@ const RightMenu = ({
         `}
         selectable={false}
         mode="horizontal"
-        onClick={handleMenuSelection}
-        onOpenChange={onMenuOpen}
         disabledOverflow
         items={menuItems}
       />
-      {navbarRight.documentation_url && (
-        <>
-          <StyledAnchor
-            href={navbarRight.documentation_url}
-            target="_blank"
-            rel="noreferrer"
-            title={navbarRight.documentation_text || t('Documentation')}
-          >
-            {navbarRight.documentation_icon ? (
-              <Icons.BookOutlined />
-            ) : (
-              <Icons.QuestionCircleOutlined />
-            )}
-          </StyledAnchor>
-          <span>&nbsp;</span>
-        </>
-      )}
-      {navbarRight.bug_report_url && (
-        <>
-          <StyledAnchor
-            href={navbarRight.bug_report_url}
-            target="_blank"
-            rel="noreferrer"
-            title={navbarRight.bug_report_text || t('Report a bug')}
-          >
-            {navbarRight.bug_report_icon ? (
-              <i className={navbarRight.bug_report_icon} />
-            ) : (
-              <Icons.BugOutlined />
-            )}
-          </StyledAnchor>
-          <span>&nbsp;</span>
-        </>
-      )}
-      {navbarRight.user_is_anonymous && (
-        <StyledAnchor href={navbarRight.user_login_url}>
-          <Icons.LoginOutlined /> {t('Login')}
-        </StyledAnchor>
-      )}
       <TelemetryPixel
         version={navbarRight.version_string}
         sha={navbarRight.version_sha}
@@ -801,14 +506,9 @@ const RightMenu = ({
   );
 };
 
-const RightMenuWithQueryWrapper: FC<RightMenuProps> = props => {
-  const [, setQuery] = useQueryParams({
-    databaseAdded: BooleanParam,
-    datasetAdded: BooleanParam,
-  });
-
-  return <RightMenu setQuery={setQuery} {...props} />;
-};
+const RightMenuWithQueryWrapper: FC<RightMenuProps> = props => (
+  <RightMenu {...props} />
+);
 
 // Query param manipulation requires that, during the setup, the
 // QueryParamProvider is present and configured.
@@ -824,11 +524,9 @@ class RightMenuErrorWrapper extends PureComponent<RightMenuProps> {
     return { hasError: true };
   }
 
-  noop = () => {};
-
   render() {
     if (this.state.hasError) {
-      return <RightMenu setQuery={this.noop} {...this.props} />;
+      return <RightMenu {...this.props} />;
     }
 
     return this.props.children;

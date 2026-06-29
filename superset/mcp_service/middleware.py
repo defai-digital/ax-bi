@@ -49,7 +49,7 @@ from superset.mcp_service.constants import (
     DEFAULT_TOKEN_LIMIT,
     DEFAULT_WARN_THRESHOLD_PCT,
 )
-from superset.mcp_service.utils.logging_utils import mcp_event_log
+from superset.mcp_service.utils.logging_utils import mcp_event_log as _mcp_event_log
 from superset.mcp_service.utils.token_utils import (
     estimate_response_tokens,
     format_size_limit_error,
@@ -60,6 +60,22 @@ from superset.utils.core import get_user_id
 
 logger = logging.getLogger(__name__)
 _mcp_call_id_var: ContextVar[str | None] = ContextVar("mcp_call_id", default=None)
+
+
+class _MCPEventLoggerAdapter:
+    """Adapter exposing the event-logger shape used by middleware tests."""
+
+    def log(self, **kwargs: Any) -> None:
+        """Write an MCP event through the shared logging utility."""
+        _mcp_event_log(**kwargs)
+
+
+event_logger = _MCPEventLoggerAdapter()
+
+
+def mcp_event_log(**kwargs: Any) -> None:
+    """Write an MCP event through the module-level event logger adapter."""
+    event_logger.log(**kwargs)
 
 
 def _sanitize_error_for_logging(error: Exception) -> str:
@@ -105,8 +121,13 @@ def _sanitize_error_for_logging(error: Exception) -> str:
 
     # Generic database connection URIs (redis, snowflake, bigquery, mssql, etc.)
     error_str = re.sub(
-        r"\b\w+://[^@\s]{1,100}@[^/\s]{1,100}/[^\s]{0,100}",
-        "[SCHEME]://[REDACTED]@[REDACTED]/[REDACTED]",
+        r"\b([A-Za-z][A-Za-z0-9+.-]*://)"
+        r"[^\s/@]{0,100}(?::[^\s/@]{0,100})?@"
+        r"[^/\s]{1,100}(/[^\s]{0,100})?",
+        lambda match: (
+            f"{match.group(1)}[REDACTED]@[REDACTED]"
+            f"{'/[REDACTED]' if match.group(2) else ''}"
+        ),
         error_str,
         flags=re.IGNORECASE,
     )
@@ -175,29 +196,44 @@ def _is_user_error(error: Exception) -> bool:
 _SENSITIVE_PARAM_KEYS = frozenset(
     {
         "password",
+        "passwd",
+        "pwd",
         "token",
         "api_key",
+        "access_key",
         "secret",
         "credentials",
+        "credential",
         "authorization",
         "cookie",
+        "session_id",
     }
 )
 
 
-def _sanitize_params(params: dict[str, Any]) -> dict[str, Any]:
+def _is_sensitive_param_key(key: Any) -> bool:
+    """Return whether a parameter key should be redacted in logs."""
+    if not isinstance(key, str):
+        return False
+    normalized = key.lower().replace("-", "_")
+    return normalized in _SENSITIVE_PARAM_KEYS or normalized.endswith("_token")
+
+
+def _sanitize_params(params: Any) -> Any:
     """Remove sensitive fields from params before logging."""
-    if not isinstance(params, dict):
-        return params
-    result: dict[str, Any] = {}
-    for k, v in params.items():
-        if k.lower() in _SENSITIVE_PARAM_KEYS:
-            result[k] = "[REDACTED]"
-        elif k == "arguments" and isinstance(v, dict):
-            result[k] = _sanitize_params(v)
-        else:
-            result[k] = v
-    return result
+    if isinstance(params, dict):
+        result: dict[Any, Any] = {}
+        for key, value in params.items():
+            if _is_sensitive_param_key(key):
+                result[key] = "[REDACTED]"
+            else:
+                result[key] = _sanitize_params(value)
+        return result
+    if isinstance(params, list):
+        return [_sanitize_params(item) for item in params]
+    if isinstance(params, tuple):
+        return tuple(_sanitize_params(item) for item in params)
+    return params
 
 
 class LoggingMiddleware(Middleware):
@@ -1285,6 +1321,10 @@ class ResponseSizeGuardMiddleware(Middleware):
         if not was_truncated:
             return None
 
+        if isinstance(truncated, dict):
+            truncated["_response_truncated"] = True
+            truncated["_truncation_notes"] = notes
+
         truncated_tokens = estimate_response_tokens(truncated)
         if truncated_tokens > self.token_limit:
             return None
@@ -1313,10 +1353,6 @@ class ResponseSizeGuardMiddleware(Middleware):
             )
         except Exception as log_error:  # noqa: BLE001
             logger.warning("Failed to log truncation event: %s", log_error)
-
-        if isinstance(truncated, dict):
-            truncated["_response_truncated"] = True
-            truncated["_truncation_notes"] = notes
 
         # Re-wrap into ToolResult if we unwrapped one
         if extracted is not None and isinstance(truncated, dict):

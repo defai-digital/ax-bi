@@ -192,7 +192,7 @@ class TagRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.add_model_schema.load(request.json)
+            item = self.add_model_schema.load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -240,7 +240,7 @@ class TagRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = TagPostBulkSchema().load(request.json)
+            item = TagPostBulkSchema().load(request.get_json(cache=True, silent=True))
         except ValidationError as error:
             return self.response_400(message=error.messages)
         try:
@@ -330,11 +330,12 @@ class TagRestApi(BaseSupersetModelRestApi):
               $ref: '#/components/responses/500'
         """
         try:
-            item = self.edit_model_schema.load(request.json)
+            item = self.edit_model_schema.load(
+                request.get_json(cache=True, silent=True)
+            )
         # This validates custom Schema with custom validations
         except ValidationError as error:
             return self.response_400(message=error.messages)
-        item = request.json
         try:
             changed_model = UpdateTagCommand(pk, item).run()
             response = self.response(200, id=changed_model.id, result=item)
@@ -394,16 +395,19 @@ class TagRestApi(BaseSupersetModelRestApi):
             500:
               $ref: '#/components/responses/500'
         """
-        try:
-            tags = request.json["properties"]["tags"]
-            # This validates custom Schema with custom validations
-            CreateCustomTagCommand(object_type, object_id, tags).run()
-            return self.response(201)
-        except KeyError:
+        payload = request.get_json(silent=True)
+        properties = payload.get("properties") if isinstance(payload, dict) else None
+        tags = properties.get("tags") if isinstance(properties, dict) else None
+        if not isinstance(tags, list) or not all(isinstance(tag, str) for tag in tags):
             return self.response(
                 400,
                 message="Missing required field 'tags' in 'properties'",
             )
+
+        try:
+            # This validates custom Schema with custom validations
+            CreateCustomTagCommand(object_type, object_id, tags).run()
+            return self.response(201)
         except TagInvalidError:
             return self.response(422, message="Invalid tag")
 

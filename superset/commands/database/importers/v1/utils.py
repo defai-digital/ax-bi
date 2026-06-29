@@ -37,6 +37,16 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 
+def _load_json_object(value: str | None) -> dict[str, Any]:
+    """Parse a JSON object string, returning an empty object for invalid shapes."""
+    try:
+        parsed = json.loads(value or "{}")
+    except (TypeError, ValueError):
+        return {}
+
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def import_database(  # noqa: C901
     config: dict[str, Any],
     overwrite: bool = False,
@@ -69,21 +79,26 @@ def import_database(  # noqa: C901
         # Default to True for backward compatibility
         config["allow_file_upload"] = True
 
-    if "schemas_allowed_for_csv_upload" in config.get("extra", {}):
-        config["extra"]["schemas_allowed_for_file_upload"] = config["extra"].pop(
+    extra = config.get("extra")
+    if not isinstance(extra, dict):
+        extra = {}
+    config["extra"] = extra
+
+    if "schemas_allowed_for_csv_upload" in extra:
+        extra["schemas_allowed_for_file_upload"] = extra.pop(
             "schemas_allowed_for_csv_upload"
         )
 
     # TODO (betodealmeida): move this logic to import_from_dict
-    config["extra"] = json.dumps(config["extra"])
+    config["extra"] = json.dumps(extra)
 
     # Convert masked_encrypted_extra → encrypted_extra before importing.
     # For existing DBs, reveal masked sensitive values from current encrypted_extra.
     # For new DBs, schema validation already ensured no fields are still masked.
     if masked_encrypted_extra := config.pop("masked_encrypted_extra", None):
         if existing and existing.encrypted_extra:
-            old_config = json.loads(existing.encrypted_extra)
-            new_config = json.loads(masked_encrypted_extra)
+            old_config = _load_json_object(existing.encrypted_extra)
+            new_config = _load_json_object(masked_encrypted_extra)
             sensitive_fields = (
                 existing.db_engine_spec.encrypted_extra_sensitive_field_paths()
             )
@@ -94,7 +109,9 @@ def import_database(  # noqa: C901
             )
             config["encrypted_extra"] = json.dumps(revealed)
         else:
-            config["encrypted_extra"] = masked_encrypted_extra
+            config["encrypted_extra"] = json.dumps(
+                _load_json_object(masked_encrypted_extra)
+            )
 
     ssh_tunnel_config = config.pop("ssh_tunnel", None)
 

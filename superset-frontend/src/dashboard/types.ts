@@ -194,6 +194,7 @@ export type DashboardInfo = {
     refresh_frequency?: number;
     positions?: JsonObject;
     filter_scopes?: JsonObject;
+    filter_bar_orientation?: FilterBarOrientation;
   };
   crossFiltersEnabled: boolean;
   filterBarOrientation: FilterBarOrientation;
