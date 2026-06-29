@@ -68,6 +68,12 @@ import {
   savedQueryListRequestSchema,
   savedQueryListResponseSchema,
 } from './contracts/savedQueryList';
+import {
+  TagListRequest,
+  TagListResponse,
+  tagListRequestSchema,
+  tagListResponseSchema,
+} from './contracts/tagList';
 import { ServiceMetrics } from './metrics';
 import {
   SupersetHealthClient,
@@ -78,6 +84,7 @@ import {
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
   SupersetSavedQueryListClient,
+  SupersetTagListClient,
 } from './supersetClient';
 
 export function buildServer(
@@ -89,7 +96,8 @@ export function buildServer(
     SupersetChartListClient &
     SupersetDatabaseListClient &
     SupersetDatasetListClient &
-    SupersetSavedQueryListClient,
+    SupersetSavedQueryListClient &
+    SupersetTagListClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
@@ -296,6 +304,23 @@ export function buildServer(
     },
     async (request): Promise<SavedQueryListResponse> =>
       supersetClient.listSavedQueries(request.body, request.id),
+  );
+
+  server.post<{
+    Body: TagListRequest;
+    Reply: TagListResponse;
+  }>(
+    '/mcp/tags/list',
+    {
+      schema: {
+        body: tagListRequestSchema,
+        response: {
+          200: tagListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<TagListResponse> =>
+      supersetClient.listTags(request.body, request.id),
   );
 
   return server;

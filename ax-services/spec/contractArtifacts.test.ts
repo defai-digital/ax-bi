@@ -29,6 +29,7 @@ import { databaseListContractSchemas } from '../src/contracts/databaseList';
 import { datasetListContractSchemas } from '../src/contracts/datasetList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 import { savedQueryListContractSchemas } from '../src/contracts/savedQueryList';
+import { tagListContractSchemas } from '../src/contracts/tagList';
 
 function readContractArtifact(filename: string): unknown {
   return JSON.parse(
@@ -81,5 +82,11 @@ test('database list contract artifact matches TypeScript source', () => {
 test('saved query list contract artifact matches TypeScript source', () => {
   expect(readContractArtifact('saved-query-list.v1.schema.json')).toEqual(
     savedQueryListContractSchemas,
+  );
+});
+
+test('tag list contract artifact matches TypeScript source', () => {
+  expect(readContractArtifact('tag-list.v1.schema.json')).toEqual(
+    tagListContractSchemas,
   );
 });

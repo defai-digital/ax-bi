@@ -26,6 +26,7 @@ import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList'
 import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
+import { TAG_LIST_CONTRACT_VERSION } from '../src/contracts/tagList';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -1144,6 +1145,127 @@ test('listSavedQueries records warnings for failed Superset list responses', asy
     columnsRequested: ['id', 'label', 'db_id', 'schema', 'uuid'],
     columnsLoaded: [],
     warnings: ['saved query list returned status 504 from Superset'],
+  });
+});
+
+test('listTags maps Superset tag list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 16,
+      result: [
+        {
+          id: 19,
+          name: 'finance',
+          type: 'custom',
+          description: 'Finance-owned assets',
+          changed_on: '2026-01-07T00:00:00',
+          changed_on_humanized: '1 hour ago',
+          created_on: '2026-01-01T00:00:00',
+          created_on_humanized: '1 week ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listTags(
+    {
+      contractVersion: TAG_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'type', opr: 'eq', value: 'custom' }],
+      selectColumns: ['id', 'name'],
+      search: 'finance',
+      orderColumn: 'name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+    },
+    'request-tags',
+  );
+
+  expect(result).toEqual({
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    tags: [
+      {
+        id: 19,
+        name: 'finance',
+        type: 'custom',
+        description: 'Finance-owned assets',
+        changedOn: '2026-01-07T00:00:00',
+        changedOnHumanized: '1 hour ago',
+        createdOn: '2026-01-01T00:00:00',
+        createdOnHumanized: '1 week ago',
+      },
+    ],
+    count: 1,
+    totalCount: 16,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: [
+      'id',
+      'name',
+      'type',
+      'description',
+      'changed_on',
+      'changed_on_humanized',
+      'created_on',
+      'created_on_humanized',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/tag/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'finance'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-tags',
+  });
+});
+
+test('listTags records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listTags({
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    tags: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'type'],
+    columnsLoaded: [],
+    warnings: ['tag list returned status 504 from Superset'],
   });
 });
 

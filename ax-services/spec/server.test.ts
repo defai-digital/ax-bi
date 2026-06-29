@@ -45,6 +45,10 @@ import {
   SavedQueryListResponse,
 } from '../src/contracts/savedQueryList';
 import {
+  TAG_LIST_CONTRACT_VERSION,
+  TagListResponse,
+} from '../src/contracts/tagList';
+import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAssetSearchClient,
@@ -55,6 +59,7 @@ import {
   SupersetHealthClient,
   SupersetMetadataClient,
   SupersetSavedQueryListClient,
+  SupersetTagListClient,
 } from '../src/supersetClient';
 
 const config = {
@@ -83,6 +88,7 @@ function makeSupersetClient({
   onListDatabases,
   onListDatasets,
   onListSavedQueries,
+  onListTags,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
@@ -158,6 +164,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  tagList = {
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    tags: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
@@ -167,6 +187,7 @@ function makeSupersetClient({
   databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
   savedQueryList?: SavedQueryListResponse;
+  tagList?: TagListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
@@ -175,6 +196,7 @@ function makeSupersetClient({
   onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
+  onListTags?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAssetSearchClient &
@@ -182,7 +204,8 @@ function makeSupersetClient({
   SupersetDashboardListClient &
   SupersetDatabaseListClient &
   SupersetDatasetListClient &
-  SupersetSavedQueryListClient {
+  SupersetSavedQueryListClient &
+  SupersetTagListClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -215,6 +238,10 @@ function makeSupersetClient({
     async listSavedQueries(_request, correlationId) {
       onListSavedQueries?.(correlationId);
       return savedQueryList;
+    },
+    async listTags(_request, correlationId) {
+      onListTags?.(correlationId);
+      return tagList;
     },
   };
 }
@@ -898,6 +925,81 @@ test('saved query list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'label'],
     columnsLoaded: ['id', 'label', 'db_id', 'schema'],
+    warnings: [],
+  });
+});
+
+test('tag list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      tagList: {
+        contractVersion: TAG_LIST_CONTRACT_VERSION,
+        tags: [
+          {
+            id: 19,
+            name: 'finance',
+            type: 'custom',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'name'],
+        columnsLoaded: ['id', 'name', 'type'],
+        warnings: [],
+      },
+      onListTags(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/tags/list',
+    headers: {
+      'x-request-id': 'request-tag-list',
+    },
+    payload: {
+      contractVersion: TAG_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'name'],
+      search: 'finance',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-tag-list');
+  expect(seenRequestIds).toEqual(['request-tag-list']);
+  expect(response.json()).toEqual({
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    tags: [
+      {
+        id: 19,
+        name: 'finance',
+        type: 'custom',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name', 'type'],
     warnings: [],
   });
 });

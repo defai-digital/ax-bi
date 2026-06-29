@@ -275,6 +275,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         contract_version="saved-query-list.v1",
         serving_flag="TS_SAVED_QUERY_LIST_SERVING",
     ),
+    _mcp_workflow(
+        name="mcp_tag_list",
+        operation="list_tags",
+        sidecar_route="POST /mcp/tags/list",
+        contract_version="tag-list.v1",
+        serving_flag="TS_TAG_LIST_SERVING",
+    ),
 )
 
 PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (

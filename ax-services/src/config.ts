@@ -29,6 +29,7 @@ export interface ServiceConfig {
     database: string;
     dataset: string;
     savedQuery: string;
+    tag: string;
   };
   supersetTimeoutMs: number;
   supersetInternalToken?: string;
@@ -48,6 +49,7 @@ const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
 const DEFAULT_SUPERSET_DATABASE_LIST_PATH = '/api/v1/database/';
 const DEFAULT_SUPERSET_DATASET_LIST_PATH = '/api/v1/dataset/';
 const DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
+const DEFAULT_SUPERSET_TAG_LIST_PATH = '/api/v1/tag/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL = 'info';
 
@@ -121,6 +123,9 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       savedQuery: normalizePath(
         env.AX_SUPERSET_SAVED_QUERY_LIST_PATH ||
           DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
+      ),
+      tag: normalizePath(
+        env.AX_SUPERSET_TAG_LIST_PATH || DEFAULT_SUPERSET_TAG_LIST_PATH,
       ),
     },
     supersetTimeoutMs: parsePositiveInteger(

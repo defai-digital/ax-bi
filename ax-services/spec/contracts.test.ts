@@ -55,6 +55,10 @@ import {
   savedQueryListContractSchemas,
   SAVED_QUERY_LIST_CONTRACT_VERSION,
 } from '../src/contracts/savedQueryList';
+import {
+  tagListContractSchemas,
+  TAG_LIST_CONTRACT_VERSION,
+} from '../src/contracts/tagList';
 
 test('runtime contract version is explicit', () => {
   expect(RUNTIME_CONTRACT_VERSION).toBe('runtime.v1');
@@ -86,6 +90,10 @@ test('database list contract version is explicit', () => {
 
 test('saved query list contract version is explicit', () => {
   expect(SAVED_QUERY_LIST_CONTRACT_VERSION).toBe('saved-query-list.v1');
+});
+
+test('tag list contract version is explicit', () => {
+  expect(TAG_LIST_CONTRACT_VERSION).toBe('tag-list.v1');
 });
 
 test('health response schema is stable', () => {
@@ -247,6 +255,18 @@ test('saved query list request schema is registered in saved query list contract
   expect(
     savedQueryListContractSchemas.savedQueryListResponseSchema.properties
       .savedQueries.items.properties.label,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('tag list request schema is registered in tag list contracts', () => {
+  expect(tagListContractSchemas.tagListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    tagListContractSchemas.tagListResponseSchema.properties.tags.items.properties.name,
   ).toEqual({
     type: 'string',
   });

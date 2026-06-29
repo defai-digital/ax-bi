@@ -391,6 +391,45 @@ def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> 
     )
 
 
+def test_list_tags_posts_to_ax_services_tag_list_endpoint() -> None:
+    """Tag list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"tags": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_tags(
+        {
+            "contractVersion": "tag-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        request_id="request-tags",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"tags": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/tags/list",
+        json={
+            "contractVersion": "tag-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-tags",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

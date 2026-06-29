@@ -63,6 +63,13 @@ import {
   SavedQueryListRequest,
   SavedQueryListResponse,
 } from './contracts/savedQueryList';
+import {
+  TAG_LIST_CONTRACT_VERSION,
+  TagFilterValue,
+  TagListItem,
+  TagListRequest,
+  TagListResponse,
+} from './contracts/tagList';
 import { ServiceConfig } from './config';
 
 export interface DependencyHealth {
@@ -127,6 +134,13 @@ export interface SupersetSavedQueryListClient {
   ): Promise<SavedQueryListResponse>;
 }
 
+export interface SupersetTagListClient {
+  listTags(
+    request: TagListRequest,
+    correlationId?: string,
+  ): Promise<TagListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -136,7 +150,8 @@ export class SupersetClient
     SupersetChartListClient,
     SupersetDatabaseListClient,
     SupersetDatasetListClient,
-    SupersetSavedQueryListClient
+    SupersetSavedQueryListClient,
+    SupersetTagListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -537,6 +552,52 @@ export class SupersetClient
     }
   }
 
+  async listTags(
+    request: TagListRequest,
+    correlationId?: string,
+  ): Promise<TagListResponse> {
+    const url = this.buildTagListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyTagListResponse(request, [
+          `tag list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const tags = extractSupersetResults(payload).map(toTagListItem).filter(isDefined);
+      const totalCount = extractSupersetCount(payload, tags.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: TAG_LIST_CONTRACT_VERSION,
+        tags,
+        count: tags.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedTagColumns(request),
+        columnsLoaded: tagColumnsLoaded(tags),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyTagListResponse(request, [
+        `tag list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -633,6 +694,14 @@ export class SupersetClient
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.savedQuery}`,
     );
     url.searchParams.set('q', buildSavedQueryListQuery(request));
+    return url.toString();
+  }
+
+  private buildTagListUrl(request: TagListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.tag}`,
+    );
+    url.searchParams.set('q', buildTagListQuery(request));
     return url.toString();
   }
 }
@@ -850,6 +919,30 @@ function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildTagListQuery(request: TagListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatTagFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -900,6 +993,16 @@ function formatSavedQueryFilter(filter: {
   )})`;
 }
 
+function formatTagFilter(filter: {
+  col: string;
+  opr: string;
+  value: TagFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatTagRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
@@ -929,6 +1032,13 @@ function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
 }
 
 function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatTagRisonValue(value: TagFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1142,6 +1252,30 @@ function toSavedQueryListItem(
   };
 }
 
+function toTagListItem(item: SupersetListItem): TagListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    type: typeof item.type === 'string' ? item.type : undefined,
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOnHumanized:
+      typeof item.created_on_humanized === 'string'
+        ? item.created_on_humanized
+        : undefined,
+  };
+}
+
 function extractDatabaseName(item: SupersetListItem): string | undefined {
   if (typeof item.database_name === 'string') {
     return item.database_name;
@@ -1262,6 +1396,12 @@ function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
     : ['id', 'label', 'db_id', 'schema', 'uuid'];
 }
 
+function requestedTagColumns(request: TagListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'name', 'type'];
+}
+
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const dataset of datasets) {
@@ -1336,6 +1476,20 @@ function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
     if (savedQuery.changedOn !== undefined) loaded.add('changed_on');
     if (savedQuery.createdOn !== undefined) loaded.add('created_on');
     if (savedQuery.lastRun !== undefined) loaded.add('last_run');
+  }
+  return [...loaded];
+}
+
+function tagColumnsLoaded(tags: TagListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const tag of tags) {
+    if (tag.name !== undefined) loaded.add('name');
+    if (tag.type !== undefined) loaded.add('type');
+    if (tag.description !== undefined) loaded.add('description');
+    if (tag.changedOn !== undefined) loaded.add('changed_on');
+    if (tag.changedOnHumanized !== undefined) loaded.add('changed_on_humanized');
+    if (tag.createdOn !== undefined) loaded.add('created_on');
+    if (tag.createdOnHumanized !== undefined) loaded.add('created_on_humanized');
   }
   return [...loaded];
 }
@@ -1435,6 +1589,26 @@ function emptySavedQueryListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedSavedQueryColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyTagListResponse(
+  request: TagListRequest,
+  warnings: string[],
+): TagListResponse {
+  return {
+    contractVersion: TAG_LIST_CONTRACT_VERSION,
+    tags: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedTagColumns(request),
     columnsLoaded: [],
     warnings,
   };

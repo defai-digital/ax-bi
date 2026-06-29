@@ -37,6 +37,7 @@ test('buildConfig returns service defaults', () => {
     database: '/api/v1/database/',
     dataset: '/api/v1/dataset/',
     savedQuery: '/api/v1/saved_query/',
+    tag: '/api/v1/tag/',
   });
   expect(config.supersetTimeoutMs).toBe(2000);
   expect(config.supersetInternalToken).toBeUndefined();
@@ -56,6 +57,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_DATABASE_LIST_PATH: 'databases',
     AX_SUPERSET_DATASET_LIST_PATH: 'datasets',
     AX_SUPERSET_SAVED_QUERY_LIST_PATH: 'saved-queries',
+    AX_SUPERSET_TAG_LIST_PATH: 'tags',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
     AX_SERVICES_LOG_LEVEL: 'debug',
@@ -73,6 +75,7 @@ test('buildConfig reads environment overrides', () => {
     database: '/databases',
     dataset: '/datasets',
     savedQuery: '/saved-queries',
+    tag: '/tags',
   });
   expect(config.supersetTimeoutMs).toBe(1500);
   expect(config.supersetInternalToken).toBe('token-123');

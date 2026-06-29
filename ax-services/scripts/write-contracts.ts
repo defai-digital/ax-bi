@@ -27,6 +27,7 @@ import { databaseListContractSchemas } from '../src/contracts/databaseList';
 import { datasetListContractSchemas } from '../src/contracts/datasetList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 import { savedQueryListContractSchemas } from '../src/contracts/savedQueryList';
+import { tagListContractSchemas } from '../src/contracts/tagList';
 
 const outputDir = join(__dirname, '..', 'contracts');
 
@@ -39,6 +40,7 @@ const contractFiles = {
   'dataset-list.v1.schema.json': datasetListContractSchemas,
   'runtime.v1.schema.json': runtimeContractSchemas,
   'saved-query-list.v1.schema.json': savedQueryListContractSchemas,
+  'tag-list.v1.schema.json': tagListContractSchemas,
 };
 
 mkdirSync(outputDir, { recursive: true });

@@ -15,20 +15,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import importlib
 import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
+from flask import current_app
 from pydantic import ValidationError
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.tag.schemas import ListTagsRequest, TagFilter
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+list_tags_module = importlib.import_module("superset.mcp_service.tag.tool.list_tags")
 
 
 class TestTagFilterSchema:
@@ -266,3 +270,110 @@ async def test_list_tags_default_columns_are_id_name_type(mock_list, mcp_server)
         assert "type" in tag_obj
         assert "description" not in tag_obj
         assert "changed_on" not in tag_obj
+
+
+@patch("superset.daos.tag.TagDAO.list")
+@pytest.mark.asyncio
+async def test_list_tags_serves_valid_sidecar_response(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Tag listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch.object(
+            list_tags_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_TAG_LIST_SERVING"},
+        ),
+        patch.object(list_tags_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_tags.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "tag-list.v1",
+                "tags": [
+                    {
+                        "id": 19,
+                        "name": "finance",
+                        "type": "custom",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "name", "type"],
+                "columnsLoaded": ["id", "name", "type"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_tags",
+                {"request": ListTagsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["tags"][0]["id"] == 19
+    assert "<UNTRUSTED-CONTENT>" in data["tags"][0]["name"]
+    assert data["tags"][0]["type"] == "custom"
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_tags.served_candidate"
+    )
+
+
+@patch("superset.daos.tag.TagDAO.list")
+@pytest.mark.asyncio
+async def test_list_tags_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Tag listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch.object(
+            list_tags_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_TAG_LIST_SERVING"},
+        ),
+        patch.object(list_tags_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_tags.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "tag-list.v1",
+                "tags": [{"name": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_tags",
+                {"request": ListTagsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_called_once()
+    data = json.loads(result.content[0].text)
+    assert data["tags"] == []
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_tags.fallback"
+    )
