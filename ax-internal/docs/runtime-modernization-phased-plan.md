@@ -339,8 +339,9 @@ product-specific and contract-oriented.
   check names, and can fail release gates when evidence is missing, failing, or
   approval does not exactly match the enabled production workflow scope.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
-  Phase 0-6 completion checks, reports incomplete phase names, and can fail
-  release gates until every phase is proven complete.
+  Phase 0-6 completion checks, keeps Phase 6 dependent on the Phase 5 selective
+  rollout evidence, reports incomplete phase names, and can fail release gates
+  until every phase is proven complete.
 - Python unit CI uploads the compatibility report artifact, production evidence
   template artifact, Rust rollout decision template artifact, and completion
   audit artifact on the current Python version. Live production dashboard

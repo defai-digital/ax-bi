@@ -1232,6 +1232,12 @@ def audit_runtime_modernization_completion(
     production_typescript_passed = (
         compatibility_passed and flag_state_passed and dashboard_passed
     )
+    selective_runtime_split_passed = (
+        production_typescript_passed
+        and typescript_selective_rollout_passed
+        and rust_benchmark_passed
+        and rust_rollout_decision_passed
+    )
 
     checks = [
         PhaseCompletionCheck(
@@ -1296,20 +1302,10 @@ def audit_runtime_modernization_completion(
         PhaseCompletionCheck(
             name="phase_5_selective_runtime_split",
             title="Expand runtime split selectively",
-            passed=(
-                production_typescript_passed
-                and typescript_selective_rollout_passed
-                and rust_benchmark_passed
-                and rust_rollout_decision_passed
-            ),
+            passed=selective_runtime_split_passed,
             message=(
                 "selective TypeScript and Rust rollout evidence passed"
-                if (
-                    production_typescript_passed
-                    and typescript_selective_rollout_passed
-                    and rust_benchmark_passed
-                    and rust_rollout_decision_passed
-                )
+                if selective_runtime_split_passed
                 else "selective runtime split production evidence is incomplete"
             ),
             required_checks=(
@@ -1324,13 +1320,16 @@ def audit_runtime_modernization_completion(
         PhaseCompletionCheck(
             name="phase_6_boundary_reevaluation",
             title="Reevaluate larger boundaries",
-            passed=approval_passed,
+            passed=selective_runtime_split_passed and approval_passed,
             message=(
-                "operator approval evidence passed"
-                if approval_passed
-                else "operator approval evidence is missing or failed"
+                "operator approval evidence passed after selective rollout"
+                if selective_runtime_split_passed and approval_passed
+                else (
+                    "operator approval evidence is missing, failed, or selective "
+                    "runtime split evidence is incomplete"
+                )
             ),
-            required_checks=("operator_approval",),
+            required_checks=("phase_5_selective_runtime_split", "operator_approval"),
         ),
     ]
 

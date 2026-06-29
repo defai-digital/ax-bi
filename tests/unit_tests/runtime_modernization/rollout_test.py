@@ -1535,10 +1535,18 @@ def test_audit_runtime_modernization_completion_separates_phase_3_and_5() -> Non
     phase_checks = {check["name"]: check for check in audit["phase_checks"]}
 
     assert audit["status"] == "incomplete"
-    assert audit["incomplete_phase_names"] == ["phase_5_selective_runtime_split"]
+    assert audit["incomplete_phase_names"] == [
+        "phase_5_selective_runtime_split",
+        "phase_6_boundary_reevaluation",
+    ]
     assert audit["failing_evidence_check_names"] == ["typescript_selective_rollout"]
     assert phase_checks["phase_3_first_typescript_extraction"]["passed"] is True
     assert phase_checks["phase_5_selective_runtime_split"]["passed"] is False
+    assert phase_checks["phase_6_boundary_reevaluation"]["passed"] is False
+    assert phase_checks["phase_6_boundary_reevaluation"]["required_checks"] == [
+        "phase_5_selective_runtime_split",
+        "operator_approval",
+    ]
 
 
 def test_audit_runtime_modernization_completion_passes_complete_evidence() -> None:

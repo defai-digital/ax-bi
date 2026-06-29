@@ -173,12 +173,13 @@ The audit only completes when compatibility evidence, production serving flags,
 operator dashboard measurement windows, service-health gates, workflow gates,
 Rust kernel rollout decision evidence, and operator approval all pass. Phase 3
 requires at least one TypeScript workflow serving production traffic; Phase 5
-requires at least two. Operator approval must include the team migration
-decision (`expand`, `pause`, or `stop`) plus compatibility and security cost
-estimates for the accepted runtime boundary. Approval workflow names must
-exactly match the workflows serving production traffic in the flag-state
-artifact. Production evidence bundles are schema-versioned; validation accepts
-only `schema_version: 1` with object-shaped `artifacts`. JSON validation output
+requires at least two. Phase 6 requires Phase 5 selective rollout evidence plus
+operator approval. Operator approval must include the team migration decision
+(`expand`, `pause`, or `stop`) plus compatibility and security cost estimates
+for the accepted runtime boundary. Approval workflow names must exactly match
+the workflows serving production traffic in the flag-state artifact. Production
+evidence bundles are schema-versioned; validation accepts only
+`schema_version: 1` with object-shaped `artifacts`. JSON validation output
 includes `enabled_workflow_names`, `approved_workflow_names`,
 `dashboard_required_workflow_names`, `failing_check_names`,
 `incomplete_phase_names`, and `failing_evidence_check_names` so release
