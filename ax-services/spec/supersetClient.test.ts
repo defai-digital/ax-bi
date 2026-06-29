@@ -19,6 +19,7 @@
 import { afterEach, expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
+import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
 import { SupersetClient } from '../src/supersetClient';
 
@@ -198,6 +199,123 @@ test('probeMetadata returns an error result when fetch fails', async () => {
     ok: false,
     error: 'metadata failed',
     url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+  });
+});
+
+test('searchAssets queries Superset list APIs and ranks normalized results', async () => {
+  const seenInputs: string[] = [];
+  const seenInits: RequestInit[] = [];
+  global.fetch = async (input, init) => {
+    seenInputs.push(String(input));
+    seenInits.push(init ?? {});
+
+    if (String(input).includes('/api/v1/chart/')) {
+      return Response.json({
+        result: [
+          {
+            id: 2,
+            uuid: 'chart-uuid',
+            slice_name: 'Sales by region',
+            description: 'Regional sales view',
+            certified_by: 'Analytics',
+            owners: [{ username: 'owner1' }],
+            tags: [{ name: 'finance' }],
+          },
+        ],
+      });
+    }
+
+    return Response.json({
+      result: [
+        {
+          id: 1,
+          uuid: 'dataset-uuid',
+          table_name: 'sales_fact',
+          description: 'Orders and revenue',
+          owners: ['owner2'],
+          tags: ['gold'],
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.searchAssets(
+    {
+      contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+      query: 'sales',
+      assetTypes: ['dataset', 'chart'],
+      includeCertifiedOnly: false,
+      limit: 10,
+    },
+    'request-search',
+  );
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [
+      {
+        assetType: 'chart',
+        id: 2,
+        uuid: 'chart-uuid',
+        name: 'Sales by region',
+        description: 'Regional sales view',
+        certified: true,
+        relevanceScore: 1.7,
+        relevanceReason: "name matches 'sales', description matches 'sales'",
+        owners: ['owner1'],
+        tags: ['finance'],
+      },
+      {
+        assetType: 'dataset',
+        id: 1,
+        uuid: 'dataset-uuid',
+        name: 'sales_fact',
+        description: 'Orders and revenue',
+        certified: false,
+        relevanceScore: 1,
+        relevanceReason: "name matches 'sales'",
+        owners: ['owner2'],
+        tags: ['gold'],
+      },
+    ],
+    warnings: [],
+  });
+  expect(seenInputs).toHaveLength(2);
+  expect(seenInputs[0]).toContain('/api/v1/dataset/');
+  expect(seenInputs[0]).toContain('q=');
+  expect(seenInputs[1]).toContain('/api/v1/chart/');
+  expect(seenInits[0].headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-search',
+  });
+});
+
+test('searchAssets records warnings for unsupported and failed search paths', async () => {
+  global.fetch = async () => {
+    throw new Error('search failed');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['metric', 'dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: [
+      'Metric search is not supported by the TypeScript path.',
+      'dashboard search failed: search failed',
+    ],
   });
 });
 

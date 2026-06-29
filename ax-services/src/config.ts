@@ -23,6 +23,11 @@ export interface ServiceConfig {
   supersetHealthPath: string;
   supersetMetadataPath: string;
   supersetPermissionPath: string;
+  supersetAssetSearchPaths: {
+    chart: string;
+    dashboard: string;
+    dataset: string;
+  };
   supersetTimeoutMs: number;
   supersetInternalToken?: string;
   logLevel: string;
@@ -36,6 +41,9 @@ const DEFAULT_SUPERSET_BASE_URL = 'http://127.0.0.1:8088';
 const DEFAULT_SUPERSET_HEALTH_PATH = '/health';
 const DEFAULT_SUPERSET_METADATA_PATH = '/api/v1/dashboard/_info';
 const DEFAULT_SUPERSET_PERMISSION_PATH = '/api/v1/security/permissions/check';
+const DEFAULT_SUPERSET_CHART_LIST_PATH = '/api/v1/chart/';
+const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
+const DEFAULT_SUPERSET_DATASET_LIST_PATH = '/api/v1/dataset/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL = 'info';
 
@@ -91,6 +99,18 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
     supersetPermissionPath: normalizePath(
       env.AX_SUPERSET_PERMISSION_PATH || DEFAULT_SUPERSET_PERMISSION_PATH,
     ),
+    supersetAssetSearchPaths: {
+      chart: normalizePath(
+        env.AX_SUPERSET_CHART_LIST_PATH || DEFAULT_SUPERSET_CHART_LIST_PATH,
+      ),
+      dashboard: normalizePath(
+        env.AX_SUPERSET_DASHBOARD_LIST_PATH ||
+          DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+      ),
+      dataset: normalizePath(
+        env.AX_SUPERSET_DATASET_LIST_PATH || DEFAULT_SUPERSET_DATASET_LIST_PATH,
+      ),
+    },
     supersetTimeoutMs: parsePositiveInteger(
       env.AX_SUPERSET_TIMEOUT_MS,
       DEFAULT_SUPERSET_TIMEOUT_MS,

@@ -145,6 +145,43 @@ def test_metrics_calls_ax_services_metrics_endpoint() -> None:
     )
 
 
+def test_asset_search_posts_to_ax_services_asset_search_endpoint() -> None:
+    """Asset search requests use the sidecar TypeScript search endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"assets": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.asset_search(
+        {
+            "contractVersion": "asset-search.v1",
+            "query": "sales",
+            "assetTypes": ["dataset"],
+            "includeCertifiedOnly": False,
+            "limit": 10,
+        },
+        request_id="request-search",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"assets": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/assets/search",
+        json={
+            "contractVersion": "asset-search.v1",
+            "query": "sales",
+            "assetTypes": ["dataset"],
+            "includeCertifiedOnly": False,
+            "limit": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-search",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

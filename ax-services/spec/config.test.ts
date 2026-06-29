@@ -31,6 +31,11 @@ test('buildConfig returns service defaults', () => {
   expect(config.supersetPermissionPath).toBe(
     '/api/v1/security/permissions/check',
   );
+  expect(config.supersetAssetSearchPaths).toEqual({
+    chart: '/api/v1/chart/',
+    dashboard: '/api/v1/dashboard/',
+    dataset: '/api/v1/dataset/',
+  });
   expect(config.supersetTimeoutMs).toBe(2000);
   expect(config.supersetInternalToken).toBeUndefined();
   expect(config.logLevel).toBe('info');
@@ -44,6 +49,9 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_HEALTH_PATH: 'healthz',
     AX_SUPERSET_METADATA_PATH: 'api/v1/chart/_info',
     AX_SUPERSET_PERMISSION_PATH: 'permissions/check',
+    AX_SUPERSET_CHART_LIST_PATH: 'charts',
+    AX_SUPERSET_DASHBOARD_LIST_PATH: 'dashboards',
+    AX_SUPERSET_DATASET_LIST_PATH: 'datasets',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
     AX_SERVICES_LOG_LEVEL: 'debug',
@@ -55,6 +63,11 @@ test('buildConfig reads environment overrides', () => {
   expect(config.supersetHealthPath).toBe('/healthz');
   expect(config.supersetMetadataPath).toBe('/api/v1/chart/_info');
   expect(config.supersetPermissionPath).toBe('/permissions/check');
+  expect(config.supersetAssetSearchPaths).toEqual({
+    chart: '/charts',
+    dashboard: '/dashboards',
+    dataset: '/datasets',
+  });
   expect(config.supersetTimeoutMs).toBe(1500);
   expect(config.supersetInternalToken).toBe('token-123');
   expect(config.logLevel).toBe('debug');

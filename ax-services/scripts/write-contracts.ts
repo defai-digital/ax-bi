@@ -19,12 +19,14 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
+import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 
 const outputDir = join(__dirname, '..', 'contracts');
 
 const contractFiles = {
+  'asset-search.v1.schema.json': assetSearchContractSchemas,
   'authorization.v1.schema.json': authorizationContractSchemas,
   'runtime.v1.schema.json': runtimeContractSchemas,
 };

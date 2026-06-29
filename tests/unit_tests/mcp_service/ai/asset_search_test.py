@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from flask import current_app
+
 from superset.mcp_service.ai.asset_search import (
     _build_reason,
     _is_certified,
@@ -30,6 +32,7 @@ from superset.mcp_service.ai.schemas import AssetResult
 from superset.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
 )
+from superset.runtime_modernization.ax_services import AxServicesResponse
 
 
 def test_score_result_name_match() -> None:
@@ -222,3 +225,109 @@ def test_search_assets_sorts_by_relevance(
     assert results[0].relevance_score is not None
     assert results[1].relevance_score is not None
     assert results[0].relevance_score >= results[1].relevance_score
+
+
+def test_search_assets_shadow_disabled_returns_python_results(
+    app_context: None,
+    mocker,
+) -> None:
+    """Disabled shadow execution does not call ax-services."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    python_results = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="dataset-uuid",
+            name="sales_fact",
+            description="",
+            certified=False,
+            relevance_score=1.0,
+            owners=[],
+            tags=[],
+        )
+    ]
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_python",
+        return_value=python_results,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        return_value=False,
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.ai.asset_search.AxServicesClient"
+    ).return_value
+
+    results = search_assets("sales", asset_types=["dataset"])
+
+    assert results == python_results
+    ax_services_client.asset_search.assert_not_called()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.search_assets.shadow_disabled"
+    )
+
+
+def test_search_assets_shadows_ax_services_when_enabled(
+    app_context: None,
+    mocker,
+) -> None:
+    """Enabled shadow execution compares TypeScript candidate output."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    python_results = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="dataset-uuid",
+            name="sales_fact",
+            description="",
+            certified=False,
+            relevance_score=1.0,
+            owners=[],
+            tags=[],
+        )
+    ]
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_python",
+        return_value=python_results,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.ai.asset_search.AxServicesClient"
+    ).return_value
+    ax_services_client.asset_search.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={
+            "assets": [
+                {
+                    "assetType": "dataset",
+                    "id": 1,
+                }
+            ],
+            "warnings": [],
+        },
+    )
+
+    results = search_assets("sales", asset_types=["dataset"], limit=5)
+
+    assert results == python_results
+    ax_services_client.asset_search.assert_called_once_with(
+        {
+            "contractVersion": "asset-search.v1",
+            "query": "sales",
+            "assetTypes": ["dataset"],
+            "includeCertifiedOnly": False,
+            "limit": 5,
+        }
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.search_assets.shadow_match"
+    )

@@ -21,8 +21,13 @@ import { expect, test } from '@jest/globals';
 import { buildConfig } from '../src/config';
 import { buildServer } from '../src/server';
 import {
+  ASSET_SEARCH_CONTRACT_VERSION,
+  AssetSearchResponse,
+} from '../src/contracts/assetSearch';
+import {
   DependencyHealth,
   DependencyMetadata,
+  SupersetAssetSearchClient,
   SupersetHealthClient,
   SupersetMetadataClient,
 } from '../src/supersetClient';
@@ -47,12 +52,20 @@ function makeSupersetClient({
   },
   onHealth,
   onMetadata,
+  onSearch,
+  search = {
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: [],
+  },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
+  search?: AssetSearchResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
-} = {}): SupersetHealthClient & SupersetMetadataClient {
+  onSearch?: (correlationId?: string) => void;
+} = {}): SupersetHealthClient & SupersetMetadataClient & SupersetAssetSearchClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -61,6 +74,10 @@ function makeSupersetClient({
     async probeMetadata(correlationId) {
       onMetadata?.(correlationId);
       return metadata;
+    },
+    async searchAssets(_request, correlationId) {
+      onSearch?.(correlationId);
+      return search;
     },
   };
 }
@@ -282,4 +299,69 @@ test('metrics endpoint returns request counters by route', async () => {
   expect(
     response.json().requests.routes['GET /health'].averageDurationMs,
   ).toBeGreaterThanOrEqual(0);
+});
+
+test('asset search endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      search: {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [
+          {
+            assetType: 'dataset',
+            id: 1,
+            uuid: 'dataset-uuid',
+            name: 'sales_fact',
+            certified: false,
+            relevanceScore: 1,
+            owners: [],
+            tags: [],
+          },
+        ],
+        warnings: [],
+      },
+      onSearch(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/assets/search',
+    headers: {
+      'x-request-id': 'request-search',
+    },
+    payload: {
+      contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+      query: 'sales',
+      assetTypes: ['dataset'],
+      includeCertifiedOnly: false,
+      limit: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-search');
+  expect(seenRequestIds).toEqual(['request-search']);
+  expect(response.json()).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [
+      {
+        assetType: 'dataset',
+        id: 1,
+        uuid: 'dataset-uuid',
+        name: 'sales_fact',
+        certified: false,
+        relevanceScore: 1,
+        owners: [],
+        tags: [],
+      },
+    ],
+    warnings: [],
+  });
 });

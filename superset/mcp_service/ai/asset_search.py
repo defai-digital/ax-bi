@@ -27,10 +27,18 @@ from __future__ import annotations
 import logging
 from typing import Any, cast
 
+from flask import current_app, has_app_context
 from sqlalchemy import or_
 
+from superset import is_feature_enabled
 from superset.extensions import db
 from superset.mcp_service.ai.schemas import AssetResult
+from superset.runtime_modernization.ax_services import (
+    AxServicesClient,
+    AxServicesConfig,
+    AxServicesResponse,
+)
+from superset.runtime_modernization.shadow import execute_with_shadow
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +48,7 @@ _DESCRIPTION_MATCH_SCORE = 0.5
 _CERTIFIED_BONUS = 0.2
 
 _VALID_ASSET_TYPES = frozenset({"dataset", "chart", "dashboard", "metric"})
+_ASSET_SEARCH_CONTRACT_VERSION = "asset-search.v1"
 
 
 def _score_result(name: str | None, description: str | None, query: str) -> float:
@@ -234,7 +243,7 @@ def _build_reason(name: str | None, description: str | None, query: str) -> str:
     return ", ".join(parts) if parts else "tag/owner match"
 
 
-def search_assets(
+def _search_assets_python(
     query: str,
     asset_types: list[str] | None = None,
     include_certified_only: bool = False,
@@ -283,3 +292,97 @@ def search_assets(
     # Sort by relevance score descending and apply final limit
     all_results.sort(key=lambda r: r.relevance_score or 0.0, reverse=True)
     return all_results[:limit]
+
+
+def _asset_search_shadow_enabled() -> bool:
+    """Return whether asset search should shadow through ax-services."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("RUNTIME_SHADOW_EXECUTION")
+        and is_feature_enabled("TS_MCP_ORCHESTRATION")
+    )
+
+
+def _ax_services_asset_search_candidate(
+    query: str,
+    asset_types: list[str] | None,
+    include_certified_only: bool,
+    limit: int,
+) -> AxServicesResponse:
+    """Run the TypeScript sidecar asset search candidate."""
+
+    client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
+    return client.asset_search(
+        {
+            "contractVersion": _ASSET_SEARCH_CONTRACT_VERSION,
+            "query": query,
+            "assetTypes": asset_types or [],
+            "includeCertifiedOnly": include_certified_only,
+            "limit": limit,
+        }
+    )
+
+
+def _asset_search_shadow_matches(
+    authoritative: list[AssetResult],
+    candidate: AxServicesResponse,
+) -> bool:
+    """Compare Python and TypeScript asset search outputs by type and ID."""
+
+    if not candidate.ok or not candidate.payload:
+        return False
+
+    candidate_assets = candidate.payload.get("assets")
+    if not isinstance(candidate_assets, list):
+        return False
+
+    authoritative_keys = [(asset.asset_type, asset.id) for asset in authoritative]
+    candidate_keys: list[tuple[str, int]] = []
+    for asset in candidate_assets:
+        if not isinstance(asset, dict):
+            return False
+        asset_type = asset.get("assetType")
+        asset_id = asset.get("id")
+        if not isinstance(asset_type, str) or not isinstance(asset_id, int):
+            return False
+        candidate_keys.append((asset_type, asset_id))
+
+    return authoritative_keys == candidate_keys
+
+
+def search_assets(
+    query: str,
+    asset_types: list[str] | None = None,
+    include_certified_only: bool = False,
+    limit: int = 10,
+) -> list[AssetResult]:
+    """Search business assets with optional TypeScript shadow execution."""
+
+    if not has_app_context():
+        return _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        )
+
+    return execute_with_shadow(
+        area="mcp_orchestration",
+        operation="search_assets",
+        authoritative=lambda: _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        ),
+        candidate=lambda: _ax_services_asset_search_candidate(
+            query,
+            asset_types,
+            include_certified_only,
+            limit,
+        ),
+        compare=_asset_search_shadow_matches,
+        stats_logger=current_app.config["STATS_LOGGER"],
+        shadow_enabled=_asset_search_shadow_enabled(),
+    )

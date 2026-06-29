@@ -21,6 +21,7 @@ import { join } from 'path';
 
 import { expect, test } from '@jest/globals';
 
+import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 
@@ -39,5 +40,11 @@ test('runtime contract artifact matches TypeScript source', () => {
 test('authorization contract artifact matches TypeScript source', () => {
   expect(readContractArtifact('authorization.v1.schema.json')).toEqual(
     authorizationContractSchemas,
+  );
+});
+
+test('asset search contract artifact matches TypeScript source', () => {
+  expect(readContractArtifact('asset-search.v1.schema.json')).toEqual(
+    assetSearchContractSchemas,
   );
 });

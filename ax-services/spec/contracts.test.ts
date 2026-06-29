@@ -19,6 +19,10 @@
 import { expect, test } from '@jest/globals';
 
 import {
+  assetSearchContractSchemas,
+  ASSET_SEARCH_CONTRACT_VERSION,
+} from '../src/contracts/assetSearch';
+import {
   authorizationContractSchemas,
   AUTHORIZATION_CONTRACT_VERSION,
   permissionCheckRequestSchema,
@@ -38,6 +42,10 @@ test('runtime contract version is explicit', () => {
 
 test('authorization contract version is explicit', () => {
   expect(AUTHORIZATION_CONTRACT_VERSION).toBe('authorization.v1');
+});
+
+test('asset search contract version is explicit', () => {
+  expect(ASSET_SEARCH_CONTRACT_VERSION).toBe('asset-search.v1');
 });
 
 test('health response schema is stable', () => {
@@ -100,5 +108,19 @@ test('permission check request schema is registered in authorization contracts',
   );
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],
+  });
+});
+
+test('asset search request schema is registered in asset search contracts', () => {
+  expect(assetSearchContractSchemas.assetSearchRequestSchema.properties.query).toEqual(
+    {
+      type: 'string',
+    },
+  );
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.assetType,
+  ).toEqual({
+    enum: ['chart', 'dashboard', 'dataset', 'metric'],
   });
 });

@@ -22,6 +22,12 @@ import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
 import {
+  AssetSearchRequest,
+  AssetSearchResponse,
+  assetSearchRequestSchema,
+  assetSearchResponseSchema,
+} from './contracts/assetSearch';
+import {
   HealthResponseContract,
   healthResponseSchema,
   MetadataResponseContract,
@@ -36,11 +42,14 @@ import { ServiceMetrics } from './metrics';
 import {
   SupersetHealthClient,
   SupersetMetadataClient,
+  SupersetAssetSearchClient,
 } from './supersetClient';
 
 export function buildServer(
   config: ServiceConfig,
-  supersetClient: SupersetHealthClient & SupersetMetadataClient,
+  supersetClient: SupersetHealthClient &
+    SupersetMetadataClient &
+    SupersetAssetSearchClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const server = Fastify({
@@ -139,6 +148,23 @@ export function buildServer(
       },
     },
     async (): Promise<MetricsResponseContract> => metrics.snapshot(),
+  );
+
+  server.post<{
+    Body: AssetSearchRequest;
+    Reply: AssetSearchResponse;
+  }>(
+    '/mcp/assets/search',
+    {
+      schema: {
+        body: assetSearchRequestSchema,
+        response: {
+          200: assetSearchResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<AssetSearchResponse> =>
+      supersetClient.searchAssets(request.body, request.id),
   );
 
   return server;

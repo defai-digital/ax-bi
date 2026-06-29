@@ -95,6 +95,20 @@ class AxServicesClient:
 
         return self.get_json("/metrics", request_id=request_id)
 
+    def asset_search(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar asset search endpoint."""
+
+        return self.post_json(
+            "/mcp/assets/search",
+            payload,
+            request_id=request_id,
+        )
+
     def get_json(
         self,
         path: str,
