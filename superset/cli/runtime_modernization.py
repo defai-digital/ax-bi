@@ -237,7 +237,11 @@ def _format_production_evidence_template(template: dict[str, Any]) -> str:
 def _format_production_flag_state(flag_state: dict[str, Any]) -> str:
     """Render a compact production flag-state report."""
 
-    lines = ["runtime modernization production flag state"]
+    lines = [
+        "runtime modernization production flag state",
+        f"  environment: {flag_state['environment']}",
+        f"  flag state reference: {flag_state['flag_state_reference']}",
+    ]
     for workflow in flag_state["workflows"]:
         flags = workflow["serving_flags"]
         enabled = [name for name, value in flags.items() if value]
@@ -670,6 +674,16 @@ def production_evidence_template(
     help="Optional rollout workflow name to include. Can be supplied more than once.",
 )
 @click.option(
+    "--environment",
+    required=True,
+    help="Production environment covered by this flag-state snapshot.",
+)
+@click.option(
+    "--flag-state-reference",
+    required=True,
+    help="Deployment config, feature-flag export, or change record reference.",
+)
+@click.option(
     "--format",
     "output_format",
     type=click.Choice(("text", "json")),
@@ -680,6 +694,8 @@ def production_evidence_template(
 @with_appcontext
 def production_flag_state(
     workflow: tuple[str, ...],
+    environment: str,
+    flag_state_reference: str,
     output_format: str,
 ) -> None:
     """Print runtime modernization serving flag state for this deployment."""
@@ -693,7 +709,12 @@ def production_flag_state(
     except KeyError as ex:
         raise click.ClickException(str(ex)) from ex
 
-    flag_state = build_production_flag_state(workflows, is_feature_enabled)
+    flag_state = build_production_flag_state(
+        workflows,
+        is_feature_enabled,
+        environment=environment,
+        flag_state_reference=flag_state_reference,
+    )
 
     if output_format == "json":
         click.echo(json.dumps(flag_state, sort_keys=True, indent=2))

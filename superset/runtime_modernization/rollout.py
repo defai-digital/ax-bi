@@ -355,9 +355,12 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         source="deployment configuration or feature-flag export",
         description=(
             "Snapshot showing which runtime modernization shadow and serving "
-            "flags were enabled for each workflow."
+            "flags were enabled for each workflow, with deployment provenance."
         ),
-        validation="at least two TypeScript workflow serving flag sets are enabled",
+        validation=(
+            "environment and flag-state reference are named, and at least two "
+            "TypeScript workflow serving flag sets are enabled"
+        ),
     ),
     RolloutEvidenceRequirement(
         name="operator_dashboard_snapshot",
@@ -455,6 +458,8 @@ def build_production_evidence_template(
                 **build_rust_kernel_rollout_decision_template(),
             },
             "production_flag_state": {
+                "environment": "",
+                "flag_state_reference": "",
                 "workflows": [
                     {
                         "name": workflow.name,
@@ -511,10 +516,15 @@ def build_production_evidence_template(
 def build_production_flag_state(
     workflows: tuple[RolloutWorkflow, ...],
     flag_enabled: Callable[[str], bool],
+    *,
+    environment: str,
+    flag_state_reference: str,
 ) -> dict[str, Any]:
     """Build production flag-state evidence for selected workflows."""
 
     return {
+        "environment": environment,
+        "flag_state_reference": flag_state_reference,
         "workflows": [
             {
                 "name": workflow.name,
@@ -903,13 +913,19 @@ def validate_production_evidence(
 
     flag_state = _artifact_mapping(artifacts, "production_flag_state")
     flag_records = _workflow_records_by_name(flag_state or {})
+    flag_state_has_provenance = _non_empty_string(
+        (flag_state or {}).get("environment")
+    ) and _non_empty_string((flag_state or {}).get("flag_state_reference"))
     enabled_workflows = [
         workflow.name
         for workflow in workflows
         if _serving_flags_enabled(flag_records.get(workflow.name, {}), workflow)
     ]
     minimum_serving_workflows = 2
-    flag_state_passed = len(enabled_workflows) >= minimum_serving_workflows
+    flag_state_passed = (
+        flag_state_has_provenance
+        and len(enabled_workflows) >= minimum_serving_workflows
+    )
     checks.append(
         ProductionEvidenceCheck(
             name="production_flag_state",
@@ -918,7 +934,8 @@ def validate_production_evidence(
                 f"{len(enabled_workflows)} TypeScript serving workflows enabled"
                 if flag_state_passed
                 else (
-                    "production flag state must show at least "
+                    "production flag state must name environment, flag-state "
+                    "reference, and at least "
                     f"{minimum_serving_workflows} TypeScript serving workflows"
                 )
             ),

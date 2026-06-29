@@ -61,6 +61,10 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                         "rationale": "benchmark gain did not justify rollout",
                     },
                     "production_flag_state": {
+                        "environment": "prod-us",
+                        "flag_state_reference": (
+                            "flags/runtime-modernization/prod-us-123"
+                        ),
                         "workflows": [
                             {
                                 "name": "mcp_asset_search",
@@ -299,6 +303,8 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["schema_version"] == 1
+    assert payload["artifacts"]["production_flag_state"]["environment"] == ""
+    assert payload["artifacts"]["production_flag_state"]["flag_state_reference"] == ""
     assert payload["artifacts"]["production_flag_state"]["workflows"] == [
         {
             "name": "mcp_asset_search",
@@ -369,6 +375,10 @@ def test_runtime_modernization_production_flag_state_outputs_json(
             "mcp_asset_search",
             "--workflow",
             "mcp_dashboard_list",
+            "--environment",
+            "prod-us",
+            "--flag-state-reference",
+            "flags/runtime-modernization/prod-us-123",
             "--format",
             "json",
         ],
@@ -376,6 +386,8 @@ def test_runtime_modernization_production_flag_state_outputs_json(
 
     assert result.exit_code == 0
     assert json.loads(result.output) == {
+        "environment": "prod-us",
+        "flag_state_reference": "flags/runtime-modernization/prod-us-123",
         "workflows": [
             {
                 "name": "mcp_asset_search",
@@ -412,6 +424,10 @@ def test_runtime_modernization_production_flag_state_outputs_text(
             "production-flag-state",
             "--workflow",
             "mcp_database_list",
+            "--environment",
+            "prod-us",
+            "--flag-state-reference",
+            "flags/runtime-modernization/prod-us-123",
             "--format",
             "text",
         ],
@@ -419,6 +435,10 @@ def test_runtime_modernization_production_flag_state_outputs_text(
 
     assert result.exit_code == 0
     assert "runtime modernization production flag state" in result.output
+    assert "environment: prod-us" in result.output
+    assert "flag state reference: flags/runtime-modernization/prod-us-123" in (
+        result.output
+    )
     assert "mcp_database_list" in result.output
     assert "enabled: none" in result.output
     assert "TS_DATABASE_LIST_SERVING" in result.output
@@ -939,6 +959,8 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     flag_state.write_text(
         json.dumps(
             {
+                "environment": "prod-us",
+                "flag_state_reference": "flags/runtime-modernization/prod-us-123",
                 "workflows": [
                     {
                         "name": "mcp_asset_search",
@@ -1122,6 +1144,10 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "rationale": "canary showed acceptable latency and errors",
                     },
                     "production_flag_state": {
+                        "environment": "prod-us",
+                        "flag_state_reference": (
+                            "flags/runtime-modernization/prod-us-123"
+                        ),
                         "workflows": [
                             {
                                 "name": "mcp_asset_search",

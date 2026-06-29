@@ -130,7 +130,10 @@ and release artifacts with:
 ```bash
 superset runtime-modernization production-evidence --format text
 superset runtime-modernization production-evidence-template --format json
-superset runtime-modernization production-flag-state --format json
+superset runtime-modernization production-flag-state \
+  --environment prod-us \
+  --flag-state-reference flags/runtime-modernization/prod-us-123 \
+  --format json
 superset runtime-modernization operator-dashboard-snapshot \
   --workflow mcp_asset_search \
   --snapshot-reference observability/runtime-modernization \

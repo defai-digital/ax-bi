@@ -293,7 +293,8 @@ product-specific and contract-oriented.
   fillable JSON bundle with the workflow-specific serving flags and dashboard
   gates operators must complete.
 - `superset runtime-modernization production-flag-state` emits the live
-  deployment serving-flag state in the evidence bundle format.
+  deployment serving-flag state, environment, and flag export reference in the
+  evidence bundle format.
 - `superset runtime-modernization operator-dashboard-snapshot` emits the
   operator dashboard gate artifact with sidecar service health/readiness gates,
   workflow metrics, p95 latency targets, fallback/error targets, per-workflow

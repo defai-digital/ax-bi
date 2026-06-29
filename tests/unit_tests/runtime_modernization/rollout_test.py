@@ -29,6 +29,7 @@ from superset.runtime_modernization.rollout import (
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
+    RolloutWorkflow,
     validate_production_evidence,
 )
 
@@ -39,6 +40,22 @@ def _passing_service_health() -> dict[str, object]:
     return {
         "health_check": {"passed": True},
         "readiness_check": {"passed": True},
+    }
+
+
+def _production_flag_state(workflows: tuple[RolloutWorkflow, ...]) -> dict[str, object]:
+    """Build passing production flag-state evidence for rollout tests."""
+
+    return {
+        "environment": "prod-us",
+        "flag_state_reference": "flags/runtime-modernization/prod-us-123",
+        "workflows": [
+            {
+                "name": workflow.name,
+                "serving_flags": {flag: True for flag in workflow.serving_flags},
+            }
+            for workflow in workflows
+        ],
     }
 
 
@@ -74,17 +91,7 @@ def _complete_production_evidence() -> dict[str, object]:
                 "decision_reference": "PERF-123",
                 "rationale": "benchmark gain did not justify rollout",
             },
-            "production_flag_state": {
-                "workflows": [
-                    {
-                        "name": workflow.name,
-                        "serving_flags": {
-                            flag: True for flag in workflow.serving_flags
-                        },
-                    }
-                    for workflow in workflows
-                ],
-            },
+            "production_flag_state": _production_flag_state(workflows),
             "operator_dashboard_snapshot": {
                 "snapshot_reference": "observability/dashboard/snapshot-123",
                 "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
@@ -369,24 +376,12 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     "decision_reference": "CHG-RUST-1",
                     "rationale": "canary showed acceptable latency and errors",
                 },
-                "production_flag_state": {
-                    "workflows": [
-                        {
-                            "name": "mcp_asset_search",
-                            "serving_flags": {
-                                "TS_MCP_ORCHESTRATION": True,
-                                "TS_ASSET_SEARCH_SERVING": True,
-                            },
-                        },
-                        {
-                            "name": "mcp_dashboard_list",
-                            "serving_flags": {
-                                "TS_MCP_ORCHESTRATION": True,
-                                "TS_DASHBOARD_LIST_SERVING": True,
-                            },
-                        },
-                    ],
-                },
+                "production_flag_state": _production_flag_state(
+                    (
+                        get_rollout_workflow("mcp_asset_search"),
+                        get_rollout_workflow("mcp_dashboard_list"),
+                    )
+                ),
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
                     "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
@@ -468,24 +463,12 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                     "decision_reference": "PERF-123",
                     "rationale": "benchmark gain did not justify rollout",
                 },
-                "production_flag_state": {
-                    "workflows": [
-                        {
-                            "name": "mcp_asset_search",
-                            "serving_flags": {
-                                "TS_MCP_ORCHESTRATION": True,
-                                "TS_ASSET_SEARCH_SERVING": True,
-                            },
-                        },
-                        {
-                            "name": "mcp_dashboard_list",
-                            "serving_flags": {
-                                "TS_MCP_ORCHESTRATION": True,
-                                "TS_DASHBOARD_LIST_SERVING": True,
-                            },
-                        },
-                    ],
-                },
+                "production_flag_state": _production_flag_state(
+                    (
+                        get_rollout_workflow("mcp_asset_search"),
+                        get_rollout_workflow("mcp_dashboard_list"),
+                    )
+                ),
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
                     "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
@@ -546,6 +529,45 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
     assert checks["operator_dashboard_snapshot"]["passed"] is True
 
 
+def test_validate_production_evidence_requires_flag_state_provenance() -> None:
+    """Production flag-state evidence must identify the deployment source."""
+
+    validation = validate_production_evidence(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": {
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_dashboard_list",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_DASHBOARD_LIST_SERVING": True,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["production_flag_state"]["passed"] is False
+    assert "flag-state reference" in checks["production_flag_state"]["message"]
+
+
 def test_validate_production_evidence_requires_dashboard_service_health() -> None:
     """Operator dashboard evidence must include sidecar service health."""
 
@@ -602,6 +624,8 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
             "schema_version": 1,
             "artifacts": {
                 "production_flag_state": {
+                    "environment": "prod-us",
+                    "flag_state_reference": "flags/runtime-modernization/prod-us-123",
                     "workflows": [
                         {
                             "name": "mcp_asset_search",
@@ -721,6 +745,8 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
     dashboard_workflows = dashboard_snapshot["workflows"]
 
     assert template["schema_version"] == 1
+    assert template["artifacts"]["production_flag_state"]["environment"] == ""
+    assert template["artifacts"]["production_flag_state"]["flag_state_reference"] == ""
     assert flag_workflows == [
         {
             "name": "mcp_asset_search",
@@ -788,9 +814,13 @@ def test_build_production_flag_state_reads_workflow_serving_flags() -> None:
             get_rollout_workflow("mcp_dashboard_list"),
         ),
         lambda flag: flag in enabled_flags,
+        environment="prod-us",
+        flag_state_reference="flags/runtime-modernization/prod-us-123",
     )
 
     assert flag_state == {
+        "environment": "prod-us",
+        "flag_state_reference": "flags/runtime-modernization/prod-us-123",
         "workflows": [
             {
                 "name": "mcp_asset_search",
