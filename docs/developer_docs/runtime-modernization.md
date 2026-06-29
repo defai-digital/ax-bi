@@ -193,6 +193,9 @@ automation can report exactly which production-serving workflows were gated,
 approved, or still incomplete. CI uses `--expect-status incomplete` for the
 fillable template audit so a template or validator regression cannot
 accidentally claim production rollout completion.
+Generated evidence templates are intentionally incomplete: placeholder
+compatibility and benchmark artifacts must be replaced with real CI artifacts
+before they can pass validation.
 Final release assembly should use both `--validate` and `--audit --strict` so
 the command fails on incomplete phase evidence, not only malformed artifacts.
 

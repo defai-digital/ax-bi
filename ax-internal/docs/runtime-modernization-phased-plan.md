@@ -312,8 +312,8 @@ product-specific and contract-oriented.
   Rust rollout decision, serving flag state, operator dashboard snapshot, and
   operator approval.
 - `superset runtime-modernization production-evidence-template` emits a
-  fillable JSON bundle with the workflow-specific serving flags and dashboard
-  gates operators must complete.
+  fillable JSON bundle with intentionally incomplete CI artifact placeholders,
+  workflow-specific serving flags, and dashboard gates operators must complete.
 - `superset runtime-modernization production-flag-state` emits the live
   deployment serving-flag state, environment, and flag export reference in the
   evidence bundle format.

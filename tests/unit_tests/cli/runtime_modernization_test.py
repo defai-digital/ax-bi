@@ -344,12 +344,19 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert (
         payload["artifacts"]["operator_dashboard_snapshot"]["measurement_window"] == ""
     )
+    assert payload["artifacts"]["compatibility_report"] == {
+        "status": "",
+        "target_checks": {
+            "rust_kernel_speedup_met": None,
+            "sql_parsing_operations_per_second_met": None,
+        },
+    }
     assert payload["artifacts"]["rust_kernel_benchmark"] == {
         "schema_version": 1,
-        "status": "passed",
+        "status": "",
         "kernel": "sql_whitespace_kernel",
         "iterations": 0,
-        "output_matched": True,
+        "output_matched": False,
         "target_checks": {
             "speedup_met": None,
         },

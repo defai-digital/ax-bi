@@ -1241,12 +1241,19 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         ]
         == "0 mismatches during the evaluation window"
     )
+    assert template["artifacts"]["compatibility_report"] == {
+        "status": "",
+        "target_checks": {
+            "sql_parsing_operations_per_second_met": None,
+            "rust_kernel_speedup_met": None,
+        },
+    }
     assert template["artifacts"]["rust_kernel_benchmark"] == {
         "schema_version": 1,
-        "status": "passed",
+        "status": "",
         "kernel": "sql_whitespace_kernel",
         "iterations": 0,
-        "output_matched": True,
+        "output_matched": False,
         "target_checks": {
             "speedup_met": None,
         },
@@ -1283,6 +1290,24 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "approval_reference": "",
         "workflow_names": [],
     }
+
+
+def test_production_evidence_template_does_not_complete_evidence_phases() -> None:
+    """Unfilled production evidence templates do not satisfy rollout evidence."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+    template = build_production_evidence_template(workflows)
+
+    audit = audit_runtime_modernization_completion(workflows, template)
+
+    assert audit["status"] == "incomplete"
+    assert "phase_1_python_boundaries" in audit["incomplete_phase_names"]
+    assert "phase_4_rust_kernel_poc" in audit["incomplete_phase_names"]
+    assert "compatibility_report" in audit["failing_evidence_check_names"]
+    assert "rust_kernel_benchmark" in audit["failing_evidence_check_names"]
 
 
 def test_build_production_flag_state_reads_workflow_serving_flags() -> None:

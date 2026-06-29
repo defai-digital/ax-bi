@@ -479,7 +479,7 @@ def build_production_evidence_template(
         "schema_version": 1,
         "artifacts": {
             "compatibility_report": {
-                "status": "passed",
+                "status": "",
                 "target_checks": {
                     "sql_parsing_operations_per_second_met": None,
                     "rust_kernel_speedup_met": None,
@@ -487,10 +487,10 @@ def build_production_evidence_template(
             },
             "rust_kernel_benchmark": {
                 "schema_version": 1,
-                "status": "passed",
+                "status": "",
                 "kernel": "sql_whitespace_kernel",
                 "iterations": 0,
-                "output_matched": True,
+                "output_matched": False,
                 "target_checks": {
                     "speedup_met": None,
                 },
