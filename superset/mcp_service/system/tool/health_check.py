@@ -22,11 +22,13 @@ import logging
 import platform
 import time
 
+from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset.mcp_service.system.schemas import HealthCheckResponse
 from superset.mcp_service.utils.config_utils import get_superset_app_name
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+from superset.runtime_modernization.measurement import measure_runtime_candidate
 from superset.utils.version import get_version_metadata
 
 logger = logging.getLogger(__name__)
@@ -74,34 +76,39 @@ async def health_check() -> HealthCheckResponse:
     app_name = get_superset_app_name()
     service_name = f"{app_name} MCP Service"
 
-    try:
-        with mcp_event_log_context(action="mcp.health_check.status"):
-            # Get version from Superset version metadata
-            version_metadata = get_version_metadata()
-            version = version_metadata.get("version_string", "unknown")
+    with measure_runtime_candidate(
+        "mcp_orchestration",
+        "health_check",
+        current_app.config["STATS_LOGGER"],
+    ):
+        try:
+            with mcp_event_log_context(action="mcp.health_check.status"):
+                # Get version from Superset version metadata
+                version_metadata = get_version_metadata()
+                version = version_metadata.get("version_string", "unknown")
 
-        response = HealthCheckResponse(
-            status="healthy",
-            timestamp=datetime.datetime.now().isoformat(),
-            service=service_name,
-            version=version,
-            python_version=platform.python_version(),
-            platform=platform.system(),
-            uptime_seconds=round(time.monotonic() - _start_time, 1),
-        )
+            response = HealthCheckResponse(
+                status="healthy",
+                timestamp=datetime.datetime.now().isoformat(),
+                service=service_name,
+                version=version,
+                python_version=platform.python_version(),
+                platform=platform.system(),
+                uptime_seconds=round(time.monotonic() - _start_time, 1),
+            )
 
-        logger.info("Health check completed successfully")
-        return response
+            logger.info("Health check completed successfully")
+            return response
 
-    except Exception as e:
-        logger.error("Health check failed: %s", e)
-        # Return error status but don't raise to keep tool working
-        response = HealthCheckResponse(
-            status="error",
-            timestamp=datetime.datetime.now().isoformat(),
-            service=service_name,
-            version="unknown",
-            python_version=platform.python_version(),
-            platform=platform.system(),
-        )
-        return response
+        except Exception as e:
+            logger.error("Health check failed: %s", e)
+            # Return error status but don't raise to keep tool working
+            response = HealthCheckResponse(
+                status="error",
+                timestamp=datetime.datetime.now().isoformat(),
+                service=service_name,
+                version="unknown",
+                python_version=platform.python_version(),
+                platform=platform.system(),
+            )
+            return response

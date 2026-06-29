@@ -17,7 +17,13 @@
 
 """Tests for health_check MCP tool."""
 
+from unittest.mock import MagicMock
+
+import pytest
+from flask import current_app
+
 from superset.mcp_service.system.schemas import HealthCheckResponse
+from superset.mcp_service.system.tool.health_check import health_check
 
 
 def test_health_check_response_schema():
@@ -53,3 +59,34 @@ def test_health_check_response_with_uptime():
     )
 
     assert response.uptime_seconds == 123.45
+
+
+@pytest.mark.asyncio
+async def test_health_check_emits_runtime_modernization_metrics(
+    app_context: None,
+    mocker,
+):
+    """Health check emits baseline runtime modernization metrics."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    current_app.config["MCP_DEV_USERNAME"] = "admin"
+    mocker.patch(
+        "superset.mcp_service.auth.load_user_with_relationships",
+        return_value=MagicMock(),
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        return_value={"version_string": "test-version"},
+    )
+
+    response = await health_check()
+
+    assert response.status == "healthy"
+    stats_logger.incr.assert_called_once_with(
+        "runtime_modernization.mcp_orchestration.health_check.success"
+    )
+    stats_logger.timing.assert_called_once()
+    assert stats_logger.timing.call_args.args[0] == (
+        "runtime_modernization.mcp_orchestration.health_check.duration"
+    )
