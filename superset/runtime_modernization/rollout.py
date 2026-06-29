@@ -586,6 +586,11 @@ def build_operator_approval_evidence(
 ) -> dict[str, Any]:
     """Build operator approval evidence for runtime modernization rollout."""
 
+    if approved and not workflow_names:
+        raise ValueError(
+            "approved operator evidence requires at least one workflow name",
+        )
+
     evidence: dict[str, Any] = {
         "approved": approved,
         "boundary_decision": boundary_decision,
@@ -666,6 +671,13 @@ def build_rust_kernel_rollout_decision(
     serving_flag_enabled: bool | None = None,
 ) -> dict[str, Any]:
     """Build Rust kernel rollout decision evidence for Phase 5."""
+
+    if decision not in {"served", "rejected"}:
+        raise ValueError("Rust rollout decision must be 'served' or 'rejected'")
+    if decision == "served" and serving_flag_enabled is not True:
+        raise ValueError(
+            "served Rust rollout decisions require serving_flag_enabled=True",
+        )
 
     evidence: dict[str, Any] = {
         "kernel": kernel,

@@ -1029,6 +1029,43 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
     }
 
 
+def test_build_operator_approval_evidence_requires_approved_workflows() -> None:
+    """Approved operator evidence must name the production-serving workflows."""
+
+    with pytest.raises(ValueError, match="at least one workflow"):
+        build_operator_approval_evidence(
+            boundary_decision="split MCP by tool class",
+            rollout_scope="asset search and dashboard listing",
+            migration_decision="expand",
+            compatibility_cost_estimate=(
+                "versioned contracts and Python fallback keep compatibility risk low"
+            ),
+            security_cost_estimate=(
+                "Superset remains the authorization authority for extracted workflows"
+            ),
+            approval_reference="CHG-123",
+            workflow_names=(),
+        )
+
+
+def test_build_operator_approval_evidence_allows_empty_rejection_scope() -> None:
+    """Rejected operator evidence may omit workflows because none are approved."""
+
+    approval = build_operator_approval_evidence(
+        boundary_decision="split MCP by tool class",
+        rollout_scope="no production rollout",
+        migration_decision="stop",
+        compatibility_cost_estimate="compatibility cost exceeds release scope",
+        security_cost_estimate="security review requires redesign",
+        approval_reference="CHG-123",
+        workflow_names=(),
+        approved=False,
+    )
+
+    assert approval["approved"] is False
+    assert approval["workflow_names"] == []
+
+
 def test_build_rust_kernel_rollout_decision_includes_required_fields() -> None:
     """Rust rollout decision evidence includes Phase 5 validation fields."""
 
@@ -1046,6 +1083,45 @@ def test_build_rust_kernel_rollout_decision_includes_required_fields() -> None:
         "decision_reference": "PERF-123",
         "rationale": "benchmark gain did not justify rollout",
     }
+
+
+def test_build_rust_kernel_rollout_decision_requires_supported_decision() -> None:
+    """Rust rollout evidence only accepts the decisions validation understands."""
+
+    with pytest.raises(ValueError, match="must be 'served' or 'rejected'"):
+        build_rust_kernel_rollout_decision(
+            kernel="ax_sql.normalize_sql_whitespace",
+            decision="paused",
+            decision_reference="PERF-123",
+            rationale="benchmark gain requires another canary",
+        )
+
+
+def test_build_rust_kernel_rollout_decision_requires_enabled_serving_flag() -> None:
+    """Served Rust decisions must prove the feature flag served traffic."""
+
+    with pytest.raises(ValueError, match="serving_flag_enabled=True"):
+        build_rust_kernel_rollout_decision(
+            kernel="ax_sql.normalize_sql_whitespace",
+            decision="served",
+            decision_reference="PERF-123",
+            rationale="benchmark gain justified rollout",
+        )
+
+
+def test_build_rust_kernel_rollout_decision_records_served_flag() -> None:
+    """Valid served Rust decisions include serving flag evidence."""
+
+    decision = build_rust_kernel_rollout_decision(
+        kernel="ax_sql.normalize_sql_whitespace",
+        decision="served",
+        decision_reference="PERF-123",
+        rationale="benchmark gain justified rollout",
+        serving_flag_enabled=True,
+    )
+
+    assert decision["decision"] == "served"
+    assert decision["serving_flag_enabled"] is True
 
 
 def test_build_rust_kernel_rollout_decision_template_is_incomplete() -> None:
