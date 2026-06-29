@@ -293,6 +293,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         serving_flag="TS_DATASET_LIST_SERVING",
     ),
     _mcp_workflow(
+        name="mcp_query_list",
+        operation="list_queries",
+        sidecar_route="POST /mcp/queries/list",
+        contract_version="query-list.v1",
+        serving_flag="TS_QUERY_LIST_SERVING",
+    ),
+    _mcp_workflow(
         name="mcp_saved_query_list",
         operation="list_saved_queries",
         sidecar_route="POST /mcp/saved-queries/list",

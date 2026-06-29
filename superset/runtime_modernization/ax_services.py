@@ -207,6 +207,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_queries(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar query list endpoint."""
+
+        return self.post_json(
+            "/mcp/queries/list",
+            payload,
+            request_id=request_id,
+        )
+
     def list_reports(
         self,
         payload: Mapping[str, Any],

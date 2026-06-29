@@ -29,6 +29,7 @@ import { chartListContractSchemas } from '../src/contracts/chartList';
 import { dashboardListContractSchemas } from '../src/contracts/dashboardList';
 import { databaseListContractSchemas } from '../src/contracts/databaseList';
 import { datasetListContractSchemas } from '../src/contracts/datasetList';
+import { queryListContractSchemas } from '../src/contracts/queryList';
 import { reportListContractSchemas } from '../src/contracts/reportList';
 import { roleListContractSchemas } from '../src/contracts/roleList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
@@ -87,6 +88,12 @@ test('chart list contract artifact matches TypeScript source', () => {
 test('dataset list contract artifact matches TypeScript source', () => {
   expect(readContractArtifact('dataset-list.v1.schema.json')).toEqual(
     datasetListContractSchemas,
+  );
+});
+
+test('query list contract artifact matches TypeScript source', () => {
+  expect(readContractArtifact('query-list.v1.schema.json')).toEqual(
+    queryListContractSchemas,
   );
 });
 

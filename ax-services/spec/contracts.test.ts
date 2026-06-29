@@ -60,6 +60,10 @@ import {
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
 import {
+  queryListContractSchemas,
+  QUERY_LIST_CONTRACT_VERSION,
+} from '../src/contracts/queryList';
+import {
   reportListContractSchemas,
   REPORT_LIST_CONTRACT_VERSION,
 } from '../src/contracts/reportList';
@@ -116,6 +120,10 @@ test('dataset list contract version is explicit', () => {
 
 test('database list contract version is explicit', () => {
   expect(DATABASE_LIST_CONTRACT_VERSION).toBe('database-list.v1');
+});
+
+test('query list contract version is explicit', () => {
+  expect(QUERY_LIST_CONTRACT_VERSION).toBe('query-list.v1');
 });
 
 test('saved query list contract version is explicit', () => {
@@ -332,6 +340,19 @@ test('database list request schema is registered in database list contracts', ()
   expect(
     databaseListContractSchemas.databaseListResponseSchema.properties.databases
       .items.properties.databaseName,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('query list request schema is registered in query list contracts', () => {
+  expect(queryListContractSchemas.queryListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    queryListContractSchemas.queryListResponseSchema.properties.queries.items
+      .properties.sql,
   ).toEqual({
     type: 'string',
   });

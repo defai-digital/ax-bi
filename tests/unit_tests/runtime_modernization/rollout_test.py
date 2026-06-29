@@ -147,6 +147,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_dataset_list",
         "mcp_health_check",
         "mcp_layer_annotation_list",
+        "mcp_query_list",
         "mcp_report_list",
         "mcp_role_list",
         "mcp_saved_query_list",
@@ -316,6 +317,23 @@ def test_rollout_workflow_includes_report_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_reports.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_query_list() -> None:
+    """Rollout manifest includes query listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_query_list")
+
+    assert workflow.sidecar_route == "POST /mcp/queries/list"
+    assert workflow.contract_version == "query-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_QUERY_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_queries.shadow_mismatch"
         in workflow.python_metrics
     )
 

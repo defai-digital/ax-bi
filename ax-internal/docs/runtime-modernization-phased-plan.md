@@ -28,7 +28,7 @@ under the License.
 
 ## Status
 
-In progress. Phase 2 foundation is implemented, Phase 3 has thirteen MCP workflows
+In progress. Phase 2 foundation is implemented, Phase 3 has fourteen MCP workflows
 behind TypeScript routing flags, Phase 4 has a Rust SQL kernel proof of
 concept, and the Phase 6 boundary decision is documented. Phase 5 production
 rollout evidence remains open.
@@ -176,6 +176,9 @@ product-specific and contract-oriented.
 - MCP layer annotation listing can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_LAYER_ANNOTATION_LIST_SERVING`, with Python
   fallback.
+- MCP query history listing can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_QUERY_LIST_SERVING`, with Python fallback and
+  MCP-side SQL/error-text sanitization before sidecar results are returned.
 - MCP dashboard listing can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_DASHBOARD_LIST_SERVING`, with Python fallback.
 - MCP chart listing can shadow or serve from `ax-services` behind

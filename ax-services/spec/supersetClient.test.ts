@@ -27,6 +27,7 @@ import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
 import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
+import { QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/queryList';
 import { REPORT_LIST_CONTRACT_VERSION } from '../src/contracts/reportList';
 import { ROLE_LIST_CONTRACT_VERSION } from '../src/contracts/roleList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
@@ -1247,6 +1248,159 @@ test('listDatabases records warnings for failed Superset list responses', async 
     ],
     columnsLoaded: [],
     warnings: ['database list returned status 504 from Superset'],
+  });
+});
+
+test('listQueries maps Superset query list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 4,
+      result: [
+        {
+          id: 11,
+          sql: 'SELECT * FROM sales',
+          executed_sql: 'SELECT * FROM sales LIMIT 1000',
+          status: 'success',
+          start_time: 1700000000,
+          end_time: 1700000001,
+          rows: 10,
+          database: {
+            id: 3,
+            database_name: 'examples',
+          },
+          schema: 'public',
+          catalog: 'analytics',
+          tab_name: 'SQL Lab',
+          error_message: '',
+          client_id: 'query-client-id',
+          limit: 1000,
+          progress: 100,
+          changed_on: '2026-01-05T00:00:00',
+          user: {
+            id: 42,
+          },
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listQueries(
+    {
+      contractVersion: QUERY_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'status', opr: 'eq', value: 'success' }],
+      selectColumns: ['id', 'status', 'database_id', 'schema'],
+      search: 'sales',
+      orderColumn: 'changed_on',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 2,
+    },
+    'request-queries',
+  );
+
+  expect(result).toEqual({
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    queries: [
+      {
+        id: 11,
+        sql: 'SELECT * FROM sales',
+        executedSql: 'SELECT * FROM sales LIMIT 1000',
+        status: 'success',
+        startTime: 1700000000,
+        endTime: 1700000001,
+        rows: 10,
+        databaseId: 3,
+        schema: 'public',
+        catalog: 'analytics',
+        tabName: 'SQL Lab',
+        errorMessage: '',
+        clientId: 'query-client-id',
+        limit: 1000,
+        progress: 100,
+        changedOn: '2026-01-05T00:00:00',
+        userId: 42,
+      },
+    ],
+    count: 1,
+    totalCount: 4,
+    page: 2,
+    pageSize: 2,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'status', 'database_id', 'schema'],
+    columnsLoaded: [
+      'id',
+      'sql',
+      'executed_sql',
+      'status',
+      'start_time',
+      'end_time',
+      'rows',
+      'database_id',
+      'schema',
+      'catalog',
+      'tab_name',
+      'error_message',
+      'client_id',
+      'limit',
+      'progress',
+      'changed_on',
+      'user_id',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/query/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'sales'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-queries',
+  });
+});
+
+test('listQueries records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listQueries({
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'desc',
+    page: 1,
+    pageSize: 25,
+  });
+
+  expect(result).toEqual({
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    queries: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 25,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'status', 'start_time', 'database_id', 'schema'],
+    columnsLoaded: [],
+    warnings: ['query list returned status 504 from Superset'],
   });
 });
 

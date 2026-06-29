@@ -64,6 +64,12 @@ import {
   datasetListResponseSchema,
 } from './contracts/datasetList';
 import {
+  QueryListRequest,
+  QueryListResponse,
+  queryListRequestSchema,
+  queryListResponseSchema,
+} from './contracts/queryList';
+import {
   HealthResponseContract,
   healthResponseSchema,
   MetadataResponseContract,
@@ -115,6 +121,7 @@ import {
   SupersetDashboardListClient,
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
+  SupersetQueryListClient,
   SupersetReportListClient,
   SupersetRoleListClient,
   SupersetSavedQueryListClient,
@@ -133,6 +140,7 @@ export function buildServer(
     SupersetChartListClient &
     SupersetDatabaseListClient &
     SupersetDatasetListClient &
+    SupersetQueryListClient &
     SupersetReportListClient &
     SupersetRoleListClient &
     SupersetSavedQueryListClient &
@@ -361,6 +369,23 @@ export function buildServer(
     },
     async (request): Promise<DatasetListResponse> =>
       supersetClient.listDatasets(request.body, request.id),
+  );
+
+  server.post<{
+    Body: QueryListRequest;
+    Reply: QueryListResponse;
+  }>(
+    '/mcp/queries/list',
+    {
+      schema: {
+        body: queryListRequestSchema,
+        response: {
+          200: queryListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<QueryListResponse> =>
+      supersetClient.listQueries(request.body, request.id),
   );
 
   server.post<{

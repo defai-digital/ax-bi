@@ -1,0 +1,224 @@
+{
+  "queryListRequestSchema": {
+    "$id": "ax-services.query-list.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "filters",
+      "selectColumns",
+      "orderDirection",
+      "page",
+      "pageSize"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "query-list.v1"
+      },
+      "filters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "col",
+            "opr",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "col": {
+              "type": "string"
+            },
+            "opr": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "selectColumns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "search": {
+        "type": "string"
+      },
+      "orderColumn": {
+        "type": "string"
+      },
+      "orderDirection": {
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "page": {
+        "type": "number",
+        "minimum": 1
+      },
+      "pageSize": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100
+      }
+    }
+  },
+  "queryListResponseSchema": {
+    "$id": "ax-services.query-list.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "queries",
+      "count",
+      "totalCount",
+      "page",
+      "pageSize",
+      "totalPages",
+      "hasNext",
+      "hasPrevious",
+      "columnsRequested",
+      "columnsLoaded",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "query-list.v1"
+      },
+      "queries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "number"
+            },
+            "sql": {
+              "type": "string"
+            },
+            "executedSql": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "startTime": {
+              "type": "number"
+            },
+            "endTime": {
+              "type": "number"
+            },
+            "rows": {
+              "type": "number"
+            },
+            "databaseId": {
+              "type": "number"
+            },
+            "schema": {
+              "type": "string"
+            },
+            "catalog": {
+              "type": "string"
+            },
+            "tabName": {
+              "type": "string"
+            },
+            "errorMessage": {
+              "type": "string"
+            },
+            "clientId": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "number"
+            },
+            "progress": {
+              "type": "number"
+            },
+            "changedOn": {
+              "type": "string"
+            },
+            "userId": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "count": {
+        "type": "number"
+      },
+      "totalCount": {
+        "type": "number"
+      },
+      "page": {
+        "type": "number"
+      },
+      "pageSize": {
+        "type": "number"
+      },
+      "totalPages": {
+        "type": "number"
+      },
+      "hasNext": {
+        "type": "boolean"
+      },
+      "hasPrevious": {
+        "type": "boolean"
+      },
+      "columnsRequested": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "columnsLoaded": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

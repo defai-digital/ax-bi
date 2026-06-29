@@ -29,6 +29,7 @@ export interface ServiceConfig {
     dashboard: string;
     database: string;
     dataset: string;
+    query: string;
     report: string;
     role: string;
     savedQuery: string;
@@ -53,6 +54,7 @@ const DEFAULT_SUPERSET_CHART_LIST_PATH = '/api/v1/chart/';
 const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
 const DEFAULT_SUPERSET_DATABASE_LIST_PATH = '/api/v1/database/';
 const DEFAULT_SUPERSET_DATASET_LIST_PATH = '/api/v1/dataset/';
+const DEFAULT_SUPERSET_QUERY_LIST_PATH = '/api/v1/query/';
 const DEFAULT_SUPERSET_REPORT_LIST_PATH = '/api/v1/report/';
 const DEFAULT_SUPERSET_ROLE_LIST_PATH = '/api/v1/role/';
 const DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
@@ -131,6 +133,9 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       ),
       dataset: normalizePath(
         env.AX_SUPERSET_DATASET_LIST_PATH || DEFAULT_SUPERSET_DATASET_LIST_PATH,
+      ),
+      query: normalizePath(
+        env.AX_SUPERSET_QUERY_LIST_PATH || DEFAULT_SUPERSET_QUERY_LIST_PATH,
       ),
       report: normalizePath(
         env.AX_SUPERSET_REPORT_LIST_PATH || DEFAULT_SUPERSET_REPORT_LIST_PATH,

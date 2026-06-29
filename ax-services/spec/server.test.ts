@@ -49,6 +49,10 @@ import {
   DatasetListResponse,
 } from '../src/contracts/datasetList';
 import {
+  QUERY_LIST_CONTRACT_VERSION,
+  QueryListResponse,
+} from '../src/contracts/queryList';
+import {
   REPORT_LIST_CONTRACT_VERSION,
   ReportListResponse,
 } from '../src/contracts/reportList';
@@ -78,6 +82,7 @@ import {
   SupersetDashboardListClient,
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
+  SupersetQueryListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
   SupersetReportListClient,
@@ -114,6 +119,7 @@ function makeSupersetClient({
   onListDashboards,
   onListDatabases,
   onListDatasets,
+  onListQueries,
   onListReports,
   onListRoles,
   onListSavedQueries,
@@ -209,6 +215,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  queryList = {
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    queries: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
   savedQueryList = {
     contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
     savedQueries: [],
@@ -289,6 +309,7 @@ function makeSupersetClient({
   dashboardList?: DashboardListResponse;
   databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
+  queryList?: QueryListResponse;
   reportList?: ReportListResponse;
   roleList?: RoleListResponse;
   savedQueryList?: SavedQueryListResponse;
@@ -303,6 +324,7 @@ function makeSupersetClient({
   onListDashboards?: (correlationId?: string) => void;
   onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
+  onListQueries?: (correlationId?: string) => void;
   onListReports?: (correlationId?: string) => void;
   onListRoles?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
@@ -317,6 +339,7 @@ function makeSupersetClient({
   SupersetDashboardListClient &
   SupersetDatabaseListClient &
   SupersetDatasetListClient &
+  SupersetQueryListClient &
   SupersetReportListClient &
   SupersetRoleListClient &
   SupersetSavedQueryListClient &
@@ -358,6 +381,10 @@ function makeSupersetClient({
     async listDatasets(_request, correlationId) {
       onListDatasets?.(correlationId);
       return datasetList;
+    },
+    async listQueries(_request, correlationId) {
+      onListQueries?.(correlationId);
+      return queryList;
     },
     async listReports(_request, correlationId) {
       onListReports?.(correlationId);
@@ -1216,6 +1243,85 @@ test('saved query list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'label'],
     columnsLoaded: ['id', 'label', 'db_id', 'schema'],
+    warnings: [],
+  });
+});
+
+test('query list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      queryList: {
+        contractVersion: QUERY_LIST_CONTRACT_VERSION,
+        queries: [
+          {
+            id: 11,
+            sql: 'SELECT 1',
+            status: 'success',
+            databaseId: 3,
+            schema: 'public',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'status'],
+        columnsLoaded: ['id', 'sql', 'status', 'database_id', 'schema'],
+        warnings: [],
+      },
+      onListQueries(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/queries/list',
+    headers: {
+      'x-request-id': 'request-query-list',
+    },
+    payload: {
+      contractVersion: QUERY_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'status'],
+      search: 'select',
+      orderDirection: 'desc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-query-list');
+  expect(seenRequestIds).toEqual(['request-query-list']);
+  expect(response.json()).toEqual({
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    queries: [
+      {
+        id: 11,
+        sql: 'SELECT 1',
+        status: 'success',
+        databaseId: 3,
+        schema: 'public',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'status'],
+    columnsLoaded: ['id', 'sql', 'status', 'database_id', 'schema'],
     warnings: [],
   });
 });

@@ -1,0 +1,205 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+export const QUERY_LIST_CONTRACT_VERSION = 'query-list.v1';
+
+export type QueryFilterValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | number[]
+  | boolean[];
+
+export interface QueryListFilter {
+  col: string;
+  opr: string;
+  value: QueryFilterValue;
+}
+
+export interface QueryListRequest {
+  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
+  filters: QueryListFilter[];
+  selectColumns: string[];
+  search?: string;
+  orderColumn?: string;
+  orderDirection: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
+}
+
+export interface QueryListItem {
+  id: number;
+  sql?: string;
+  executedSql?: string;
+  status?: string;
+  startTime?: number;
+  endTime?: number;
+  rows?: number;
+  databaseId?: number;
+  schema?: string;
+  catalog?: string;
+  tabName?: string;
+  errorMessage?: string;
+  clientId?: string;
+  limit?: number;
+  progress?: number;
+  changedOn?: string;
+  userId?: number;
+}
+
+export interface QueryListResponse {
+  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
+  queries: QueryListItem[];
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+}
+
+const queryFilterSchema = {
+  type: 'object',
+  required: ['col', 'opr', 'value'],
+  additionalProperties: false,
+  properties: {
+    col: { type: 'string' },
+    opr: { type: 'string' },
+    value: {
+      anyOf: [
+        { type: 'string' },
+        { type: 'number' },
+        { type: 'boolean' },
+        { type: 'array', items: { type: 'string' } },
+        { type: 'array', items: { type: 'number' } },
+        { type: 'array', items: { type: 'boolean' } },
+      ],
+    },
+  },
+} as const;
+
+const queryListItemSchema = {
+  type: 'object',
+  required: ['id'],
+  additionalProperties: false,
+  properties: {
+    id: { type: 'number' },
+    sql: { type: 'string' },
+    executedSql: { type: 'string' },
+    status: { type: 'string' },
+    startTime: { type: 'number' },
+    endTime: { type: 'number' },
+    rows: { type: 'number' },
+    databaseId: { type: 'number' },
+    schema: { type: 'string' },
+    catalog: { type: 'string' },
+    tabName: { type: 'string' },
+    errorMessage: { type: 'string' },
+    clientId: { type: 'string' },
+    limit: { type: 'number' },
+    progress: { type: 'number' },
+    changedOn: { type: 'string' },
+    userId: { type: 'number' },
+  },
+} as const;
+
+export const queryListRequestSchema = {
+  $id: 'ax-services.query-list.v1.request',
+  type: 'object',
+  required: [
+    'contractVersion',
+    'filters',
+    'selectColumns',
+    'orderDirection',
+    'page',
+    'pageSize',
+  ],
+  additionalProperties: false,
+  properties: {
+    contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
+    filters: {
+      type: 'array',
+      items: queryFilterSchema,
+    },
+    selectColumns: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    search: { type: 'string' },
+    orderColumn: { type: 'string' },
+    orderDirection: { enum: ['asc', 'desc'] },
+    page: { type: 'number', minimum: 1 },
+    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+  },
+} as const;
+
+export const queryListResponseSchema = {
+  $id: 'ax-services.query-list.v1.response',
+  type: 'object',
+  required: [
+    'contractVersion',
+    'queries',
+    'count',
+    'totalCount',
+    'page',
+    'pageSize',
+    'totalPages',
+    'hasNext',
+    'hasPrevious',
+    'columnsRequested',
+    'columnsLoaded',
+    'warnings',
+  ],
+  additionalProperties: false,
+  properties: {
+    contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
+    queries: {
+      type: 'array',
+      items: queryListItemSchema,
+    },
+    count: { type: 'number' },
+    totalCount: { type: 'number' },
+    page: { type: 'number' },
+    pageSize: { type: 'number' },
+    totalPages: { type: 'number' },
+    hasNext: { type: 'boolean' },
+    hasPrevious: { type: 'boolean' },
+    columnsRequested: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    columnsLoaded: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    warnings: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+} as const;
+
+export const queryListContractSchemas = {
+  queryListRequestSchema,
+  queryListResponseSchema,
+} as const;

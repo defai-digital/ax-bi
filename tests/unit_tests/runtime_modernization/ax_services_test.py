@@ -434,6 +434,45 @@ def test_list_annotations_posts_to_ax_services_annotation_list_endpoint() -> Non
     )
 
 
+def test_list_queries_posts_to_ax_services_query_list_endpoint() -> None:
+    """Query list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"queries": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_queries(
+        {
+            "contractVersion": "query-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "status"],
+            "orderDirection": "desc",
+            "page": 1,
+            "pageSize": 25,
+        },
+        request_id="request-queries",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"queries": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/queries/list",
+        json={
+            "contractVersion": "query-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "status"],
+            "orderDirection": "desc",
+            "page": 1,
+            "pageSize": 25,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-queries",
+        },
+        timeout=2.0,
+    )
+
+
 def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> None:
     """Saved query list requests use the sidecar TypeScript list endpoint."""
 
