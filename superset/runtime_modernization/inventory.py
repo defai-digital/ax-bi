@@ -140,6 +140,23 @@ RUNTIME_INVENTORY: tuple[RuntimeInventoryItem, ...] = (
         ),
     ),
     RuntimeInventoryItem(
+        area="mcp_user_directory_tools",
+        module_patterns=("superset/mcp_service/user",),
+        current_runtime=Runtime.PYTHON,
+        target_runtime=Runtime.PYTHON,
+        disposition=MigrationDisposition.DEFER,
+        rationale=(
+            "User-directory MCP tools expose sensitive identity metadata and do "
+            "not have a general Superset REST list API for ax-services to "
+            "delegate to as the authorization and data-shape authority."
+        ),
+        required_evidence=(
+            "general Superset user-list API design",
+            "sensitive field redaction parity tests",
+            "authorization compatibility review",
+        ),
+    ),
+    RuntimeInventoryItem(
         area="sql_parsing_normalization",
         module_patterns=("superset/sql",),
         current_runtime=Runtime.PYTHON,

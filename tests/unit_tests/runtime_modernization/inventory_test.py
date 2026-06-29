@@ -55,6 +55,18 @@ def test_runtime_inventory_identifies_typescript_candidates() -> None:
     assert candidates["asset_search_indexing"].target_runtime == Runtime.TYPESCRIPT
 
 
+def test_runtime_inventory_defers_user_directory_tools() -> None:
+    """User-directory MCP tools stay Python until a source API exists."""
+
+    item = get_inventory_item("mcp_user_directory_tools")
+
+    assert item.module_patterns == ("superset/mcp_service/user",)
+    assert item.target_runtime == Runtime.PYTHON
+    assert item.disposition == MigrationDisposition.DEFER
+    assert "general Superset user-list API design" in item.required_evidence
+    assert "authorization compatibility review" in item.required_evidence
+
+
 def test_runtime_inventory_identifies_rust_candidates() -> None:
     """CPU-oriented kernels are Rust candidates only with required evidence."""
 

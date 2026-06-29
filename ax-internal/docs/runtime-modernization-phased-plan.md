@@ -31,7 +31,9 @@ under the License.
 In progress. Phase 2 foundation is implemented, Phase 3 has fifteen MCP workflows
 behind TypeScript routing flags, Phase 4 has a Rust SQL kernel proof of
 concept, and the Phase 6 boundary decision is documented. Phase 5 production
-rollout evidence remains open.
+rollout evidence remains open. User-directory MCP tools remain explicitly
+deferred until a general Superset user-list API and redaction parity evidence
+exist.
 
 ## Planning Assumptions
 
@@ -68,6 +70,13 @@ rollout evidence remains open.
 - At least three real bottlenecks are measured.
 - First TypeScript and Rust experiments have written success criteria.
 - No migration work begins without a rollback plan.
+
+### Current Evidence
+
+- Runtime inventory classifies broad MCP and GenAI orchestration as TypeScript
+  candidates, SQL parsing and chart validation kernels as Rust candidates, and
+  core security, metadata, and user-directory MCP tools as Python-owned or
+  deferred where Superset API boundaries are not ready for sidecar delegation.
 
 ## Phase 1: Stabilize Python Boundaries
 
