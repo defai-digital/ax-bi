@@ -147,6 +147,37 @@ test('checkPermission fails closed when Superset cannot be reached', async () =>
   });
 });
 
+test('checkPermission fails closed for non-success Superset responses', async () => {
+  global.fetch = async () =>
+    Response.json(
+      {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: true,
+        reason: 'misleading upstream body',
+      },
+      { status: 500 },
+    );
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    statusCode: 500,
+  });
+});
+
 test('probeMetadata returns sanitized Superset metadata summary', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
@@ -184,6 +215,27 @@ test('probeMetadata returns sanitized Superset metadata summary', async () => {
   expect(seenInit?.headers).toEqual({
     authorization: 'Bearer token-123',
     'x-request-id': 'request-abc',
+  });
+});
+
+test('probeMetadata reports non-success Superset responses without parsing body', async () => {
+  global.fetch = async () =>
+    new Response('<h1>service unavailable</h1>', {
+      status: 503,
+      headers: {
+        'content-type': 'text/html',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.probeMetadata();
+
+  expect(result).toEqual({
+    ok: false,
+    statusCode: 503,
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    keyCount: 0,
+    keys: [],
   });
 });
 
@@ -292,6 +344,31 @@ test('searchAssets queries Superset list APIs and ranks normalized results', asy
   expect(seenInits[0].headers).toEqual({
     authorization: 'Bearer token-123',
     'x-request-id': 'request-search',
+  });
+});
+
+test('searchAssets records status warnings for non-json error responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['dashboard search returned status 504 from Superset'],
   });
 });
 

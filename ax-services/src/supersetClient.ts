@@ -121,6 +121,17 @@ export class SupersetClient
         headers: this.buildHeaders(correlationId),
         signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
       });
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          statusCode: response.status,
+          url: this.metadataUrl,
+          keyCount: 0,
+          keys: [],
+        };
+      }
+
       const payload = (await response.json()) as unknown;
       const keys = extractObjectKeys(payload);
 
@@ -185,6 +196,15 @@ export class SupersetClient
         body: JSON.stringify(request),
         signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
       });
+
+      if (!response.ok) {
+        return {
+          contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+          allowed: false,
+          statusCode: response.status,
+        };
+      }
+
       const payload = (await response.json()) as Partial<PermissionCheckResult>;
 
       return {
@@ -214,7 +234,6 @@ export class SupersetClient
         headers: this.buildHeaders(correlationId),
         signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
       });
-      const payload = (await response.json()) as unknown;
 
       if (!response.ok) {
         return {
@@ -224,6 +243,8 @@ export class SupersetClient
           ],
         };
       }
+
+      const payload = (await response.json()) as unknown;
 
       return {
         assets: extractSupersetResults(payload)
