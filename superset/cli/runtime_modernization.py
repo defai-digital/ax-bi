@@ -31,7 +31,9 @@ from superset.runtime_modernization.ax_services import (
 )
 from superset.runtime_modernization.benchmarks import (
     benchmark_sql_parsing_normalization,
+    benchmark_sql_whitespace_kernel,
     RuntimeBenchmarkResult,
+    RuntimeKernelBenchmarkResult,
 )
 from superset.runtime_modernization.inventory import (
     get_runtime_inventory,
@@ -116,6 +118,26 @@ def _benchmark_result_to_dict(result: RuntimeBenchmarkResult) -> dict[str, Any]:
     }
 
 
+def _kernel_benchmark_result_to_dict(
+    result: RuntimeKernelBenchmarkResult,
+) -> dict[str, Any]:
+    """Serialize a runtime kernel benchmark result for CLI output."""
+
+    return {
+        "area": result.area,
+        "operation": result.operation,
+        "iterations": result.iterations,
+        "python_duration_ms": result.python_duration_ms,
+        "python_operations_per_second": result.python_operations_per_second,
+        "rust_available": result.rust_available,
+        "rust_duration_ms": result.rust_duration_ms,
+        "rust_operations_per_second": result.rust_operations_per_second,
+        "speedup": result.speedup,
+        "output_matched": result.output_matched,
+        "output_bytes": result.output_bytes,
+    }
+
+
 @runtime_modernization.command()
 @click.option(
     "--format",
@@ -153,7 +175,7 @@ def inventory(output_format: str, disposition: str | None) -> None:
 @runtime_modernization.command("benchmark")
 @click.option(
     "--candidate",
-    type=click.Choice(("sql_parsing_normalization",)),
+    type=click.Choice(("sql_parsing_normalization", "sql_whitespace_kernel")),
     default="sql_parsing_normalization",
     show_default=True,
     help="Runtime modernization candidate to benchmark.",
@@ -176,21 +198,59 @@ def inventory(output_format: str, disposition: str | None) -> None:
 def benchmark(candidate: str, iterations: int, output_format: str) -> None:
     """Run a local runtime modernization benchmark."""
 
-    if candidate != "sql_parsing_normalization":
-        raise click.ClickException(f"Unsupported benchmark candidate: {candidate}")
+    if candidate == "sql_parsing_normalization":
+        result = benchmark_sql_parsing_normalization(iterations=iterations)
 
-    result = benchmark_sql_parsing_normalization(iterations=iterations)
+        if output_format == "json":
+            click.echo(
+                json.dumps(_benchmark_result_to_dict(result), sort_keys=True, indent=2)
+            )
+            return
 
-    if output_format == "json":
         click.echo(
-            json.dumps(_benchmark_result_to_dict(result), sort_keys=True, indent=2)
+            f"{result.area} {result.operation}: "
+            f"{result.iterations} iterations in {result.duration_ms:.2f} ms "
+            f"({result.operations_per_second:.2f} ops/s)"
         )
         return
 
+    if candidate != "sql_whitespace_kernel":
+        raise click.ClickException(f"Unsupported benchmark candidate: {candidate}")
+
+    kernel_result = benchmark_sql_whitespace_kernel(iterations=iterations)
+
+    if output_format == "json":
+        click.echo(
+            json.dumps(
+                _kernel_benchmark_result_to_dict(kernel_result),
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return
+
+    rust_summary = "rust unavailable"
+    if kernel_result.rust_available:
+        rust_duration_ms = kernel_result.rust_duration_ms or 0
+        rust_operations_per_second = kernel_result.rust_operations_per_second or 0
+        speedup = (
+            f"{kernel_result.speedup:.2f}x"
+            if kernel_result.speedup is not None
+            else "n/a"
+        )
+        rust_summary = (
+            f"rust {rust_duration_ms:.2f} ms "
+            f"({rust_operations_per_second:.2f} ops/s), "
+            f"speedup {speedup}, "
+            f"matched={kernel_result.output_matched}"
+        )
+
     click.echo(
-        f"{result.area} {result.operation}: "
-        f"{result.iterations} iterations in {result.duration_ms:.2f} ms "
-        f"({result.operations_per_second:.2f} ops/s)"
+        f"{kernel_result.area} {kernel_result.operation}: "
+        f"{kernel_result.iterations} iterations, "
+        f"python {kernel_result.python_duration_ms:.2f} ms "
+        f"({kernel_result.python_operations_per_second:.2f} ops/s), "
+        f"{rust_summary}"
     )
 
 

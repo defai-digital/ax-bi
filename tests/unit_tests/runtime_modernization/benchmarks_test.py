@@ -20,6 +20,7 @@ import pytest
 
 from superset.runtime_modernization.benchmarks import (
     benchmark_sql_parsing_normalization,
+    benchmark_sql_whitespace_kernel,
 )
 
 
@@ -45,3 +46,35 @@ def test_benchmark_sql_parsing_normalization_rejects_invalid_iterations() -> Non
 
     with pytest.raises(ValueError, match="iterations must be positive"):
         benchmark_sql_parsing_normalization(iterations=0)
+
+
+def test_benchmark_sql_whitespace_kernel_reports_python_baseline(
+    monkeypatch,
+) -> None:
+    """Rust kernel benchmark reports the Python baseline without requiring Rust."""
+
+    monkeypatch.setattr(
+        "superset.runtime_modernization.benchmarks.rust_sql_kernel_available",
+        lambda: False,
+    )
+
+    result = benchmark_sql_whitespace_kernel(iterations=1)
+
+    assert result.area == "sql_whitespace_kernel"
+    assert result.operation == "normalize_whitespace"
+    assert result.iterations == 1
+    assert result.python_duration_ms >= 0
+    assert result.python_operations_per_second >= 0
+    assert result.rust_available is False
+    assert result.rust_duration_ms is None
+    assert result.rust_operations_per_second is None
+    assert result.speedup is None
+    assert result.output_matched is None
+    assert result.output_bytes > 0
+
+
+def test_benchmark_sql_whitespace_kernel_rejects_invalid_iterations() -> None:
+    """Rust kernel benchmark iterations must be positive."""
+
+    with pytest.raises(ValueError, match="iterations must be positive"):
+        benchmark_sql_whitespace_kernel(iterations=0)

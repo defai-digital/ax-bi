@@ -21,6 +21,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from timeit import default_timer
 
+from superset.runtime_modernization.rust_sql import (
+    normalize_sql_whitespace,
+    rust_sql_kernel_available,
+)
 from superset.sql.parse import SQLScript
 
 SQL_PARSING_NORMALIZATION_SAMPLE = """
@@ -53,6 +57,23 @@ class RuntimeBenchmarkResult:
     formatted_bytes: int
     table_check_matched: bool
     has_mutation: bool
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeKernelBenchmarkResult:
+    """Result from a runtime modernization kernel benchmark run."""
+
+    area: str
+    operation: str
+    iterations: int
+    python_duration_ms: float
+    python_operations_per_second: float
+    rust_available: bool
+    rust_duration_ms: float | None
+    rust_operations_per_second: float | None
+    speedup: float | None
+    output_matched: bool | None
+    output_bytes: int
 
 
 def benchmark_sql_parsing_normalization(
@@ -95,4 +116,59 @@ def benchmark_sql_parsing_normalization(
         formatted_bytes=formatted_bytes,
         table_check_matched=table_check_matched,
         has_mutation=has_mutation,
+    )
+
+
+def benchmark_sql_whitespace_kernel(
+    *,
+    iterations: int = 50,
+    sql: str = SQL_PARSING_NORMALIZATION_SAMPLE,
+) -> RuntimeKernelBenchmarkResult:
+    """Benchmark Python and optional Rust SQL whitespace normalization kernels."""
+
+    if iterations <= 0:
+        raise ValueError("iterations must be positive")
+
+    python_output = ""
+    start = default_timer()
+    for _ in range(iterations):
+        python_output = normalize_sql_whitespace(sql, use_rust=False)
+    python_duration_ms = (default_timer() - start) * 1000
+
+    rust_available = rust_sql_kernel_available()
+    rust_duration_ms = None
+    rust_operations_per_second = None
+    speedup = None
+    output_matched = None
+
+    if rust_available:
+        rust_output = ""
+        start = default_timer()
+        for _ in range(iterations):
+            rust_output = normalize_sql_whitespace(sql, use_rust=True)
+        rust_duration_ms = (default_timer() - start) * 1000
+        rust_operations_per_second = (
+            iterations / (rust_duration_ms / 1000) if rust_duration_ms > 0 else 0
+        )
+        output_matched = rust_output == python_output
+        speedup = (
+            python_duration_ms / rust_duration_ms
+            if rust_duration_ms and rust_duration_ms > 0
+            else None
+        )
+
+    return RuntimeKernelBenchmarkResult(
+        area="sql_whitespace_kernel",
+        operation="normalize_whitespace",
+        iterations=iterations,
+        python_duration_ms=python_duration_ms,
+        python_operations_per_second=iterations / (python_duration_ms / 1000)
+        if python_duration_ms > 0
+        else 0,
+        rust_available=rust_available,
+        rust_duration_ms=rust_duration_ms,
+        rust_operations_per_second=rust_operations_per_second,
+        speedup=speedup,
+        output_matched=output_matched,
+        output_bytes=len(python_output.encode("utf-8")),
     )

@@ -20,7 +20,10 @@ from pytest_mock import MockerFixture
 
 from superset.cli.runtime_modernization import runtime_modernization
 from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.runtime_modernization.benchmarks import RuntimeBenchmarkResult
+from superset.runtime_modernization.benchmarks import (
+    RuntimeBenchmarkResult,
+    RuntimeKernelBenchmarkResult,
+)
 from superset.utils import json
 
 
@@ -95,6 +98,58 @@ def test_runtime_modernization_benchmark_outputs_json(
         "table_check_matched": True,
     }
     benchmark.assert_called_once_with(iterations=3)
+
+
+def test_runtime_modernization_kernel_benchmark_outputs_json(
+    mocker: MockerFixture,
+) -> None:
+    """Kernel benchmark command emits stable JSON for automation."""
+
+    benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+    )
+    benchmark.return_value = RuntimeKernelBenchmarkResult(
+        area="sql_whitespace_kernel",
+        operation="normalize_whitespace",
+        iterations=5,
+        python_duration_ms=10.0,
+        python_operations_per_second=500.0,
+        rust_available=True,
+        rust_duration_ms=2.5,
+        rust_operations_per_second=2000.0,
+        speedup=4.0,
+        output_matched=True,
+        output_bytes=64,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "benchmark",
+            "--candidate",
+            "sql_whitespace_kernel",
+            "--iterations",
+            "5",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "area": "sql_whitespace_kernel",
+        "iterations": 5,
+        "operation": "normalize_whitespace",
+        "output_bytes": 64,
+        "output_matched": True,
+        "python_duration_ms": 10.0,
+        "python_operations_per_second": 500.0,
+        "rust_available": True,
+        "rust_duration_ms": 2.5,
+        "rust_operations_per_second": 2000.0,
+        "speedup": 4.0,
+    }
+    benchmark.assert_called_once_with(iterations=5)
 
 
 def test_runtime_modernization_ax_services_ready_outputs_text(
