@@ -20,6 +20,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
+    build_production_flag_state,
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
@@ -272,6 +273,39 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "boundary_decision": "",
         "rollout_scope": "",
         "approval_reference": "",
+    }
+
+
+def test_build_production_flag_state_reads_workflow_serving_flags() -> None:
+    """Production flag-state evidence includes selected workflow serving flags."""
+
+    enabled_flags = {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"}
+
+    flag_state = build_production_flag_state(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        lambda flag: flag in enabled_flags,
+    )
+
+    assert flag_state == {
+        "workflows": [
+            {
+                "name": "mcp_asset_search",
+                "serving_flags": {
+                    "TS_MCP_ORCHESTRATION": True,
+                    "TS_ASSET_SEARCH_SERVING": True,
+                },
+            },
+            {
+                "name": "mcp_dashboard_list",
+                "serving_flags": {
+                    "TS_MCP_ORCHESTRATION": True,
+                    "TS_DASHBOARD_LIST_SERVING": False,
+                },
+            },
+        ],
     }
 
 

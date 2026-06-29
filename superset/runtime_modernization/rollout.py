@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -392,6 +392,25 @@ def build_production_evidence_template(
                 "approval_reference": "",
             },
         },
+    }
+
+
+def build_production_flag_state(
+    workflows: tuple[RolloutWorkflow, ...],
+    flag_enabled: Callable[[str], bool],
+) -> dict[str, Any]:
+    """Build production flag-state evidence for selected workflows."""
+
+    return {
+        "workflows": [
+            {
+                "name": workflow.name,
+                "serving_flags": {
+                    flag: flag_enabled(flag) for flag in workflow.serving_flags
+                },
+            }
+            for workflow in workflows
+        ],
     }
 
 

@@ -278,6 +278,8 @@ product-specific and contract-oriented.
 - `superset runtime-modernization production-evidence-template` emits a
   fillable JSON bundle with the workflow-specific serving flags and dashboard
   gates operators must complete.
+- `superset runtime-modernization production-flag-state` emits the live
+  deployment serving-flag state in the evidence bundle format.
 - `superset runtime-modernization assemble-production-evidence` combines CI
   artifacts and operator-provided flag, dashboard, and approval JSON into the
   evidence bundle shape.

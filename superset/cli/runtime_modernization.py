@@ -24,6 +24,7 @@ import click
 from flask import current_app
 from flask.cli import with_appcontext
 
+from superset import is_feature_enabled
 from superset.runtime_modernization.ax_services import (
     AxServicesClient,
     AxServicesConfig,
@@ -44,6 +45,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
+    build_production_flag_state,
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
@@ -225,6 +227,20 @@ def _format_production_evidence_template(template: dict[str, Any]) -> str:
             "artifacts: " + ", ".join(sorted(artifacts)),
         ]
     )
+
+
+def _format_production_flag_state(flag_state: dict[str, Any]) -> str:
+    """Render a compact production flag-state report."""
+
+    lines = ["runtime modernization production flag state"]
+    for workflow in flag_state["workflows"]:
+        flags = workflow["serving_flags"]
+        enabled = [name for name, value in flags.items() if value]
+        disabled = [name for name, value in flags.items() if not value]
+        lines.append(f"  {workflow['name']}")
+        lines.append(f"    enabled: {', '.join(enabled) if enabled else 'none'}")
+        lines.append(f"    disabled: {', '.join(disabled) if disabled else 'none'}")
+    return "\n".join(lines)
 
 
 def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
@@ -454,6 +470,45 @@ def production_evidence_template(
         return
 
     click.echo(_format_production_evidence_template(template))
+
+
+@runtime_modernization.command("production-flag-state")
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to include. Can be supplied more than once.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+@with_appcontext
+def production_flag_state(
+    workflow: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Print runtime modernization serving flag state for this deployment."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    flag_state = build_production_flag_state(workflows, is_feature_enabled)
+
+    if output_format == "json":
+        click.echo(json.dumps(flag_state, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_production_flag_state(flag_state))
 
 
 @runtime_modernization.command("assemble-production-evidence")

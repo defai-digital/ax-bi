@@ -234,6 +234,81 @@ def test_runtime_modernization_production_evidence_template_outputs_text() -> No
     assert "operator_approval" in result.output
 
 
+def test_runtime_modernization_production_flag_state_outputs_json(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """Production flag-state command emits selected workflow serving flags."""
+
+    mocker.patch(
+        "superset.cli.runtime_modernization.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "production-flag-state",
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "workflows": [
+            {
+                "name": "mcp_asset_search",
+                "serving_flags": {
+                    "TS_ASSET_SEARCH_SERVING": True,
+                    "TS_MCP_ORCHESTRATION": True,
+                },
+            },
+            {
+                "name": "mcp_dashboard_list",
+                "serving_flags": {
+                    "TS_DASHBOARD_LIST_SERVING": False,
+                    "TS_MCP_ORCHESTRATION": True,
+                },
+            },
+        ],
+    }
+
+
+def test_runtime_modernization_production_flag_state_outputs_text(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """Production flag-state command has a compact text mode."""
+
+    mocker.patch(
+        "superset.cli.runtime_modernization.is_feature_enabled",
+        return_value=False,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "production-flag-state",
+            "--workflow",
+            "mcp_database_list",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization production flag state" in result.output
+    assert "mcp_database_list" in result.output
+    assert "enabled: none" in result.output
+    assert "TS_DATABASE_LIST_SERVING" in result.output
+
+
 def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     tmp_path,
 ) -> None:
