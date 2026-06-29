@@ -695,6 +695,24 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enable embedded dashboard AI assistant flows
     # @lifecycle: development
     "GENAI_EMBEDDED_ASSISTANT": False,
+    # Parent flag for runtime modernization experiments.
+    # @lifecycle: development
+    "RUNTIME_MODERNIZATION": False,
+    # Route selected MCP workflows through a TypeScript orchestration service.
+    # @lifecycle: development
+    "TS_MCP_ORCHESTRATION": False,
+    # Enable a TypeScript-derived metadata index for AX-BI search workflows.
+    # @lifecycle: development
+    "TS_METADATA_INDEX": False,
+    # Enable Rust-backed SQL parsing or normalization kernels.
+    # @lifecycle: development
+    "RUST_SQL_KERNEL": False,
+    # Enable Rust-backed chart validation kernels.
+    # @lifecycle: development
+    "RUST_CHART_VALIDATION_KERNEL": False,
+    # Run candidate runtime paths beside authoritative Python paths.
+    # @lifecycle: development
+    "RUNTIME_SHADOW_EXECUTION": False,
     # Simplify navigation by relocating power-user destinations (e.g. SQL Lab)
     # out of the primary nav bar into an "Advanced" group. Presentation-only;
     # does not change routes or permissions. See ax-docs/ux-simplification-*.

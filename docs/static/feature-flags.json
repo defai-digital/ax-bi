@@ -112,6 +112,30 @@
         "description": "Expand nested types in Presto into extra columns/arrays. Experimental, doesn't work with all nested types."
       },
       {
+        "name": "RUNTIME_MODERNIZATION",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Parent flag for runtime modernization experiments."
+      },
+      {
+        "name": "RUNTIME_SHADOW_EXECUTION",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Run candidate runtime paths beside authoritative Python paths."
+      },
+      {
+        "name": "RUST_CHART_VALIDATION_KERNEL",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable Rust-backed chart validation kernels."
+      },
+      {
+        "name": "RUST_SQL_KERNEL",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable Rust-backed SQL parsing or normalization kernels."
+      },
+      {
         "name": "SEMANTIC_LAYERS",
         "default": false,
         "lifecycle": "development",
@@ -134,6 +158,18 @@
         "default": false,
         "lifecycle": "development",
         "description": "Enables the tagging system for organizing assets"
+      },
+      {
+        "name": "TS_MCP_ORCHESTRATION",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Route selected MCP workflows through a TypeScript orchestration service."
+      },
+      {
+        "name": "TS_METADATA_INDEX",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable a TypeScript-derived metadata index for AX-BI search workflows."
       }
     ],
     "testing": [
