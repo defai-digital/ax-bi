@@ -134,6 +134,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
 
   canOverwriteSlice(): boolean {
     return (
+      Boolean(this.props.slice?.slice_id) &&
       (this.props.can_overwrite ||
         isUserAdmin(this.props.user) ||
         this.props.slice?.owners?.includes(this.props.user.userId)) &&
