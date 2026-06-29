@@ -367,7 +367,8 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         ),
         validation=(
             "schema_version is 1, kernel is named, iterations are positive, "
-            "status is passed, and output_matched is true"
+            "status is passed, output_matched is true, and measured Python and "
+            "Rust duration and throughput are present"
         ),
     ),
     RolloutEvidenceRequirement(
@@ -873,6 +874,12 @@ def _positive_integer(value: Any) -> bool:
     return isinstance(value, int) and value > 0
 
 
+def _positive_number(value: Any) -> bool:
+    """Return whether a value is a positive int or float."""
+
+    return isinstance(value, int | float) and value > 0
+
+
 def _rust_benchmark_passed(artifact: Mapping[str, Any] | None) -> bool:
     """Return whether Rust benchmark evidence satisfies Phase 4 and 5."""
 
@@ -883,6 +890,11 @@ def _rust_benchmark_passed(artifact: Mapping[str, Any] | None) -> bool:
         and _positive_integer(artifact.get("iterations"))
         and artifact.get("status") == "passed"
         and artifact.get("output_matched") is True
+        and _positive_number(artifact.get("python_duration_ms"))
+        and _positive_number(artifact.get("python_operations_per_second"))
+        and _positive_number(artifact.get("rust_duration_ms"))
+        and _positive_number(artifact.get("rust_operations_per_second"))
+        and _positive_integer(artifact.get("output_bytes"))
         and _target_checks_passed(artifact)
     )
 

@@ -93,7 +93,13 @@ def _rust_kernel_benchmark() -> dict[str, object]:
         "status": "passed",
         "kernel": "sql_whitespace_kernel",
         "iterations": 3,
+        "python_duration_ms": 6.0,
+        "python_operations_per_second": 500.0,
+        "rust_duration_ms": 2.0,
+        "rust_operations_per_second": 1500.0,
+        "speedup": 3.0,
         "output_matched": True,
+        "output_bytes": 128,
         "target_checks": {
             "speedup_met": None,
         },
@@ -1877,11 +1883,7 @@ def test_validate_production_evidence_rejects_malformed_target_checks() -> None:
                     },
                 },
                 "rust_kernel_benchmark": {
-                    "schema_version": 1,
-                    "status": "passed",
-                    "kernel": "sql_whitespace_kernel",
-                    "iterations": 3,
-                    "output_matched": True,
+                    **_rust_kernel_benchmark(),
                     "target_checks": {
                         "speedup_met": 0,
                     },
@@ -1930,6 +1932,28 @@ def test_validate_production_evidence_requires_rust_benchmark_identity() -> None
                     "status": "passed",
                     "output_matched": True,
                 },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["rust_kernel_benchmark"]["passed"] is False
+    assert "malformed" in checks["rust_kernel_benchmark"]["message"]
+
+
+def test_validate_production_evidence_requires_rust_benchmark_measurements() -> None:
+    """Rust benchmark evidence must include measured duration and throughput."""
+
+    benchmark = _rust_kernel_benchmark()
+    benchmark.pop("rust_operations_per_second")
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "rust_kernel_benchmark": benchmark,
             },
         },
     )

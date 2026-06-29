@@ -55,6 +55,27 @@ def _compatibility_report() -> dict[str, object]:
     }
 
 
+def _rust_kernel_benchmark() -> dict[str, object]:
+    """Build passing Rust kernel benchmark evidence for CLI tests."""
+
+    return {
+        "schema_version": 1,
+        "status": "passed",
+        "kernel": "sql_whitespace_kernel",
+        "iterations": 3,
+        "python_duration_ms": 6.0,
+        "python_operations_per_second": 500.0,
+        "rust_duration_ms": 2.0,
+        "rust_operations_per_second": 1500.0,
+        "speedup": 3.0,
+        "output_matched": True,
+        "output_bytes": 128,
+        "target_checks": {
+            "speedup_met": None,
+        },
+    }
+
+
 def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
     """Write a complete production evidence bundle for CLI tests."""
 
@@ -65,16 +86,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                 "schema_version": 1,
                 "artifacts": {
                     "compatibility_report": _compatibility_report(),
-                    "rust_kernel_benchmark": {
-                        "schema_version": 1,
-                        "status": "passed",
-                        "kernel": "sql_whitespace_kernel",
-                        "iterations": 3,
-                        "output_matched": True,
-                        "target_checks": {
-                            "speedup_met": None,
-                        },
-                    },
+                    "rust_kernel_benchmark": _rust_kernel_benchmark(),
                     "rust_kernel_rollout_decision": {
                         "kernel": "ax_sql.normalize_sql_whitespace",
                         "decision": "rejected",
@@ -1109,18 +1121,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
         encoding="utf-8",
     )
     rust_benchmark.write_text(
-        json.dumps(
-            {
-                "schema_version": 1,
-                "status": "passed",
-                "kernel": "sql_whitespace_kernel",
-                "iterations": 3,
-                "output_matched": True,
-                "target_checks": {
-                    "speedup_met": None,
-                },
-            }
-        ),
+        json.dumps(_rust_kernel_benchmark()),
         encoding="utf-8",
     )
     rust_decision.write_text(
@@ -1401,16 +1402,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                 "schema_version": 1,
                 "artifacts": {
                     "compatibility_report": _compatibility_report(),
-                    "rust_kernel_benchmark": {
-                        "schema_version": 1,
-                        "status": "passed",
-                        "kernel": "sql_whitespace_kernel",
-                        "iterations": 3,
-                        "output_matched": True,
-                        "target_checks": {
-                            "speedup_met": None,
-                        },
-                    },
+                    "rust_kernel_benchmark": _rust_kernel_benchmark(),
                     "rust_kernel_rollout_decision": {
                         "kernel": "ax_sql.normalize_sql_whitespace",
                         "decision": "served",
@@ -1609,11 +1601,7 @@ def test_validate_production_evidence_rejects_malformed_target_checks(
                         },
                     },
                     "rust_kernel_benchmark": {
-                        "schema_version": 1,
-                        "status": "passed",
-                        "kernel": "sql_whitespace_kernel",
-                        "iterations": 3,
-                        "output_matched": True,
+                        **_rust_kernel_benchmark(),
                         "target_checks": {
                             "speedup_met": 0,
                         },

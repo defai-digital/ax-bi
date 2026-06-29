@@ -336,11 +336,12 @@ product-specific and contract-oriented.
   schema-versioned evidence bundle against those required artifacts, rejects
   empty or duplicate selected workflow scopes, scopes dashboard gates to
   workflows serving production traffic, requires compatibility reports to
-  include inventory and benchmark details, separates the Phase 3 first-workflow
-  serving gate from the Phase 5 two-workflow selective rollout gate, reports the
-  enabled, approved, dashboard-required, and failing evidence check names, and
-  can fail release gates when evidence is missing, failing, or approval does not
-  exactly match the enabled production workflow scope.
+  include inventory and benchmark details, requires Rust benchmark artifacts to
+  include measured Python/Rust duration and throughput, separates the Phase 3
+  first-workflow serving gate from the Phase 5 two-workflow selective rollout
+  gate, reports the enabled, approved, dashboard-required, and failing evidence
+  check names, and can fail release gates when evidence is missing, failing, or
+  approval does not exactly match the enabled production workflow scope.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
   Phase 0-6 completion checks, keeps Phase 6 dependent on the Phase 5 selective
   rollout evidence, reports incomplete phase names, can assert an expected

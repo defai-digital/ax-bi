@@ -222,6 +222,7 @@ For each Rust kernel:
 2. Add compatibility tests against the Python behavior.
 3. Keep Python fallback available.
 4. Gate runtime use behind a feature flag.
-5. Upload benchmark evidence from CI with `schema_version`, kernel name, and
-   positive iteration count.
+5. Upload benchmark evidence from CI with `schema_version`, kernel name,
+   positive iteration count, output compatibility, and measured Python/Rust
+   duration and throughput.
 6. Record a Rust rollout decision before treating Phase 5 as complete.
