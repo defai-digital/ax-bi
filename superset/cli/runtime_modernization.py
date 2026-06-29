@@ -21,7 +21,14 @@ from __future__ import annotations
 from typing import Any
 
 import click
+from flask import current_app
+from flask.cli import with_appcontext
 
+from superset.runtime_modernization.ax_services import (
+    AxServicesClient,
+    AxServicesConfig,
+    AxServicesResponse,
+)
 from superset.runtime_modernization.inventory import (
     get_runtime_inventory,
     MigrationDisposition,
@@ -77,6 +84,17 @@ def _format_table(items: tuple[RuntimeInventoryItem, ...]) -> str:
     return "\n".join(lines)
 
 
+def _response_to_dict(response: AxServicesResponse) -> dict[str, Any]:
+    """Serialize an ax-services response for CLI output."""
+
+    return {
+        "ok": response.ok,
+        "status_code": response.status_code,
+        "payload": response.payload,
+        "error": response.error,
+    }
+
+
 @runtime_modernization.command()
 @click.option(
     "--format",
@@ -109,3 +127,43 @@ def inventory(output_format: str, disposition: str | None) -> None:
         return
 
     click.echo(_format_table(items))
+
+
+@runtime_modernization.command("ax-services")
+@click.option(
+    "--check",
+    type=click.Choice(("health", "ready")),
+    default="ready",
+    show_default=True,
+    help="Sidecar endpoint to check.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+@click.option("--request-id", help="Optional request ID to forward.")
+@with_appcontext
+def ax_services(check: str, output_format: str, request_id: str | None) -> None:
+    """Check AX services sidecar health or readiness."""
+
+    client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
+    response = (
+        client.health(request_id=request_id)
+        if check == "health"
+        else client.ready(request_id=request_id)
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(_response_to_dict(response), sort_keys=True, indent=2))
+    elif response.ok:
+        click.echo(f"ax-services {check}: ok")
+    else:
+        message = response.error or response.payload or "not ready"
+        click.echo(f"ax-services {check}: failed ({message})", err=True)
+
+    if not response.ok:
+        raise click.ClickException(f"ax-services {check} check failed")
