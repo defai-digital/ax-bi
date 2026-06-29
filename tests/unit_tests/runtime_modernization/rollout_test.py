@@ -585,6 +585,25 @@ def test_build_operator_dashboard_snapshot_allows_gate_overrides() -> None:
     assert gates["error_rate"]["passed"] is True
 
 
+def test_build_operator_dashboard_snapshot_allows_workflow_gate_overrides() -> None:
+    """Operator dashboard evidence can mark gates per workflow."""
+
+    snapshot = build_operator_dashboard_snapshot(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        snapshot_reference="observability/dashboard/snapshot-123",
+        gates_passed=True,
+        workflow_gate_statuses={"mcp_dashboard_list": {"latency_p95": False}},
+    )
+
+    workflows = snapshot["workflows"]
+
+    assert workflows["mcp_asset_search"]["gates"]["latency_p95"]["passed"] is True
+    assert workflows["mcp_dashboard_list"]["gates"]["latency_p95"]["passed"] is False
+
+
 def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:
     """Production evidence bundle preserves collected artifact payloads."""
 

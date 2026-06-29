@@ -541,6 +541,33 @@ def test_runtime_modernization_operator_dashboard_snapshot_accepts_gate_override
     assert gates["error_rate"]["passed"] is True
 
 
+def test_operator_dashboard_snapshot_accepts_workflow_gate_overrides() -> None:
+    """Operator dashboard snapshot can record per-workflow gate status."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--snapshot-reference",
+            "observability/dashboard/snapshot-123",
+            "--gates-passed",
+            "--failed-workflow-gate",
+            "mcp_dashboard_list:latency_p95",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    workflows = json.loads(result.output)["workflows"]
+    assert workflows["mcp_asset_search"]["gates"]["latency_p95"]["passed"] is True
+    assert workflows["mcp_dashboard_list"]["gates"]["latency_p95"]["passed"] is False
+
+
 def test_runtime_modernization_operator_dashboard_snapshot_rejects_unknown_gate() -> (
     None
 ):
@@ -561,6 +588,48 @@ def test_runtime_modernization_operator_dashboard_snapshot_rejects_unknown_gate(
 
     assert result.exit_code != 0
     assert "Unknown dashboard gate: missing_gate" in result.output
+
+
+def test_operator_dashboard_snapshot_rejects_unknown_workflow_gate() -> None:
+    """Operator dashboard snapshot rejects unknown workflow gate overrides."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_asset_search",
+            "--snapshot-reference",
+            "observability/dashboard/snapshot-123",
+            "--failed-workflow-gate",
+            "mcp_asset_search:missing_gate",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown dashboard gate for mcp_asset_search: missing_gate" in (
+        result.output
+    )
+
+
+def test_operator_dashboard_snapshot_rejects_unselected_workflow_gate() -> None:
+    """Operator dashboard snapshot rejects overrides for unselected workflows."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_asset_search",
+            "--snapshot-reference",
+            "observability/dashboard/snapshot-123",
+            "--failed-workflow-gate",
+            "mcp_dashboard_list:latency_p95",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown dashboard workflow: mcp_dashboard_list" in result.output
 
 
 def test_operator_dashboard_snapshot_rejects_conflicting_gate() -> None:
@@ -585,6 +654,30 @@ def test_operator_dashboard_snapshot_rejects_conflicting_gate() -> None:
     assert "Dashboard gate cannot be both passed and failed: latency_p95" in (
         result.output
     )
+
+
+def test_operator_dashboard_snapshot_rejects_conflicting_workflow_gate() -> None:
+    """Operator dashboard snapshot rejects contradictory workflow gate overrides."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_asset_search",
+            "--snapshot-reference",
+            "observability/dashboard/snapshot-123",
+            "--passed-workflow-gate",
+            "mcp_asset_search:latency_p95",
+            "--failed-workflow-gate",
+            "mcp_asset_search:latency_p95",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert (
+        "Dashboard gate cannot be both passed and failed: mcp_asset_search:latency_p95"
+    ) in result.output
 
 
 def test_operator_dashboard_snapshot_rejects_unknown_workflow() -> None:

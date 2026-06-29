@@ -328,6 +328,62 @@ def _build_gate_status_overrides(
     }
 
 
+def _parse_workflow_gate_token(token: str) -> tuple[str, str]:
+    """Parse a workflow:gate status override token."""
+
+    workflow_name, separator, gate_name = token.partition(":")
+    if separator == "" or workflow_name.strip() == "" or gate_name.strip() == "":
+        raise click.ClickException(
+            "Workflow gate override must use the format workflow:gate"
+        )
+    return workflow_name, gate_name
+
+
+def _build_workflow_gate_status_overrides(
+    workflows: tuple[RolloutWorkflow, ...],
+    passed_workflow_gate: tuple[str, ...],
+    failed_workflow_gate: tuple[str, ...],
+) -> dict[str, dict[str, bool]]:
+    """Build and validate per-workflow dashboard gate status overrides."""
+
+    workflows_by_name = {workflow.name: workflow for workflow in workflows}
+    parsed_passed = [
+        _parse_workflow_gate_token(token) for token in passed_workflow_gate
+    ]
+    parsed_failed = [
+        _parse_workflow_gate_token(token) for token in failed_workflow_gate
+    ]
+
+    statuses: dict[str, dict[str, bool]] = {}
+    seen: dict[tuple[str, str], bool] = {}
+
+    for workflow_name, gate_name in [*parsed_passed, *parsed_failed]:
+        workflow = workflows_by_name.get(workflow_name)
+        if workflow is None:
+            raise click.ClickException(f"Unknown dashboard workflow: {workflow_name}")
+
+        gate_names = {gate.name for gate in workflow.gates}
+        if gate_name not in gate_names:
+            raise click.ClickException(
+                f"Unknown dashboard gate for {workflow_name}: {gate_name}"
+            )
+
+    for workflow_name, gate_name in parsed_passed:
+        seen[(workflow_name, gate_name)] = True
+        statuses.setdefault(workflow_name, {})[gate_name] = True
+
+    for workflow_name, gate_name in parsed_failed:
+        key = (workflow_name, gate_name)
+        if seen.get(key) is True:
+            raise click.ClickException(
+                "Dashboard gate cannot be both passed and failed: "
+                f"{workflow_name}:{gate_name}"
+            )
+        statuses.setdefault(workflow_name, {})[gate_name] = False
+
+    return statuses
+
+
 def _format_rust_kernel_rollout_decision(decision: dict[str, Any]) -> str:
     """Render compact Rust kernel rollout decision evidence."""
 
@@ -715,6 +771,22 @@ def operator_approval(
     help="Specific dashboard gate to mark failed. Can be supplied more than once.",
 )
 @click.option(
+    "--passed-workflow-gate",
+    multiple=True,
+    help=(
+        "Specific workflow gate to mark passed, in workflow:gate format. "
+        "Can be supplied more than once."
+    ),
+)
+@click.option(
+    "--failed-workflow-gate",
+    multiple=True,
+    help=(
+        "Specific workflow gate to mark failed, in workflow:gate format. "
+        "Can be supplied more than once."
+    ),
+)
+@click.option(
     "--measurement-window",
     help="Optional production measurement window covered by the snapshot.",
 )
@@ -736,6 +808,8 @@ def operator_dashboard_snapshot(
     gates_passed: bool,
     passed_gate: tuple[str, ...],
     failed_gate: tuple[str, ...],
+    passed_workflow_gate: tuple[str, ...],
+    failed_workflow_gate: tuple[str, ...],
     measurement_window: str | None,
     notes: str | None,
     output_format: str,
@@ -756,11 +830,17 @@ def operator_dashboard_snapshot(
         passed_gate,
         failed_gate,
     )
+    workflow_gate_statuses = _build_workflow_gate_status_overrides(
+        workflows,
+        passed_workflow_gate,
+        failed_workflow_gate,
+    )
     snapshot = build_operator_dashboard_snapshot(
         workflows,
         snapshot_reference=snapshot_reference,
         gates_passed=gates_passed,
         gate_statuses=gate_statuses,
+        workflow_gate_statuses=workflow_gate_statuses,
         measurement_window=measurement_window,
         notes=notes,
     )
