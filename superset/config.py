@@ -2605,6 +2605,13 @@ GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
 )
 GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
 
+# AX-BI runtime modernization sidecar config.
+# These settings are inert until runtime modernization feature flags route
+# selected workflows to the TypeScript sidecar.
+AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"
+AX_SERVICES_TIMEOUT_SECONDS = 2.0
+AX_SERVICES_INTERNAL_TOKEN: str | None = None
+
 # Global async queries cache backend configuration options:
 # - Set 'CACHE_TYPE' to 'RedisCache' for RedisCacheBackend.
 # - Set 'CACHE_TYPE' to 'RedisSentinelCache' for RedisSentinelCacheBackend.
