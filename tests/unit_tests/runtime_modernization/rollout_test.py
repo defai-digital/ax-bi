@@ -401,6 +401,84 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
     assert all(check["passed"] for check in validation["checks"])
 
 
+def test_validate_production_evidence_requires_dashboard_for_enabled_workflows() -> (
+    None
+):
+    """Dashboard evidence is scoped to workflows serving production traffic."""
+
+    validation = validate_production_evidence(
+        get_rollout_workflows(),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "compatibility_report": {
+                    "status": "passed",
+                },
+                "rust_kernel_benchmark": {
+                    "status": "passed",
+                    "output_matched": True,
+                },
+                "rust_kernel_rollout_decision": {
+                    "kernel": "ax_sql.normalize_sql_whitespace",
+                    "decision": "rejected",
+                    "decision_reference": "PERF-123",
+                    "rationale": "benchmark gain did not justify rollout",
+                },
+                "production_flag_state": {
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_dashboard_list",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_DASHBOARD_LIST_SERVING": True,
+                            },
+                        },
+                    ],
+                },
+                "operator_dashboard_snapshot": {
+                    "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "workflows": {
+                        "mcp_asset_search": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                        "mcp_dashboard_list": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                    },
+                },
+                "operator_approval": {
+                    "approved": True,
+                    "boundary_decision": "split MCP by tool class",
+                    "rollout_scope": "asset search and dashboard listing",
+                    "approval_reference": "CHG-123",
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "passed"
+    assert checks["production_flag_state"]["passed"] is True
+    assert checks["operator_dashboard_snapshot"]["passed"] is True
+
+
 def test_build_production_evidence_template_includes_workflow_gates() -> None:
     """Production evidence template includes fillable workflow-specific fields."""
 

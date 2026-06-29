@@ -307,8 +307,9 @@ product-specific and contract-oriented.
   artifacts and operator-provided flag, dashboard, and approval JSON into the
   evidence bundle shape.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
-  evidence bundle against those required artifacts and can fail release gates
-  when evidence is missing or failing.
+  evidence bundle against those required artifacts, scopes dashboard gates to
+  workflows serving production traffic, and can fail release gates when
+  evidence is missing or failing.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
   Phase 0-6 completion checks and can fail release gates until every phase is
   proven complete.

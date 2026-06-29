@@ -838,10 +838,13 @@ def validate_production_evidence(
 
     dashboard_snapshot = _artifact_mapping(artifacts, "operator_dashboard_snapshot")
     dashboard_records = _workflow_records_by_name(dashboard_snapshot or {})
+    dashboard_required_workflows = [
+        workflow for workflow in workflows if workflow.name in enabled_workflows
+    ] or list(workflows)
     dashboard_passed = bool(workflows) and _non_empty_string(
         (dashboard_snapshot or {}).get("snapshot_reference")
     )
-    for workflow in workflows:
+    for workflow in dashboard_required_workflows:
         record = dashboard_records.get(workflow.name)
         if record is None:
             dashboard_passed = False
@@ -856,7 +859,7 @@ def validate_production_evidence(
             name="operator_dashboard_snapshot",
             passed=dashboard_passed,
             message=(
-                "operator dashboard reference and gates passed for selected workflows"
+                "operator dashboard reference and gates passed for enabled workflows"
                 if dashboard_passed
                 else ("operator dashboard reference or gates are missing or failing")
             ),
