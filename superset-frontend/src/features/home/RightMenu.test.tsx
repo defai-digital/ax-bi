@@ -209,6 +209,19 @@ test('shows upload data menu item when local upload is enabled and permitted', a
   expect(await screen.findByText('Upload data')).toBeInTheDocument();
 });
 
+test('dashboard create menu item uses backend navigation', async () => {
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+
+  const dashboardLink = (await screen.findByText('Dashboard')).closest('a');
+  expect(dashboardLink).toHaveAttribute('href', '/dashboard/new/');
+});
+
 test('hides upload data menu item without local upload permission', async () => {
   mockIsFeatureEnabled.mockImplementation(
     (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,

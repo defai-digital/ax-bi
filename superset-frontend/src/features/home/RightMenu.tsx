@@ -160,7 +160,11 @@ const RightMenu = ({
         });
         createItems.push({
           key: 'create-dashboard',
-          label: <Link to="/dashboard/new/">{t('Dashboard')}</Link>,
+          label: (
+            <Typography.Link href="/dashboard/new/">
+              {t('Dashboard')}
+            </Typography.Link>
+          ),
           icon: <Icons.DashboardOutlined />,
         });
         if (

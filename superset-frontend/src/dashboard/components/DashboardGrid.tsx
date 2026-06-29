@@ -204,13 +204,16 @@ function DashboardGrid({
     [setDirectPathToChild],
   );
 
-  const columnPlusGutterWidth = (width + GRID_GUTTER_SIZE) / GRID_COLUMN_COUNT;
-
-  const columnWidth = columnPlusGutterWidth - GRID_GUTTER_SIZE;
-
   const shouldDisplayEmptyState = gridComponent?.children?.length === 0;
   const shouldDisplayTopLevelTabEmptyState =
     shouldDisplayEmptyState && gridComponent?.type === TAB_TYPE;
+  const shouldDeferRender = width < 100 && !shouldDisplayEmptyState;
+  const effectiveWidth = Math.max(width, 100);
+
+  const columnPlusGutterWidth =
+    (effectiveWidth + GRID_GUTTER_SIZE) / GRID_COLUMN_COUNT;
+
+  const columnWidth = columnPlusGutterWidth - GRID_GUTTER_SIZE;
 
   const dashboardEmptyState = editMode && (
     <EmptyState
@@ -271,7 +274,7 @@ function DashboardGrid({
     />
   );
 
-  return width < 100 ? null : (
+  return shouldDeferRender ? null : (
     <>
       {shouldDisplayEmptyState && (
         <DashboardEmptyStateContainer>

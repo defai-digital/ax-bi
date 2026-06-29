@@ -293,17 +293,19 @@ const StyledDashboardContent = styled.div<{
       padding-left: 0;
     }
 
-    .grid-container {
-      /* without this, the grid will not get smaller upon toggling the builder panel on */
-      width: 0;
-      flex: 1;
-      position: relative;
-      margin: ${theme.sizeUnit * 4}px;
-      margin-left: ${marginLeft}px;
-      min-height: max-content;
+      .grid-container {
+        /* without this, the grid will not get smaller upon toggling the builder panel on */
+        width: 0;
+        flex: 1;
+        position: relative;
+        margin: ${theme.sizeUnit * 4}px;
+        margin-left: ${marginLeft}px;
+        min-height: max-content;
+        min-width: 0;
 
-      ${editMode &&
+        ${editMode &&
       `
+      min-width: min(100%, ${theme.sizeUnit * 80}px);
       max-width: calc(100% - ${
         BUILDER_SIDEPANEL_WIDTH + theme.sizeUnit * 16
       }px);

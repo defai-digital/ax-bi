@@ -160,3 +160,18 @@ test('should render empty state in both edit and view modes', () => {
   expect(editEmptyState).toBeInTheDocument();
   expect(viewEmptyState).toBeInTheDocument();
 });
+
+test('should still render empty state while empty grid width is measuring', () => {
+  const { queryByText } = setup({
+    gridComponent: { ...props.gridComponent, children: [] },
+    editMode: true,
+    canEdit: true,
+    setEditMode: jest.fn(),
+    dashboardId: 1,
+    width: 0,
+  });
+
+  expect(
+    queryByText('Drag and drop components and charts to the dashboard'),
+  ).toBeInTheDocument();
+});
