@@ -249,6 +249,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_rls_filters(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar RLS filter list endpoint."""
+
+        return self.post_json(
+            "/mcp/rls-filters/list",
+            payload,
+            request_id=request_id,
+        )
+
     def list_tags(
         self,
         payload: Mapping[str, Any],

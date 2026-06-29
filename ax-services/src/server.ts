@@ -93,6 +93,12 @@ import {
   roleListResponseSchema,
 } from './contracts/roleList';
 import {
+  RlsListRequest,
+  RlsListResponse,
+  rlsListRequestSchema,
+  rlsListResponseSchema,
+} from './contracts/rlsList';
+import {
   SavedQueryListRequest,
   SavedQueryListResponse,
   savedQueryListRequestSchema,
@@ -124,6 +130,7 @@ import {
   SupersetQueryListClient,
   SupersetReportListClient,
   SupersetRoleListClient,
+  SupersetRlsListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
   SupersetTaskListClient,
@@ -143,6 +150,7 @@ export function buildServer(
     SupersetQueryListClient &
     SupersetReportListClient &
     SupersetRoleListClient &
+    SupersetRlsListClient &
     SupersetSavedQueryListClient &
     SupersetTagListClient &
     SupersetTaskListClient,
@@ -420,6 +428,23 @@ export function buildServer(
     },
     async (request): Promise<RoleListResponse> =>
       supersetClient.listRoles(request.body, request.id),
+  );
+
+  server.post<{
+    Body: RlsListRequest;
+    Reply: RlsListResponse;
+  }>(
+    '/mcp/rls-filters/list',
+    {
+      schema: {
+        body: rlsListRequestSchema,
+        response: {
+          200: rlsListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<RlsListResponse> =>
+      supersetClient.listRlsFilters(request.body, request.id),
   );
 
   server.post<{

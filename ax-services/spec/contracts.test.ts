@@ -72,6 +72,10 @@ import {
   ROLE_LIST_CONTRACT_VERSION,
 } from '../src/contracts/roleList';
 import {
+  rlsListContractSchemas,
+  RLS_LIST_CONTRACT_VERSION,
+} from '../src/contracts/rlsList';
+import {
   savedQueryListContractSchemas,
   SAVED_QUERY_LIST_CONTRACT_VERSION,
 } from '../src/contracts/savedQueryList';
@@ -136,6 +140,10 @@ test('report list contract version is explicit', () => {
 
 test('role list contract version is explicit', () => {
   expect(ROLE_LIST_CONTRACT_VERSION).toBe('role-list.v1');
+});
+
+test('RLS list contract version is explicit', () => {
+  expect(RLS_LIST_CONTRACT_VERSION).toBe('rls-list.v1');
 });
 
 test('tag list contract version is explicit', () => {
@@ -220,6 +228,19 @@ test('permission check request schema is registered in authorization contracts',
   );
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],
+  });
+});
+
+test('RLS list request schema is registered in RLS list contracts', () => {
+  expect(rlsListContractSchemas.rlsListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    rlsListContractSchemas.rlsListResponseSchema.properties.rlsFilters.items
+      .properties.clause,
+  ).toEqual({
+    type: 'string',
   });
 });
 

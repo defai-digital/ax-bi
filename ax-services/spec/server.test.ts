@@ -61,6 +61,10 @@ import {
   RoleListResponse,
 } from '../src/contracts/roleList';
 import {
+  RLS_LIST_CONTRACT_VERSION,
+  RlsListResponse,
+} from '../src/contracts/rlsList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryListResponse,
 } from '../src/contracts/savedQueryList';
@@ -87,6 +91,7 @@ import {
   SupersetMetadataClient,
   SupersetReportListClient,
   SupersetRoleListClient,
+  SupersetRlsListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
   SupersetTaskListClient,
@@ -122,6 +127,7 @@ function makeSupersetClient({
   onListQueries,
   onListReports,
   onListRoles,
+  onListRlsFilters,
   onListSavedQueries,
   onListTags,
   onListTasks,
@@ -271,6 +277,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  rlsList = {
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
   tagList = {
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
@@ -312,6 +332,7 @@ function makeSupersetClient({
   queryList?: QueryListResponse;
   reportList?: ReportListResponse;
   roleList?: RoleListResponse;
+  rlsList?: RlsListResponse;
   savedQueryList?: SavedQueryListResponse;
   tagList?: TagListResponse;
   taskList?: TaskListResponse;
@@ -327,6 +348,7 @@ function makeSupersetClient({
   onListQueries?: (correlationId?: string) => void;
   onListReports?: (correlationId?: string) => void;
   onListRoles?: (correlationId?: string) => void;
+  onListRlsFilters?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
   onListTasks?: (correlationId?: string) => void;
@@ -342,6 +364,7 @@ function makeSupersetClient({
   SupersetQueryListClient &
   SupersetReportListClient &
   SupersetRoleListClient &
+  SupersetRlsListClient &
   SupersetSavedQueryListClient &
   SupersetTagListClient &
   SupersetTaskListClient {
@@ -393,6 +416,10 @@ function makeSupersetClient({
     async listRoles(_request, correlationId) {
       onListRoles?.(correlationId);
       return roleList;
+    },
+    async listRlsFilters(_request, correlationId) {
+      onListRlsFilters?.(correlationId);
+      return rlsList;
     },
     async listSavedQueries(_request, correlationId) {
       onListSavedQueries?.(correlationId);
@@ -1474,6 +1501,87 @@ test('role list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'name'],
     columnsLoaded: ['id', 'name'],
+    warnings: [],
+  });
+});
+
+test('RLS filter list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      rlsList: {
+        contractVersion: RLS_LIST_CONTRACT_VERSION,
+        rlsFilters: [
+          {
+            id: 42,
+            name: 'regional_sales',
+            filterType: 'Regular',
+            tables: [{ id: 7, tableName: 'sales' }],
+            roles: [{ id: 3, name: 'Alpha' }],
+            clause: 'region = "EMEA"',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'name', 'filter_type', 'tables', 'roles'],
+        columnsLoaded: ['id', 'name', 'filter_type', 'tables', 'roles'],
+        warnings: [],
+      },
+      onListRlsFilters(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/rls-filters/list',
+    headers: {
+      'x-request-id': 'request-rls-list',
+    },
+    payload: {
+      contractVersion: RLS_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'name', 'filter_type', 'tables', 'roles'],
+      search: 'regional',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-rls-list');
+  expect(seenRequestIds).toEqual(['request-rls-list']);
+  expect(response.json()).toEqual({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [
+      {
+        id: 42,
+        name: 'regional_sales',
+        filterType: 'Regular',
+        tables: [{ id: 7, tableName: 'sales' }],
+        roles: [{ id: 3, name: 'Alpha' }],
+        clause: 'region = "EMEA"',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'filter_type', 'tables', 'roles'],
+    columnsLoaded: ['id', 'name', 'filter_type', 'tables', 'roles'],
     warnings: [],
   });
 });

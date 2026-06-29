@@ -15,19 +15,26 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import importlib
 import logging
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from fastmcp import Client
+from flask import current_app
 from pydantic import ValidationError
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.rls.schemas import ListRlsFiltersRequest, RlsColumnFilter
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+list_rls_filters_module = importlib.import_module(
+    "superset.mcp_service.rls.tool.list_rls_filters"
+)
 
 
 def create_mock_rls_filter(
@@ -243,3 +250,166 @@ async def test_list_rls_filters_roles_only_select_columns(mock_list, mcp_server)
         item = data["rls_filters"][0]
         assert "roles" in item
         assert item["roles"][0]["name"] == "Alpha"
+
+
+@pytest.mark.asyncio
+async def test_list_rls_filters_serves_valid_sidecar_response(mcp_server):
+    """RLS filter listing can serve a valid TypeScript sidecar response."""
+
+    stats_logger = MagicMock()
+
+    class MockAxServicesClient:
+        def __init__(self, _config):
+            pass
+
+        def list_rls_filters(self, payload):
+            assert payload["contractVersion"] == "rls-list.v1"
+            return AxServicesResponse(
+                ok=True,
+                status_code=200,
+                payload={
+                    "contractVersion": "rls-list.v1",
+                    "rlsFilters": [
+                        {
+                            "id": 42,
+                            "name": "regional_sales",
+                            "filterType": "Regular",
+                            "tables": [{"id": 7, "tableName": "sales"}],
+                            "roles": [{"id": 3, "name": "Alpha"}],
+                            "clause": "region = 'EMEA'",
+                            "groupKey": "region",
+                            "changedOn": "2026-01-01T00:00:00",
+                        }
+                    ],
+                    "count": 1,
+                    "totalCount": 1,
+                    "page": 1,
+                    "pageSize": 10,
+                    "totalPages": 1,
+                    "hasNext": False,
+                    "hasPrevious": False,
+                    "columnsRequested": [
+                        "id",
+                        "name",
+                        "filter_type",
+                        "tables",
+                        "roles",
+                        "clause",
+                        "group_key",
+                    ],
+                    "columnsLoaded": [
+                        "id",
+                        "name",
+                        "filter_type",
+                        "tables",
+                        "roles",
+                        "clause",
+                        "group_key",
+                    ],
+                    "warnings": [],
+                },
+            )
+
+    with (
+        patch.object(
+            list_rls_filters_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {
+                "TS_MCP_ORCHESTRATION",
+                "TS_RLS_FILTER_LIST_SERVING",
+            },
+        ),
+        patch.object(list_rls_filters_module, "AxServicesClient", MockAxServicesClient),
+        patch.dict(current_app.config, {"STATS_LOGGER": stats_logger}),
+    ):
+        async with Client(mcp_server) as client:
+            request = ListRlsFiltersRequest(
+                page=1,
+                page_size=10,
+                select_columns=[
+                    "id",
+                    "name",
+                    "filter_type",
+                    "tables",
+                    "roles",
+                    "clause",
+                    "group_key",
+                ],
+            )
+            result = await client.call_tool(
+                "list_rls_filters", {"request": request.model_dump()}
+            )
+            data = json.loads(result.content[0].text)
+
+    item = data["rls_filters"][0]
+    assert item["id"] == 42
+    assert item["name"] == "regional_sales"
+    assert item["filter_type"] == "Regular"
+    assert item["tables"][0]["table_name"] == "sales"
+    assert item["roles"][0]["name"] == "Alpha"
+    assert item["clause"] == "region = 'EMEA'"
+    assert item["group_key"] == "region"
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_rls_filters.served_candidate"
+    )
+
+
+@patch("superset.daos.security.RLSDAO.list")
+@pytest.mark.asyncio
+async def test_list_rls_filters_falls_back_on_candidate_warning(mock_list, mcp_server):
+    """Sidecar RLS warnings fall back to the authoritative Python path."""
+
+    stats_logger = MagicMock()
+    rls_filter = create_mock_rls_filter()
+    mock_list.return_value = ([rls_filter], 1)
+
+    class MockAxServicesClient:
+        def __init__(self, _config):
+            pass
+
+        def list_rls_filters(self, _payload):
+            return AxServicesResponse(
+                ok=True,
+                status_code=200,
+                payload={
+                    "contractVersion": "rls-list.v1",
+                    "rlsFilters": [],
+                    "count": 0,
+                    "totalCount": 0,
+                    "page": 1,
+                    "pageSize": 10,
+                    "totalPages": 0,
+                    "hasNext": False,
+                    "hasPrevious": False,
+                    "columnsRequested": ["id", "name"],
+                    "columnsLoaded": [],
+                    "warnings": ["RLS filter list returned status 504 from Superset"],
+                },
+            )
+
+    with (
+        patch.object(
+            list_rls_filters_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {
+                "TS_MCP_ORCHESTRATION",
+                "TS_RLS_FILTER_LIST_SERVING",
+            },
+        ),
+        patch.object(list_rls_filters_module, "AxServicesClient", MockAxServicesClient),
+        patch.dict(current_app.config, {"STATS_LOGGER": stats_logger}),
+    ):
+        async with Client(mcp_server) as client:
+            request = ListRlsFiltersRequest(page=1, page_size=10)
+            result = await client.call_tool(
+                "list_rls_filters", {"request": request.model_dump()}
+            )
+            data = json.loads(result.content[0].text)
+
+    assert data["rls_filters"][0]["id"] == 1
+    mock_list.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_rls_filters.fallback"
+    )

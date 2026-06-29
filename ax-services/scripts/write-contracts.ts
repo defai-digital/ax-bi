@@ -30,6 +30,7 @@ import { datasetListContractSchemas } from '../src/contracts/datasetList';
 import { queryListContractSchemas } from '../src/contracts/queryList';
 import { reportListContractSchemas } from '../src/contracts/reportList';
 import { roleListContractSchemas } from '../src/contracts/roleList';
+import { rlsListContractSchemas } from '../src/contracts/rlsList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 import { savedQueryListContractSchemas } from '../src/contracts/savedQueryList';
 import { tagListContractSchemas } from '../src/contracts/tagList';
@@ -49,6 +50,7 @@ const contractFiles = {
   'query-list.v1.schema.json': queryListContractSchemas,
   'report-list.v1.schema.json': reportListContractSchemas,
   'role-list.v1.schema.json': roleListContractSchemas,
+  'rls-list.v1.schema.json': rlsListContractSchemas,
   'runtime.v1.schema.json': runtimeContractSchemas,
   'saved-query-list.v1.schema.json': savedQueryListContractSchemas,
   'tag-list.v1.schema.json': tagListContractSchemas,

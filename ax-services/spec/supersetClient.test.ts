@@ -30,6 +30,7 @@ import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/queryList';
 import { REPORT_LIST_CONTRACT_VERSION } from '../src/contracts/reportList';
 import { ROLE_LIST_CONTRACT_VERSION } from '../src/contracts/roleList';
+import { RLS_LIST_CONTRACT_VERSION } from '../src/contracts/rlsList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
 import { TAG_LIST_CONTRACT_VERSION } from '../src/contracts/tagList';
 import { TASK_LIST_CONTRACT_VERSION } from '../src/contracts/taskList';
@@ -1776,6 +1777,127 @@ test('listRoles records warnings for failed Superset list responses', async () =
     columnsRequested: ['id', 'name'],
     columnsLoaded: [],
     warnings: ['role list returned status 504 from Superset'],
+  });
+});
+
+test('listRlsFilters maps Superset RLS filter list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 3,
+      result: [
+        {
+          id: 42,
+          name: 'regional_sales',
+          filter_type: 'Regular',
+          tables: [{ id: 7, table_name: 'sales' }],
+          roles: [{ id: 3, name: 'Alpha' }],
+          clause: 'region = "EMEA"',
+          group_key: 'region',
+          changed_on_delta_humanized: '1 hour ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listRlsFilters(
+    {
+      contractVersion: RLS_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'filter_type', opr: 'eq', value: 'Regular' }],
+      selectColumns: ['id', 'name', 'filter_type', 'tables', 'roles', 'clause'],
+      search: 'regional',
+      orderColumn: 'name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 2,
+    },
+    'request-rls',
+  );
+
+  expect(result).toEqual({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [
+      {
+        id: 42,
+        name: 'regional_sales',
+        filterType: 'Regular',
+        tables: [{ id: 7, tableName: 'sales' }],
+        roles: [{ id: 3, name: 'Alpha' }],
+        clause: 'region = "EMEA"',
+        groupKey: 'region',
+        changedOn: '1 hour ago',
+      },
+    ],
+    count: 1,
+    totalCount: 3,
+    page: 2,
+    pageSize: 2,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'name', 'filter_type', 'tables', 'roles', 'clause'],
+    columnsLoaded: [
+      'id',
+      'name',
+      'filter_type',
+      'tables',
+      'roles',
+      'clause',
+      'group_key',
+      'changed_on',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/rowlevelsecurity/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'regional'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-rls',
+  });
+});
+
+test('listRlsFilters records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listRlsFilters({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'filter_type', 'clause'],
+    columnsLoaded: [],
+    warnings: ['RLS filter list returned status 504 from Superset'],
   });
 });
 

@@ -321,6 +321,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         serving_flag="TS_ROLE_LIST_SERVING",
     ),
     _mcp_workflow(
+        name="mcp_rls_filter_list",
+        operation="list_rls_filters",
+        sidecar_route="POST /mcp/rls-filters/list",
+        contract_version="rls-list.v1",
+        serving_flag="TS_RLS_FILTER_LIST_SERVING",
+    ),
+    _mcp_workflow(
         name="mcp_tag_list",
         operation="list_tags",
         sidecar_route="POST /mcp/tags/list",

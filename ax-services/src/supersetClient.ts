@@ -92,6 +92,15 @@ import {
   RoleListResponse,
 } from './contracts/roleList';
 import {
+  RLS_LIST_CONTRACT_VERSION,
+  RlsFilterValue,
+  RlsListItem,
+  RlsListRequest,
+  RlsListResponse,
+  RlsRoleRef,
+  RlsTableRef,
+} from './contracts/rlsList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryFilterValue,
   SavedQueryListItem,
@@ -204,6 +213,13 @@ export interface SupersetRoleListClient {
   ): Promise<RoleListResponse>;
 }
 
+export interface SupersetRlsListClient {
+  listRlsFilters(
+    request: RlsListRequest,
+    correlationId?: string,
+  ): Promise<RlsListResponse>;
+}
+
 export interface SupersetSavedQueryListClient {
   listSavedQueries(
     request: SavedQueryListRequest,
@@ -239,6 +255,7 @@ export class SupersetClient
     SupersetQueryListClient,
     SupersetReportListClient,
     SupersetRoleListClient,
+    SupersetRlsListClient,
     SupersetSavedQueryListClient,
     SupersetTagListClient,
     SupersetTaskListClient
@@ -881,6 +898,54 @@ export class SupersetClient
     }
   }
 
+  async listRlsFilters(
+    request: RlsListRequest,
+    correlationId?: string,
+  ): Promise<RlsListResponse> {
+    const url = this.buildRlsListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyRlsListResponse(request, [
+          `RLS filter list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const rlsFilters = extractSupersetResults(payload)
+        .map(toRlsListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, rlsFilters.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: RLS_LIST_CONTRACT_VERSION,
+        rlsFilters,
+        count: rlsFilters.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedRlsColumns(request),
+        columnsLoaded: rlsColumnsLoaded(rlsFilters),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyRlsListResponse(request, [
+        `RLS filter list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   async listTags(
     request: TagListRequest,
     correlationId?: string,
@@ -1120,6 +1185,14 @@ export class SupersetClient
     return url.toString();
   }
 
+  private buildRlsListUrl(request: RlsListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.rls}`,
+    );
+    url.searchParams.set('q', buildRlsListQuery(request));
+    return url.toString();
+  }
+
   private buildTagListUrl(request: TagListRequest): string {
     const url = new URL(
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.tag}`,
@@ -1230,6 +1303,12 @@ interface SupersetListItem {
   created_on_humanized?: string;
   owners?: unknown[];
   tags?: unknown[];
+  filter_type?: string;
+  tables?: unknown[];
+  roles?: unknown[];
+  clause?: string;
+  group_key?: string;
+  changed_on_delta_humanized?: string;
 }
 
 const assetSearchFilterColumns: Record<SearchableAssetType, string> = {
@@ -1507,6 +1586,30 @@ function buildRoleListQuery(request: RoleListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildRlsListQuery(request: RlsListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatRlsFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function buildTagListQuery(request: TagListRequest): string {
   const filters = [...request.filters];
   if (request.search !== undefined && request.search !== '') {
@@ -1655,6 +1758,16 @@ function formatRoleFilter(filter: {
   )})`;
 }
 
+function formatRlsFilter(filter: {
+  col: string;
+  opr: string;
+  value: RlsFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatRlsRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatTagFilter(filter: {
   col: string;
   opr: string;
@@ -1741,6 +1854,13 @@ function formatReportRisonValue(value: ReportFilterValue): string {
 }
 
 function formatRoleRisonValue(value: RoleFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatRlsRisonValue(value: RlsFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -2088,6 +2208,59 @@ function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
   };
 }
 
+function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    filterType:
+      typeof item.filter_type === 'string' ? item.filter_type : undefined,
+    tables: item.tables?.map(toRlsTableRef).filter(isDefined),
+    roles: item.roles?.map(toRlsRoleRef).filter(isDefined),
+    clause: typeof item.clause === 'string' ? item.clause : undefined,
+    groupKey: typeof item.group_key === 'string' ? item.group_key : undefined,
+    changedOn:
+      typeof item.changed_on === 'string'
+        ? item.changed_on
+        : typeof item.changed_on_delta_humanized === 'string'
+          ? item.changed_on_delta_humanized
+          : undefined,
+  };
+}
+
+function toRlsTableRef(value: unknown): RlsTableRef | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const ref: RlsTableRef = {};
+  if (typeof value.id === 'number') {
+    ref.id = value.id;
+  }
+  if (typeof value.table_name === 'string') {
+    ref.tableName = value.table_name;
+  }
+  return Object.keys(ref).length > 0 ? ref : undefined;
+}
+
+function toRlsRoleRef(value: unknown): RlsRoleRef | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const ref: RlsRoleRef = {};
+  if (typeof value.id === 'number') {
+    ref.id = value.id;
+  }
+  if (typeof value.name === 'string') {
+    ref.name = value.name;
+  }
+  return Object.keys(ref).length > 0 ? ref : undefined;
+}
+
 function toTagListItem(item: SupersetListItem): TagListItem | undefined {
   if (typeof item.id !== 'number') {
     return undefined;
@@ -2280,6 +2453,12 @@ function requestedRoleColumns(request: RoleListRequest): string[] {
   return request.selectColumns.length > 0 ? request.selectColumns : ['id', 'name'];
 }
 
+function requestedRlsColumns(request: RlsListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'name', 'filter_type', 'clause'];
+}
+
 function requestedTagColumns(request: TagListRequest): string[] {
   return request.selectColumns.length > 0
     ? request.selectColumns
@@ -2451,6 +2630,20 @@ function roleColumnsLoaded(roles: RoleListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const role of roles) {
     if (role.name !== undefined) loaded.add('name');
+  }
+  return [...loaded];
+}
+
+function rlsColumnsLoaded(rlsFilters: RlsListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const rlsFilter of rlsFilters) {
+    if (rlsFilter.name !== undefined) loaded.add('name');
+    if (rlsFilter.filterType !== undefined) loaded.add('filter_type');
+    if (rlsFilter.tables !== undefined) loaded.add('tables');
+    if (rlsFilter.roles !== undefined) loaded.add('roles');
+    if (rlsFilter.clause !== undefined) loaded.add('clause');
+    if (rlsFilter.groupKey !== undefined) loaded.add('group_key');
+    if (rlsFilter.changedOn !== undefined) loaded.add('changed_on');
   }
   return [...loaded];
 }
@@ -2680,6 +2873,26 @@ function emptyRoleListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedRoleColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyRlsListResponse(
+  request: RlsListRequest,
+  warnings: string[],
+): RlsListResponse {
+  return {
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedRlsColumns(request),
     columnsLoaded: [],
     warnings,
   };

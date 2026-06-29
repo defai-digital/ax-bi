@@ -150,6 +150,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_query_list",
         "mcp_report_list",
         "mcp_role_list",
+        "mcp_rls_filter_list",
         "mcp_saved_query_list",
         "mcp_tag_list",
         "mcp_task_list",
@@ -351,6 +352,23 @@ def test_rollout_workflow_includes_role_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_roles.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_rls_filter_list() -> None:
+    """Rollout manifest includes RLS filter listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_rls_filter_list")
+
+    assert workflow.sidecar_route == "POST /mcp/rls-filters/list"
+    assert workflow.contract_version == "rls-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_RLS_FILTER_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_rls_filters.shadow_mismatch"
         in workflow.python_metrics
     )
 
