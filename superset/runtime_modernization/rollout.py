@@ -532,6 +532,7 @@ def build_operator_dashboard_snapshot(
     *,
     snapshot_reference: str,
     gates_passed: bool,
+    gate_statuses: Mapping[str, bool] | None = None,
     measurement_window: str | None = None,
     notes: str | None = None,
 ) -> dict[str, Any]:
@@ -543,7 +544,7 @@ def build_operator_dashboard_snapshot(
             workflow.name: {
                 "gates": {
                     gate.name: {
-                        "passed": gates_passed,
+                        "passed": (gate_statuses or {}).get(gate.name, gates_passed),
                         "metric": gate.metric,
                         "target": gate.target,
                     }

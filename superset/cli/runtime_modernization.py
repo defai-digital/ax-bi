@@ -295,6 +295,39 @@ def _format_operator_dashboard_snapshot(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _selected_dashboard_gate_names(workflows: tuple[RolloutWorkflow, ...]) -> set[str]:
+    """Return dashboard gate names for selected workflows."""
+
+    return {gate.name for workflow in workflows for gate in workflow.gates}
+
+
+def _build_gate_status_overrides(
+    workflows: tuple[RolloutWorkflow, ...],
+    passed_gate: tuple[str, ...],
+    failed_gate: tuple[str, ...],
+) -> dict[str, bool]:
+    """Build and validate per-gate dashboard status overrides."""
+
+    selected_gates = _selected_dashboard_gate_names(workflows)
+    unknown_gates = (set(passed_gate) | set(failed_gate)) - selected_gates
+    if unknown_gates:
+        raise click.ClickException(
+            "Unknown dashboard gate: " + ", ".join(sorted(unknown_gates))
+        )
+
+    conflicting_gates = set(passed_gate) & set(failed_gate)
+    if conflicting_gates:
+        raise click.ClickException(
+            "Dashboard gate cannot be both passed and failed: "
+            + ", ".join(sorted(conflicting_gates))
+        )
+
+    return {
+        **{gate: True for gate in passed_gate},
+        **{gate: False for gate in failed_gate},
+    }
+
+
 def _format_rust_kernel_rollout_decision(decision: dict[str, Any]) -> str:
     """Render compact Rust kernel rollout decision evidence."""
 
@@ -672,6 +705,16 @@ def operator_approval(
     help="Whether all selected workflow dashboard gates passed.",
 )
 @click.option(
+    "--passed-gate",
+    multiple=True,
+    help="Specific dashboard gate to mark passed. Can be supplied more than once.",
+)
+@click.option(
+    "--failed-gate",
+    multiple=True,
+    help="Specific dashboard gate to mark failed. Can be supplied more than once.",
+)
+@click.option(
     "--measurement-window",
     help="Optional production measurement window covered by the snapshot.",
 )
@@ -691,6 +734,8 @@ def operator_dashboard_snapshot(
     workflow: tuple[str, ...],
     snapshot_reference: str,
     gates_passed: bool,
+    passed_gate: tuple[str, ...],
+    failed_gate: tuple[str, ...],
     measurement_window: str | None,
     notes: str | None,
     output_format: str,
@@ -706,10 +751,16 @@ def operator_dashboard_snapshot(
     except KeyError as ex:
         raise click.ClickException(str(ex)) from ex
 
+    gate_statuses = _build_gate_status_overrides(
+        workflows,
+        passed_gate,
+        failed_gate,
+    )
     snapshot = build_operator_dashboard_snapshot(
         workflows,
         snapshot_reference=snapshot_reference,
         gates_passed=gates_passed,
+        gate_statuses=gate_statuses,
         measurement_window=measurement_window,
         notes=notes,
     )
