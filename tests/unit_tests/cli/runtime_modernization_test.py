@@ -108,6 +108,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                         "approved": True,
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
+                        "migration_decision": "expand",
                         "compatibility_cost_estimate": (
                             "versioned contracts and Python fallback keep "
                             "compatibility risk low"
@@ -320,6 +321,7 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     )
     assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
+    assert payload["artifacts"]["operator_approval"]["migration_decision"] == ""
     assert (
         payload["artifacts"]["operator_approval"]["compatibility_cost_estimate"] == ""
     )
@@ -437,6 +439,8 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
             "split MCP by tool class",
             "--rollout-scope",
             "asset search and dashboard listing",
+            "--migration-decision",
+            "expand",
             "--compatibility-cost-estimate",
             "versioned contracts and Python fallback keep compatibility risk low",
             "--security-cost-estimate",
@@ -455,6 +459,7 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
         "approved": True,
         "boundary_decision": "split MCP by tool class",
         "rollout_scope": "asset search and dashboard listing",
+        "migration_decision": "expand",
         "compatibility_cost_estimate": (
             "versioned contracts and Python fallback keep compatibility risk low"
         ),
@@ -481,6 +486,8 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
             "split MCP by tool class",
             "--rollout-scope",
             "asset search",
+            "--migration-decision",
+            "pause",
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
@@ -497,6 +504,7 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "runtime modernization operator approval" in result.output
     assert "approved: False" in result.output
     assert "split MCP by tool class" in result.output
+    assert "migration decision: pause" in result.output
     assert "compatibility cost estimate: single contract family" in result.output
     assert "security cost estimate: Superset keeps authorization checks" in (
         result.output
@@ -518,6 +526,8 @@ def test_runtime_modernization_operator_approval_rejects_unknown_workflow() -> N
             "split MCP by tool class",
             "--rollout-scope",
             "asset search",
+            "--migration-decision",
+            "pause",
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
@@ -986,6 +996,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                 "approved": True,
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
+                "migration_decision": "expand",
                 "compatibility_cost_estimate": (
                     "versioned contracts and Python fallback keep compatibility "
                     "risk low"
@@ -1158,6 +1169,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "approved": True,
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
+                        "migration_decision": "expand",
                         "compatibility_cost_estimate": (
                             "versioned contracts and Python fallback keep "
                             "compatibility risk low"

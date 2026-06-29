@@ -382,7 +382,8 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         ),
         validation=(
             "approval names the accepted boundary decision, rollout scope, "
-            "compatibility cost estimate, and security cost estimate"
+            "migration decision, compatibility cost estimate, and security "
+            "cost estimate"
         ),
     ),
 )
@@ -497,6 +498,7 @@ def build_production_evidence_template(
                 "approved": False,
                 "boundary_decision": "",
                 "rollout_scope": "",
+                "migration_decision": "",
                 "compatibility_cost_estimate": "",
                 "security_cost_estimate": "",
                 "approval_reference": "",
@@ -529,6 +531,7 @@ def build_operator_approval_evidence(
     *,
     boundary_decision: str,
     rollout_scope: str,
+    migration_decision: str,
     compatibility_cost_estimate: str,
     security_cost_estimate: str,
     approval_reference: str,
@@ -543,6 +546,7 @@ def build_operator_approval_evidence(
         "approved": approved,
         "boundary_decision": boundary_decision,
         "rollout_scope": rollout_scope,
+        "migration_decision": migration_decision,
         "compatibility_cost_estimate": compatibility_cost_estimate,
         "security_cost_estimate": security_cost_estimate,
         "approval_reference": approval_reference,
@@ -784,6 +788,12 @@ def _string_set(value: Any) -> set[str]:
     return {item for item in value if isinstance(item, str)}
 
 
+def _migration_decision_passed(value: Any) -> bool:
+    """Return whether the Phase 6 migration decision is valid."""
+
+    return value in {"expand", "pause", "stop"}
+
+
 def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
     """Return whether Rust rollout decision evidence satisfies Phase 5."""
 
@@ -963,6 +973,7 @@ def validate_production_evidence(
         operator_approval is not None
         and operator_approval.get("approved") is True
         and _non_empty_string(operator_approval.get("boundary_decision"))
+        and _migration_decision_passed(operator_approval.get("migration_decision"))
         and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
         and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
@@ -978,13 +989,13 @@ def validate_production_evidence(
             passed=approval_passed,
             message=(
                 "operator approval names boundary decision, rollout scope, "
-                "compatibility and security cost estimates, approval reference, "
-                "and enabled workflows"
+                "migration decision, compatibility and security cost estimates, "
+                "approval reference, and enabled workflows"
                 if approval_passed
                 else (
                     "operator approval is missing boundary decision, rollout "
-                    "scope, compatibility or security cost estimates, approval "
-                    "reference, or enabled workflow names"
+                    "scope, migration decision, compatibility or security cost "
+                    "estimates, approval reference, or enabled workflow names"
                 )
             ),
         )

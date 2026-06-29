@@ -256,6 +256,7 @@ def _format_operator_approval_evidence(approval: dict[str, Any]) -> str:
         f"  approved: {approval['approved']}",
         f"  boundary decision: {approval['boundary_decision']}",
         f"  rollout scope: {approval['rollout_scope']}",
+        f"  migration decision: {approval['migration_decision']}",
         f"  compatibility cost estimate: {approval['compatibility_cost_estimate']}",
         f"  security cost estimate: {approval['security_cost_estimate']}",
         f"  approval reference: {approval['approval_reference']}",
@@ -718,6 +719,12 @@ def production_flag_state(
     help="Approved rollout scope.",
 )
 @click.option(
+    "--migration-decision",
+    type=click.Choice(("expand", "pause", "stop")),
+    required=True,
+    help="Team decision after Phase 6 boundary reevaluation.",
+)
+@click.option(
     "--compatibility-cost-estimate",
     required=True,
     help="Estimated compatibility cost of the approved runtime boundary.",
@@ -758,6 +765,7 @@ def operator_approval(
     workflow: tuple[str, ...],
     boundary_decision: str,
     rollout_scope: str,
+    migration_decision: str,
     compatibility_cost_estimate: str,
     security_cost_estimate: str,
     approval_reference: str,
@@ -776,6 +784,7 @@ def operator_approval(
     approval = build_operator_approval_evidence(
         boundary_decision=boundary_decision,
         rollout_scope=rollout_scope,
+        migration_decision=migration_decision,
         compatibility_cost_estimate=compatibility_cost_estimate,
         security_cost_estimate=security_cost_estimate,
         approval_reference=approval_reference,

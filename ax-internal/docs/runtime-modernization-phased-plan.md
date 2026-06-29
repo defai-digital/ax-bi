@@ -299,9 +299,9 @@ product-specific and contract-oriented.
   workflow metrics, p95 latency targets, fallback/error targets, per-workflow
   gate status, measurement window, and the dashboard snapshot reference.
 - `superset runtime-modernization operator-approval` emits the operator
-  approval artifact with the accepted boundary decision, rollout scope, and
-  compatibility and security cost estimates, and approval reference for
-  workflows serving production traffic.
+  approval artifact with the accepted boundary decision, rollout scope,
+  migration decision, compatibility and security cost estimates, and approval
+  reference for workflows serving production traffic.
 - `superset runtime-modernization rust-kernel-rollout-decision` emits the Rust
   kernel decision artifact proving the measured kernel either served production
   traffic or was rejected with a documented reason.
