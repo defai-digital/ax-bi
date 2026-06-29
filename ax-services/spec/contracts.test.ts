@@ -52,12 +52,26 @@ test('health response schema is stable', () => {
   expect(healthResponseSchema).toEqual({
     $id: 'ax-services.health.v1.response',
     type: 'object',
-    required: ['contractVersion', 'service', 'status'],
+    required: [
+      'contractVersion',
+      'service',
+      'status',
+      'timestamp',
+      'version',
+      'nodeVersion',
+      'platform',
+      'uptimeSeconds',
+    ],
     additionalProperties: false,
     properties: {
       contractVersion: { const: 'runtime.v1' },
       service: { const: 'ax-services' },
       status: { const: 'ok' },
+      timestamp: { type: 'string' },
+      version: { type: 'string' },
+      nodeVersion: { type: 'string' },
+      platform: { type: 'string' },
+      uptimeSeconds: { type: 'number' },
     },
   });
 });

@@ -52,6 +52,7 @@ export function buildServer(
     SupersetAssetSearchClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
+  const serviceStartTime = process.hrtime.bigint();
   const server = Fastify({
     logger: config.logLevel !== 'silent',
     genReqId(request) {
@@ -85,6 +86,11 @@ export function buildServer(
       contractVersion: RUNTIME_CONTRACT_VERSION,
       service: 'ax-services',
       status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '0.0.1',
+      nodeVersion: process.version,
+      platform: process.platform,
+      uptimeSeconds: Number(process.hrtime.bigint() - serviceStartTime) / 1e9,
     }),
   );
 

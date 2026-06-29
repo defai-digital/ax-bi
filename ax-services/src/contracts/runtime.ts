@@ -34,6 +34,11 @@ export interface HealthResponseContract {
   contractVersion: typeof RUNTIME_CONTRACT_VERSION;
   service: 'ax-services';
   status: 'ok';
+  timestamp: string;
+  version: string;
+  nodeVersion: string;
+  platform: string;
+  uptimeSeconds: number;
 }
 
 export interface ReadinessResponseContract {
@@ -119,12 +124,26 @@ const routeMetricsSchema = {
 export const healthResponseSchema = {
   $id: 'ax-services.health.v1.response',
   type: 'object',
-  required: ['contractVersion', 'service', 'status'],
+  required: [
+    'contractVersion',
+    'service',
+    'status',
+    'timestamp',
+    'version',
+    'nodeVersion',
+    'platform',
+    'uptimeSeconds',
+  ],
   additionalProperties: false,
   properties: {
     contractVersion: { const: RUNTIME_CONTRACT_VERSION },
     service: { const: 'ax-services' },
     status: { const: 'ok' },
+    timestamp: { type: 'string' },
+    version: { type: 'string' },
+    nodeVersion: { type: 'string' },
+    platform: { type: 'string' },
+    uptimeSeconds: { type: 'number' },
   },
 } as const;
 

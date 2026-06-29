@@ -5,7 +5,12 @@
     "required": [
       "contractVersion",
       "service",
-      "status"
+      "status",
+      "timestamp",
+      "version",
+      "nodeVersion",
+      "platform",
+      "uptimeSeconds"
     ],
     "additionalProperties": false,
     "properties": {
@@ -17,6 +22,21 @@
       },
       "status": {
         "const": "ok"
+      },
+      "timestamp": {
+        "type": "string"
+      },
+      "version": {
+        "type": "string"
+      },
+      "nodeVersion": {
+        "type": "string"
+      },
+      "platform": {
+        "type": "string"
+      },
+      "uptimeSeconds": {
+        "type": "number"
       }
     }
   },
