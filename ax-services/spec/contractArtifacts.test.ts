@@ -23,6 +23,7 @@ import { expect, test } from '@jest/globals';
 
 import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
+import { chartListContractSchemas } from '../src/contracts/chartList';
 import { dashboardListContractSchemas } from '../src/contracts/dashboardList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 
@@ -53,5 +54,11 @@ test('asset search contract artifact matches TypeScript source', () => {
 test('dashboard list contract artifact matches TypeScript source', () => {
   expect(readContractArtifact('dashboard-list.v1.schema.json')).toEqual(
     dashboardListContractSchemas,
+  );
+});
+
+test('chart list contract artifact matches TypeScript source', () => {
+  expect(readContractArtifact('chart-list.v1.schema.json')).toEqual(
+    chartListContractSchemas,
   );
 });

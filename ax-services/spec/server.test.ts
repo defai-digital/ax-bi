@@ -25,6 +25,10 @@ import {
   AssetSearchResponse,
 } from '../src/contracts/assetSearch';
 import {
+  CHART_LIST_CONTRACT_VERSION,
+  ChartListResponse,
+} from '../src/contracts/chartList';
+import {
   DASHBOARD_LIST_CONTRACT_VERSION,
   DashboardListResponse,
 } from '../src/contracts/dashboardList';
@@ -32,6 +36,7 @@ import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAssetSearchClient,
+  SupersetChartListClient,
   SupersetDashboardListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
@@ -58,10 +63,25 @@ function makeSupersetClient({
   onHealth,
   onMetadata,
   onSearch,
+  onListCharts,
   onListDashboards,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
+    warnings: [],
+  },
+  chartList = {
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    charts: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
     warnings: [],
   },
   dashboardList = {
@@ -82,14 +102,17 @@ function makeSupersetClient({
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  chartList?: ChartListResponse;
   dashboardList?: DashboardListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
+  onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAssetSearchClient &
+  SupersetChartListClient &
   SupersetDashboardListClient {
   return {
     async checkHealth(correlationId) {
@@ -103,6 +126,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async listCharts(_request, correlationId) {
+      onListCharts?.(correlationId);
+      return chartList;
     },
     async listDashboards(_request, correlationId) {
       onListDashboards?.(correlationId);
@@ -475,6 +502,85 @@ test('dashboard list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'dashboard_title'],
     columnsLoaded: ['id', 'dashboard_title', 'slug', 'url'],
+    warnings: [],
+  });
+});
+
+test('chart list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      chartList: {
+        contractVersion: CHART_LIST_CONTRACT_VERSION,
+        charts: [
+          {
+            id: 9,
+            sliceName: 'Sales by region',
+            vizType: 'bar',
+            url: '/explore/?slice_id=9',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'slice_name'],
+        columnsLoaded: ['id', 'slice_name', 'viz_type', 'url'],
+        warnings: [],
+      },
+      onListCharts(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/charts/list',
+    headers: {
+      'x-request-id': 'request-chart-list',
+    },
+    payload: {
+      contractVersion: CHART_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'slice_name'],
+      search: 'sales',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-chart-list');
+  expect(seenRequestIds).toEqual(['request-chart-list']);
+  expect(response.json()).toEqual({
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    charts: [
+      {
+        id: 9,
+        sliceName: 'Sales by region',
+        vizType: 'bar',
+        url: '/explore/?slice_id=9',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'slice_name'],
+    columnsLoaded: ['id', 'slice_name', 'viz_type', 'url'],
     warnings: [],
   });
 });

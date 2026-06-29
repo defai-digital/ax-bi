@@ -46,8 +46,8 @@ Environment variables:
 | `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
 | `AX_SUPERSET_METADATA_PATH` | `/api/v1/dashboard/_info` | Safe Superset REST metadata endpoint used by the sidecar metadata probe. |
 | `AX_SUPERSET_PERMISSION_PATH` | `/api/v1/security/permissions/check` | Superset permission delegation path for future data-bearing workflows. |
-| `AX_SUPERSET_CHART_LIST_PATH` | `/api/v1/chart/` | Superset chart list endpoint for TypeScript asset search shadow execution. |
-| `AX_SUPERSET_DASHBOARD_LIST_PATH` | `/api/v1/dashboard/` | Superset dashboard list endpoint for TypeScript asset search shadow execution. |
+| `AX_SUPERSET_CHART_LIST_PATH` | `/api/v1/chart/` | Superset chart list endpoint for TypeScript asset search and chart listing. |
+| `AX_SUPERSET_DASHBOARD_LIST_PATH` | `/api/v1/dashboard/` | Superset dashboard list endpoint for TypeScript asset search and dashboard listing. |
 | `AX_SUPERSET_DATASET_LIST_PATH` | `/api/v1/dataset/` | Superset dataset list endpoint for TypeScript asset search shadow execution. |
 | `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
 | `AX_SUPERSET_INTERNAL_TOKEN` | unset | Optional bearer token for internal Superset calls. |
@@ -65,6 +65,7 @@ Current endpoints:
 - `GET /ready`
 - `GET /metrics`
 - `POST /mcp/assets/search`
+- `POST /mcp/charts/list`
 - `POST /mcp/dashboards/list`
 
 Generated JSON schema artifacts live in `contracts/`.

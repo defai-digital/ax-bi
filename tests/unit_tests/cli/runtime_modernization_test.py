@@ -89,12 +89,12 @@ def test_runtime_modernization_rollout_manifest_outputs_text() -> None:
 
     result = CliRunner().invoke(
         runtime_modernization,
-        ["rollout-manifest", "--workflow", "mcp_asset_search", "--format", "text"],
+        ["rollout-manifest", "--workflow", "mcp_chart_list", "--format", "text"],
     )
 
     assert result.exit_code == 0
-    assert "mcp_asset_search: POST /mcp/assets/search" in result.output
-    assert "TS_ASSET_SEARCH_SERVING" in result.output
+    assert "mcp_chart_list: POST /mcp/charts/list" in result.output
+    assert "TS_CHART_LIST_SERVING" in result.output
     assert "shadow_mismatch_rate" in result.output
 
 

@@ -38,11 +38,20 @@ from superset.mcp_service.privacy import (
     request_uses_chart_data_model_filter,
     user_can_view_data_model_metadata,
 )
+from superset.mcp_service.utils.sanitization import (
+    LLM_CONTEXT_CLOSE_DELIMITER,
+    LLM_CONTEXT_OPEN_DELIMITER,
+)
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 list_charts_module = importlib.import_module(
     "superset.mcp_service.chart.tool.list_charts"
 )
+
+
+def _wrapped(value: str) -> str:
+    return f"{LLM_CONTEXT_OPEN_DELIMITER}\n{value}\n{LLM_CONTEXT_CLOSE_DELIMITER}"
 
 
 @pytest.fixture
@@ -339,4 +348,192 @@ async def test_list_charts_no_arguments(mock_list, mcp_server, app_context: None
     stats_logger.timing.assert_called_once()
     assert stats_logger.timing.call_args.args[0] == (
         "runtime_modernization.mcp_orchestration.list_charts.duration"
+    )
+
+
+@patch("superset.daos.chart.ChartDAO.list")
+@pytest.mark.asyncio
+async def test_list_charts_shadows_ax_services_when_enabled(
+    mock_list,
+    mock_chart,
+    mcp_server,
+    app_context: None,
+):
+    """Chart listing can shadow the TypeScript sidecar candidate."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([mock_chart], 1)
+
+    with (
+        patch.object(
+            list_charts_module,
+            "user_can_view_data_model_metadata",
+            return_value=True,
+        ),
+        patch.object(
+            list_charts_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+        ),
+        patch.object(list_charts_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_charts.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "chart-list.v1",
+                "charts": [
+                    {
+                        "id": 1,
+                        "sliceName": "test_chart",
+                        "vizType": "bar",
+                        "url": "/chart/1",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "slice_name"],
+                "columnsLoaded": ["id", "slice_name"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_charts",
+                {"request": ListChartsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    data = json.loads(result.content[0].text)
+    assert [chart["id"] for chart in data["charts"]] == [1]
+    client_class.return_value.list_charts.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_charts.shadow_match"
+    )
+
+
+@patch("superset.daos.chart.ChartDAO.list")
+@pytest.mark.asyncio
+async def test_list_charts_serves_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Chart listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch.object(
+            list_charts_module,
+            "user_can_view_data_model_metadata",
+            return_value=True,
+        ),
+        patch.object(
+            list_charts_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_CHART_LIST_SERVING"},
+        ),
+        patch.object(list_charts_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_charts.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "chart-list.v1",
+                "charts": [
+                    {
+                        "id": 9,
+                        "sliceName": "TS Chart",
+                        "vizType": "bar",
+                        "url": "/explore/?slice_id=9",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "slice_name", "viz_type", "url"],
+                "columnsLoaded": ["id", "slice_name", "viz_type", "url"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_charts",
+                {"request": ListChartsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["charts"] == [
+        {
+            "id": 9,
+            "slice_name": _wrapped("TS Chart"),
+            "viz_type": "bar",
+            "url": "/explore/?slice_id=9",
+        }
+    ]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_charts.served_candidate"
+    )
+
+
+@patch("superset.daos.chart.ChartDAO.list")
+@pytest.mark.asyncio
+async def test_list_charts_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Chart listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch.object(
+            list_charts_module,
+            "user_can_view_data_model_metadata",
+            return_value=True,
+        ),
+        patch.object(
+            list_charts_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_CHART_LIST_SERVING"},
+        ),
+        patch.object(list_charts_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_charts.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "chart-list.v1",
+                "charts": [{"sliceName": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_charts", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["charts"] == []
+    mock_list.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_charts.fallback"
     )

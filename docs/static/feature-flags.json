@@ -166,6 +166,12 @@
         "description": "Serve MCP asset search from the TypeScript sidecar with Python fallback."
       },
       {
+        "name": "TS_CHART_LIST_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP chart listing from the TypeScript sidecar with Python fallback."
+      },
+      {
         "name": "TS_DASHBOARD_LIST_SERVING",
         "default": false,
         "lifecycle": "development",

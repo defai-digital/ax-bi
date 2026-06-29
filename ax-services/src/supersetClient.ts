@@ -24,6 +24,13 @@ import {
   AssetType,
 } from './contracts/assetSearch';
 import {
+  CHART_LIST_CONTRACT_VERSION,
+  ChartFilterValue,
+  ChartListItem,
+  ChartListRequest,
+  ChartListResponse,
+} from './contracts/chartList';
+import {
   DASHBOARD_LIST_CONTRACT_VERSION,
   DashboardListItem,
   DashboardListRequest,
@@ -71,12 +78,20 @@ export interface SupersetDashboardListClient {
   ): Promise<DashboardListResponse>;
 }
 
+export interface SupersetChartListClient {
+  listCharts(
+    request: ChartListRequest,
+    correlationId?: string,
+  ): Promise<ChartListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
     SupersetMetadataClient,
     SupersetAssetSearchClient,
-    SupersetDashboardListClient
+    SupersetDashboardListClient,
+    SupersetChartListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -285,6 +300,54 @@ export class SupersetClient
     }
   }
 
+  async listCharts(
+    request: ChartListRequest,
+    correlationId?: string,
+  ): Promise<ChartListResponse> {
+    const url = this.buildChartListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyChartListResponse(request, [
+          `chart list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const charts = extractSupersetResults(payload)
+        .map(toChartListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, charts.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: CHART_LIST_CONTRACT_VERSION,
+        charts,
+        count: charts.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedChartColumns(request),
+        columnsLoaded: chartColumnsLoaded(charts),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyChartListResponse(request, [
+        `chart list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -351,6 +414,14 @@ export class SupersetClient
     url.searchParams.set('q', buildDashboardListQuery(request));
     return url.toString();
   }
+
+  private buildChartListUrl(request: ChartListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.chart}`,
+    );
+    url.searchParams.set('q', buildChartListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -369,6 +440,7 @@ interface SupersetListItem {
   name?: string;
   table_name?: string;
   slice_name?: string;
+  viz_type?: string;
   dashboard_title?: string;
   slug?: string;
   description?: string;
@@ -439,6 +511,30 @@ function buildDashboardListQuery(request: DashboardListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildChartListQuery(request: ChartListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'slice_name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatChartFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -449,7 +545,24 @@ function formatDashboardFilter(filter: {
   )})`;
 }
 
+function formatChartFilter(filter: {
+  col: string;
+  opr: string;
+  value: ChartFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatChartRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatChartRisonValue(value: ChartFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -513,6 +626,33 @@ function toDashboardListItem(
   };
 }
 
+function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    sliceName: typeof item.slice_name === 'string' ? item.slice_name : undefined,
+    vizType: typeof item.viz_type === 'string' ? item.viz_type : undefined,
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    certifiedBy:
+      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    certificationDetails:
+      typeof item.certification_details === 'string'
+        ? item.certification_details
+        : undefined,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    url: typeof item.url === 'string' ? item.url : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+  };
+}
+
 function requestedDashboardColumns(request: DashboardListRequest): string[] {
   return request.selectColumns.length > 0
     ? request.selectColumns
@@ -550,6 +690,42 @@ function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
   return [...loaded];
 }
 
+function requestedChartColumns(request: ChartListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : [
+        'id',
+        'slice_name',
+        'viz_type',
+        'description',
+        'certified_by',
+        'certification_details',
+        'url',
+        'changed_on',
+        'changed_on_humanized',
+      ];
+}
+
+function chartColumnsLoaded(charts: ChartListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const chart of charts) {
+    if (chart.sliceName !== undefined) loaded.add('slice_name');
+    if (chart.vizType !== undefined) loaded.add('viz_type');
+    if (chart.description !== undefined) loaded.add('description');
+    if (chart.certifiedBy !== undefined) loaded.add('certified_by');
+    if (chart.certificationDetails !== undefined) {
+      loaded.add('certification_details');
+    }
+    if (chart.uuid !== undefined) loaded.add('uuid');
+    if (chart.url !== undefined) loaded.add('url');
+    if (chart.changedOn !== undefined) loaded.add('changed_on');
+    if (chart.changedOnHumanized !== undefined) {
+      loaded.add('changed_on_humanized');
+    }
+  }
+  return [...loaded];
+}
+
 function emptyDashboardListResponse(
   request: DashboardListRequest,
   warnings: string[],
@@ -565,6 +741,26 @@ function emptyDashboardListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedDashboardColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyChartListResponse(
+  request: ChartListRequest,
+  warnings: string[],
+): ChartListResponse {
+  return {
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    charts: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedChartColumns(request),
     columnsLoaded: [],
     warnings,
   };

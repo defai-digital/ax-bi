@@ -225,6 +225,49 @@ def test_list_dashboards_posts_to_ax_services_dashboard_list_endpoint() -> None:
     )
 
 
+def test_list_charts_posts_to_ax_services_chart_list_endpoint() -> None:
+    """Chart list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"charts": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_charts(
+        {
+            "contractVersion": "chart-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "slice_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        request_id="request-charts",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"charts": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/charts/list",
+        json={
+            "contractVersion": "chart-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "slice_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-charts",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

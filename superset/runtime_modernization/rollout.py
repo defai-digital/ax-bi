@@ -201,6 +201,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         contract_version="dashboard-list.v1",
         serving_flag="TS_DASHBOARD_LIST_SERVING",
     ),
+    _mcp_workflow(
+        name="mcp_chart_list",
+        operation="list_charts",
+        sidecar_route="POST /mcp/charts/list",
+        contract_version="chart-list.v1",
+        serving_flag="TS_CHART_LIST_SERVING",
+    ),
 )
 
 PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (

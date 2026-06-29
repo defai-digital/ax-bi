@@ -123,6 +123,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_charts(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar chart list endpoint."""
+
+        return self.post_json(
+            "/mcp/charts/list",
+            payload,
+            request_id=request_id,
+        )
+
     def get_json(
         self,
         path: str,

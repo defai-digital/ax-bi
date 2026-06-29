@@ -21,6 +21,7 @@ import { afterEach, expect, test } from '@jest/globals';
 import { buildConfig } from '../src/config';
 import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
+import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
 import { SupersetClient } from '../src/supersetClient';
 
@@ -540,6 +541,147 @@ test('listDashboards records warnings for failed Superset list responses', async
     ],
     columnsLoaded: [],
     warnings: ['dashboard list returned status 504 from Superset'],
+  });
+});
+
+test('listCharts maps Superset chart list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 12,
+      result: [
+        {
+          id: 9,
+          slice_name: 'Sales by region',
+          viz_type: 'bar',
+          description: 'Regional sales',
+          certified_by: 'BI',
+          certification_details: 'Reviewed',
+          uuid: 'chart-uuid',
+          url: '/explore/?slice_id=9',
+          changed_on: '2026-01-02T00:00:00',
+          changed_on_humanized: '2 days ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listCharts(
+    {
+      contractVersion: CHART_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'viz_type', opr: 'eq', value: 'bar' }],
+      selectColumns: ['id', 'slice_name'],
+      search: 'sales',
+      orderColumn: 'slice_name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+    'request-charts',
+  );
+
+  expect(result).toEqual({
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    charts: [
+      {
+        id: 9,
+        sliceName: 'Sales by region',
+        vizType: 'bar',
+        description: 'Regional sales',
+        certifiedBy: 'BI',
+        certificationDetails: 'Reviewed',
+        uuid: 'chart-uuid',
+        url: '/explore/?slice_id=9',
+        changedOn: '2026-01-02T00:00:00',
+        changedOnHumanized: '2 days ago',
+      },
+    ],
+    count: 1,
+    totalCount: 12,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'slice_name'],
+    columnsLoaded: [
+      'id',
+      'slice_name',
+      'viz_type',
+      'description',
+      'certified_by',
+      'certification_details',
+      'uuid',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/chart/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'sales'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-charts',
+  });
+});
+
+test('listCharts records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listCharts({
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: CHART_LIST_CONTRACT_VERSION,
+    charts: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'slice_name',
+      'viz_type',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['chart list returned status 504 from Superset'],
   });
 });
 

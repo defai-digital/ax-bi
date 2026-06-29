@@ -32,6 +32,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
 
     assert names == {
         "mcp_asset_search",
+        "mcp_chart_list",
         "mcp_dashboard_list",
         "mcp_health_check",
     }
@@ -63,6 +64,23 @@ def test_rollout_workflow_serializes_metrics_and_gates() -> None:
         "fallback_rate",
         "shadow_mismatch_rate",
     }
+
+
+def test_rollout_workflow_includes_chart_list() -> None:
+    """Rollout manifest includes chart listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_chart_list")
+
+    assert workflow.sidecar_route == "POST /mcp/charts/list"
+    assert workflow.contract_version == "chart-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_CHART_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_charts.shadow_mismatch"
+        in workflow.python_metrics
+    )
 
 
 def test_get_rollout_workflow_rejects_unknown_workflow() -> None:
