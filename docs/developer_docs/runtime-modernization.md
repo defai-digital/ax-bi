@@ -174,12 +174,13 @@ superset runtime-modernization completion-audit \
   --expect-status incomplete
 ```
 
-The audit only completes when compatibility evidence, production serving flags,
-operator dashboard measurement windows, service-health gates, workflow gates,
-Rust kernel rollout decision evidence, and operator approval all pass. Phase 3
-requires at least one TypeScript workflow serving production traffic; Phase 5
-requires at least two. Phase 6 requires Phase 5 selective rollout evidence plus
-operator approval. Operator approval must include the team migration decision
+The audit only completes when schema-versioned compatibility evidence with
+inventory and benchmark details, production serving flags, operator dashboard
+measurement windows, service-health gates, workflow gates, Rust kernel rollout
+decision evidence, and operator approval all pass. Phase 3 requires at least
+one TypeScript workflow serving production traffic; Phase 5 requires at least
+two. Phase 6 requires Phase 5 selective rollout evidence plus operator
+approval. Operator approval must include the team migration decision
 (`expand`, `pause`, or `stop`) plus compatibility and security cost estimates
 for the accepted runtime boundary. Approval workflow names must exactly match
 the workflows serving production traffic in the flag-state artifact. Production

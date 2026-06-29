@@ -45,6 +45,30 @@ def _passing_service_health() -> dict[str, object]:
     }
 
 
+def _compatibility_report() -> dict[str, object]:
+    """Build passing compatibility report evidence for rollout tests."""
+
+    return {
+        "schema_version": 1,
+        "status": "passed",
+        "target_checks": {
+            "sql_parsing_operations_per_second_met": True,
+            "rust_kernel_speedup_met": None,
+        },
+        "inventory": {
+            "candidate_count": 2,
+        },
+        "benchmarks": {
+            "sql_parsing_normalization": {
+                "operations_per_second": 1000.0,
+            },
+            "sql_whitespace_kernel": {
+                "output_matched": True,
+            },
+        },
+    }
+
+
 def _production_flag_state(workflows: tuple[RolloutWorkflow, ...]) -> dict[str, object]:
     """Build passing production flag-state evidence for rollout tests."""
 
@@ -89,13 +113,7 @@ def _complete_production_evidence(
     return {
         "schema_version": 1,
         "artifacts": {
-            "compatibility_report": {
-                "status": "passed",
-                "target_checks": {
-                    "sql_parsing_operations_per_second_met": True,
-                    "rust_kernel_speedup_met": None,
-                },
-            },
+            "compatibility_report": _compatibility_report(),
             "rust_kernel_benchmark": _rust_kernel_benchmark(),
             "rust_kernel_rollout_decision": {
                 "kernel": "ax_sql.normalize_sql_whitespace",
@@ -474,13 +492,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
         {
             "schema_version": 1,
             "artifacts": {
-                "compatibility_report": {
-                    "status": "passed",
-                    "target_checks": {
-                        "sql_parsing_operations_per_second_met": True,
-                        "rust_kernel_speedup_met": None,
-                    },
-                },
+                "compatibility_report": _compatibility_report(),
                 "rust_kernel_benchmark": _rust_kernel_benchmark(),
                 "rust_kernel_rollout_decision": {
                     "kernel": "ax_sql.normalize_sql_whitespace",
@@ -568,9 +580,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
         {
             "schema_version": 1,
             "artifacts": {
-                "compatibility_report": {
-                    "status": "passed",
-                },
+                "compatibility_report": _compatibility_report(),
                 "rust_kernel_benchmark": _rust_kernel_benchmark(),
                 "rust_kernel_rollout_decision": {
                     "kernel": "ax_sql.normalize_sql_whitespace",
@@ -1861,7 +1871,7 @@ def test_validate_production_evidence_rejects_malformed_target_checks() -> None:
             "schema_version": 1,
             "artifacts": {
                 "compatibility_report": {
-                    "status": "passed",
+                    **_compatibility_report(),
                     "target_checks": {
                         "sql_parsing_operations_per_second_met": "yes",
                     },
@@ -1883,7 +1893,29 @@ def test_validate_production_evidence_rejects_malformed_target_checks() -> None:
 
     assert validation["status"] == "failed"
     assert checks["compatibility_report"]["passed"] is False
-    assert checks["rust_kernel_benchmark"]["passed"] is False
+
+
+def test_validate_production_evidence_requires_compatibility_details() -> None:
+    """Compatibility evidence must include inventory and benchmark details."""
+
+    report = _compatibility_report()
+    report.pop("benchmarks")
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "compatibility_report": report,
+                "rust_kernel_benchmark": _rust_kernel_benchmark(),
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["compatibility_report"]["passed"] is False
+    assert "inventory or benchmark details" in checks["compatibility_report"]["message"]
 
 
 def test_validate_production_evidence_requires_rust_benchmark_identity() -> None:

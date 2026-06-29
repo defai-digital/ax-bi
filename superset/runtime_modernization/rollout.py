@@ -352,7 +352,10 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
             "Machine-readable compatibility report for parser behavior, "
             "inventory, and optional release-candidate gates."
         ),
-        validation="status is passed and target_checks are true or explicitly unset",
+        validation=(
+            "schema_version is 1, status is passed, target_checks are true or "
+            "explicitly unset, and inventory and benchmark details are present"
+        ),
     ),
     RolloutEvidenceRequirement(
         name="rust_kernel_benchmark",
@@ -851,6 +854,19 @@ def _target_checks_passed(artifact: Mapping[str, Any]) -> bool:
     return all(value is True or value is None for value in target_checks.values())
 
 
+def _compatibility_report_passed(artifact: Mapping[str, Any] | None) -> bool:
+    """Return whether compatibility evidence has the expected report shape."""
+
+    return (
+        artifact is not None
+        and artifact.get("schema_version") == 1
+        and artifact.get("status") == "passed"
+        and _target_checks_passed(artifact)
+        and isinstance(artifact.get("inventory"), Mapping)
+        and isinstance(artifact.get("benchmarks"), Mapping)
+    )
+
+
 def _positive_integer(value: Any) -> bool:
     """Return whether a value is a positive integer."""
 
@@ -1077,19 +1093,18 @@ def validate_production_evidence(
     )
 
     compatibility_report = _artifact_mapping(artifacts, "compatibility_report")
-    compatibility_passed = (
-        compatibility_report is not None
-        and compatibility_report.get("status") == "passed"
-        and _target_checks_passed(compatibility_report)
-    )
+    compatibility_passed = _compatibility_report_passed(compatibility_report)
     checks.append(
         ProductionEvidenceCheck(
             name="compatibility_report",
             passed=compatibility_passed,
             message=(
-                "compatibility report passed"
+                "schema-versioned compatibility report passed"
                 if compatibility_passed
-                else "compatibility report is missing or failed"
+                else (
+                    "compatibility report is missing, malformed, failed, or lacks "
+                    "inventory or benchmark details"
+                )
             ),
         )
     )

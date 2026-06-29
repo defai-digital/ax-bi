@@ -31,6 +31,30 @@ from superset.utils import json
 MEASUREMENT_WINDOW = "2026-06-29T00:00Z/2026-06-29T01:00Z"
 
 
+def _compatibility_report() -> dict[str, object]:
+    """Build passing compatibility report evidence for CLI tests."""
+
+    return {
+        "schema_version": 1,
+        "status": "passed",
+        "target_checks": {
+            "sql_parsing_operations_per_second_met": True,
+            "rust_kernel_speedup_met": None,
+        },
+        "inventory": {
+            "candidate_count": 2,
+        },
+        "benchmarks": {
+            "sql_parsing_normalization": {
+                "operations_per_second": 1000.0,
+            },
+            "sql_whitespace_kernel": {
+                "output_matched": True,
+            },
+        },
+    }
+
+
 def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
     """Write a complete production evidence bundle for CLI tests."""
 
@@ -40,13 +64,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
             {
                 "schema_version": 1,
                 "artifacts": {
-                    "compatibility_report": {
-                        "status": "passed",
-                        "target_checks": {
-                            "sql_parsing_operations_per_second_met": True,
-                            "rust_kernel_speedup_met": None,
-                        },
-                    },
+                    "compatibility_report": _compatibility_report(),
                     "rust_kernel_benchmark": {
                         "schema_version": 1,
                         "status": "passed",
@@ -1087,15 +1105,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     operator_approval = tmp_path / "operator-approval.json"
 
     compatibility_report.write_text(
-        json.dumps(
-            {
-                "status": "passed",
-                "target_checks": {
-                    "sql_parsing_operations_per_second_met": True,
-                    "rust_kernel_speedup_met": None,
-                },
-            }
-        ),
+        json.dumps(_compatibility_report()),
         encoding="utf-8",
     )
     rust_benchmark.write_text(
@@ -1390,13 +1400,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
             {
                 "schema_version": 1,
                 "artifacts": {
-                    "compatibility_report": {
-                        "status": "passed",
-                        "target_checks": {
-                            "sql_parsing_operations_per_second_met": True,
-                            "rust_kernel_speedup_met": None,
-                        },
-                    },
+                    "compatibility_report": _compatibility_report(),
                     "rust_kernel_benchmark": {
                         "schema_version": 1,
                         "status": "passed",
@@ -1599,7 +1603,7 @@ def test_validate_production_evidence_rejects_malformed_target_checks(
                 "schema_version": 1,
                 "artifacts": {
                     "compatibility_report": {
-                        "status": "passed",
+                        **_compatibility_report(),
                         "target_checks": {
                             "sql_parsing_operations_per_second_met": "yes",
                         },
