@@ -45,6 +45,7 @@ test('health endpoint returns service metadata', async () => {
 
   expect(response.statusCode).toBe(200);
   expect(response.json()).toEqual({
+    contractVersion: 'runtime.v1',
     service: 'ax-services',
     status: 'ok',
   });
@@ -68,6 +69,7 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
 
   expect(response.statusCode).toBe(200);
   expect(response.json()).toEqual({
+    contractVersion: 'runtime.v1',
     service: 'ax-services',
     status: 'ready',
     dependencies: {
@@ -98,6 +100,7 @@ test('ready endpoint returns unavailable when Superset is unreachable', async ()
 
   expect(response.statusCode).toBe(503);
   expect(response.json()).toEqual({
+    contractVersion: 'runtime.v1',
     service: 'ax-services',
     status: 'not_ready',
     dependencies: {

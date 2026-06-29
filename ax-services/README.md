@@ -45,3 +45,13 @@ Environment variables:
 | `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
 | `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
 | `AX_SERVICES_LOG_LEVEL` | `info` | Structured log level. |
+
+## Runtime Contract
+
+The service exposes versioned runtime responses with
+`contractVersion: "runtime.v1"`.
+
+Current endpoints:
+
+- `GET /health`
+- `GET /ready`

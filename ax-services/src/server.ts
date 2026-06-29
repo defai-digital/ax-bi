@@ -19,6 +19,13 @@
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
+import {
+  HealthResponseContract,
+  healthResponseSchema,
+  ReadinessResponseContract,
+  readinessResponseSchema,
+  RUNTIME_CONTRACT_VERSION,
+} from './contracts/runtime';
 import { SupersetHealthClient } from './supersetClient';
 
 export function buildServer(
@@ -29,23 +36,46 @@ export function buildServer(
     logger: config.logLevel !== 'silent',
   });
 
-  server.get('/health', async () => ({
-    service: 'ax-services',
-    status: 'ok',
-  }));
-
-  server.get('/ready', async (request, reply) => {
-    const superset = await supersetClient.checkHealth();
-    const ready = superset.ok;
-
-    return reply.status(ready ? 200 : 503).send({
-      service: 'ax-services',
-      status: ready ? 'ready' : 'not_ready',
-      dependencies: {
-        superset,
+  server.get(
+    '/health',
+    {
+      schema: {
+        response: {
+          200: healthResponseSchema,
+        },
       },
-    });
-  });
+    },
+    async (): Promise<HealthResponseContract> => ({
+      contractVersion: RUNTIME_CONTRACT_VERSION,
+      service: 'ax-services',
+      status: 'ok',
+    }),
+  );
+
+  server.get(
+    '/ready',
+    {
+      schema: {
+        response: {
+          200: readinessResponseSchema,
+          503: readinessResponseSchema,
+        },
+      },
+    },
+    async (request, reply): Promise<ReadinessResponseContract> => {
+      const superset = await supersetClient.checkHealth();
+      const ready = superset.ok;
+
+      return reply.status(ready ? 200 : 503).send({
+        contractVersion: RUNTIME_CONTRACT_VERSION,
+        service: 'ax-services',
+        status: ready ? 'ready' : 'not_ready',
+        dependencies: {
+          superset,
+        },
+      });
+    },
+  );
 
   return server;
 }
