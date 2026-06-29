@@ -24,6 +24,7 @@ from flask import current_app
 
 from superset.mcp_service.system.schemas import HealthCheckResponse
 from superset.mcp_service.system.tool.health_check import health_check
+from superset.runtime_modernization.ax_services import AxServicesResponse
 
 
 def test_health_check_response_schema():
@@ -79,14 +80,65 @@ async def test_health_check_emits_runtime_modernization_metrics(
         "superset.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "test-version"},
     )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        return_value=False,
+    )
 
     response = await health_check()
 
     assert response.status == "healthy"
-    stats_logger.incr.assert_called_once_with(
+    stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.health_check.success"
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.shadow_disabled"
     )
     stats_logger.timing.assert_called_once()
     assert stats_logger.timing.call_args.args[0] == (
         "runtime_modernization.mcp_orchestration.health_check.duration"
+    )
+
+
+@pytest.mark.asyncio
+async def test_health_check_shadows_ax_services_when_enabled(
+    app_context: None,
+    mocker,
+):
+    """Health check shadows through ax-services when both flags are enabled."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    current_app.config["MCP_DEV_USERNAME"] = "admin"
+    mocker.patch(
+        "superset.mcp_service.auth.load_user_with_relationships",
+        return_value=MagicMock(),
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        return_value={"version_string": "test-version"},
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+    ).return_value
+    ax_services_client.health.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={"status": "ok"},
+    )
+
+    response = await health_check()
+
+    assert response.status == "healthy"
+    ax_services_client.health.assert_called_once_with()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.shadow_match"
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.success"
     )
