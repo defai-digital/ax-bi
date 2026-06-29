@@ -998,9 +998,9 @@ def validate_production_evidence(
     dashboard_records = _workflow_records_by_name(dashboard_snapshot or {})
     dashboard_required_workflows = [
         workflow for workflow in workflows if workflow.name in enabled_workflows
-    ] or list(workflows)
+    ]
     dashboard_passed = (
-        bool(workflows)
+        bool(dashboard_required_workflows)
         and _non_empty_string((dashboard_snapshot or {}).get("snapshot_reference"))
         and _non_empty_string((dashboard_snapshot or {}).get("measurement_window"))
         and _service_health_passed(dashboard_snapshot or {})

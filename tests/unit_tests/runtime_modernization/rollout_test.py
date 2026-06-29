@@ -644,6 +644,35 @@ def test_validate_production_evidence_requires_flag_state_provenance() -> None:
     assert "flag-state reference" in checks["production_flag_state"]["message"]
 
 
+def test_validate_production_evidence_scopes_dashboards_to_enabled_flags() -> None:
+    """Missing flag-state evidence does not mark every workflow dashboard-required."""
+
+    validation = validate_production_evidence(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "operator_dashboard_snapshot": {
+                    "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
+                    "service_health": _passing_service_health(),
+                    "workflows": {},
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["enabled_workflow_names"] == []
+    assert validation["dashboard_required_workflow_names"] == []
+    assert checks["production_flag_state"]["passed"] is False
+    assert checks["operator_dashboard_snapshot"]["passed"] is False
+
+
 def test_validate_production_evidence_requires_dashboard_service_health() -> None:
     """Operator dashboard evidence must include sidecar service health."""
 
@@ -1168,7 +1197,7 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
 
     assert validation["status"] == "failed"
     assert validation["enabled_workflow_names"] == []
-    assert validation["dashboard_required_workflow_names"] == ["mcp_asset_search"]
+    assert validation["dashboard_required_workflow_names"] == []
     assert checks["compatibility_report"]["passed"] is False
     assert checks["rust_kernel_benchmark"]["passed"] is False
     assert checks["rust_kernel_rollout_decision"]["passed"] is False
