@@ -22,13 +22,15 @@ under the License.
 > **Related documents:**
 > [PRD](runtime-modernization-prd.md) ·
 > [ADR](runtime-modernization-adr.md) ·
+> [Boundary Decision ADR](runtime-modernization-boundary-decision-adr.md) ·
 > [Technical Specification](runtime-modernization-tech-spec.md)
 
 ## Status
 
 In progress. Phase 2 foundation is implemented, Phase 3 has three MCP workflows
-behind TypeScript routing flags, and Phase 4 has a Rust SQL kernel proof of
-concept. Phase 5 expansion and Phase 6 larger-boundary decisions remain open.
+behind TypeScript routing flags, Phase 4 has a Rust SQL kernel proof of
+concept, and the Phase 6 boundary decision is documented. Phase 5 production
+rollout evidence remains open.
 
 ## Planning Assumptions
 
@@ -285,6 +287,15 @@ product-specific and contract-oriented.
 - Compatibility and security costs are explicitly estimated.
 - Operators approve deployment complexity.
 - The team chooses either expand, pause, or stop migration.
+
+### Current Evidence
+
+- [Runtime Modernization Boundary Decision](runtime-modernization-boundary-decision-adr.md)
+  selects a split-by-tool-class MCP boundary, keeps Superset as the
+  authorization authority, keeps background jobs in Python, and limits Rust to
+  measured kernels.
+- Operator production approval and live rollout evidence are still required
+  before treating the modernization effort as complete.
 
 ## Workstreams
 

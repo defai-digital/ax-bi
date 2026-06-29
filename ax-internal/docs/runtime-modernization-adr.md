@@ -22,7 +22,8 @@ under the License.
 > **Related documents:**
 > [PRD](runtime-modernization-prd.md) ·
 > [Technical Specification](runtime-modernization-tech-spec.md) ·
-> [Phased Plan](runtime-modernization-phased-plan.md)
+> [Phased Plan](runtime-modernization-phased-plan.md) ·
+> [Boundary Decision ADR](runtime-modernization-boundary-decision-adr.md)
 
 ## Status
 
@@ -199,4 +200,5 @@ Decision: accepted.
   package used by an existing Node runtime?
 - Should Rust enter first as Python extensions or service binaries?
 - Which runtime owns MCP long term: Python for Superset affinity, TypeScript for
-  product velocity, or a split by tool class?
+  product velocity, or a split by tool class? Resolved for AX-BI planning in
+  [Runtime Modernization Boundary Decision](runtime-modernization-boundary-decision-adr.md).
