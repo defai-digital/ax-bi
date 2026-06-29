@@ -26,7 +26,7 @@ export interface DependencyHealth {
 }
 
 export interface SupersetHealthClient {
-  checkHealth(): Promise<DependencyHealth>;
+  checkHealth(correlationId?: string): Promise<DependencyHealth>;
 }
 
 export class SupersetClient implements SupersetHealthClient {
@@ -36,9 +36,13 @@ export class SupersetClient implements SupersetHealthClient {
     this.healthUrl = `${config.supersetBaseUrl}${config.supersetHealthPath}`;
   }
 
-  async checkHealth(): Promise<DependencyHealth> {
+  async checkHealth(correlationId?: string): Promise<DependencyHealth> {
+    const headers =
+      correlationId === undefined ? undefined : { 'x-request-id': correlationId };
+
     try {
       const response = await fetch(this.healthUrl, {
+        headers,
         signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
       });
 

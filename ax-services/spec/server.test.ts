@@ -44,6 +44,7 @@ test('health endpoint returns service metadata', async () => {
   });
 
   expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBeDefined();
   expect(response.json()).toEqual({
     contractVersion: 'runtime.v1',
     service: 'ax-services',
@@ -52,8 +53,12 @@ test('health endpoint returns service metadata', async () => {
 });
 
 test('ready endpoint returns ok when Superset is reachable', async () => {
+  const seenRequestIds: string[] = [];
   const server = buildServer(config, {
-    async checkHealth() {
+    async checkHealth(correlationId) {
+      if (correlationId) {
+        seenRequestIds.push(correlationId);
+      }
       return {
         ok: true,
         statusCode: 200,
@@ -65,9 +70,14 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
   const response = await server.inject({
     method: 'GET',
     url: '/ready',
+    headers: {
+      'x-request-id': 'request-123',
+    },
   });
 
   expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-123');
+  expect(seenRequestIds).toEqual(['request-123']);
   expect(response.json()).toEqual({
     contractVersion: 'runtime.v1',
     service: 'ax-services',

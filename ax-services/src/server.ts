@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { randomUUID } from 'crypto';
+
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
@@ -34,6 +36,17 @@ export function buildServer(
 ): FastifyInstance {
   const server = Fastify({
     logger: config.logLevel !== 'silent',
+    genReqId(request) {
+      const requestId = request.headers['x-request-id'];
+      if (Array.isArray(requestId)) {
+        return requestId[0] || randomUUID();
+      }
+      return requestId || randomUUID();
+    },
+  });
+
+  server.addHook('onRequest', async (request, reply) => {
+    reply.header('x-request-id', request.id);
   });
 
   server.get(
@@ -63,7 +76,7 @@ export function buildServer(
       },
     },
     async (request, reply): Promise<ReadinessResponseContract> => {
-      const superset = await supersetClient.checkHealth();
+      const superset = await supersetClient.checkHealth(request.id);
       const ready = superset.ok;
 
       return reply.status(ready ? 200 : 503).send({
