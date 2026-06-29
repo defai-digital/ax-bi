@@ -58,6 +58,58 @@ def test_runtime_modernization_inventory_outputs_json() -> None:
     assert all(item["disposition"] == "candidate" for item in payload)
 
 
+def test_runtime_modernization_rollout_manifest_outputs_json() -> None:
+    """Rollout manifest emits stable JSON for operator dashboard wiring."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["rollout-manifest", "--workflow", "mcp_dashboard_list"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert len(payload["workflows"]) == 1
+    workflow = payload["workflows"][0]
+    assert workflow["name"] == "mcp_dashboard_list"
+    assert workflow["sidecar_route"] == "POST /mcp/dashboards/list"
+    assert workflow["contract_version"] == "dashboard-list.v1"
+    assert workflow["serving_flags"] == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_DASHBOARD_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_dashboards.fallback"
+        in workflow["python_metrics"]
+    )
+
+
+def test_runtime_modernization_rollout_manifest_outputs_text() -> None:
+    """Rollout manifest has a compact human-readable mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["rollout-manifest", "--workflow", "mcp_asset_search", "--format", "text"],
+    )
+
+    assert result.exit_code == 0
+    assert "mcp_asset_search: POST /mcp/assets/search" in result.output
+    assert "TS_ASSET_SEARCH_SERVING" in result.output
+    assert "shadow_mismatch_rate" in result.output
+
+
+def test_runtime_modernization_rollout_manifest_rejects_unknown_workflow() -> None:
+    """Rollout manifest fails on unknown workflow names."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["rollout-manifest", "--workflow", "missing"],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown runtime modernization rollout workflow" in result.output
+
+
 def test_runtime_modernization_benchmark_outputs_json(
     mocker: MockerFixture,
 ) -> None:

@@ -40,6 +40,11 @@ from superset.runtime_modernization.inventory import (
     MigrationDisposition,
     RuntimeInventoryItem,
 )
+from superset.runtime_modernization.rollout import (
+    get_rollout_workflow,
+    get_rollout_workflows,
+    RolloutWorkflow,
+)
 from superset.utils import json
 
 
@@ -158,6 +163,29 @@ def _inventory_summary_to_dict(
     }
 
 
+def _rollout_workflow_to_dict(workflow: RolloutWorkflow) -> dict[str, object]:
+    """Serialize a rollout workflow for CLI output."""
+
+    return workflow.to_dict()
+
+
+def _format_rollout_workflows(workflows: tuple[RolloutWorkflow, ...]) -> str:
+    """Render rollout workflows as compact text."""
+
+    lines = []
+    for workflow in workflows:
+        lines.append(
+            f"{workflow.name}: {workflow.sidecar_route} ({workflow.contract_version})"
+        )
+        lines.append(f"  shadow: {', '.join(workflow.shadow_flags)}")
+        lines.append(f"  serving: {', '.join(workflow.serving_flags)}")
+        lines.append(
+            "  gates: "
+            + ", ".join(f"{gate.name} {gate.target}" for gate in workflow.gates)
+        )
+    return "\n".join(lines)
+
+
 def _build_compatibility_report(
     iterations: int,
     *,
@@ -246,6 +274,49 @@ def inventory(output_format: str, disposition: str | None) -> None:
         return
 
     click.echo(_format_table(items))
+
+
+@runtime_modernization.command("rollout-manifest")
+@click.option(
+    "--workflow",
+    help="Optional rollout workflow name to print.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def rollout_manifest(workflow: str | None, output_format: str) -> None:
+    """Print rollout gates and dashboard metrics for migrated workflows."""
+
+    try:
+        workflows = (
+            (get_rollout_workflow(workflow),)
+            if workflow is not None
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    if output_format == "json":
+        click.echo(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "workflows": [
+                        _rollout_workflow_to_dict(item) for item in workflows
+                    ],
+                },
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return
+
+    click.echo(_format_rollout_workflows(workflows))
 
 
 @runtime_modernization.command("compatibility-report")

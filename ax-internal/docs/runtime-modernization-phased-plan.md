@@ -252,10 +252,14 @@ product-specific and contract-oriented.
 - The compatibility report accepts explicit SQL parsing throughput and Rust
   speedup gates for release-candidate validation without making default CI runs
   environment-sensitive.
+- `superset runtime-modernization rollout-manifest` emits the serving flags,
+  sidecar routes, Python metrics, sidecar metrics, and rollout gates for each
+  migrated MCP workflow so operator dashboards can be generated from a stable
+  source.
 - Python unit CI uploads the compatibility report artifact on the current
-  Python version. Additional production service dashboards, rollout evidence,
-  and selective workflow migrations are still required before this phase is
-  complete.
+  Python version. Live production dashboard snapshots, rollout evidence, and
+  additional selective workflow migrations are still required before this phase
+  is complete.
 
 ## Phase 6: Reevaluate Larger Boundaries
 
