@@ -923,8 +923,10 @@ def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
     if artifact is None:
         return False
 
-    if not _non_empty_string(artifact.get("kernel")) or not _non_empty_string(
-        artifact.get("decision_reference")
+    if (
+        not _non_empty_string(artifact.get("kernel"))
+        or not _non_empty_string(artifact.get("decision_reference"))
+        or not _non_empty_string(artifact.get("rationale"))
     ):
         return False
 
@@ -935,7 +937,7 @@ def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
             and artifact.get("serving_flag_enabled") is True
         )
     if decision == "rejected":
-        return _non_empty_string(artifact.get("rationale"))
+        return True
     return False
 
 

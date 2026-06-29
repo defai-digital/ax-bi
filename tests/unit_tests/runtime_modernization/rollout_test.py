@@ -1534,6 +1534,31 @@ def test_validate_production_evidence_rejects_unserved_rust_decision() -> None:
     assert checks["rust_kernel_rollout_decision"]["passed"] is False
 
 
+def test_validate_production_evidence_requires_served_rust_rationale() -> None:
+    """A served Rust decision must explain the production rollout decision."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "rust_kernel_rollout_decision": {
+                    "kernel": "ax_sql.normalize_sql_whitespace",
+                    "decision": "served",
+                    "serving_flag": "RUST_SQL_KERNEL",
+                    "serving_flag_enabled": True,
+                    "decision_reference": "CHG-RUST-1",
+                    "rationale": "",
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["rust_kernel_rollout_decision"]["passed"] is False
+
+
 def test_audit_runtime_modernization_completion_reports_missing_evidence() -> None:
     """Phase completion audit identifies production evidence gaps."""
 

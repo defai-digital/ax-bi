@@ -1495,6 +1495,49 @@ def test_runtime_modernization_validate_production_evidence_rejects_empty_approv
     assert "runtime modernization production evidence failed" in result.output
 
 
+def test_validate_production_evidence_rejects_served_rust_without_rationale(
+    tmp_path,
+) -> None:
+    """Strict validation rejects served Rust decisions without rationale."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "rust_kernel_rollout_decision": {
+                        "kernel": "ax_sql.normalize_sql_whitespace",
+                        "decision": "served",
+                        "serving_flag": "RUST_SQL_KERNEL",
+                        "serving_flag_enabled": True,
+                        "decision_reference": "CHG-RUST-1",
+                        "rationale": "",
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL rust_kernel_rollout_decision" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> None:
     """Completion audit emits stable phase status JSON."""
 
