@@ -45,6 +45,7 @@ from superset.runtime_modernization.rollout import (
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
+    validate_production_evidence,
 )
 from superset.utils import json
 
@@ -205,6 +206,18 @@ def _format_production_evidence_manifest(manifest: dict[str, Any]) -> str:
         lines.append(
             f"  {artifact['name']} ({artifact['phase']}): {artifact['source']}"
         )
+    return "\n".join(lines)
+
+
+def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
+    """Render a compact production evidence validation report."""
+
+    lines = [
+        f"runtime modernization production evidence validation: {validation['status']}"
+    ]
+    for check in validation["checks"]:
+        marker = "PASS" if check["passed"] else "FAIL"
+        lines.append(f"  {marker} {check['name']}: {check['message']}")
     return "\n".join(lines)
 
 
@@ -373,6 +386,61 @@ def production_evidence(workflow: str | None, output_format: str) -> None:
         return
 
     click.echo(_format_production_evidence_manifest(manifest))
+
+
+@runtime_modernization.command("validate-production-evidence")
+@click.argument("evidence_file", type=click.File("r"))
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to validate. Can be supplied more than once.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with an error when evidence validation fails.",
+)
+def validate_production_evidence_command(
+    evidence_file: Any,
+    workflow: tuple[str, ...],
+    output_format: str,
+    strict: bool,
+) -> None:
+    """Validate runtime modernization production evidence from a JSON file."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    try:
+        evidence = json.loads(evidence_file.read())
+    except ValueError as ex:
+        raise click.ClickException(f"Invalid evidence JSON: {ex}") from ex
+    if not isinstance(evidence, dict):
+        raise click.ClickException("Evidence JSON must be an object")
+
+    validation = validate_production_evidence(workflows, evidence)
+
+    if output_format == "json":
+        click.echo(json.dumps(validation, sort_keys=True, indent=2))
+    else:
+        click.echo(_format_production_evidence_validation(validation))
+
+    if strict and validation["status"] != "passed":
+        raise click.ClickException("runtime modernization production evidence failed")
 
 
 @runtime_modernization.command("compatibility-report")

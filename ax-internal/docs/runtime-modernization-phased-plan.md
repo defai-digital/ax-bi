@@ -275,6 +275,9 @@ product-specific and contract-oriented.
 - `superset runtime-modernization production-evidence` emits the required
   production artifacts for completion: compatibility report, Rust benchmark,
   serving flag state, operator dashboard snapshot, and operator approval.
+- `superset runtime-modernization validate-production-evidence` checks a JSON
+  evidence bundle against those required artifacts and can fail release gates
+  when evidence is missing or failing.
 - Python unit CI uploads the compatibility report artifact on the current
   Python version. Live production dashboard snapshots, rollout evidence, and
   additional selective workflow migrations are still required before this phase

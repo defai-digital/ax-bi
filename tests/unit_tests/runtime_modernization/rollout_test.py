@@ -21,6 +21,7 @@ from superset.runtime_modernization.rollout import (
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
+    validate_production_evidence,
 )
 
 
@@ -148,3 +149,105 @@ def test_production_evidence_manifest_lists_required_artifacts() -> None:
         "rust_kernel_benchmark",
     }
     assert len(get_production_evidence_requirements()) == len(artifact_names)
+
+
+def test_validate_production_evidence_passes_complete_bundle() -> None:
+    """Production evidence validation passes complete release evidence."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+
+    validation = validate_production_evidence(
+        workflows,
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "compatibility_report": {
+                    "status": "passed",
+                    "target_checks": {
+                        "sql_parsing_operations_per_second_met": True,
+                        "rust_kernel_speedup_met": None,
+                    },
+                },
+                "rust_kernel_benchmark": {
+                    "status": "passed",
+                    "output_matched": True,
+                    "target_checks": {
+                        "speedup_met": None,
+                    },
+                },
+                "production_flag_state": {
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_dashboard_list",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_DASHBOARD_LIST_SERVING": True,
+                            },
+                        },
+                    ],
+                },
+                "operator_dashboard_snapshot": {
+                    "workflows": {
+                        "mcp_asset_search": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                            },
+                        },
+                        "mcp_dashboard_list": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                            },
+                        },
+                    },
+                },
+                "operator_approval": {
+                    "approved": True,
+                    "boundary_decision": "split MCP by tool class",
+                    "rollout_scope": "asset search and dashboard listing",
+                },
+            },
+        },
+    )
+
+    assert validation["status"] == "passed"
+    assert all(check["passed"] for check in validation["checks"])
+
+
+def test_validate_production_evidence_fails_incomplete_bundle() -> None:
+    """Production evidence validation identifies missing external artifacts."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "compatibility_report": {
+                    "status": "failed",
+                    "target_checks": {
+                        "sql_parsing_operations_per_second_met": False,
+                    },
+                },
+            },
+        },
+    )
+
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["compatibility_report"]["passed"] is False
+    assert checks["rust_kernel_benchmark"]["passed"] is False
+    assert checks["production_flag_state"]["passed"] is False

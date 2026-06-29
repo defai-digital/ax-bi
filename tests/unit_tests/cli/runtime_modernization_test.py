@@ -175,6 +175,133 @@ def test_runtime_modernization_production_evidence_rejects_unknown_workflow() ->
     assert "Unknown runtime modernization rollout workflow" in result.output
 
 
+def test_runtime_modernization_validate_production_evidence_outputs_json(
+    tmp_path,
+) -> None:
+    """Production evidence validation emits stable JSON for release gates."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "compatibility_report": {
+                        "status": "passed",
+                        "target_checks": {
+                            "sql_parsing_operations_per_second_met": True,
+                            "rust_kernel_speedup_met": None,
+                        },
+                    },
+                    "rust_kernel_benchmark": {
+                        "status": "passed",
+                        "output_matched": True,
+                        "target_checks": {
+                            "speedup_met": None,
+                        },
+                    },
+                    "production_flag_state": {
+                        "workflows": [
+                            {
+                                "name": "mcp_asset_search",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_ASSET_SEARCH_SERVING": True,
+                                },
+                            },
+                            {
+                                "name": "mcp_dashboard_list",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_DASHBOARD_LIST_SERVING": True,
+                                },
+                            },
+                        ],
+                    },
+                    "operator_dashboard_snapshot": {
+                        "workflows": {
+                            "mcp_asset_search": {
+                                "gates": {
+                                    "shadow_mismatch_rate": {"passed": True},
+                                    "fallback_rate": {"passed": True},
+                                    "error_rate": {"passed": True},
+                                },
+                            },
+                            "mcp_dashboard_list": {
+                                "gates": {
+                                    "shadow_mismatch_rate": {"passed": True},
+                                    "fallback_rate": {"passed": True},
+                                    "error_rate": {"passed": True},
+                                },
+                            },
+                        },
+                    },
+                    "operator_approval": {
+                        "approved": True,
+                        "boundary_decision": "split MCP by tool class",
+                        "rollout_scope": "asset search and dashboard listing",
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--format",
+            "json",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["status"] == "passed"
+    assert payload["workflow_names"] == ["mcp_asset_search", "mcp_dashboard_list"]
+    assert all(check["passed"] for check in payload["checks"])
+
+
+def test_runtime_modernization_validate_production_evidence_strict_failure(
+    tmp_path,
+) -> None:
+    """Strict production evidence validation exits nonzero for missing artifacts."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps({"schema_version": 1, "artifacts": {}}),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "runtime modernization production evidence validation: failed" in (
+        result.output
+    )
+    assert "FAIL compatibility_report" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_benchmark_outputs_json(
     mocker: MockerFixture,
 ) -> None:
