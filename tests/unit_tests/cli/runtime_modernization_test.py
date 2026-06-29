@@ -104,6 +104,10 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
                         "approval_reference": "CHG-123",
+                        "workflow_names": [
+                            "mcp_asset_search",
+                            "mcp_dashboard_list",
+                        ],
                     },
                 },
             }
@@ -300,6 +304,7 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert "operator_dashboard_snapshot" in payload["artifacts"]
     assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
+    assert payload["artifacts"]["operator_approval"]["workflow_names"] == []
 
 
 def test_runtime_modernization_production_evidence_template_outputs_text() -> None:
@@ -404,6 +409,10 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
         runtime_modernization,
         [
             "operator-approval",
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
             "--boundary-decision",
             "split MCP by tool class",
             "--rollout-scope",
@@ -423,6 +432,7 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
         "boundary_decision": "split MCP by tool class",
         "rollout_scope": "asset search and dashboard listing",
         "approval_reference": "CHG-123",
+        "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
         "approver": "platform-ops",
         "notes": "approved after canary review",
     }
@@ -435,6 +445,8 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
         runtime_modernization,
         [
             "operator-approval",
+            "--workflow",
+            "mcp_asset_search",
             "--boundary-decision",
             "split MCP by tool class",
             "--rollout-scope",
@@ -452,6 +464,29 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "approved: False" in result.output
     assert "split MCP by tool class" in result.output
     assert "approval reference: ADR-42" in result.output
+    assert "workflows: mcp_asset_search" in result.output
+
+
+def test_runtime_modernization_operator_approval_rejects_unknown_workflow() -> None:
+    """Operator approval command rejects unknown workflow names."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--workflow",
+            "missing",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "asset search",
+            "--approval-reference",
+            "ADR-42",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown runtime modernization rollout workflow" in result.output
 
 
 def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> None:
@@ -900,6 +935,10 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
                 "approval_reference": "CHG-123",
+                "workflow_names": [
+                    "mcp_asset_search",
+                    "mcp_dashboard_list",
+                ],
             }
         ),
         encoding="utf-8",
@@ -1055,6 +1094,10 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
                         "approval_reference": "CHG-123",
+                        "workflow_names": [
+                            "mcp_asset_search",
+                            "mcp_dashboard_list",
+                        ],
                     },
                 },
             }

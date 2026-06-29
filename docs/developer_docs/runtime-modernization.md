@@ -140,6 +140,7 @@ superset runtime-modernization operator-dashboard-snapshot \
   --passed-workflow-gate mcp_asset_search:latency_p95
 superset runtime-modernization rust-kernel-rollout-decision-template --format json
 superset runtime-modernization operator-approval \
+  --workflow mcp_asset_search \
   --boundary-decision "split MCP by tool class" \
   --rollout-scope "selected TypeScript MCP workflows" \
   --approval-reference "CHANGE-REFERENCE"

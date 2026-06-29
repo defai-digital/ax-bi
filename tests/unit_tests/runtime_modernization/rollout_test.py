@@ -90,6 +90,7 @@ def _complete_production_evidence() -> dict[str, object]:
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
                 "approval_reference": "CHG-123",
+                "workflow_names": [workflow.name for workflow in workflows],
             },
         },
     }
@@ -392,6 +393,10 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search and dashboard listing",
                     "approval_reference": "CHG-123",
+                    "workflow_names": [
+                        "mcp_asset_search",
+                        "mcp_dashboard_list",
+                    ],
                 },
             },
         },
@@ -468,6 +473,10 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search and dashboard listing",
                     "approval_reference": "CHG-123",
+                    "workflow_names": [
+                        "mcp_asset_search",
+                        "mcp_dashboard_list",
+                    ],
                 },
             },
         },
@@ -477,6 +486,51 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
     assert validation["status"] == "passed"
     assert checks["production_flag_state"]["passed"] is True
     assert checks["operator_dashboard_snapshot"]["passed"] is True
+
+
+def test_validate_production_evidence_requires_approval_for_enabled_workflows() -> None:
+    """Operator approval must name workflows serving production traffic."""
+
+    validation = validate_production_evidence(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": {
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_dashboard_list",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_DASHBOARD_LIST_SERVING": True,
+                            },
+                        },
+                    ],
+                },
+                "operator_approval": {
+                    "approved": True,
+                    "boundary_decision": "split MCP by tool class",
+                    "rollout_scope": "asset search only",
+                    "approval_reference": "CHG-123",
+                    "workflow_names": ["mcp_asset_search"],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_approval"]["passed"] is False
 
 
 def test_build_production_evidence_template_includes_workflow_gates() -> None:
@@ -530,6 +584,7 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "boundary_decision": "",
         "rollout_scope": "",
         "approval_reference": "",
+        "workflow_names": [],
     }
 
 
@@ -573,6 +628,7 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
         boundary_decision="split MCP by tool class",
         rollout_scope="asset search and dashboard listing",
         approval_reference="CHG-123",
+        workflow_names=("mcp_asset_search", "mcp_dashboard_list"),
         approver="platform-ops",
         notes="approved after canary review",
     )
@@ -582,6 +638,7 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
         "boundary_decision": "split MCP by tool class",
         "rollout_scope": "asset search and dashboard listing",
         "approval_reference": "CHG-123",
+        "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
         "approver": "platform-ops",
         "notes": "approved after canary review",
     }

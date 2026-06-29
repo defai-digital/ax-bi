@@ -257,6 +257,12 @@ def _format_operator_approval_evidence(approval: dict[str, Any]) -> str:
         f"  boundary decision: {approval['boundary_decision']}",
         f"  rollout scope: {approval['rollout_scope']}",
         f"  approval reference: {approval['approval_reference']}",
+        "  workflows: "
+        + (
+            ", ".join(approval["workflow_names"])
+            if approval.get("workflow_names")
+            else "none"
+        ),
     ]
     if "approver" in approval:
         lines.append(f"  approver: {approval['approver']}")
@@ -680,6 +686,11 @@ def production_flag_state(
 
 @runtime_modernization.command("operator-approval")
 @click.option(
+    "--workflow",
+    multiple=True,
+    help="Approved rollout workflow name. Can be supplied more than once.",
+)
+@click.option(
     "--boundary-decision",
     required=True,
     help="Accepted runtime ownership boundary decision.",
@@ -717,6 +728,7 @@ def production_flag_state(
     help="Output format.",
 )
 def operator_approval(
+    workflow: tuple[str, ...],
     boundary_decision: str,
     rollout_scope: str,
     approval_reference: str,
@@ -727,10 +739,16 @@ def operator_approval(
 ) -> None:
     """Print operator approval evidence for runtime modernization rollout."""
 
+    try:
+        workflow_names = tuple(get_rollout_workflow(name).name for name in workflow)
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
     approval = build_operator_approval_evidence(
         boundary_decision=boundary_decision,
         rollout_scope=rollout_scope,
         approval_reference=approval_reference,
+        workflow_names=workflow_names,
         approved=approved,
         approver=approver,
         notes=notes,

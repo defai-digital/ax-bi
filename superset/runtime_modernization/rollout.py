@@ -479,6 +479,7 @@ def build_production_evidence_template(
                 "boundary_decision": "",
                 "rollout_scope": "",
                 "approval_reference": "",
+                "workflow_names": [],
             },
         },
     }
@@ -508,6 +509,7 @@ def build_operator_approval_evidence(
     boundary_decision: str,
     rollout_scope: str,
     approval_reference: str,
+    workflow_names: tuple[str, ...] = (),
     approved: bool = True,
     approver: str | None = None,
     notes: str | None = None,
@@ -519,6 +521,7 @@ def build_operator_approval_evidence(
         "boundary_decision": boundary_decision,
         "rollout_scope": rollout_scope,
         "approval_reference": approval_reference,
+        "workflow_names": list(workflow_names),
     }
     if approver is not None:
         evidence["approver"] = approver
@@ -723,6 +726,14 @@ def _non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and value.strip() != ""
 
 
+def _string_set(value: Any) -> set[str]:
+    """Return a string set from a list-like value."""
+
+    if not isinstance(value, list):
+        return set()
+    return {item for item in value if isinstance(item, str)}
+
+
 def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
     """Return whether Rust rollout decision evidence satisfies Phase 5."""
 
@@ -867,11 +878,18 @@ def validate_production_evidence(
     )
 
     operator_approval = _artifact_mapping(artifacts, "operator_approval")
+    approval_workflow_names = _string_set(
+        (operator_approval or {}).get("workflow_names")
+    )
+    approval_covers_enabled_workflows = not enabled_workflows or set(
+        enabled_workflows
+    ).issubset(approval_workflow_names)
     approval_passed = (
         operator_approval is not None
         and operator_approval.get("approved") is True
         and _non_empty_string(operator_approval.get("boundary_decision"))
         and _non_empty_string(operator_approval.get("approval_reference"))
+        and approval_covers_enabled_workflows
         and (
             _non_empty_string(operator_approval.get("rollout_scope"))
             or _non_empty_string(operator_approval.get("scope"))
@@ -883,11 +901,11 @@ def validate_production_evidence(
             passed=approval_passed,
             message=(
                 "operator approval names boundary decision, rollout scope, "
-                "and approval reference"
+                "approval reference, and enabled workflows"
                 if approval_passed
                 else (
                     "operator approval is missing boundary decision, rollout "
-                    "scope, or approval reference"
+                    "scope, approval reference, or enabled workflow names"
                 )
             ),
         )
