@@ -17,6 +17,13 @@
  * under the License.
  */
 import {
+  ANNOTATION_LIST_CONTRACT_VERSION,
+  AnnotationFilterValue,
+  AnnotationListItem,
+  AnnotationListRequest,
+  AnnotationListResponse,
+} from './contracts/annotationList';
+import {
   ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
   AnnotationLayerFilterValue,
   AnnotationLayerListItem,
@@ -127,6 +134,13 @@ export interface SupersetAssetSearchClient {
   ): Promise<AssetSearchResponse>;
 }
 
+export interface SupersetAnnotationListClient {
+  listAnnotations(
+    request: AnnotationListRequest,
+    correlationId?: string,
+  ): Promise<AnnotationListResponse>;
+}
+
 export interface SupersetAnnotationLayerListClient {
   listAnnotationLayers(
     request: AnnotationLayerListRequest,
@@ -201,6 +215,7 @@ export class SupersetClient
   implements
     SupersetHealthClient,
     SupersetMetadataClient,
+    SupersetAnnotationListClient,
     SupersetAnnotationLayerListClient,
     SupersetAssetSearchClient,
     SupersetDashboardListClient,
@@ -343,6 +358,55 @@ export class SupersetClient
     } catch (error) {
       return emptyAnnotationLayerListResponse(request, [
         `annotation layer list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
+  async listAnnotations(
+    request: AnnotationListRequest,
+    correlationId?: string,
+  ): Promise<AnnotationListResponse> {
+    const url = this.buildAnnotationListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyAnnotationListResponse(request, [
+          `annotation list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const annotations = extractSupersetResults(payload)
+        .map(item => toAnnotationListItem(item, request.layerId))
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, annotations.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+        annotations,
+        count: annotations.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        layerId: request.layerId,
+        columnsRequested: requestedAnnotationColumns(request),
+        columnsLoaded: annotationColumnsLoaded(annotations),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyAnnotationListResponse(request, [
+        `annotation list failed: ${
           error instanceof Error ? error.message : String(error)
         }`,
       ]);
@@ -917,6 +981,18 @@ export class SupersetClient
     return url.toString();
   }
 
+  private buildAnnotationListUrl(request: AnnotationListRequest): string {
+    const basePath = this.config.supersetAssetSearchPaths.annotationLayer.replace(
+      /\/$/,
+      '',
+    );
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${basePath}/${request.layerId}/annotation/`,
+    );
+    url.searchParams.set('q', buildAnnotationListQuery(request));
+    return url.toString();
+  }
+
   private buildDashboardListUrl(request: DashboardListRequest): string {
     const url = new URL(
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dashboard}`,
@@ -1005,6 +1081,12 @@ interface SupersetListItem {
   uuid?: string;
   name?: string;
   descr?: string;
+  short_descr?: string;
+  long_descr?: string;
+  start_dttm?: string;
+  end_dttm?: string;
+  json_metadata?: string;
+  layer_id?: number;
   table_name?: string;
   schema?: string;
   database_name?: string;
@@ -1113,6 +1195,30 @@ function buildAnnotationLayerListQuery(
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
     `filters:!(${filters.map(formatAnnotationLayerFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
+function buildAnnotationListQuery(request: AnnotationListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'short_descr',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatAnnotationFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1359,6 +1465,16 @@ function formatAnnotationLayerFilter(filter: {
   )})`;
 }
 
+function formatAnnotationFilter(filter: {
+  col: string;
+  opr: string;
+  value: AnnotationFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatChartFilter(filter: {
   col: string;
   opr: string;
@@ -1449,6 +1565,13 @@ function formatRisonValue(value: DashboardFilterValue): string {
 function formatAnnotationLayerRisonValue(
   value: AnnotationLayerFilterValue,
 ): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatAnnotationRisonValue(value: AnnotationFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1734,6 +1857,27 @@ function toAnnotationLayerListItem(
   };
 }
 
+function toAnnotationListItem(
+  item: SupersetListItem,
+  fallbackLayerId: number,
+): AnnotationListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    shortDescr:
+      typeof item.short_descr === 'string' ? item.short_descr : undefined,
+    longDescr: typeof item.long_descr === 'string' ? item.long_descr : undefined,
+    startDttm: typeof item.start_dttm === 'string' ? item.start_dttm : undefined,
+    endDttm: typeof item.end_dttm === 'string' ? item.end_dttm : undefined,
+    jsonMetadata:
+      typeof item.json_metadata === 'string' ? item.json_metadata : undefined,
+    layerId: typeof item.layer_id === 'number' ? item.layer_id : fallbackLayerId,
+  };
+}
+
 function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
   if (typeof item.id !== 'number') {
     return undefined;
@@ -1859,6 +2003,12 @@ function requestedAnnotationLayerColumns(
   return request.selectColumns.length > 0
     ? request.selectColumns
     : ['id', 'name', 'descr'];
+}
+
+function requestedAnnotationColumns(request: AnnotationListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'];
 }
 
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
@@ -2069,6 +2219,19 @@ function annotationLayerColumnsLoaded(
   return [...loaded];
 }
 
+function annotationColumnsLoaded(annotations: AnnotationListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const annotation of annotations) {
+    if (annotation.shortDescr !== undefined) loaded.add('short_descr');
+    if (annotation.longDescr !== undefined) loaded.add('long_descr');
+    if (annotation.startDttm !== undefined) loaded.add('start_dttm');
+    if (annotation.endDttm !== undefined) loaded.add('end_dttm');
+    if (annotation.jsonMetadata !== undefined) loaded.add('json_metadata');
+    if (annotation.layerId !== undefined) loaded.add('layer_id');
+  }
+  return [...loaded];
+}
+
 function reportColumnsLoaded(reports: ReportListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const report of reports) {
@@ -2169,6 +2332,27 @@ function emptyAnnotationLayerListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedAnnotationLayerColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyAnnotationListResponse(
+  request: AnnotationListRequest,
+  warnings: string[],
+): AnnotationListResponse {
+  return {
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    layerId: request.layerId,
+    columnsRequested: requestedAnnotationColumns(request),
     columnsLoaded: [],
     warnings,
   };

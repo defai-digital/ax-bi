@@ -146,6 +146,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_database_list",
         "mcp_dataset_list",
         "mcp_health_check",
+        "mcp_layer_annotation_list",
         "mcp_report_list",
         "mcp_role_list",
         "mcp_saved_query_list",
@@ -196,6 +197,23 @@ def test_rollout_workflow_includes_annotation_layer_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_annotation_layers.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_layer_annotation_list() -> None:
+    """Rollout manifest includes layer annotation listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_layer_annotation_list")
+
+    assert workflow.sidecar_route == "POST /mcp/annotations/list"
+    assert workflow.contract_version == "annotation-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_LAYER_ANNOTATION_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_layer_annotations.shadow_mismatch"
         in workflow.python_metrics
     )
 

@@ -19,6 +19,7 @@
 import { afterEach, expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
+import { ANNOTATION_LIST_CONTRACT_VERSION } from '../src/contracts/annotationList';
 import { ANNOTATION_LAYER_LIST_CONTRACT_VERSION } from '../src/contracts/annotationLayerList';
 import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
@@ -509,6 +510,127 @@ test('listAnnotationLayers records warnings for failed Superset responses', asyn
     columnsRequested: ['id', 'name', 'descr'],
     columnsLoaded: [],
     warnings: ['annotation layer list returned status 504 from Superset'],
+  });
+});
+
+test('listAnnotations maps Superset annotation list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 4,
+      result: [
+        {
+          id: 7,
+          short_descr: 'Deploy',
+          long_descr: 'Production deploy',
+          start_dttm: '2026-01-05T00:00:00',
+          end_dttm: '2026-01-05T01:00:00',
+          json_metadata: '{"env":"prod"}',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listAnnotations(
+    {
+      contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+      layerId: 5,
+      filters: [{ col: 'short_descr', opr: 'ct', value: 'deploy' }],
+      selectColumns: ['id', 'short_descr', 'layer_id'],
+      search: 'release',
+      orderColumn: 'short_descr',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 2,
+    },
+    'request-annotations',
+  );
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [
+      {
+        id: 7,
+        shortDescr: 'Deploy',
+        longDescr: 'Production deploy',
+        startDttm: '2026-01-05T00:00:00',
+        endDttm: '2026-01-05T01:00:00',
+        jsonMetadata: '{"env":"prod"}',
+        layerId: 5,
+      },
+    ],
+    count: 1,
+    totalCount: 4,
+    page: 2,
+    pageSize: 2,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    layerId: 5,
+    columnsRequested: ['id', 'short_descr', 'layer_id'],
+    columnsLoaded: [
+      'id',
+      'short_descr',
+      'long_descr',
+      'start_dttm',
+      'end_dttm',
+      'json_metadata',
+      'layer_id',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/annotation_layer/5/annotation/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'release'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-annotations',
+  });
+});
+
+test('listAnnotations records warnings for failed Superset responses', async () => {
+  global.fetch = async () =>
+    new Response('missing layer', {
+      status: 404,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listAnnotations({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    layerId: 5,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    layerId: 5,
+    columnsRequested: ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'],
+    columnsLoaded: [],
+    warnings: ['annotation list returned status 404 from Superset'],
   });
 });
 

@@ -19,6 +19,10 @@
 import { expect, test } from '@jest/globals';
 
 import {
+  annotationListContractSchemas,
+  ANNOTATION_LIST_CONTRACT_VERSION,
+} from '../src/contracts/annotationList';
+import {
   annotationLayerListContractSchemas,
   ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
 } from '../src/contracts/annotationLayerList';
@@ -86,6 +90,10 @@ test('authorization contract version is explicit', () => {
 
 test('asset search contract version is explicit', () => {
   expect(ASSET_SEARCH_CONTRACT_VERSION).toBe('asset-search.v1');
+});
+
+test('annotation list contract version is explicit', () => {
+  expect(ANNOTATION_LIST_CONTRACT_VERSION).toBe('annotation-list.v1');
 });
 
 test('annotation layer list contract version is explicit', () => {
@@ -218,6 +226,27 @@ test('asset search request schema is registered in asset search contracts', () =
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+});
+
+test('annotation list request schema is registered in annotation list contracts', () => {
+  expect(
+    annotationListContractSchemas.annotationListRequestSchema.properties.layerId,
+  ).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    annotationListContractSchemas.annotationListResponseSchema.properties.annotations
+      .items.properties,
+  ).toEqual({
+    id: { type: 'number' },
+    shortDescr: { type: 'string' },
+    longDescr: { type: 'string' },
+    startDttm: { type: 'string' },
+    endDttm: { type: 'string' },
+    jsonMetadata: { type: 'string' },
+    layerId: { type: 'number' },
   });
 });
 

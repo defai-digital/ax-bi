@@ -1,0 +1,203 @@
+{
+  "annotationListRequestSchema": {
+    "$id": "ax-services.annotation-list.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "layerId",
+      "filters",
+      "selectColumns",
+      "orderDirection",
+      "page",
+      "pageSize"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "annotation-list.v1"
+      },
+      "layerId": {
+        "type": "number",
+        "minimum": 1
+      },
+      "filters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "col",
+            "opr",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "col": {
+              "type": "string"
+            },
+            "opr": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "selectColumns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "search": {
+        "type": "string"
+      },
+      "orderColumn": {
+        "type": "string"
+      },
+      "orderDirection": {
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "page": {
+        "type": "number",
+        "minimum": 1
+      },
+      "pageSize": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100
+      }
+    }
+  },
+  "annotationListResponseSchema": {
+    "$id": "ax-services.annotation-list.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "annotations",
+      "count",
+      "totalCount",
+      "page",
+      "pageSize",
+      "totalPages",
+      "hasNext",
+      "hasPrevious",
+      "layerId",
+      "columnsRequested",
+      "columnsLoaded",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "annotation-list.v1"
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "number"
+            },
+            "shortDescr": {
+              "type": "string"
+            },
+            "longDescr": {
+              "type": "string"
+            },
+            "startDttm": {
+              "type": "string"
+            },
+            "endDttm": {
+              "type": "string"
+            },
+            "jsonMetadata": {
+              "type": "string"
+            },
+            "layerId": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "count": {
+        "type": "number"
+      },
+      "totalCount": {
+        "type": "number"
+      },
+      "page": {
+        "type": "number"
+      },
+      "pageSize": {
+        "type": "number"
+      },
+      "totalPages": {
+        "type": "number"
+      },
+      "hasNext": {
+        "type": "boolean"
+      },
+      "hasPrevious": {
+        "type": "boolean"
+      },
+      "layerId": {
+        "type": "number"
+      },
+      "columnsRequested": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "columnsLoaded": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -21,6 +21,10 @@ import { expect, test } from '@jest/globals';
 import { buildConfig } from '../src/config';
 import { buildServer } from '../src/server';
 import {
+  ANNOTATION_LIST_CONTRACT_VERSION,
+  AnnotationListResponse,
+} from '../src/contracts/annotationList';
+import {
   ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
   AnnotationLayerListResponse,
 } from '../src/contracts/annotationLayerList';
@@ -67,6 +71,7 @@ import {
 import {
   DependencyHealth,
   DependencyMetadata,
+  SupersetAnnotationListClient,
   SupersetAnnotationLayerListClient,
   SupersetAssetSearchClient,
   SupersetChartListClient,
@@ -102,6 +107,7 @@ function makeSupersetClient({
   },
   onHealth,
   onMetadata,
+  onListAnnotations,
   onListAnnotationLayers,
   onSearch,
   onListCharts,
@@ -128,6 +134,21 @@ function makeSupersetClient({
     totalPages: 0,
     hasNext: false,
     hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
+  annotationList = {
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    layerId: 1,
     columnsRequested: [],
     columnsLoaded: [],
     warnings: [],
@@ -262,6 +283,7 @@ function makeSupersetClient({
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  annotationList?: AnnotationListResponse;
   annotationLayerList?: AnnotationLayerListResponse;
   chartList?: ChartListResponse;
   dashboardList?: DashboardListResponse;
@@ -274,6 +296,7 @@ function makeSupersetClient({
   taskList?: TaskListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
+  onListAnnotations?: (correlationId?: string) => void;
   onListAnnotationLayers?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
@@ -287,6 +310,7 @@ function makeSupersetClient({
   onListTasks?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
+  SupersetAnnotationListClient &
   SupersetAnnotationLayerListClient &
   SupersetAssetSearchClient &
   SupersetChartListClient &
@@ -310,6 +334,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async listAnnotations(_request, correlationId) {
+      onListAnnotations?.(correlationId);
+      return annotationList;
     },
     async listAnnotationLayers(_request, correlationId) {
       onListAnnotationLayers?.(correlationId);
@@ -714,6 +742,86 @@ test('annotation layer list endpoint delegates to Superset client', async () => 
     hasPrevious: false,
     columnsRequested: ['id', 'name'],
     columnsLoaded: ['id', 'name', 'descr'],
+    warnings: [],
+  });
+});
+
+test('annotation list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      annotationList: {
+        contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+        annotations: [
+          {
+            id: 7,
+            shortDescr: 'Deploy',
+            longDescr: 'Production deploy',
+            layerId: 5,
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        layerId: 5,
+        columnsRequested: ['id', 'short_descr', 'layer_id'],
+        columnsLoaded: ['id', 'short_descr', 'long_descr', 'layer_id'],
+        warnings: [],
+      },
+      onListAnnotations(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/annotations/list',
+    headers: {
+      'x-request-id': 'request-annotations',
+    },
+    payload: {
+      contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+      layerId: 5,
+      filters: [],
+      selectColumns: ['id', 'short_descr', 'layer_id'],
+      search: 'deploy',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-annotations');
+  expect(seenRequestIds).toEqual(['request-annotations']);
+  expect(response.json()).toEqual({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [
+      {
+        id: 7,
+        shortDescr: 'Deploy',
+        longDescr: 'Production deploy',
+        layerId: 5,
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    layerId: 5,
+    columnsRequested: ['id', 'short_descr', 'layer_id'],
+    columnsLoaded: ['id', 'short_descr', 'long_descr', 'layer_id'],
     warnings: [],
   });
 });
