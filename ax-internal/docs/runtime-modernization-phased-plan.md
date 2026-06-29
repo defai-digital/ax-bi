@@ -294,8 +294,8 @@ product-specific and contract-oriented.
 - `superset runtime-modernization production-flag-state` emits the live
   deployment serving-flag state in the evidence bundle format.
 - `superset runtime-modernization operator-dashboard-snapshot` emits the
-  operator dashboard gate artifact with workflow metrics, targets, gate status,
-  and the dashboard snapshot reference.
+  operator dashboard gate artifact with workflow metrics, p95 latency targets,
+  fallback/error targets, gate status, and the dashboard snapshot reference.
 - `superset runtime-modernization operator-approval` emits the operator
   approval artifact with the accepted boundary decision, rollout scope, and
   approval reference.

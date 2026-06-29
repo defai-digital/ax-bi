@@ -86,6 +86,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                                     "shadow_mismatch_rate": True,
                                     "fallback_rate": True,
                                     "error_rate": True,
+                                    "latency_p95": True,
                                 },
                             },
                             "mcp_dashboard_list": {
@@ -93,6 +94,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                                     "shadow_mismatch_rate": True,
                                     "fallback_rate": True,
                                     "error_rate": True,
+                                    "latency_p95": True,
                                 },
                             },
                         },
@@ -480,6 +482,7 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> Non
     assert set(gates) == {
         "error_rate",
         "fallback_rate",
+        "latency_p95",
         "shadow_mismatch_rate",
     }
     assert all(gate["passed"] is True for gate in gates.values())
@@ -505,7 +508,10 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_text() -> Non
     assert "runtime modernization operator dashboard snapshot" in result.output
     assert "snapshot reference: dashboards/runtime-modernization.png" in result.output
     assert "mcp_dashboard_list" in result.output
-    assert "failed: shadow_mismatch_rate, fallback_rate, error_rate" in result.output
+    assert (
+        "failed: shadow_mismatch_rate, fallback_rate, error_rate, latency_p95"
+        in result.output
+    )
 
 
 def test_operator_dashboard_snapshot_rejects_unknown_workflow() -> None:
@@ -705,6 +711,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                             "shadow_mismatch_rate": {"passed": True},
                             "fallback_rate": {"passed": True},
                             "error_rate": {"passed": True},
+                            "latency_p95": {"passed": True},
                         },
                     },
                     "mcp_dashboard_list": {
@@ -712,6 +719,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                             "shadow_mismatch_rate": {"passed": True},
                             "fallback_rate": {"passed": True},
                             "error_rate": {"passed": True},
+                            "latency_p95": {"passed": True},
                         },
                     },
                 },
@@ -863,6 +871,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                                     "shadow_mismatch_rate": {"passed": True},
                                     "fallback_rate": {"passed": True},
                                     "error_rate": {"passed": True},
+                                    "latency_p95": {"passed": True},
                                 },
                             },
                             "mcp_dashboard_list": {
@@ -870,6 +879,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                                     "shadow_mismatch_rate": {"passed": True},
                                     "fallback_rate": {"passed": True},
                                     "error_rate": {"passed": True},
+                                    "latency_p95": {"passed": True},
                                 },
                             },
                         },

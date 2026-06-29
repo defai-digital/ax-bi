@@ -164,6 +164,7 @@ def _mcp_workflow(
     shadow_mismatch = runtime_metric_key(area, operation, "shadow_mismatch")
     fallback = runtime_metric_key(area, operation, "fallback")
     error = runtime_metric_key(area, operation, "error")
+    duration = runtime_metric_key(area, operation, "duration")
 
     return RolloutWorkflow(
         name=name,
@@ -219,6 +220,15 @@ def _mcp_workflow(
                 description=(
                     "The migrated workflow must not increase user-visible MCP "
                     "tool failures."
+                ),
+            ),
+            RolloutGate(
+                name="latency_p95",
+                metric=duration,
+                target="p95 latency meets the workflow baseline target",
+                description=(
+                    "The migrated workflow must meet the release-candidate p95 "
+                    "latency target measured against the Python baseline."
                 ),
             ),
         ),

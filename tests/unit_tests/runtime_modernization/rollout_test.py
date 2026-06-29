@@ -140,6 +140,7 @@ def test_rollout_workflow_serializes_metrics_and_gates() -> None:
     assert {gate.name for gate in workflow.gates} == {
         "error_rate",
         "fallback_rate",
+        "latency_p95",
         "shadow_mismatch_rate",
     }
 
@@ -373,6 +374,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                                 "shadow_mismatch_rate": {"passed": True},
                                 "fallback_rate": {"passed": True},
                                 "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
                             },
                         },
                         "mcp_dashboard_list": {
@@ -380,6 +382,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                                 "shadow_mismatch_rate": {"passed": True},
                                 "fallback_rate": {"passed": True},
                                 "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
                             },
                         },
                     },
@@ -559,6 +562,7 @@ def test_build_operator_dashboard_snapshot_includes_workflow_gates() -> None:
     assert set(gates) == {
         "error_rate",
         "fallback_rate",
+        "latency_p95",
         "shadow_mismatch_rate",
     }
     assert all(gate["passed"] is True for gate in gates.values())
