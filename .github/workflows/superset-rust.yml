@@ -67,6 +67,21 @@ jobs:
         working-directory: superset-rust/python
         run: maturin build --interpreter python
 
+      - name: Install Python extension wheel
+        run: python -m pip install superset-rust/target/wheels/ax_sql-*.whl
+
+      - name: Generate SQL kernel benchmark artifact
+        run: >
+          python superset-rust/python/benchmark_sql_kernel.py
+          --iterations 10000
+          --output superset-rust/target/sql-kernel-benchmark.json
+
+      - name: Upload SQL kernel benchmark artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sql-kernel-benchmark
+          path: superset-rust/target/sql-kernel-benchmark.json
+
   superset-rust-required:
     needs: [changes, rust-checks]
     if: always()
