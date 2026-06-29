@@ -993,6 +993,11 @@ def rust_kernel_rollout_decision(
 ) -> None:
     """Print Rust kernel rollout decision evidence for Phase 5."""
 
+    if decision == "served" and serving_flag_enabled is not True:
+        raise click.ClickException(
+            "Rust kernel served decisions require --serving-flag-enabled"
+        )
+
     evidence = build_rust_kernel_rollout_decision(
         kernel=kernel,
         decision=decision,

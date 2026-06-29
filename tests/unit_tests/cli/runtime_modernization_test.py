@@ -889,6 +889,26 @@ def test_runtime_modernization_rust_kernel_rollout_decision_outputs_json() -> No
     }
 
 
+def test_rust_kernel_rollout_decision_requires_enabled_flag_when_served() -> None:
+    """Served Rust decisions must prove the production serving flag is enabled."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "rust-kernel-rollout-decision",
+            "--decision",
+            "served",
+            "--decision-reference",
+            "CHG-RUST-1",
+            "--rationale",
+            "canary showed acceptable latency and errors",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "served decisions require --serving-flag-enabled" in result.output
+
+
 def test_runtime_modernization_rust_kernel_rollout_decision_outputs_text() -> None:
     """Rust rollout decision command has a compact text mode."""
 
