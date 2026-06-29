@@ -50,6 +50,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_template,
     build_production_flag_state,
     build_rust_kernel_rollout_decision,
+    build_rust_kernel_rollout_decision_template,
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
@@ -787,6 +788,46 @@ def rust_kernel_rollout_decision(
         return
 
     click.echo(_format_rust_kernel_rollout_decision(evidence))
+
+
+@runtime_modernization.command("rust-kernel-rollout-decision-template")
+@click.option(
+    "--kernel",
+    default="ax_sql.normalize_sql_whitespace",
+    show_default=True,
+    help="Rust kernel covered by this rollout decision template.",
+)
+@click.option(
+    "--serving-flag",
+    default="RUST_SQL_KERNEL",
+    show_default=True,
+    help="Feature flag controlling the Rust kernel.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def rust_kernel_rollout_decision_template(
+    kernel: str,
+    serving_flag: str,
+    output_format: str,
+) -> None:
+    """Print a fillable Rust kernel rollout decision evidence template."""
+
+    template = build_rust_kernel_rollout_decision_template(
+        kernel=kernel,
+        serving_flag=serving_flag,
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(template, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_rust_kernel_rollout_decision(template))
 
 
 @runtime_modernization.command("assemble-production-evidence")

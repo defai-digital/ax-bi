@@ -25,6 +25,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_template,
     build_production_flag_state,
     build_rust_kernel_rollout_decision,
+    build_rust_kernel_rollout_decision_template,
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
@@ -521,6 +522,21 @@ def test_build_rust_kernel_rollout_decision_includes_required_fields() -> None:
         "serving_flag": "RUST_SQL_KERNEL",
         "decision_reference": "PERF-123",
         "rationale": "benchmark gain did not justify rollout",
+    }
+
+
+def test_build_rust_kernel_rollout_decision_template_is_incomplete() -> None:
+    """Rust rollout decision templates are fillable but do not pass validation."""
+
+    template = build_rust_kernel_rollout_decision_template()
+
+    assert template == {
+        "kernel": "ax_sql.normalize_sql_whitespace",
+        "decision": "",
+        "serving_flag": "RUST_SQL_KERNEL",
+        "serving_flag_enabled": False,
+        "decision_reference": "",
+        "rationale": "",
     }
 
 

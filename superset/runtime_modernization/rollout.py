@@ -435,12 +435,7 @@ def build_production_evidence_template(
                 },
             },
             "rust_kernel_rollout_decision": {
-                "kernel": "ax_sql.normalize_sql_whitespace",
-                "decision": "",
-                "serving_flag": "RUST_SQL_KERNEL",
-                "serving_flag_enabled": False,
-                "decision_reference": "",
-                "rationale": "",
+                **build_rust_kernel_rollout_decision_template(),
             },
             "production_flag_state": {
                 "workflows": [
@@ -576,6 +571,23 @@ def build_rust_kernel_rollout_decision(
     if serving_flag_enabled is not None:
         evidence["serving_flag_enabled"] = serving_flag_enabled
     return evidence
+
+
+def build_rust_kernel_rollout_decision_template(
+    *,
+    kernel: str = "ax_sql.normalize_sql_whitespace",
+    serving_flag: str = "RUST_SQL_KERNEL",
+) -> dict[str, Any]:
+    """Build a fillable Rust kernel rollout decision evidence template."""
+
+    return {
+        "kernel": kernel,
+        "decision": "",
+        "serving_flag": serving_flag,
+        "serving_flag_enabled": False,
+        "decision_reference": "",
+        "rationale": "",
+    }
 
 
 def build_production_evidence_bundle(

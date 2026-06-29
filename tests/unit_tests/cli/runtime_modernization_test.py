@@ -578,6 +578,51 @@ def test_runtime_modernization_rust_kernel_rollout_decision_outputs_text() -> No
     assert "decision reference: PERF-123" in result.output
 
 
+def test_runtime_modernization_rust_kernel_rollout_decision_template_outputs_json() -> (
+    None
+):
+    """Rust rollout decision template command emits fillable evidence JSON."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["rust-kernel-rollout-decision-template"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "kernel": "ax_sql.normalize_sql_whitespace",
+        "decision": "",
+        "serving_flag": "RUST_SQL_KERNEL",
+        "serving_flag_enabled": False,
+        "decision_reference": "",
+        "rationale": "",
+    }
+
+
+def test_runtime_modernization_rust_kernel_rollout_decision_template_outputs_text() -> (
+    None
+):
+    """Rust rollout decision template command has a compact text mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "rust-kernel-rollout-decision-template",
+            "--kernel",
+            "custom.kernel",
+            "--serving-flag",
+            "CUSTOM_RUST_KERNEL",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization Rust kernel rollout decision" in result.output
+    assert "kernel: custom.kernel" in result.output
+    assert "serving flag: CUSTOM_RUST_KERNEL" in result.output
+
+
 def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     tmp_path,
 ) -> None:

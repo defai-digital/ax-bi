@@ -312,10 +312,10 @@ product-specific and contract-oriented.
   Phase 0-6 completion checks and can fail release gates until every phase is
   proven complete.
 - Python unit CI uploads the compatibility report artifact, production evidence
-  template artifact, and completion audit artifact on the current Python
-  version. Live production dashboard snapshots, completed rollout evidence, and
-  additional selective workflow migrations are still required before this phase
-  is complete.
+  template artifact, Rust rollout decision template artifact, and completion
+  audit artifact on the current Python version. Live production dashboard
+  snapshots, completed rollout evidence, and additional selective workflow
+  migrations are still required before this phase is complete.
 
 ## Phase 6: Reevaluate Larger Boundaries
 
