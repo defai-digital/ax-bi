@@ -36,6 +36,7 @@ test('buildConfig returns service defaults', () => {
     dashboard: '/api/v1/dashboard/',
     database: '/api/v1/database/',
     dataset: '/api/v1/dataset/',
+    savedQuery: '/api/v1/saved_query/',
   });
   expect(config.supersetTimeoutMs).toBe(2000);
   expect(config.supersetInternalToken).toBeUndefined();
@@ -54,6 +55,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_DASHBOARD_LIST_PATH: 'dashboards',
     AX_SUPERSET_DATABASE_LIST_PATH: 'databases',
     AX_SUPERSET_DATASET_LIST_PATH: 'datasets',
+    AX_SUPERSET_SAVED_QUERY_LIST_PATH: 'saved-queries',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
     AX_SERVICES_LOG_LEVEL: 'debug',
@@ -70,6 +72,7 @@ test('buildConfig reads environment overrides', () => {
     dashboard: '/dashboards',
     database: '/databases',
     dataset: '/datasets',
+    savedQuery: '/saved-queries',
   });
   expect(config.supersetTimeoutMs).toBe(1500);
   expect(config.supersetInternalToken).toBe('token-123');

@@ -206,6 +206,12 @@
         "default": false,
         "lifecycle": "development",
         "description": "Enable a TypeScript-derived metadata index for AX-BI search workflows."
+      },
+      {
+        "name": "TS_SAVED_QUERY_LIST_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP saved query listing from the TypeScript sidecar with Python fallback."
       }
     ],
     "testing": [

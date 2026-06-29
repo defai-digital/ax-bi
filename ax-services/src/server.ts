@@ -62,6 +62,12 @@ import {
   readinessResponseSchema,
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
+import {
+  SavedQueryListRequest,
+  SavedQueryListResponse,
+  savedQueryListRequestSchema,
+  savedQueryListResponseSchema,
+} from './contracts/savedQueryList';
 import { ServiceMetrics } from './metrics';
 import {
   SupersetHealthClient,
@@ -71,6 +77,7 @@ import {
   SupersetDashboardListClient,
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
+  SupersetSavedQueryListClient,
 } from './supersetClient';
 
 export function buildServer(
@@ -81,7 +88,8 @@ export function buildServer(
     SupersetDashboardListClient &
     SupersetChartListClient &
     SupersetDatabaseListClient &
-    SupersetDatasetListClient,
+    SupersetDatasetListClient &
+    SupersetSavedQueryListClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
@@ -271,6 +279,23 @@ export function buildServer(
     },
     async (request): Promise<DatasetListResponse> =>
       supersetClient.listDatasets(request.body, request.id),
+  );
+
+  server.post<{
+    Body: SavedQueryListRequest;
+    Reply: SavedQueryListResponse;
+  }>(
+    '/mcp/saved-queries/list',
+    {
+      schema: {
+        body: savedQueryListRequestSchema,
+        response: {
+          200: savedQueryListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<SavedQueryListResponse> =>
+      supersetClient.listSavedQueries(request.body, request.id),
   );
 
   return server;

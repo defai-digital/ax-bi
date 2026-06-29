@@ -70,5 +70,6 @@ Current endpoints:
 - `POST /mcp/dashboards/list`
 - `POST /mcp/databases/list`
 - `POST /mcp/datasets/list`
+- `POST /mcp/saved-queries/list`
 
 Generated JSON schema artifacts live in `contracts/`.

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-
+import importlib
 import logging
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -23,6 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
+from flask import current_app
 from pydantic import ValidationError
 
 from superset.mcp_service.app import mcp
@@ -30,10 +31,14 @@ from superset.mcp_service.saved_query.schemas import (
     ListSavedQueriesRequest,
     SavedQueryFilter,
 )
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+list_saved_queries_module = importlib.import_module(
+    "superset.mcp_service.saved_query.tool.list_saved_queries"
+)
 
 
 class TestSavedQueryFilterSchema:
@@ -334,6 +339,119 @@ async def test_list_saved_queries_select_columns_keeps_schema_alias(
         sq = data["saved_queries"][0]
         assert set(sq.keys()) == {"id", "schema"}
         assert sq["schema"] == "public"
+
+
+@patch("superset.daos.query.SavedQueryDAO.list")
+@pytest.mark.asyncio
+async def test_list_saved_queries_serves_valid_sidecar_response(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Saved query listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch.object(
+            list_saved_queries_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_SAVED_QUERY_LIST_SERVING"},
+        ),
+        patch.object(list_saved_queries_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_saved_queries.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "saved-query-list.v1",
+                "savedQueries": [
+                    {
+                        "id": 17,
+                        "label": "TS Saved Query",
+                        "dbId": 3,
+                        "schema": "public",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "label", "db_id", "schema"],
+                "columnsLoaded": ["id", "label", "db_id", "schema"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_saved_queries",
+                {"request": ListSavedQueriesRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["saved_queries"] == [
+        {
+            "id": 17,
+            "label": "TS Saved Query",
+            "db_id": 3,
+            "schema": "public",
+        }
+    ]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_saved_queries.served_candidate"
+    )
+
+
+@patch("superset.daos.query.SavedQueryDAO.list")
+@pytest.mark.asyncio
+async def test_list_saved_queries_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Saved query listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch.object(
+            list_saved_queries_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_SAVED_QUERY_LIST_SERVING"},
+        ),
+        patch.object(list_saved_queries_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_saved_queries.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "saved-query-list.v1",
+                "savedQueries": [{"label": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_saved_queries",
+                {"request": ListSavedQueriesRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_called_once()
+    data = json.loads(result.content[0].text)
+    assert data["saved_queries"] == []
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_saved_queries.fallback"
+    )
 
 
 @pytest.mark.asyncio

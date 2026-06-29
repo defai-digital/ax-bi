@@ -165,6 +165,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_saved_queries(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar saved query list endpoint."""
+
+        return self.post_json(
+            "/mcp/saved-queries/list",
+            payload,
+            request_id=request_id,
+        )
+
     def get_json(
         self,
         path: str,

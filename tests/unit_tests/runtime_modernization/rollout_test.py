@@ -98,6 +98,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_database_list",
         "mcp_dataset_list",
         "mcp_health_check",
+        "mcp_saved_query_list",
     }
     assert all(workflow.area == "mcp_orchestration" for workflow in workflows)
 
@@ -176,6 +177,23 @@ def test_rollout_workflow_includes_database_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_databases.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_saved_query_list() -> None:
+    """Rollout manifest includes saved query listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_saved_query_list")
+
+    assert workflow.sidecar_route == "POST /mcp/saved-queries/list"
+    assert workflow.contract_version == "saved-query-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_SAVED_QUERY_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_saved_queries.shadow_mismatch"
         in workflow.python_metrics
     )
 

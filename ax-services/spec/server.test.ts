@@ -41,6 +41,10 @@ import {
   DatasetListResponse,
 } from '../src/contracts/datasetList';
 import {
+  SAVED_QUERY_LIST_CONTRACT_VERSION,
+  SavedQueryListResponse,
+} from '../src/contracts/savedQueryList';
+import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAssetSearchClient,
@@ -50,6 +54,7 @@ import {
   SupersetDatasetListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
+  SupersetSavedQueryListClient,
 } from '../src/supersetClient';
 
 const config = {
@@ -77,6 +82,7 @@ function makeSupersetClient({
   onListDashboards,
   onListDatabases,
   onListDatasets,
+  onListSavedQueries,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
@@ -138,6 +144,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  savedQueryList = {
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    savedQueries: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
@@ -146,6 +166,7 @@ function makeSupersetClient({
   dashboardList?: DashboardListResponse;
   databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
+  savedQueryList?: SavedQueryListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
@@ -153,13 +174,15 @@ function makeSupersetClient({
   onListDashboards?: (correlationId?: string) => void;
   onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
+  onListSavedQueries?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAssetSearchClient &
   SupersetChartListClient &
   SupersetDashboardListClient &
   SupersetDatabaseListClient &
-  SupersetDatasetListClient {
+  SupersetDatasetListClient &
+  SupersetSavedQueryListClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -188,6 +211,10 @@ function makeSupersetClient({
     async listDatasets(_request, correlationId) {
       onListDatasets?.(correlationId);
       return datasetList;
+    },
+    async listSavedQueries(_request, correlationId) {
+      onListSavedQueries?.(correlationId);
+      return savedQueryList;
     },
   };
 }
@@ -794,6 +821,83 @@ test('dataset list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'table_name'],
     columnsLoaded: ['id', 'table_name', 'schema', 'database_name', 'url'],
+    warnings: [],
+  });
+});
+
+test('saved query list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      savedQueryList: {
+        contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+        savedQueries: [
+          {
+            id: 17,
+            label: 'Revenue query',
+            dbId: 3,
+            schema: 'public',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'label'],
+        columnsLoaded: ['id', 'label', 'db_id', 'schema'],
+        warnings: [],
+      },
+      onListSavedQueries(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/saved-queries/list',
+    headers: {
+      'x-request-id': 'request-saved-query-list',
+    },
+    payload: {
+      contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'label'],
+      search: 'revenue',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-saved-query-list');
+  expect(seenRequestIds).toEqual(['request-saved-query-list']);
+  expect(response.json()).toEqual({
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    savedQueries: [
+      {
+        id: 17,
+        label: 'Revenue query',
+        dbId: 3,
+        schema: 'public',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'label'],
+    columnsLoaded: ['id', 'label', 'db_id', 'schema'],
     warnings: [],
   });
 });

@@ -27,7 +27,7 @@ under the License.
 
 ## Status
 
-In progress. Phase 2 foundation is implemented, Phase 3 has six MCP workflows
+In progress. Phase 2 foundation is implemented, Phase 3 has seven MCP workflows
 behind TypeScript routing flags, Phase 4 has a Rust SQL kernel proof of
 concept, and the Phase 6 boundary decision is documented. Phase 5 production
 rollout evidence remains open.
@@ -179,6 +179,9 @@ product-specific and contract-oriented.
 - MCP database listing can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_DATABASE_LIST_SERVING`, with Python fallback
   after Superset database metadata permission checks pass.
+- MCP saved query listing can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_SAVED_QUERY_LIST_SERVING`, with Python
+  fallback.
 - Compatibility, fallback behavior, compact shadow mismatch reporting, and
   opt-in compatibility report latency gates are covered by unit tests.
   Production rollout evidence still needs to be captured before this phase is

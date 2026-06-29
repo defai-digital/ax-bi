@@ -56,6 +56,13 @@ import {
   PermissionCheckRequest,
   PermissionCheckResult,
 } from './contracts/authorization';
+import {
+  SAVED_QUERY_LIST_CONTRACT_VERSION,
+  SavedQueryFilterValue,
+  SavedQueryListItem,
+  SavedQueryListRequest,
+  SavedQueryListResponse,
+} from './contracts/savedQueryList';
 import { ServiceConfig } from './config';
 
 export interface DependencyHealth {
@@ -113,6 +120,13 @@ export interface SupersetDatasetListClient {
   ): Promise<DatasetListResponse>;
 }
 
+export interface SupersetSavedQueryListClient {
+  listSavedQueries(
+    request: SavedQueryListRequest,
+    correlationId?: string,
+  ): Promise<SavedQueryListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -121,7 +135,8 @@ export class SupersetClient
     SupersetDashboardListClient,
     SupersetChartListClient,
     SupersetDatabaseListClient,
-    SupersetDatasetListClient
+    SupersetDatasetListClient,
+    SupersetSavedQueryListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -474,6 +489,54 @@ export class SupersetClient
     }
   }
 
+  async listSavedQueries(
+    request: SavedQueryListRequest,
+    correlationId?: string,
+  ): Promise<SavedQueryListResponse> {
+    const url = this.buildSavedQueryListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptySavedQueryListResponse(request, [
+          `saved query list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const savedQueries = extractSupersetResults(payload)
+        .map(toSavedQueryListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, savedQueries.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+        savedQueries,
+        count: savedQueries.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedSavedQueryColumns(request),
+        columnsLoaded: savedQueryColumnsLoaded(savedQueries),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptySavedQueryListResponse(request, [
+        `saved query list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -564,6 +627,14 @@ export class SupersetClient
     url.searchParams.set('q', buildDatabaseListQuery(request));
     return url.toString();
   }
+
+  private buildSavedQueryListUrl(request: SavedQueryListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.savedQuery}`,
+    );
+    url.searchParams.set('q', buildSavedQueryListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -615,6 +686,11 @@ interface SupersetListItem {
   is_managed_externally?: boolean;
   external_url?: string | null;
   extra?: unknown;
+  label?: string;
+  sql?: string;
+  db_id?: number;
+  catalog?: string;
+  last_run?: string;
   created_on?: string;
   created_on_humanized?: string;
   owners?: unknown[];
@@ -750,6 +826,30 @@ function buildDatabaseListQuery(request: DatabaseListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'label',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatSavedQueryFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -790,6 +890,16 @@ function formatDatabaseFilter(filter: {
   )})`;
 }
 
+function formatSavedQueryFilter(filter: {
+  col: string;
+  opr: string;
+  value: SavedQueryFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatSavedQueryRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
@@ -812,6 +922,13 @@ function formatDatasetRisonValue(value: DatasetFilterValue): string {
 }
 
 function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1002,6 +1119,29 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
   };
 }
 
+function toSavedQueryListItem(
+  item: SupersetListItem,
+): SavedQueryListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    label: typeof item.label === 'string' ? item.label : undefined,
+    sql: typeof item.sql === 'string' ? item.sql : undefined,
+    dbId: typeof item.db_id === 'number' ? item.db_id : undefined,
+    schema: typeof item.schema === 'string' ? item.schema : undefined,
+    catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    lastRun: typeof item.last_run === 'string' ? item.last_run : undefined,
+  };
+}
+
 function extractDatabaseName(item: SupersetListItem): string | undefined {
   if (typeof item.database_name === 'string') {
     return item.database_name;
@@ -1116,6 +1256,12 @@ function requestedDatabaseColumns(request: DatabaseListRequest): string[] {
       ];
 }
 
+function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'label', 'db_id', 'schema', 'uuid'];
+}
+
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const dataset of datasets) {
@@ -1173,6 +1319,23 @@ function databaseColumnsLoaded(databases: DatabaseListItem[]): string[] {
     if (database.createdOnHumanized !== undefined) {
       loaded.add('created_on_humanized');
     }
+  }
+  return [...loaded];
+}
+
+function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const savedQuery of savedQueries) {
+    if (savedQuery.uuid !== undefined) loaded.add('uuid');
+    if (savedQuery.label !== undefined) loaded.add('label');
+    if (savedQuery.sql !== undefined) loaded.add('sql');
+    if (savedQuery.dbId !== undefined) loaded.add('db_id');
+    if (savedQuery.schema !== undefined) loaded.add('schema');
+    if (savedQuery.catalog !== undefined) loaded.add('catalog');
+    if (savedQuery.description !== undefined) loaded.add('description');
+    if (savedQuery.changedOn !== undefined) loaded.add('changed_on');
+    if (savedQuery.createdOn !== undefined) loaded.add('created_on');
+    if (savedQuery.lastRun !== undefined) loaded.add('last_run');
   }
   return [...loaded];
 }
@@ -1252,6 +1415,26 @@ function emptyDatabaseListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedDatabaseColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptySavedQueryListResponse(
+  request: SavedQueryListRequest,
+  warnings: string[],
+): SavedQueryListResponse {
+  return {
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    savedQueries: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedSavedQueryColumns(request),
     columnsLoaded: [],
     warnings,
   };

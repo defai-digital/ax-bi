@@ -268,6 +268,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         contract_version="dataset-list.v1",
         serving_flag="TS_DATASET_LIST_SERVING",
     ),
+    _mcp_workflow(
+        name="mcp_saved_query_list",
+        operation="list_saved_queries",
+        sidecar_route="POST /mcp/saved-queries/list",
+        contract_version="saved-query-list.v1",
+        serving_flag="TS_SAVED_QUERY_LIST_SERVING",
+    ),
 )
 
 PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (

@@ -25,6 +25,7 @@ import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
 import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
+import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -1013,6 +1014,136 @@ test('listDatabases records warnings for failed Superset list responses', async 
     ],
     columnsLoaded: [],
     warnings: ['database list returned status 504 from Superset'],
+  });
+});
+
+test('listSavedQueries maps Superset saved query list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 15,
+      result: [
+        {
+          id: 17,
+          uuid: 'saved-query-uuid',
+          label: 'Revenue query',
+          sql: 'select * from sales',
+          db_id: 3,
+          schema: 'public',
+          catalog: 'analytics',
+          description: 'Revenue analysis',
+          changed_on: '2026-01-05T00:00:00',
+          created_on: '2026-01-01T00:00:00',
+          last_run: '2026-01-06T00:00:00',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listSavedQueries(
+    {
+      contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'schema', opr: 'eq', value: 'public' }],
+      selectColumns: ['id', 'label'],
+      search: 'revenue',
+      orderColumn: 'label',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+    },
+    'request-saved-queries',
+  );
+
+  expect(result).toEqual({
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    savedQueries: [
+      {
+        id: 17,
+        uuid: 'saved-query-uuid',
+        label: 'Revenue query',
+        sql: 'select * from sales',
+        dbId: 3,
+        schema: 'public',
+        catalog: 'analytics',
+        description: 'Revenue analysis',
+        changedOn: '2026-01-05T00:00:00',
+        createdOn: '2026-01-01T00:00:00',
+        lastRun: '2026-01-06T00:00:00',
+      },
+    ],
+    count: 1,
+    totalCount: 15,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'label'],
+    columnsLoaded: [
+      'id',
+      'uuid',
+      'label',
+      'sql',
+      'db_id',
+      'schema',
+      'catalog',
+      'description',
+      'changed_on',
+      'created_on',
+      'last_run',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/saved_query/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'revenue'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-saved-queries',
+  });
+});
+
+test('listSavedQueries records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listSavedQueries({
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+    savedQueries: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'label', 'db_id', 'schema', 'uuid'],
+    columnsLoaded: [],
+    warnings: ['saved query list returned status 504 from Superset'],
   });
 });
 

@@ -352,6 +352,45 @@ def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
     )
 
 
+def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> None:
+    """Saved query list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"savedQueries": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_saved_queries(
+        {
+            "contractVersion": "saved-query-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "label"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        request_id="request-saved-queries",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"savedQueries": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/saved-queries/list",
+        json={
+            "contractVersion": "saved-query-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "label"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-saved-queries",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

@@ -51,6 +51,10 @@ import {
   RUNTIME_CONTRACT_VERSION,
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
+import {
+  savedQueryListContractSchemas,
+  SAVED_QUERY_LIST_CONTRACT_VERSION,
+} from '../src/contracts/savedQueryList';
 
 test('runtime contract version is explicit', () => {
   expect(RUNTIME_CONTRACT_VERSION).toBe('runtime.v1');
@@ -78,6 +82,10 @@ test('dataset list contract version is explicit', () => {
 
 test('database list contract version is explicit', () => {
   expect(DATABASE_LIST_CONTRACT_VERSION).toBe('database-list.v1');
+});
+
+test('saved query list contract version is explicit', () => {
+  expect(SAVED_QUERY_LIST_CONTRACT_VERSION).toBe('saved-query-list.v1');
 });
 
 test('health response schema is stable', () => {
@@ -224,6 +232,21 @@ test('database list request schema is registered in database list contracts', ()
   expect(
     databaseListContractSchemas.databaseListResponseSchema.properties.databases
       .items.properties.databaseName,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('saved query list request schema is registered in saved query list contracts', () => {
+  expect(
+    savedQueryListContractSchemas.savedQueryListRequestSchema.properties.page,
+  ).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    savedQueryListContractSchemas.savedQueryListResponseSchema.properties
+      .savedQueries.items.properties.label,
   ).toEqual({
     type: 'string',
   });
