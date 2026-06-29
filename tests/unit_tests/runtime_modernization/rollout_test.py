@@ -18,6 +18,7 @@ import pytest
 
 from superset.runtime_modernization.rollout import (
     build_operator_approval_evidence,
+    build_operator_dashboard_snapshot,
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
@@ -201,6 +202,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     ],
                 },
                 "operator_dashboard_snapshot": {
+                    "snapshot_reference": "observability/dashboard/snapshot-123",
                     "workflows": {
                         "mcp_asset_search": {
                             "gates": {
@@ -243,9 +245,8 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
     )
 
     flag_workflows = template["artifacts"]["production_flag_state"]["workflows"]
-    dashboard_workflows = template["artifacts"]["operator_dashboard_snapshot"][
-        "workflows"
-    ]
+    dashboard_snapshot = template["artifacts"]["operator_dashboard_snapshot"]
+    dashboard_workflows = dashboard_snapshot["workflows"]
 
     assert template["schema_version"] == 1
     assert flag_workflows == [
@@ -270,6 +271,7 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         ]
         == "0 mismatches during the evaluation window"
     )
+    assert dashboard_snapshot["snapshot_reference"] == ""
     assert template["artifacts"]["operator_approval"] == {
         "approved": False,
         "boundary_decision": "",
@@ -330,6 +332,31 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
         "approver": "platform-ops",
         "notes": "approved after canary review",
     }
+
+
+def test_build_operator_dashboard_snapshot_includes_workflow_gates() -> None:
+    """Operator dashboard evidence includes gate status for selected workflows."""
+
+    snapshot = build_operator_dashboard_snapshot(
+        (get_rollout_workflow("mcp_asset_search"),),
+        snapshot_reference="observability/dashboard/snapshot-123",
+        gates_passed=True,
+        measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
+        notes="canary window passed",
+    )
+
+    gates = snapshot["workflows"]["mcp_asset_search"]["gates"]
+
+    assert snapshot["snapshot_reference"] == "observability/dashboard/snapshot-123"
+    assert snapshot["measurement_window"] == "2026-06-29T00:00Z/2026-06-29T01:00Z"
+    assert snapshot["notes"] == "canary window passed"
+    assert set(gates) == {
+        "error_rate",
+        "fallback_rate",
+        "shadow_mismatch_rate",
+    }
+    assert all(gate["passed"] is True for gate in gates.values())
+    assert gates["fallback_rate"]["metric"].endswith(".fallback")
 
 
 def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:

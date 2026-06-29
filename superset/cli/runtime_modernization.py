@@ -43,6 +43,7 @@ from superset.runtime_modernization.inventory import (
 )
 from superset.runtime_modernization.rollout import (
     build_operator_approval_evidence,
+    build_operator_dashboard_snapshot,
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
@@ -258,6 +259,36 @@ def _format_operator_approval_evidence(approval: dict[str, Any]) -> str:
         lines.append(f"  approver: {approval['approver']}")
     if "notes" in approval:
         lines.append(f"  notes: {approval['notes']}")
+    return "\n".join(lines)
+
+
+def _format_operator_dashboard_snapshot(snapshot: dict[str, Any]) -> str:
+    """Render compact operator dashboard snapshot evidence."""
+
+    lines = [
+        "runtime modernization operator dashboard snapshot",
+        f"  snapshot reference: {snapshot['snapshot_reference']}",
+    ]
+    if "measurement_window" in snapshot:
+        lines.append(f"  measurement window: {snapshot['measurement_window']}")
+    if "notes" in snapshot:
+        lines.append(f"  notes: {snapshot['notes']}")
+    lines.append("  workflows:")
+    for workflow_name, workflow in snapshot["workflows"].items():
+        gates = workflow["gates"]
+        passed = [
+            name
+            for name, gate in gates.items()
+            if isinstance(gate, dict) and gate.get("passed") is True
+        ]
+        failed = [
+            name
+            for name, gate in gates.items()
+            if isinstance(gate, dict) and gate.get("passed") is not True
+        ]
+        lines.append(f"    {workflow_name}")
+        lines.append(f"      passed: {', '.join(passed) if passed else 'none'}")
+        lines.append(f"      failed: {', '.join(failed) if failed else 'none'}")
     return "\n".join(lines)
 
 
@@ -592,6 +623,73 @@ def operator_approval(
         return
 
     click.echo(_format_operator_approval_evidence(approval))
+
+
+@runtime_modernization.command("operator-dashboard-snapshot")
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to include. Can be supplied more than once.",
+)
+@click.option(
+    "--snapshot-reference",
+    required=True,
+    help="Dashboard export, screenshot, or observability record reference.",
+)
+@click.option(
+    "--gates-passed/--gates-failed",
+    default=False,
+    show_default=True,
+    help="Whether all selected workflow dashboard gates passed.",
+)
+@click.option(
+    "--measurement-window",
+    help="Optional production measurement window covered by the snapshot.",
+)
+@click.option(
+    "--notes",
+    help="Optional dashboard evidence notes.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def operator_dashboard_snapshot(
+    workflow: tuple[str, ...],
+    snapshot_reference: str,
+    gates_passed: bool,
+    measurement_window: str | None,
+    notes: str | None,
+    output_format: str,
+) -> None:
+    """Print operator dashboard evidence for runtime modernization rollout."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    snapshot = build_operator_dashboard_snapshot(
+        workflows,
+        snapshot_reference=snapshot_reference,
+        gates_passed=gates_passed,
+        measurement_window=measurement_window,
+        notes=notes,
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(snapshot, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_operator_dashboard_snapshot(snapshot))
 
 
 @runtime_modernization.command("assemble-production-evidence")

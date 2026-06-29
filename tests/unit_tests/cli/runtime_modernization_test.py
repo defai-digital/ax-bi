@@ -366,6 +366,80 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "approval reference: ADR-42" in result.output
 
 
+def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> None:
+    """Operator dashboard snapshot command emits validation-ready gate evidence."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_asset_search",
+            "--snapshot-reference",
+            "observability/dashboard/snapshot-123",
+            "--gates-passed",
+            "--measurement-window",
+            "2026-06-29T00:00Z/2026-06-29T01:00Z",
+            "--notes",
+            "canary window passed",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    gates = payload["workflows"]["mcp_asset_search"]["gates"]
+    assert payload["snapshot_reference"] == "observability/dashboard/snapshot-123"
+    assert payload["measurement_window"] == "2026-06-29T00:00Z/2026-06-29T01:00Z"
+    assert payload["notes"] == "canary window passed"
+    assert set(gates) == {
+        "error_rate",
+        "fallback_rate",
+        "shadow_mismatch_rate",
+    }
+    assert all(gate["passed"] is True for gate in gates.values())
+
+
+def test_runtime_modernization_operator_dashboard_snapshot_outputs_text() -> None:
+    """Operator dashboard snapshot command has a compact text mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--snapshot-reference",
+            "dashboards/runtime-modernization.png",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization operator dashboard snapshot" in result.output
+    assert "snapshot reference: dashboards/runtime-modernization.png" in result.output
+    assert "mcp_dashboard_list" in result.output
+    assert "failed: shadow_mismatch_rate, fallback_rate, error_rate" in result.output
+
+
+def test_operator_dashboard_snapshot_rejects_unknown_workflow() -> None:
+    """Operator dashboard snapshot command fails on unknown workflow names."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "missing",
+            "--snapshot-reference",
+            "dashboards/runtime-modernization.png",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown runtime modernization rollout workflow" in result.output
+
+
 def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     tmp_path,
 ) -> None:
@@ -427,6 +501,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     dashboard_snapshot.write_text(
         json.dumps(
             {
+                "snapshot_reference": "observability/dashboard/snapshot-123",
                 "workflows": {
                     "mcp_asset_search": {
                         "gates": {
@@ -571,6 +646,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         ],
                     },
                     "operator_dashboard_snapshot": {
+                        "snapshot_reference": "observability/dashboard/snapshot-123",
                         "workflows": {
                             "mcp_asset_search": {
                                 "gates": {

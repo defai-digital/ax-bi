@@ -371,6 +371,7 @@ def build_production_evidence_template(
                 ],
             },
             "operator_dashboard_snapshot": {
+                "snapshot_reference": "",
                 "workflows": {
                     workflow.name: {
                         "gates": {
@@ -436,6 +437,39 @@ def build_operator_approval_evidence(
     if notes is not None:
         evidence["notes"] = notes
     return evidence
+
+
+def build_operator_dashboard_snapshot(
+    workflows: tuple[RolloutWorkflow, ...],
+    *,
+    snapshot_reference: str,
+    gates_passed: bool,
+    measurement_window: str | None = None,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Build operator dashboard evidence for runtime modernization rollout."""
+
+    snapshot: dict[str, Any] = {
+        "snapshot_reference": snapshot_reference,
+        "workflows": {
+            workflow.name: {
+                "gates": {
+                    gate.name: {
+                        "passed": gates_passed,
+                        "metric": gate.metric,
+                        "target": gate.target,
+                    }
+                    for gate in workflow.gates
+                },
+            }
+            for workflow in workflows
+        },
+    }
+    if measurement_window is not None:
+        snapshot["measurement_window"] = measurement_window
+    if notes is not None:
+        snapshot["notes"] = notes
+    return snapshot
 
 
 def build_production_evidence_bundle(
@@ -624,7 +658,9 @@ def validate_production_evidence(
 
     dashboard_snapshot = _artifact_mapping(artifacts, "operator_dashboard_snapshot")
     dashboard_records = _workflow_records_by_name(dashboard_snapshot or {})
-    dashboard_passed = bool(workflows)
+    dashboard_passed = bool(workflows) and _non_empty_string(
+        (dashboard_snapshot or {}).get("snapshot_reference")
+    )
     for workflow in workflows:
         record = dashboard_records.get(workflow.name)
         if record is None:
@@ -640,9 +676,9 @@ def validate_production_evidence(
             name="operator_dashboard_snapshot",
             passed=dashboard_passed,
             message=(
-                "operator dashboard gates passed for selected workflows"
+                "operator dashboard reference and gates passed for selected workflows"
                 if dashboard_passed
-                else "operator dashboard gates are missing or failing"
+                else ("operator dashboard reference or gates are missing or failing")
             ),
         )
     )
