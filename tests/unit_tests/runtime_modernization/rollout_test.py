@@ -17,6 +17,7 @@
 import pytest
 
 from superset.runtime_modernization.rollout import (
+    build_operator_approval_evidence,
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
@@ -221,6 +222,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     "approved": True,
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search and dashboard listing",
+                    "approval_reference": "CHG-123",
                 },
             },
         },
@@ -306,6 +308,27 @@ def test_build_production_flag_state_reads_workflow_serving_flags() -> None:
                 },
             },
         ],
+    }
+
+
+def test_build_operator_approval_evidence_includes_required_fields() -> None:
+    """Operator approval evidence includes the fields validation requires."""
+
+    approval = build_operator_approval_evidence(
+        boundary_decision="split MCP by tool class",
+        rollout_scope="asset search and dashboard listing",
+        approval_reference="CHG-123",
+        approver="platform-ops",
+        notes="approved after canary review",
+    )
+
+    assert approval == {
+        "approved": True,
+        "boundary_decision": "split MCP by tool class",
+        "rollout_scope": "asset search and dashboard listing",
+        "approval_reference": "CHG-123",
+        "approver": "platform-ops",
+        "notes": "approved after canary review",
     }
 
 

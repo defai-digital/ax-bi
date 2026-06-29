@@ -42,6 +42,7 @@ from superset.runtime_modernization.inventory import (
     RuntimeInventoryItem,
 )
 from superset.runtime_modernization.rollout import (
+    build_operator_approval_evidence,
     build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
@@ -240,6 +241,23 @@ def _format_production_flag_state(flag_state: dict[str, Any]) -> str:
         lines.append(f"  {workflow['name']}")
         lines.append(f"    enabled: {', '.join(enabled) if enabled else 'none'}")
         lines.append(f"    disabled: {', '.join(disabled) if disabled else 'none'}")
+    return "\n".join(lines)
+
+
+def _format_operator_approval_evidence(approval: dict[str, Any]) -> str:
+    """Render compact operator approval evidence."""
+
+    lines = [
+        "runtime modernization operator approval",
+        f"  approved: {approval['approved']}",
+        f"  boundary decision: {approval['boundary_decision']}",
+        f"  rollout scope: {approval['rollout_scope']}",
+        f"  approval reference: {approval['approval_reference']}",
+    ]
+    if "approver" in approval:
+        lines.append(f"  approver: {approval['approver']}")
+    if "notes" in approval:
+        lines.append(f"  notes: {approval['notes']}")
     return "\n".join(lines)
 
 
@@ -509,6 +527,71 @@ def production_flag_state(
         return
 
     click.echo(_format_production_flag_state(flag_state))
+
+
+@runtime_modernization.command("operator-approval")
+@click.option(
+    "--boundary-decision",
+    required=True,
+    help="Accepted runtime ownership boundary decision.",
+)
+@click.option(
+    "--rollout-scope",
+    required=True,
+    help="Approved rollout scope.",
+)
+@click.option(
+    "--approval-reference",
+    required=True,
+    help="Change ticket, ADR sign-off, or release approval reference.",
+)
+@click.option(
+    "--approved/--not-approved",
+    default=True,
+    show_default=True,
+    help="Whether the operator approved this rollout scope.",
+)
+@click.option(
+    "--approver",
+    help="Optional operator or approval group name.",
+)
+@click.option(
+    "--notes",
+    help="Optional approval notes.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def operator_approval(
+    boundary_decision: str,
+    rollout_scope: str,
+    approval_reference: str,
+    approved: bool,
+    approver: str | None,
+    notes: str | None,
+    output_format: str,
+) -> None:
+    """Print operator approval evidence for runtime modernization rollout."""
+
+    approval = build_operator_approval_evidence(
+        boundary_decision=boundary_decision,
+        rollout_scope=rollout_scope,
+        approval_reference=approval_reference,
+        approved=approved,
+        approver=approver,
+        notes=notes,
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(approval, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_operator_approval_evidence(approval))
 
 
 @runtime_modernization.command("assemble-production-evidence")

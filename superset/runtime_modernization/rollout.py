@@ -414,6 +414,30 @@ def build_production_flag_state(
     }
 
 
+def build_operator_approval_evidence(
+    *,
+    boundary_decision: str,
+    rollout_scope: str,
+    approval_reference: str,
+    approved: bool = True,
+    approver: str | None = None,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Build operator approval evidence for runtime modernization rollout."""
+
+    evidence: dict[str, Any] = {
+        "approved": approved,
+        "boundary_decision": boundary_decision,
+        "rollout_scope": rollout_scope,
+        "approval_reference": approval_reference,
+    }
+    if approver is not None:
+        evidence["approver"] = approver
+    if notes is not None:
+        evidence["notes"] = notes
+    return evidence
+
+
 def build_production_evidence_bundle(
     *,
     compatibility_report: Mapping[str, Any],
@@ -628,6 +652,7 @@ def validate_production_evidence(
         operator_approval is not None
         and operator_approval.get("approved") is True
         and _non_empty_string(operator_approval.get("boundary_decision"))
+        and _non_empty_string(operator_approval.get("approval_reference"))
         and (
             _non_empty_string(operator_approval.get("rollout_scope"))
             or _non_empty_string(operator_approval.get("scope"))
@@ -638,9 +663,13 @@ def validate_production_evidence(
             name="operator_approval",
             passed=approval_passed,
             message=(
-                "operator approval names boundary decision and rollout scope"
+                "operator approval names boundary decision, rollout scope, "
+                "and approval reference"
                 if approval_passed
-                else "operator approval is missing boundary decision or rollout scope"
+                else (
+                    "operator approval is missing boundary decision, rollout "
+                    "scope, or approval reference"
+                )
             ),
         )
     )

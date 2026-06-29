@@ -309,6 +309,63 @@ def test_runtime_modernization_production_flag_state_outputs_text(
     assert "TS_DATABASE_LIST_SERVING" in result.output
 
 
+def test_runtime_modernization_operator_approval_outputs_json() -> None:
+    """Operator approval command emits validation-ready approval evidence."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "asset search and dashboard listing",
+            "--approval-reference",
+            "CHG-123",
+            "--approver",
+            "platform-ops",
+            "--notes",
+            "approved after canary review",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "approved": True,
+        "boundary_decision": "split MCP by tool class",
+        "rollout_scope": "asset search and dashboard listing",
+        "approval_reference": "CHG-123",
+        "approver": "platform-ops",
+        "notes": "approved after canary review",
+    }
+
+
+def test_runtime_modernization_operator_approval_outputs_text() -> None:
+    """Operator approval command has a compact text mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "asset search",
+            "--approval-reference",
+            "ADR-42",
+            "--not-approved",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization operator approval" in result.output
+    assert "approved: False" in result.output
+    assert "split MCP by tool class" in result.output
+    assert "approval reference: ADR-42" in result.output
+
+
 def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     tmp_path,
 ) -> None:
@@ -396,6 +453,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                 "approved": True,
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
+                "approval_reference": "CHG-123",
             }
         ),
         encoding="utf-8",
@@ -534,6 +592,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "approved": True,
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
+                        "approval_reference": "CHG-123",
                     },
                 },
             }

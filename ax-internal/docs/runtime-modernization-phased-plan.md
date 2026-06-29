@@ -280,6 +280,9 @@ product-specific and contract-oriented.
   gates operators must complete.
 - `superset runtime-modernization production-flag-state` emits the live
   deployment serving-flag state in the evidence bundle format.
+- `superset runtime-modernization operator-approval` emits the operator
+  approval artifact with the accepted boundary decision, rollout scope, and
+  approval reference.
 - `superset runtime-modernization assemble-production-evidence` combines CI
   artifacts and operator-provided flag, dashboard, and approval JSON into the
   evidence bundle shape.
