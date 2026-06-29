@@ -1,4 +1,4 @@
-name: AX Services
+name: Superset Rust Checks
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      ax-services: ${{ steps.check.outputs.ax-services }}
+      superset-rust: ${{ steps.check.outputs.superset-rust }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -37,57 +37,54 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  ax-services:
+  rust-checks:
     needs: changes
-    if: needs.changes.outputs.ax-services == 'true'
+    if: needs.changes.outputs.superset-rust == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: ax-services
+    timeout-minutes: 20
     steps:
-      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+      - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version-file: "superset-frontend/.nvmrc"
-          cache: "npm"
-          cache-dependency-path: "ax-services/package-lock.json"
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy,rustfmt
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path superset-rust/Cargo.toml -- --check
 
-      - name: TypeScript checks
-        run: npm run type
+      - name: Run Clippy
+        run: cargo clippy --manifest-path superset-rust/Cargo.toml --all-targets -- -D warnings
 
-      - name: Unit tests
-        run: npm test
+      - name: Run Rust tests
+        run: cargo test --manifest-path superset-rust/Cargo.toml
 
-      - name: Build
-        run: npm run build
+      - name: Install maturin
+        run: python -m pip install "maturin>=1.12,<2"
 
-  ax-services-required:
-    needs: [changes, ax-services]
+      - name: Build Python extension wheel
+        working-directory: superset-rust/python
+        run: maturin build --interpreter python
+
+  superset-rust-required:
+    needs: [changes, rust-checks]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: Check ax-services result
+      - name: Check superset-rust result
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULT: ${{ needs.ax-services.result }}
+          RESULT: ${{ needs.rust-checks.result }}
         run: |
           if [ "$CHANGES" != "success" ]; then
             echo "change detection did not succeed (result: $CHANGES); refusing to pass on a skipped check"
             exit 1
           fi
           if [ "$RESULT" != "success" ] && [ "$RESULT" != "skipped" ]; then
-            echo "ax-services did not pass (result: $RESULT)"
+            echo "superset-rust did not pass (result: $RESULT)"
             exit 1
           fi
-          echo "ax-services result: $RESULT (changes: $CHANGES)"
+          echo "superset-rust result: $RESULT (changes: $CHANGES)"

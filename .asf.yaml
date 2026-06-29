@@ -78,6 +78,7 @@ github:
         contexts:
           - ax-services-required
           - lint-check
+          - superset-rust-required
           - cypress-matrix-required
           - dependency-review
           - frontend-build

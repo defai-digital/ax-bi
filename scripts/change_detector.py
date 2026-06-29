@@ -44,6 +44,12 @@ PATTERNS = {
         r"^\.github/workflows/ax-services\.yml",
         r"^ax-services/",
     ],
+    "superset-rust": [
+        r"^\.github/workflows/superset-rust\.yml",
+        r"^superset-rust/",
+        r"^superset/runtime_modernization/rust_sql\.py",
+        r"^tests/unit_tests/runtime_modernization/rust_sql_test\.py",
+    ],
     "docker": [
         r"^Dockerfile$",
         r"^docker.*",

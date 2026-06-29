@@ -20,6 +20,9 @@ outputs:
   ax-services:
     description: Whether ax-services package-related files were changed
     value: ${{ steps.change-detector.outputs.ax-services }}
+  superset-rust:
+    description: Whether superset-rust package-related files were changed
+    value: ${{ steps.change-detector.outputs.superset-rust }}
   superset-extensions-cli:
     description: Whether superset-extensions-cli package-related files were changed
     value: ${{ steps.change-detector.outputs.superset-extensions-cli }}
