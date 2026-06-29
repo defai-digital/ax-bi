@@ -74,13 +74,16 @@ def _rust_kernel_benchmark() -> dict[str, object]:
     }
 
 
-def _complete_production_evidence() -> dict[str, object]:
+def _complete_production_evidence(
+    workflows: tuple[RolloutWorkflow, ...] | None = None,
+) -> dict[str, object]:
     """Build complete production evidence for audit tests."""
 
-    workflows = (
-        get_rollout_workflow("mcp_asset_search"),
-        get_rollout_workflow("mcp_dashboard_list"),
-    )
+    if workflows is None:
+        workflows = (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        )
     return {
         "schema_version": 1,
         "artifacts": {
@@ -408,6 +411,8 @@ def test_production_evidence_manifest_lists_required_artifacts() -> None:
     assert manifest["schema_version"] == 1
     assert manifest["status"] == "requires_external_evidence"
     assert manifest["minimum_typescript_serving_workflows"] == 2
+    assert manifest["minimum_phase_3_typescript_serving_workflows"] == 1
+    assert manifest["minimum_phase_5_typescript_serving_workflows"] == 2
     assert [workflow["name"] for workflow in manifest["workflows"]] == [
         "mcp_asset_search"
     ]
@@ -602,6 +607,24 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
         "mcp_dashboard_list",
     ]
     assert checks["production_flag_state"]["passed"] is True
+    assert checks["typescript_selective_rollout"]["passed"] is True
+    assert checks["operator_dashboard_snapshot"]["passed"] is True
+
+
+def test_validate_production_evidence_separates_first_and_selective_rollout() -> None:
+    """One serving TypeScript workflow satisfies Phase 3 but not Phase 5."""
+
+    workflows = (get_rollout_workflow("mcp_asset_search"),)
+    evidence = _complete_production_evidence(workflows)
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["enabled_workflow_names"] == ["mcp_asset_search"]
+    assert validation["failing_check_names"] == ["typescript_selective_rollout"]
+    assert checks["production_flag_state"]["passed"] is True
+    assert checks["typescript_selective_rollout"]["passed"] is False
     assert checks["operator_dashboard_snapshot"]["passed"] is True
 
 
@@ -672,6 +695,7 @@ def test_validate_production_evidence_scopes_dashboards_to_enabled_flags() -> No
         "rust_kernel_benchmark",
         "rust_kernel_rollout_decision",
         "production_flag_state",
+        "typescript_selective_rollout",
         "operator_dashboard_snapshot",
         "operator_approval",
     ]
@@ -1490,6 +1514,7 @@ def test_audit_runtime_modernization_completion_reports_missing_evidence() -> No
         "rust_kernel_benchmark",
         "rust_kernel_rollout_decision",
         "production_flag_state",
+        "typescript_selective_rollout",
         "operator_dashboard_snapshot",
         "operator_approval",
     ]
@@ -1497,6 +1522,23 @@ def test_audit_runtime_modernization_completion_reports_missing_evidence() -> No
     assert phase_checks["phase_2_typescript_foundation"]["passed"] is True
     assert phase_checks["phase_5_selective_runtime_split"]["passed"] is False
     assert audit["evidence_validation"]["status"] == "failed"
+
+
+def test_audit_runtime_modernization_completion_separates_phase_3_and_5() -> None:
+    """A first TypeScript extraction can pass before selective expansion passes."""
+
+    workflows = (get_rollout_workflow("mcp_asset_search"),)
+    audit = audit_runtime_modernization_completion(
+        workflows,
+        _complete_production_evidence(workflows),
+    )
+    phase_checks = {check["name"]: check for check in audit["phase_checks"]}
+
+    assert audit["status"] == "incomplete"
+    assert audit["incomplete_phase_names"] == ["phase_5_selective_runtime_split"]
+    assert audit["failing_evidence_check_names"] == ["typescript_selective_rollout"]
+    assert phase_checks["phase_3_first_typescript_extraction"]["passed"] is True
+    assert phase_checks["phase_5_selective_runtime_split"]["passed"] is False
 
 
 def test_audit_runtime_modernization_completion_passes_complete_evidence() -> None:

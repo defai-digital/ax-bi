@@ -389,8 +389,9 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
             "flags were enabled for each workflow, with deployment provenance."
         ),
         validation=(
-            "environment and flag-state reference are named, and at least two "
-            "TypeScript workflow serving flag sets are enabled"
+            "environment and flag-state reference are named, at least one "
+            "TypeScript workflow serving flag set is enabled for Phase 3, "
+            "and at least two are enabled for Phase 5"
         ),
     ),
     RolloutEvidenceRequirement(
@@ -455,6 +456,8 @@ def build_production_evidence_manifest(
         "schema_version": 1,
         "status": "requires_external_evidence",
         "minimum_typescript_serving_workflows": 2,
+        "minimum_phase_3_typescript_serving_workflows": 1,
+        "minimum_phase_5_typescript_serving_workflows": 2,
         "workflows": [workflow.to_dict() for workflow in workflows],
         "required_artifacts": [
             requirement.to_dict()
@@ -1029,10 +1032,15 @@ def validate_production_evidence(
         for workflow in workflows
         if _serving_flags_enabled(flag_records.get(workflow.name, {}), workflow)
     ]
-    minimum_serving_workflows = 2
+    minimum_first_serving_workflows = 1
+    minimum_selective_serving_workflows = 2
     flag_state_passed = (
         flag_state_has_provenance
-        and len(enabled_workflows) >= minimum_serving_workflows
+        and len(enabled_workflows) >= minimum_first_serving_workflows
+    )
+    selective_rollout_passed = (
+        flag_state_has_provenance
+        and len(enabled_workflows) >= minimum_selective_serving_workflows
     )
     checks.append(
         ProductionEvidenceCheck(
@@ -1044,7 +1052,22 @@ def validate_production_evidence(
                 else (
                     "production flag state must name environment, flag-state "
                     "reference, and at least "
-                    f"{minimum_serving_workflows} TypeScript serving workflows"
+                    f"{minimum_first_serving_workflows} TypeScript serving workflow"
+                )
+            ),
+        )
+    )
+    checks.append(
+        ProductionEvidenceCheck(
+            name="typescript_selective_rollout",
+            passed=selective_rollout_passed,
+            message=(
+                f"{len(enabled_workflows)} TypeScript serving workflows enabled"
+                if selective_rollout_passed
+                else (
+                    "selective rollout requires at least "
+                    f"{minimum_selective_serving_workflows} TypeScript serving "
+                    "workflows with deployment provenance"
                 )
             ),
         )
@@ -1197,6 +1220,10 @@ def audit_runtime_modernization_completion(
         "rust_kernel_rollout_decision",
     )
     flag_state_passed = _evidence_check_passed(validation, "production_flag_state")
+    typescript_selective_rollout_passed = _evidence_check_passed(
+        validation,
+        "typescript_selective_rollout",
+    )
     dashboard_passed = _evidence_check_passed(
         validation,
         "operator_dashboard_snapshot",
@@ -1271,6 +1298,7 @@ def audit_runtime_modernization_completion(
             title="Expand runtime split selectively",
             passed=(
                 production_typescript_passed
+                and typescript_selective_rollout_passed
                 and rust_benchmark_passed
                 and rust_rollout_decision_passed
             ),
@@ -1278,6 +1306,7 @@ def audit_runtime_modernization_completion(
                 "selective TypeScript and Rust rollout evidence passed"
                 if (
                     production_typescript_passed
+                    and typescript_selective_rollout_passed
                     and rust_benchmark_passed
                     and rust_rollout_decision_passed
                 )
@@ -1286,6 +1315,7 @@ def audit_runtime_modernization_completion(
             required_checks=(
                 "compatibility_report",
                 "production_flag_state",
+                "typescript_selective_rollout",
                 "operator_dashboard_snapshot",
                 "rust_kernel_benchmark",
                 "rust_kernel_rollout_decision",

@@ -333,13 +333,14 @@ product-specific and contract-oriented.
   evidence bundle shape.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
   schema-versioned evidence bundle against those required artifacts, scopes
-  dashboard gates to workflows serving production traffic, reports the enabled
-  approved, and dashboard-required workflow names, and can fail release gates
-  when evidence is missing, failing, or approval does not exactly match the
-  enabled production workflow scope.
+  dashboard gates to workflows serving production traffic, separates the Phase 3
+  first-workflow serving gate from the Phase 5 two-workflow selective rollout
+  gate, reports the enabled, approved, dashboard-required, and failing evidence
+  check names, and can fail release gates when evidence is missing, failing, or
+  approval does not exactly match the enabled production workflow scope.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
-  Phase 0-6 completion checks and can fail release gates until every phase is
-  proven complete.
+  Phase 0-6 completion checks, reports incomplete phase names, and can fail
+  release gates until every phase is proven complete.
 - Python unit CI uploads the compatibility report artifact, production evidence
   template artifact, Rust rollout decision template artifact, and completion
   audit artifact on the current Python version. Live production dashboard
