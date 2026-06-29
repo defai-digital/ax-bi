@@ -704,6 +704,10 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Serve MCP asset search from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_ASSET_SEARCH_SERVING": False,
+    # Serve MCP annotation layer listing from the TypeScript sidecar with
+    # Python fallback.
+    # @lifecycle: development
+    "TS_ANNOTATION_LAYER_LIST_SERVING": False,
     # Serve MCP health check from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_HEALTH_CHECK_SERVING": False,

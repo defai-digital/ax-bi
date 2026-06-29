@@ -19,6 +19,7 @@
 import { afterEach, expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
+import { ANNOTATION_LAYER_LIST_CONTRACT_VERSION } from '../src/contracts/annotationLayerList';
 import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
 import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
@@ -400,6 +401,112 @@ test('searchAssets records warnings for unsupported and failed search paths', as
       'Metric search is not supported by the TypeScript path.',
       'dashboard search failed: search failed',
     ],
+  });
+});
+
+test('listAnnotationLayers maps Superset annotation layer list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 6,
+      result: [
+        {
+          id: 5,
+          name: 'Release markers',
+          descr: 'Production release windows',
+          changed_on: '2026-01-05T00:00:00',
+          created_on: '2026-01-01T00:00:00',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listAnnotationLayers(
+    {
+      contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'name', opr: 'ct', value: 'release' }],
+      selectColumns: ['id', 'name'],
+      search: 'markers',
+      orderColumn: 'name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 5,
+    },
+    'request-annotation-layers',
+  );
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    annotationLayers: [
+      {
+        id: 5,
+        name: 'Release markers',
+        descr: 'Production release windows',
+        changedOn: '2026-01-05T00:00:00',
+        createdOn: '2026-01-01T00:00:00',
+      },
+    ],
+    count: 1,
+    totalCount: 6,
+    page: 2,
+    pageSize: 5,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name', 'descr', 'changed_on', 'created_on'],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/annotation_layer/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'markers'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-annotation-layers',
+  });
+});
+
+test('listAnnotationLayers records warnings for failed Superset responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listAnnotationLayers({
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    annotationLayers: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'descr'],
+    columnsLoaded: [],
+    warnings: ['annotation layer list returned status 504 from Superset'],
   });
 });
 

@@ -109,6 +109,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_annotation_layers(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar annotation layer list endpoint."""
+
+        return self.post_json(
+            "/mcp/annotation-layers/list",
+            payload,
+            request_id=request_id,
+        )
+
     def list_dashboards(
         self,
         payload: Mapping[str, Any],

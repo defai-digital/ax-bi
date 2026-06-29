@@ -352,6 +352,47 @@ def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
     )
 
 
+def test_list_annotation_layers_posts_to_ax_services_annotation_layer_endpoint() -> (
+    None
+):
+    """Annotation layer list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"annotationLayers": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_annotation_layers(
+        {
+            "contractVersion": "annotation-layer-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        request_id="request-annotation-layers",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"annotationLayers": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/annotation-layers/list",
+        json={
+            "contractVersion": "annotation-layer-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-annotation-layers",
+        },
+        timeout=2.0,
+    )
+
+
 def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> None:
     """Saved query list requests use the sidecar TypeScript list endpoint."""
 

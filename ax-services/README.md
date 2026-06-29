@@ -46,6 +46,7 @@ Environment variables:
 | `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
 | `AX_SUPERSET_METADATA_PATH` | `/api/v1/dashboard/_info` | Safe Superset REST metadata endpoint used by the sidecar metadata probe. |
 | `AX_SUPERSET_PERMISSION_PATH` | `/api/v1/security/permissions/check` | Superset permission delegation path for future data-bearing workflows. |
+| `AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH` | `/api/v1/annotation_layer/` | Superset annotation layer list endpoint for TypeScript annotation layer listing. |
 | `AX_SUPERSET_CHART_LIST_PATH` | `/api/v1/chart/` | Superset chart list endpoint for TypeScript asset search and chart listing. |
 | `AX_SUPERSET_DASHBOARD_LIST_PATH` | `/api/v1/dashboard/` | Superset dashboard list endpoint for TypeScript asset search and dashboard listing. |
 | `AX_SUPERSET_DATABASE_LIST_PATH` | `/api/v1/database/` | Superset database list endpoint for TypeScript database listing. |
@@ -69,6 +70,7 @@ Current endpoints:
 - `GET /ready`
 - `GET /metrics`
 - `POST /mcp/assets/search`
+- `POST /mcp/annotation-layers/list`
 - `POST /mcp/charts/list`
 - `POST /mcp/dashboards/list`
 - `POST /mcp/databases/list`

@@ -32,6 +32,7 @@ test('buildConfig returns service defaults', () => {
     '/api/v1/security/permissions/check',
   );
   expect(config.supersetAssetSearchPaths).toEqual({
+    annotationLayer: '/api/v1/annotation_layer/',
     chart: '/api/v1/chart/',
     dashboard: '/api/v1/dashboard/',
     database: '/api/v1/database/',
@@ -53,6 +54,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_HEALTH_PATH: 'healthz',
     AX_SUPERSET_METADATA_PATH: 'api/v1/chart/_info',
     AX_SUPERSET_PERMISSION_PATH: 'permissions/check',
+    AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH: 'annotation-layers',
     AX_SUPERSET_CHART_LIST_PATH: 'charts',
     AX_SUPERSET_DASHBOARD_LIST_PATH: 'dashboards',
     AX_SUPERSET_DATABASE_LIST_PATH: 'databases',
@@ -72,6 +74,7 @@ test('buildConfig reads environment overrides', () => {
   expect(config.supersetMetadataPath).toBe('/api/v1/chart/_info');
   expect(config.supersetPermissionPath).toBe('/permissions/check');
   expect(config.supersetAssetSearchPaths).toEqual({
+    annotationLayer: '/annotation-layers',
     chart: '/charts',
     dashboard: '/dashboards',
     database: '/databases',

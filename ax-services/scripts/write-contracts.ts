@@ -19,6 +19,7 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
+import { annotationLayerListContractSchemas } from '../src/contracts/annotationLayerList';
 import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
 import { chartListContractSchemas } from '../src/contracts/chartList';
@@ -33,6 +34,7 @@ import { tagListContractSchemas } from '../src/contracts/tagList';
 const outputDir = join(__dirname, '..', 'contracts');
 
 const contractFiles = {
+  'annotation-layer-list.v1.schema.json': annotationLayerListContractSchemas,
   'asset-search.v1.schema.json': assetSearchContractSchemas,
   'authorization.v1.schema.json': authorizationContractSchemas,
   'chart-list.v1.schema.json': chartListContractSchemas,

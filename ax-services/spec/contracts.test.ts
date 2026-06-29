@@ -19,6 +19,10 @@
 import { expect, test } from '@jest/globals';
 
 import {
+  annotationLayerListContractSchemas,
+  ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+} from '../src/contracts/annotationLayerList';
+import {
   assetSearchContractSchemas,
   ASSET_SEARCH_CONTRACT_VERSION,
 } from '../src/contracts/assetSearch';
@@ -74,6 +78,12 @@ test('authorization contract version is explicit', () => {
 
 test('asset search contract version is explicit', () => {
   expect(ASSET_SEARCH_CONTRACT_VERSION).toBe('asset-search.v1');
+});
+
+test('annotation layer list contract version is explicit', () => {
+  expect(ANNOTATION_LAYER_LIST_CONTRACT_VERSION).toBe(
+    'annotation-layer-list.v1',
+  );
 });
 
 test('dashboard list contract version is explicit', () => {
@@ -192,6 +202,22 @@ test('asset search request schema is registered in asset search contracts', () =
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+});
+
+test('annotation layer list request schema is registered in annotation layer list contracts', () => {
+  expect(
+    annotationLayerListContractSchemas.annotationLayerListRequestSchema.properties
+      .page,
+  ).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema.properties
+      .annotationLayers.items.properties.name,
+  ).toEqual({
+    type: 'string',
   });
 });
 

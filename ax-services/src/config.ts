@@ -24,6 +24,7 @@ export interface ServiceConfig {
   supersetMetadataPath: string;
   supersetPermissionPath: string;
   supersetAssetSearchPaths: {
+    annotationLayer: string;
     chart: string;
     dashboard: string;
     database: string;
@@ -45,6 +46,7 @@ const DEFAULT_SUPERSET_BASE_URL = 'http://127.0.0.1:8088';
 const DEFAULT_SUPERSET_HEALTH_PATH = '/health';
 const DEFAULT_SUPERSET_METADATA_PATH = '/api/v1/dashboard/_info';
 const DEFAULT_SUPERSET_PERMISSION_PATH = '/api/v1/security/permissions/check';
+const DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH = '/api/v1/annotation_layer/';
 const DEFAULT_SUPERSET_CHART_LIST_PATH = '/api/v1/chart/';
 const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
 const DEFAULT_SUPERSET_DATABASE_LIST_PATH = '/api/v1/database/';
@@ -108,6 +110,10 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       env.AX_SUPERSET_PERMISSION_PATH || DEFAULT_SUPERSET_PERMISSION_PATH,
     ),
     supersetAssetSearchPaths: {
+      annotationLayer: normalizePath(
+        env.AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH ||
+          DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
+      ),
       chart: normalizePath(
         env.AX_SUPERSET_CHART_LIST_PATH || DEFAULT_SUPERSET_CHART_LIST_PATH,
       ),

@@ -17,6 +17,13 @@
  * under the License.
  */
 import {
+  ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+  AnnotationLayerFilterValue,
+  AnnotationLayerListItem,
+  AnnotationLayerListRequest,
+  AnnotationLayerListResponse,
+} from './contracts/annotationLayerList';
+import {
   ASSET_SEARCH_CONTRACT_VERSION,
   AssetSearchRequest,
   AssetSearchResponse,
@@ -106,6 +113,13 @@ export interface SupersetAssetSearchClient {
   ): Promise<AssetSearchResponse>;
 }
 
+export interface SupersetAnnotationLayerListClient {
+  listAnnotationLayers(
+    request: AnnotationLayerListRequest,
+    correlationId?: string,
+  ): Promise<AnnotationLayerListResponse>;
+}
+
 export interface SupersetDashboardListClient {
   listDashboards(
     request: DashboardListRequest,
@@ -159,6 +173,7 @@ export class SupersetClient
   implements
     SupersetHealthClient,
     SupersetMetadataClient,
+    SupersetAnnotationLayerListClient,
     SupersetAssetSearchClient,
     SupersetDashboardListClient,
     SupersetChartListClient,
@@ -253,6 +268,54 @@ export class SupersetClient
         error: error instanceof Error ? error.message : String(error),
         url: this.metadataUrl,
       };
+    }
+  }
+
+  async listAnnotationLayers(
+    request: AnnotationLayerListRequest,
+    correlationId?: string,
+  ): Promise<AnnotationLayerListResponse> {
+    const url = this.buildAnnotationLayerListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyAnnotationLayerListResponse(request, [
+          `annotation layer list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const annotationLayers = extractSupersetResults(payload)
+        .map(toAnnotationLayerListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, annotationLayers.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+        annotationLayers,
+        count: annotationLayers.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedAnnotationLayerColumns(request),
+        columnsLoaded: annotationLayerColumnsLoaded(annotationLayers),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyAnnotationLayerListResponse(request, [
+        `annotation layer list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
     }
   }
 
@@ -720,6 +783,16 @@ export class SupersetClient
     return url.toString();
   }
 
+  private buildAnnotationLayerListUrl(
+    request: AnnotationLayerListRequest,
+  ): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.annotationLayer}`,
+    );
+    url.searchParams.set('q', buildAnnotationLayerListQuery(request));
+    return url.toString();
+  }
+
   private buildDashboardListUrl(request: DashboardListRequest): string {
     const url = new URL(
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dashboard}`,
@@ -791,6 +864,7 @@ interface SupersetListItem {
   id?: number;
   uuid?: string;
   name?: string;
+  descr?: string;
   table_name?: string;
   schema?: string;
   database_name?: string;
@@ -876,6 +950,32 @@ function buildSupersetListQuery(
   }
 
   return `(page:0,page_size:${limit},filters:!(${filters.join(',')}))`;
+}
+
+function buildAnnotationLayerListQuery(
+  request: AnnotationLayerListRequest,
+): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatAnnotationLayerFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
 }
 
 function buildDashboardListQuery(request: DashboardListRequest): string {
@@ -1056,6 +1156,16 @@ function formatDashboardFilter(filter: {
   )})`;
 }
 
+function formatAnnotationLayerFilter(filter: {
+  col: string;
+  opr: string;
+  value: AnnotationLayerFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationLayerRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatChartFilter(filter: {
   col: string;
   opr: string;
@@ -1117,6 +1227,15 @@ function formatTagFilter(filter: {
 }
 
 function formatRisonValue(value: DashboardFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatAnnotationLayerRisonValue(
+  value: AnnotationLayerFilterValue,
+): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1372,6 +1491,22 @@ function toSavedQueryListItem(
   };
 }
 
+function toAnnotationLayerListItem(
+  item: SupersetListItem,
+): AnnotationLayerListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    descr: typeof item.descr === 'string' ? item.descr : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+  };
+}
+
 function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
   if (typeof item.id !== 'number') {
     return undefined;
@@ -1460,6 +1595,14 @@ function requestedDashboardColumns(request: DashboardListRequest): string[] {
         'changed_on',
         'changed_on_humanized',
       ];
+}
+
+function requestedAnnotationLayerColumns(
+  request: AnnotationLayerListRequest,
+): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'name', 'descr'];
 }
 
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
@@ -1647,6 +1790,19 @@ function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
   return [...loaded];
 }
 
+function annotationLayerColumnsLoaded(
+  annotationLayers: AnnotationLayerListItem[],
+): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const annotationLayer of annotationLayers) {
+    if (annotationLayer.name !== undefined) loaded.add('name');
+    if (annotationLayer.descr !== undefined) loaded.add('descr');
+    if (annotationLayer.changedOn !== undefined) loaded.add('changed_on');
+    if (annotationLayer.createdOn !== undefined) loaded.add('created_on');
+  }
+  return [...loaded];
+}
+
 function reportColumnsLoaded(reports: ReportListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const report of reports) {
@@ -1704,6 +1860,26 @@ function emptyDashboardListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedDashboardColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyAnnotationLayerListResponse(
+  request: AnnotationLayerListRequest,
+  warnings: string[],
+): AnnotationLayerListResponse {
+  return {
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    annotationLayers: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedAnnotationLayerColumns(request),
     columnsLoaded: [],
     warnings,
   };

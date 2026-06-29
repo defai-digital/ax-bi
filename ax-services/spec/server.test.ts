@@ -21,6 +21,10 @@ import { expect, test } from '@jest/globals';
 import { buildConfig } from '../src/config';
 import { buildServer } from '../src/server';
 import {
+  ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+  AnnotationLayerListResponse,
+} from '../src/contracts/annotationLayerList';
+import {
   ASSET_SEARCH_CONTRACT_VERSION,
   AssetSearchResponse,
 } from '../src/contracts/assetSearch';
@@ -55,6 +59,7 @@ import {
 import {
   DependencyHealth,
   DependencyMetadata,
+  SupersetAnnotationLayerListClient,
   SupersetAssetSearchClient,
   SupersetChartListClient,
   SupersetDashboardListClient,
@@ -87,6 +92,7 @@ function makeSupersetClient({
   },
   onHealth,
   onMetadata,
+  onListAnnotationLayers,
   onSearch,
   onListCharts,
   onListDashboards,
@@ -98,6 +104,20 @@ function makeSupersetClient({
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
+    warnings: [],
+  },
+  annotationLayerList = {
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    annotationLayers: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
     warnings: [],
   },
   chartList = {
@@ -202,6 +222,7 @@ function makeSupersetClient({
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  annotationLayerList?: AnnotationLayerListResponse;
   chartList?: ChartListResponse;
   dashboardList?: DashboardListResponse;
   databaseList?: DatabaseListResponse;
@@ -211,6 +232,7 @@ function makeSupersetClient({
   tagList?: TagListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
+  onListAnnotationLayers?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
@@ -221,6 +243,7 @@ function makeSupersetClient({
   onListTags?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
+  SupersetAnnotationLayerListClient &
   SupersetAssetSearchClient &
   SupersetChartListClient &
   SupersetDashboardListClient &
@@ -241,6 +264,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async listAnnotationLayers(_request, correlationId) {
+      onListAnnotationLayers?.(correlationId);
+      return annotationLayerList;
     },
     async listCharts(_request, correlationId) {
       onListCharts?.(correlationId);
@@ -558,6 +585,81 @@ test('asset search endpoint delegates to Superset client', async () => {
         tags: [],
       },
     ],
+    warnings: [],
+  });
+});
+
+test('annotation layer list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      annotationLayerList: {
+        contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+        annotationLayers: [
+          {
+            id: 5,
+            name: 'Release markers',
+            descr: 'Production release windows',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'name'],
+        columnsLoaded: ['id', 'name', 'descr'],
+        warnings: [],
+      },
+      onListAnnotationLayers(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/annotation-layers/list',
+    headers: {
+      'x-request-id': 'request-annotation-layers',
+    },
+    payload: {
+      contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'name'],
+      search: 'release',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-annotation-layers');
+  expect(seenRequestIds).toEqual(['request-annotation-layers']);
+  expect(response.json()).toEqual({
+    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    annotationLayers: [
+      {
+        id: 5,
+        name: 'Release markers',
+        descr: 'Production release windows',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name', 'descr'],
     warnings: [],
   });
 });

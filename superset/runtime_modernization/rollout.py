@@ -241,6 +241,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         serving_flag="TS_ASSET_SEARCH_SERVING",
     ),
     _mcp_workflow(
+        name="mcp_annotation_layer_list",
+        operation="list_annotation_layers",
+        sidecar_route="POST /mcp/annotation-layers/list",
+        contract_version="annotation-layer-list.v1",
+        serving_flag="TS_ANNOTATION_LAYER_LIST_SERVING",
+    ),
+    _mcp_workflow(
         name="mcp_dashboard_list",
         operation="list_dashboards",
         sidecar_route="POST /mcp/dashboards/list",

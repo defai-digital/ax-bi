@@ -92,6 +92,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
     names = {workflow.name for workflow in workflows}
 
     assert names == {
+        "mcp_annotation_layer_list",
         "mcp_asset_search",
         "mcp_chart_list",
         "mcp_dashboard_list",
@@ -130,6 +131,23 @@ def test_rollout_workflow_serializes_metrics_and_gates() -> None:
         "fallback_rate",
         "shadow_mismatch_rate",
     }
+
+
+def test_rollout_workflow_includes_annotation_layer_list() -> None:
+    """Rollout manifest includes annotation layer listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_annotation_layer_list")
+
+    assert workflow.sidecar_route == "POST /mcp/annotation-layers/list"
+    assert workflow.contract_version == "annotation-layer-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_ANNOTATION_LAYER_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_annotation_layers.shadow_mismatch"
+        in workflow.python_metrics
+    )
 
 
 def test_rollout_workflow_includes_chart_list() -> None:

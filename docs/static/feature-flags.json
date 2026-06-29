@@ -160,6 +160,12 @@
         "description": "Enables the tagging system for organizing assets"
       },
       {
+        "name": "TS_ANNOTATION_LAYER_LIST_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP annotation layer listing from the TypeScript sidecar with Python fallback."
+      },
+      {
         "name": "TS_ASSET_SEARCH_SERVING",
         "default": false,
         "lifecycle": "development",

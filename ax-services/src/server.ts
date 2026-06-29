@@ -22,6 +22,12 @@ import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
 import {
+  AnnotationLayerListRequest,
+  AnnotationLayerListResponse,
+  annotationLayerListRequestSchema,
+  annotationLayerListResponseSchema,
+} from './contracts/annotationLayerList';
+import {
   AssetSearchRequest,
   AssetSearchResponse,
   assetSearchRequestSchema,
@@ -84,6 +90,7 @@ import { ServiceMetrics } from './metrics';
 import {
   SupersetHealthClient,
   SupersetMetadataClient,
+  SupersetAnnotationLayerListClient,
   SupersetAssetSearchClient,
   SupersetChartListClient,
   SupersetDashboardListClient,
@@ -98,6 +105,7 @@ export function buildServer(
   config: ServiceConfig,
   supersetClient: SupersetHealthClient &
     SupersetMetadataClient &
+    SupersetAnnotationLayerListClient &
     SupersetAssetSearchClient &
     SupersetDashboardListClient &
     SupersetChartListClient &
@@ -210,6 +218,23 @@ export function buildServer(
       },
     },
     async (): Promise<MetricsResponseContract> => metrics.snapshot(),
+  );
+
+  server.post<{
+    Body: AnnotationLayerListRequest;
+    Reply: AnnotationLayerListResponse;
+  }>(
+    '/mcp/annotation-layers/list',
+    {
+      schema: {
+        body: annotationLayerListRequestSchema,
+        response: {
+          200: annotationLayerListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<AnnotationLayerListResponse> =>
+      supersetClient.listAnnotationLayers(request.body, request.id),
   );
 
   server.post<{
