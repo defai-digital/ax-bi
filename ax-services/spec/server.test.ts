@@ -33,11 +33,16 @@ import {
   DashboardListResponse,
 } from '../src/contracts/dashboardList';
 import {
+  DATASET_LIST_CONTRACT_VERSION,
+  DatasetListResponse,
+} from '../src/contracts/datasetList';
+import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAssetSearchClient,
   SupersetChartListClient,
   SupersetDashboardListClient,
+  SupersetDatasetListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
 } from '../src/supersetClient';
@@ -65,6 +70,7 @@ function makeSupersetClient({
   onSearch,
   onListCharts,
   onListDashboards,
+  onListDatasets,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
@@ -98,22 +104,39 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  datasetList = {
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    datasets: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
   chartList?: ChartListResponse;
   dashboardList?: DashboardListResponse;
+  datasetList?: DatasetListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
+  onListDatasets?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAssetSearchClient &
   SupersetChartListClient &
-  SupersetDashboardListClient {
+  SupersetDashboardListClient &
+  SupersetDatasetListClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -134,6 +157,10 @@ function makeSupersetClient({
     async listDashboards(_request, correlationId) {
       onListDashboards?.(correlationId);
       return dashboardList;
+    },
+    async listDatasets(_request, correlationId) {
+      onListDatasets?.(correlationId);
+      return datasetList;
     },
   };
 }
@@ -581,6 +608,87 @@ test('chart list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'slice_name'],
     columnsLoaded: ['id', 'slice_name', 'viz_type', 'url'],
+    warnings: [],
+  });
+});
+
+test('dataset list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      datasetList: {
+        contractVersion: DATASET_LIST_CONTRACT_VERSION,
+        datasets: [
+          {
+            id: 11,
+            tableName: 'sales_fact',
+            schema: 'public',
+            databaseName: 'examples',
+            url: '/explore/?datasource_type=table&datasource_id=11',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'table_name'],
+        columnsLoaded: ['id', 'table_name', 'schema', 'database_name', 'url'],
+        warnings: [],
+      },
+      onListDatasets(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/datasets/list',
+    headers: {
+      'x-request-id': 'request-dataset-list',
+    },
+    payload: {
+      contractVersion: DATASET_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'table_name'],
+      search: 'sales',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-dataset-list');
+  expect(seenRequestIds).toEqual(['request-dataset-list']);
+  expect(response.json()).toEqual({
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    datasets: [
+      {
+        id: 11,
+        tableName: 'sales_fact',
+        schema: 'public',
+        databaseName: 'examples',
+        url: '/explore/?datasource_type=table&datasource_id=11',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'table_name'],
+    columnsLoaded: ['id', 'table_name', 'schema', 'database_name', 'url'],
     warnings: [],
   });
 });

@@ -44,6 +44,7 @@ from superset.mcp_service.utils.sanitization import (
     LLM_CONTEXT_OPEN_DELIMITER,
     sanitize_for_llm_context,
 )
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
@@ -145,6 +146,34 @@ async def test_list_datasets_without_request_returns_structured_privacy_error(
 
     data = json.loads(result.content[0].text)
     assert data["error_type"] == DATA_MODEL_METADATA_ERROR_TYPE
+
+
+@pytest.mark.asyncio
+async def test_list_datasets_privacy_denial_does_not_call_sidecar(
+    mcp_server,
+) -> None:
+    """Dataset sidecar serving is blocked by metadata privacy controls."""
+
+    with (
+        patch.object(
+            list_datasets_module,
+            "user_can_view_data_model_metadata",
+            return_value=False,
+        ),
+        patch.object(
+            list_datasets_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATASET_LIST_SERVING"},
+        ),
+        patch.object(list_datasets_module, "AxServicesClient") as client_class,
+    ):
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_datasets", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["error_type"] == DATA_MODEL_METADATA_ERROR_TYPE
+    client_class.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -323,6 +352,179 @@ async def test_list_datasets_basic(mock_list, mcp_server, app_context: None):
     stats_logger.timing.assert_called_once()
     assert stats_logger.timing.call_args.args[0] == (
         "runtime_modernization.mcp_orchestration.list_datasets.duration"
+    )
+
+
+@patch("superset.daos.dataset.DatasetDAO.list")
+@pytest.mark.asyncio
+async def test_list_datasets_shadows_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Dataset listing can shadow the TypeScript sidecar candidate."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([create_mock_dataset(dataset_id=1)], 1)
+
+    with (
+        patch.object(
+            list_datasets_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+        ),
+        patch.object(list_datasets_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_datasets.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dataset-list.v1",
+                "datasets": [
+                    {
+                        "id": 1,
+                        "tableName": "Test DatasetInfo",
+                        "schema": "main",
+                        "databaseName": "examples",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "table_name"],
+                "columnsLoaded": ["id", "table_name"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_datasets",
+                {"request": ListDatasetsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    data = json.loads(result.content[0].text)
+    assert [dataset["id"] for dataset in data["datasets"]] == [1]
+    client_class.return_value.list_datasets.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_datasets.shadow_match"
+    )
+
+
+@patch("superset.daos.dataset.DatasetDAO.list")
+@pytest.mark.asyncio
+async def test_list_datasets_serves_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Dataset listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch.object(
+            list_datasets_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATASET_LIST_SERVING"},
+        ),
+        patch.object(list_datasets_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_datasets.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dataset-list.v1",
+                "datasets": [
+                    {
+                        "id": 9,
+                        "tableName": "ts_dataset",
+                        "schema": "public",
+                        "databaseName": "examples",
+                        "url": "/explore/?datasource_type=table&datasource_id=9",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "table_name", "schema", "database_name"],
+                "columnsLoaded": ["id", "table_name", "schema", "database_name"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_datasets",
+                {"request": ListDatasetsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["datasets"] == [
+        {
+            "id": 9,
+            "table_name": _wrapped("ts_dataset"),
+            "schema": "public",
+            "database_name": "examples",
+        }
+    ]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_datasets.served_candidate"
+    )
+
+
+@patch("superset.daos.dataset.DatasetDAO.list")
+@pytest.mark.asyncio
+async def test_list_datasets_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+    app_context: None,
+):
+    """Dataset listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch.object(
+            list_datasets_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATASET_LIST_SERVING"},
+        ),
+        patch.object(list_datasets_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_datasets.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dataset-list.v1",
+                "datasets": [{"tableName": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_datasets", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["datasets"] == []
+    mock_list.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_datasets.fallback"
     )
 
 

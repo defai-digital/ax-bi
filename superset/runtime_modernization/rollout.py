@@ -208,6 +208,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         contract_version="chart-list.v1",
         serving_flag="TS_CHART_LIST_SERVING",
     ),
+    _mcp_workflow(
+        name="mcp_dataset_list",
+        operation="list_datasets",
+        sidecar_route="POST /mcp/datasets/list",
+        contract_version="dataset-list.v1",
+        serving_flag="TS_DATASET_LIST_SERVING",
+    ),
 )
 
 PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (

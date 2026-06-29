@@ -38,6 +38,13 @@ import {
   DashboardFilterValue,
 } from './contracts/dashboardList';
 import {
+  DATASET_LIST_CONTRACT_VERSION,
+  DatasetFilterValue,
+  DatasetListItem,
+  DatasetListRequest,
+  DatasetListResponse,
+} from './contracts/datasetList';
+import {
   AUTHORIZATION_CONTRACT_VERSION,
   PermissionCheckRequest,
   PermissionCheckResult,
@@ -85,13 +92,21 @@ export interface SupersetChartListClient {
   ): Promise<ChartListResponse>;
 }
 
+export interface SupersetDatasetListClient {
+  listDatasets(
+    request: DatasetListRequest,
+    correlationId?: string,
+  ): Promise<DatasetListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
     SupersetMetadataClient,
     SupersetAssetSearchClient,
     SupersetDashboardListClient,
-    SupersetChartListClient
+    SupersetChartListClient,
+    SupersetDatasetListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -348,6 +363,54 @@ export class SupersetClient
     }
   }
 
+  async listDatasets(
+    request: DatasetListRequest,
+    correlationId?: string,
+  ): Promise<DatasetListResponse> {
+    const url = this.buildDatasetListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyDatasetListResponse(request, [
+          `dataset list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const datasets = extractSupersetResults(payload)
+        .map(toDatasetListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, datasets.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: DATASET_LIST_CONTRACT_VERSION,
+        datasets,
+        count: datasets.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedDatasetColumns(request),
+        columnsLoaded: datasetColumnsLoaded(datasets),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyDatasetListResponse(request, [
+        `dataset list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -422,6 +485,14 @@ export class SupersetClient
     url.searchParams.set('q', buildChartListQuery(request));
     return url.toString();
   }
+
+  private buildDatasetListUrl(request: DatasetListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dataset}`,
+    );
+    url.searchParams.set('q', buildDatasetListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -439,6 +510,12 @@ interface SupersetListItem {
   uuid?: string;
   name?: string;
   table_name?: string;
+  schema?: string;
+  database_name?: string;
+  database?: {
+    id?: number;
+    database_name?: string;
+  };
   slice_name?: string;
   viz_type?: string;
   dashboard_title?: string;
@@ -450,6 +527,9 @@ interface SupersetListItem {
   url?: string;
   changed_on?: string;
   changed_on_humanized?: string;
+  is_virtual?: boolean;
+  database_id?: number;
+  type?: string;
   owners?: unknown[];
   tags?: unknown[];
 }
@@ -535,6 +615,30 @@ function buildChartListQuery(request: ChartListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildDatasetListQuery(request: DatasetListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'table_name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatDatasetFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -555,6 +659,16 @@ function formatChartFilter(filter: {
   )})`;
 }
 
+function formatDatasetFilter(filter: {
+  col: string;
+  opr: string;
+  value: DatasetFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatDatasetRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
@@ -563,6 +677,13 @@ function formatRisonValue(value: DashboardFilterValue): string {
 }
 
 function formatChartRisonValue(value: ChartFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatDatasetRisonValue(value: DatasetFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -653,6 +774,53 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
   };
 }
 
+function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    tableName: typeof item.table_name === 'string' ? item.table_name : undefined,
+    schema: typeof item.schema === 'string' ? item.schema : undefined,
+    databaseName: extractDatabaseName(item),
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    certifiedBy:
+      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    certificationDetails:
+      typeof item.certification_details === 'string'
+        ? item.certification_details
+        : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+    isVirtual:
+      typeof item.is_virtual === 'boolean'
+        ? item.is_virtual
+        : item.type === 'virtual',
+    databaseId:
+      typeof item.database_id === 'number'
+        ? item.database_id
+        : typeof item.database?.id === 'number'
+          ? item.database.id
+          : undefined,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    url: typeof item.url === 'string' ? item.url : undefined,
+  };
+}
+
+function extractDatabaseName(item: SupersetListItem): string | undefined {
+  if (typeof item.database_name === 'string') {
+    return item.database_name;
+  }
+  return typeof item.database?.database_name === 'string'
+    ? item.database.database_name
+    : undefined;
+}
+
 function requestedDashboardColumns(request: DashboardListRequest): string[] {
   return request.selectColumns.length > 0
     ? request.selectColumns
@@ -726,6 +894,49 @@ function chartColumnsLoaded(charts: ChartListItem[]): string[] {
   return [...loaded];
 }
 
+function requestedDatasetColumns(request: DatasetListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : [
+        'id',
+        'table_name',
+        'schema',
+        'database_name',
+        'database',
+        'description',
+        'certified_by',
+        'certification_details',
+        'changed_on',
+        'changed_on_humanized',
+      ];
+}
+
+function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const dataset of datasets) {
+    if (dataset.tableName !== undefined) loaded.add('table_name');
+    if (dataset.schema !== undefined) loaded.add('schema');
+    if (dataset.databaseName !== undefined) {
+      loaded.add('database_name');
+      loaded.add('database');
+    }
+    if (dataset.description !== undefined) loaded.add('description');
+    if (dataset.certifiedBy !== undefined) loaded.add('certified_by');
+    if (dataset.certificationDetails !== undefined) {
+      loaded.add('certification_details');
+    }
+    if (dataset.changedOn !== undefined) loaded.add('changed_on');
+    if (dataset.changedOnHumanized !== undefined) {
+      loaded.add('changed_on_humanized');
+    }
+    if (dataset.isVirtual !== undefined) loaded.add('is_virtual');
+    if (dataset.databaseId !== undefined) loaded.add('database_id');
+    if (dataset.uuid !== undefined) loaded.add('uuid');
+    if (dataset.url !== undefined) loaded.add('url');
+  }
+  return [...loaded];
+}
+
 function emptyDashboardListResponse(
   request: DashboardListRequest,
   warnings: string[],
@@ -761,6 +972,26 @@ function emptyChartListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedChartColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyDatasetListResponse(
+  request: DatasetListRequest,
+  warnings: string[],
+): DatasetListResponse {
+  return {
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    datasets: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedDatasetColumns(request),
     columnsLoaded: [],
     warnings,
   };

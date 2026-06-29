@@ -25,6 +25,7 @@ import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
 import { chartListContractSchemas } from '../src/contracts/chartList';
 import { dashboardListContractSchemas } from '../src/contracts/dashboardList';
+import { datasetListContractSchemas } from '../src/contracts/datasetList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 
 function readContractArtifact(filename: string): unknown {
@@ -60,5 +61,11 @@ test('dashboard list contract artifact matches TypeScript source', () => {
 test('chart list contract artifact matches TypeScript source', () => {
   expect(readContractArtifact('chart-list.v1.schema.json')).toEqual(
     chartListContractSchemas,
+  );
+});
+
+test('dataset list contract artifact matches TypeScript source', () => {
+  expect(readContractArtifact('dataset-list.v1.schema.json')).toEqual(
+    datasetListContractSchemas,
   );
 });

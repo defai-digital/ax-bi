@@ -23,6 +23,7 @@ import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
 import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
+import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -682,6 +683,160 @@ test('listCharts records warnings for failed Superset list responses', async () 
     ],
     columnsLoaded: [],
     warnings: ['chart list returned status 504 from Superset'],
+  });
+});
+
+test('listDatasets maps Superset dataset list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 13,
+      result: [
+        {
+          id: 11,
+          table_name: 'sales_fact',
+          schema: 'public',
+          database: {
+            id: 3,
+            database_name: 'examples',
+          },
+          description: 'Orders and revenue',
+          certified_by: 'BI',
+          certification_details: 'Reviewed',
+          changed_on: '2026-01-03T00:00:00',
+          changed_on_humanized: '3 days ago',
+          is_virtual: false,
+          uuid: 'dataset-uuid',
+          url: '/explore/?datasource_type=table&datasource_id=11',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listDatasets(
+    {
+      contractVersion: DATASET_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'schema', opr: 'eq', value: 'public' }],
+      selectColumns: ['id', 'table_name'],
+      search: 'sales',
+      orderColumn: 'table_name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+    'request-datasets',
+  );
+
+  expect(result).toEqual({
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    datasets: [
+      {
+        id: 11,
+        tableName: 'sales_fact',
+        schema: 'public',
+        databaseName: 'examples',
+        description: 'Orders and revenue',
+        certifiedBy: 'BI',
+        certificationDetails: 'Reviewed',
+        changedOn: '2026-01-03T00:00:00',
+        changedOnHumanized: '3 days ago',
+        isVirtual: false,
+        databaseId: 3,
+        uuid: 'dataset-uuid',
+        url: '/explore/?datasource_type=table&datasource_id=11',
+      },
+    ],
+    count: 1,
+    totalCount: 13,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'table_name'],
+    columnsLoaded: [
+      'id',
+      'table_name',
+      'schema',
+      'database_name',
+      'database',
+      'description',
+      'certified_by',
+      'certification_details',
+      'changed_on',
+      'changed_on_humanized',
+      'is_virtual',
+      'database_id',
+      'uuid',
+      'url',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/dataset/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'sales'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-datasets',
+  });
+});
+
+test('listDatasets records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDatasets({
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    datasets: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'table_name',
+      'schema',
+      'database_name',
+      'database',
+      'description',
+      'certified_by',
+      'certification_details',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['dataset list returned status 504 from Superset'],
   });
 });
 

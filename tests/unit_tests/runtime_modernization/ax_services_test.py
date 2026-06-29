@@ -268,6 +268,49 @@ def test_list_charts_posts_to_ax_services_chart_list_endpoint() -> None:
     )
 
 
+def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
+    """Dataset list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"datasets": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_datasets(
+        {
+            "contractVersion": "dataset-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "table_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        request_id="request-datasets",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"datasets": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/datasets/list",
+        json={
+            "contractVersion": "dataset-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "table_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-datasets",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

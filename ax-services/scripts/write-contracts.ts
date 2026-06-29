@@ -23,6 +23,7 @@ import { assetSearchContractSchemas } from '../src/contracts/assetSearch';
 import { authorizationContractSchemas } from '../src/contracts/authorization';
 import { chartListContractSchemas } from '../src/contracts/chartList';
 import { dashboardListContractSchemas } from '../src/contracts/dashboardList';
+import { datasetListContractSchemas } from '../src/contracts/datasetList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 
 const outputDir = join(__dirname, '..', 'contracts');
@@ -32,6 +33,7 @@ const contractFiles = {
   'authorization.v1.schema.json': authorizationContractSchemas,
   'chart-list.v1.schema.json': chartListContractSchemas,
   'dashboard-list.v1.schema.json': dashboardListContractSchemas,
+  'dataset-list.v1.schema.json': datasetListContractSchemas,
   'runtime.v1.schema.json': runtimeContractSchemas,
 };
 

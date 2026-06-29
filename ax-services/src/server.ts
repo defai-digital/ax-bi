@@ -40,6 +40,12 @@ import {
   dashboardListResponseSchema,
 } from './contracts/dashboardList';
 import {
+  DatasetListRequest,
+  DatasetListResponse,
+  datasetListRequestSchema,
+  datasetListResponseSchema,
+} from './contracts/datasetList';
+import {
   HealthResponseContract,
   healthResponseSchema,
   MetadataResponseContract,
@@ -57,6 +63,7 @@ import {
   SupersetAssetSearchClient,
   SupersetChartListClient,
   SupersetDashboardListClient,
+  SupersetDatasetListClient,
 } from './supersetClient';
 
 export function buildServer(
@@ -65,7 +72,8 @@ export function buildServer(
     SupersetMetadataClient &
     SupersetAssetSearchClient &
     SupersetDashboardListClient &
-    SupersetChartListClient,
+    SupersetChartListClient &
+    SupersetDatasetListClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
@@ -221,6 +229,23 @@ export function buildServer(
     },
     async (request): Promise<ChartListResponse> =>
       supersetClient.listCharts(request.body, request.id),
+  );
+
+  server.post<{
+    Body: DatasetListRequest;
+    Reply: DatasetListResponse;
+  }>(
+    '/mcp/datasets/list',
+    {
+      schema: {
+        body: datasetListRequestSchema,
+        response: {
+          200: datasetListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<DatasetListResponse> =>
+      supersetClient.listDatasets(request.body, request.id),
   );
 
   return server;

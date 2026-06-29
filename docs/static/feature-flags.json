@@ -178,6 +178,12 @@
         "description": "Serve MCP dashboard listing from the TypeScript sidecar with Python fallback."
       },
       {
+        "name": "TS_DATASET_LIST_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP dataset listing from the TypeScript sidecar with Python fallback."
+      },
+      {
         "name": "TS_HEALTH_CHECK_SERVING",
         "default": false,
         "lifecycle": "development",

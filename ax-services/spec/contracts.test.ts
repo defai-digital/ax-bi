@@ -36,6 +36,10 @@ import {
   DASHBOARD_LIST_CONTRACT_VERSION,
 } from '../src/contracts/dashboardList';
 import {
+  datasetListContractSchemas,
+  DATASET_LIST_CONTRACT_VERSION,
+} from '../src/contracts/datasetList';
+import {
   healthResponseSchema,
   metadataResponseSchema,
   metricsResponseSchema,
@@ -62,6 +66,10 @@ test('dashboard list contract version is explicit', () => {
 
 test('chart list contract version is explicit', () => {
   expect(CHART_LIST_CONTRACT_VERSION).toBe('chart-list.v1');
+});
+
+test('dataset list contract version is explicit', () => {
+  expect(DATASET_LIST_CONTRACT_VERSION).toBe('dataset-list.v1');
 });
 
 test('health response schema is stable', () => {
@@ -178,6 +186,21 @@ test('chart list request schema is registered in chart list contracts', () => {
   expect(
     chartListContractSchemas.chartListResponseSchema.properties.charts.items
       .properties.sliceName,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('dataset list request schema is registered in dataset list contracts', () => {
+  expect(
+    datasetListContractSchemas.datasetListRequestSchema.properties.page,
+  ).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    datasetListContractSchemas.datasetListResponseSchema.properties.datasets.items
+      .properties.tableName,
   ).toEqual({
     type: 'string',
   });
