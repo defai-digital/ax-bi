@@ -76,6 +76,15 @@ export const GlobalStyles = () => {
           display: none !important;
         }
 
+        /* Softer, Evidence.dev-style ECharts tooltips: gentle shadow and
+           tabular figures so numbers align cleanly across rows. */
+        .echarts-tooltip {
+          box-shadow:
+            0 3px 6px rgba(0, 0, 0, 0.15),
+            0 2px 4px rgba(0, 0, 0, 0.12) !important;
+          font-feature-settings: 'tnum';
+        }
+
         .no-wrap {
           white-space: nowrap;
         }

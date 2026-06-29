@@ -223,6 +223,14 @@ const schemes = [
     label: 'Deck.gl Heatmap Default',
     colors: ['#bd0026', '#f03b20', '#fd8d3c', '#feb24c', '#fed976', '#ffffb2'],
   },
+  {
+    // Light-to-dark blue ramp adapted from Evidence.dev's default color scale,
+    // for heatmaps and choropleths that pair with the Evidence categorical palette.
+    id: 'evidence_blue',
+    label: 'Evidence Blue',
+    isDiverging: false,
+    colors: ['#a5cdee', '#71b9f4', '#45a1bf', '#236aa4', '#1b4150'],
+  },
 ].map(s => new SequentialScheme(s));
 
 export default schemes;
