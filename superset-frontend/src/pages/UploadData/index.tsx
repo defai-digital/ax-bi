@@ -25,6 +25,7 @@ import { Upload, Progress } from '@superset-ui/core/components';
 import { Alert } from '@apache-superset/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
+import { URL_PARAMS } from 'src/constants';
 
 const { Dragger } = Upload;
 
@@ -243,7 +244,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
       if (firstSuccess?.datasetId) {
         setTimeout(() => {
           history.push(
-            `/explore/?dataset_type=table&dataset_id=${firstSuccess.datasetId}`,
+            `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=${firstSuccess.datasetId}`,
           );
         }, 1500);
       }

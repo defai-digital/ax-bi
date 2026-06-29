@@ -27,6 +27,7 @@ import { css, styled, useTheme } from '@apache-superset/core/theme';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { CellProps } from 'react-table';
 import rison from 'rison';
+import { useHistory } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useQueryParams, BooleanParam } from 'use-query-params';
 import { LocalStorageKeys, setItem } from 'src/utils/localStorageHelpers';
@@ -134,6 +135,7 @@ function DatabaseList({
   user,
 }: DatabaseListProps) {
   const theme = useTheme();
+  const history = useHistory();
   const showSemanticLayers = isFeatureEnabled(SEMANTIC_LAYERS_FLAG);
 
   // Standard database list view resource (used when SL flag is OFF)
@@ -354,20 +356,34 @@ function DatabaseList({
   const canDelete = hasPerm('can_write');
   const canExport = hasPerm('can_export');
 
-  const { canUploadCSV, canUploadColumnar, canUploadExcel } = uploadUserPerms(
-    roles,
-    CSV_EXTENSIONS,
-    COLUMNAR_EXTENSIONS,
-    EXCEL_EXTENSIONS,
-    ALLOWED_EXTENSIONS,
-  );
+  const { canUploadCSV, canUploadColumnar, canUploadExcel, canUploadData } =
+    uploadUserPerms(
+      roles,
+      CSV_EXTENSIONS,
+      COLUMNAR_EXTENSIONS,
+      EXCEL_EXTENSIONS,
+      ALLOWED_EXTENSIONS,
+    );
 
   const isDisabled = isAdmin && !allowUploads;
+
+  // The streamlined upload page auto-provisions its own local database, so it
+  // works without any pre-configured upload-enabled database — unlike the
+  // format-specific modals below, it is not subject to `isDisabled`.
+  const streamlinedUploadEnabled =
+    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
 
   const uploadDropdownMenu = [
     {
       label: t('Upload file to database'),
       childs: [
+        {
+          label: t('Upload data file'),
+          name: 'Upload data file',
+          url: '#',
+          onClick: () => history.push('/upload/'),
+          perm: streamlinedUploadEnabled,
+        },
         {
           label: t('Upload CSV'),
           name: 'Upload CSV file',

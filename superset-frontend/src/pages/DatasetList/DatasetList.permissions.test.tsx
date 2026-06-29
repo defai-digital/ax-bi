@@ -17,7 +17,9 @@
  * under the License.
  */
 import { act, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import { FeatureFlag } from '@superset-ui/core';
 import {
   setupMocks,
   setupApiPermissions,
@@ -29,6 +31,28 @@ import {
   mockDatasets,
   mockDatasetListEndpoints,
 } from './DatasetList.testHelpers';
+
+// A write-capable user that also holds the Database.can_upload permission, which
+// gates the streamlined file-upload entry in the "New" menu.
+const mockUploadUser = {
+  userId: 12,
+  firstName: 'Upload',
+  lastName: 'User',
+  roles: {
+    Alpha: [
+      ['can_read', 'Dataset'],
+      ['can_write', 'Dataset'],
+      ['can_upload', 'Database'],
+    ],
+  },
+};
+
+const setFileUploadFlag = (enabled: boolean) => {
+  window.featureFlags = {
+    ...window.featureFlags,
+    [FeatureFlag.EnableLocalFileUpload]: enabled,
+  };
+};
 
 // Increase default timeout for tests that involve multiple async operations
 // CI parallel load can cause timeouts with default 15s
@@ -55,6 +79,9 @@ afterEach(async () => {
   fetchMock.clearHistory();
   fetchMock.removeRoutes();
   jest.restoreAllMocks();
+
+  // Reset the file-upload flag so it cannot leak into other tests.
+  setFileUploadFlag(false);
 });
 
 test('admin users see all UI elements', async () => {
@@ -395,4 +422,50 @@ test('user with can_duplicate sees duplicate button only for virtual datasets', 
   // Virtual dataset SHOULD have duplicate button
   const virtualDuplicateButton = within(virtualRow!).getByTestId('copy');
   expect(virtualDuplicateButton).toBeInTheDocument();
+});
+
+test('upload-permitted user sees the Upload data file entry in the New menu', async () => {
+  setupApiPermissions(['can_read', 'can_write']);
+  setFileUploadFlag(true);
+
+  renderDatasetList(mockUploadUser);
+
+  expect(await screen.findByText('Datasets')).toBeInTheDocument();
+
+  // With an extra menu item, the create control becomes a "New" dropdown.
+  const newButton = await screen.findByRole('button', { name: /new/i });
+  await userEvent.click(newButton);
+
+  expect(await screen.findByText('Upload data file')).toBeInTheDocument();
+});
+
+test('upload entry is hidden when the file-upload flag is off', async () => {
+  setupApiPermissions(['can_read', 'can_write']);
+  setFileUploadFlag(false);
+
+  renderDatasetList(mockUploadUser);
+
+  expect(await screen.findByText('Datasets')).toBeInTheDocument();
+
+  // Without upload (and without semantic layers) the control is the single
+  // "Dataset" create button, not a "New" dropdown.
+  expect(
+    screen.getByRole('button', { name: /^(?:plus\s*)?Dataset$/i }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Upload data file')).not.toBeInTheDocument();
+});
+
+test('upload entry is hidden without the Database.can_upload permission', async () => {
+  setupApiPermissions(['can_read', 'can_write']);
+  setFileUploadFlag(true);
+
+  // mockWriteUser can create datasets but lacks Database.can_upload.
+  renderDatasetList(mockWriteUser);
+
+  expect(await screen.findByText('Datasets')).toBeInTheDocument();
+
+  expect(
+    screen.getByRole('button', { name: /^(?:plus\s*)?Dataset$/i }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('Upload data file')).not.toBeInTheDocument();
 });

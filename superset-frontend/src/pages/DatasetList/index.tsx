@@ -77,6 +77,8 @@ import withToasts from 'src/components/MessageToasts/withToasts';
 import { Icons } from '@superset-ui/core/components/Icons';
 import WarningIconWithTooltip from '@superset-ui/core/components/WarningIconWithTooltip';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
+import { findPermission } from 'src/utils/findPermission';
+import type { RootState } from 'src/views/store';
 
 import {
   PAGE_SIZE,
@@ -541,6 +543,14 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   const canCreate = hasPerm('can_write');
   const canDuplicate = hasPerm('can_duplicate');
   const canExport = hasPerm('can_export');
+  // Surface the streamlined file-upload page where "I want to add data" users
+  // land. Gated by the same predicate the "+" Create menu uses, so it cannot
+  // widen access.
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
+  );
+  const uploadEnabled =
+    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
 
   const initialSort = SORT_BY;
 
@@ -1170,7 +1180,33 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   }
 
   if (canCreate) {
-    if (isFeatureEnabled(SEMANTIC_LAYERS_FLAG)) {
+    const createMenuItems = [
+      {
+        key: 'dataset',
+        label: t('Dataset'),
+        onClick: () => history.push('/dataset/add/'),
+      },
+      ...(isFeatureEnabled(SEMANTIC_LAYERS_FLAG)
+        ? [
+            {
+              key: 'semantic-view',
+              label: t('Semantic View'),
+              onClick: () => setShowAddSemanticViewModal(true),
+            },
+          ]
+        : []),
+      ...(uploadEnabled
+        ? [
+            {
+              key: 'upload-data',
+              label: t('Upload data file'),
+              onClick: () => history.push('/upload/'),
+            },
+          ]
+        : []),
+    ];
+
+    if (createMenuItems.length > 1) {
       buttonArr.push({
         name: t('New'),
         buttonStyle: 'primary',
@@ -1179,20 +1215,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
             css={css`
               margin-left: ${theme.sizeUnit * 2}px;
             `}
-            menu={{
-              items: [
-                {
-                  key: 'dataset',
-                  label: t('Dataset'),
-                  onClick: () => history.push('/dataset/add/'),
-                },
-                {
-                  key: 'semantic-view',
-                  label: t('Semantic View'),
-                  onClick: () => setShowAddSemanticViewModal(true),
-                },
-              ],
-            }}
+            menu={{ items: createMenuItems }}
             trigger={['click']}
           >
             <Button

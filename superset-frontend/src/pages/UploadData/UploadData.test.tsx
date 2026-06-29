@@ -18,6 +18,8 @@
  */
 
 import { ComponentType } from 'react';
+import { Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 import {
   render,
   screen,
@@ -25,6 +27,7 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
+import { URL_PARAMS } from 'src/constants';
 import UploadData from '.';
 
 type ToastInjectedProps = {
@@ -132,5 +135,35 @@ describe('UploadData', () => {
       );
     });
     expect(await screen.findByText('Failed')).toBeVisible();
+  });
+
+  test('redirects successful uploads to explore with datasource params', async () => {
+    const history = createMemoryHistory();
+    const pushSpy = jest.spyOn(history, 'push');
+
+    render(
+      <Router history={history}>
+        <UploadData />
+      </Router>,
+      {
+        useRedux: true,
+      },
+    );
+
+    fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
+      target: {
+        files: [new File(['a,b\n1,2'], 'orders.csv', { type: 'text/csv' })],
+      },
+    });
+
+    await screen.findByText('Uploaded');
+
+    await waitFor(
+      () =>
+        expect(pushSpy).toHaveBeenCalledWith(
+          `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=1`,
+        ),
+      { timeout: 3000 },
+    );
   });
 });

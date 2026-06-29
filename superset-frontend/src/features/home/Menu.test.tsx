@@ -588,6 +588,7 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
     ...CoreTheme.supersetTheme,
     brandLogoUrl: '/static/assets/images/custom-logo.png',
     brandLogoHref: 'https://external.example.com',
+    brandLogoAlt: 'Brand Home',
   });
   useSelectorMock.mockReturnValue({ roles: user.roles });
 
@@ -599,7 +600,7 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
   });
 
   const brandLink = await screen.findByRole('link', {
-    name: /apache superset/i,
+    name: /brand home/i,
   });
   expect(brandLink).toHaveAttribute('href', 'https://external.example.com');
 });
@@ -610,6 +611,7 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
     ...CoreTheme.supersetTheme,
     brandLogoUrl: '/static/assets/images/custom-logo.png',
     brandLogoHref: '//external.example.com',
+    brandLogoAlt: 'Brand Home',
   });
   useSelectorMock.mockReturnValue({ roles: user.roles });
 
@@ -621,7 +623,7 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
   });
 
   const brandLink = await screen.findByRole('link', {
-    name: /apache superset/i,
+    name: /brand home/i,
   });
   expect(brandLink).toHaveAttribute('href', '//external.example.com');
 });

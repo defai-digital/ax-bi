@@ -46,7 +46,13 @@ const EXPLORE_URL_SEARCH_PARAMS = {
   datasource_id: {
     name: 'datasource_id',
   },
+  dataset_id: {
+    name: 'datasource_id',
+  },
   datasource_type: {
+    name: 'datasource_type',
+  },
+  dataset_type: {
     name: 'datasource_type',
   },
   datasource: {
@@ -81,35 +87,38 @@ const getParsedExploreURLSearchParams = (
   search: string,
 ): Record<string, any> => {
   const urlSearchParams = new URLSearchParams(search);
-  return Array.from(urlSearchParams.keys()).reduce<Record<string, any>>(
-    (acc, currentParam) => {
-      const paramValue = urlSearchParams.get(currentParam);
-      if (paramValue === null) {
-        return acc;
-      }
-      let parsedParamValue;
-      try {
-        parsedParamValue =
-          EXPLORE_URL_SEARCH_PARAMS[
-            currentParam as ExploreUrlSearchParamsWithParser
-          ].parser?.(paramValue) ?? paramValue;
-      } catch {
-        return acc;
-      }
-      if (typeof parsedParamValue === 'object') {
-        return { ...acc, ...parsedParamValue };
-      }
-      const key =
+  const parsedParams = Array.from(urlSearchParams.keys()).reduce<
+    Record<string, any>
+  >((acc, currentParam) => {
+    const paramValue = urlSearchParams.get(currentParam);
+    if (paramValue === null) {
+      return acc;
+    }
+    let parsedParamValue;
+    try {
+      parsedParamValue =
         EXPLORE_URL_SEARCH_PARAMS[
-          currentParam as keyof typeof EXPLORE_URL_SEARCH_PARAMS
-        ]?.name || currentParam;
-      return {
-        ...acc,
-        [key]: parsedParamValue,
-      };
-    },
-    {},
-  );
+          currentParam as ExploreUrlSearchParamsWithParser
+        ].parser?.(paramValue) ?? paramValue;
+    } catch {
+      return acc;
+    }
+    if (typeof parsedParamValue === 'object') {
+      return { ...acc, ...parsedParamValue };
+    }
+    const key =
+      EXPLORE_URL_SEARCH_PARAMS[
+        currentParam as keyof typeof EXPLORE_URL_SEARCH_PARAMS
+      ]?.name || currentParam;
+    return {
+      ...acc,
+      [key]: parsedParamValue,
+    };
+  }, {});
+  if (parsedParams.datasource_id && !parsedParams.datasource_type) {
+    parsedParams.datasource_type = 'table';
+  }
+  return parsedParams;
 };
 
 // path params need to be transformed to search params to use them with /v1/explore endpoint
@@ -118,12 +127,19 @@ const getParsedExploreURLPathParams = (pathname: string) =>
     const re = new RegExp(`/(${currentParam})/(\\w+)`);
     const pathGroups = pathname.match(re);
     if (pathGroups?.[2]) {
-      return {
+      const pathParams = {
         ...acc,
         [EXPLORE_URL_PATH_PARAMS[
           currentParam as keyof typeof EXPLORE_URL_PATH_PARAMS
         ]]: pathGroups[2],
       };
+      if (currentParam === 'table') {
+        return {
+          ...pathParams,
+          datasource_type: 'table',
+        };
+      }
+      return pathParams;
     }
     return acc;
   }, {});
