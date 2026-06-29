@@ -436,11 +436,29 @@ def test_production_evidence_manifest_requires_workflows() -> None:
         build_production_evidence_manifest(())
 
 
+def test_production_evidence_manifest_requires_unique_workflows() -> None:
+    """Production evidence manifests reject duplicate workflow scopes."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+
+    with pytest.raises(ValueError, match="requires unique workflows"):
+        build_production_evidence_manifest((workflow, workflow))
+
+
 def test_production_evidence_template_requires_workflows() -> None:
     """Production evidence templates require a concrete workflow scope."""
 
     with pytest.raises(ValueError, match="requires at least one workflow"):
         build_production_evidence_template(())
+
+
+def test_production_evidence_template_requires_unique_workflows() -> None:
+    """Production evidence templates reject duplicate workflow scopes."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+
+    with pytest.raises(ValueError, match="requires unique workflows"):
+        build_production_evidence_template((workflow, workflow))
 
 
 def test_validate_production_evidence_passes_complete_bundle() -> None:
@@ -1031,7 +1049,8 @@ def test_validate_production_evidence_rejects_empty_approved_scope() -> None:
     assert validation["approved_workflow_names"] == []
     assert checks["operator_approval"]["passed"] is False
     assert (
-        "valid non-empty workflow name list" in checks["operator_approval"]["message"]
+        "valid non-empty unique workflow name list"
+        in checks["operator_approval"]["message"]
     )
 
 
@@ -1057,7 +1076,31 @@ def test_validate_production_evidence_rejects_malformed_approval_workflows() -> 
     assert validation["approved_workflow_names"] == []
     assert checks["operator_approval"]["passed"] is False
     assert (
-        "valid non-empty workflow name list" in checks["operator_approval"]["message"]
+        "valid non-empty unique workflow name list"
+        in checks["operator_approval"]["message"]
+    )
+
+
+def test_validate_production_evidence_rejects_duplicate_approval_workflows() -> None:
+    """Externally supplied approval workflow names must be unique."""
+
+    workflows = (get_rollout_workflow("mcp_asset_search"),)
+    evidence = _complete_production_evidence(workflows)
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    operator_approval = artifacts["operator_approval"]
+    assert isinstance(operator_approval, dict)
+    operator_approval["workflow_names"] = ["mcp_asset_search", "mcp_asset_search"]
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["approved_workflow_names"] == ["mcp_asset_search"]
+    assert checks["operator_approval"]["passed"] is False
+    assert (
+        "valid non-empty unique workflow name list"
+        in checks["operator_approval"]["message"]
     )
 
 
@@ -1291,6 +1334,20 @@ def test_build_production_flag_state_requires_workflow_scope() -> None:
         )
 
 
+def test_build_production_flag_state_requires_unique_workflows() -> None:
+    """Production flag-state evidence rejects duplicate workflow scopes."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+
+    with pytest.raises(ValueError, match="requires unique workflows"):
+        build_production_flag_state(
+            (workflow, workflow),
+            lambda flag: flag == "TS_MCP_ORCHESTRATION",
+            environment="prod-us",
+            flag_state_reference="flags/runtime-modernization/prod-us-123",
+        )
+
+
 def test_build_production_flag_state_requires_provenance() -> None:
     """Production flag-state evidence must name environment and source."""
 
@@ -1356,6 +1413,25 @@ def test_build_operator_approval_evidence_requires_approved_workflows() -> None:
             ),
             approval_reference="CHG-123",
             workflow_names=(),
+        )
+
+
+def test_build_operator_approval_evidence_requires_unique_workflows() -> None:
+    """Approved operator evidence rejects duplicate workflow names."""
+
+    with pytest.raises(ValueError, match="unique workflow names"):
+        build_operator_approval_evidence(
+            boundary_decision="split MCP by tool class",
+            rollout_scope="asset search",
+            migration_decision="expand",
+            compatibility_cost_estimate=(
+                "versioned contracts and Python fallback keep compatibility risk low"
+            ),
+            security_cost_estimate=(
+                "Superset remains the authorization authority for extracted workflows"
+            ),
+            approval_reference="CHG-123",
+            workflow_names=("mcp_asset_search", "mcp_asset_search"),
         )
 
 
@@ -1541,6 +1617,21 @@ def test_build_operator_dashboard_snapshot_requires_workflow_scope() -> None:
         )
 
 
+def test_build_operator_dashboard_snapshot_requires_unique_workflows() -> None:
+    """Operator dashboard evidence rejects duplicate workflow scopes."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+
+    with pytest.raises(ValueError, match="requires unique workflows"):
+        build_operator_dashboard_snapshot(
+            (workflow, workflow),
+            snapshot_reference="observability/dashboard/snapshot-123",
+            gates_passed=True,
+            service_health_passed=True,
+            measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
+        )
+
+
 def test_build_operator_dashboard_snapshot_requires_measurement_window() -> None:
     """Operator dashboard evidence must identify the production window."""
 
@@ -1709,7 +1800,31 @@ def test_validate_production_evidence_requires_workflow_scope() -> None:
     assert validation["status"] == "failed"
     assert validation["workflow_names"] == []
     assert checks["workflow_scope"]["passed"] is False
-    assert "requires at least one workflow" in checks["workflow_scope"]["message"]
+    assert (
+        "requires at least one unique workflow" in checks["workflow_scope"]["message"]
+    )
+
+
+def test_validate_production_evidence_requires_unique_workflow_scope() -> None:
+    """Production evidence validation fails with duplicate selected workflows."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+    validation = validate_production_evidence(
+        (workflow, workflow),
+        {
+            "schema_version": 1,
+            "artifacts": {},
+        },
+    )
+
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["workflow_names"] == ["mcp_asset_search", "mcp_asset_search"]
+    assert checks["workflow_scope"]["passed"] is False
+    assert (
+        "requires at least one unique workflow" in checks["workflow_scope"]["message"]
+    )
 
 
 def test_validate_production_evidence_rejects_malformed_target_checks() -> None:

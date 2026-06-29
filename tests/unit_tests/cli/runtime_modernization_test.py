@@ -364,6 +364,24 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert payload["artifacts"]["operator_approval"]["workflow_names"] == []
 
 
+def test_production_evidence_template_rejects_duplicate_workflow() -> None:
+    """Production evidence templates reject duplicate selected workflows."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "production-evidence-template",
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_asset_search",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "requires unique workflows" in result.output
+
+
 def test_runtime_modernization_production_evidence_template_outputs_text() -> None:
     """Production evidence template command has a compact text mode."""
 
@@ -1714,7 +1732,7 @@ def test_runtime_modernization_validate_production_evidence_rejects_empty_approv
 
     assert result.exit_code != 0
     assert "FAIL operator_approval" in result.output
-    assert "valid non-empty workflow name list" in result.output
+    assert "valid non-empty unique workflow name list" in result.output
     assert "runtime modernization production evidence failed" in result.output
 
 
@@ -1775,7 +1793,7 @@ def test_validate_production_evidence_rejects_malformed_approval_workflows(
 
     assert result.exit_code != 0
     assert "FAIL operator_approval" in result.output
-    assert "valid non-empty workflow name list" in result.output
+    assert "valid non-empty unique workflow name list" in result.output
     assert "runtime modernization production evidence failed" in result.output
 
 

@@ -472,6 +472,36 @@ def _read_json_object(file: Any, label: str) -> dict[str, Any]:
     return payload
 
 
+def _resolve_rollout_workflows(
+    workflow: tuple[str, ...],
+) -> tuple[RolloutWorkflow, ...]:
+    """Resolve CLI workflow names into a unique rollout workflow scope."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    workflow_names = [item.name for item in workflows]
+    if len(set(workflow_names)) != len(workflow_names):
+        raise click.ClickException(
+            "runtime modernization workflow scope requires unique workflows"
+        )
+    return workflows
+
+
+def _resolve_rollout_workflow_names(workflow: tuple[str, ...]) -> tuple[str, ...]:
+    """Resolve CLI workflow names into unique rollout workflow names."""
+
+    if not workflow:
+        return ()
+    return tuple(item.name for item in _resolve_rollout_workflows(workflow))
+
+
 def _build_compatibility_report(
     iterations: int,
     *,
@@ -659,14 +689,7 @@ def production_evidence_template(
 ) -> None:
     """Print a fillable production evidence JSON bundle template."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     template = build_production_evidence_template(workflows)
 
@@ -710,14 +733,7 @@ def production_flag_state(
 ) -> None:
     """Print runtime modernization serving flag state for this deployment."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     flag_state = build_production_flag_state(
         workflows,
@@ -807,10 +823,7 @@ def operator_approval(
 ) -> None:
     """Print operator approval evidence for runtime modernization rollout."""
 
-    try:
-        workflow_names = tuple(get_rollout_workflow(name).name for name in workflow)
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflow_names = _resolve_rollout_workflow_names(workflow)
 
     if approved and not workflow_names:
         raise click.ClickException(
@@ -918,14 +931,7 @@ def operator_dashboard_snapshot(
 ) -> None:
     """Print operator dashboard evidence for runtime modernization rollout."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     gate_statuses = _build_gate_status_overrides(
         workflows,
@@ -1147,14 +1153,7 @@ def assemble_production_evidence(
 ) -> None:
     """Assemble collected production artifacts into one evidence bundle."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     bundle = build_production_evidence_bundle(
         compatibility_report=_read_json_object(
@@ -1236,14 +1235,7 @@ def validate_production_evidence_command(
 ) -> None:
     """Validate runtime modernization production evidence from a JSON file."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     evidence = _read_json_object(evidence_file, "evidence")
 
@@ -1292,14 +1284,7 @@ def completion_audit(
 ) -> None:
     """Audit runtime modernization phase completion from production evidence."""
 
-    try:
-        workflows = (
-            tuple(get_rollout_workflow(name) for name in workflow)
-            if workflow
-            else get_rollout_workflows()
-        )
-    except KeyError as ex:
-        raise click.ClickException(str(ex)) from ex
+    workflows = _resolve_rollout_workflows(workflow)
 
     evidence = (
         _read_json_object(evidence_file, "evidence")

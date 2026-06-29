@@ -452,10 +452,7 @@ def build_production_evidence_manifest(
 ) -> dict[str, Any]:
     """Build the production evidence manifest for selected workflows."""
 
-    if not workflows:
-        raise ValueError(
-            "production evidence manifest requires at least one workflow",
-        )
+    _require_workflow_scope(workflows, "production evidence manifest")
 
     return {
         "schema_version": 1,
@@ -476,10 +473,7 @@ def build_production_evidence_template(
 ) -> dict[str, Any]:
     """Build a fillable production evidence bundle template."""
 
-    if not workflows:
-        raise ValueError(
-            "production evidence template requires at least one workflow",
-        )
+    _require_workflow_scope(workflows, "production evidence template")
 
     return {
         "schema_version": 1,
@@ -569,10 +563,7 @@ def build_production_flag_state(
 ) -> dict[str, Any]:
     """Build production flag-state evidence for selected workflows."""
 
-    if not workflows:
-        raise ValueError(
-            "production flag-state evidence requires at least one workflow",
-        )
+    _require_workflow_scope(workflows, "production flag-state evidence")
     _require_non_empty_evidence_field(environment, "environment")
     _require_non_empty_evidence_field(
         flag_state_reference,
@@ -613,6 +604,10 @@ def build_operator_approval_evidence(
         if not workflow_names:
             raise ValueError(
                 "approved operator evidence requires at least one workflow name",
+            )
+        if len(set(workflow_names)) != len(workflow_names):
+            raise ValueError(
+                "approved operator evidence requires unique workflow names",
             )
         _require_non_empty_evidence_field(boundary_decision, "boundary_decision")
         _require_non_empty_evidence_field(rollout_scope, "rollout_scope")
@@ -660,10 +655,7 @@ def build_operator_dashboard_snapshot(
 ) -> dict[str, Any]:
     """Build operator dashboard evidence for runtime modernization rollout."""
 
-    if not workflows:
-        raise ValueError(
-            "operator dashboard evidence requires at least one workflow",
-        )
+    _require_workflow_scope(workflows, "operator dashboard evidence")
     _require_non_empty_evidence_field(snapshot_reference, "snapshot_reference")
     _require_non_empty_evidence_field(measurement_window, "measurement_window")
 
@@ -810,6 +802,25 @@ def _require_artifact_mapping(value: Any, artifact_name: str) -> None:
 
     if not isinstance(value, Mapping):
         raise ValueError(f"{artifact_name} artifact must be an object")
+
+
+def _workflow_scope_unique(workflows: tuple[RolloutWorkflow, ...]) -> bool:
+    """Return whether selected workflow names are unique."""
+
+    workflow_names = [workflow.name for workflow in workflows]
+    return len(set(workflow_names)) == len(workflow_names)
+
+
+def _require_workflow_scope(
+    workflows: tuple[RolloutWorkflow, ...],
+    evidence_name: str,
+) -> None:
+    """Require a non-empty, unique workflow scope for evidence builders."""
+
+    if not workflows:
+        raise ValueError(f"{evidence_name} requires at least one workflow")
+    if not _workflow_scope_unique(workflows):
+        raise ValueError(f"{evidence_name} requires unique workflows")
 
 
 def _artifact_mapping(
@@ -985,6 +996,12 @@ def _string_list(value: Any) -> bool:
     return isinstance(value, list) and all(_non_empty_string(item) for item in value)
 
 
+def _unique_string_list(value: Any) -> bool:
+    """Return whether a value is a unique list of non-empty strings."""
+
+    return _string_list(value) and len(set(value)) == len(value)
+
+
 def _migration_decision_passed(value: Any) -> bool:
     """Return whether the Phase 6 migration decision is valid."""
 
@@ -1025,15 +1042,18 @@ def validate_production_evidence(
     artifacts = raw_artifacts if isinstance(raw_artifacts, Mapping) else {}
     checks: list[ProductionEvidenceCheck] = []
 
-    workflow_scope_passed = bool(workflows)
+    workflow_scope_passed = bool(workflows) and _workflow_scope_unique(workflows)
     checks.append(
         ProductionEvidenceCheck(
             name="workflow_scope",
             passed=workflow_scope_passed,
             message=(
-                "production evidence is scoped to selected workflows"
+                "production evidence is scoped to unique selected workflows"
                 if workflow_scope_passed
-                else "production evidence validation requires at least one workflow"
+                else (
+                    "production evidence validation requires at least one unique "
+                    "workflow"
+                )
             ),
         )
     )
@@ -1218,7 +1238,7 @@ def validate_production_evidence(
     operator_approval = _artifact_mapping(artifacts, "operator_approval")
     raw_approval_workflow_names = (operator_approval or {}).get("workflow_names")
     approval_workflow_names = _string_set(raw_approval_workflow_names)
-    approval_workflow_names_valid = _string_list(raw_approval_workflow_names)
+    approval_workflow_names_valid = _unique_string_list(raw_approval_workflow_names)
     enabled_workflow_names = set(enabled_workflows)
     approval_matches_enabled_workflows = (
         approval_workflow_names == enabled_workflow_names
@@ -1251,8 +1271,8 @@ def validate_production_evidence(
                 else (
                     "operator approval is missing boundary decision, rollout "
                     "scope, migration decision, compatibility or security cost "
-                    "estimates, approval reference, a valid non-empty workflow "
-                    "name list, or exact enabled workflow names"
+                    "estimates, approval reference, a valid non-empty unique "
+                    "workflow name list, or exact enabled workflow names"
                 )
             ),
         )
