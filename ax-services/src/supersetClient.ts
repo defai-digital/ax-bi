@@ -84,6 +84,13 @@ import {
   TagListRequest,
   TagListResponse,
 } from './contracts/tagList';
+import {
+  TASK_LIST_CONTRACT_VERSION,
+  TaskFilterValue,
+  TaskListItem,
+  TaskListRequest,
+  TaskListResponse,
+} from './contracts/taskList';
 import { ServiceConfig } from './config';
 
 export interface DependencyHealth {
@@ -169,6 +176,13 @@ export interface SupersetTagListClient {
   ): Promise<TagListResponse>;
 }
 
+export interface SupersetTaskListClient {
+  listTasks(
+    request: TaskListRequest,
+    correlationId?: string,
+  ): Promise<TaskListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -181,7 +195,8 @@ export class SupersetClient
     SupersetDatasetListClient,
     SupersetReportListClient,
     SupersetSavedQueryListClient,
-    SupersetTagListClient
+    SupersetTagListClient,
+    SupersetTaskListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -724,6 +739,54 @@ export class SupersetClient
     }
   }
 
+  async listTasks(
+    request: TaskListRequest,
+    correlationId?: string,
+  ): Promise<TaskListResponse> {
+    const url = this.buildTaskListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyTaskListResponse(request, [
+          `task list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const tasks = extractSupersetResults(payload)
+        .map(toTaskListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, tasks.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: TASK_LIST_CONTRACT_VERSION,
+        tasks,
+        count: tasks.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedTaskColumns(request),
+        columnsLoaded: taskColumnsLoaded(tasks),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyTaskListResponse(request, [
+        `task list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -848,6 +911,14 @@ export class SupersetClient
     url.searchParams.set('q', buildTagListQuery(request));
     return url.toString();
   }
+
+  private buildTaskListUrl(request: TaskListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.task}`,
+    );
+    url.searchParams.set('q', buildTaskListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -905,6 +976,11 @@ interface SupersetListItem {
   db_id?: number;
   catalog?: string;
   last_run?: string;
+  task_type?: string;
+  task_key?: string;
+  task_name?: string;
+  scope?: string;
+  status?: string;
   active?: boolean;
   crontab?: string;
   dashboard_id?: number;
@@ -1146,6 +1222,30 @@ function buildTagListQuery(request: TagListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildTaskListQuery(request: TaskListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'task_name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatTaskFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -1226,6 +1326,16 @@ function formatTagFilter(filter: {
   )})`;
 }
 
+function formatTaskFilter(filter: {
+  col: string;
+  opr: string;
+  value: TaskFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatTaskRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
@@ -1278,6 +1388,13 @@ function formatReportRisonValue(value: ReportFilterValue): string {
 }
 
 function formatTagRisonValue(value: TagFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatTaskRisonValue(value: TaskFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1572,6 +1689,24 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
   };
 }
 
+function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    taskType: typeof item.task_type === 'string' ? item.task_type : undefined,
+    taskKey: typeof item.task_key === 'string' ? item.task_key : undefined,
+    taskName: typeof item.task_name === 'string' ? item.task_name : undefined,
+    status: typeof item.status === 'string' ? item.status : undefined,
+    scope: typeof item.scope === 'string' ? item.scope : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+  };
+}
+
 function extractDatabaseName(item: SupersetListItem): string | undefined {
   if (typeof item.database_name === 'string') {
     return item.database_name;
@@ -1712,6 +1847,12 @@ function requestedTagColumns(request: TagListRequest): string[] {
     : ['id', 'name', 'type'];
 }
 
+function requestedTaskColumns(request: TaskListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'uuid', 'task_type', 'status', 'changed_on'];
+}
+
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const dataset of datasets) {
@@ -1841,6 +1982,21 @@ function tagColumnsLoaded(tags: TagListItem[]): string[] {
     if (tag.changedOnHumanized !== undefined) loaded.add('changed_on_humanized');
     if (tag.createdOn !== undefined) loaded.add('created_on');
     if (tag.createdOnHumanized !== undefined) loaded.add('created_on_humanized');
+  }
+  return [...loaded];
+}
+
+function taskColumnsLoaded(tasks: TaskListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const task of tasks) {
+    if (task.uuid !== undefined) loaded.add('uuid');
+    if (task.taskType !== undefined) loaded.add('task_type');
+    if (task.taskKey !== undefined) loaded.add('task_key');
+    if (task.taskName !== undefined) loaded.add('task_name');
+    if (task.status !== undefined) loaded.add('status');
+    if (task.scope !== undefined) loaded.add('scope');
+    if (task.changedOn !== undefined) loaded.add('changed_on');
+    if (task.createdOn !== undefined) loaded.add('created_on');
   }
   return [...loaded];
 }
@@ -2000,6 +2156,26 @@ function emptyTagListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedTagColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyTaskListResponse(
+  request: TaskListRequest,
+  warnings: string[],
+): TaskListResponse {
+  return {
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    tasks: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedTaskColumns(request),
     columnsLoaded: [],
     warnings,
   };

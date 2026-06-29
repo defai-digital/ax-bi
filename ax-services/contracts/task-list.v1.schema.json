@@ -1,0 +1,200 @@
+{
+  "taskListRequestSchema": {
+    "$id": "ax-services.task-list.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "filters",
+      "selectColumns",
+      "orderDirection",
+      "page",
+      "pageSize"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "task-list.v1"
+      },
+      "filters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "col",
+            "opr",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "col": {
+              "type": "string"
+            },
+            "opr": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "selectColumns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "search": {
+        "type": "string"
+      },
+      "orderColumn": {
+        "type": "string"
+      },
+      "orderDirection": {
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "page": {
+        "type": "number",
+        "minimum": 1
+      },
+      "pageSize": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100
+      }
+    }
+  },
+  "taskListResponseSchema": {
+    "$id": "ax-services.task-list.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "tasks",
+      "count",
+      "totalCount",
+      "page",
+      "pageSize",
+      "totalPages",
+      "hasNext",
+      "hasPrevious",
+      "columnsRequested",
+      "columnsLoaded",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "task-list.v1"
+      },
+      "tasks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "number"
+            },
+            "uuid": {
+              "type": "string"
+            },
+            "taskType": {
+              "type": "string"
+            },
+            "taskKey": {
+              "type": "string"
+            },
+            "taskName": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "scope": {
+              "type": "string"
+            },
+            "changedOn": {
+              "type": "string"
+            },
+            "createdOn": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "count": {
+        "type": "number"
+      },
+      "totalCount": {
+        "type": "number"
+      },
+      "page": {
+        "type": "number"
+      },
+      "pageSize": {
+        "type": "number"
+      },
+      "totalPages": {
+        "type": "number"
+      },
+      "hasNext": {
+        "type": "boolean"
+      },
+      "hasPrevious": {
+        "type": "boolean"
+      },
+      "columnsRequested": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "columnsLoaded": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

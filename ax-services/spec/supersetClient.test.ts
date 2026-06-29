@@ -29,6 +29,7 @@ import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { REPORT_LIST_CONTRACT_VERSION } from '../src/contracts/reportList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
 import { TAG_LIST_CONTRACT_VERSION } from '../src/contracts/tagList';
+import { TASK_LIST_CONTRACT_VERSION } from '../src/contracts/taskList';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -1519,6 +1520,131 @@ test('listTags records warnings for failed Superset list responses', async () =>
     columnsRequested: ['id', 'name', 'type'],
     columnsLoaded: [],
     warnings: ['tag list returned status 504 from Superset'],
+  });
+});
+
+test('listTasks maps Superset task list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 12,
+      result: [
+        {
+          id: 31,
+          uuid: 'task-uuid',
+          task_type: 'sql_execution',
+          task_key: 'task-key',
+          task_name: 'Refresh cache',
+          status: 'success',
+          scope: 'private',
+          changed_on: '2026-01-07T00:00:00',
+          created_on: '2026-01-01T00:00:00',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listTasks(
+    {
+      contractVersion: TASK_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'status', opr: 'eq', value: 'success' }],
+      selectColumns: ['id', 'task_name'],
+      search: 'refresh',
+      orderColumn: 'changed_on',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+    },
+    'request-tasks',
+  );
+
+  expect(result).toEqual({
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    tasks: [
+      {
+        id: 31,
+        uuid: 'task-uuid',
+        taskType: 'sql_execution',
+        taskKey: 'task-key',
+        taskName: 'Refresh cache',
+        status: 'success',
+        scope: 'private',
+        changedOn: '2026-01-07T00:00:00',
+        createdOn: '2026-01-01T00:00:00',
+      },
+    ],
+    count: 1,
+    totalCount: 12,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'task_name'],
+    columnsLoaded: [
+      'id',
+      'uuid',
+      'task_type',
+      'task_key',
+      'task_name',
+      'status',
+      'scope',
+      'changed_on',
+      'created_on',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/task/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain('col:task_name');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'refresh'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-tasks',
+  });
+});
+
+test('listTasks records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listTasks({
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    tasks: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'uuid', 'task_type', 'status', 'changed_on'],
+    columnsLoaded: [],
+    warnings: ['task list returned status 504 from Superset'],
   });
 });
 

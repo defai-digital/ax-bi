@@ -30,6 +30,7 @@ import { reportListContractSchemas } from '../src/contracts/reportList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 import { savedQueryListContractSchemas } from '../src/contracts/savedQueryList';
 import { tagListContractSchemas } from '../src/contracts/tagList';
+import { taskListContractSchemas } from '../src/contracts/taskList';
 
 const outputDir = join(__dirname, '..', 'contracts');
 
@@ -45,6 +46,7 @@ const contractFiles = {
   'runtime.v1.schema.json': runtimeContractSchemas,
   'saved-query-list.v1.schema.json': savedQueryListContractSchemas,
   'tag-list.v1.schema.json': tagListContractSchemas,
+  'task-list.v1.schema.json': taskListContractSchemas,
 };
 
 mkdirSync(outputDir, { recursive: true });

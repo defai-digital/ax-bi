@@ -102,6 +102,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_report_list",
         "mcp_saved_query_list",
         "mcp_tag_list",
+        "mcp_task_list",
     }
     assert all(workflow.area == "mcp_orchestration" for workflow in workflows)
 
@@ -248,6 +249,23 @@ def test_rollout_workflow_includes_report_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_reports.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_task_list() -> None:
+    """Rollout manifest includes task listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_task_list")
+
+    assert workflow.sidecar_route == "POST /mcp/tasks/list"
+    assert workflow.contract_version == "task-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_TASK_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_tasks.shadow_mismatch"
         in workflow.python_metrics
     )
 

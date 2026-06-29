@@ -732,6 +732,9 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Serve MCP tag listing from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_TAG_LIST_SERVING": False,
+    # Serve MCP task listing from the TypeScript sidecar with Python fallback.
+    # @lifecycle: development
+    "TS_TASK_LIST_SERVING": False,
     # Enable a TypeScript-derived metadata index for AX-BI search workflows.
     # @lifecycle: development
     "TS_METADATA_INDEX": False,

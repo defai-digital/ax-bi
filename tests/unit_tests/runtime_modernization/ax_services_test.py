@@ -510,6 +510,45 @@ def test_list_reports_posts_to_ax_services_report_list_endpoint() -> None:
     )
 
 
+def test_list_tasks_posts_to_ax_services_task_list_endpoint() -> None:
+    """Task list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"tasks": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_tasks(
+        {
+            "contractVersion": "task-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "task_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        request_id="request-tasks",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"tasks": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/tasks/list",
+        json={
+            "contractVersion": "task-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "task_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-tasks",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

@@ -54,6 +54,7 @@ Environment variables:
 | `AX_SUPERSET_REPORT_LIST_PATH` | `/api/v1/report/` | Superset report list endpoint for TypeScript report listing. |
 | `AX_SUPERSET_SAVED_QUERY_LIST_PATH` | `/api/v1/saved_query/` | Superset saved query list endpoint for TypeScript saved query listing. |
 | `AX_SUPERSET_TAG_LIST_PATH` | `/api/v1/tag/` | Superset tag list endpoint for TypeScript tag listing. |
+| `AX_SUPERSET_TASK_LIST_PATH` | `/api/v1/task/` | Superset task list endpoint for TypeScript task listing. |
 | `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
 | `AX_SUPERSET_INTERNAL_TOKEN` | unset | Optional bearer token for internal Superset calls. |
 | `AX_SERVICES_LOG_LEVEL` | `info` | Structured log level. |
@@ -78,5 +79,6 @@ Current endpoints:
 - `POST /mcp/reports/list`
 - `POST /mcp/saved-queries/list`
 - `POST /mcp/tags/list`
+- `POST /mcp/tasks/list`
 
 Generated JSON schema artifacts live in `contracts/`.

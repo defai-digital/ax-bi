@@ -67,6 +67,10 @@ import {
   tagListContractSchemas,
   TAG_LIST_CONTRACT_VERSION,
 } from '../src/contracts/tagList';
+import {
+  taskListContractSchemas,
+  TASK_LIST_CONTRACT_VERSION,
+} from '../src/contracts/taskList';
 
 test('runtime contract version is explicit', () => {
   expect(RUNTIME_CONTRACT_VERSION).toBe('runtime.v1');
@@ -112,6 +116,10 @@ test('report list contract version is explicit', () => {
 
 test('tag list contract version is explicit', () => {
   expect(TAG_LIST_CONTRACT_VERSION).toBe('tag-list.v1');
+});
+
+test('task list contract version is explicit', () => {
+  expect(TASK_LIST_CONTRACT_VERSION).toBe('task-list.v1');
 });
 
 test('health response schema is stable', () => {
@@ -314,6 +322,19 @@ test('tag list request schema is registered in tag list contracts', () => {
   });
   expect(
     tagListContractSchemas.tagListResponseSchema.properties.tags.items.properties.name,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('task list request schema is registered in task list contracts', () => {
+  expect(taskListContractSchemas.taskListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    taskListContractSchemas.taskListResponseSchema.properties.tasks.items.properties
+      .taskName,
   ).toEqual({
     type: 'string',
   });

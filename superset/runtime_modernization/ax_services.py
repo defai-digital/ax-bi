@@ -221,6 +221,20 @@ class AxServicesClient:
             request_id=request_id,
         )
 
+    def list_tasks(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        request_id: str | None = None,
+    ) -> AxServicesResponse:
+        """Call the sidecar task list endpoint."""
+
+        return self.post_json(
+            "/mcp/tasks/list",
+            payload,
+            request_id=request_id,
+        )
+
     def get_json(
         self,
         path: str,

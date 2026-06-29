@@ -230,6 +230,12 @@
         "default": false,
         "lifecycle": "development",
         "description": "Serve MCP tag listing from the TypeScript sidecar with Python fallback."
+      },
+      {
+        "name": "TS_TASK_LIST_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP task listing from the TypeScript sidecar with Python fallback."
       }
     ],
     "testing": [

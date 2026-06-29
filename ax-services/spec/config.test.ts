@@ -40,6 +40,7 @@ test('buildConfig returns service defaults', () => {
     report: '/api/v1/report/',
     savedQuery: '/api/v1/saved_query/',
     tag: '/api/v1/tag/',
+    task: '/api/v1/task/',
   });
   expect(config.supersetTimeoutMs).toBe(2000);
   expect(config.supersetInternalToken).toBeUndefined();
@@ -62,6 +63,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_REPORT_LIST_PATH: 'reports',
     AX_SUPERSET_SAVED_QUERY_LIST_PATH: 'saved-queries',
     AX_SUPERSET_TAG_LIST_PATH: 'tags',
+    AX_SUPERSET_TASK_LIST_PATH: 'tasks',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
     AX_SERVICES_LOG_LEVEL: 'debug',
@@ -82,6 +84,7 @@ test('buildConfig reads environment overrides', () => {
     report: '/reports',
     savedQuery: '/saved-queries',
     tag: '/tags',
+    task: '/tasks',
   });
   expect(config.supersetTimeoutMs).toBe(1500);
   expect(config.supersetInternalToken).toBe('token-123');

@@ -57,6 +57,10 @@ import {
   TagListResponse,
 } from '../src/contracts/tagList';
 import {
+  TASK_LIST_CONTRACT_VERSION,
+  TaskListResponse,
+} from '../src/contracts/taskList';
+import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAnnotationLayerListClient,
@@ -70,6 +74,7 @@ import {
   SupersetReportListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
+  SupersetTaskListClient,
 } from '../src/supersetClient';
 
 const config = {
@@ -101,6 +106,7 @@ function makeSupersetClient({
   onListReports,
   onListSavedQueries,
   onListTags,
+  onListTasks,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
@@ -218,6 +224,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  taskList = {
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    tasks: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
@@ -230,6 +250,7 @@ function makeSupersetClient({
   reportList?: ReportListResponse;
   savedQueryList?: SavedQueryListResponse;
   tagList?: TagListResponse;
+  taskList?: TaskListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onListAnnotationLayers?: (correlationId?: string) => void;
@@ -241,6 +262,7 @@ function makeSupersetClient({
   onListReports?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
+  onListTasks?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAnnotationLayerListClient &
@@ -251,7 +273,8 @@ function makeSupersetClient({
   SupersetDatasetListClient &
   SupersetReportListClient &
   SupersetSavedQueryListClient &
-  SupersetTagListClient {
+  SupersetTagListClient &
+  SupersetTaskListClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -296,6 +319,10 @@ function makeSupersetClient({
     async listTags(_request, correlationId) {
       onListTags?.(correlationId);
       return tagList;
+    },
+    async listTasks(_request, correlationId) {
+      onListTasks?.(correlationId);
+      return taskList;
     },
   };
 }
@@ -1208,6 +1235,105 @@ test('tag list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'name'],
     columnsLoaded: ['id', 'name', 'type'],
+    warnings: [],
+  });
+});
+
+test('task list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      taskList: {
+        contractVersion: TASK_LIST_CONTRACT_VERSION,
+        tasks: [
+          {
+            id: 31,
+            uuid: 'task-uuid',
+            taskType: 'sql_execution',
+            taskKey: 'task-key',
+            taskName: 'Refresh cache',
+            status: 'success',
+            scope: 'private',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'task_name'],
+        columnsLoaded: [
+          'id',
+          'uuid',
+          'task_type',
+          'task_key',
+          'task_name',
+          'status',
+          'scope',
+        ],
+        warnings: [],
+      },
+      onListTasks(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/tasks/list',
+    headers: {
+      'x-request-id': 'request-task-list',
+    },
+    payload: {
+      contractVersion: TASK_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'task_name'],
+      search: 'refresh',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-task-list');
+  expect(seenRequestIds).toEqual(['request-task-list']);
+  expect(response.json()).toEqual({
+    contractVersion: TASK_LIST_CONTRACT_VERSION,
+    tasks: [
+      {
+        id: 31,
+        uuid: 'task-uuid',
+        taskType: 'sql_execution',
+        taskKey: 'task-key',
+        taskName: 'Refresh cache',
+        status: 'success',
+        scope: 'private',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'task_name'],
+    columnsLoaded: [
+      'id',
+      'uuid',
+      'task_type',
+      'task_key',
+      'task_name',
+      'status',
+      'scope',
+    ],
     warnings: [],
   });
 });

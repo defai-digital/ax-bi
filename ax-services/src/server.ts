@@ -86,6 +86,12 @@ import {
   tagListRequestSchema,
   tagListResponseSchema,
 } from './contracts/tagList';
+import {
+  TaskListRequest,
+  TaskListResponse,
+  taskListRequestSchema,
+  taskListResponseSchema,
+} from './contracts/taskList';
 import { ServiceMetrics } from './metrics';
 import {
   SupersetHealthClient,
@@ -99,6 +105,7 @@ import {
   SupersetReportListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
+  SupersetTaskListClient,
 } from './supersetClient';
 
 export function buildServer(
@@ -113,7 +120,8 @@ export function buildServer(
     SupersetDatasetListClient &
     SupersetReportListClient &
     SupersetSavedQueryListClient &
-    SupersetTagListClient,
+    SupersetTagListClient &
+    SupersetTaskListClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
@@ -371,6 +379,23 @@ export function buildServer(
     },
     async (request): Promise<TagListResponse> =>
       supersetClient.listTags(request.body, request.id),
+  );
+
+  server.post<{
+    Body: TaskListRequest;
+    Reply: TaskListResponse;
+  }>(
+    '/mcp/tasks/list',
+    {
+      schema: {
+        body: taskListRequestSchema,
+        response: {
+          200: taskListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<TaskListResponse> =>
+      supersetClient.listTasks(request.body, request.id),
   );
 
   return server;
