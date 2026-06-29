@@ -341,11 +341,14 @@ product-specific and contract-oriented.
   match the enabled production workflow scope.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
   Phase 0-6 completion checks, keeps Phase 6 dependent on the Phase 5 selective
-  rollout evidence, reports incomplete phase names, and can fail release gates
-  until every phase is proven complete.
+  rollout evidence, reports incomplete phase names, can assert an expected
+  complete or incomplete audit status, and can fail release gates until every
+  phase is proven complete.
 - Python unit CI uploads the compatibility report artifact, production evidence
   template artifact, Rust rollout decision template artifact, and completion
-  audit artifact on the current Python version. Live production dashboard
+  audit artifact on the current Python version. The template completion audit is
+  expected to remain incomplete in CI so generated templates cannot be mistaken
+  for completed production rollout evidence. Live production dashboard
   snapshots, completed rollout evidence, and additional selective workflow
   migrations are still required before this phase is complete.
 - The developer guide documents runtime ownership, local setup, feature flags,

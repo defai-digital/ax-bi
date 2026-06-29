@@ -1753,6 +1753,57 @@ def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> 
     ]
 
 
+def test_runtime_modernization_completion_audit_expect_status_passes() -> None:
+    """Completion audit can assert the expected incomplete status for CI artifacts."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "completion-audit",
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--expect-status",
+            "incomplete",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization completion audit: incomplete" in result.output
+
+
+def test_runtime_modernization_completion_audit_expect_status_failure(
+    tmp_path: Path,
+) -> None:
+    """Completion audit fails when the status does not match the expectation."""
+
+    evidence_file = _write_complete_runtime_evidence(tmp_path)
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "completion-audit",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--format",
+            "text",
+            "--expect-status",
+            "incomplete",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "runtime modernization completion audit: complete" in result.output
+    assert (
+        "runtime modernization completion audit status complete did not match "
+        "expected incomplete"
+    ) in result.output
+
+
 def test_runtime_modernization_completion_audit_strict_failure() -> None:
     """Strict completion audit exits nonzero when phase evidence is incomplete."""
 

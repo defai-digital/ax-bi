@@ -1263,11 +1263,17 @@ def validate_production_evidence_command(
     is_flag=True,
     help="Exit with an error when phase completion audit is incomplete.",
 )
+@click.option(
+    "--expect-status",
+    type=click.Choice(("complete", "incomplete")),
+    help="Exit with an error unless the audit has this status.",
+)
 def completion_audit(
     evidence_file: Any | None,
     workflow: tuple[str, ...],
     output_format: str,
     strict: bool,
+    expect_status: str | None,
 ) -> None:
     """Audit runtime modernization phase completion from production evidence."""
 
@@ -1294,6 +1300,11 @@ def completion_audit(
 
     if strict and audit["status"] != "complete":
         raise click.ClickException("runtime modernization phases incomplete")
+    if expect_status is not None and audit["status"] != expect_status:
+        raise click.ClickException(
+            "runtime modernization completion audit status "
+            f"{audit['status']} did not match expected {expect_status}"
+        )
 
 
 @runtime_modernization.command("compatibility-report")

@@ -167,6 +167,9 @@ superset runtime-modernization assemble-production-evidence \
   --validate
 
 superset runtime-modernization completion-audit evidence-bundle.json --strict
+superset runtime-modernization completion-audit \
+  runtime-modernization-production-evidence-template.json \
+  --expect-status incomplete
 ```
 
 The audit only completes when compatibility evidence, production serving flags,
@@ -185,7 +188,9 @@ selected workflow. JSON validation output includes `enabled_workflow_names`,
 `dashboard_required_workflow_names`, `failing_check_names`,
 `incomplete_phase_names`, and `failing_evidence_check_names` so release
 automation can report exactly which production-serving workflows were gated,
-approved, or still incomplete.
+approved, or still incomplete. CI uses `--expect-status incomplete` for the
+fillable template audit so a template or validator regression cannot
+accidentally claim production rollout completion.
 
 ## Adding A TypeScript MCP Workflow
 
