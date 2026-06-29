@@ -330,7 +330,9 @@ export function transformSeries(
     itemStyle.borderType = 'dotted';
     itemStyle.borderColor = itemStyle.color;
   }
-  let emphasis = {};
+  // Highlight the hovered series and fade the rest, the way Evidence.dev
+  // charts do, so a single line/bar stands out on hover.
+  let emphasis: Record<string, unknown> = { focus: 'series' };
   let showSymbol = false;
   if (!isConfidenceBand) {
     if (plotType === 'scatter') {
@@ -345,6 +347,7 @@ export function transformSeries(
       showSymbol = true;
       itemStyle.opacity = 0;
       emphasis = {
+        ...emphasis,
         itemStyle: {
           opacity: 1,
         },

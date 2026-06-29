@@ -893,6 +893,11 @@ export default function transformProps(
       groupBy.length === 0 && {
         triggerEvent: true,
       }),
+    // Evidence.dev-style category/time axis: keep a subtle baseline, drop the
+    // tick marks and vertical gridlines, mute the labels.
+    axisLine: { lineStyle: { color: theme.colorSplit } },
+    axisTick: { show: false },
+    splitLine: { show: false },
     axisLabel: {
       // When rotation is applied on time axes, hideOverlap can
       // aggressively hide the last label. Rotated labels already
@@ -901,6 +906,7 @@ export default function transformProps(
       // from overlapping each other, with showMaxLabel to ensure
       // the last data point label stays visible (#37181).
       hideOverlap: !(xAxisType === AxisType.Time && xAxisLabelRotation !== 0),
+      color: theme.colorTextSecondary,
       formatter: deduplicatedFormatter,
       rotate: xAxisLabelRotation,
       interval: xAxisLabelInterval,
@@ -957,12 +963,16 @@ export default function transformProps(
     max: yAxisMax,
     minorTick: { show: isSmallChart ? false : minorTicks },
     minorSplitLine: { show: isSmallChart ? false : minorSplitLine },
-    splitLine: { show: !isSmallChart },
+    // Evidence.dev-style value axis: light horizontal gridlines only, no
+    // axis line or tick marks, muted labels.
+    splitLine: { show: !isSmallChart, lineStyle: { color: theme.colorSplit } },
+    axisLine: { show: false },
     axisLabel: {
       show: !isMicroChart,
       showMinLabel: !isMicroChart,
       showMaxLabel: !isMicroChart,
       hideOverlap: true,
+      color: theme.colorTextSecondary,
       formatter: getYAxisFormatter(
         metrics,
         forcePercentFormatter,
@@ -971,7 +981,7 @@ export default function transformProps(
         yAxisFormat,
       ),
     },
-    axisTick: { show: !isSmallChart },
+    axisTick: { show: false },
     scale: truncateYAxis,
     name: isSmallChart ? undefined : yAxisTitle,
     nameGap: convertInteger(yAxisTitleMargin),
