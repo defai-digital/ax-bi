@@ -23,6 +23,7 @@ import logging
 from typing import cast, TYPE_CHECKING
 
 from fastmcp import Context
+from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 if TYPE_CHECKING:
@@ -50,6 +51,7 @@ from superset.mcp_service.privacy import (
 )
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 from superset.mcp_service.utils.response_utils import finalize_list_response
+from superset.runtime_modernization.measurement import measure_runtime_candidate
 
 logger = logging.getLogger(__name__)
 
@@ -189,20 +191,25 @@ async def list_charts(
         logger=logger,
     )
 
-    try:
-        with mcp_event_log_context(action="mcp.list_charts.query"):
-            result = tool.run_tool(
-                filters=request.filters,
-                search=request.search,
-                select_columns=select_columns,
-                order_column=request.order_column,
-                order_direction=request.order_direction,
-                page=to_zero_based_page(request.page),
-                page_size=request.page_size,
-                created_by_me=request.created_by_me,
-                owned_by_me=request.owned_by_me,
-            )
-        return await finalize_list_response(result, "charts", "Charts", ctx)
-    except Exception as e:
-        await ctx.error("Failed to list charts: %s" % (str(e),))
-        raise
+    with measure_runtime_candidate(
+        "mcp_orchestration",
+        "list_charts",
+        current_app.config["STATS_LOGGER"],
+    ):
+        try:
+            with mcp_event_log_context(action="mcp.list_charts.query"):
+                result = tool.run_tool(
+                    filters=request.filters,
+                    search=request.search,
+                    select_columns=select_columns,
+                    order_column=request.order_column,
+                    order_direction=request.order_direction,
+                    page=to_zero_based_page(request.page),
+                    page_size=request.page_size,
+                    created_by_me=request.created_by_me,
+                    owned_by_me=request.owned_by_me,
+                )
+            return await finalize_list_response(result, "charts", "Charts", ctx)
+        except Exception as e:
+            await ctx.error("Failed to list charts: %s" % (str(e),))
+            raise
