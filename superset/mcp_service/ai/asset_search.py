@@ -42,6 +42,17 @@ _CERTIFIED_BONUS = 0.2
 _VALID_ASSET_TYPES = frozenset({"dataset", "chart", "dashboard", "metric"})
 
 
+def _escape_like_pattern(value: str) -> str:
+    """Escape LIKE wildcard characters in a search value.
+
+    SQLAlchemy's ``ilike`` parameterises the value (preventing SQL injection)
+    but ``%`` and ``_`` inside the value are still interpreted as LIKE
+    wildcards.  Escape them so searches for literal ``100%`` or ``_admin``
+    return correct results.
+    """
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def _score_result(name: str | None, description: str | None, query: str) -> float:
     """Compute a simple relevance score for a search result."""
     score = 0.0
@@ -87,9 +98,10 @@ def _search_datasets(
     from superset.connectors.sqla.models import SqlaTable
     from superset.daos.dataset import DatasetDAO
 
+    escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        SqlaTable.table_name.ilike(f"%{query}%"),
-        SqlaTable.description.ilike(f"%{query}%"),
+        SqlaTable.table_name.ilike(f"%{escaped_query}%"),
+        SqlaTable.description.ilike(f"%{escaped_query}%"),
     )
 
     session = db.session
@@ -134,9 +146,10 @@ def _search_charts(
     from superset.daos.chart import ChartDAO
     from superset.models.slice import Slice
 
+    escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        Slice.slice_name.ilike(f"%{query}%"),
-        Slice.description.ilike(f"%{query}%"),
+        Slice.slice_name.ilike(f"%{escaped_query}%"),
+        Slice.description.ilike(f"%{escaped_query}%"),
     )
 
     session = db.session
@@ -183,9 +196,10 @@ def _search_dashboards(
     from superset.daos.dashboard import DashboardDAO
     from superset.models.dashboard import Dashboard
 
+    escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        Dashboard.dashboard_title.ilike(f"%{query}%"),
-        Dashboard.description.ilike(f"%{query}%"),
+        Dashboard.dashboard_title.ilike(f"%{escaped_query}%"),
+        Dashboard.description.ilike(f"%{escaped_query}%"),
     )
 
     session = db.session

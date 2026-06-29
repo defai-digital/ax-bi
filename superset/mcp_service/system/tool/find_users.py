@@ -65,7 +65,15 @@ async def find_users(request: FindUsersRequest, ctx: Context) -> FindUsersRespon
     )
 
     user_model = security_manager.user_model
-    needle = f"%{request.query.strip()}%"
+    # Escape LIKE wildcards so literal '%' and '_' in the query are
+    # matched as-is rather than being interpreted as wildcards.
+    escaped = (
+        request.query.strip()
+        .replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_")
+    )
+    needle = f"%{escaped}%"
 
     with mcp_event_log_context(action="mcp.find_users.query"):
         query = (
