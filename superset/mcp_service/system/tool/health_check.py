@@ -17,13 +17,13 @@
 
 """Simple health check tool for testing MCP service."""
 
-import datetime
 import logging
 import platform
 import time
 
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
+from superset.mcp_service.common.error_schemas import mcp_error_timestamp
 from superset.mcp_service.system.schemas import HealthCheckResponse
 from superset.mcp_service.utils.config_utils import get_superset_app_name
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
@@ -82,7 +82,7 @@ async def health_check() -> HealthCheckResponse:
 
         response = HealthCheckResponse(
             status="healthy",
-            timestamp=datetime.datetime.now().isoformat(),
+            timestamp=mcp_error_timestamp().isoformat(),
             service=service_name,
             version=version,
             python_version=platform.python_version(),
@@ -98,7 +98,7 @@ async def health_check() -> HealthCheckResponse:
         # Return error status but don't raise to keep tool working
         response = HealthCheckResponse(
             status="error",
-            timestamp=datetime.datetime.now().isoformat(),
+            timestamp=mcp_error_timestamp().isoformat(),
             service=service_name,
             version="unknown",
             python_version=platform.python_version(),
