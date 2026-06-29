@@ -28,7 +28,7 @@ under the License.
 
 ## Status
 
-In progress. Phase 2 foundation is implemented, Phase 3 has eleven MCP workflows
+In progress. Phase 2 foundation is implemented, Phase 3 has twelve MCP workflows
 behind TypeScript routing flags, Phase 4 has a Rust SQL kernel proof of
 concept, and the Phase 6 boundary decision is documented. Phase 5 production
 rollout evidence remains open.
@@ -188,6 +188,8 @@ product-specific and contract-oriented.
   fallback.
 - MCP report listing can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_REPORT_LIST_SERVING`, with Python fallback.
+- MCP role listing can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_ROLE_LIST_SERVING`, with Python fallback.
 - MCP tag listing can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_TAG_LIST_SERVING`, with Python fallback.
 - MCP task listing can shadow or serve from `ax-services` behind

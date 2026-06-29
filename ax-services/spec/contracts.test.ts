@@ -60,6 +60,10 @@ import {
   REPORT_LIST_CONTRACT_VERSION,
 } from '../src/contracts/reportList';
 import {
+  roleListContractSchemas,
+  ROLE_LIST_CONTRACT_VERSION,
+} from '../src/contracts/roleList';
+import {
   savedQueryListContractSchemas,
   SAVED_QUERY_LIST_CONTRACT_VERSION,
 } from '../src/contracts/savedQueryList';
@@ -112,6 +116,10 @@ test('saved query list contract version is explicit', () => {
 
 test('report list contract version is explicit', () => {
   expect(REPORT_LIST_CONTRACT_VERSION).toBe('report-list.v1');
+});
+
+test('role list contract version is explicit', () => {
+  expect(ROLE_LIST_CONTRACT_VERSION).toBe('role-list.v1');
 });
 
 test('tag list contract version is explicit', () => {
@@ -210,6 +218,19 @@ test('asset search request schema is registered in asset search contracts', () =
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+});
+
+test('role list request schema is registered in role list contracts', () => {
+  expect(roleListContractSchemas.roleListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    roleListContractSchemas.roleListResponseSchema.properties.roles.items.properties,
+  ).toEqual({
+    id: { type: 'number' },
+    name: { type: 'string' },
   });
 });
 

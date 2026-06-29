@@ -49,6 +49,10 @@ import {
   ReportListResponse,
 } from '../src/contracts/reportList';
 import {
+  ROLE_LIST_CONTRACT_VERSION,
+  RoleListResponse,
+} from '../src/contracts/roleList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryListResponse,
 } from '../src/contracts/savedQueryList';
@@ -72,6 +76,7 @@ import {
   SupersetHealthClient,
   SupersetMetadataClient,
   SupersetReportListClient,
+  SupersetRoleListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
   SupersetTaskListClient,
@@ -104,6 +109,7 @@ function makeSupersetClient({
   onListDatabases,
   onListDatasets,
   onListReports,
+  onListRoles,
   onListSavedQueries,
   onListTags,
   onListTasks,
@@ -210,6 +216,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  roleList = {
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    roles: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
   tagList = {
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
@@ -248,6 +268,7 @@ function makeSupersetClient({
   databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
   reportList?: ReportListResponse;
+  roleList?: RoleListResponse;
   savedQueryList?: SavedQueryListResponse;
   tagList?: TagListResponse;
   taskList?: TaskListResponse;
@@ -260,6 +281,7 @@ function makeSupersetClient({
   onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
   onListReports?: (correlationId?: string) => void;
+  onListRoles?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
   onListTasks?: (correlationId?: string) => void;
@@ -272,6 +294,7 @@ function makeSupersetClient({
   SupersetDatabaseListClient &
   SupersetDatasetListClient &
   SupersetReportListClient &
+  SupersetRoleListClient &
   SupersetSavedQueryListClient &
   SupersetTagListClient &
   SupersetTaskListClient {
@@ -311,6 +334,10 @@ function makeSupersetClient({
     async listReports(_request, correlationId) {
       onListReports?.(correlationId);
       return reportList;
+    },
+    async listRoles(_request, correlationId) {
+      onListRoles?.(correlationId);
+      return roleList;
     },
     async listSavedQueries(_request, correlationId) {
       onListSavedQueries?.(correlationId);
@@ -1160,6 +1187,79 @@ test('report list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'name'],
     columnsLoaded: ['id', 'name', 'type', 'active', 'crontab'],
+    warnings: [],
+  });
+});
+
+test('role list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      roleList: {
+        contractVersion: ROLE_LIST_CONTRACT_VERSION,
+        roles: [
+          {
+            id: 31,
+            name: 'Admin',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'name'],
+        columnsLoaded: ['id', 'name'],
+        warnings: [],
+      },
+      onListRoles(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/roles/list',
+    headers: {
+      'x-request-id': 'request-role-list',
+    },
+    payload: {
+      contractVersion: ROLE_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'name'],
+      search: 'admin',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-role-list');
+  expect(seenRequestIds).toEqual(['request-role-list']);
+  expect(response.json()).toEqual({
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    roles: [
+      {
+        id: 31,
+        name: 'Admin',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name'],
     warnings: [],
   });
 });

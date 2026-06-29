@@ -147,6 +147,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_dataset_list",
         "mcp_health_check",
         "mcp_report_list",
+        "mcp_role_list",
         "mcp_saved_query_list",
         "mcp_tag_list",
         "mcp_task_list",
@@ -297,6 +298,23 @@ def test_rollout_workflow_includes_report_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_reports.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_role_list() -> None:
+    """Rollout manifest includes role listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_role_list")
+
+    assert workflow.sidecar_route == "POST /mcp/roles/list"
+    assert workflow.contract_version == "role-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_ROLE_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_roles.shadow_mismatch"
         in workflow.python_metrics
     )
 

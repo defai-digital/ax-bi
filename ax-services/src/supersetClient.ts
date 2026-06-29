@@ -71,6 +71,13 @@ import {
   ReportListResponse,
 } from './contracts/reportList';
 import {
+  ROLE_LIST_CONTRACT_VERSION,
+  RoleFilterValue,
+  RoleListItem,
+  RoleListRequest,
+  RoleListResponse,
+} from './contracts/roleList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryFilterValue,
   SavedQueryListItem,
@@ -162,6 +169,13 @@ export interface SupersetReportListClient {
   ): Promise<ReportListResponse>;
 }
 
+export interface SupersetRoleListClient {
+  listRoles(
+    request: RoleListRequest,
+    correlationId?: string,
+  ): Promise<RoleListResponse>;
+}
+
 export interface SupersetSavedQueryListClient {
   listSavedQueries(
     request: SavedQueryListRequest,
@@ -194,6 +208,7 @@ export class SupersetClient
     SupersetDatabaseListClient,
     SupersetDatasetListClient,
     SupersetReportListClient,
+    SupersetRoleListClient,
     SupersetSavedQueryListClient,
     SupersetTagListClient,
     SupersetTaskListClient
@@ -693,6 +708,52 @@ export class SupersetClient
     }
   }
 
+  async listRoles(
+    request: RoleListRequest,
+    correlationId?: string,
+  ): Promise<RoleListResponse> {
+    const url = this.buildRoleListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyRoleListResponse(request, [
+          `role list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const roles = extractSupersetResults(payload).map(toRoleListItem).filter(isDefined);
+      const totalCount = extractSupersetCount(payload, roles.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: ROLE_LIST_CONTRACT_VERSION,
+        roles,
+        count: roles.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedRoleColumns(request),
+        columnsLoaded: roleColumnsLoaded(roles),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyRoleListResponse(request, [
+        `role list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   async listTags(
     request: TagListRequest,
     correlationId?: string,
@@ -901,6 +962,14 @@ export class SupersetClient
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.report}`,
     );
     url.searchParams.set('q', buildReportListQuery(request));
+    return url.toString();
+  }
+
+  private buildRoleListUrl(request: RoleListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.role}`,
+    );
+    url.searchParams.set('q', buildRoleListQuery(request));
     return url.toString();
   }
 
@@ -1198,6 +1267,30 @@ function buildReportListQuery(request: ReportListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildRoleListQuery(request: RoleListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatRoleFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function buildTagListQuery(request: TagListRequest): string {
   const filters = [...request.filters];
   if (request.search !== undefined && request.search !== '') {
@@ -1316,6 +1409,16 @@ function formatReportFilter(filter: {
   )})`;
 }
 
+function formatRoleFilter(filter: {
+  col: string;
+  opr: string;
+  value: RoleFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatRoleRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatTagFilter(filter: {
   col: string;
   opr: string;
@@ -1381,6 +1484,13 @@ function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
 }
 
 function formatReportRisonValue(value: ReportFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatRoleRisonValue(value: RoleFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1665,6 +1775,17 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
   };
 }
 
+function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    name: typeof item.name === 'string' ? item.name : undefined,
+  };
+}
+
 function toTagListItem(item: SupersetListItem): TagListItem | undefined {
   if (typeof item.id !== 'number') {
     return undefined;
@@ -1841,6 +1962,10 @@ function requestedReportColumns(request: ReportListRequest): string[] {
     : ['id', 'name', 'type', 'active', 'crontab'];
 }
 
+function requestedRoleColumns(request: RoleListRequest): string[] {
+  return request.selectColumns.length > 0 ? request.selectColumns : ['id', 'name'];
+}
+
 function requestedTagColumns(request: TagListRequest): string[] {
   return request.selectColumns.length > 0
     ? request.selectColumns
@@ -1968,6 +2093,14 @@ function reportColumnsLoaded(reports: ReportListItem[]): string[] {
     if (report.createdOnHumanized !== undefined) {
       loaded.add('created_on_humanized');
     }
+  }
+  return [...loaded];
+}
+
+function roleColumnsLoaded(roles: RoleListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const role of roles) {
+    if (role.name !== undefined) loaded.add('name');
   }
   return [...loaded];
 }
@@ -2136,6 +2269,26 @@ function emptyReportListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedReportColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyRoleListResponse(
+  request: RoleListRequest,
+  warnings: string[],
+): RoleListResponse {
+  return {
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    roles: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedRoleColumns(request),
     columnsLoaded: [],
     warnings,
   };

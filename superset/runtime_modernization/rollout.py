@@ -300,6 +300,13 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
         serving_flag="TS_REPORT_LIST_SERVING",
     ),
     _mcp_workflow(
+        name="mcp_role_list",
+        operation="list_roles",
+        sidecar_route="POST /mcp/roles/list",
+        contract_version="role-list.v1",
+        serving_flag="TS_ROLE_LIST_SERVING",
+    ),
+    _mcp_workflow(
         name="mcp_tag_list",
         operation="list_tags",
         sidecar_route="POST /mcp/tags/list",

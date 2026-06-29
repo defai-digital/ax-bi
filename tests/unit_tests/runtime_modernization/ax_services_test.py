@@ -510,6 +510,45 @@ def test_list_reports_posts_to_ax_services_report_list_endpoint() -> None:
     )
 
 
+def test_list_roles_posts_to_ax_services_role_list_endpoint() -> None:
+    """Role list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"roles": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_roles(
+        {
+            "contractVersion": "role-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        request_id="request-roles",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"roles": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/roles/list",
+        json={
+            "contractVersion": "role-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-roles",
+        },
+        timeout=2.0,
+    )
+
+
 def test_list_tasks_posts_to_ax_services_task_list_endpoint() -> None:
     """Task list requests use the sidecar TypeScript list endpoint."""
 

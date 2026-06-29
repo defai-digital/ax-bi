@@ -75,6 +75,12 @@ import {
   reportListResponseSchema,
 } from './contracts/reportList';
 import {
+  RoleListRequest,
+  RoleListResponse,
+  roleListRequestSchema,
+  roleListResponseSchema,
+} from './contracts/roleList';
+import {
   SavedQueryListRequest,
   SavedQueryListResponse,
   savedQueryListRequestSchema,
@@ -103,6 +109,7 @@ import {
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
   SupersetReportListClient,
+  SupersetRoleListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
   SupersetTaskListClient,
@@ -119,6 +126,7 @@ export function buildServer(
     SupersetDatabaseListClient &
     SupersetDatasetListClient &
     SupersetReportListClient &
+    SupersetRoleListClient &
     SupersetSavedQueryListClient &
     SupersetTagListClient &
     SupersetTaskListClient,
@@ -345,6 +353,23 @@ export function buildServer(
     },
     async (request): Promise<ReportListResponse> =>
       supersetClient.listReports(request.body, request.id),
+  );
+
+  server.post<{
+    Body: RoleListRequest;
+    Reply: RoleListResponse;
+  }>(
+    '/mcp/roles/list',
+    {
+      schema: {
+        body: roleListRequestSchema,
+        response: {
+          200: roleListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<RoleListResponse> =>
+      supersetClient.listRoles(request.body, request.id),
   );
 
   server.post<{

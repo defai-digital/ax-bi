@@ -27,6 +27,7 @@ import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList'
 import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { REPORT_LIST_CONTRACT_VERSION } from '../src/contracts/reportList';
+import { ROLE_LIST_CONTRACT_VERSION } from '../src/contracts/roleList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
 import { TAG_LIST_CONTRACT_VERSION } from '../src/contracts/tagList';
 import { TASK_LIST_CONTRACT_VERSION } from '../src/contracts/taskList';
@@ -1399,6 +1400,106 @@ test('listReports records warnings for failed Superset list responses', async ()
     columnsRequested: ['id', 'name', 'type', 'active', 'crontab'],
     columnsLoaded: [],
     warnings: ['report list returned status 504 from Superset'],
+  });
+});
+
+test('listRoles maps Superset role list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 4,
+      result: [
+        {
+          id: 31,
+          name: 'Admin',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listRoles(
+    {
+      contractVersion: ROLE_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'name', opr: 'ct', value: 'Admin' }],
+      selectColumns: ['id', 'name'],
+      search: 'admin',
+      orderColumn: 'name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 2,
+    },
+    'request-roles',
+  );
+
+  expect(result).toEqual({
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    roles: [
+      {
+        id: 31,
+        name: 'Admin',
+      },
+    ],
+    count: 1,
+    totalCount: 4,
+    page: 2,
+    pageSize: 2,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name'],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/role/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'admin'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-roles',
+  });
+});
+
+test('listRoles records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listRoles({
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ROLE_LIST_CONTRACT_VERSION,
+    roles: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: [],
+    warnings: ['role list returned status 504 from Superset'],
   });
 });
 
