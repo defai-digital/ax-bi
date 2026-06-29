@@ -42,6 +42,7 @@ from superset.runtime_modernization.inventory import (
     RuntimeInventoryItem,
 )
 from superset.runtime_modernization.rollout import (
+    audit_runtime_modernization_completion,
     build_operator_approval_evidence,
     build_operator_dashboard_snapshot,
     build_production_evidence_bundle,
@@ -299,6 +300,16 @@ def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
         f"runtime modernization production evidence validation: {validation['status']}"
     ]
     for check in validation["checks"]:
+        marker = "PASS" if check["passed"] else "FAIL"
+        lines.append(f"  {marker} {check['name']}: {check['message']}")
+    return "\n".join(lines)
+
+
+def _format_completion_audit(audit: dict[str, Any]) -> str:
+    """Render a compact runtime modernization completion audit."""
+
+    lines = [f"runtime modernization completion audit: {audit['status']}"]
+    for check in audit["phase_checks"]:
         marker = "PASS" if check["passed"] else "FAIL"
         lines.append(f"  {marker} {check['name']}: {check['message']}")
     return "\n".join(lines)
@@ -851,6 +862,59 @@ def validate_production_evidence_command(
 
     if strict and validation["status"] != "passed":
         raise click.ClickException("runtime modernization production evidence failed")
+
+
+@runtime_modernization.command("completion-audit")
+@click.argument("evidence_file", required=False, type=click.File("r"))
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to audit. Can be supplied more than once.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with an error when phase completion audit is incomplete.",
+)
+def completion_audit(
+    evidence_file: Any | None,
+    workflow: tuple[str, ...],
+    output_format: str,
+    strict: bool,
+) -> None:
+    """Audit runtime modernization phase completion from production evidence."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    evidence = (
+        _read_json_object(evidence_file, "evidence")
+        if evidence_file is not None
+        else {"schema_version": 1, "artifacts": {}}
+    )
+    audit = audit_runtime_modernization_completion(workflows, evidence)
+
+    if output_format == "json":
+        click.echo(json.dumps(audit, sort_keys=True, indent=2))
+    else:
+        click.echo(_format_completion_audit(audit))
+
+    if strict and audit["status"] != "complete":
+        raise click.ClickException("runtime modernization phases incomplete")
 
 
 @runtime_modernization.command("compatibility-report")

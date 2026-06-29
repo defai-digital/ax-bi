@@ -14,6 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from pathlib import Path
+
 from click.testing import CliRunner
 from flask import current_app
 from pytest_mock import MockerFixture
@@ -25,6 +27,80 @@ from superset.runtime_modernization.benchmarks import (
     RuntimeKernelBenchmarkResult,
 )
 from superset.utils import json
+
+
+def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
+    """Write a complete production evidence bundle for CLI tests."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "compatibility_report": {
+                        "status": "passed",
+                        "target_checks": {
+                            "sql_parsing_operations_per_second_met": True,
+                            "rust_kernel_speedup_met": None,
+                        },
+                    },
+                    "rust_kernel_benchmark": {
+                        "status": "passed",
+                        "output_matched": True,
+                        "target_checks": {
+                            "speedup_met": None,
+                        },
+                    },
+                    "production_flag_state": {
+                        "workflows": [
+                            {
+                                "name": "mcp_asset_search",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_ASSET_SEARCH_SERVING": True,
+                                },
+                            },
+                            {
+                                "name": "mcp_dashboard_list",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_DASHBOARD_LIST_SERVING": True,
+                                },
+                            },
+                        ],
+                    },
+                    "operator_dashboard_snapshot": {
+                        "snapshot_reference": "observability/dashboard/snapshot-123",
+                        "workflows": {
+                            "mcp_asset_search": {
+                                "gates": {
+                                    "shadow_mismatch_rate": True,
+                                    "fallback_rate": True,
+                                    "error_rate": True,
+                                },
+                            },
+                            "mcp_dashboard_list": {
+                                "gates": {
+                                    "shadow_mismatch_rate": True,
+                                    "fallback_rate": True,
+                                    "error_rate": True,
+                                },
+                            },
+                        },
+                    },
+                    "operator_approval": {
+                        "approved": True,
+                        "boundary_decision": "split MCP by tool class",
+                        "rollout_scope": "asset search and dashboard listing",
+                        "approval_reference": "CHG-123",
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return evidence_file
 
 
 def test_runtime_modernization_inventory_outputs_table() -> None:
@@ -729,6 +805,56 @@ def test_runtime_modernization_validate_production_evidence_strict_failure(
     )
     assert "FAIL compatibility_report" in result.output
     assert "runtime modernization production evidence failed" in result.output
+
+
+def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> None:
+    """Completion audit emits stable phase status JSON."""
+
+    evidence_file = _write_complete_runtime_evidence(tmp_path)
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "completion-audit",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--format",
+            "json",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["status"] == "complete"
+    assert payload["workflow_names"] == ["mcp_asset_search", "mcp_dashboard_list"]
+    assert all(check["passed"] for check in payload["phase_checks"])
+    assert payload["evidence_validation"]["status"] == "passed"
+
+
+def test_runtime_modernization_completion_audit_strict_failure() -> None:
+    """Strict completion audit exits nonzero when phase evidence is incomplete."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "completion-audit",
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "runtime modernization completion audit: incomplete" in result.output
+    assert "FAIL phase_5_selective_runtime_split" in result.output
+    assert "runtime modernization phases incomplete" in result.output
 
 
 def test_runtime_modernization_benchmark_outputs_json(

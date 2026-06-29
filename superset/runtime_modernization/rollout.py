@@ -22,6 +22,11 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from superset.runtime_modernization.inventory import (
+    get_runtime_inventory,
+    MigrationDisposition,
+    Runtime,
+)
 from superset.runtime_modernization.measurement import runtime_metric_key
 
 
@@ -114,6 +119,28 @@ class ProductionEvidenceCheck:
             "name": self.name,
             "passed": self.passed,
             "message": self.message,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class PhaseCompletionCheck:
+    """Validation result for one runtime modernization phase."""
+
+    name: str
+    title: str
+    passed: bool
+    message: str
+    required_checks: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize the phase completion check for CLI output."""
+
+        return {
+            "name": self.name,
+            "title": self.title,
+            "passed": self.passed,
+            "message": self.message,
+            "required_checks": list(self.required_checks),
         }
 
 
@@ -716,4 +743,161 @@ def validate_production_evidence(
         "status": "passed" if passed else "failed",
         "workflow_names": [workflow.name for workflow in workflows],
         "checks": [check.to_dict() for check in checks],
+    }
+
+
+def _evidence_check_passed(
+    validation: Mapping[str, Any],
+    check_name: str,
+) -> bool:
+    """Return whether one named production evidence check passed."""
+
+    raw_checks = validation.get("checks")
+    if not isinstance(raw_checks, list):
+        return False
+    for raw_check in raw_checks:
+        if (
+            isinstance(raw_check, Mapping)
+            and raw_check.get("name") == check_name
+            and raw_check.get("passed") is True
+        ):
+            return True
+    return False
+
+
+def audit_runtime_modernization_completion(
+    workflows: tuple[RolloutWorkflow, ...],
+    evidence: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Audit runtime modernization phase completion from current evidence."""
+
+    inventory = get_runtime_inventory()
+    has_typescript_candidate = any(
+        item.disposition == MigrationDisposition.CANDIDATE
+        and item.target_runtime == Runtime.TYPESCRIPT
+        for item in inventory
+    )
+    has_rust_candidate = any(
+        item.disposition == MigrationDisposition.CANDIDATE
+        and item.target_runtime == Runtime.RUST
+        for item in inventory
+    )
+    has_service_foundation = any(
+        workflow.name == "mcp_health_check"
+        and workflow.sidecar_route == "GET /health"
+        and workflow.contract_version == "runtime.v1"
+        for workflow in get_rollout_workflows()
+    )
+    validation = validate_production_evidence(workflows, evidence)
+    compatibility_passed = _evidence_check_passed(validation, "compatibility_report")
+    rust_benchmark_passed = _evidence_check_passed(
+        validation,
+        "rust_kernel_benchmark",
+    )
+    flag_state_passed = _evidence_check_passed(validation, "production_flag_state")
+    dashboard_passed = _evidence_check_passed(
+        validation,
+        "operator_dashboard_snapshot",
+    )
+    approval_passed = _evidence_check_passed(validation, "operator_approval")
+    production_typescript_passed = (
+        compatibility_passed and flag_state_passed and dashboard_passed
+    )
+
+    checks = [
+        PhaseCompletionCheck(
+            name="phase_0_baseline",
+            title="Baseline and decision gates",
+            passed=has_typescript_candidate and has_rust_candidate,
+            message=(
+                "runtime inventory includes TypeScript and Rust candidates"
+                if has_typescript_candidate and has_rust_candidate
+                else "runtime inventory is missing TypeScript or Rust candidates"
+            ),
+            required_checks=("runtime_inventory",),
+        ),
+        PhaseCompletionCheck(
+            name="phase_1_python_boundaries",
+            title="Stabilize Python boundaries",
+            passed=compatibility_passed,
+            message=(
+                "compatibility evidence passed for selected boundaries"
+                if compatibility_passed
+                else "compatibility evidence is missing or failed"
+            ),
+            required_checks=("compatibility_report",),
+        ),
+        PhaseCompletionCheck(
+            name="phase_2_typescript_foundation",
+            title="TypeScript service foundation",
+            passed=has_service_foundation,
+            message=(
+                "TypeScript sidecar health workflow is registered"
+                if has_service_foundation
+                else "TypeScript sidecar health workflow is missing"
+            ),
+            required_checks=("mcp_health_check_workflow",),
+        ),
+        PhaseCompletionCheck(
+            name="phase_3_first_typescript_extraction",
+            title="First TypeScript product extraction",
+            passed=production_typescript_passed,
+            message=(
+                "TypeScript workflow production evidence passed"
+                if production_typescript_passed
+                else "TypeScript workflow production evidence is incomplete"
+            ),
+            required_checks=(
+                "compatibility_report",
+                "production_flag_state",
+                "operator_dashboard_snapshot",
+            ),
+        ),
+        PhaseCompletionCheck(
+            name="phase_4_rust_kernel_poc",
+            title="Rust kernel proof of concept",
+            passed=rust_benchmark_passed,
+            message=(
+                "Rust kernel benchmark evidence passed"
+                if rust_benchmark_passed
+                else "Rust kernel benchmark evidence is missing or failed"
+            ),
+            required_checks=("rust_kernel_benchmark",),
+        ),
+        PhaseCompletionCheck(
+            name="phase_5_selective_runtime_split",
+            title="Expand runtime split selectively",
+            passed=production_typescript_passed and rust_benchmark_passed,
+            message=(
+                "selective TypeScript and Rust rollout evidence passed"
+                if production_typescript_passed and rust_benchmark_passed
+                else "selective runtime split production evidence is incomplete"
+            ),
+            required_checks=(
+                "compatibility_report",
+                "production_flag_state",
+                "operator_dashboard_snapshot",
+                "rust_kernel_benchmark",
+            ),
+        ),
+        PhaseCompletionCheck(
+            name="phase_6_boundary_reevaluation",
+            title="Reevaluate larger boundaries",
+            passed=approval_passed,
+            message=(
+                "operator approval evidence passed"
+                if approval_passed
+                else "operator approval evidence is missing or failed"
+            ),
+            required_checks=("operator_approval",),
+        ),
+    ]
+
+    passed = all(check.passed for check in checks)
+    return {
+        "schema_version": 1,
+        "status": "complete" if passed else "incomplete",
+        "workflow_names": [workflow.name for workflow in workflows],
+        "phase_checks": [check.to_dict() for check in checks],
+        "evidence_validation": validation,
     }

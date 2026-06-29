@@ -17,6 +17,7 @@
 import pytest
 
 from superset.runtime_modernization.rollout import (
+    audit_runtime_modernization_completion,
     build_operator_approval_evidence,
     build_operator_dashboard_snapshot,
     build_production_evidence_bundle,
@@ -28,6 +29,60 @@ from superset.runtime_modernization.rollout import (
     get_rollout_workflows,
     validate_production_evidence,
 )
+
+
+def _complete_production_evidence() -> dict[str, object]:
+    """Build complete production evidence for audit tests."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+    return {
+        "schema_version": 1,
+        "artifacts": {
+            "compatibility_report": {
+                "status": "passed",
+                "target_checks": {
+                    "sql_parsing_operations_per_second_met": True,
+                    "rust_kernel_speedup_met": None,
+                },
+            },
+            "rust_kernel_benchmark": {
+                "status": "passed",
+                "output_matched": True,
+                "target_checks": {
+                    "speedup_met": None,
+                },
+            },
+            "production_flag_state": {
+                "workflows": [
+                    {
+                        "name": workflow.name,
+                        "serving_flags": {
+                            flag: True for flag in workflow.serving_flags
+                        },
+                    }
+                    for workflow in workflows
+                ],
+            },
+            "operator_dashboard_snapshot": {
+                "snapshot_reference": "observability/dashboard/snapshot-123",
+                "workflows": {
+                    workflow.name: {
+                        "gates": {gate.name: True for gate in workflow.gates},
+                    }
+                    for workflow in workflows
+                },
+            },
+            "operator_approval": {
+                "approved": True,
+                "boundary_decision": "split MCP by tool class",
+                "rollout_scope": "asset search and dashboard listing",
+                "approval_reference": "CHG-123",
+            },
+        },
+    }
 
 
 def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
@@ -416,3 +471,38 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert checks["compatibility_report"]["passed"] is False
     assert checks["rust_kernel_benchmark"]["passed"] is False
     assert checks["production_flag_state"]["passed"] is False
+
+
+def test_audit_runtime_modernization_completion_reports_missing_evidence() -> None:
+    """Phase completion audit identifies production evidence gaps."""
+
+    audit = audit_runtime_modernization_completion(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {"schema_version": 1, "artifacts": {}},
+    )
+    phase_checks = {check["name"]: check for check in audit["phase_checks"]}
+
+    assert audit["status"] == "incomplete"
+    assert phase_checks["phase_0_baseline"]["passed"] is True
+    assert phase_checks["phase_2_typescript_foundation"]["passed"] is True
+    assert phase_checks["phase_5_selective_runtime_split"]["passed"] is False
+    assert audit["evidence_validation"]["status"] == "failed"
+
+
+def test_audit_runtime_modernization_completion_passes_complete_evidence() -> None:
+    """Phase completion audit passes when all required evidence is present."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+
+    audit = audit_runtime_modernization_completion(
+        workflows,
+        _complete_production_evidence(),
+    )
+
+    assert audit["status"] == "complete"
+    assert audit["workflow_names"] == ["mcp_asset_search", "mcp_dashboard_list"]
+    assert all(check["passed"] for check in audit["phase_checks"])
+    assert audit["evidence_validation"]["status"] == "passed"
