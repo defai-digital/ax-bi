@@ -337,6 +337,64 @@ def build_production_evidence_manifest(
     }
 
 
+def build_production_evidence_template(
+    workflows: tuple[RolloutWorkflow, ...],
+) -> dict[str, Any]:
+    """Build a fillable production evidence bundle template."""
+
+    return {
+        "schema_version": 1,
+        "artifacts": {
+            "compatibility_report": {
+                "status": "passed",
+                "target_checks": {
+                    "sql_parsing_operations_per_second_met": None,
+                    "rust_kernel_speedup_met": None,
+                },
+            },
+            "rust_kernel_benchmark": {
+                "status": "passed",
+                "output_matched": True,
+                "target_checks": {
+                    "speedup_met": None,
+                },
+            },
+            "production_flag_state": {
+                "workflows": [
+                    {
+                        "name": workflow.name,
+                        "serving_flags": {
+                            flag: False for flag in workflow.serving_flags
+                        },
+                    }
+                    for workflow in workflows
+                ],
+            },
+            "operator_dashboard_snapshot": {
+                "workflows": {
+                    workflow.name: {
+                        "gates": {
+                            gate.name: {
+                                "passed": False,
+                                "metric": gate.metric,
+                                "target": gate.target,
+                            }
+                            for gate in workflow.gates
+                        }
+                    }
+                    for workflow in workflows
+                },
+            },
+            "operator_approval": {
+                "approved": False,
+                "boundary_decision": "",
+                "rollout_scope": "",
+                "approval_reference": "",
+            },
+        },
+    }
+
+
 def _artifact_mapping(
     artifacts: Mapping[str, Any],
     name: str,

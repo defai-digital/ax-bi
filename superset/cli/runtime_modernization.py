@@ -42,6 +42,7 @@ from superset.runtime_modernization.inventory import (
 )
 from superset.runtime_modernization.rollout import (
     build_production_evidence_manifest,
+    build_production_evidence_template,
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
@@ -207,6 +208,22 @@ def _format_production_evidence_manifest(manifest: dict[str, Any]) -> str:
             f"  {artifact['name']} ({artifact['phase']}): {artifact['source']}"
         )
     return "\n".join(lines)
+
+
+def _format_production_evidence_template(template: dict[str, Any]) -> str:
+    """Render a compact production evidence template summary."""
+
+    artifacts = template["artifacts"]
+    workflow_names = [
+        workflow["name"] for workflow in artifacts["production_flag_state"]["workflows"]
+    ]
+    return "\n".join(
+        [
+            "runtime modernization production evidence template",
+            "workflows: " + ", ".join(workflow_names),
+            "artifacts: " + ", ".join(sorted(artifacts)),
+        ]
+    )
 
 
 def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
@@ -386,6 +403,44 @@ def production_evidence(workflow: str | None, output_format: str) -> None:
         return
 
     click.echo(_format_production_evidence_manifest(manifest))
+
+
+@runtime_modernization.command("production-evidence-template")
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to include. Can be supplied more than once.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def production_evidence_template(
+    workflow: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Print a fillable production evidence JSON bundle template."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    template = build_production_evidence_template(workflows)
+
+    if output_format == "json":
+        click.echo(json.dumps(template, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_production_evidence_template(template))
 
 
 @runtime_modernization.command("validate-production-evidence")

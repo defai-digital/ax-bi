@@ -275,6 +275,9 @@ product-specific and contract-oriented.
 - `superset runtime-modernization production-evidence` emits the required
   production artifacts for completion: compatibility report, Rust benchmark,
   serving flag state, operator dashboard snapshot, and operator approval.
+- `superset runtime-modernization production-evidence-template` emits a
+  fillable JSON bundle with the workflow-specific serving flags and dashboard
+  gates operators must complete.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
   evidence bundle against those required artifacts and can fail release gates
   when evidence is missing or failing.

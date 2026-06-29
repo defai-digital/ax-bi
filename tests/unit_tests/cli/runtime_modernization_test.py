@@ -175,6 +175,65 @@ def test_runtime_modernization_production_evidence_rejects_unknown_workflow() ->
     assert "Unknown runtime modernization rollout workflow" in result.output
 
 
+def test_runtime_modernization_production_evidence_template_outputs_json() -> None:
+    """Production evidence template command emits a fillable JSON bundle."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "production-evidence-template",
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["artifacts"]["production_flag_state"]["workflows"] == [
+        {
+            "name": "mcp_asset_search",
+            "serving_flags": {
+                "TS_ASSET_SEARCH_SERVING": False,
+                "TS_MCP_ORCHESTRATION": False,
+            },
+        },
+        {
+            "name": "mcp_dashboard_list",
+            "serving_flags": {
+                "TS_DASHBOARD_LIST_SERVING": False,
+                "TS_MCP_ORCHESTRATION": False,
+            },
+        },
+    ]
+    assert "operator_dashboard_snapshot" in payload["artifacts"]
+    assert payload["artifacts"]["operator_approval"]["approved"] is False
+
+
+def test_runtime_modernization_production_evidence_template_outputs_text() -> None:
+    """Production evidence template command has a compact text mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "production-evidence-template",
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization production evidence template" in result.output
+    assert "workflows: mcp_asset_search" in result.output
+    assert "operator_approval" in result.output
+
+
 def test_runtime_modernization_validate_production_evidence_outputs_json(
     tmp_path,
 ) -> None:

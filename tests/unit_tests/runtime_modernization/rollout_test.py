@@ -18,6 +18,7 @@ import pytest
 
 from superset.runtime_modernization.rollout import (
     build_production_evidence_manifest,
+    build_production_evidence_template,
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
@@ -225,6 +226,52 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
 
     assert validation["status"] == "passed"
     assert all(check["passed"] for check in validation["checks"])
+
+
+def test_build_production_evidence_template_includes_workflow_gates() -> None:
+    """Production evidence template includes fillable workflow-specific fields."""
+
+    template = build_production_evidence_template(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        )
+    )
+
+    flag_workflows = template["artifacts"]["production_flag_state"]["workflows"]
+    dashboard_workflows = template["artifacts"]["operator_dashboard_snapshot"][
+        "workflows"
+    ]
+
+    assert template["schema_version"] == 1
+    assert flag_workflows == [
+        {
+            "name": "mcp_asset_search",
+            "serving_flags": {
+                "TS_MCP_ORCHESTRATION": False,
+                "TS_ASSET_SEARCH_SERVING": False,
+            },
+        },
+        {
+            "name": "mcp_dashboard_list",
+            "serving_flags": {
+                "TS_MCP_ORCHESTRATION": False,
+                "TS_DASHBOARD_LIST_SERVING": False,
+            },
+        },
+    ]
+    assert (
+        dashboard_workflows["mcp_asset_search"]["gates"]["shadow_mismatch_rate"][
+            "target"
+        ]
+        == "0 mismatches during the evaluation window"
+    )
+    assert template["artifacts"]["operator_approval"] == {
+        "approved": False,
+        "boundary_decision": "",
+        "rollout_scope": "",
+        "approval_reference": "",
+    }
 
 
 def test_validate_production_evidence_fails_incomplete_bundle() -> None:
