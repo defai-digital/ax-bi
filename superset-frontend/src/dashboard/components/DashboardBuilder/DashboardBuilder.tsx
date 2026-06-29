@@ -310,8 +310,25 @@ const StyledDashboardContent = styled.div<{
     `}
 
       /* this is the ParentSize wrapper */
-    & > div:first-of-type {
-        height: 100% !important;
+      & > div:first-of-type,
+      & > div:first-of-type > div {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
+      }
+
+      .ant-tabs {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
+      }
+
+      .ant-tabs-content-holder,
+      .ant-tabs-content,
+      .ant-tabs-tabpane {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
       }
     }
 

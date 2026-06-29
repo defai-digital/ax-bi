@@ -623,3 +623,45 @@ test('should maintain layout when switching between tabs', async () => {
   expect(gridContainer).toBeInTheDocument();
   expect(tabPanels.length).toBeGreaterThan(0);
 });
+
+test('should allow dashboard tab content to overflow into the scroll container', async () => {
+  (useStoredSidebarWidth as jest.Mock).mockImplementation(() => [
+    100,
+    jest.fn(),
+  ]);
+  (fetchFaveStar as jest.Mock).mockReturnValue({ type: 'mock-action' });
+  (setActiveTab as jest.Mock).mockReturnValue({ type: 'mock-action' });
+
+  const { findByTestId } = render(<DashboardBuilder />, {
+    useRedux: true,
+    store: storeWithState({
+      ...mockState,
+      dashboardLayout: undoableDashboardLayoutWithTabs,
+    }),
+    useDnd: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  const gridContainer = await findByTestId('grid-container');
+  const dashboardContent = gridContainer.closest('.dashboard-content');
+
+  expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
+    target: '.grid-container>div:first-of-type',
+  });
+  expect(dashboardContent).toHaveStyleRule('height', 'auto!important', {
+    target: '.grid-container>div:first-of-type>div',
+  });
+  expect(dashboardContent).toHaveStyleRule('height', 'auto!important', {
+    target: '.grid-container .ant-tabs',
+  });
+  expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
+    target: '.grid-container .ant-tabs-content-holder',
+  });
+  expect(dashboardContent).toHaveStyleRule('height', 'auto!important', {
+    target: '.grid-container .ant-tabs-content-holder',
+  });
+  expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
+    target: '.grid-container .ant-tabs-tabpane',
+  });
+});
