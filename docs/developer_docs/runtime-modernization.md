@@ -134,6 +134,7 @@ superset runtime-modernization production-flag-state --format json
 superset runtime-modernization operator-dashboard-snapshot \
   --workflow mcp_asset_search \
   --snapshot-reference observability/runtime-modernization \
+  --measurement-window "2026-06-29T00:00Z/2026-06-29T01:00Z" \
   --service-health-passed \
   --passed-workflow-gate mcp_asset_search:shadow_mismatch_rate \
   --passed-workflow-gate mcp_asset_search:fallback_rate \
@@ -165,10 +166,10 @@ superset runtime-modernization completion-audit evidence-bundle.json --strict
 ```
 
 The audit only completes when compatibility evidence, production serving flags,
-operator dashboard service-health gates, workflow gates, Rust kernel rollout
-decision evidence, and operator approval all pass. Operator approval must
-include compatibility and security cost estimates for the accepted runtime
-boundary.
+operator dashboard measurement windows, service-health gates, workflow gates,
+Rust kernel rollout decision evidence, and operator approval all pass. Operator
+approval must include compatibility and security cost estimates for the
+accepted runtime boundary.
 JSON validation output includes `enabled_workflow_names` and
 `dashboard_required_workflow_names` so release automation can report exactly
 which production-serving workflows were gated.

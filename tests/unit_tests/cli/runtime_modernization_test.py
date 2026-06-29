@@ -80,6 +80,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                     },
                     "operator_dashboard_snapshot": {
                         "snapshot_reference": "observability/dashboard/snapshot-123",
+                        "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                         "service_health": {
                             "health_check": {"passed": True},
                             "readiness_check": {"passed": True},
@@ -314,6 +315,9 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
         },
     ]
     assert "operator_dashboard_snapshot" in payload["artifacts"]
+    assert (
+        payload["artifacts"]["operator_dashboard_snapshot"]["measurement_window"] == ""
+    )
     assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
     assert (
@@ -949,6 +953,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
         json.dumps(
             {
                 "snapshot_reference": "observability/dashboard/snapshot-123",
+                "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                 "service_health": {
                     "health_check": {"passed": True},
                     "readiness_check": {"passed": True},
@@ -1125,6 +1130,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                     },
                     "operator_dashboard_snapshot": {
                         "snapshot_reference": "observability/dashboard/snapshot-123",
+                        "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                         "service_health": {
                             "health_check": {"passed": True},
                             "readiness_check": {"passed": True},

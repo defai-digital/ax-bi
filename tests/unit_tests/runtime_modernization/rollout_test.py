@@ -87,6 +87,7 @@ def _complete_production_evidence() -> dict[str, object]:
             },
             "operator_dashboard_snapshot": {
                 "snapshot_reference": "observability/dashboard/snapshot-123",
+                "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                 "service_health": _passing_service_health(),
                 "workflows": {
                     workflow.name: {
@@ -387,6 +388,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                 },
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                     "service_health": _passing_service_health(),
                     "workflows": {
                         "mcp_asset_search": {
@@ -484,6 +486,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                 },
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
                     "service_health": _passing_service_health(),
                     "workflows": {
                         "mcp_asset_search": {
@@ -560,6 +563,28 @@ def test_validate_production_evidence_requires_dashboard_service_health() -> Non
     assert validation["status"] == "failed"
     assert checks["operator_dashboard_snapshot"]["passed"] is False
     assert "service health" in checks["operator_dashboard_snapshot"]["message"]
+
+
+def test_validate_production_evidence_requires_dashboard_measurement_window() -> None:
+    """Operator dashboard evidence must name the measured production window."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+    evidence = _complete_production_evidence()
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    dashboard_snapshot = artifacts["operator_dashboard_snapshot"]
+    assert isinstance(dashboard_snapshot, dict)
+    dashboard_snapshot.pop("measurement_window")
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_dashboard_snapshot"]["passed"] is False
+    assert "measurement window" in checks["operator_dashboard_snapshot"]["message"]
 
 
 def test_validate_production_evidence_requires_approval_for_enabled_workflows() -> None:
@@ -689,6 +714,7 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "rationale": "",
     }
     assert dashboard_snapshot["snapshot_reference"] == ""
+    assert dashboard_snapshot["measurement_window"] == ""
     assert dashboard_snapshot["service_health"] == {
         "health_check": {
             "passed": False,

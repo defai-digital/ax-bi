@@ -297,7 +297,7 @@ product-specific and contract-oriented.
 - `superset runtime-modernization operator-dashboard-snapshot` emits the
   operator dashboard gate artifact with sidecar service health/readiness gates,
   workflow metrics, p95 latency targets, fallback/error targets, per-workflow
-  gate status, and the dashboard snapshot reference.
+  gate status, measurement window, and the dashboard snapshot reference.
 - `superset runtime-modernization operator-approval` emits the operator
   approval artifact with the accepted boundary decision, rollout scope, and
   compatibility and security cost estimates, and approval reference for

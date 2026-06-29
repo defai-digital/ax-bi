@@ -368,8 +368,8 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
             "fallback rate, and shadow mismatch metrics for migrated workflows."
         ),
         validation=(
-            "sidecar health and readiness pass, and fallback rate and error "
-            "rate meet each workflow gate"
+            "measurement window is named, sidecar health and readiness pass, "
+            "and fallback rate and error rate meet each workflow gate"
         ),
     ),
     RolloutEvidenceRequirement(
@@ -466,6 +466,7 @@ def build_production_evidence_template(
             },
             "operator_dashboard_snapshot": {
                 "snapshot_reference": "",
+                "measurement_window": "",
                 "service_health": {
                     "health_check": {
                         "passed": False,
@@ -904,6 +905,7 @@ def validate_production_evidence(
     dashboard_passed = (
         bool(workflows)
         and _non_empty_string((dashboard_snapshot or {}).get("snapshot_reference"))
+        and _non_empty_string((dashboard_snapshot or {}).get("measurement_window"))
         and _service_health_passed(dashboard_snapshot or {})
     )
     for workflow in dashboard_required_workflows:
@@ -921,12 +923,12 @@ def validate_production_evidence(
             name="operator_dashboard_snapshot",
             passed=dashboard_passed,
             message=(
-                "operator dashboard reference, service health, and gates passed "
-                "for enabled workflows"
+                "operator dashboard reference, measurement window, service "
+                "health, and gates passed for enabled workflows"
                 if dashboard_passed
                 else (
-                    "operator dashboard reference, service health, or gates are "
-                    "missing or failing"
+                    "operator dashboard reference, measurement window, service "
+                    "health, or gates are missing or failing"
                 )
             ),
         )
