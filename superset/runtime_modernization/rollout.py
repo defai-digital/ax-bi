@@ -1492,7 +1492,7 @@ def audit_runtime_modernization_completion(
     failing_evidence_check_names = (
         evidence_checks if isinstance(evidence_checks, list) else []
     )
-    passed = not incomplete_phase_names
+    passed = not incomplete_phase_names and not failing_evidence_check_names
     return {
         "schema_version": 1,
         "status": "complete" if passed else "incomplete",

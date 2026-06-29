@@ -2105,6 +2105,23 @@ def test_audit_runtime_modernization_completion_separates_phase_3_and_5() -> Non
     ]
 
 
+def test_audit_runtime_modernization_completion_requires_validation_status() -> None:
+    """Phase audit cannot complete while any evidence validation check fails."""
+
+    workflow = get_rollout_workflow("mcp_asset_search")
+    workflows = (workflow, workflow)
+
+    audit = audit_runtime_modernization_completion(
+        workflows,
+        _complete_production_evidence((workflow,)),
+    )
+
+    assert audit["status"] == "incomplete"
+    assert audit["incomplete_phase_names"] == []
+    assert audit["failing_evidence_check_names"] == ["workflow_scope"]
+    assert audit["evidence_validation"]["status"] == "failed"
+
+
 def test_audit_runtime_modernization_completion_passes_complete_evidence() -> None:
     """Phase completion audit passes when all required evidence is present."""
 

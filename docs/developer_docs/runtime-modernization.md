@@ -199,6 +199,8 @@ compatibility and benchmark artifacts must be replaced with real CI artifacts
 before they can pass validation.
 Final release assembly should use both `--validate` and `--audit --strict` so
 the command fails on incomplete phase evidence, not only malformed artifacts.
+The completion audit reports `complete` only when every phase check passes and
+the underlying production evidence validation has no failing checks.
 
 ## Adding A TypeScript MCP Workflow
 

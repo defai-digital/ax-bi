@@ -346,7 +346,8 @@ product-specific and contract-oriented.
   Phase 0-6 completion checks, keeps Phase 6 dependent on the Phase 5 selective
   rollout evidence, reports incomplete phase names, can assert an expected
   complete or incomplete audit status, and can fail release gates until every
-  phase is proven complete.
+  phase is proven complete and production evidence validation has no failing
+  checks.
 - Python unit CI uploads the compatibility report artifact, production evidence
   template artifact, Rust rollout decision template artifact, and completion
   audit artifact on the current Python version. The template completion audit is
