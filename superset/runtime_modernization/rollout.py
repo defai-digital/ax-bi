@@ -1128,7 +1128,8 @@ def validate_production_evidence(
         )
     )
 
-    passed = all(check.passed for check in checks)
+    failing_check_names = [check.name for check in checks if not check.passed]
+    passed = not failing_check_names
     return {
         "schema_version": 1,
         "status": "passed" if passed else "failed",
@@ -1138,6 +1139,7 @@ def validate_production_evidence(
         "dashboard_required_workflow_names": [
             workflow.name for workflow in dashboard_required_workflows
         ],
+        "failing_check_names": failing_check_names,
         "checks": [check.to_dict() for check in checks],
     }
 
@@ -1302,11 +1304,18 @@ def audit_runtime_modernization_completion(
         ),
     ]
 
-    passed = all(check.passed for check in checks)
+    incomplete_phase_names = [check.name for check in checks if not check.passed]
+    evidence_checks = validation.get("failing_check_names")
+    failing_evidence_check_names = (
+        evidence_checks if isinstance(evidence_checks, list) else []
+    )
+    passed = not incomplete_phase_names
     return {
         "schema_version": 1,
         "status": "complete" if passed else "incomplete",
         "workflow_names": [workflow.name for workflow in workflows],
+        "incomplete_phase_names": incomplete_phase_names,
+        "failing_evidence_check_names": failing_evidence_check_names,
         "phase_checks": [check.to_dict() for check in checks],
         "evidence_validation": validation,
     }

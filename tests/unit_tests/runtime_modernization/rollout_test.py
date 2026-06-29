@@ -667,6 +667,14 @@ def test_validate_production_evidence_scopes_dashboards_to_enabled_flags() -> No
     checks = {check["name"]: check for check in validation["checks"]}
 
     assert validation["status"] == "failed"
+    assert validation["failing_check_names"] == [
+        "compatibility_report",
+        "rust_kernel_benchmark",
+        "rust_kernel_rollout_decision",
+        "production_flag_state",
+        "operator_dashboard_snapshot",
+        "operator_approval",
+    ]
     assert validation["enabled_workflow_names"] == []
     assert validation["dashboard_required_workflow_names"] == []
     assert checks["production_flag_state"]["passed"] is False
@@ -1470,6 +1478,21 @@ def test_audit_runtime_modernization_completion_reports_missing_evidence() -> No
     phase_checks = {check["name"]: check for check in audit["phase_checks"]}
 
     assert audit["status"] == "incomplete"
+    assert audit["incomplete_phase_names"] == [
+        "phase_1_python_boundaries",
+        "phase_3_first_typescript_extraction",
+        "phase_4_rust_kernel_poc",
+        "phase_5_selective_runtime_split",
+        "phase_6_boundary_reevaluation",
+    ]
+    assert audit["failing_evidence_check_names"] == [
+        "compatibility_report",
+        "rust_kernel_benchmark",
+        "rust_kernel_rollout_decision",
+        "production_flag_state",
+        "operator_dashboard_snapshot",
+        "operator_approval",
+    ]
     assert phase_checks["phase_0_baseline"]["passed"] is True
     assert phase_checks["phase_2_typescript_foundation"]["passed"] is True
     assert phase_checks["phase_5_selective_runtime_split"]["passed"] is False
@@ -1491,5 +1514,8 @@ def test_audit_runtime_modernization_completion_passes_complete_evidence() -> No
 
     assert audit["status"] == "complete"
     assert audit["workflow_names"] == ["mcp_asset_search", "mcp_dashboard_list"]
+    assert audit["incomplete_phase_names"] == []
+    assert audit["failing_evidence_check_names"] == []
     assert all(check["passed"] for check in audit["phase_checks"])
     assert audit["evidence_validation"]["status"] == "passed"
+    assert audit["evidence_validation"]["failing_check_names"] == []

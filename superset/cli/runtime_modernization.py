@@ -434,6 +434,8 @@ def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
     lines = [
         f"runtime modernization production evidence validation: {validation['status']}"
     ]
+    if failing_check_names := validation.get("failing_check_names") or []:
+        lines.append(f"  failing checks: {', '.join(failing_check_names)}")
     for check in validation["checks"]:
         marker = "PASS" if check["passed"] else "FAIL"
         lines.append(f"  {marker} {check['name']}: {check['message']}")
@@ -444,6 +446,14 @@ def _format_completion_audit(audit: dict[str, Any]) -> str:
     """Render a compact runtime modernization completion audit."""
 
     lines = [f"runtime modernization completion audit: {audit['status']}"]
+    incomplete_phase_names = audit.get("incomplete_phase_names") or []
+    failing_evidence_check_names = audit.get("failing_evidence_check_names") or []
+    if incomplete_phase_names:
+        lines.append(f"  incomplete phases: {', '.join(incomplete_phase_names)}")
+    if failing_evidence_check_names:
+        lines.append(
+            f"  failing evidence checks: {', '.join(failing_evidence_check_names)}"
+        )
     for check in audit["phase_checks"]:
         marker = "PASS" if check["passed"] else "FAIL"
         lines.append(f"  {marker} {check['name']}: {check['message']}")
