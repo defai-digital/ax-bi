@@ -1007,9 +1007,10 @@ def validate_production_evidence(
     approval_workflow_names = _string_set(
         (operator_approval or {}).get("workflow_names")
     )
-    approval_covers_enabled_workflows = not enabled_workflows or set(
-        enabled_workflows
-    ).issubset(approval_workflow_names)
+    enabled_workflow_names = set(enabled_workflows)
+    approval_matches_enabled_workflows = (
+        approval_workflow_names == enabled_workflow_names
+    )
     approval_passed = (
         operator_approval is not None
         and operator_approval.get("approved") is True
@@ -1018,7 +1019,7 @@ def validate_production_evidence(
         and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
         and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
-        and approval_covers_enabled_workflows
+        and approval_matches_enabled_workflows
         and (
             _non_empty_string(operator_approval.get("rollout_scope"))
             or _non_empty_string(operator_approval.get("scope"))
@@ -1036,7 +1037,8 @@ def validate_production_evidence(
                 else (
                     "operator approval is missing boundary decision, rollout "
                     "scope, migration decision, compatibility or security cost "
-                    "estimates, approval reference, or enabled workflow names"
+                    "estimates, approval reference, or exact enabled workflow "
+                    "names"
                 )
             ),
         )
@@ -1048,6 +1050,7 @@ def validate_production_evidence(
         "status": "passed" if passed else "failed",
         "workflow_names": [workflow.name for workflow in workflows],
         "enabled_workflow_names": enabled_workflows,
+        "approved_workflow_names": sorted(approval_workflow_names),
         "dashboard_required_workflow_names": [
             workflow.name for workflow in dashboard_required_workflows
         ],

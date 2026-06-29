@@ -440,6 +440,10 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
         "mcp_asset_search",
         "mcp_dashboard_list",
     ]
+    assert validation["approved_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
     assert all(check["passed"] for check in validation["checks"])
 
 
@@ -666,6 +670,43 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
 
     assert validation["status"] == "failed"
     assert checks["operator_approval"]["passed"] is False
+    assert "exact enabled workflow names" in checks["operator_approval"]["message"]
+
+
+def test_validate_production_evidence_rejects_extra_approved_workflows() -> None:
+    """Operator approval must not name workflows outside the enabled scope."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+        get_rollout_workflow("mcp_chart_list"),
+    )
+    evidence = _complete_production_evidence()
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    operator_approval = artifacts["operator_approval"]
+    assert isinstance(operator_approval, dict)
+    operator_approval["workflow_names"] = [
+        "mcp_asset_search",
+        "mcp_chart_list",
+        "mcp_dashboard_list",
+    ]
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["enabled_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
+    assert validation["approved_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_chart_list",
+        "mcp_dashboard_list",
+    ]
+    assert checks["operator_approval"]["passed"] is False
+    assert "exact enabled workflow names" in checks["operator_approval"]["message"]
 
 
 def test_validate_production_evidence_requires_operator_cost_estimates() -> None:

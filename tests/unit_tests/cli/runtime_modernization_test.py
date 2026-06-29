@@ -1259,6 +1259,10 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
         "mcp_asset_search",
         "mcp_dashboard_list",
     ]
+    assert payload["approved_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
     assert payload["dashboard_required_workflow_names"] == [
         "mcp_asset_search",
         "mcp_dashboard_list",
@@ -1356,6 +1360,10 @@ def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> 
     assert all(check["passed"] for check in payload["phase_checks"])
     assert payload["evidence_validation"]["status"] == "passed"
     assert payload["evidence_validation"]["enabled_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
+    assert payload["evidence_validation"]["approved_workflow_names"] == [
         "mcp_asset_search",
         "mcp_dashboard_list",
     ]
