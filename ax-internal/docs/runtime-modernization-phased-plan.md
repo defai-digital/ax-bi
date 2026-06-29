@@ -330,7 +330,8 @@ product-specific and contract-oriented.
   traffic or was rejected with a documented reason.
 - `superset runtime-modernization assemble-production-evidence` combines CI
   artifacts and operator-provided flag, dashboard, and approval JSON into the
-  evidence bundle shape.
+  evidence bundle shape, and can run the phase completion audit against that
+  assembled bundle for final release gating.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
   schema-versioned evidence bundle against those required artifacts, rejects
   empty selected workflow scopes, scopes dashboard gates to workflows serving

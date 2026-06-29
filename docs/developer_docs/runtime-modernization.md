@@ -164,7 +164,9 @@ superset runtime-modernization assemble-production-evidence \
   --production-flag-state production-flag-state.json \
   --operator-dashboard-snapshot operator-dashboard-snapshot.json \
   --operator-approval operator-approval.json \
-  --validate
+  --validate \
+  --audit \
+  --strict
 
 superset runtime-modernization completion-audit evidence-bundle.json --strict
 superset runtime-modernization completion-audit \
@@ -191,6 +193,8 @@ automation can report exactly which production-serving workflows were gated,
 approved, or still incomplete. CI uses `--expect-status incomplete` for the
 fillable template audit so a template or validator regression cannot
 accidentally claim production rollout completion.
+Final release assembly should use both `--validate` and `--audit --strict` so
+the command fails on incomplete phase evidence, not only malformed artifacts.
 
 ## Adding A TypeScript MCP Workflow
 

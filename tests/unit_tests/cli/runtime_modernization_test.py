@@ -140,6 +140,20 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
     return evidence_file
 
 
+def _write_complete_runtime_evidence_artifacts(tmp_path: Path) -> dict[str, Path]:
+    """Write complete production evidence artifacts for assembly tests."""
+
+    evidence_file = _write_complete_runtime_evidence(tmp_path)
+    evidence = json.loads(evidence_file.read_text(encoding="utf-8"))
+    artifacts = evidence["artifacts"]
+    paths: dict[str, Path] = {}
+    for artifact_name, artifact in artifacts.items():
+        artifact_file = tmp_path / f"{artifact_name}.json"
+        artifact_file.write_text(json.dumps(artifact), encoding="utf-8")
+        paths[artifact_name] = artifact_file
+    return paths
+
+
 def test_runtime_modernization_inventory_outputs_table() -> None:
     """Inventory command prints a human-readable candidate matrix."""
 
@@ -1201,6 +1215,105 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
         payload["artifacts"]["rust_kernel_rollout_decision"]["decision"] == "rejected"
     )
     assert payload["artifacts"]["operator_approval"]["approved"] is True
+
+
+def test_runtime_modernization_assemble_production_evidence_audits_completion(
+    tmp_path: Path,
+) -> None:
+    """Production evidence assembly can audit phase completion in one command."""
+
+    artifacts = _write_complete_runtime_evidence_artifacts(tmp_path)
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "assemble-production-evidence",
+            "--compatibility-report",
+            str(artifacts["compatibility_report"]),
+            "--rust-kernel-benchmark",
+            str(artifacts["rust_kernel_benchmark"]),
+            "--rust-kernel-rollout-decision",
+            str(artifacts["rust_kernel_rollout_decision"]),
+            "--production-flag-state",
+            str(artifacts["production_flag_state"]),
+            "--operator-dashboard-snapshot",
+            str(artifacts["operator_dashboard_snapshot"]),
+            "--operator-approval",
+            str(artifacts["operator_approval"]),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--audit",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert '"schema_version": 1' in result.output
+    assert "runtime modernization completion audit: complete" in result.output
+
+
+def test_runtime_modernization_assemble_production_evidence_audit_strict_failure(
+    tmp_path: Path,
+    mocker: MockerFixture,
+) -> None:
+    """Strict evidence assembly fails when the phase audit is incomplete."""
+
+    artifacts = _write_complete_runtime_evidence_artifacts(tmp_path)
+    audit = mocker.patch(
+        "superset.cli.runtime_modernization.audit_runtime_modernization_completion"
+    )
+    audit.return_value = {
+        "schema_version": 1,
+        "status": "incomplete",
+        "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
+        "incomplete_phase_names": ["phase_5_selective_runtime_split"],
+        "failing_evidence_check_names": [],
+        "phase_checks": [
+            {
+                "name": "phase_5_selective_runtime_split",
+                "title": "Expand runtime split selectively",
+                "passed": False,
+                "message": "selective runtime split production evidence is incomplete",
+                "required_checks": ["typescript_selective_rollout"],
+            }
+        ],
+        "evidence_validation": {
+            "status": "passed",
+            "failing_check_names": [],
+        },
+    }
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "assemble-production-evidence",
+            "--compatibility-report",
+            str(artifacts["compatibility_report"]),
+            "--rust-kernel-benchmark",
+            str(artifacts["rust_kernel_benchmark"]),
+            "--rust-kernel-rollout-decision",
+            str(artifacts["rust_kernel_rollout_decision"]),
+            "--production-flag-state",
+            str(artifacts["production_flag_state"]),
+            "--operator-dashboard-snapshot",
+            str(artifacts["operator_dashboard_snapshot"]),
+            "--operator-approval",
+            str(artifacts["operator_approval"]),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--audit",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "runtime modernization completion audit: incomplete" in result.output
+    assert "runtime modernization phases incomplete" in result.output
+    audit.assert_called_once()
 
 
 def test_runtime_modernization_assemble_production_evidence_strict_failure(

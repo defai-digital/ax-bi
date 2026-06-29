@@ -1120,9 +1120,18 @@ def rust_kernel_rollout_decision_template(
     help="Validate the assembled evidence bundle after printing it.",
 )
 @click.option(
+    "--audit",
+    "audit_completion",
+    is_flag=True,
+    help="Audit phase completion from the assembled evidence bundle.",
+)
+@click.option(
     "--strict",
     is_flag=True,
-    help="Exit with an error when assembled evidence validation fails.",
+    help=(
+        "Exit with an error when validation fails, or when --audit is supplied "
+        "and phase completion is incomplete."
+    ),
 )
 def assemble_production_evidence(
     compatibility_report_file: Any,
@@ -1133,6 +1142,7 @@ def assemble_production_evidence(
     operator_approval_file: Any | None,
     workflow: tuple[str, ...],
     validate_bundle: bool,
+    audit_completion: bool,
     strict: bool,
 ) -> None:
     """Assemble collected production artifacts into one evidence bundle."""
@@ -1191,6 +1201,11 @@ def assemble_production_evidence(
             raise click.ClickException(
                 "runtime modernization production evidence failed"
             )
+    if audit_completion:
+        audit = audit_runtime_modernization_completion(workflows, bundle)
+        click.echo(_format_completion_audit(audit), err=True)
+        if strict and audit["status"] != "complete":
+            raise click.ClickException("runtime modernization phases incomplete")
 
 
 @runtime_modernization.command("validate-production-evidence")
