@@ -845,7 +845,35 @@ def test_validate_production_evidence_rejects_empty_approved_scope() -> None:
     assert validation["status"] == "failed"
     assert validation["approved_workflow_names"] == []
     assert checks["operator_approval"]["passed"] is False
-    assert "non-empty workflow names" in checks["operator_approval"]["message"]
+    assert (
+        "valid non-empty workflow name list" in checks["operator_approval"]["message"]
+    )
+
+
+def test_validate_production_evidence_rejects_malformed_approval_workflows() -> None:
+    """Externally supplied approval workflow names must be non-empty strings."""
+
+    evidence = _complete_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),)
+    )
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    operator_approval = artifacts["operator_approval"]
+    assert isinstance(operator_approval, dict)
+    operator_approval["workflow_names"] = ["mcp_asset_search", 1]
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        evidence,
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["approved_workflow_names"] == []
+    assert checks["operator_approval"]["passed"] is False
+    assert (
+        "valid non-empty workflow name list" in checks["operator_approval"]["message"]
+    )
 
 
 def test_validate_production_evidence_rejects_extra_approved_workflows() -> None:

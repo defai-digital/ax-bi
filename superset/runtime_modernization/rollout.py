@@ -904,11 +904,17 @@ def _non_empty_string(value: Any) -> bool:
 
 
 def _string_set(value: Any) -> set[str]:
-    """Return a string set from a list-like value."""
+    """Return a string set from a validated string list."""
 
-    if not isinstance(value, list):
+    if not _string_list(value):
         return set()
-    return {item for item in value if isinstance(item, str)}
+    return set(value)
+
+
+def _string_list(value: Any) -> bool:
+    """Return whether a value is a list of non-empty strings."""
+
+    return isinstance(value, list) and all(_non_empty_string(item) for item in value)
 
 
 def _migration_decision_passed(value: Any) -> bool:
@@ -1113,9 +1119,9 @@ def validate_production_evidence(
     )
 
     operator_approval = _artifact_mapping(artifacts, "operator_approval")
-    approval_workflow_names = _string_set(
-        (operator_approval or {}).get("workflow_names")
-    )
+    raw_approval_workflow_names = (operator_approval or {}).get("workflow_names")
+    approval_workflow_names = _string_set(raw_approval_workflow_names)
+    approval_workflow_names_valid = _string_list(raw_approval_workflow_names)
     enabled_workflow_names = set(enabled_workflows)
     approval_matches_enabled_workflows = (
         approval_workflow_names == enabled_workflow_names
@@ -1128,6 +1134,7 @@ def validate_production_evidence(
         and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
         and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
+        and approval_workflow_names_valid
         and bool(approval_workflow_names)
         and approval_matches_enabled_workflows
         and (
@@ -1147,8 +1154,8 @@ def validate_production_evidence(
                 else (
                     "operator approval is missing boundary decision, rollout "
                     "scope, migration decision, compatibility or security cost "
-                    "estimates, approval reference, non-empty workflow names, "
-                    "or exact enabled workflow names"
+                    "estimates, approval reference, a valid non-empty workflow "
+                    "name list, or exact enabled workflow names"
                 )
             ),
         )

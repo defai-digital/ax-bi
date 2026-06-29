@@ -1543,7 +1543,68 @@ def test_runtime_modernization_validate_production_evidence_rejects_empty_approv
 
     assert result.exit_code != 0
     assert "FAIL operator_approval" in result.output
-    assert "non-empty workflow names" in result.output
+    assert "valid non-empty workflow name list" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
+def test_validate_production_evidence_rejects_malformed_approval_workflows(
+    tmp_path,
+) -> None:
+    """Strict validation rejects non-string approval workflow names."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "production_flag_state": {
+                        "environment": "prod-us",
+                        "flag_state_reference": (
+                            "flags/runtime-modernization/prod-us-123"
+                        ),
+                        "workflows": [
+                            {
+                                "name": "mcp_asset_search",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_ASSET_SEARCH_SERVING": True,
+                                },
+                            },
+                        ],
+                    },
+                    "operator_approval": {
+                        "approved": True,
+                        "boundary_decision": "split MCP by tool class",
+                        "rollout_scope": "asset search",
+                        "migration_decision": "expand",
+                        "compatibility_cost_estimate": "compatible",
+                        "security_cost_estimate": "authorized by Superset",
+                        "approval_reference": "CHG-123",
+                        "workflow_names": ["mcp_asset_search", 1],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL operator_approval" in result.output
+    assert "valid non-empty workflow name list" in result.output
     assert "runtime modernization production evidence failed" in result.output
 
 
