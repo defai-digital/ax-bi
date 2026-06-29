@@ -234,6 +234,166 @@ def test_runtime_modernization_production_evidence_template_outputs_text() -> No
     assert "operator_approval" in result.output
 
 
+def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
+    tmp_path,
+) -> None:
+    """Production evidence assembly combines collected artifact JSON files."""
+
+    compatibility_report = tmp_path / "compatibility-report.json"
+    rust_benchmark = tmp_path / "sql-kernel-benchmark.json"
+    flag_state = tmp_path / "flag-state.json"
+    dashboard_snapshot = tmp_path / "dashboard-snapshot.json"
+    operator_approval = tmp_path / "operator-approval.json"
+
+    compatibility_report.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "target_checks": {
+                    "sql_parsing_operations_per_second_met": True,
+                    "rust_kernel_speedup_met": None,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    rust_benchmark.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "output_matched": True,
+                "target_checks": {
+                    "speedup_met": None,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    flag_state.write_text(
+        json.dumps(
+            {
+                "workflows": [
+                    {
+                        "name": "mcp_asset_search",
+                        "serving_flags": {
+                            "TS_MCP_ORCHESTRATION": True,
+                            "TS_ASSET_SEARCH_SERVING": True,
+                        },
+                    },
+                    {
+                        "name": "mcp_dashboard_list",
+                        "serving_flags": {
+                            "TS_MCP_ORCHESTRATION": True,
+                            "TS_DASHBOARD_LIST_SERVING": True,
+                        },
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    dashboard_snapshot.write_text(
+        json.dumps(
+            {
+                "workflows": {
+                    "mcp_asset_search": {
+                        "gates": {
+                            "shadow_mismatch_rate": {"passed": True},
+                            "fallback_rate": {"passed": True},
+                            "error_rate": {"passed": True},
+                        },
+                    },
+                    "mcp_dashboard_list": {
+                        "gates": {
+                            "shadow_mismatch_rate": {"passed": True},
+                            "fallback_rate": {"passed": True},
+                            "error_rate": {"passed": True},
+                        },
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    operator_approval.write_text(
+        json.dumps(
+            {
+                "approved": True,
+                "boundary_decision": "split MCP by tool class",
+                "rollout_scope": "asset search and dashboard listing",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "assemble-production-evidence",
+            "--compatibility-report",
+            str(compatibility_report),
+            "--rust-kernel-benchmark",
+            str(rust_benchmark),
+            "--production-flag-state",
+            str(flag_state),
+            "--operator-dashboard-snapshot",
+            str(dashboard_snapshot),
+            "--operator-approval",
+            str(operator_approval),
+            "--workflow",
+            "mcp_asset_search",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--validate",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["artifacts"]["compatibility_report"]["status"] == "passed"
+    assert payload["artifacts"]["rust_kernel_benchmark"]["output_matched"] is True
+    assert payload["artifacts"]["operator_approval"]["approved"] is True
+
+
+def test_runtime_modernization_assemble_production_evidence_strict_failure(
+    tmp_path,
+) -> None:
+    """Strict evidence assembly fails when required production artifacts are absent."""
+
+    compatibility_report = tmp_path / "compatibility-report.json"
+    rust_benchmark = tmp_path / "sql-kernel-benchmark.json"
+    compatibility_report.write_text(
+        json.dumps({"status": "passed"}),
+        encoding="utf-8",
+    )
+    rust_benchmark.write_text(
+        json.dumps({"status": "passed", "output_matched": True}),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "assemble-production-evidence",
+            "--compatibility-report",
+            str(compatibility_report),
+            "--rust-kernel-benchmark",
+            str(rust_benchmark),
+            "--workflow",
+            "mcp_asset_search",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert '"compatibility_report"' in result.output
+    assert "runtime modernization production evidence validation: failed" in (
+        result.output
+    )
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_validate_production_evidence_outputs_json(
     tmp_path,
 ) -> None:

@@ -17,6 +17,7 @@
 import pytest
 
 from superset.runtime_modernization.rollout import (
+    build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
     get_production_evidence_requirements,
@@ -271,6 +272,39 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "boundary_decision": "",
         "rollout_scope": "",
         "approval_reference": "",
+    }
+
+
+def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:
+    """Production evidence bundle preserves collected artifact payloads."""
+
+    bundle = build_production_evidence_bundle(
+        compatibility_report={
+            "status": "passed",
+        },
+        rust_kernel_benchmark={
+            "status": "passed",
+            "output_matched": True,
+        },
+        production_flag_state={
+            "workflows": [],
+        },
+    )
+
+    assert bundle == {
+        "schema_version": 1,
+        "artifacts": {
+            "compatibility_report": {
+                "status": "passed",
+            },
+            "rust_kernel_benchmark": {
+                "status": "passed",
+                "output_matched": True,
+            },
+            "production_flag_state": {
+                "workflows": [],
+            },
+        },
     }
 
 

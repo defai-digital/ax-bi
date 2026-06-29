@@ -41,6 +41,7 @@ from superset.runtime_modernization.inventory import (
     RuntimeInventoryItem,
 )
 from superset.runtime_modernization.rollout import (
+    build_production_evidence_bundle,
     build_production_evidence_manifest,
     build_production_evidence_template,
     get_rollout_workflow,
@@ -236,6 +237,18 @@ def _format_production_evidence_validation(validation: dict[str, Any]) -> str:
         marker = "PASS" if check["passed"] else "FAIL"
         lines.append(f"  {marker} {check['name']}: {check['message']}")
     return "\n".join(lines)
+
+
+def _read_json_object(file: Any, label: str) -> dict[str, Any]:
+    """Read one JSON object from a Click file handle."""
+
+    try:
+        payload = json.loads(file.read())
+    except ValueError as ex:
+        raise click.ClickException(f"Invalid {label} JSON: {ex}") from ex
+    if not isinstance(payload, dict):
+        raise click.ClickException(f"{label} JSON must be an object")
+    return payload
 
 
 def _build_compatibility_report(
@@ -443,6 +456,117 @@ def production_evidence_template(
     click.echo(_format_production_evidence_template(template))
 
 
+@runtime_modernization.command("assemble-production-evidence")
+@click.option(
+    "--compatibility-report",
+    "compatibility_report_file",
+    required=True,
+    type=click.File("r"),
+    help="Compatibility report JSON artifact.",
+)
+@click.option(
+    "--rust-kernel-benchmark",
+    "rust_kernel_benchmark_file",
+    required=True,
+    type=click.File("r"),
+    help="Rust kernel benchmark JSON artifact.",
+)
+@click.option(
+    "--production-flag-state",
+    "production_flag_state_file",
+    type=click.File("r"),
+    help="Production feature flag state JSON artifact.",
+)
+@click.option(
+    "--operator-dashboard-snapshot",
+    "operator_dashboard_snapshot_file",
+    type=click.File("r"),
+    help="Operator dashboard gate JSON artifact.",
+)
+@click.option(
+    "--operator-approval",
+    "operator_approval_file",
+    type=click.File("r"),
+    help="Operator approval JSON artifact.",
+)
+@click.option(
+    "--workflow",
+    multiple=True,
+    help="Optional rollout workflow name to validate. Can be supplied more than once.",
+)
+@click.option(
+    "--validate",
+    "validate_bundle",
+    is_flag=True,
+    help="Validate the assembled evidence bundle after printing it.",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with an error when assembled evidence validation fails.",
+)
+def assemble_production_evidence(
+    compatibility_report_file: Any,
+    rust_kernel_benchmark_file: Any,
+    production_flag_state_file: Any | None,
+    operator_dashboard_snapshot_file: Any | None,
+    operator_approval_file: Any | None,
+    workflow: tuple[str, ...],
+    validate_bundle: bool,
+    strict: bool,
+) -> None:
+    """Assemble collected production artifacts into one evidence bundle."""
+
+    try:
+        workflows = (
+            tuple(get_rollout_workflow(name) for name in workflow)
+            if workflow
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    bundle = build_production_evidence_bundle(
+        compatibility_report=_read_json_object(
+            compatibility_report_file,
+            "compatibility report",
+        ),
+        rust_kernel_benchmark=_read_json_object(
+            rust_kernel_benchmark_file,
+            "Rust kernel benchmark",
+        ),
+        production_flag_state=_read_json_object(
+            production_flag_state_file,
+            "production flag state",
+        )
+        if production_flag_state_file is not None
+        else None,
+        operator_dashboard_snapshot=_read_json_object(
+            operator_dashboard_snapshot_file,
+            "operator dashboard snapshot",
+        )
+        if operator_dashboard_snapshot_file is not None
+        else None,
+        operator_approval=_read_json_object(
+            operator_approval_file,
+            "operator approval",
+        )
+        if operator_approval_file is not None
+        else None,
+    )
+
+    click.echo(json.dumps(bundle, sort_keys=True, indent=2))
+
+    if validate_bundle or strict:
+        validation = validate_production_evidence(workflows, bundle)
+        if validation["status"] != "passed":
+            click.echo(_format_production_evidence_validation(validation), err=True)
+        if strict and validation["status"] != "passed":
+            raise click.ClickException(
+                "runtime modernization production evidence failed"
+            )
+
+
 @runtime_modernization.command("validate-production-evidence")
 @click.argument("evidence_file", type=click.File("r"))
 @click.option(
@@ -480,12 +604,7 @@ def validate_production_evidence_command(
     except KeyError as ex:
         raise click.ClickException(str(ex)) from ex
 
-    try:
-        evidence = json.loads(evidence_file.read())
-    except ValueError as ex:
-        raise click.ClickException(f"Invalid evidence JSON: {ex}") from ex
-    if not isinstance(evidence, dict):
-        raise click.ClickException("Evidence JSON must be an object")
+    evidence = _read_json_object(evidence_file, "evidence")
 
     validation = validate_production_evidence(workflows, evidence)
 

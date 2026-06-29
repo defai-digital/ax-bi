@@ -395,6 +395,33 @@ def build_production_evidence_template(
     }
 
 
+def build_production_evidence_bundle(
+    *,
+    compatibility_report: Mapping[str, Any],
+    rust_kernel_benchmark: Mapping[str, Any],
+    production_flag_state: Mapping[str, Any] | None = None,
+    operator_dashboard_snapshot: Mapping[str, Any] | None = None,
+    operator_approval: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a production evidence bundle from collected artifact payloads."""
+
+    artifacts: dict[str, Mapping[str, Any]] = {
+        "compatibility_report": compatibility_report,
+        "rust_kernel_benchmark": rust_kernel_benchmark,
+    }
+    if production_flag_state is not None:
+        artifacts["production_flag_state"] = production_flag_state
+    if operator_dashboard_snapshot is not None:
+        artifacts["operator_dashboard_snapshot"] = operator_dashboard_snapshot
+    if operator_approval is not None:
+        artifacts["operator_approval"] = operator_approval
+
+    return {
+        "schema_version": 1,
+        "artifacts": artifacts,
+    }
+
+
 def _artifact_mapping(
     artifacts: Mapping[str, Any],
     name: str,
