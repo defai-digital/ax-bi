@@ -327,6 +327,19 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         validation="status is passed and output_matched is true",
     ),
     RolloutEvidenceRequirement(
+        name="rust_kernel_rollout_decision",
+        phase="phase_5",
+        source="production flag export, change ticket, or release decision record",
+        description=(
+            "Decision showing the measured Rust kernel either serves production "
+            "traffic or was rejected with a documented reason."
+        ),
+        validation=(
+            "decision is served with the kernel flag enabled, or rejected with "
+            "rationale and decision reference"
+        ),
+    ),
+    RolloutEvidenceRequirement(
         name="production_flag_state",
         phase="phase_3_phase_5",
         source="deployment configuration or feature-flag export",
@@ -420,6 +433,14 @@ def build_production_evidence_template(
                 "target_checks": {
                     "speedup_met": None,
                 },
+            },
+            "rust_kernel_rollout_decision": {
+                "kernel": "ax_sql.normalize_sql_whitespace",
+                "decision": "",
+                "serving_flag": "RUST_SQL_KERNEL",
+                "serving_flag_enabled": False,
+                "decision_reference": "",
+                "rationale": "",
             },
             "production_flag_state": {
                 "workflows": [
@@ -534,10 +555,34 @@ def build_operator_dashboard_snapshot(
     return snapshot
 
 
+def build_rust_kernel_rollout_decision(
+    *,
+    kernel: str,
+    decision: str,
+    decision_reference: str,
+    rationale: str,
+    serving_flag: str = "RUST_SQL_KERNEL",
+    serving_flag_enabled: bool | None = None,
+) -> dict[str, Any]:
+    """Build Rust kernel rollout decision evidence for Phase 5."""
+
+    evidence: dict[str, Any] = {
+        "kernel": kernel,
+        "decision": decision,
+        "serving_flag": serving_flag,
+        "decision_reference": decision_reference,
+        "rationale": rationale,
+    }
+    if serving_flag_enabled is not None:
+        evidence["serving_flag_enabled"] = serving_flag_enabled
+    return evidence
+
+
 def build_production_evidence_bundle(
     *,
     compatibility_report: Mapping[str, Any],
     rust_kernel_benchmark: Mapping[str, Any],
+    rust_kernel_rollout_decision: Mapping[str, Any] | None = None,
     production_flag_state: Mapping[str, Any] | None = None,
     operator_dashboard_snapshot: Mapping[str, Any] | None = None,
     operator_approval: Mapping[str, Any] | None = None,
@@ -548,6 +593,8 @@ def build_production_evidence_bundle(
         "compatibility_report": compatibility_report,
         "rust_kernel_benchmark": rust_kernel_benchmark,
     }
+    if rust_kernel_rollout_decision is not None:
+        artifacts["rust_kernel_rollout_decision"] = rust_kernel_rollout_decision
     if production_flag_state is not None:
         artifacts["production_flag_state"] = production_flag_state
     if operator_dashboard_snapshot is not None:
@@ -647,6 +694,28 @@ def _non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and value.strip() != ""
 
 
+def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
+    """Return whether Rust rollout decision evidence satisfies Phase 5."""
+
+    if artifact is None:
+        return False
+
+    if not _non_empty_string(artifact.get("kernel")) or not _non_empty_string(
+        artifact.get("decision_reference")
+    ):
+        return False
+
+    decision = artifact.get("decision")
+    if decision == "served":
+        return (
+            _non_empty_string(artifact.get("serving_flag"))
+            and artifact.get("serving_flag_enabled") is True
+        )
+    if decision == "rejected":
+        return _non_empty_string(artifact.get("rationale"))
+    return False
+
+
 def validate_production_evidence(
     workflows: tuple[RolloutWorkflow, ...],
     evidence: Mapping[str, Any],
@@ -690,6 +759,26 @@ def validate_production_evidence(
                 "Rust kernel benchmark passed"
                 if rust_passed
                 else "Rust kernel benchmark is missing, failed, or incompatible"
+            ),
+        )
+    )
+
+    rust_rollout_decision = _artifact_mapping(
+        artifacts,
+        "rust_kernel_rollout_decision",
+    )
+    rust_rollout_decision_passed = _rust_rollout_decision_passed(rust_rollout_decision)
+    checks.append(
+        ProductionEvidenceCheck(
+            name="rust_kernel_rollout_decision",
+            passed=rust_rollout_decision_passed,
+            message=(
+                "Rust kernel rollout decision is documented"
+                if rust_rollout_decision_passed
+                else (
+                    "Rust kernel rollout decision must show served production "
+                    "traffic or a documented rejection"
+                )
             ),
         )
     )
@@ -829,6 +918,10 @@ def audit_runtime_modernization_completion(
         validation,
         "rust_kernel_benchmark",
     )
+    rust_rollout_decision_passed = _evidence_check_passed(
+        validation,
+        "rust_kernel_rollout_decision",
+    )
     flag_state_passed = _evidence_check_passed(validation, "production_flag_state")
     dashboard_passed = _evidence_check_passed(
         validation,
@@ -902,10 +995,18 @@ def audit_runtime_modernization_completion(
         PhaseCompletionCheck(
             name="phase_5_selective_runtime_split",
             title="Expand runtime split selectively",
-            passed=production_typescript_passed and rust_benchmark_passed,
+            passed=(
+                production_typescript_passed
+                and rust_benchmark_passed
+                and rust_rollout_decision_passed
+            ),
             message=(
                 "selective TypeScript and Rust rollout evidence passed"
-                if production_typescript_passed and rust_benchmark_passed
+                if (
+                    production_typescript_passed
+                    and rust_benchmark_passed
+                    and rust_rollout_decision_passed
+                )
                 else "selective runtime split production evidence is incomplete"
             ),
             required_checks=(
@@ -913,6 +1014,7 @@ def audit_runtime_modernization_completion(
                 "production_flag_state",
                 "operator_dashboard_snapshot",
                 "rust_kernel_benchmark",
+                "rust_kernel_rollout_decision",
             ),
         ),
         PhaseCompletionCheck(

@@ -49,6 +49,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_manifest,
     build_production_evidence_template,
     build_production_flag_state,
+    build_rust_kernel_rollout_decision,
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
@@ -290,6 +291,22 @@ def _format_operator_dashboard_snapshot(snapshot: dict[str, Any]) -> str:
         lines.append(f"    {workflow_name}")
         lines.append(f"      passed: {', '.join(passed) if passed else 'none'}")
         lines.append(f"      failed: {', '.join(failed) if failed else 'none'}")
+    return "\n".join(lines)
+
+
+def _format_rust_kernel_rollout_decision(decision: dict[str, Any]) -> str:
+    """Render compact Rust kernel rollout decision evidence."""
+
+    lines = [
+        "runtime modernization Rust kernel rollout decision",
+        f"  kernel: {decision['kernel']}",
+        f"  decision: {decision['decision']}",
+        f"  serving flag: {decision['serving_flag']}",
+        f"  decision reference: {decision['decision_reference']}",
+        f"  rationale: {decision['rationale']}",
+    ]
+    if "serving_flag_enabled" in decision:
+        lines.append(f"  serving flag enabled: {decision['serving_flag_enabled']}")
     return "\n".join(lines)
 
 
@@ -703,6 +720,75 @@ def operator_dashboard_snapshot(
     click.echo(_format_operator_dashboard_snapshot(snapshot))
 
 
+@runtime_modernization.command("rust-kernel-rollout-decision")
+@click.option(
+    "--kernel",
+    default="ax_sql.normalize_sql_whitespace",
+    show_default=True,
+    help="Rust kernel covered by this rollout decision.",
+)
+@click.option(
+    "--decision",
+    type=click.Choice(("served", "rejected")),
+    required=True,
+    help="Whether the measured kernel serves production or was rejected.",
+)
+@click.option(
+    "--decision-reference",
+    required=True,
+    help="Change ticket, benchmark note, or release decision reference.",
+)
+@click.option(
+    "--rationale",
+    required=True,
+    help="Reason for serving or rejecting the Rust kernel in production.",
+)
+@click.option(
+    "--serving-flag",
+    default="RUST_SQL_KERNEL",
+    show_default=True,
+    help="Feature flag controlling the Rust kernel.",
+)
+@click.option(
+    "--serving-flag-enabled/--serving-flag-disabled",
+    default=None,
+    help="Whether the serving flag was enabled for production traffic.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def rust_kernel_rollout_decision(
+    kernel: str,
+    decision: str,
+    decision_reference: str,
+    rationale: str,
+    serving_flag: str,
+    serving_flag_enabled: bool | None,
+    output_format: str,
+) -> None:
+    """Print Rust kernel rollout decision evidence for Phase 5."""
+
+    evidence = build_rust_kernel_rollout_decision(
+        kernel=kernel,
+        decision=decision,
+        decision_reference=decision_reference,
+        rationale=rationale,
+        serving_flag=serving_flag,
+        serving_flag_enabled=serving_flag_enabled,
+    )
+
+    if output_format == "json":
+        click.echo(json.dumps(evidence, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_rust_kernel_rollout_decision(evidence))
+
+
 @runtime_modernization.command("assemble-production-evidence")
 @click.option(
     "--compatibility-report",
@@ -717,6 +803,12 @@ def operator_dashboard_snapshot(
     required=True,
     type=click.File("r"),
     help="Rust kernel benchmark JSON artifact.",
+)
+@click.option(
+    "--rust-kernel-rollout-decision",
+    "rust_kernel_rollout_decision_file",
+    type=click.File("r"),
+    help="Rust kernel rollout decision JSON artifact.",
 )
 @click.option(
     "--production-flag-state",
@@ -755,6 +847,7 @@ def operator_dashboard_snapshot(
 def assemble_production_evidence(
     compatibility_report_file: Any,
     rust_kernel_benchmark_file: Any,
+    rust_kernel_rollout_decision_file: Any | None,
     production_flag_state_file: Any | None,
     operator_dashboard_snapshot_file: Any | None,
     operator_approval_file: Any | None,
@@ -782,6 +875,12 @@ def assemble_production_evidence(
             rust_kernel_benchmark_file,
             "Rust kernel benchmark",
         ),
+        rust_kernel_rollout_decision=_read_json_object(
+            rust_kernel_rollout_decision_file,
+            "Rust kernel rollout decision",
+        )
+        if rust_kernel_rollout_decision_file is not None
+        else None,
         production_flag_state=_read_json_object(
             production_flag_state_file,
             "production flag state",

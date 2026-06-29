@@ -286,7 +286,8 @@ product-specific and contract-oriented.
   source.
 - `superset runtime-modernization production-evidence` emits the required
   production artifacts for completion: compatibility report, Rust benchmark,
-  serving flag state, operator dashboard snapshot, and operator approval.
+  Rust rollout decision, serving flag state, operator dashboard snapshot, and
+  operator approval.
 - `superset runtime-modernization production-evidence-template` emits a
   fillable JSON bundle with the workflow-specific serving flags and dashboard
   gates operators must complete.
@@ -298,6 +299,9 @@ product-specific and contract-oriented.
 - `superset runtime-modernization operator-approval` emits the operator
   approval artifact with the accepted boundary decision, rollout scope, and
   approval reference.
+- `superset runtime-modernization rust-kernel-rollout-decision` emits the Rust
+  kernel decision artifact proving the measured kernel either served production
+  traffic or was rejected with a documented reason.
 - `superset runtime-modernization assemble-production-evidence` combines CI
   artifacts and operator-provided flag, dashboard, and approval JSON into the
   evidence bundle shape.

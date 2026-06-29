@@ -52,6 +52,14 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                             "speedup_met": None,
                         },
                     },
+                    "rust_kernel_rollout_decision": {
+                        "kernel": "ax_sql.normalize_sql_whitespace",
+                        "decision": "rejected",
+                        "serving_flag": "RUST_SQL_KERNEL",
+                        "serving_flag_enabled": False,
+                        "decision_reference": "PERF-123",
+                        "rationale": "benchmark gain did not justify rollout",
+                    },
                     "production_flag_state": {
                         "workflows": [
                             {
@@ -222,6 +230,7 @@ def test_runtime_modernization_production_evidence_outputs_json() -> None:
         "operator_dashboard_snapshot",
         "production_flag_state",
         "rust_kernel_benchmark",
+        "rust_kernel_rollout_decision",
     }
 
 
@@ -287,6 +296,7 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
         },
     ]
     assert "operator_dashboard_snapshot" in payload["artifacts"]
+    assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
 
 
@@ -516,6 +526,58 @@ def test_operator_dashboard_snapshot_rejects_unknown_workflow() -> None:
     assert "Unknown runtime modernization rollout workflow" in result.output
 
 
+def test_runtime_modernization_rust_kernel_rollout_decision_outputs_json() -> None:
+    """Rust rollout decision command emits validation-ready evidence."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "rust-kernel-rollout-decision",
+            "--decision",
+            "served",
+            "--decision-reference",
+            "CHG-RUST-1",
+            "--rationale",
+            "canary showed acceptable latency and errors",
+            "--serving-flag-enabled",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "kernel": "ax_sql.normalize_sql_whitespace",
+        "decision": "served",
+        "serving_flag": "RUST_SQL_KERNEL",
+        "serving_flag_enabled": True,
+        "decision_reference": "CHG-RUST-1",
+        "rationale": "canary showed acceptable latency and errors",
+    }
+
+
+def test_runtime_modernization_rust_kernel_rollout_decision_outputs_text() -> None:
+    """Rust rollout decision command has a compact text mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "rust-kernel-rollout-decision",
+            "--decision",
+            "rejected",
+            "--decision-reference",
+            "PERF-123",
+            "--rationale",
+            "benchmark gain did not justify rollout",
+            "--format",
+            "text",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization Rust kernel rollout decision" in result.output
+    assert "decision: rejected" in result.output
+    assert "decision reference: PERF-123" in result.output
+
+
 def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     tmp_path,
 ) -> None:
@@ -523,6 +585,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
 
     compatibility_report = tmp_path / "compatibility-report.json"
     rust_benchmark = tmp_path / "sql-kernel-benchmark.json"
+    rust_decision = tmp_path / "rust-kernel-rollout-decision.json"
     flag_state = tmp_path / "flag-state.json"
     dashboard_snapshot = tmp_path / "dashboard-snapshot.json"
     operator_approval = tmp_path / "operator-approval.json"
@@ -547,6 +610,19 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                 "target_checks": {
                     "speedup_met": None,
                 },
+            }
+        ),
+        encoding="utf-8",
+    )
+    rust_decision.write_text(
+        json.dumps(
+            {
+                "kernel": "ax_sql.normalize_sql_whitespace",
+                "decision": "rejected",
+                "serving_flag": "RUST_SQL_KERNEL",
+                "serving_flag_enabled": False,
+                "decision_reference": "PERF-123",
+                "rationale": "benchmark gain did not justify rollout",
             }
         ),
         encoding="utf-8",
@@ -618,6 +694,8 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
             str(compatibility_report),
             "--rust-kernel-benchmark",
             str(rust_benchmark),
+            "--rust-kernel-rollout-decision",
+            str(rust_decision),
             "--production-flag-state",
             str(flag_state),
             "--operator-dashboard-snapshot",
@@ -637,6 +715,9 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     assert payload["schema_version"] == 1
     assert payload["artifacts"]["compatibility_report"]["status"] == "passed"
     assert payload["artifacts"]["rust_kernel_benchmark"]["output_matched"] is True
+    assert (
+        payload["artifacts"]["rust_kernel_rollout_decision"]["decision"] == "rejected"
+    )
     assert payload["artifacts"]["operator_approval"]["approved"] is True
 
 
@@ -702,6 +783,14 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "target_checks": {
                             "speedup_met": None,
                         },
+                    },
+                    "rust_kernel_rollout_decision": {
+                        "kernel": "ax_sql.normalize_sql_whitespace",
+                        "decision": "served",
+                        "serving_flag": "RUST_SQL_KERNEL",
+                        "serving_flag_enabled": True,
+                        "decision_reference": "CHG-RUST-1",
+                        "rationale": "canary showed acceptable latency and errors",
                     },
                     "production_flag_state": {
                         "workflows": [

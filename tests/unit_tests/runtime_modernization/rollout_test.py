@@ -24,6 +24,7 @@ from superset.runtime_modernization.rollout import (
     build_production_evidence_manifest,
     build_production_evidence_template,
     build_production_flag_state,
+    build_rust_kernel_rollout_decision,
     get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
@@ -54,6 +55,14 @@ def _complete_production_evidence() -> dict[str, object]:
                 "target_checks": {
                     "speedup_met": None,
                 },
+            },
+            "rust_kernel_rollout_decision": {
+                "kernel": "ax_sql.normalize_sql_whitespace",
+                "decision": "rejected",
+                "serving_flag": "RUST_SQL_KERNEL",
+                "serving_flag_enabled": False,
+                "decision_reference": "PERF-123",
+                "rationale": "benchmark gain did not justify rollout",
             },
             "production_flag_state": {
                 "workflows": [
@@ -297,6 +306,7 @@ def test_production_evidence_manifest_lists_required_artifacts() -> None:
         "operator_dashboard_snapshot",
         "production_flag_state",
         "rust_kernel_benchmark",
+        "rust_kernel_rollout_decision",
     }
     assert len(get_production_evidence_requirements()) == len(artifact_names)
 
@@ -327,6 +337,14 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     "target_checks": {
                         "speedup_met": None,
                     },
+                },
+                "rust_kernel_rollout_decision": {
+                    "kernel": "ax_sql.normalize_sql_whitespace",
+                    "decision": "served",
+                    "serving_flag": "RUST_SQL_KERNEL",
+                    "serving_flag_enabled": True,
+                    "decision_reference": "CHG-RUST-1",
+                    "rationale": "canary showed acceptable latency and errors",
                 },
                 "production_flag_state": {
                     "workflows": [
@@ -416,6 +434,14 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         ]
         == "0 mismatches during the evaluation window"
     )
+    assert template["artifacts"]["rust_kernel_rollout_decision"] == {
+        "kernel": "ax_sql.normalize_sql_whitespace",
+        "decision": "",
+        "serving_flag": "RUST_SQL_KERNEL",
+        "serving_flag_enabled": False,
+        "decision_reference": "",
+        "rationale": "",
+    }
     assert dashboard_snapshot["snapshot_reference"] == ""
     assert template["artifacts"]["operator_approval"] == {
         "approved": False,
@@ -479,6 +505,25 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
     }
 
 
+def test_build_rust_kernel_rollout_decision_includes_required_fields() -> None:
+    """Rust rollout decision evidence includes Phase 5 validation fields."""
+
+    decision = build_rust_kernel_rollout_decision(
+        kernel="ax_sql.normalize_sql_whitespace",
+        decision="rejected",
+        decision_reference="PERF-123",
+        rationale="benchmark gain did not justify rollout",
+    )
+
+    assert decision == {
+        "kernel": "ax_sql.normalize_sql_whitespace",
+        "decision": "rejected",
+        "serving_flag": "RUST_SQL_KERNEL",
+        "decision_reference": "PERF-123",
+        "rationale": "benchmark gain did not justify rollout",
+    }
+
+
 def test_build_operator_dashboard_snapshot_includes_workflow_gates() -> None:
     """Operator dashboard evidence includes gate status for selected workflows."""
 
@@ -515,6 +560,12 @@ def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:
             "status": "passed",
             "output_matched": True,
         },
+        rust_kernel_rollout_decision={
+            "kernel": "ax_sql.normalize_sql_whitespace",
+            "decision": "rejected",
+            "decision_reference": "PERF-123",
+            "rationale": "benchmark gain did not justify rollout",
+        },
         production_flag_state={
             "workflows": [],
         },
@@ -529,6 +580,12 @@ def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:
             "rust_kernel_benchmark": {
                 "status": "passed",
                 "output_matched": True,
+            },
+            "rust_kernel_rollout_decision": {
+                "kernel": "ax_sql.normalize_sql_whitespace",
+                "decision": "rejected",
+                "decision_reference": "PERF-123",
+                "rationale": "benchmark gain did not justify rollout",
             },
             "production_flag_state": {
                 "workflows": [],
@@ -560,7 +617,33 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert validation["status"] == "failed"
     assert checks["compatibility_report"]["passed"] is False
     assert checks["rust_kernel_benchmark"]["passed"] is False
+    assert checks["rust_kernel_rollout_decision"]["passed"] is False
     assert checks["production_flag_state"]["passed"] is False
+
+
+def test_validate_production_evidence_rejects_unserved_rust_decision() -> None:
+    """A served Rust decision must prove the production serving flag is enabled."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "rust_kernel_rollout_decision": {
+                    "kernel": "ax_sql.normalize_sql_whitespace",
+                    "decision": "served",
+                    "serving_flag": "RUST_SQL_KERNEL",
+                    "serving_flag_enabled": False,
+                    "decision_reference": "CHG-RUST-1",
+                    "rationale": "planned rollout",
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["rust_kernel_rollout_decision"]["passed"] is False
 
 
 def test_audit_runtime_modernization_completion_reports_missing_evidence() -> None:
