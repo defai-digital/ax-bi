@@ -548,6 +548,63 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "workflows: mcp_asset_search" in result.output
 
 
+def test_operator_approval_requires_workflow_when_approved() -> None:
+    """Approved operator evidence must name at least one approved workflow."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "asset search",
+            "--migration-decision",
+            "expand",
+            "--compatibility-cost-estimate",
+            "single contract family is low compatibility cost",
+            "--security-cost-estimate",
+            "Superset keeps authorization checks",
+            "--approval-reference",
+            "ADR-42",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Approved operator evidence requires at least one --workflow" in (
+        result.output
+    )
+
+
+def test_operator_approval_allows_empty_workflows_when_not_approved() -> None:
+    """A non-approval record can document a rejected empty rollout scope."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "no workflows approved",
+            "--migration-decision",
+            "stop",
+            "--compatibility-cost-estimate",
+            "compatibility risk exceeds benefit",
+            "--security-cost-estimate",
+            "security review rejected the rollout scope",
+            "--approval-reference",
+            "ADR-43",
+            "--not-approved",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["approved"] is False
+    assert payload["workflow_names"] == []
+
+
 def test_runtime_modernization_operator_approval_rejects_unknown_workflow() -> None:
     """Operator approval command rejects unknown workflow names."""
 

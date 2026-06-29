@@ -802,6 +802,11 @@ def operator_approval(
     except KeyError as ex:
         raise click.ClickException(str(ex)) from ex
 
+    if approved and not workflow_names:
+        raise click.ClickException(
+            "Approved operator evidence requires at least one --workflow"
+        )
+
     approval = build_operator_approval_evidence(
         boundary_decision=boundary_decision,
         rollout_scope=rollout_scope,
