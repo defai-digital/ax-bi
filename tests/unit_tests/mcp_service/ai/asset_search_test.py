@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock, patch
 
 from flask import current_app
@@ -331,6 +332,74 @@ def test_search_assets_shadows_ax_services_when_enabled(
     stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.search_assets.shadow_match"
     )
+
+
+def test_search_assets_reports_shadow_mismatch(
+    app_context: None,
+    caplog,
+    mocker,
+) -> None:
+    """Asset search emits a compact report when shadow output mismatches."""
+
+    caplog.set_level(
+        logging.WARNING,
+        logger="superset.mcp_service.ai.asset_search",
+    )
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    python_results = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="dataset-uuid",
+            name="sales_fact",
+            description="sensitive description",
+            certified=False,
+            relevance_score=1.0,
+            owners=[],
+            tags=[],
+        )
+    ]
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_python",
+        return_value=python_results,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.ai.asset_search.AxServicesClient"
+    ).return_value
+    ax_services_client.asset_search.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={
+            "contractVersion": "asset-search.v1",
+            "assets": [
+                {
+                    "assetType": "dataset",
+                    "id": 2,
+                    "name": "candidate_name",
+                    "description": "candidate description",
+                }
+            ],
+            "warnings": [],
+        },
+    )
+
+    results = search_assets("sales", asset_types=["dataset"], limit=5)
+
+    assert results == python_results
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.search_assets.shadow_mismatch"
+    )
+    assert "Runtime modernization asset search shadow mismatch" in caplog.text
+    assert "('dataset', 1)" in caplog.text
+    assert "('dataset', 2)" in caplog.text
+    assert "sensitive description" not in caplog.text
+    assert "candidate description" not in caplog.text
 
 
 def test_search_assets_serves_ax_services_when_serving_enabled(

@@ -39,7 +39,10 @@ from superset.runtime_modernization.ax_services import (
     AxServicesResponse,
 )
 from superset.runtime_modernization.measurement import runtime_metric_key
-from superset.runtime_modernization.shadow import execute_with_shadow
+from superset.runtime_modernization.shadow import (
+    execute_with_shadow,
+    ShadowMismatchReport,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -424,6 +427,71 @@ def _asset_search_shadow_matches(
     return authoritative_keys == candidate_keys
 
 
+def _asset_keys_from_results(results: list[AssetResult]) -> list[tuple[str, int]]:
+    """Return stable asset keys without exposing names or descriptions."""
+
+    return [(asset.asset_type, asset.id) for asset in results]
+
+
+def _asset_keys_from_ax_services_payload(payload: Any) -> list[tuple[str, int]]:
+    """Return stable asset keys from an ax-services payload."""
+
+    if not isinstance(payload, dict):
+        return []
+
+    assets = payload.get("assets")
+    if not isinstance(assets, list):
+        return []
+
+    keys = []
+    for asset in assets:
+        if not isinstance(asset, dict):
+            continue
+
+        asset_type = asset.get("assetType")
+        asset_id = asset.get("id")
+        if isinstance(asset_type, str) and isinstance(asset_id, int):
+            keys.append((asset_type, asset_id))
+
+    return keys
+
+
+def _summarize_asset_search_results(results: list[AssetResult]) -> dict[str, object]:
+    """Summarize Python asset search results for shadow mismatch reports."""
+
+    return {
+        "count": len(results),
+        "keys": _asset_keys_from_results(results),
+    }
+
+
+def _summarize_ax_services_asset_search_response(
+    response: AxServicesResponse,
+) -> dict[str, object]:
+    """Summarize ax-services asset search results for shadow mismatch reports."""
+
+    payload = response.payload or {}
+    return {
+        "ok": response.ok,
+        "status_code": response.status_code,
+        "contract_version": payload.get("contractVersion")
+        if isinstance(payload, dict)
+        else None,
+        "count": len(_asset_keys_from_ax_services_payload(payload)),
+        "keys": _asset_keys_from_ax_services_payload(payload),
+        "error": response.error,
+    }
+
+
+def _report_asset_search_shadow_mismatch(report: ShadowMismatchReport) -> None:
+    """Log a compact asset search shadow mismatch report."""
+
+    logger.warning(
+        "Runtime modernization asset search shadow mismatch: %s",
+        report.to_dict(),
+    )
+
+
 def _record_asset_search_metric(metric: str) -> None:
     """Record an asset-search migration metric when Flask context is available."""
 
@@ -487,4 +555,7 @@ def search_assets(
         compare=_asset_search_shadow_matches,
         stats_logger=current_app.config["STATS_LOGGER"],
         shadow_enabled=_asset_search_shadow_enabled(),
+        report_mismatch=_report_asset_search_shadow_mismatch,
+        summarize_authoritative=_summarize_asset_search_results,
+        summarize_candidate=_summarize_ax_services_asset_search_response,
     )

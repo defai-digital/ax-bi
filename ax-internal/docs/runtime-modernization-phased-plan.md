@@ -167,9 +167,9 @@ product-specific and contract-oriented.
   `TS_MCP_ORCHESTRATION` and `TS_ASSET_SEARCH_SERVING`, with Python fallback.
 - MCP health check can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_HEALTH_CHECK_SERVING`, with Python fallback.
-- Compatibility and fallback behavior are covered by unit tests. Production
-  rollout evidence, latency targets, and mismatch reporting still need to be
-  captured before this phase is complete.
+- Compatibility, fallback behavior, and compact shadow mismatch reporting are
+  covered by unit tests. Production rollout evidence and latency targets still
+  need to be captured before this phase is complete.
 
 ## Phase 4: Rust Kernel Proof Of Concept
 

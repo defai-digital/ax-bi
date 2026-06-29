@@ -16,7 +16,10 @@
 # under the License.
 import pytest
 
-from superset.runtime_modernization.shadow import execute_with_shadow
+from superset.runtime_modernization.shadow import (
+    execute_with_shadow,
+    ShadowMismatchReport,
+)
 from tests.unit_tests.runtime_modernization.testing import RecordingStatsLogger
 
 
@@ -74,6 +77,7 @@ def test_execute_with_shadow_records_mismatch() -> None:
     """Different candidate output records a shadow mismatch."""
 
     stats_logger = RecordingStatsLogger()
+    reports: list[ShadowMismatchReport] = []
 
     result = execute_with_shadow(
         area="mcp_orchestration",
@@ -83,11 +87,57 @@ def test_execute_with_shadow_records_mismatch() -> None:
         compare=lambda authoritative, candidate: authoritative == candidate,
         stats_logger=stats_logger,
         shadow_enabled=True,
+        report_mismatch=reports.append,
+        summarize_authoritative=lambda value: {"value": value["value"]},
+        summarize_candidate=lambda value: {"value": value["value"]},
     )
 
     assert result == {"value": 1}
     assert stats_logger.increments == [
         "runtime_modernization.mcp_orchestration.plan_dashboard.shadow_mismatch"
+    ]
+    assert [report.to_dict() for report in reports] == [
+        {
+            "area": "mcp_orchestration",
+            "operation": "plan_dashboard",
+            "reason": "comparison_failed",
+            "authoritative": {"value": 1},
+            "candidate": {"value": 2},
+        }
+    ]
+
+
+def test_execute_with_shadow_mismatch_report_survives_summary_error() -> None:
+    """Summary failures do not affect authoritative output."""
+
+    stats_logger = RecordingStatsLogger()
+    reports: list[ShadowMismatchReport] = []
+
+    def summarize(value: dict[str, int]) -> dict[str, int]:
+        raise RuntimeError("summary failed")
+
+    result = execute_with_shadow(
+        area="mcp_orchestration",
+        operation="plan_dashboard",
+        authoritative=lambda: {"value": 1},
+        candidate=lambda: {"value": 2},
+        compare=lambda authoritative, candidate: authoritative == candidate,
+        stats_logger=stats_logger,
+        shadow_enabled=True,
+        report_mismatch=reports.append,
+        summarize_authoritative=summarize,
+        summarize_candidate=summarize,
+    )
+
+    assert result == {"value": 1}
+    assert [report.to_dict() for report in reports] == [
+        {
+            "area": "mcp_orchestration",
+            "operation": "plan_dashboard",
+            "reason": "comparison_failed",
+            "authoritative": {"summary_error": "RuntimeError"},
+            "candidate": {"summary_error": "RuntimeError"},
+        }
     ]
 
 

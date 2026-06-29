@@ -35,7 +35,10 @@ from superset.runtime_modernization.ax_services import (
     AxServicesResponse,
 )
 from superset.runtime_modernization.measurement import measure_runtime_candidate
-from superset.runtime_modernization.shadow import execute_with_shadow
+from superset.runtime_modernization.shadow import (
+    execute_with_shadow,
+    ShadowMismatchReport,
+)
 from superset.utils.version import get_version_metadata
 
 logger = logging.getLogger(__name__)
@@ -118,6 +121,44 @@ def _health_shadow_matches(
     """Compare Python MCP health with the TypeScript sidecar candidate."""
 
     return authoritative.status == "healthy" and candidate.ok
+
+
+def _summarize_health_response(response: HealthCheckResponse) -> dict[str, object]:
+    """Summarize the Python health response for shadow mismatch reports."""
+
+    return {
+        "status": response.status,
+        "service": response.service,
+        "version": response.version,
+    }
+
+
+def _summarize_ax_services_health_response(
+    response: AxServicesResponse,
+) -> dict[str, object]:
+    """Summarize the ax-services health response for shadow mismatch reports."""
+
+    payload = response.payload or {}
+    if not isinstance(payload, dict):
+        payload = {}
+
+    return {
+        "ok": response.ok,
+        "status_code": response.status_code,
+        "contract_version": payload.get("contractVersion"),
+        "service": payload.get("service"),
+        "status": payload.get("status"),
+        "error": response.error,
+    }
+
+
+def _report_health_shadow_mismatch(report: ShadowMismatchReport) -> None:
+    """Log a compact health shadow mismatch report."""
+
+    logger.warning(
+        "Runtime modernization health shadow mismatch: %s",
+        report.to_dict(),
+    )
 
 
 def _health_shadow_enabled() -> bool:
@@ -208,4 +249,7 @@ async def health_check() -> HealthCheckResponse:
             compare=_health_shadow_matches,
             stats_logger=current_app.config["STATS_LOGGER"],
             shadow_enabled=_health_shadow_enabled(),
+            report_mismatch=_report_health_shadow_mismatch,
+            summarize_authoritative=_summarize_health_response,
+            summarize_candidate=_summarize_ax_services_health_response,
         )

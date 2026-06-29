@@ -18,14 +18,53 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TypeVar
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any, TypeVar
 
 from superset.runtime_modernization.measurement import runtime_metric_key
 from superset.stats_logger import BaseStatsLogger
 
 AuthoritativeResult = TypeVar("AuthoritativeResult")
 CandidateResult = TypeVar("CandidateResult")
+ShadowSummary = Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class ShadowMismatchReport:
+    """Compact report for a shadow-execution mismatch."""
+
+    area: str
+    operation: str
+    reason: str
+    authoritative_summary: ShadowSummary
+    candidate_summary: ShadowSummary
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the report for structured logs or artifacts."""
+
+        return {
+            "area": self.area,
+            "operation": self.operation,
+            "reason": self.reason,
+            "authoritative": dict(self.authoritative_summary),
+            "candidate": dict(self.candidate_summary),
+        }
+
+
+def _safe_summary(
+    summarize: Callable[[Any], ShadowSummary] | None,
+    value: Any,
+) -> ShadowSummary:
+    """Build a bounded shadow report summary without raising."""
+
+    if summarize is None:
+        return {"type": type(value).__name__}
+
+    try:
+        return summarize(value)
+    except Exception as ex:  # pylint: disable=broad-except
+        return {"summary_error": type(ex).__name__}
 
 
 def execute_with_shadow(
@@ -37,6 +76,10 @@ def execute_with_shadow(
     compare: Callable[[AuthoritativeResult, CandidateResult], bool],
     stats_logger: BaseStatsLogger,
     shadow_enabled: bool,
+    report_mismatch: Callable[[ShadowMismatchReport], None] | None = None,
+    summarize_authoritative: Callable[[AuthoritativeResult], ShadowSummary]
+    | None = None,
+    summarize_candidate: Callable[[CandidateResult], ShadowSummary] | None = None,
 ) -> AuthoritativeResult:
     """Return authoritative output while optionally comparing a candidate path."""
 
@@ -60,4 +103,22 @@ def execute_with_shadow(
 
     metric = "shadow_match" if matched else "shadow_mismatch"
     stats_logger.incr(runtime_metric_key(area, operation, metric))
+
+    if not matched and report_mismatch is not None:
+        report_mismatch(
+            ShadowMismatchReport(
+                area=area,
+                operation=operation,
+                reason="comparison_failed",
+                authoritative_summary=_safe_summary(
+                    summarize_authoritative,
+                    authoritative_result,
+                ),
+                candidate_summary=_safe_summary(
+                    summarize_candidate,
+                    candidate_result,
+                ),
+            )
+        )
+
     return authoritative_result

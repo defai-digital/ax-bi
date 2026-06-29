@@ -17,6 +17,7 @@
 
 """Tests for health_check MCP tool."""
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -142,6 +143,55 @@ async def test_health_check_shadows_ax_services_when_enabled(
     stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.health_check.success"
     )
+
+
+@pytest.mark.asyncio
+async def test_health_check_reports_shadow_mismatch(
+    app_context: None,
+    caplog: pytest.LogCaptureFixture,
+    mocker,
+):
+    """Health check emits a compact report when shadow output mismatches."""
+
+    caplog.set_level(
+        logging.WARNING,
+        logger="superset.mcp_service.system.tool.health_check",
+    )
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    current_app.config["MCP_DEV_USERNAME"] = "admin"
+    mocker.patch(
+        "superset.mcp_service.auth.load_user_with_relationships",
+        return_value=MagicMock(),
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        return_value={"version_string": "test-version"},
+    )
+    mocker.patch(
+        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+    ).return_value
+    ax_services_client.health.return_value = AxServicesResponse(
+        ok=False,
+        status_code=503,
+        payload={"contractVersion": "runtime.v1", "status": "error"},
+        error="not ready",
+    )
+
+    response = await health_check()
+
+    assert response.status == "healthy"
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.health_check.shadow_mismatch"
+    )
+    assert "Runtime modernization health shadow mismatch" in caplog.text
+    assert "'status_code': 503" in caplog.text
+    assert "'error': 'not ready'" in caplog.text
 
 
 @pytest.mark.asyncio
