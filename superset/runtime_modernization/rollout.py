@@ -769,6 +769,23 @@ def build_production_evidence_bundle(
 ) -> dict[str, Any]:
     """Build a production evidence bundle from collected artifact payloads."""
 
+    _require_artifact_mapping(compatibility_report, "compatibility_report")
+    _require_artifact_mapping(rust_kernel_benchmark, "rust_kernel_benchmark")
+    if rust_kernel_rollout_decision is not None:
+        _require_artifact_mapping(
+            rust_kernel_rollout_decision,
+            "rust_kernel_rollout_decision",
+        )
+    if production_flag_state is not None:
+        _require_artifact_mapping(production_flag_state, "production_flag_state")
+    if operator_dashboard_snapshot is not None:
+        _require_artifact_mapping(
+            operator_dashboard_snapshot,
+            "operator_dashboard_snapshot",
+        )
+    if operator_approval is not None:
+        _require_artifact_mapping(operator_approval, "operator_approval")
+
     artifacts: dict[str, Mapping[str, Any]] = {
         "compatibility_report": compatibility_report,
         "rust_kernel_benchmark": rust_kernel_benchmark,
@@ -786,6 +803,13 @@ def build_production_evidence_bundle(
         "schema_version": 1,
         "artifacts": artifacts,
     }
+
+
+def _require_artifact_mapping(value: Any, artifact_name: str) -> None:
+    """Require an object-shaped artifact when assembling evidence bundles."""
+
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{artifact_name} artifact must be an object")
 
 
 def _artifact_mapping(

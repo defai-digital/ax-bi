@@ -14,6 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from typing import Any, cast
+
 import pytest
 
 from superset.runtime_modernization.rollout import (
@@ -1548,6 +1550,33 @@ def test_build_production_evidence_bundle_includes_supplied_artifacts() -> None:
             },
         },
     }
+
+
+def test_build_production_evidence_bundle_requires_required_objects() -> None:
+    """Production evidence bundle rejects malformed required artifacts."""
+
+    with pytest.raises(ValueError, match="compatibility_report artifact"):
+        build_production_evidence_bundle(
+            compatibility_report=cast(dict[str, Any], []),
+            rust_kernel_benchmark={
+                "status": "passed",
+            },
+        )
+
+
+def test_build_production_evidence_bundle_requires_optional_objects() -> None:
+    """Production evidence bundle rejects malformed optional artifacts."""
+
+    with pytest.raises(ValueError, match="operator_approval artifact"):
+        build_production_evidence_bundle(
+            compatibility_report={
+                "status": "passed",
+            },
+            rust_kernel_benchmark={
+                "status": "passed",
+            },
+            operator_approval=cast(dict[str, Any], []),
+        )
 
 
 def test_validate_production_evidence_fails_incomplete_bundle() -> None:
