@@ -21,6 +21,8 @@ DOCS_ROOT = REPO_ROOT / "ax-internal" / "docs"
 BOUNDARY_ADR = DOCS_ROOT / "runtime-modernization-boundary-decision-adr.md"
 INITIAL_ADR = DOCS_ROOT / "runtime-modernization-adr.md"
 PHASED_PLAN = DOCS_ROOT / "runtime-modernization-phased-plan.md"
+DEVELOPER_GUIDE = REPO_ROOT / "docs" / "developer_docs" / "runtime-modernization.md"
+DEVELOPER_SIDEBAR = REPO_ROOT / "docs" / "developer_docs" / "sidebars.js"
 
 
 def test_runtime_modernization_boundary_adr_is_linked() -> None:
@@ -42,3 +44,19 @@ def test_runtime_modernization_boundary_adr_records_phase_six_decisions() -> Non
     assert "No separate permission service is introduced" in text
     assert "Background jobs and Celery task families stay Python" in text
     assert "Rust owns only measured pure kernels" in text
+
+
+def test_runtime_modernization_developer_guide_is_linked() -> None:
+    """Developer runtime ownership and setup guide is discoverable."""
+
+    guide_text = DEVELOPER_GUIDE.read_text(encoding="utf-8")
+
+    assert DEVELOPER_GUIDE.exists()
+    assert (
+        "../../docs/developer_docs/runtime-modernization.md"
+        in PHASED_PLAN.read_text(encoding="utf-8")
+    )
+    assert "'runtime-modernization'" in DEVELOPER_SIDEBAR.read_text(encoding="utf-8")
+    assert "Runtime Ownership" in guide_text
+    assert "Local Setup" in guide_text
+    assert "Rollout Evidence" in guide_text

@@ -23,7 +23,8 @@ under the License.
 > [PRD](runtime-modernization-prd.md) ·
 > [ADR](runtime-modernization-adr.md) ·
 > [Boundary Decision ADR](runtime-modernization-boundary-decision-adr.md) ·
-> [Technical Specification](runtime-modernization-tech-spec.md)
+> [Technical Specification](runtime-modernization-tech-spec.md) ·
+> [Developer Guide](../../docs/developer_docs/runtime-modernization.md)
 
 ## Status
 
@@ -318,6 +319,9 @@ product-specific and contract-oriented.
   audit artifact on the current Python version. Live production dashboard
   snapshots, completed rollout evidence, and additional selective workflow
   migrations are still required before this phase is complete.
+- The developer guide documents runtime ownership, local setup, feature flags,
+  contracts, rollout evidence commands, and the process for adding TypeScript
+  workflows or Rust kernels.
 
 ## Phase 6: Reevaluate Larger Boundaries
 

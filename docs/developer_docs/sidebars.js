@@ -31,6 +31,7 @@ module.exports = {
         'guidelines/backend-style-guidelines',
       ],
     },
+    'runtime-modernization',
     {
       type: 'category',
       label: 'Extensions',
