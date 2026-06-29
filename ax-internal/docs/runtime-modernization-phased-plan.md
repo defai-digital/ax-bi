@@ -281,10 +281,10 @@ product-specific and contract-oriented.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
   evidence bundle against those required artifacts and can fail release gates
   when evidence is missing or failing.
-- Python unit CI uploads the compatibility report artifact on the current
-  Python version. Live production dashboard snapshots, rollout evidence, and
-  additional selective workflow migrations are still required before this phase
-  is complete.
+- Python unit CI uploads the compatibility report artifact and production
+  evidence template artifact on the current Python version. Live production
+  dashboard snapshots, completed rollout evidence, and additional selective
+  workflow migrations are still required before this phase is complete.
 
 ## Phase 6: Reevaluate Larger Boundaries
 
