@@ -1227,10 +1227,18 @@ def validate_production_evidence(
     dashboard_required_workflows = [
         workflow for workflow in workflows if workflow.name in enabled_workflows
     ]
+    dashboard_record_names = set(dashboard_records)
+    dashboard_required_workflow_names = {
+        workflow.name for workflow in dashboard_required_workflows
+    }
+    dashboard_records_match_enabled = (
+        dashboard_record_names == dashboard_required_workflow_names
+    )
     dashboard_passed = (
         bool(dashboard_required_workflows)
         and dashboard_records_valid
         and dashboard_records_scoped
+        and dashboard_records_match_enabled
         and _non_empty_string((dashboard_snapshot or {}).get("snapshot_reference"))
         and _non_empty_string((dashboard_snapshot or {}).get("measurement_window"))
         and _service_health_passed(dashboard_snapshot or {})
@@ -1255,8 +1263,8 @@ def validate_production_evidence(
                 if dashboard_passed
                 else (
                     "operator dashboard reference, measurement window, service "
-                    "health, selected-scope workflow records, or gates are "
-                    "missing or failing"
+                    "health, exactly enabled workflow records, or gates are "
+                    "missing, extra, or failing"
                 )
             ),
         )

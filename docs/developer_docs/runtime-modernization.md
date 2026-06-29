@@ -194,6 +194,8 @@ automation can report exactly which production-serving workflows were gated,
 approved, or still incomplete. CI uses `--expect-status incomplete` for the
 fillable template audit so a template or validator regression cannot
 accidentally claim production rollout completion.
+Dashboard workflow records must exactly match the workflows serving production
+traffic in the flag-state artifact.
 Generated evidence templates are intentionally incomplete: placeholder
 compatibility and benchmark artifacts must be replaced with real CI artifacts
 before they can pass validation.

@@ -831,6 +831,75 @@ def test_validate_production_evidence_scopes_dashboards_to_enabled_flags() -> No
     assert checks["operator_dashboard_snapshot"]["passed"] is False
 
 
+def test_validate_production_evidence_rejects_extra_dashboard_workflows() -> None:
+    """Dashboard evidence must only name workflows serving production traffic."""
+
+    validation = validate_production_evidence(
+        (
+            get_rollout_workflow("mcp_asset_search"),
+            get_rollout_workflow("mcp_dashboard_list"),
+        ),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": {
+                    "environment": "prod-us",
+                    "flag_state_reference": "flags/runtime-modernization/prod-us-123",
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_dashboard_list",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": False,
+                                "TS_DASHBOARD_LIST_SERVING": False,
+                            },
+                        },
+                    ],
+                },
+                "operator_dashboard_snapshot": {
+                    "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
+                    "service_health": _passing_service_health(),
+                    "workflows": {
+                        "mcp_asset_search": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                        "mcp_dashboard_list": {
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["enabled_workflow_names"] == ["mcp_asset_search"]
+    assert validation["dashboard_required_workflow_names"] == ["mcp_asset_search"]
+    assert checks["operator_dashboard_snapshot"]["passed"] is False
+    assert (
+        "exactly enabled workflow records"
+        in checks["operator_dashboard_snapshot"]["message"]
+    )
+
+
 def test_validate_production_evidence_requires_dashboard_service_health() -> None:
     """Operator dashboard evidence must include sidecar service health."""
 
@@ -963,7 +1032,7 @@ def test_validate_production_evidence_rejects_unselected_dashboard_workflows() -
     assert validation["status"] == "failed"
     assert checks["operator_dashboard_snapshot"]["passed"] is False
     assert (
-        "selected-scope workflow records"
+        "exactly enabled workflow records"
         in checks["operator_dashboard_snapshot"]["message"]
     )
 
