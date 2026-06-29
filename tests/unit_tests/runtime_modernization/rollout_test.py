@@ -667,6 +667,44 @@ def test_validate_production_evidence_requires_flag_state_provenance() -> None:
     assert "flag-state reference" in checks["production_flag_state"]["message"]
 
 
+def test_validate_production_evidence_rejects_duplicate_flag_workflows() -> None:
+    """Production flag-state workflow records must be unique."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": {
+                    "environment": "prod-us",
+                    "flag_state_reference": "flags/runtime-modernization/prod-us-123",
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": True,
+                                "TS_ASSET_SEARCH_SERVING": True,
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["production_flag_state"]["passed"] is False
+    assert "valid workflow records" in checks["production_flag_state"]["message"]
+
+
 def test_validate_production_evidence_scopes_dashboards_to_enabled_flags() -> None:
     """Missing flag-state evidence does not mark every workflow dashboard-required."""
 
@@ -747,6 +785,52 @@ def test_validate_production_evidence_requires_dashboard_measurement_window() ->
     assert validation["status"] == "failed"
     assert checks["operator_dashboard_snapshot"]["passed"] is False
     assert "measurement window" in checks["operator_dashboard_snapshot"]["message"]
+
+
+def test_validate_production_evidence_rejects_duplicate_dashboard_workflows() -> None:
+    """Dashboard workflow records must be unique."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": _production_flag_state(
+                    (get_rollout_workflow("mcp_asset_search"),)
+                ),
+                "operator_dashboard_snapshot": {
+                    "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "measurement_window": "2026-06-29T00:00Z/2026-06-29T01:00Z",
+                    "service_health": _passing_service_health(),
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                        {
+                            "name": "mcp_asset_search",
+                            "gates": {
+                                "shadow_mismatch_rate": {"passed": True},
+                                "fallback_rate": {"passed": True},
+                                "error_rate": {"passed": True},
+                                "latency_p95": {"passed": True},
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_dashboard_snapshot"]["passed"] is False
+    assert "workflow records" in checks["operator_dashboard_snapshot"]["message"]
 
 
 def test_validate_production_evidence_requires_approval_for_enabled_workflows() -> None:

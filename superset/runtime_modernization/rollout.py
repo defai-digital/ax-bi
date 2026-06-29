@@ -851,6 +851,30 @@ def _workflow_records_by_name(
     return records
 
 
+def _workflow_records_valid(artifact: Mapping[str, Any]) -> bool:
+    """Return whether workflow evidence records are well-formed and unique."""
+
+    raw_workflows = artifact.get("workflows")
+    if isinstance(raw_workflows, Mapping):
+        return all(
+            _non_empty_string(name) and isinstance(raw_record, Mapping)
+            for name, raw_record in raw_workflows.items()
+        )
+
+    if isinstance(raw_workflows, list):
+        names: set[str] = set()
+        for raw_record in raw_workflows:
+            if not isinstance(raw_record, Mapping):
+                return False
+            name = raw_record.get("name")
+            if not isinstance(name, str) or name.strip() == "" or name in names:
+                return False
+            names.add(name)
+        return True
+
+    return False
+
+
 def _serving_flags_enabled(
     record: Mapping[str, Any],
     workflow: RolloutWorkflow,
@@ -1032,6 +1056,7 @@ def validate_production_evidence(
 
     flag_state = _artifact_mapping(artifacts, "production_flag_state")
     flag_records = _workflow_records_by_name(flag_state or {})
+    flag_records_valid = _workflow_records_valid(flag_state or {})
     flag_state_has_provenance = _non_empty_string(
         (flag_state or {}).get("environment")
     ) and _non_empty_string((flag_state or {}).get("flag_state_reference"))
@@ -1044,10 +1069,12 @@ def validate_production_evidence(
     minimum_selective_serving_workflows = 2
     flag_state_passed = (
         flag_state_has_provenance
+        and flag_records_valid
         and len(enabled_workflows) >= minimum_first_serving_workflows
     )
     selective_rollout_passed = (
         flag_state_has_provenance
+        and flag_records_valid
         and len(enabled_workflows) >= minimum_selective_serving_workflows
     )
     checks.append(
@@ -1059,7 +1086,7 @@ def validate_production_evidence(
                 if flag_state_passed
                 else (
                     "production flag state must name environment, flag-state "
-                    "reference, and at least "
+                    "reference, valid workflow records, and at least "
                     f"{minimum_first_serving_workflows} TypeScript serving workflow"
                 )
             ),
@@ -1075,7 +1102,8 @@ def validate_production_evidence(
                 else (
                     "selective rollout requires at least "
                     f"{minimum_selective_serving_workflows} TypeScript serving "
-                    "workflows with deployment provenance"
+                    "workflows with deployment provenance and valid workflow "
+                    "records"
                 )
             ),
         )
@@ -1083,11 +1111,13 @@ def validate_production_evidence(
 
     dashboard_snapshot = _artifact_mapping(artifacts, "operator_dashboard_snapshot")
     dashboard_records = _workflow_records_by_name(dashboard_snapshot or {})
+    dashboard_records_valid = _workflow_records_valid(dashboard_snapshot or {})
     dashboard_required_workflows = [
         workflow for workflow in workflows if workflow.name in enabled_workflows
     ]
     dashboard_passed = (
         bool(dashboard_required_workflows)
+        and dashboard_records_valid
         and _non_empty_string((dashboard_snapshot or {}).get("snapshot_reference"))
         and _non_empty_string((dashboard_snapshot or {}).get("measurement_window"))
         and _service_health_passed(dashboard_snapshot or {})
@@ -1112,7 +1142,7 @@ def validate_production_evidence(
                 if dashboard_passed
                 else (
                     "operator dashboard reference, measurement window, service "
-                    "health, or gates are missing or failing"
+                    "health, workflow records, or gates are missing or failing"
                 )
             ),
         )

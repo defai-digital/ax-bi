@@ -1501,6 +1501,64 @@ def test_validate_production_evidence_rejects_malformed_target_checks(
     assert "runtime modernization production evidence failed" in result.output
 
 
+def test_validate_production_evidence_rejects_duplicate_flag_workflows(
+    tmp_path,
+) -> None:
+    """Strict validation rejects duplicate production flag workflow records."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "production_flag_state": {
+                        "environment": "prod-us",
+                        "flag_state_reference": (
+                            "flags/runtime-modernization/prod-us-123"
+                        ),
+                        "workflows": [
+                            {
+                                "name": "mcp_asset_search",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_ASSET_SEARCH_SERVING": True,
+                                },
+                            },
+                            {
+                                "name": "mcp_asset_search",
+                                "serving_flags": {
+                                    "TS_MCP_ORCHESTRATION": True,
+                                    "TS_ASSET_SEARCH_SERVING": True,
+                                },
+                            },
+                        ],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL production_flag_state" in result.output
+    assert "valid workflow records" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_validate_production_evidence_rejects_empty_approval(
     tmp_path,
 ) -> None:
