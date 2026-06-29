@@ -803,7 +803,7 @@ def _target_checks_passed(artifact: Mapping[str, Any]) -> bool:
         return True
     if not isinstance(target_checks, Mapping):
         return False
-    return all(value is not False for value in target_checks.values())
+    return all(value is True or value is None for value in target_checks.values())
 
 
 def _positive_integer(value: Any) -> bool:

@@ -1453,6 +1453,40 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert checks["production_flag_state"]["passed"] is False
 
 
+def test_validate_production_evidence_rejects_malformed_target_checks() -> None:
+    """Target checks must be true or explicitly unset to pass evidence gates."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "compatibility_report": {
+                    "status": "passed",
+                    "target_checks": {
+                        "sql_parsing_operations_per_second_met": "yes",
+                    },
+                },
+                "rust_kernel_benchmark": {
+                    "schema_version": 1,
+                    "status": "passed",
+                    "kernel": "sql_whitespace_kernel",
+                    "iterations": 3,
+                    "output_matched": True,
+                    "target_checks": {
+                        "speedup_met": 0,
+                    },
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["compatibility_report"]["passed"] is False
+    assert checks["rust_kernel_benchmark"]["passed"] is False
+
+
 def test_validate_production_evidence_requires_rust_benchmark_identity() -> None:
     """Rust benchmark evidence must name the benchmarked kernel and iterations."""
 

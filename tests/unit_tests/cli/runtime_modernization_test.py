@@ -1449,6 +1449,58 @@ def test_runtime_modernization_validate_production_evidence_rejects_schema(
     assert "runtime modernization production evidence failed" in result.output
 
 
+def test_validate_production_evidence_rejects_malformed_target_checks(
+    tmp_path,
+) -> None:
+    """Strict validation rejects non-boolean target check values."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "compatibility_report": {
+                        "status": "passed",
+                        "target_checks": {
+                            "sql_parsing_operations_per_second_met": "yes",
+                        },
+                    },
+                    "rust_kernel_benchmark": {
+                        "schema_version": 1,
+                        "status": "passed",
+                        "kernel": "sql_whitespace_kernel",
+                        "iterations": 3,
+                        "output_matched": True,
+                        "target_checks": {
+                            "speedup_met": 0,
+                        },
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL compatibility_report" in result.output
+    assert "FAIL rust_kernel_benchmark" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_validate_production_evidence_rejects_empty_approval(
     tmp_path,
 ) -> None:
