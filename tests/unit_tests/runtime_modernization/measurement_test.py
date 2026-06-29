@@ -16,45 +16,13 @@
 # under the License.
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 import pytest
 
 from superset.runtime_modernization.measurement import (
     measure_runtime_candidate,
     runtime_metric_key,
 )
-from superset.stats_logger import BaseStatsLogger
-
-
-@dataclass
-class RecordingStatsLogger(BaseStatsLogger):
-    """Stats logger test double that records emitted metrics."""
-
-    increments: list[str] = field(default_factory=list)
-    decrements: list[str] = field(default_factory=list)
-    timings: list[tuple[str, float]] = field(default_factory=list)
-    gauges: list[tuple[str, float]] = field(default_factory=list)
-
-    def incr(self, key: str) -> None:
-        """Record incremented keys."""
-
-        self.increments.append(key)
-
-    def decr(self, key: str) -> None:
-        """Record decremented keys."""
-
-        self.decrements.append(key)
-
-    def timing(self, key: str, value: float) -> None:
-        """Record timing keys and values."""
-
-        self.timings.append((key, value))
-
-    def gauge(self, key: str, value: float) -> None:
-        """Record gauge keys and values."""
-
-        self.gauges.append((key, value))
+from tests.unit_tests.runtime_modernization.testing import RecordingStatsLogger
 
 
 def test_runtime_metric_key_uses_inventory_area() -> None:
