@@ -22,6 +22,7 @@ import {
   PropsWithChildren,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -132,18 +133,31 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
     dragDropManager.getMonitor().isDragging(),
   );
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const topOffsetRef = useRef(0);
   const [topOffset, setTopOffset] = useState(0);
 
   const updateTopOffset = useCallback(() => {
-    setTopOffset(wrapperRef.current?.getBoundingClientRect().top || 0);
-  }, []);
+    const nextTopOffset = wrapperRef.current?.getBoundingClientRect().top || 0;
 
-  const setWrapperRef = useCallback((element: HTMLDivElement | null) => {
-    wrapperRef.current = element;
-    if (element) {
-      setTopOffset(element.getBoundingClientRect().top || 0);
+    if (topOffsetRef.current !== nextTopOffset) {
+      topOffsetRef.current = nextTopOffset;
+      setTopOffset(nextTopOffset);
     }
   }, []);
+
+  const setWrapperRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      wrapperRef.current = element;
+      if (element) {
+        updateTopOffset();
+      }
+    },
+    [updateTopOffset],
+  );
+
+  useLayoutEffect(() => {
+    updateTopOffset();
+  });
 
   useEffect(() => {
     window.addEventListener('resize', updateTopOffset);

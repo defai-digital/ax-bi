@@ -67,6 +67,50 @@ test('should expose its viewport offset for dashboard scrolling', () => {
   getBoundingClientRect.mockRestore();
 });
 
+test('should refresh its viewport offset after dashboard layout shifts', () => {
+  let topOffset = 64;
+  const getBoundingClientRect = jest
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(
+      () =>
+        ({
+          top: topOffset,
+          bottom: topOffset + 800,
+          left: 0,
+          right: 1200,
+          width: 1200,
+          height: 800,
+          x: 0,
+          y: topOffset,
+          toJSON: () => {},
+        }) as DOMRect,
+    );
+
+  const { getByTestId, rerender } = render(
+    <DashboardWrapper>
+      <div data-test="mock-children">before</div>
+    </DashboardWrapper>,
+    { useRedux: true, useDnd: true },
+  );
+
+  expect(getByTestId('dashboard-wrapper')).toHaveStyle({
+    '--dashboard-top-offset': '64px',
+  });
+
+  topOffset = 112;
+  rerender(
+    <DashboardWrapper>
+      <div data-test="mock-children">after</div>
+    </DashboardWrapper>,
+  );
+
+  expect(getByTestId('dashboard-wrapper')).toHaveStyle({
+    '--dashboard-top-offset': '112px',
+  });
+
+  getBoundingClientRect.mockRestore();
+});
+
 // Note: Drag-and-drop test removed - DashboardWrapper uses react-dnd but
 // OptionControlLabel uses @dnd-kit, causing cross-library compatibility issues.
 // This test requires proper @dnd-kit testing utilities.
