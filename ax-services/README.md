@@ -65,5 +65,6 @@ Current endpoints:
 - `GET /ready`
 - `GET /metrics`
 - `POST /mcp/assets/search`
+- `POST /mcp/dashboards/list`
 
 Generated JSON schema artifacts live in `contracts/`.

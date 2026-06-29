@@ -21,6 +21,7 @@ import { afterEach, expect, test } from '@jest/globals';
 import { buildConfig } from '../src/config';
 import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
+import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -393,6 +394,152 @@ test('searchAssets records warnings for unsupported and failed search paths', as
       'Metric search is not supported by the TypeScript path.',
       'dashboard search failed: search failed',
     ],
+  });
+});
+
+test('listDashboards maps Superset dashboard list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 11,
+      result: [
+        {
+          id: 7,
+          dashboard_title: 'Sales dashboard',
+          slug: 'sales',
+          description: 'Executive sales',
+          certified_by: 'BI',
+          certification_details: 'Reviewed',
+          published: true,
+          uuid: 'dashboard-uuid',
+          url: '/superset/dashboard/7/',
+          changed_on: '2026-01-01T00:00:00',
+          changed_on_humanized: '1 day ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listDashboards(
+    {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'published', opr: 'eq', value: true }],
+      selectColumns: ['id', 'dashboard_title'],
+      search: 'sales',
+      orderColumn: 'dashboard_title',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+    'request-dashboards',
+  );
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [
+      {
+        id: 7,
+        dashboardTitle: 'Sales dashboard',
+        slug: 'sales',
+        description: 'Executive sales',
+        certifiedBy: 'BI',
+        certificationDetails: 'Reviewed',
+        published: true,
+        uuid: 'dashboard-uuid',
+        url: '/superset/dashboard/7/',
+        changedOn: '2026-01-01T00:00:00',
+        changedOnHumanized: '1 day ago',
+      },
+    ],
+    count: 1,
+    totalCount: 11,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'dashboard_title'],
+    columnsLoaded: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'published',
+      'uuid',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/dashboard/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain(
+    "value:'sales'",
+  );
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-dashboards',
+  });
+});
+
+test('listDashboards records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['dashboard list returned status 504 from Superset'],
   });
 });
 

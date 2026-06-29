@@ -25,9 +25,14 @@ import {
   AssetSearchResponse,
 } from '../src/contracts/assetSearch';
 import {
+  DASHBOARD_LIST_CONTRACT_VERSION,
+  DashboardListResponse,
+} from '../src/contracts/dashboardList';
+import {
   DependencyHealth,
   DependencyMetadata,
   SupersetAssetSearchClient,
+  SupersetDashboardListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
 } from '../src/supersetClient';
@@ -53,19 +58,39 @@ function makeSupersetClient({
   onHealth,
   onMetadata,
   onSearch,
+  onListDashboards,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
+    warnings: [],
+  },
+  dashboardList = {
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
     warnings: [],
   },
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  dashboardList?: DashboardListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
-} = {}): SupersetHealthClient & SupersetMetadataClient & SupersetAssetSearchClient {
+  onListDashboards?: (correlationId?: string) => void;
+} = {}): SupersetHealthClient &
+  SupersetMetadataClient &
+  SupersetAssetSearchClient &
+  SupersetDashboardListClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -78,6 +103,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async listDashboards(_request, correlationId) {
+      onListDashboards?.(correlationId);
+      return dashboardList;
     },
   };
 }
@@ -367,6 +396,85 @@ test('asset search endpoint delegates to Superset client', async () => {
         tags: [],
       },
     ],
+    warnings: [],
+  });
+});
+
+test('dashboard list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      dashboardList: {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        dashboards: [
+          {
+            id: 7,
+            dashboardTitle: 'Sales dashboard',
+            slug: 'sales',
+            url: '/superset/dashboard/7/',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'dashboard_title'],
+        columnsLoaded: ['id', 'dashboard_title', 'slug', 'url'],
+        warnings: [],
+      },
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/dashboards/list',
+    headers: {
+      'x-request-id': 'request-dashboard-list',
+    },
+    payload: {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'dashboard_title'],
+      search: 'sales',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-dashboard-list');
+  expect(seenRequestIds).toEqual(['request-dashboard-list']);
+  expect(response.json()).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [
+      {
+        id: 7,
+        dashboardTitle: 'Sales dashboard',
+        slug: 'sales',
+        url: '/superset/dashboard/7/',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'dashboard_title'],
+    columnsLoaded: ['id', 'dashboard_title', 'slug', 'url'],
     warnings: [],
   });
 });

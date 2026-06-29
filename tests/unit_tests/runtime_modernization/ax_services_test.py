@@ -182,6 +182,49 @@ def test_asset_search_posts_to_ax_services_asset_search_endpoint() -> None:
     )
 
 
+def test_list_dashboards_posts_to_ax_services_dashboard_list_endpoint() -> None:
+    """Dashboard list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"dashboards": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_dashboards(
+        {
+            "contractVersion": "dashboard-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "dashboard_title"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        request_id="request-dashboards",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"dashboards": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/dashboards/list",
+        json={
+            "contractVersion": "dashboard-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "dashboard_title"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+            "ownedByMe": False,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-dashboards",
+        },
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

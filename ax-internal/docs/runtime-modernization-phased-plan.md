@@ -26,7 +26,7 @@ under the License.
 
 ## Status
 
-In progress. Phase 2 foundation is implemented, Phase 3 has two MCP workflows
+In progress. Phase 2 foundation is implemented, Phase 3 has three MCP workflows
 behind TypeScript routing flags, and Phase 4 has a Rust SQL kernel proof of
 concept. Phase 5 expansion and Phase 6 larger-boundary decisions remain open.
 
@@ -167,6 +167,8 @@ product-specific and contract-oriented.
   `TS_MCP_ORCHESTRATION` and `TS_ASSET_SEARCH_SERVING`, with Python fallback.
 - MCP health check can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_HEALTH_CHECK_SERVING`, with Python fallback.
+- MCP dashboard listing can shadow or serve from `ax-services` behind
+  `TS_MCP_ORCHESTRATION` and `TS_DASHBOARD_LIST_SERVING`, with Python fallback.
 - Compatibility, fallback behavior, compact shadow mismatch reporting, and
   opt-in compatibility report latency gates are covered by unit tests.
   Production rollout evidence still needs to be captured before this phase is

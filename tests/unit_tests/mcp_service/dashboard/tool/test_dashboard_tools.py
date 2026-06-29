@@ -39,6 +39,7 @@ from superset.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
@@ -1445,4 +1446,188 @@ async def test_list_dashboards_no_arguments(mock_list, mcp_server):
     stats_logger.timing.assert_called_once()
     assert stats_logger.timing.call_args.args[0] == (
         "runtime_modernization.mcp_orchestration.list_dashboards.duration"
+    )
+
+
+@patch("superset.daos.dashboard.DashboardDAO.list")
+@pytest.mark.asyncio
+async def test_list_dashboards_shadows_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+):
+    """Dashboard listing shadows through ax-services when flags are enabled."""
+
+    stats_logger = Mock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    dashboard = Mock()
+    dashboard.id = 7
+    dashboard.dashboard_title = "Sales Dashboard"
+    dashboard.slug = "sales"
+    dashboard.url = "/superset/dashboard/7/"
+    dashboard.published = True
+    dashboard.changed_on = None
+    dashboard.created_on = None
+    dashboard.description = None
+    dashboard.css = None
+    dashboard.certified_by = None
+    dashboard.certification_details = None
+    dashboard.json_metadata = None
+    dashboard.is_managed_externally = False
+    dashboard.external_url = None
+    dashboard.uuid = "dashboard-uuid"
+    dashboard.tags = []
+    dashboard.owners = []
+    dashboard.slices = []
+    mock_list.return_value = ([dashboard], 1)
+
+    with (
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+        ),
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+        ) as client_class,
+    ):
+        client_class.return_value.list_dashboards.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dashboard-list.v1",
+                "dashboards": [{"id": 7, "dashboardTitle": "Sales Dashboard"}],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "dashboard_title"],
+                "columnsLoaded": ["id", "dashboard_title"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_dashboards",
+                {"request": ListDashboardsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    data = json.loads(result.content[0].text)
+    assert [dashboard["id"] for dashboard in data["dashboards"]] == [7]
+    client_class.return_value.list_dashboards.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_dashboards.shadow_match"
+    )
+
+
+@patch("superset.daos.dashboard.DashboardDAO.list")
+@pytest.mark.asyncio
+async def test_list_dashboards_serves_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+):
+    """Dashboard listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = Mock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DASHBOARD_LIST_SERVING"},
+        ),
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+        ) as client_class,
+    ):
+        client_class.return_value.list_dashboards.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dashboard-list.v1",
+                "dashboards": [
+                    {
+                        "id": 9,
+                        "dashboardTitle": "TS Dashboard",
+                        "slug": "ts-dashboard",
+                        "url": "/superset/dashboard/9/",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "dashboard_title", "slug", "url"],
+                "columnsLoaded": ["id", "dashboard_title", "slug", "url"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_dashboards",
+                {"request": ListDashboardsRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["dashboards"] == [
+        {
+            "id": 9,
+            "dashboard_title": _wrapped("TS Dashboard"),
+            "slug": "ts-dashboard",
+            "url": "/superset/dashboard/9/",
+        }
+    ]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_dashboards.served_candidate"
+    )
+
+
+@patch("superset.daos.dashboard.DashboardDAO.list")
+@pytest.mark.asyncio
+async def test_list_dashboards_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+):
+    """Dashboard listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = Mock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DASHBOARD_LIST_SERVING"},
+        ),
+        patch(
+            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+        ) as client_class,
+    ):
+        client_class.return_value.list_dashboards.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "dashboard-list.v1",
+                "dashboards": [{"dashboardTitle": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_dashboards", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["dashboards"] == []
+    mock_list.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_dashboards.fallback"
     )

@@ -28,6 +28,10 @@ import {
   permissionCheckRequestSchema,
 } from '../src/contracts/authorization';
 import {
+  dashboardListContractSchemas,
+  DASHBOARD_LIST_CONTRACT_VERSION,
+} from '../src/contracts/dashboardList';
+import {
   healthResponseSchema,
   metadataResponseSchema,
   metricsResponseSchema,
@@ -46,6 +50,10 @@ test('authorization contract version is explicit', () => {
 
 test('asset search contract version is explicit', () => {
   expect(ASSET_SEARCH_CONTRACT_VERSION).toBe('asset-search.v1');
+});
+
+test('dashboard list contract version is explicit', () => {
+  expect(DASHBOARD_LIST_CONTRACT_VERSION).toBe('dashboard-list.v1');
 });
 
 test('health response schema is stable', () => {
@@ -136,5 +144,20 @@ test('asset search request schema is registered in asset search contracts', () =
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+});
+
+test('dashboard list request schema is registered in dashboard list contracts', () => {
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.page,
+  ).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties
+      .dashboards.items.properties.dashboardTitle,
+  ).toEqual({
+    type: 'string',
   });
 });

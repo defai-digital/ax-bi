@@ -24,6 +24,13 @@ import {
   AssetType,
 } from './contracts/assetSearch';
 import {
+  DASHBOARD_LIST_CONTRACT_VERSION,
+  DashboardListItem,
+  DashboardListRequest,
+  DashboardListResponse,
+  DashboardFilterValue,
+} from './contracts/dashboardList';
+import {
   AUTHORIZATION_CONTRACT_VERSION,
   PermissionCheckRequest,
   PermissionCheckResult,
@@ -57,11 +64,19 @@ export interface SupersetAssetSearchClient {
   ): Promise<AssetSearchResponse>;
 }
 
+export interface SupersetDashboardListClient {
+  listDashboards(
+    request: DashboardListRequest,
+    correlationId?: string,
+  ): Promise<DashboardListResponse>;
+}
+
 export class SupersetClient
   implements
     SupersetHealthClient,
     SupersetMetadataClient,
-    SupersetAssetSearchClient
+    SupersetAssetSearchClient,
+    SupersetDashboardListClient
 {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
@@ -222,6 +237,54 @@ export class SupersetClient
     }
   }
 
+  async listDashboards(
+    request: DashboardListRequest,
+    correlationId?: string,
+  ): Promise<DashboardListResponse> {
+    const url = this.buildDashboardListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyDashboardListResponse(request, [
+          `dashboard list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const dashboards = extractSupersetResults(payload)
+        .map(toDashboardListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, dashboards.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        dashboards,
+        count: dashboards.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedDashboardColumns(request),
+        columnsLoaded: dashboardColumnsLoaded(dashboards),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyDashboardListResponse(request, [
+        `dashboard list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -280,6 +343,14 @@ export class SupersetClient
     url.searchParams.set('q', query);
     return url.toString();
   }
+
+  private buildDashboardListUrl(request: DashboardListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dashboard}`,
+    );
+    url.searchParams.set('q', buildDashboardListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -299,8 +370,14 @@ interface SupersetListItem {
   table_name?: string;
   slice_name?: string;
   dashboard_title?: string;
+  slug?: string;
   description?: string;
   certified_by?: string | null;
+  certification_details?: string | null;
+  published?: boolean;
+  url?: string;
+  changed_on?: string;
+  changed_on_humanized?: string;
   owners?: unknown[];
   tags?: unknown[];
 }
@@ -338,6 +415,54 @@ function buildSupersetListQuery(
   return `(page:0,page_size:${limit},filters:!(${filters.join(',')}))`;
 }
 
+function buildDashboardListQuery(request: DashboardListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'dashboard_title',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatDashboardFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
+function formatDashboardFilter(filter: {
+  col: string;
+  opr: string;
+  value: DashboardFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatRisonValue(
+    filter.value,
+  )})`;
+}
+
+function formatRisonValue(value: DashboardFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatScalarRisonValue(value: string | number | boolean): string {
+  if (typeof value === 'string') {
+    return `'${escapeRisonString(value)}'`;
+  }
+  return String(value);
+}
+
 function escapeRisonString(value: string): string {
   return value.replace(/!/g, '!!').replace(/'/g, "!'");
 }
@@ -348,6 +473,101 @@ function extractSupersetResults(payload: unknown): SupersetListItem[] {
   }
 
   return payload.result.filter(isRecord).map(item => item as SupersetListItem);
+}
+
+function extractSupersetCount(payload: unknown, fallback: number): number {
+  if (!isRecord(payload) || typeof payload.count !== 'number') {
+    return fallback;
+  }
+  return payload.count;
+}
+
+function toDashboardListItem(
+  item: SupersetListItem,
+): DashboardListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    dashboardTitle:
+      typeof item.dashboard_title === 'string' ? item.dashboard_title : undefined,
+    slug: typeof item.slug === 'string' ? item.slug : undefined,
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    certifiedBy:
+      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    certificationDetails:
+      typeof item.certification_details === 'string'
+        ? item.certification_details
+        : undefined,
+    published: typeof item.published === 'boolean' ? item.published : undefined,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    url: typeof item.url === 'string' ? item.url : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+  };
+}
+
+function requestedDashboardColumns(request: DashboardListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : [
+        'id',
+        'dashboard_title',
+        'slug',
+        'description',
+        'certified_by',
+        'certification_details',
+        'url',
+        'changed_on',
+        'changed_on_humanized',
+      ];
+}
+
+function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const dashboard of dashboards) {
+    if (dashboard.dashboardTitle !== undefined) loaded.add('dashboard_title');
+    if (dashboard.slug !== undefined) loaded.add('slug');
+    if (dashboard.description !== undefined) loaded.add('description');
+    if (dashboard.certifiedBy !== undefined) loaded.add('certified_by');
+    if (dashboard.certificationDetails !== undefined) {
+      loaded.add('certification_details');
+    }
+    if (dashboard.published !== undefined) loaded.add('published');
+    if (dashboard.uuid !== undefined) loaded.add('uuid');
+    if (dashboard.url !== undefined) loaded.add('url');
+    if (dashboard.changedOn !== undefined) loaded.add('changed_on');
+    if (dashboard.changedOnHumanized !== undefined) {
+      loaded.add('changed_on_humanized');
+    }
+  }
+  return [...loaded];
+}
+
+function emptyDashboardListResponse(
+  request: DashboardListRequest,
+  warnings: string[],
+): DashboardListResponse {
+  return {
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedDashboardColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
 }
 
 function toAssetSearchResult(
