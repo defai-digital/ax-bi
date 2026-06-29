@@ -332,12 +332,13 @@ product-specific and contract-oriented.
   artifacts and operator-provided flag, dashboard, and approval JSON into the
   evidence bundle shape.
 - `superset runtime-modernization validate-production-evidence` checks a JSON
-  schema-versioned evidence bundle against those required artifacts, scopes
-  dashboard gates to workflows serving production traffic, separates the Phase 3
-  first-workflow serving gate from the Phase 5 two-workflow selective rollout
-  gate, reports the enabled, approved, dashboard-required, and failing evidence
-  check names, and can fail release gates when evidence is missing, failing, or
-  approval does not exactly match the enabled production workflow scope.
+  schema-versioned evidence bundle against those required artifacts, rejects
+  empty selected workflow scopes, scopes dashboard gates to workflows serving
+  production traffic, separates the Phase 3 first-workflow serving gate from
+  the Phase 5 two-workflow selective rollout gate, reports the enabled,
+  approved, dashboard-required, and failing evidence check names, and can fail
+  release gates when evidence is missing, failing, or approval does not exactly
+  match the enabled production workflow scope.
 - `superset runtime-modernization completion-audit` maps the evidence bundle to
   Phase 0-6 completion checks, keeps Phase 6 dependent on the Phase 5 selective
   rollout evidence, reports incomplete phase names, and can fail release gates

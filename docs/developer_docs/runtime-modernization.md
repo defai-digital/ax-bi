@@ -179,8 +179,9 @@ operator approval. Operator approval must include the team migration decision
 for the accepted runtime boundary. Approval workflow names must exactly match
 the workflows serving production traffic in the flag-state artifact. Production
 evidence bundles are schema-versioned; validation accepts only
-`schema_version: 1` with object-shaped `artifacts`. JSON validation output
-includes `enabled_workflow_names`, `approved_workflow_names`,
+`schema_version: 1` with object-shaped `artifacts`, and requires at least one
+selected workflow. JSON validation output includes `enabled_workflow_names`,
+`approved_workflow_names`,
 `dashboard_required_workflow_names`, `failing_check_names`,
 `incomplete_phase_names`, and `failing_evidence_check_names` so release
 automation can report exactly which production-serving workflows were gated,
