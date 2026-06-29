@@ -238,20 +238,27 @@ jobs:
   # It is gated on change detection, so on non-Python PRs it is skipped and
   # never produces its `test-postgres (current)` context (a job-level skip
   # happens before matrix expansion). This always-running job reports a single
-  # context branch protection can require: it passes when test-postgres
-  # succeeded or was skipped, and fails only on a real failure.
+  # context branch protection can require: it passes when change detection
+  # succeeded and test-postgres succeeded or was skipped, and fails on a real
+  # failure.
   test-postgres-required:
     needs: [changes, test-postgres]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions: {}
     steps:
       - name: Check test-postgres result
         env:
+          CHANGES: ${{ needs.changes.result }}
           RESULT: ${{ needs.test-postgres.result }}
         run: |
+          if [ "$CHANGES" != "success" ]; then
+            echo "change detection did not succeed (result: $CHANGES); refusing to pass on a skipped check"
+            exit 1
+          fi
           if [ "$RESULT" != "success" ] && [ "$RESULT" != "skipped" ]; then
             echo "test-postgres did not pass (result: $RESULT)"
             exit 1
           fi
-          echo "test-postgres result: $RESULT"
+          echo "test-postgres result: $RESULT (changes: $CHANGES)"
