@@ -873,7 +873,8 @@ def operator_approval(
 )
 @click.option(
     "--measurement-window",
-    help="Optional production measurement window covered by the snapshot.",
+    required=True,
+    help="Production measurement window covered by the snapshot.",
 )
 @click.option(
     "--notes",

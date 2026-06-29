@@ -28,6 +28,8 @@ from superset.runtime_modernization.benchmarks import (
 )
 from superset.utils import json
 
+MEASUREMENT_WINDOW = "2026-06-29T00:00Z/2026-06-29T01:00Z"
+
 
 def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
     """Write a complete production evidence bundle for CLI tests."""
@@ -588,7 +590,7 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> Non
             "--gates-passed",
             "--service-health-passed",
             "--measurement-window",
-            "2026-06-29T00:00Z/2026-06-29T01:00Z",
+            MEASUREMENT_WINDOW,
             "--notes",
             "canary window passed",
         ],
@@ -599,7 +601,7 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> Non
     gates = payload["workflows"]["mcp_asset_search"]["gates"]
     service_health = payload["service_health"]
     assert payload["snapshot_reference"] == "observability/dashboard/snapshot-123"
-    assert payload["measurement_window"] == "2026-06-29T00:00Z/2026-06-29T01:00Z"
+    assert payload["measurement_window"] == MEASUREMENT_WINDOW
     assert payload["notes"] == "canary window passed"
     assert service_health["health_check"]["passed"] is True
     assert service_health["readiness_check"]["passed"] is True
@@ -623,6 +625,8 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_text() -> Non
             "mcp_dashboard_list",
             "--snapshot-reference",
             "dashboards/runtime-modernization.png",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--format",
             "text",
         ],
@@ -639,6 +643,24 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_text() -> Non
     )
 
 
+def test_operator_dashboard_snapshot_requires_measurement_window() -> None:
+    """Operator dashboard snapshots must identify the production window."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-dashboard-snapshot",
+            "--workflow",
+            "mcp_dashboard_list",
+            "--snapshot-reference",
+            "dashboards/runtime-modernization.png",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Missing option '--measurement-window'" in result.output
+
+
 def test_runtime_modernization_operator_dashboard_snapshot_accepts_gate_overrides() -> (
     None
 ):
@@ -652,6 +674,8 @@ def test_runtime_modernization_operator_dashboard_snapshot_accepts_gate_override
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--gates-passed",
             "--failed-gate",
             "latency_p95",
@@ -679,6 +703,8 @@ def test_operator_dashboard_snapshot_accepts_workflow_gate_overrides() -> None:
             "mcp_dashboard_list",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--gates-passed",
             "--failed-workflow-gate",
             "mcp_dashboard_list:latency_p95",
@@ -706,6 +732,8 @@ def test_runtime_modernization_operator_dashboard_snapshot_rejects_unknown_gate(
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--passed-gate",
             "missing_gate",
         ],
@@ -726,6 +754,8 @@ def test_operator_dashboard_snapshot_rejects_unknown_workflow_gate() -> None:
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--failed-workflow-gate",
             "mcp_asset_search:missing_gate",
         ],
@@ -748,6 +778,8 @@ def test_operator_dashboard_snapshot_rejects_unselected_workflow_gate() -> None:
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--failed-workflow-gate",
             "mcp_dashboard_list:latency_p95",
         ],
@@ -768,6 +800,8 @@ def test_operator_dashboard_snapshot_rejects_conflicting_gate() -> None:
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--passed-gate",
             "latency_p95",
             "--failed-gate",
@@ -792,6 +826,8 @@ def test_operator_dashboard_snapshot_rejects_conflicting_workflow_gate() -> None
             "mcp_asset_search",
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
             "--passed-workflow-gate",
             "mcp_asset_search:latency_p95",
             "--failed-workflow-gate",
@@ -816,6 +852,8 @@ def test_operator_dashboard_snapshot_rejects_unknown_workflow() -> None:
             "missing",
             "--snapshot-reference",
             "dashboards/runtime-modernization.png",
+            "--measurement-window",
+            MEASUREMENT_WINDOW,
         ],
     )
 
