@@ -428,7 +428,7 @@ APP_NAME = "AX-BI"
 # superset_config.py, you must also override THEME_DEFAULT to see the change,
 # or set THEME_DEFAULT["token"]["brandLogoUrl"] directly.
 APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png?v=20260626-4"
-APP_ICON_DARK = "/static/assets/images/ax-bi-logo-horiz-dark.png?v=20260629-1"
+APP_ICON_DARK = "/static/assets/images/ax-bi-logo-horiz-dark.png?v=20260629-2"
 
 # Specify where clicking the logo would take the user
 # Default value of None will take you to '/superset/welcome'
