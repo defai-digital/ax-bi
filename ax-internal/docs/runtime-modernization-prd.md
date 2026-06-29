@@ -21,12 +21,19 @@ under the License.
 
 > **Related documents:**
 > [ADR](runtime-modernization-adr.md) ·
+> [Boundary Decision ADR](runtime-modernization-boundary-decision-adr.md) ·
 > [Technical Specification](runtime-modernization-tech-spec.md) ·
-> [Phased Plan](runtime-modernization-phased-plan.md)
+> [Phased Plan](runtime-modernization-phased-plan.md) ·
+> [Developer Guide](../../docs/developer_docs/runtime-modernization.md)
 
 ## Status
 
-Proposed
+Accepted for AX-BI implementation. The PRD is complete for the scoped partial
+runtime modernization effort: selected AX-BI orchestration moves to TypeScript
+behind contracts and feature flags, while narrow CPU-heavy kernels may move to
+Rust after benchmark and compatibility proof. Treat implementation completion
+as evidence-driven, not calendar-driven: the initiative is complete only when
+the phase completion audit reports `complete` from production evidence.
 
 ## Summary
 
@@ -42,6 +49,60 @@ for measured, bounded performance hotspots.
 The goal is not a language rewrite for its own sake. The goal is a more stable,
 observable, and faster AX-BI platform with clear service boundaries and a lower
 risk path for future migration.
+
+## MVP Scope
+
+This PRD scopes a partial runtime migration, not a full backend rewrite.
+
+### Included
+
+- A TypeScript sidecar for selected AX-BI product and agent orchestration
+  workflows.
+- TypeScript-served MCP workflows that remain read-oriented or
+  orchestration-oriented and can delegate Superset authorization and source data
+  reads back to Python.
+- Python routing, shadow execution, mismatch metrics, serving flags, and
+  fallback for every migrated TypeScript workflow.
+- A Rust proof-of-concept kernel for one measured CPU-heavy path, exposed to
+  Python only when the optional extension and feature flag are available.
+- Compatibility reports, rollout manifests, production evidence templates, and
+  completion audits that prevent generated templates from being mistaken for
+  completed rollout proof.
+
+### Excluded
+
+- Moving Superset core, Flask-AppBuilder auth, SQLAlchemy models, DAOs,
+  migrations, core commands, or metadata transactions out of Python.
+- Moving the MCP server lifecycle, auth hook, Flask context, or session
+  management out of Python.
+- Moving Celery, reports, screenshots, or task families without a separate
+  reliability ADR.
+- Introducing a standalone permission service.
+- Moving broad business workflows into Rust.
+
+## Completion Definition
+
+The runtime modernization effort is complete only when all of the following are
+true:
+
+- Phase 0 has a reviewed runtime inventory with TypeScript and Rust candidates.
+- Phase 1 has compatibility evidence for selected Python boundaries.
+- Phase 2 has a TypeScript sidecar foundation with health/readiness and
+  Superset connectivity.
+- Phase 3 has at least one TypeScript workflow serving production traffic behind
+  flags, with compatibility, dashboard, and fallback evidence.
+- Phase 4 has a Rust kernel benchmark artifact proving compatibility and
+  positive measured Python/Rust performance data.
+- Phase 5 has at least two TypeScript workflows serving production traffic and
+  a Rust rollout decision showing either served production traffic or a
+  documented rejection.
+- Phase 6 has an accepted boundary decision, explicit compatibility and
+  security cost estimates, and operator approval for the enabled workflow scope.
+- `superset runtime-modernization completion-audit <evidence-bundle> --strict`
+  exits successfully and reports `status: complete`.
+
+Until those conditions are proven by a schema-versioned evidence bundle, the
+product state is incomplete even if code, tests, and CI templates exist.
 
 ## Problem Statement
 
@@ -163,6 +224,24 @@ creating a second backend that duplicates Superset behavior.
   compare outputs, and keep serving the Python result until confidence is high.
 - Support fast rollback to the Python path.
 
+### Production Evidence
+
+- Provide a schema-versioned compatibility report with runtime inventory,
+  benchmark details, and passing target checks where targets are set.
+- Provide a Rust benchmark artifact with kernel name, positive iterations,
+  Python duration, Rust duration, throughput, output size, and output
+  compatibility.
+- Provide a Rust rollout decision artifact documenting either production
+  serving behind an enabled flag or a rejected rollout with rationale.
+- Provide production flag-state evidence naming the environment, flag-state
+  reference, selected workflows, and serving flags.
+- Provide an operator dashboard snapshot with a measurement window, service
+  health/readiness gates, and workflow gate results for exactly the enabled
+  workflows.
+- Provide operator approval naming the accepted boundary decision, rollout
+  scope, migration decision, compatibility and security cost estimates,
+  approval reference, approver, and exactly the enabled production workflows.
+
 ## Non-Functional Requirements
 
 ### Security
@@ -204,6 +283,23 @@ creating a second backend that duplicates Superset behavior.
 - Rollback can be performed through configuration or feature flags.
 - Developers can identify the runtime owner of each major backend path.
 
+## Product Acceptance Criteria
+
+- Operators can list migrated workflow owners, routes, flags, metrics, and gates
+  with `superset runtime-modernization rollout-manifest`.
+- Release candidates can generate compatibility reports and production evidence
+  templates in CI.
+- The generated production evidence template remains intentionally incomplete
+  and fails completion audit until real production artifacts are supplied.
+- A completed evidence bundle can be assembled from CI artifacts plus operator
+  flag, dashboard, Rust decision, and approval artifacts.
+- Strict completion audit fails if any selected workflow scope is empty,
+  duplicated, out of scope, missing production flag evidence, missing dashboard
+  proof, missing Rust benchmark proof, missing Rust rollout decision proof, or
+  missing operator approval.
+- The accepted boundary decision keeps Superset as the authorization authority
+  and keeps Python as the owner of core metadata writes.
+
 ## Risks
 
 - Moving code without profiling may increase complexity without improving user
@@ -215,11 +311,28 @@ creating a second backend that duplicates Superset behavior.
 - TypeScript sidecars may drift from Superset's data model unless contracts are
   generated and tested.
 
-## Open Questions
+## Resolved Product Decisions
 
-- Which endpoints and MCP tools are the first measured bottlenecks?
-- Should the first TypeScript service live inside the existing frontend
-  workspace or as a new top-level workspace package?
-- Should Rust kernels be Python extensions first or standalone services first?
-- Which schema system should be the source of truth for cross-runtime contracts?
-- What is the minimum operator deployment profile for additional services?
+- The first service boundary is a top-level TypeScript sidecar, `ax-services`,
+  rather than code embedded in the frontend application.
+- TypeScript ownership is selected by tool class and workflow, not by moving the
+  entire MCP service.
+- Rust enters first as a Python-callable optional extension for narrow kernels.
+- Superset remains the authorization authority; extracted services delegate
+  authorization and source data reads back to Python.
+- Runtime contracts are versioned JSON contracts and release evidence is
+  schema-versioned JSON.
+- Completion is proven by `completion-audit`, not by the presence of generated
+  templates or local-only tests.
+
+## Remaining External Proof
+
+- Capture live production flag-state evidence for the selected workflows.
+- Capture operator dashboard snapshots showing health/readiness and gate results
+  for exactly the workflows serving production traffic.
+- Supply completed Rust benchmark and Rust rollout decision artifacts for a
+  release candidate.
+- Supply explicit operator approval with approver, approval reference, migration
+  decision, cost estimates, and workflow scope.
+- Re-run strict completion audit against the assembled evidence bundle before
+  declaring the runtime modernization phases complete.
