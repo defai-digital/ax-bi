@@ -28,11 +28,16 @@ from superset.commands.base import BaseCommand, UpdateMixin
 from superset.commands.chart.exceptions import (
     ChartForbiddenError,
     ChartInvalidError,
+    ChartLegacyVizTypeError,
     ChartNotFoundError,
     ChartUpdateFailedError,
     DashboardsForbiddenError,
     DashboardsNotFoundValidationError,
     DatasourceTypeUpdateRequiredValidationError,
+)
+from superset.commands.chart.legacy import (
+    is_legacy_viz_type,
+    legacy_viz_type_message,
 )
 from superset.commands.utils import get_datasource_by_id, update_tags, validate_tags
 from superset.daos.chart import ChartDAO
@@ -106,6 +111,16 @@ class UpdateChartCommand(UpdateMixin, BaseCommand):
         dashboard_ids = self._properties.get("dashboards")
         owner_ids: Optional[list[int]] = self._properties.get("owners")
         tag_ids: Optional[list[int]] = self._properties.get("tags")
+
+        # Reject updates that set a removed legacy chart type. Partial updates
+        # that don't touch ``viz_type`` are unaffected (migrated charts no
+        # longer carry a legacy value).
+        if "viz_type" in self._properties:
+            viz_type = self._properties.get("viz_type")
+            if is_legacy_viz_type(viz_type):
+                exceptions.append(
+                    ChartLegacyVizTypeError(legacy_viz_type_message(viz_type))
+                )
 
         # Validate if datasource_id is provided datasource_type is required
         datasource_id = self._properties.get("datasource_id")

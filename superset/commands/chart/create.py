@@ -29,8 +29,13 @@ from superset.commands.chart.exceptions import (
     ChartCreateFailedError,
     ChartForbiddenError,
     ChartInvalidError,
+    ChartLegacyVizTypeError,
     DashboardsForbiddenError,
     DashboardsNotFoundValidationError,
+)
+from superset.commands.chart.legacy import (
+    is_legacy_viz_type,
+    legacy_viz_type_message,
 )
 from superset.commands.utils import get_datasource_by_id
 from superset.daos.chart import ChartDAO
@@ -67,11 +72,16 @@ class CreateChartCommand(CreateMixin, BaseCommand):
         return chart
 
     def validate(self) -> None:
-        exceptions = []
+        exceptions: list[ValidationError] = []
         datasource_type = self._properties["datasource_type"]
         datasource_id = self._properties["datasource_id"]
         dashboard_ids = self._properties.get("dashboards", [])
         owner_ids: Optional[list[int]] = self._properties.get("owners")
+
+        # Reject removed legacy chart types (they have modern replacements).
+        viz_type = self._properties.get("viz_type")
+        if is_legacy_viz_type(viz_type):
+            exceptions.append(ChartLegacyVizTypeError(legacy_viz_type_message(viz_type)))
 
         # Validate/Populate datasource
         try:

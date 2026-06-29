@@ -60,7 +60,7 @@ def test_create_chart_command_forbidden_when_no_datasource_access() -> None:
                 command = CreateChartCommand(
                     {
                         "slice_name": "test",
-                        "viz_type": "bar",
+                        "viz_type": "echarts_timeseries_bar",
                         "datasource_id": 1,
                         "datasource_type": "table",
                     }
@@ -92,7 +92,7 @@ def test_create_chart_command_allowed_when_access_passes() -> None:
                     command = CreateChartCommand(
                         {
                             "slice_name": "test",
-                            "viz_type": "bar",
+                            "viz_type": "echarts_timeseries_bar",
                             "datasource_id": 1,
                             "datasource_type": "table",
                         }

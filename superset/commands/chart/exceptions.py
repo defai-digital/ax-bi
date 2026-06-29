@@ -103,6 +103,15 @@ class DatasourceTypeUpdateRequiredValidationError(ValidationError):
         )
 
 
+class ChartLegacyVizTypeError(ValidationError):
+    """
+    Marshmallow validation error for removed legacy ``viz_type`` values.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, field_name="viz_type")
+
+
 class ChartNotFoundError(CommandException):
     message = "Chart not found."
 
