@@ -118,9 +118,22 @@ def _convert_object_column_big_integers(
     object_cols: pd.Index,
 ) -> None:
     """Convert JS-unsafe integers that live inside object columns."""
-    object_col_set = set(object_cols)
+    # Pre-filter: skip columns whose non-null values are all strings, since
+    # those cannot contain big integers.  This avoids a per-record isinstance
+    # check on every text column, which is the common case.
+    cols_with_non_str: set[str] = set()
+    for col in object_cols:
+        for record in records:
+            val = record.get(col)
+            if val is not None and not isinstance(val, str):
+                cols_with_non_str.add(col)
+                break
+
+    if not cols_with_non_str:
+        return
+
     for record in records:
-        for key in object_col_set:
+        for key in cols_with_non_str:
             if key in record:
                 record[key] = _convert_big_integers(record[key])
 

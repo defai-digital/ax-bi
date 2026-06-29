@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 from flask import current_app
 from flask_babel import gettext as _
+from pandas.api.types import infer_dtype
 
 from superset.common.chart_data import ChartDataResultFormat
 from superset.common.db_query_status import QueryStatus
@@ -165,30 +166,30 @@ class QueryContextProcessor:
                 for idx, column_name in enumerate(query_obj.column_names)
             }
         )
-        label_map.update(
-            {
-                metric_name: [
-                    (
-                        str(query_obj.metrics[idx])
-                        if not is_adhoc_metric(query_obj.metrics[idx])
-                        else (
-                            str(
-                                cast(AdhocMetric, query_obj.metrics[idx])[
-                                    "sqlExpression"
+        if query_obj.metrics:
+            label_map.update(
+                {
+                    metric_name: [
+                        (
+                            str(query_obj.metrics[idx])
+                            if not is_adhoc_metric(query_obj.metrics[idx])
+                            else (
+                                str(
+                                    cast(AdhocMetric, query_obj.metrics[idx])[
+                                        "sqlExpression"
+                                    ]
+                                )
+                                if cast(AdhocMetric, query_obj.metrics[idx])[
+                                    "expressionType"
                                 ]
+                                == "SQL"
+                                else metric_name
                             )
-                            if cast(AdhocMetric, query_obj.metrics[idx])[
-                                "expressionType"
-                            ]
-                            == "SQL"
-                            else metric_name
-                        )
-                    ),
-                ]
-                for idx, metric_name in enumerate(query_obj.metric_names)
-                if query_obj and query_obj.metrics
-            }
-        )
+                        ),
+                    ]
+                    for idx, metric_name in enumerate(query_obj.metric_names)
+                }
+            )
         cache.df.columns = [unescape_separator(col) for col in cache.df.columns.values]
 
         warning: str | None = None
@@ -299,11 +300,10 @@ class QueryContextProcessor:
         DataFrame copy when non-datetime columns dominate.
         """
         datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
-        date_cols = df.select_dtypes(include=["object"]).columns[
-            [
-                pd.api.types.infer_dtype(df[col], skipna=True) == "date"
-                for col in df.select_dtypes(include=["object"]).columns
-            ]
+        # Compute object columns once to avoid redundant DataFrame scan
+        obj_cols = df.select_dtypes(include=["object"]).columns
+        date_cols = obj_cols[
+            [infer_dtype(df[col], skipna=True) == "date" for col in obj_cols]
         ]
 
         if len(datetime_cols) == 0 and len(date_cols) == 0:

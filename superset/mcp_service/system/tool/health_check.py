@@ -17,6 +17,7 @@
 
 """Simple health check tool for testing MCP service."""
 
+import datetime
 import logging
 import platform
 import time

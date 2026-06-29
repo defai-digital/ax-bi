@@ -46,11 +46,11 @@ def test_legacy_registry_matches_migration_processors() -> None:
     # Import processors so every subclass is registered.
     import superset.migrations.shared.migrate_viz.processors  # noqa: F401
 
-    migration_map = {
-        proc.source_viz_type: proc.target_viz_type
-        for proc in _leaf_processors(MigrateViz)
-        if getattr(proc, "source_viz_type", "")
-    }
+    migration_map = {}
+    for proc in _leaf_processors(MigrateViz):
+        source_viz_type = getattr(proc, "source_viz_type", "")
+        if source_viz_type:
+            migration_map[source_viz_type] = getattr(proc, "target_viz_type", "")
 
     # Every loaded migration (legacy -> modern) must be reflected in the ban
     # list with the same replacement. Version-file processors load lazily, so
@@ -161,9 +161,7 @@ def test_update_chart_command_rejects_legacy_viz_type() -> None:
             "superset.commands.chart.update.ChartDAO.find_by_id",
             return_value=mock_chart,
         ),
-        patch(
-            "superset.commands.chart.update.security_manager.raise_for_ownership"
-        ),
+        patch("superset.commands.chart.update.security_manager.raise_for_ownership"),
         patch(
             "superset.commands.chart.update.UpdateChartCommand.compute_owners",
             return_value=[],

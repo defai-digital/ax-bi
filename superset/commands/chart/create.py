@@ -81,7 +81,9 @@ class CreateChartCommand(CreateMixin, BaseCommand):
         # Reject removed legacy chart types (they have modern replacements).
         viz_type = self._properties.get("viz_type")
         if is_legacy_viz_type(viz_type):
-            exceptions.append(ChartLegacyVizTypeError(legacy_viz_type_message(viz_type)))
+            exceptions.append(
+                ChartLegacyVizTypeError(legacy_viz_type_message(viz_type))
+            )
 
         # Validate/Populate datasource
         try:
