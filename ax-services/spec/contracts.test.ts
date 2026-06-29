@@ -52,6 +52,10 @@ import {
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
 import {
+  reportListContractSchemas,
+  REPORT_LIST_CONTRACT_VERSION,
+} from '../src/contracts/reportList';
+import {
   savedQueryListContractSchemas,
   SAVED_QUERY_LIST_CONTRACT_VERSION,
 } from '../src/contracts/savedQueryList';
@@ -90,6 +94,10 @@ test('database list contract version is explicit', () => {
 
 test('saved query list contract version is explicit', () => {
   expect(SAVED_QUERY_LIST_CONTRACT_VERSION).toBe('saved-query-list.v1');
+});
+
+test('report list contract version is explicit', () => {
+  expect(REPORT_LIST_CONTRACT_VERSION).toBe('report-list.v1');
 });
 
 test('tag list contract version is explicit', () => {
@@ -255,6 +263,19 @@ test('saved query list request schema is registered in saved query list contract
   expect(
     savedQueryListContractSchemas.savedQueryListResponseSchema.properties
       .savedQueries.items.properties.label,
+  ).toEqual({
+    type: 'string',
+  });
+});
+
+test('report list request schema is registered in report list contracts', () => {
+  expect(reportListContractSchemas.reportListRequestSchema.properties.page).toEqual({
+    type: 'number',
+    minimum: 1,
+  });
+  expect(
+    reportListContractSchemas.reportListResponseSchema.properties.reports.items
+      .properties.name,
   ).toEqual({
     type: 'string',
   });

@@ -63,6 +63,12 @@ import {
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
 import {
+  ReportListRequest,
+  ReportListResponse,
+  reportListRequestSchema,
+  reportListResponseSchema,
+} from './contracts/reportList';
+import {
   SavedQueryListRequest,
   SavedQueryListResponse,
   savedQueryListRequestSchema,
@@ -83,6 +89,7 @@ import {
   SupersetDashboardListClient,
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
+  SupersetReportListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
 } from './supersetClient';
@@ -96,6 +103,7 @@ export function buildServer(
     SupersetChartListClient &
     SupersetDatabaseListClient &
     SupersetDatasetListClient &
+    SupersetReportListClient &
     SupersetSavedQueryListClient &
     SupersetTagListClient,
 ): FastifyInstance {
@@ -287,6 +295,23 @@ export function buildServer(
     },
     async (request): Promise<DatasetListResponse> =>
       supersetClient.listDatasets(request.body, request.id),
+  );
+
+  server.post<{
+    Body: ReportListRequest;
+    Reply: ReportListResponse;
+  }>(
+    '/mcp/reports/list',
+    {
+      schema: {
+        body: reportListRequestSchema,
+        response: {
+          200: reportListResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<ReportListResponse> =>
+      supersetClient.listReports(request.body, request.id),
   );
 
   server.post<{

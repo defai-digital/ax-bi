@@ -50,6 +50,9 @@ Environment variables:
 | `AX_SUPERSET_DASHBOARD_LIST_PATH` | `/api/v1/dashboard/` | Superset dashboard list endpoint for TypeScript asset search and dashboard listing. |
 | `AX_SUPERSET_DATABASE_LIST_PATH` | `/api/v1/database/` | Superset database list endpoint for TypeScript database listing. |
 | `AX_SUPERSET_DATASET_LIST_PATH` | `/api/v1/dataset/` | Superset dataset list endpoint for TypeScript asset search and dataset listing. |
+| `AX_SUPERSET_REPORT_LIST_PATH` | `/api/v1/report/` | Superset report list endpoint for TypeScript report listing. |
+| `AX_SUPERSET_SAVED_QUERY_LIST_PATH` | `/api/v1/saved_query/` | Superset saved query list endpoint for TypeScript saved query listing. |
+| `AX_SUPERSET_TAG_LIST_PATH` | `/api/v1/tag/` | Superset tag list endpoint for TypeScript tag listing. |
 | `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
 | `AX_SUPERSET_INTERNAL_TOKEN` | unset | Optional bearer token for internal Superset calls. |
 | `AX_SERVICES_LOG_LEVEL` | `info` | Structured log level. |
@@ -70,6 +73,7 @@ Current endpoints:
 - `POST /mcp/dashboards/list`
 - `POST /mcp/databases/list`
 - `POST /mcp/datasets/list`
+- `POST /mcp/reports/list`
 - `POST /mcp/saved-queries/list`
 - `POST /mcp/tags/list`
 

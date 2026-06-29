@@ -722,6 +722,9 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Serve MCP saved query listing from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_SAVED_QUERY_LIST_SERVING": False,
+    # Serve MCP report listing from the TypeScript sidecar with Python fallback.
+    # @lifecycle: development
+    "TS_REPORT_LIST_SERVING": False,
     # Serve MCP tag listing from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_TAG_LIST_SERVING": False,

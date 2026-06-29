@@ -41,6 +41,10 @@ import {
   DatasetListResponse,
 } from '../src/contracts/datasetList';
 import {
+  REPORT_LIST_CONTRACT_VERSION,
+  ReportListResponse,
+} from '../src/contracts/reportList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryListResponse,
 } from '../src/contracts/savedQueryList';
@@ -58,6 +62,7 @@ import {
   SupersetDatasetListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
+  SupersetReportListClient,
   SupersetSavedQueryListClient,
   SupersetTagListClient,
 } from '../src/supersetClient';
@@ -87,6 +92,7 @@ function makeSupersetClient({
   onListDashboards,
   onListDatabases,
   onListDatasets,
+  onListReports,
   onListSavedQueries,
   onListTags,
   search = {
@@ -164,6 +170,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  reportList = {
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    reports: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
   tagList = {
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
@@ -186,6 +206,7 @@ function makeSupersetClient({
   dashboardList?: DashboardListResponse;
   databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
+  reportList?: ReportListResponse;
   savedQueryList?: SavedQueryListResponse;
   tagList?: TagListResponse;
   onHealth?: (correlationId?: string) => void;
@@ -195,6 +216,7 @@ function makeSupersetClient({
   onListDashboards?: (correlationId?: string) => void;
   onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
+  onListReports?: (correlationId?: string) => void;
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
@@ -204,6 +226,7 @@ function makeSupersetClient({
   SupersetDashboardListClient &
   SupersetDatabaseListClient &
   SupersetDatasetListClient &
+  SupersetReportListClient &
   SupersetSavedQueryListClient &
   SupersetTagListClient {
   return {
@@ -234,6 +257,10 @@ function makeSupersetClient({
     async listDatasets(_request, correlationId) {
       onListDatasets?.(correlationId);
       return datasetList;
+    },
+    async listReports(_request, correlationId) {
+      onListReports?.(correlationId);
+      return reportList;
     },
     async listSavedQueries(_request, correlationId) {
       onListSavedQueries?.(correlationId);
@@ -925,6 +952,85 @@ test('saved query list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'label'],
     columnsLoaded: ['id', 'label', 'db_id', 'schema'],
+    warnings: [],
+  });
+});
+
+test('report list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      reportList: {
+        contractVersion: REPORT_LIST_CONTRACT_VERSION,
+        reports: [
+          {
+            id: 23,
+            name: 'Daily report',
+            type: 'Report',
+            active: true,
+            crontab: '0 9 * * *',
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'name'],
+        columnsLoaded: ['id', 'name', 'type', 'active', 'crontab'],
+        warnings: [],
+      },
+      onListReports(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/reports/list',
+    headers: {
+      'x-request-id': 'request-report-list',
+    },
+    payload: {
+      contractVersion: REPORT_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'name'],
+      search: 'daily',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-report-list');
+  expect(seenRequestIds).toEqual(['request-report-list']);
+  expect(response.json()).toEqual({
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    reports: [
+      {
+        id: 23,
+        name: 'Daily report',
+        type: 'Report',
+        active: true,
+        crontab: '0 9 * * *',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: ['id', 'name', 'type', 'active', 'crontab'],
     warnings: [],
   });
 });

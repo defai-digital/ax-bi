@@ -25,6 +25,7 @@ import { chartListContractSchemas } from '../src/contracts/chartList';
 import { dashboardListContractSchemas } from '../src/contracts/dashboardList';
 import { databaseListContractSchemas } from '../src/contracts/databaseList';
 import { datasetListContractSchemas } from '../src/contracts/datasetList';
+import { reportListContractSchemas } from '../src/contracts/reportList';
 import { runtimeContractSchemas } from '../src/contracts/runtime';
 import { savedQueryListContractSchemas } from '../src/contracts/savedQueryList';
 import { tagListContractSchemas } from '../src/contracts/tagList';
@@ -38,6 +39,7 @@ const contractFiles = {
   'dashboard-list.v1.schema.json': dashboardListContractSchemas,
   'database-list.v1.schema.json': databaseListContractSchemas,
   'dataset-list.v1.schema.json': datasetListContractSchemas,
+  'report-list.v1.schema.json': reportListContractSchemas,
   'runtime.v1.schema.json': runtimeContractSchemas,
   'saved-query-list.v1.schema.json': savedQueryListContractSchemas,
   'tag-list.v1.schema.json': tagListContractSchemas,

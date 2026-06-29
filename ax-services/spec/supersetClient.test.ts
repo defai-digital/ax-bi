@@ -25,6 +25,7 @@ import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
 import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
+import { REPORT_LIST_CONTRACT_VERSION } from '../src/contracts/reportList';
 import { SAVED_QUERY_LIST_CONTRACT_VERSION } from '../src/contracts/savedQueryList';
 import { TAG_LIST_CONTRACT_VERSION } from '../src/contracts/tagList';
 import { SupersetClient } from '../src/supersetClient';
@@ -1145,6 +1146,151 @@ test('listSavedQueries records warnings for failed Superset list responses', asy
     columnsRequested: ['id', 'label', 'db_id', 'schema', 'uuid'],
     columnsLoaded: [],
     warnings: ['saved query list returned status 504 from Superset'],
+  });
+});
+
+test('listReports maps Superset report list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 21,
+      result: [
+        {
+          id: 23,
+          name: 'Daily sales report',
+          description: 'Sends sales summary',
+          type: 'Report',
+          active: true,
+          crontab: '0 9 * * *',
+          dashboard_id: 7,
+          chart_id: 11,
+          last_eval_dttm: '2026-01-08T00:00:00',
+          last_eval_dttm_humanized: 'a day ago',
+          last_state: 'Success',
+          creation_method: 'alerts_reports',
+          changed_on: '2026-01-07T00:00:00',
+          changed_on_humanized: '2 days ago',
+          created_on: '2026-01-01T00:00:00',
+          created_on_humanized: '8 days ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listReports(
+    {
+      contractVersion: REPORT_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'active', opr: 'eq', value: true }],
+      selectColumns: ['id', 'name'],
+      search: 'daily',
+      orderColumn: 'name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+    },
+    'request-reports',
+  );
+
+  expect(result).toEqual({
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    reports: [
+      {
+        id: 23,
+        name: 'Daily sales report',
+        description: 'Sends sales summary',
+        type: 'Report',
+        active: true,
+        crontab: '0 9 * * *',
+        dashboardId: 7,
+        chartId: 11,
+        lastEvalDttm: '2026-01-08T00:00:00',
+        lastEvalDttmHumanized: 'a day ago',
+        lastState: 'Success',
+        creationMethod: 'alerts_reports',
+        changedOn: '2026-01-07T00:00:00',
+        changedOnHumanized: '2 days ago',
+        createdOn: '2026-01-01T00:00:00',
+        createdOnHumanized: '8 days ago',
+      },
+    ],
+    count: 1,
+    totalCount: 21,
+    page: 2,
+    pageSize: 10,
+    totalPages: 3,
+    hasNext: true,
+    hasPrevious: true,
+    columnsRequested: ['id', 'name'],
+    columnsLoaded: [
+      'id',
+      'name',
+      'description',
+      'type',
+      'active',
+      'crontab',
+      'dashboard_id',
+      'chart_id',
+      'last_eval_dttm',
+      'last_eval_dttm_humanized',
+      'last_state',
+      'creation_method',
+      'changed_on',
+      'changed_on_humanized',
+      'created_on',
+      'created_on_humanized',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/report/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'daily'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-reports',
+  });
+});
+
+test('listReports records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listReports({
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    reports: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'type', 'active', 'crontab'],
+    columnsLoaded: [],
+    warnings: ['report list returned status 504 from Superset'],
   });
 });
 

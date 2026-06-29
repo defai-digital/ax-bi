@@ -57,6 +57,13 @@ import {
   PermissionCheckResult,
 } from './contracts/authorization';
 import {
+  REPORT_LIST_CONTRACT_VERSION,
+  ReportFilterValue,
+  ReportListItem,
+  ReportListRequest,
+  ReportListResponse,
+} from './contracts/reportList';
+import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
   SavedQueryFilterValue,
   SavedQueryListItem,
@@ -127,6 +134,13 @@ export interface SupersetDatasetListClient {
   ): Promise<DatasetListResponse>;
 }
 
+export interface SupersetReportListClient {
+  listReports(
+    request: ReportListRequest,
+    correlationId?: string,
+  ): Promise<ReportListResponse>;
+}
+
 export interface SupersetSavedQueryListClient {
   listSavedQueries(
     request: SavedQueryListRequest,
@@ -150,6 +164,7 @@ export class SupersetClient
     SupersetChartListClient,
     SupersetDatabaseListClient,
     SupersetDatasetListClient,
+    SupersetReportListClient,
     SupersetSavedQueryListClient,
     SupersetTagListClient
 {
@@ -552,6 +567,54 @@ export class SupersetClient
     }
   }
 
+  async listReports(
+    request: ReportListRequest,
+    correlationId?: string,
+  ): Promise<ReportListResponse> {
+    const url = this.buildReportListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyReportListResponse(request, [
+          `report list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const reports = extractSupersetResults(payload)
+        .map(toReportListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, reports.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: REPORT_LIST_CONTRACT_VERSION,
+        reports,
+        count: reports.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedReportColumns(request),
+        columnsLoaded: reportColumnsLoaded(reports),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyReportListResponse(request, [
+        `report list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   async listTags(
     request: TagListRequest,
     correlationId?: string,
@@ -697,6 +760,14 @@ export class SupersetClient
     return url.toString();
   }
 
+  private buildReportListUrl(request: ReportListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.report}`,
+    );
+    url.searchParams.set('q', buildReportListQuery(request));
+    return url.toString();
+  }
+
   private buildTagListUrl(request: TagListRequest): string {
     const url = new URL(
       `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.tag}`,
@@ -760,6 +831,14 @@ interface SupersetListItem {
   db_id?: number;
   catalog?: string;
   last_run?: string;
+  active?: boolean;
+  crontab?: string;
+  dashboard_id?: number;
+  chart_id?: number;
+  last_eval_dttm?: string;
+  last_eval_dttm_humanized?: string;
+  last_state?: string;
+  creation_method?: string;
   created_on?: string;
   created_on_humanized?: string;
   owners?: unknown[];
@@ -919,6 +998,30 @@ function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildReportListQuery(request: ReportListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatReportFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function buildTagListQuery(request: TagListRequest): string {
   const filters = [...request.filters];
   if (request.search !== undefined && request.search !== '') {
@@ -993,6 +1096,16 @@ function formatSavedQueryFilter(filter: {
   )})`;
 }
 
+function formatReportFilter(filter: {
+  col: string;
+  opr: string;
+  value: ReportFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatReportRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatTagFilter(filter: {
   col: string;
   opr: string;
@@ -1032,6 +1145,13 @@ function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
 }
 
 function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatReportRisonValue(value: ReportFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1252,6 +1372,47 @@ function toSavedQueryListItem(
   };
 }
 
+function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    description:
+      typeof item.description === 'string' ? item.description : undefined,
+    type: typeof item.type === 'string' ? item.type : undefined,
+    active: typeof item.active === 'boolean' ? item.active : undefined,
+    crontab: typeof item.crontab === 'string' ? item.crontab : undefined,
+    dashboardId:
+      typeof item.dashboard_id === 'number' ? item.dashboard_id : undefined,
+    chartId: typeof item.chart_id === 'number' ? item.chart_id : undefined,
+    lastEvalDttm:
+      typeof item.last_eval_dttm === 'string' ? item.last_eval_dttm : undefined,
+    lastEvalDttmHumanized:
+      typeof item.last_eval_dttm_humanized === 'string'
+        ? item.last_eval_dttm_humanized
+        : undefined,
+    lastState:
+      typeof item.last_state === 'string' ? item.last_state : undefined,
+    creationMethod:
+      typeof item.creation_method === 'string'
+        ? item.creation_method
+        : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOnHumanized:
+      typeof item.created_on_humanized === 'string'
+        ? item.created_on_humanized
+        : undefined,
+  };
+}
+
 function toTagListItem(item: SupersetListItem): TagListItem | undefined {
   if (typeof item.id !== 'number') {
     return undefined;
@@ -1396,6 +1557,12 @@ function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
     : ['id', 'label', 'db_id', 'schema', 'uuid'];
 }
 
+function requestedReportColumns(request: ReportListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : ['id', 'name', 'type', 'active', 'crontab'];
+}
+
 function requestedTagColumns(request: TagListRequest): string[] {
   return request.selectColumns.length > 0
     ? request.selectColumns
@@ -1476,6 +1643,34 @@ function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
     if (savedQuery.changedOn !== undefined) loaded.add('changed_on');
     if (savedQuery.createdOn !== undefined) loaded.add('created_on');
     if (savedQuery.lastRun !== undefined) loaded.add('last_run');
+  }
+  return [...loaded];
+}
+
+function reportColumnsLoaded(reports: ReportListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const report of reports) {
+    if (report.name !== undefined) loaded.add('name');
+    if (report.description !== undefined) loaded.add('description');
+    if (report.type !== undefined) loaded.add('type');
+    if (report.active !== undefined) loaded.add('active');
+    if (report.crontab !== undefined) loaded.add('crontab');
+    if (report.dashboardId !== undefined) loaded.add('dashboard_id');
+    if (report.chartId !== undefined) loaded.add('chart_id');
+    if (report.lastEvalDttm !== undefined) loaded.add('last_eval_dttm');
+    if (report.lastEvalDttmHumanized !== undefined) {
+      loaded.add('last_eval_dttm_humanized');
+    }
+    if (report.lastState !== undefined) loaded.add('last_state');
+    if (report.creationMethod !== undefined) loaded.add('creation_method');
+    if (report.changedOn !== undefined) loaded.add('changed_on');
+    if (report.changedOnHumanized !== undefined) {
+      loaded.add('changed_on_humanized');
+    }
+    if (report.createdOn !== undefined) loaded.add('created_on');
+    if (report.createdOnHumanized !== undefined) {
+      loaded.add('created_on_humanized');
+    }
   }
   return [...loaded];
 }
@@ -1589,6 +1784,26 @@ function emptySavedQueryListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedSavedQueryColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyReportListResponse(
+  request: ReportListRequest,
+  warnings: string[],
+): ReportListResponse {
+  return {
+    contractVersion: REPORT_LIST_CONTRACT_VERSION,
+    reports: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedReportColumns(request),
     columnsLoaded: [],
     warnings,
   };
