@@ -157,6 +157,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                             "extracted workflows"
                         ),
                         "approval_reference": "CHG-123",
+                        "approver": "platform-ops",
                         "workflow_names": [
                             "mcp_asset_search",
                             "mcp_dashboard_list",
@@ -643,6 +644,34 @@ def test_operator_approval_requires_workflow_when_approved() -> None:
     assert "Approved operator evidence requires at least one --workflow" in (
         result.output
     )
+
+
+def test_operator_approval_requires_approver_when_approved() -> None:
+    """Approved operator evidence must name the approving operator."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "operator-approval",
+            "--workflow",
+            "mcp_asset_search",
+            "--boundary-decision",
+            "split MCP by tool class",
+            "--rollout-scope",
+            "asset search",
+            "--migration-decision",
+            "expand",
+            "--compatibility-cost-estimate",
+            "single contract family is low compatibility cost",
+            "--security-cost-estimate",
+            "Superset keeps authorization checks",
+            "--approval-reference",
+            "ADR-42",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Approved operator evidence requires --approver" in result.output
 
 
 def test_operator_approval_allows_empty_workflows_when_not_approved() -> None:
@@ -1209,6 +1238,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                     "workflows"
                 ),
                 "approval_reference": "CHG-123",
+                "approver": "platform-ops",
                 "workflow_names": [
                     "mcp_asset_search",
                     "mcp_dashboard_list",
@@ -1473,6 +1503,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                             "extracted workflows"
                         ),
                         "approval_reference": "CHG-123",
+                        "approver": "platform-ops",
                         "workflow_names": [
                             "mcp_asset_search",
                             "mcp_dashboard_list",
@@ -1708,6 +1739,7 @@ def test_runtime_modernization_validate_production_evidence_rejects_empty_approv
                         "compatibility_cost_estimate": "no enabled workflow",
                         "security_cost_estimate": "no enabled workflow",
                         "approval_reference": "CHG-123",
+                        "approver": "platform-ops",
                         "workflow_names": [],
                     },
                 },
@@ -1769,6 +1801,7 @@ def test_validate_production_evidence_rejects_malformed_approval_workflows(
                         "compatibility_cost_estimate": "compatible",
                         "security_cost_estimate": "authorized by Superset",
                         "approval_reference": "CHG-123",
+                        "approver": "platform-ops",
                         "workflow_names": ["mcp_asset_search", 1],
                     },
                 },

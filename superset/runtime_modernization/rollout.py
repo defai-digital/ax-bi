@@ -422,7 +422,7 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         validation=(
             "approval names the accepted boundary decision, rollout scope, "
             "migration decision, compatibility cost estimate, and security "
-            "cost estimate"
+            "cost estimate, approval reference, approver, and workflow scope"
         ),
     ),
 )
@@ -552,6 +552,7 @@ def build_production_evidence_template(
                 "compatibility_cost_estimate": "",
                 "security_cost_estimate": "",
                 "approval_reference": "",
+                "approver": "",
                 "workflow_names": [],
             },
         },
@@ -628,6 +629,7 @@ def build_operator_approval_evidence(
             "security_cost_estimate",
         )
         _require_non_empty_evidence_field(approval_reference, "approval_reference")
+        _require_non_empty_evidence_field(approver, "approver")
 
     evidence: dict[str, Any] = {
         "approved": approved,
@@ -1286,6 +1288,7 @@ def validate_production_evidence(
         and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
         and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
+        and _non_empty_string(operator_approval.get("approver"))
         and approval_workflow_names_valid
         and bool(approval_workflow_names)
         and approval_matches_enabled_workflows
@@ -1301,13 +1304,13 @@ def validate_production_evidence(
             message=(
                 "operator approval names boundary decision, rollout scope, "
                 "migration decision, compatibility and security cost estimates, "
-                "approval reference, and enabled workflows"
+                "approval reference, approver, and enabled workflows"
                 if approval_passed
                 else (
                     "operator approval is missing boundary decision, rollout "
                     "scope, migration decision, compatibility or security cost "
-                    "estimates, approval reference, a valid non-empty unique "
-                    "workflow name list, or exact enabled workflow names"
+                    "estimates, approval reference, approver, a valid non-empty "
+                    "unique workflow name list, or exact enabled workflow names"
                 )
             ),
         )

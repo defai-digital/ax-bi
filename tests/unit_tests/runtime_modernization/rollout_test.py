@@ -155,6 +155,7 @@ def _complete_production_evidence(
                     "workflows"
                 ),
                 "approval_reference": "CHG-123",
+                "approver": "platform-ops",
                 "workflow_names": [workflow.name for workflow in workflows],
             },
         },
@@ -551,6 +552,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": [
                         "mcp_asset_search",
                         "mcp_dashboard_list",
@@ -637,6 +639,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": [
                         "mcp_asset_search",
                         "mcp_dashboard_list",
@@ -1082,6 +1085,7 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": ["mcp_asset_search"],
                 },
             },
@@ -1123,6 +1127,7 @@ def test_validate_production_evidence_rejects_empty_approved_scope() -> None:
                     "compatibility_cost_estimate": "no enabled workflow to compare",
                     "security_cost_estimate": "no enabled workflow to approve",
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": [],
                 },
             },
@@ -1189,6 +1194,25 @@ def test_validate_production_evidence_rejects_duplicate_approval_workflows() -> 
     )
 
 
+def test_validate_production_evidence_requires_operator_approver() -> None:
+    """Approved operator evidence must identify who approved the rollout."""
+
+    workflows = (get_rollout_workflow("mcp_asset_search"),)
+    evidence = _complete_production_evidence(workflows)
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    operator_approval = artifacts["operator_approval"]
+    assert isinstance(operator_approval, dict)
+    operator_approval.pop("approver")
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_approval"]["passed"] is False
+    assert "approver" in checks["operator_approval"]["message"]
+
+
 def test_validate_production_evidence_rejects_extra_approved_workflows() -> None:
     """Operator approval must not name workflows outside the enabled scope."""
 
@@ -1237,7 +1261,9 @@ def test_validate_production_evidence_requires_operator_cost_estimates() -> None
                     "approved": True,
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search",
+                    "migration_decision": "expand",
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": ["mcp_asset_search"],
                 },
             },
@@ -1275,6 +1301,7 @@ def test_validate_production_evidence_requires_valid_migration_decision() -> Non
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
+                    "approver": "platform-ops",
                     "workflow_names": ["mcp_asset_search"],
                 },
             },
@@ -1373,6 +1400,7 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "compatibility_cost_estimate": "",
         "security_cost_estimate": "",
         "approval_reference": "",
+        "approver": "",
         "workflow_names": [],
     }
 
@@ -1542,6 +1570,25 @@ def test_build_operator_approval_evidence_requires_unique_workflows() -> None:
             ),
             approval_reference="CHG-123",
             workflow_names=("mcp_asset_search", "mcp_asset_search"),
+        )
+
+
+def test_build_operator_approval_evidence_requires_approver() -> None:
+    """Approved operator evidence must identify the approving operator."""
+
+    with pytest.raises(ValueError, match="approver"):
+        build_operator_approval_evidence(
+            boundary_decision="split MCP by tool class",
+            rollout_scope="asset search",
+            migration_decision="expand",
+            compatibility_cost_estimate=(
+                "versioned contracts and Python fallback keep compatibility risk low"
+            ),
+            security_cost_estimate=(
+                "Superset remains the authorization authority for extracted workflows"
+            ),
+            approval_reference="CHG-123",
+            workflow_names=("mcp_asset_search",),
         )
 
 

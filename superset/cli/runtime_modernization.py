@@ -794,7 +794,7 @@ def production_flag_state(
 )
 @click.option(
     "--approver",
-    help="Optional operator or approval group name.",
+    help="Operator or approval group name. Required when approved.",
 )
 @click.option(
     "--notes",
@@ -829,6 +829,8 @@ def operator_approval(
         raise click.ClickException(
             "Approved operator evidence requires at least one --workflow"
         )
+    if approved and not approver:
+        raise click.ClickException("Approved operator evidence requires --approver")
 
     approval = build_operator_approval_evidence(
         boundary_decision=boundary_decision,

@@ -151,7 +151,8 @@ superset runtime-modernization operator-approval \
   --migration-decision expand \
   --compatibility-cost-estimate "versioned contracts preserve Python fallback" \
   --security-cost-estimate "Superset remains the authorization authority" \
-  --approval-reference "CHANGE-REFERENCE"
+  --approval-reference "CHANGE-REFERENCE" \
+  --approver "platform-ops"
 ```
 
 Assemble and validate collected evidence with:
@@ -181,9 +182,10 @@ decision evidence, and operator approval all pass. Phase 3 requires at least
 one TypeScript workflow serving production traffic; Phase 5 requires at least
 two. Phase 6 requires Phase 5 selective rollout evidence plus operator
 approval. Operator approval must include the team migration decision
-(`expand`, `pause`, or `stop`) plus compatibility and security cost estimates
-for the accepted runtime boundary. Approval workflow names must exactly match
-the workflows serving production traffic in the flag-state artifact. Production
+(`expand`, `pause`, or `stop`), compatibility and security cost estimates,
+approval reference, and approver for the accepted runtime boundary. Approval
+workflow names must exactly match the workflows serving production traffic in
+the flag-state artifact. Production
 evidence bundles are schema-versioned; validation accepts only
 `schema_version: 1` with object-shaped `artifacts`, and requires at least one
 unique selected workflow. JSON validation output includes

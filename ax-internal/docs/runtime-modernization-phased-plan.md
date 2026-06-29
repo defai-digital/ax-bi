@@ -323,8 +323,8 @@ product-specific and contract-oriented.
   gate status, measurement window, and the dashboard snapshot reference.
 - `superset runtime-modernization operator-approval` emits the operator
   approval artifact with the accepted boundary decision, rollout scope,
-  migration decision, compatibility and security cost estimates, and approval
-  reference for workflows serving production traffic.
+  migration decision, compatibility and security cost estimates, approval
+  reference, and approver for workflows serving production traffic.
 - `superset runtime-modernization rust-kernel-rollout-decision` emits the Rust
   kernel decision artifact proving the measured kernel either served production
   traffic or was rejected with a documented reason.
