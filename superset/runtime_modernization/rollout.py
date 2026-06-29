@@ -377,7 +377,10 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
             "Operational approval for deployment complexity and remaining "
             "runtime ownership boundaries."
         ),
-        validation="approval names the accepted boundary decision and rollout scope",
+        validation=(
+            "approval names the accepted boundary decision, rollout scope, "
+            "compatibility cost estimate, and security cost estimate"
+        ),
     ),
 )
 
@@ -478,6 +481,8 @@ def build_production_evidence_template(
                 "approved": False,
                 "boundary_decision": "",
                 "rollout_scope": "",
+                "compatibility_cost_estimate": "",
+                "security_cost_estimate": "",
                 "approval_reference": "",
                 "workflow_names": [],
             },
@@ -508,6 +513,8 @@ def build_operator_approval_evidence(
     *,
     boundary_decision: str,
     rollout_scope: str,
+    compatibility_cost_estimate: str,
+    security_cost_estimate: str,
     approval_reference: str,
     workflow_names: tuple[str, ...] = (),
     approved: bool = True,
@@ -520,6 +527,8 @@ def build_operator_approval_evidence(
         "approved": approved,
         "boundary_decision": boundary_decision,
         "rollout_scope": rollout_scope,
+        "compatibility_cost_estimate": compatibility_cost_estimate,
+        "security_cost_estimate": security_cost_estimate,
         "approval_reference": approval_reference,
         "workflow_names": list(workflow_names),
     }
@@ -888,6 +897,8 @@ def validate_production_evidence(
         operator_approval is not None
         and operator_approval.get("approved") is True
         and _non_empty_string(operator_approval.get("boundary_decision"))
+        and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
+        and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
         and approval_covers_enabled_workflows
         and (
@@ -901,11 +912,13 @@ def validate_production_evidence(
             passed=approval_passed,
             message=(
                 "operator approval names boundary decision, rollout scope, "
-                "approval reference, and enabled workflows"
+                "compatibility and security cost estimates, approval reference, "
+                "and enabled workflows"
                 if approval_passed
                 else (
                     "operator approval is missing boundary decision, rollout "
-                    "scope, approval reference, or enabled workflow names"
+                    "scope, compatibility or security cost estimates, approval "
+                    "reference, or enabled workflow names"
                 )
             ),
         )

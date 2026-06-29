@@ -300,7 +300,8 @@ product-specific and contract-oriented.
   reference.
 - `superset runtime-modernization operator-approval` emits the operator
   approval artifact with the accepted boundary decision, rollout scope, and
-  approval reference for workflows serving production traffic.
+  compatibility and security cost estimates, and approval reference for
+  workflows serving production traffic.
 - `superset runtime-modernization rust-kernel-rollout-decision` emits the Rust
   kernel decision artifact proving the measured kernel either served production
   traffic or was rejected with a documented reason.

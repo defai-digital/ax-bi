@@ -89,6 +89,14 @@ def _complete_production_evidence() -> dict[str, object]:
                 "approved": True,
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
+                "compatibility_cost_estimate": (
+                    "versioned contracts and Python fallback keep compatibility "
+                    "risk low"
+                ),
+                "security_cost_estimate": (
+                    "Superset remains the authorization authority for extracted "
+                    "workflows"
+                ),
                 "approval_reference": "CHG-123",
                 "workflow_names": [workflow.name for workflow in workflows],
             },
@@ -392,6 +400,14 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                     "approved": True,
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search and dashboard listing",
+                    "compatibility_cost_estimate": (
+                        "versioned contracts and Python fallback keep compatibility "
+                        "risk low"
+                    ),
+                    "security_cost_estimate": (
+                        "Superset remains the authorization authority for extracted "
+                        "workflows"
+                    ),
                     "approval_reference": "CHG-123",
                     "workflow_names": [
                         "mcp_asset_search",
@@ -480,6 +496,14 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                     "approved": True,
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search and dashboard listing",
+                    "compatibility_cost_estimate": (
+                        "versioned contracts and Python fallback keep compatibility "
+                        "risk low"
+                    ),
+                    "security_cost_estimate": (
+                        "Superset remains the authorization authority for extracted "
+                        "workflows"
+                    ),
                     "approval_reference": "CHG-123",
                     "workflow_names": [
                         "mcp_asset_search",
@@ -537,6 +561,14 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
                     "approved": True,
                     "boundary_decision": "split MCP by tool class",
                     "rollout_scope": "asset search only",
+                    "compatibility_cost_estimate": (
+                        "versioned contracts and Python fallback keep compatibility "
+                        "risk low"
+                    ),
+                    "security_cost_estimate": (
+                        "Superset remains the authorization authority for extracted "
+                        "workflows"
+                    ),
                     "approval_reference": "CHG-123",
                     "workflow_names": ["mcp_asset_search"],
                 },
@@ -547,6 +579,34 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
 
     assert validation["status"] == "failed"
     assert checks["operator_approval"]["passed"] is False
+
+
+def test_validate_production_evidence_requires_operator_cost_estimates() -> None:
+    """Operator approval must include Phase 6 compatibility and security costs."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "operator_approval": {
+                    "approved": True,
+                    "boundary_decision": "split MCP by tool class",
+                    "rollout_scope": "asset search",
+                    "approval_reference": "CHG-123",
+                    "workflow_names": ["mcp_asset_search"],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_approval"]["passed"] is False
+    assert (
+        "compatibility or security cost estimates"
+        in checks["operator_approval"]["message"]
+    )
 
 
 def test_build_production_evidence_template_includes_workflow_gates() -> None:
@@ -599,6 +659,8 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "approved": False,
         "boundary_decision": "",
         "rollout_scope": "",
+        "compatibility_cost_estimate": "",
+        "security_cost_estimate": "",
         "approval_reference": "",
         "workflow_names": [],
     }
@@ -643,6 +705,12 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
     approval = build_operator_approval_evidence(
         boundary_decision="split MCP by tool class",
         rollout_scope="asset search and dashboard listing",
+        compatibility_cost_estimate=(
+            "versioned contracts and Python fallback keep compatibility risk low"
+        ),
+        security_cost_estimate=(
+            "Superset remains the authorization authority for extracted workflows"
+        ),
         approval_reference="CHG-123",
         workflow_names=("mcp_asset_search", "mcp_dashboard_list"),
         approver="platform-ops",
@@ -653,6 +721,12 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
         "approved": True,
         "boundary_decision": "split MCP by tool class",
         "rollout_scope": "asset search and dashboard listing",
+        "compatibility_cost_estimate": (
+            "versioned contracts and Python fallback keep compatibility risk low"
+        ),
+        "security_cost_estimate": (
+            "Superset remains the authorization authority for extracted workflows"
+        ),
         "approval_reference": "CHG-123",
         "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
         "approver": "platform-ops",

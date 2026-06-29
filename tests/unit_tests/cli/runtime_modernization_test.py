@@ -103,6 +103,14 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                         "approved": True,
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
+                        "compatibility_cost_estimate": (
+                            "versioned contracts and Python fallback keep "
+                            "compatibility risk low"
+                        ),
+                        "security_cost_estimate": (
+                            "Superset remains the authorization authority for "
+                            "extracted workflows"
+                        ),
                         "approval_reference": "CHG-123",
                         "workflow_names": [
                             "mcp_asset_search",
@@ -304,6 +312,10 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert "operator_dashboard_snapshot" in payload["artifacts"]
     assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
+    assert (
+        payload["artifacts"]["operator_approval"]["compatibility_cost_estimate"] == ""
+    )
+    assert payload["artifacts"]["operator_approval"]["security_cost_estimate"] == ""
     assert payload["artifacts"]["operator_approval"]["workflow_names"] == []
 
 
@@ -417,6 +429,10 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
             "split MCP by tool class",
             "--rollout-scope",
             "asset search and dashboard listing",
+            "--compatibility-cost-estimate",
+            "versioned contracts and Python fallback keep compatibility risk low",
+            "--security-cost-estimate",
+            "Superset remains the authorization authority for extracted workflows",
             "--approval-reference",
             "CHG-123",
             "--approver",
@@ -431,6 +447,12 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
         "approved": True,
         "boundary_decision": "split MCP by tool class",
         "rollout_scope": "asset search and dashboard listing",
+        "compatibility_cost_estimate": (
+            "versioned contracts and Python fallback keep compatibility risk low"
+        ),
+        "security_cost_estimate": (
+            "Superset remains the authorization authority for extracted workflows"
+        ),
         "approval_reference": "CHG-123",
         "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
         "approver": "platform-ops",
@@ -451,6 +473,10 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
             "split MCP by tool class",
             "--rollout-scope",
             "asset search",
+            "--compatibility-cost-estimate",
+            "single contract family is low compatibility cost",
+            "--security-cost-estimate",
+            "Superset keeps authorization checks",
             "--approval-reference",
             "ADR-42",
             "--not-approved",
@@ -463,6 +489,10 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "runtime modernization operator approval" in result.output
     assert "approved: False" in result.output
     assert "split MCP by tool class" in result.output
+    assert "compatibility cost estimate: single contract family" in result.output
+    assert "security cost estimate: Superset keeps authorization checks" in (
+        result.output
+    )
     assert "approval reference: ADR-42" in result.output
     assert "workflows: mcp_asset_search" in result.output
 
@@ -480,6 +510,10 @@ def test_runtime_modernization_operator_approval_rejects_unknown_workflow() -> N
             "split MCP by tool class",
             "--rollout-scope",
             "asset search",
+            "--compatibility-cost-estimate",
+            "single contract family is low compatibility cost",
+            "--security-cost-estimate",
+            "Superset keeps authorization checks",
             "--approval-reference",
             "ADR-42",
         ],
@@ -934,6 +968,14 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                 "approved": True,
                 "boundary_decision": "split MCP by tool class",
                 "rollout_scope": "asset search and dashboard listing",
+                "compatibility_cost_estimate": (
+                    "versioned contracts and Python fallback keep compatibility "
+                    "risk low"
+                ),
+                "security_cost_estimate": (
+                    "Superset remains the authorization authority for extracted "
+                    "workflows"
+                ),
                 "approval_reference": "CHG-123",
                 "workflow_names": [
                     "mcp_asset_search",
@@ -1093,6 +1135,14 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         "approved": True,
                         "boundary_decision": "split MCP by tool class",
                         "rollout_scope": "asset search and dashboard listing",
+                        "compatibility_cost_estimate": (
+                            "versioned contracts and Python fallback keep "
+                            "compatibility risk low"
+                        ),
+                        "security_cost_estimate": (
+                            "Superset remains the authorization authority for "
+                            "extracted workflows"
+                        ),
                         "approval_reference": "CHG-123",
                         "workflow_names": [
                             "mcp_asset_search",
