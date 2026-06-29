@@ -1449,6 +1449,52 @@ def test_runtime_modernization_validate_production_evidence_rejects_schema(
     assert "runtime modernization production evidence failed" in result.output
 
 
+def test_runtime_modernization_validate_production_evidence_rejects_empty_approval(
+    tmp_path,
+) -> None:
+    """Strict validation rejects externally supplied approved empty workflow scopes."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "artifacts": {
+                    "operator_approval": {
+                        "approved": True,
+                        "boundary_decision": "split MCP by tool class",
+                        "rollout_scope": "empty rollout scope",
+                        "migration_decision": "pause",
+                        "compatibility_cost_estimate": "no enabled workflow",
+                        "security_cost_estimate": "no enabled workflow",
+                        "approval_reference": "CHG-123",
+                        "workflow_names": [],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL operator_approval" in result.output
+    assert "non-empty workflow names" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> None:
     """Completion audit emits stable phase status JSON."""
 

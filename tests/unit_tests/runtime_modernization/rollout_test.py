@@ -806,6 +806,48 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
     assert "exact enabled workflow names" in checks["operator_approval"]["message"]
 
 
+def test_validate_production_evidence_rejects_empty_approved_scope() -> None:
+    """Externally supplied approved evidence cannot approve an empty workflow set."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "production_flag_state": {
+                    "environment": "prod-us",
+                    "flag_state_reference": "flags/runtime-modernization/prod-us-123",
+                    "workflows": [
+                        {
+                            "name": "mcp_asset_search",
+                            "serving_flags": {
+                                "TS_MCP_ORCHESTRATION": False,
+                                "TS_ASSET_SEARCH_SERVING": False,
+                            },
+                        },
+                    ],
+                },
+                "operator_approval": {
+                    "approved": True,
+                    "boundary_decision": "split MCP by tool class",
+                    "rollout_scope": "empty rollout scope",
+                    "migration_decision": "pause",
+                    "compatibility_cost_estimate": "no enabled workflow to compare",
+                    "security_cost_estimate": "no enabled workflow to approve",
+                    "approval_reference": "CHG-123",
+                    "workflow_names": [],
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["approved_workflow_names"] == []
+    assert checks["operator_approval"]["passed"] is False
+    assert "non-empty workflow names" in checks["operator_approval"]["message"]
+
+
 def test_validate_production_evidence_rejects_extra_approved_workflows() -> None:
     """Operator approval must not name workflows outside the enabled scope."""
 

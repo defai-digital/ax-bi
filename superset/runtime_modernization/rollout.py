@@ -1126,6 +1126,7 @@ def validate_production_evidence(
         and _non_empty_string(operator_approval.get("compatibility_cost_estimate"))
         and _non_empty_string(operator_approval.get("security_cost_estimate"))
         and _non_empty_string(operator_approval.get("approval_reference"))
+        and bool(approval_workflow_names)
         and approval_matches_enabled_workflows
         and (
             _non_empty_string(operator_approval.get("rollout_scope"))
@@ -1144,8 +1145,8 @@ def validate_production_evidence(
                 else (
                     "operator approval is missing boundary decision, rollout "
                     "scope, migration decision, compatibility or security cost "
-                    "estimates, approval reference, or exact enabled workflow "
-                    "names"
+                    "estimates, approval reference, non-empty workflow names, "
+                    "or exact enabled workflow names"
                 )
             ),
         )
