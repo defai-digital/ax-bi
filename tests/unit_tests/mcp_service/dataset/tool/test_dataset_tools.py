@@ -25,6 +25,7 @@ import fastmcp
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
+from flask import current_app
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.dataset.schemas import (
@@ -204,7 +205,7 @@ def allow_data_model_metadata():
 
 @patch("superset.daos.dataset.DatasetDAO.list")
 @pytest.mark.asyncio
-async def test_list_datasets_basic(mock_list, mcp_server):
+async def test_list_datasets_basic(mock_list, mcp_server, app_context: None):
     """Test basic dataset listing functionality.
 
     Note: Dataset tests use json.loads(result.content[0].text) pattern
@@ -212,6 +213,8 @@ async def test_list_datasets_basic(mock_list, mcp_server):
     use result.data directly. This is intentional based on how the
     dataset tool responses are structured.
     """
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
     dataset = MagicMock()
     dataset.id = 1
     dataset.table_name = "Test DatasetInfo"
@@ -314,6 +317,13 @@ async def test_list_datasets_basic(mock_list, mcp_server):
         # Verify changed_on_humanized is in default columns
         assert "changed_on_humanized" in data["columns_requested"]
         assert "changed_on_humanized" in data["columns_loaded"]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_datasets.success"
+    )
+    stats_logger.timing.assert_called_once()
+    assert stats_logger.timing.call_args.args[0] == (
+        "runtime_modernization.mcp_orchestration.list_datasets.duration"
+    )
 
 
 @patch("superset.daos.dataset.DatasetDAO.list")
