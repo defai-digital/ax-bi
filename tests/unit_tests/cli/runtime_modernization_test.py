@@ -110,6 +110,36 @@ def test_runtime_modernization_ax_services_health_outputs_json(
     client.health.assert_called_once_with(request_id=None)
 
 
+def test_runtime_modernization_ax_services_metadata_outputs_json(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """AX services CLI can emit machine-readable metadata probe output."""
+
+    client = mocker.patch(
+        "superset.cli.runtime_modernization.AxServicesClient"
+    ).return_value
+    client.metadata.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={"dependencies": {"supersetMetadata": {"ok": True}}},
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["ax-services", "--check", "metadata", "--format", "json"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "error": None,
+        "ok": True,
+        "payload": {"dependencies": {"supersetMetadata": {"ok": True}}},
+        "status_code": 200,
+    }
+    client.metadata.assert_called_once_with(request_id=None)
+
+
 def test_runtime_modernization_ax_services_metrics_outputs_json(
     mocker: MockerFixture,
     app_context: None,

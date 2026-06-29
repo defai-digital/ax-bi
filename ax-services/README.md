@@ -44,6 +44,7 @@ Environment variables:
 | `AX_SERVICES_PORT` | `5010` | Port for the service listener. |
 | `AX_SUPERSET_BASE_URL` | `http://127.0.0.1:8088` | Superset base URL used by readiness checks and future internal clients. |
 | `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
+| `AX_SUPERSET_METADATA_PATH` | `/api/v1/dashboard/_info` | Safe Superset REST metadata endpoint used by the sidecar metadata probe. |
 | `AX_SUPERSET_PERMISSION_PATH` | `/api/v1/security/permissions/check` | Superset permission delegation path for future data-bearing workflows. |
 | `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
 | `AX_SUPERSET_INTERNAL_TOKEN` | unset | Optional bearer token for internal Superset calls. |
@@ -57,6 +58,7 @@ The service exposes versioned runtime responses with
 Current endpoints:
 
 - `GET /health`
+- `GET /metadata`
 - `GET /ready`
 - `GET /metrics`
 

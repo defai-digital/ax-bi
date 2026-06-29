@@ -107,6 +107,26 @@ def test_ready_returns_unready_response_payload() -> None:
     assert result.payload == {"status": "not_ready"}
 
 
+def test_metadata_calls_ax_services_metadata_endpoint() -> None:
+    """Metadata requests use the sidecar Superset metadata probe endpoint."""
+
+    session = MagicMock()
+    session.get.return_value = make_response(
+        payload={"dependencies": {"supersetMetadata": {"ok": True}}}
+    )
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.metadata(request_id="request-metadata")
+
+    assert result.ok is True
+    assert result.payload == {"dependencies": {"supersetMetadata": {"ok": True}}}
+    session.get.assert_called_once_with(
+        "http://127.0.0.1:5010/metadata",
+        headers={"x-request-id": "request-metadata"},
+        timeout=2.0,
+    )
+
+
 def test_metrics_calls_ax_services_metrics_endpoint() -> None:
     """Metrics requests use the sidecar runtime metrics endpoint."""
 

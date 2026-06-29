@@ -27,6 +27,7 @@ test('buildConfig returns service defaults', () => {
   expect(config.port).toBe(5010);
   expect(config.supersetBaseUrl).toBe('http://127.0.0.1:8088');
   expect(config.supersetHealthPath).toBe('/health');
+  expect(config.supersetMetadataPath).toBe('/api/v1/dashboard/_info');
   expect(config.supersetPermissionPath).toBe(
     '/api/v1/security/permissions/check',
   );
@@ -41,6 +42,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SERVICES_PORT: '6010',
     AX_SUPERSET_BASE_URL: 'https://superset.example.test/',
     AX_SUPERSET_HEALTH_PATH: 'healthz',
+    AX_SUPERSET_METADATA_PATH: 'api/v1/chart/_info',
     AX_SUPERSET_PERMISSION_PATH: 'permissions/check',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
@@ -51,6 +53,7 @@ test('buildConfig reads environment overrides', () => {
   expect(config.port).toBe(6010);
   expect(config.supersetBaseUrl).toBe('https://superset.example.test');
   expect(config.supersetHealthPath).toBe('/healthz');
+  expect(config.supersetMetadataPath).toBe('/api/v1/chart/_info');
   expect(config.supersetPermissionPath).toBe('/permissions/check');
   expect(config.supersetTimeoutMs).toBe(1500);
   expect(config.supersetInternalToken).toBe('token-123');

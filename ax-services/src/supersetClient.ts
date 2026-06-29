@@ -30,16 +30,29 @@ export interface DependencyHealth {
   error?: string;
 }
 
+export interface DependencyMetadata extends DependencyHealth {
+  keyCount?: number;
+  keys?: string[];
+}
+
 export interface SupersetHealthClient {
   checkHealth(correlationId?: string): Promise<DependencyHealth>;
 }
 
-export class SupersetClient implements SupersetHealthClient {
+export interface SupersetMetadataClient {
+  probeMetadata(correlationId?: string): Promise<DependencyMetadata>;
+}
+
+export class SupersetClient
+  implements SupersetHealthClient, SupersetMetadataClient
+{
   private readonly healthUrl: string;
+  private readonly metadataUrl: string;
   private readonly permissionUrl: string;
 
   constructor(private readonly config: ServiceConfig) {
     this.healthUrl = `${config.supersetBaseUrl}${config.supersetHealthPath}`;
+    this.metadataUrl = `${config.supersetBaseUrl}${config.supersetMetadataPath}`;
     this.permissionUrl = `${config.supersetBaseUrl}${config.supersetPermissionPath}`;
   }
 
@@ -85,6 +98,31 @@ export class SupersetClient implements SupersetHealthClient {
     }
   }
 
+  async probeMetadata(correlationId?: string): Promise<DependencyMetadata> {
+    try {
+      const response = await fetch(this.metadataUrl, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+      const payload = (await response.json()) as unknown;
+      const keys = extractObjectKeys(payload);
+
+      return {
+        ok: response.ok,
+        statusCode: response.status,
+        url: this.metadataUrl,
+        keyCount: keys.length,
+        keys,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        url: this.metadataUrl,
+      };
+    }
+  }
+
   async checkPermission(
     request: PermissionCheckRequest,
     correlationId?: string,
@@ -112,4 +150,12 @@ export class SupersetClient implements SupersetHealthClient {
       };
     }
   }
+}
+
+function extractObjectKeys(payload: unknown): string[] {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return [];
+  }
+
+  return Object.keys(payload).sort();
 }

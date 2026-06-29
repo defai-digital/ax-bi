@@ -20,23 +20,53 @@ import { expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
 import { buildServer } from '../src/server';
-import { SupersetHealthClient } from '../src/supersetClient';
+import {
+  DependencyHealth,
+  DependencyMetadata,
+  SupersetHealthClient,
+  SupersetMetadataClient,
+} from '../src/supersetClient';
 
 const config = {
   ...buildConfig({}),
   logLevel: 'silent',
 };
 
-test('health endpoint returns service metadata', async () => {
-  const server = buildServer(config, {
-    async checkHealth() {
-      return {
-        ok: true,
-        statusCode: 200,
-        url: 'http://127.0.0.1:8088/health',
-      };
+function makeSupersetClient({
+  health = {
+    ok: true,
+    statusCode: 200,
+    url: 'http://127.0.0.1:8088/health',
+  },
+  metadata = {
+    ok: true,
+    statusCode: 200,
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    keyCount: 2,
+    keys: ['permissions', 'result'],
+  },
+  onHealth,
+  onMetadata,
+}: {
+  health?: DependencyHealth;
+  metadata?: DependencyMetadata;
+  onHealth?: (correlationId?: string) => void;
+  onMetadata?: (correlationId?: string) => void;
+} = {}): SupersetHealthClient & SupersetMetadataClient {
+  return {
+    async checkHealth(correlationId) {
+      onHealth?.(correlationId);
+      return health;
     },
-  } as SupersetHealthClient);
+    async probeMetadata(correlationId) {
+      onMetadata?.(correlationId);
+      return metadata;
+    },
+  };
+}
+
+test('health endpoint returns service metadata', async () => {
+  const server = buildServer(config, makeSupersetClient());
 
   const response = await server.inject({
     method: 'GET',
@@ -54,18 +84,16 @@ test('health endpoint returns service metadata', async () => {
 
 test('ready endpoint returns ok when Superset is reachable', async () => {
   const seenRequestIds: string[] = [];
-  const server = buildServer(config, {
-    async checkHealth(correlationId) {
-      if (correlationId) {
-        seenRequestIds.push(correlationId);
-      }
-      return {
-        ok: true,
-        statusCode: 200,
-        url: 'http://127.0.0.1:8088/health',
-      };
-    },
-  } as SupersetHealthClient);
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onHealth(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
 
   const response = await server.inject({
     method: 'GET',
@@ -93,15 +121,16 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
 });
 
 test('ready endpoint returns unavailable when Superset is unreachable', async () => {
-  const server = buildServer(config, {
-    async checkHealth() {
-      return {
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      health: {
         ok: false,
         error: 'connect ECONNREFUSED',
         url: 'http://127.0.0.1:8088/health',
-      };
-    },
-  } as SupersetHealthClient);
+      },
+    }),
+  );
 
   const response = await server.inject({
     method: 'GET',
@@ -123,16 +152,96 @@ test('ready endpoint returns unavailable when Superset is unreachable', async ()
   });
 });
 
+test('metadata endpoint returns sanitized Superset metadata probe', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      metadata: {
+        ok: true,
+        statusCode: 200,
+        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        keyCount: 3,
+        keys: ['edit_columns', 'permissions', 'result'],
+      },
+      onMetadata(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/metadata',
+    headers: {
+      'x-request-id': 'request-metadata',
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-metadata');
+  expect(seenRequestIds).toEqual(['request-metadata']);
+  expect(response.json()).toEqual({
+    contractVersion: 'runtime.v1',
+    service: 'ax-services',
+    status: 'ok',
+    dependencies: {
+      supersetMetadata: {
+        ok: true,
+        statusCode: 200,
+        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        keyCount: 3,
+        keys: ['edit_columns', 'permissions', 'result'],
+      },
+    },
+  });
+});
+
+test('metadata endpoint returns unavailable when Superset metadata is unreachable', async () => {
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      metadata: {
+        ok: false,
+        error: 'metadata timeout',
+        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/metadata',
+  });
+
+  expect(response.statusCode).toBe(503);
+  expect(response.json()).toEqual({
+    contractVersion: 'runtime.v1',
+    service: 'ax-services',
+    status: 'not_ready',
+    dependencies: {
+      supersetMetadata: {
+        ok: false,
+        error: 'metadata timeout',
+        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+      },
+    },
+  });
+});
+
 test('metrics endpoint returns request counters by route', async () => {
-  const server = buildServer(config, {
-    async checkHealth() {
-      return {
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      health: {
         ok: false,
         error: 'connect ECONNREFUSED',
         url: 'http://127.0.0.1:8088/health',
-      };
-    },
-  } as SupersetHealthClient);
+      },
+    }),
+  );
 
   await server.inject({
     method: 'GET',

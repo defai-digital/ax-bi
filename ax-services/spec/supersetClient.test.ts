@@ -146,6 +146,61 @@ test('checkPermission fails closed when Superset cannot be reached', async () =>
   });
 });
 
+test('probeMetadata returns sanitized Superset metadata summary', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json(
+      {
+        permissions: ['can_read'],
+        result: {
+          add_columns: ['dashboard_title'],
+        },
+        edit_columns: ['slug'],
+      },
+      { status: 200 },
+    );
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+      AX_SUPERSET_METADATA_PATH: '/api/v1/dashboard/_info',
+    }),
+  );
+
+  const result = await client.probeMetadata('request-abc');
+
+  expect(result).toEqual({
+    ok: true,
+    statusCode: 200,
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    keyCount: 3,
+    keys: ['edit_columns', 'permissions', 'result'],
+  });
+  expect(seenInput).toBe('http://127.0.0.1:8088/api/v1/dashboard/_info');
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-abc',
+  });
+});
+
+test('probeMetadata returns an error result when fetch fails', async () => {
+  global.fetch = async () => {
+    throw new Error('metadata failed');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.probeMetadata();
+
+  expect(result).toEqual({
+    ok: false,
+    error: 'metadata failed',
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+  });
+});
+
 test('checkHealth returns an error result when fetch fails', async () => {
   global.fetch = async () => {
     throw new Error('connect failed');

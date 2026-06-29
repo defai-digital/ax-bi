@@ -132,7 +132,7 @@ def inventory(output_format: str, disposition: str | None) -> None:
 @runtime_modernization.command("ax-services")
 @click.option(
     "--check",
-    type=click.Choice(("health", "metrics", "ready")),
+    type=click.Choice(("health", "metadata", "metrics", "ready")),
     default="ready",
     show_default=True,
     help="Sidecar endpoint to check.",
@@ -153,6 +153,8 @@ def ax_services(check: str, output_format: str, request_id: str | None) -> None:
     client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
     if check == "health":
         response = client.health(request_id=request_id)
+    elif check == "metadata":
+        response = client.metadata(request_id=request_id)
     elif check == "metrics":
         response = client.metrics(request_id=request_id)
     else:

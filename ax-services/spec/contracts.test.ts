@@ -25,6 +25,7 @@ import {
 } from '../src/contracts/authorization';
 import {
   healthResponseSchema,
+  metadataResponseSchema,
   metricsResponseSchema,
   readinessResponseSchema,
   RUNTIME_CONTRACT_VERSION,
@@ -77,6 +78,19 @@ test('metrics response schema is registered in runtime contracts', () => {
         maxDurationMs: { type: 'number' },
       },
     },
+  });
+});
+
+test('metadata response schema is registered in runtime contracts', () => {
+  expect(runtimeContractSchemas.metadataResponseSchema).toBe(
+    metadataResponseSchema,
+  );
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.keys,
+  ).toEqual({
+    type: 'array',
+    items: { type: 'string' },
   });
 });
 

@@ -25,6 +25,11 @@ export interface DependencyHealthContract {
   error?: string;
 }
 
+export interface DependencyMetadataContract extends DependencyHealthContract {
+  keyCount?: number;
+  keys?: string[];
+}
+
 export interface HealthResponseContract {
   contractVersion: typeof RUNTIME_CONTRACT_VERSION;
   service: 'ax-services';
@@ -61,6 +66,15 @@ export interface MetricsResponseContract {
   };
 }
 
+export interface MetadataResponseContract {
+  contractVersion: typeof RUNTIME_CONTRACT_VERSION;
+  service: 'ax-services';
+  status: 'ok' | 'not_ready';
+  dependencies: {
+    supersetMetadata: DependencyMetadataContract;
+  };
+}
+
 const dependencyHealthSchema = {
   type: 'object',
   required: ['ok', 'url'],
@@ -69,6 +83,23 @@ const dependencyHealthSchema = {
     ok: { type: 'boolean' },
     url: { type: 'string' },
     statusCode: { type: 'number' },
+    error: { type: 'string' },
+  },
+} as const;
+
+const dependencyMetadataSchema = {
+  type: 'object',
+  required: ['ok', 'url'],
+  additionalProperties: false,
+  properties: {
+    ok: { type: 'boolean' },
+    url: { type: 'string' },
+    statusCode: { type: 'number' },
+    keyCount: { type: 'number' },
+    keys: {
+      type: 'array',
+      items: { type: 'string' },
+    },
     error: { type: 'string' },
   },
 } as const;
@@ -151,8 +182,29 @@ export const metricsResponseSchema = {
   },
 } as const;
 
+export const metadataResponseSchema = {
+  $id: 'ax-services.metadata.v1.response',
+  type: 'object',
+  required: ['contractVersion', 'service', 'status', 'dependencies'],
+  additionalProperties: false,
+  properties: {
+    contractVersion: { const: RUNTIME_CONTRACT_VERSION },
+    service: { const: 'ax-services' },
+    status: { enum: ['ok', 'not_ready'] },
+    dependencies: {
+      type: 'object',
+      required: ['supersetMetadata'],
+      additionalProperties: false,
+      properties: {
+        supersetMetadata: dependencyMetadataSchema,
+      },
+    },
+  },
+} as const;
+
 export const runtimeContractSchemas = {
   healthResponseSchema,
+  metadataResponseSchema,
   metricsResponseSchema,
   readinessResponseSchema,
 } as const;

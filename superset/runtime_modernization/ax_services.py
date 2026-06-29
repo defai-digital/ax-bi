@@ -85,6 +85,11 @@ class AxServicesClient:
 
         return self.get_json("/ready", request_id=request_id)
 
+    def metadata(self, request_id: str | None = None) -> AxServicesResponse:
+        """Call the sidecar Superset metadata probe endpoint."""
+
+        return self.get_json("/metadata", request_id=request_id)
+
     def metrics(self, request_id: str | None = None) -> AxServicesResponse:
         """Call the sidecar metrics endpoint."""
 

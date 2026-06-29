@@ -20,6 +20,71 @@
       }
     }
   },
+  "metadataResponseSchema": {
+    "$id": "ax-services.metadata.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "service",
+      "status",
+      "dependencies"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "runtime.v1"
+      },
+      "service": {
+        "const": "ax-services"
+      },
+      "status": {
+        "enum": [
+          "ok",
+          "not_ready"
+        ]
+      },
+      "dependencies": {
+        "type": "object",
+        "required": [
+          "supersetMetadata"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "supersetMetadata": {
+            "type": "object",
+            "required": [
+              "ok",
+              "url"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "string"
+              },
+              "statusCode": {
+                "type": "number"
+              },
+              "keyCount": {
+                "type": "number"
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "metricsResponseSchema": {
     "$id": "ax-services.metrics.v1.response",
     "type": "object",

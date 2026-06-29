@@ -24,6 +24,8 @@ import { ServiceConfig } from './config';
 import {
   HealthResponseContract,
   healthResponseSchema,
+  MetadataResponseContract,
+  metadataResponseSchema,
   MetricsResponseContract,
   metricsResponseSchema,
   ReadinessResponseContract,
@@ -31,11 +33,14 @@ import {
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
 import { ServiceMetrics } from './metrics';
-import { SupersetHealthClient } from './supersetClient';
+import {
+  SupersetHealthClient,
+  SupersetMetadataClient,
+} from './supersetClient';
 
 export function buildServer(
   config: ServiceConfig,
-  supersetClient: SupersetHealthClient,
+  supersetClient: SupersetHealthClient & SupersetMetadataClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const server = Fastify({
@@ -94,6 +99,31 @@ export function buildServer(
         status: ready ? 'ready' : 'not_ready',
         dependencies: {
           superset,
+        },
+      });
+    },
+  );
+
+  server.get(
+    '/metadata',
+    {
+      schema: {
+        response: {
+          200: metadataResponseSchema,
+          503: metadataResponseSchema,
+        },
+      },
+    },
+    async (request, reply): Promise<MetadataResponseContract> => {
+      const supersetMetadata = await supersetClient.probeMetadata(request.id);
+      const ready = supersetMetadata.ok;
+
+      return reply.status(ready ? 200 : 503).send({
+        contractVersion: RUNTIME_CONTRACT_VERSION,
+        service: 'ax-services',
+        status: ready ? 'ok' : 'not_ready',
+        dependencies: {
+          supersetMetadata,
         },
       });
     },
