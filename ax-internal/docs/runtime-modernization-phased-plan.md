@@ -241,9 +241,10 @@ product-specific and contract-oriented.
   integration. CI checks cover Rust format, clippy, tests, maturin wheel
   builds, extension installation, and a SQL kernel benchmark artifact uploaded
   as `sql-kernel-benchmark`.
-- The Rust benchmark artifact records output compatibility, Python/Rust
-  durations, operations per second, and optional speedup gates. Production
-  rollout criteria still need to be completed before this phase is complete.
+- The Rust benchmark artifact records schema version, kernel name, iteration
+  count, output compatibility, Python/Rust durations, operations per second,
+  and optional speedup gates. Production rollout criteria still need to be
+  completed before this phase is complete.
 
 ## Phase 5: Expand Runtime Split Selectively
 
@@ -280,7 +281,8 @@ product-specific and contract-oriented.
   environment-sensitive.
 - The Rust workflow uploads a dedicated `sql-kernel-benchmark` artifact after
   installing the built extension wheel, giving release candidates direct
-  evidence that the PyO3 module imports and matches the Python baseline.
+  evidence that the PyO3 module imports, names the benchmarked kernel, runs
+  positive iterations, and matches the Python baseline.
 - `superset runtime-modernization rollout-manifest` emits the serving flags,
   sidecar routes, Python metrics, sidecar metrics, and rollout gates for each
   migrated MCP workflow so operator dashboards can be generated from a stable

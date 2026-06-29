@@ -59,6 +59,21 @@ def _production_flag_state(workflows: tuple[RolloutWorkflow, ...]) -> dict[str, 
     }
 
 
+def _rust_kernel_benchmark() -> dict[str, object]:
+    """Build passing Rust kernel benchmark evidence for rollout tests."""
+
+    return {
+        "schema_version": 1,
+        "status": "passed",
+        "kernel": "sql_whitespace_kernel",
+        "iterations": 3,
+        "output_matched": True,
+        "target_checks": {
+            "speedup_met": None,
+        },
+    }
+
+
 def _complete_production_evidence() -> dict[str, object]:
     """Build complete production evidence for audit tests."""
 
@@ -76,13 +91,7 @@ def _complete_production_evidence() -> dict[str, object]:
                     "rust_kernel_speedup_met": None,
                 },
             },
-            "rust_kernel_benchmark": {
-                "status": "passed",
-                "output_matched": True,
-                "target_checks": {
-                    "speedup_met": None,
-                },
-            },
+            "rust_kernel_benchmark": _rust_kernel_benchmark(),
             "rust_kernel_rollout_decision": {
                 "kernel": "ax_sql.normalize_sql_whitespace",
                 "decision": "rejected",
@@ -361,13 +370,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                         "rust_kernel_speedup_met": None,
                     },
                 },
-                "rust_kernel_benchmark": {
-                    "status": "passed",
-                    "output_matched": True,
-                    "target_checks": {
-                        "speedup_met": None,
-                    },
-                },
+                "rust_kernel_benchmark": _rust_kernel_benchmark(),
                 "rust_kernel_rollout_decision": {
                     "kernel": "ax_sql.normalize_sql_whitespace",
                     "decision": "served",
@@ -453,10 +456,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                 "compatibility_report": {
                     "status": "passed",
                 },
-                "rust_kernel_benchmark": {
-                    "status": "passed",
-                    "output_matched": True,
-                },
+                "rust_kernel_benchmark": _rust_kernel_benchmark(),
                 "rust_kernel_rollout_decision": {
                     "kernel": "ax_sql.normalize_sql_whitespace",
                     "decision": "rejected",
@@ -769,6 +769,16 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         ]
         == "0 mismatches during the evaluation window"
     )
+    assert template["artifacts"]["rust_kernel_benchmark"] == {
+        "schema_version": 1,
+        "status": "passed",
+        "kernel": "sql_whitespace_kernel",
+        "iterations": 0,
+        "output_matched": True,
+        "target_checks": {
+            "speedup_met": None,
+        },
+    }
     assert template["artifacts"]["rust_kernel_rollout_decision"] == {
         "kernel": "ax_sql.normalize_sql_whitespace",
         "decision": "",
@@ -1050,6 +1060,28 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert checks["rust_kernel_benchmark"]["passed"] is False
     assert checks["rust_kernel_rollout_decision"]["passed"] is False
     assert checks["production_flag_state"]["passed"] is False
+
+
+def test_validate_production_evidence_requires_rust_benchmark_identity() -> None:
+    """Rust benchmark evidence must name the benchmarked kernel and iterations."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": {
+                "rust_kernel_benchmark": {
+                    "status": "passed",
+                    "output_matched": True,
+                },
+            },
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["rust_kernel_benchmark"]["passed"] is False
+    assert "malformed" in checks["rust_kernel_benchmark"]["message"]
 
 
 def test_validate_production_evidence_requires_supported_bundle_schema() -> None:

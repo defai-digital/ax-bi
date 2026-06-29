@@ -334,7 +334,10 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
             "Rust PyO3 extension import, output compatibility, and speed "
             "measurement evidence."
         ),
-        validation="status is passed and output_matched is true",
+        validation=(
+            "schema_version is 1, kernel is named, iterations are positive, "
+            "status is passed, and output_matched is true"
+        ),
     ),
     RolloutEvidenceRequirement(
         name="rust_kernel_rollout_decision",
@@ -448,7 +451,10 @@ def build_production_evidence_template(
                 },
             },
             "rust_kernel_benchmark": {
+                "schema_version": 1,
                 "status": "passed",
+                "kernel": "sql_whitespace_kernel",
+                "iterations": 0,
                 "output_matched": True,
                 "target_checks": {
                     "speedup_met": None,
@@ -713,6 +719,26 @@ def _target_checks_passed(artifact: Mapping[str, Any]) -> bool:
     return all(value is not False for value in target_checks.values())
 
 
+def _positive_integer(value: Any) -> bool:
+    """Return whether a value is a positive integer."""
+
+    return isinstance(value, int) and value > 0
+
+
+def _rust_benchmark_passed(artifact: Mapping[str, Any] | None) -> bool:
+    """Return whether Rust benchmark evidence satisfies Phase 4 and 5."""
+
+    return (
+        artifact is not None
+        and artifact.get("schema_version") == 1
+        and _non_empty_string(artifact.get("kernel"))
+        and _positive_integer(artifact.get("iterations"))
+        and artifact.get("status") == "passed"
+        and artifact.get("output_matched") is True
+        and _target_checks_passed(artifact)
+    )
+
+
 def _workflow_records_by_name(
     artifact: Mapping[str, Any],
 ) -> dict[str, Mapping[str, Any]]:
@@ -873,12 +899,7 @@ def validate_production_evidence(
     )
 
     rust_benchmark = _artifact_mapping(artifacts, "rust_kernel_benchmark")
-    rust_passed = (
-        rust_benchmark is not None
-        and rust_benchmark.get("status") == "passed"
-        and rust_benchmark.get("output_matched") is True
-        and _target_checks_passed(rust_benchmark)
-    )
+    rust_passed = _rust_benchmark_passed(rust_benchmark)
     checks.append(
         ProductionEvidenceCheck(
             name="rust_kernel_benchmark",
@@ -886,7 +907,10 @@ def validate_production_evidence(
             message=(
                 "Rust kernel benchmark passed"
                 if rust_passed
-                else "Rust kernel benchmark is missing, failed, or incompatible"
+                else (
+                    "Rust kernel benchmark is missing, malformed, failed, or "
+                    "incompatible"
+                )
             ),
         )
     )

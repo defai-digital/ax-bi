@@ -46,7 +46,10 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                         },
                     },
                     "rust_kernel_benchmark": {
+                        "schema_version": 1,
                         "status": "passed",
+                        "kernel": "sql_whitespace_kernel",
+                        "iterations": 3,
                         "output_matched": True,
                         "target_checks": {
                             "speedup_met": None,
@@ -325,6 +328,16 @@ def test_runtime_modernization_production_evidence_template_outputs_json() -> No
     assert (
         payload["artifacts"]["operator_dashboard_snapshot"]["measurement_window"] == ""
     )
+    assert payload["artifacts"]["rust_kernel_benchmark"] == {
+        "schema_version": 1,
+        "status": "passed",
+        "kernel": "sql_whitespace_kernel",
+        "iterations": 0,
+        "output_matched": True,
+        "target_checks": {
+            "speedup_met": None,
+        },
+    }
     assert "rust_kernel_rollout_decision" in payload["artifacts"]
     assert payload["artifacts"]["operator_approval"]["approved"] is False
     assert payload["artifacts"]["operator_approval"]["migration_decision"] == ""
@@ -934,7 +947,10 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
     rust_benchmark.write_text(
         json.dumps(
             {
+                "schema_version": 1,
                 "status": "passed",
+                "kernel": "sql_whitespace_kernel",
+                "iterations": 3,
                 "output_matched": True,
                 "target_checks": {
                     "speedup_met": None,
@@ -1129,7 +1145,10 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                         },
                     },
                     "rust_kernel_benchmark": {
+                        "schema_version": 1,
                         "status": "passed",
+                        "kernel": "sql_whitespace_kernel",
+                        "iterations": 3,
                         "output_matched": True,
                         "target_checks": {
                             "speedup_met": None,
