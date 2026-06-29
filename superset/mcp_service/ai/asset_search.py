@@ -38,6 +38,7 @@ from superset.runtime_modernization.ax_services import (
     AxServicesConfig,
     AxServicesResponse,
 )
+from superset.runtime_modernization.measurement import runtime_metric_key
 from superset.runtime_modernization.shadow import execute_with_shadow
 
 logger = logging.getLogger(__name__)
@@ -304,6 +305,16 @@ def _asset_search_shadow_enabled() -> bool:
     )
 
 
+def _asset_search_serving_enabled() -> bool:
+    """Return whether asset search should serve from ax-services."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("TS_MCP_ORCHESTRATION")
+        and is_feature_enabled("TS_ASSET_SEARCH_SERVING")
+    )
+
+
 def _ax_services_asset_search_candidate(
     query: str,
     asset_types: list[str] | None,
@@ -322,6 +333,68 @@ def _ax_services_asset_search_candidate(
             "limit": limit,
         }
     )
+
+
+def _is_string_list(value: object) -> bool:
+    """Return whether value is a list of strings."""
+
+    return isinstance(value, list) and all(isinstance(item, str) for item in value)
+
+
+def _asset_results_from_ax_services_response(
+    response: AxServicesResponse,
+) -> list[AssetResult] | None:
+    """Convert a TypeScript sidecar asset-search response into Python schemas."""
+
+    if not response.ok or not response.payload:
+        return None
+
+    assets = response.payload.get("assets")
+    if not isinstance(assets, list):
+        return None
+
+    results: list[AssetResult] = []
+    for asset in assets:
+        if not isinstance(asset, dict):
+            return None
+
+        asset_type = asset.get("assetType")
+        asset_id = asset.get("id")
+        name = asset.get("name")
+        if not isinstance(asset_type, str) or not isinstance(asset_id, int):
+            return None
+        if not isinstance(name, str):
+            return None
+
+        owners = asset.get("owners", [])
+        tags = asset.get("tags", [])
+        if not _is_string_list(owners) or not _is_string_list(tags):
+            return None
+
+        relevance_score = asset.get("relevanceScore")
+        results.append(
+            AssetResult(
+                asset_type=asset_type,
+                id=asset_id,
+                uuid=asset.get("uuid") if isinstance(asset.get("uuid"), str) else "",
+                name=name,
+                description=asset.get("description")
+                if isinstance(asset.get("description"), str)
+                else "",
+                certified=asset.get("certified") is True,
+                relevance_score=relevance_score
+                if isinstance(relevance_score, (int, float))
+                and not isinstance(relevance_score, bool)
+                else None,
+                relevance_reason=asset.get("relevanceReason")
+                if isinstance(asset.get("relevanceReason"), str)
+                else None,
+                owners=owners,
+                tags=tags,
+            )
+        )
+
+    return results
 
 
 def _asset_search_shadow_matches(
@@ -351,6 +424,15 @@ def _asset_search_shadow_matches(
     return authoritative_keys == candidate_keys
 
 
+def _record_asset_search_metric(metric: str) -> None:
+    """Record an asset-search migration metric when Flask context is available."""
+
+    if has_app_context():
+        current_app.config["STATS_LOGGER"].incr(
+            runtime_metric_key("mcp_orchestration", "search_assets", metric)
+        )
+
+
 def search_assets(
     query: str,
     asset_types: list[str] | None = None,
@@ -360,6 +442,26 @@ def search_assets(
     """Search business assets with optional TypeScript shadow execution."""
 
     if not has_app_context():
+        return _search_assets_python(
+            query,
+            asset_types=asset_types,
+            include_certified_only=include_certified_only,
+            limit=limit,
+        )
+
+    if _asset_search_serving_enabled():
+        candidate_response = _ax_services_asset_search_candidate(
+            query,
+            asset_types,
+            include_certified_only,
+            limit,
+        )
+        candidate_assets = _asset_results_from_ax_services_response(candidate_response)
+        if candidate_assets is not None:
+            _record_asset_search_metric("served_candidate")
+            return candidate_assets
+
+        _record_asset_search_metric("fallback")
         return _search_assets_python(
             query,
             asset_types=asset_types,

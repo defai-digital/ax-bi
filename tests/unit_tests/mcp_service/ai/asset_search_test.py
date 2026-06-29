@@ -331,3 +331,111 @@ def test_search_assets_shadows_ax_services_when_enabled(
     stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.search_assets.shadow_match"
     )
+
+
+def test_search_assets_serves_ax_services_when_serving_enabled(
+    app_context: None,
+    mocker,
+) -> None:
+    """Serving flag returns TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    python_search = mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_python"
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.ai.asset_search.AxServicesClient"
+    ).return_value
+    ax_services_client.asset_search.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={
+            "assets": [
+                {
+                    "assetType": "dataset",
+                    "id": 7,
+                    "uuid": "dataset-uuid",
+                    "name": "sales_fact",
+                    "description": "Sales facts",
+                    "certified": True,
+                    "relevanceScore": 1.2,
+                    "relevanceReason": "name matches 'sales'",
+                    "owners": ["owner"],
+                    "tags": ["finance"],
+                }
+            ],
+            "warnings": [],
+        },
+    )
+
+    results = search_assets("sales", asset_types=["dataset"], limit=5)
+
+    python_search.assert_not_called()
+    assert len(results) == 1
+    assert results[0].asset_type == "dataset"
+    assert results[0].id == 7
+    assert results[0].name == "sales_fact"
+    assert results[0].certified is True
+    assert results[0].owners == ["owner"]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.search_assets.served_candidate"
+    )
+
+
+def test_search_assets_serving_falls_back_to_python_on_invalid_candidate(
+    app_context: None,
+    mocker,
+) -> None:
+    """Serving flag falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    python_results = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="dataset-uuid",
+            name="sales_fact",
+            description="",
+            certified=False,
+            relevance_score=1.0,
+            owners=[],
+            tags=[],
+        )
+    ]
+    python_search = mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_python",
+        return_value=python_results,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag
+        in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
+    )
+    ax_services_client = mocker.patch(
+        "superset.mcp_service.ai.asset_search.AxServicesClient"
+    ).return_value
+    ax_services_client.asset_search.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={"assets": [{"assetType": "dataset"}]},
+    )
+
+    results = search_assets("sales", asset_types=["dataset"], limit=5)
+
+    assert results == python_results
+    python_search.assert_called_once_with(
+        "sales",
+        asset_types=["dataset"],
+        include_certified_only=False,
+        limit=5,
+    )
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.search_assets.fallback"
+    )

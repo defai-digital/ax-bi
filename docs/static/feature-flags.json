@@ -160,6 +160,12 @@
         "description": "Enables the tagging system for organizing assets"
       },
       {
+        "name": "TS_ASSET_SEARCH_SERVING",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Serve MCP asset search from the TypeScript sidecar with Python fallback."
+      },
+      {
         "name": "TS_MCP_ORCHESTRATION",
         "default": false,
         "lifecycle": "development",
