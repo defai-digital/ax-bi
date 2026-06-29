@@ -188,6 +188,7 @@ class QueryContextProcessor:
                         ),
                     ]
                     for idx, metric_name in enumerate(query_obj.metric_names)
+                    if query_obj and query_obj.metrics
                 }
             )
         cache.df.columns = [unescape_separator(col) for col in cache.df.columns.values]
