@@ -110,6 +110,36 @@ def test_runtime_modernization_ax_services_health_outputs_json(
     client.health.assert_called_once_with(request_id=None)
 
 
+def test_runtime_modernization_ax_services_metrics_outputs_json(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """AX services CLI can emit machine-readable metrics output."""
+
+    client = mocker.patch(
+        "superset.cli.runtime_modernization.AxServicesClient"
+    ).return_value
+    client.metrics.return_value = AxServicesResponse(
+        ok=True,
+        status_code=200,
+        payload={"requests": {"total": 2, "errorCount": 0}},
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["ax-services", "--check", "metrics", "--format", "json"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "error": None,
+        "ok": True,
+        "payload": {"requests": {"total": 2, "errorCount": 0}},
+        "status_code": 200,
+    }
+    client.metrics.assert_called_once_with(request_id=None)
+
+
 def test_runtime_modernization_ax_services_failure_exits_nonzero(
     mocker: MockerFixture,
     app_context: None,

@@ -132,7 +132,7 @@ def inventory(output_format: str, disposition: str | None) -> None:
 @runtime_modernization.command("ax-services")
 @click.option(
     "--check",
-    type=click.Choice(("health", "ready")),
+    type=click.Choice(("health", "metrics", "ready")),
     default="ready",
     show_default=True,
     help="Sidecar endpoint to check.",
@@ -148,14 +148,15 @@ def inventory(output_format: str, disposition: str | None) -> None:
 @click.option("--request-id", help="Optional request ID to forward.")
 @with_appcontext
 def ax_services(check: str, output_format: str, request_id: str | None) -> None:
-    """Check AX services sidecar health or readiness."""
+    """Check AX services sidecar runtime endpoints."""
 
     client = AxServicesClient(AxServicesConfig.from_mapping(current_app.config))
-    response = (
-        client.health(request_id=request_id)
-        if check == "health"
-        else client.ready(request_id=request_id)
-    )
+    if check == "health":
+        response = client.health(request_id=request_id)
+    elif check == "metrics":
+        response = client.metrics(request_id=request_id)
+    else:
+        response = client.ready(request_id=request_id)
 
     if output_format == "json":
         click.echo(json.dumps(_response_to_dict(response), sort_keys=True, indent=2))

@@ -107,6 +107,24 @@ def test_ready_returns_unready_response_payload() -> None:
     assert result.payload == {"status": "not_ready"}
 
 
+def test_metrics_calls_ax_services_metrics_endpoint() -> None:
+    """Metrics requests use the sidecar runtime metrics endpoint."""
+
+    session = MagicMock()
+    session.get.return_value = make_response(payload={"requests": {"total": 3}})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.metrics(request_id="request-metrics")
+
+    assert result.ok is True
+    assert result.payload == {"requests": {"total": 3}}
+    session.get.assert_called_once_with(
+        "http://127.0.0.1:5010/metrics",
+        headers={"x-request-id": "request-metrics"},
+        timeout=2.0,
+    )
+
+
 def test_post_json_sends_payload() -> None:
     """POST helpers send JSON payloads to future sidecar candidate paths."""
 

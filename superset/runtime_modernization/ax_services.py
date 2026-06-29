@@ -85,6 +85,11 @@ class AxServicesClient:
 
         return self.get_json("/ready", request_id=request_id)
 
+    def metrics(self, request_id: str | None = None) -> AxServicesResponse:
+        """Call the sidecar metrics endpoint."""
+
+        return self.get_json("/metrics", request_id=request_id)
+
     def get_json(
         self,
         path: str,
