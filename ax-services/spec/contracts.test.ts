@@ -19,6 +19,11 @@
 import { expect, test } from '@jest/globals';
 
 import {
+  authorizationContractSchemas,
+  AUTHORIZATION_CONTRACT_VERSION,
+  permissionCheckRequestSchema,
+} from '../src/contracts/authorization';
+import {
   healthResponseSchema,
   readinessResponseSchema,
   RUNTIME_CONTRACT_VERSION,
@@ -27,6 +32,10 @@ import {
 
 test('runtime contract version is explicit', () => {
   expect(RUNTIME_CONTRACT_VERSION).toBe('runtime.v1');
+});
+
+test('authorization contract version is explicit', () => {
+  expect(AUTHORIZATION_CONTRACT_VERSION).toBe('authorization.v1');
 });
 
 test('health response schema is stable', () => {
@@ -49,5 +58,14 @@ test('readiness response schema is registered in runtime contracts', () => {
   );
   expect(readinessResponseSchema.properties.status).toEqual({
     enum: ['ready', 'not_ready'],
+  });
+});
+
+test('permission check request schema is registered in authorization contracts', () => {
+  expect(authorizationContractSchemas.permissionCheckRequestSchema).toBe(
+    permissionCheckRequestSchema,
+  );
+  expect(permissionCheckRequestSchema.properties.action).toEqual({
+    enum: ['create', 'delete', 'read', 'write'],
   });
 });

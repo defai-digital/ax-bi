@@ -19,6 +19,7 @@
 import { afterEach, expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
+import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
 import { SupersetClient } from '../src/supersetClient';
 
 const originalFetch = global.fetch;
@@ -47,6 +48,101 @@ test('checkHealth returns Superset status and forwards request ID', async () => 
   expect(seenInput).toBe('http://127.0.0.1:8088/health');
   expect(seenInit?.headers).toEqual({
     'x-request-id': 'request-abc',
+  });
+});
+
+test('checkPermission posts authorization request to Superset', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json(
+      {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: true,
+        reason: 'allowed by Superset',
+      },
+      { status: 200 },
+    );
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.checkPermission(
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'user',
+        userId: 7,
+      },
+      resource: {
+        type: 'dataset',
+        id: 42,
+      },
+      action: 'read',
+    },
+    'request-abc',
+  );
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: true,
+    reason: 'allowed by Superset',
+    statusCode: 200,
+  });
+  expect(seenInput).toBe(
+    'http://127.0.0.1:8088/api/v1/security/permissions/check',
+  );
+  expect(seenInit).toEqual(
+    expect.objectContaining({
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer token-123',
+        'content-type': 'application/json',
+        'x-request-id': 'request-abc',
+      },
+    }),
+  );
+  expect(JSON.parse(String(seenInit?.body))).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'user',
+      userId: 7,
+    },
+    resource: {
+      type: 'dataset',
+      id: 42,
+    },
+    action: 'read',
+  });
+});
+
+test('checkPermission fails closed when Superset cannot be reached', async () => {
+  global.fetch = async () => {
+    throw new Error('connect failed');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'connect failed',
   });
 });
 

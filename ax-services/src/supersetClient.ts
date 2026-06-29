@@ -16,6 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  AUTHORIZATION_CONTRACT_VERSION,
+  PermissionCheckRequest,
+  PermissionCheckResult,
+} from './contracts/authorization';
 import { ServiceConfig } from './config';
 
 export interface DependencyHealth {
@@ -31,18 +36,38 @@ export interface SupersetHealthClient {
 
 export class SupersetClient implements SupersetHealthClient {
   private readonly healthUrl: string;
+  private readonly permissionUrl: string;
 
   constructor(private readonly config: ServiceConfig) {
     this.healthUrl = `${config.supersetBaseUrl}${config.supersetHealthPath}`;
+    this.permissionUrl = `${config.supersetBaseUrl}${config.supersetPermissionPath}`;
+  }
+
+  private buildHeaders(
+    correlationId?: string,
+    contentType?: string,
+  ): HeadersInit {
+    const headers: Record<string, string> = {};
+
+    if (correlationId !== undefined) {
+      headers['x-request-id'] = correlationId;
+    }
+
+    if (contentType !== undefined) {
+      headers['content-type'] = contentType;
+    }
+
+    if (this.config.supersetInternalToken !== undefined) {
+      headers.authorization = `Bearer ${this.config.supersetInternalToken}`;
+    }
+
+    return headers;
   }
 
   async checkHealth(correlationId?: string): Promise<DependencyHealth> {
-    const headers =
-      correlationId === undefined ? undefined : { 'x-request-id': correlationId };
-
     try {
       const response = await fetch(this.healthUrl, {
-        headers,
+        headers: this.buildHeaders(correlationId),
         signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
       });
 
@@ -56,6 +81,34 @@ export class SupersetClient implements SupersetHealthClient {
         ok: false,
         error: error instanceof Error ? error.message : String(error),
         url: this.healthUrl,
+      };
+    }
+  }
+
+  async checkPermission(
+    request: PermissionCheckRequest,
+    correlationId?: string,
+  ): Promise<PermissionCheckResult> {
+    try {
+      const response = await fetch(this.permissionUrl, {
+        method: 'POST',
+        headers: this.buildHeaders(correlationId, 'application/json'),
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+      const payload = (await response.json()) as Partial<PermissionCheckResult>;
+
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: payload.allowed === true,
+        reason: typeof payload.reason === 'string' ? payload.reason : undefined,
+        statusCode: response.status,
+      };
+    } catch (error) {
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }

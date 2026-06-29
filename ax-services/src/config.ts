@@ -21,7 +21,9 @@ export interface ServiceConfig {
   port: number;
   supersetBaseUrl: string;
   supersetHealthPath: string;
+  supersetPermissionPath: string;
   supersetTimeoutMs: number;
+  supersetInternalToken?: string;
   logLevel: string;
 }
 
@@ -31,6 +33,7 @@ const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 5010;
 const DEFAULT_SUPERSET_BASE_URL = 'http://127.0.0.1:8088';
 const DEFAULT_SUPERSET_HEALTH_PATH = '/health';
+const DEFAULT_SUPERSET_PERMISSION_PATH = '/api/v1/security/permissions/check';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL = 'info';
 
@@ -80,11 +83,15 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
     supersetHealthPath: normalizePath(
       env.AX_SUPERSET_HEALTH_PATH || DEFAULT_SUPERSET_HEALTH_PATH,
     ),
+    supersetPermissionPath: normalizePath(
+      env.AX_SUPERSET_PERMISSION_PATH || DEFAULT_SUPERSET_PERMISSION_PATH,
+    ),
     supersetTimeoutMs: parsePositiveInteger(
       env.AX_SUPERSET_TIMEOUT_MS,
       DEFAULT_SUPERSET_TIMEOUT_MS,
       'AX_SUPERSET_TIMEOUT_MS',
     ),
+    supersetInternalToken: env.AX_SUPERSET_INTERNAL_TOKEN || undefined,
     logLevel: env.AX_SERVICES_LOG_LEVEL || DEFAULT_LOG_LEVEL,
   };
 }
