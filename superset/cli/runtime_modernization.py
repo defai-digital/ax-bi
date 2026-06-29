@@ -158,17 +158,35 @@ def _inventory_summary_to_dict(
     }
 
 
-def _build_compatibility_report(iterations: int) -> dict[str, Any]:
+def _build_compatibility_report(
+    iterations: int,
+    *,
+    min_sql_parsing_ops_per_second: float | None = None,
+    min_rust_kernel_speedup: float | None = None,
+) -> dict[str, Any]:
     """Build a runtime modernization compatibility report."""
 
     inventory_items = get_runtime_inventory()
     parsing_result = benchmark_sql_parsing_normalization(iterations=iterations)
     kernel_result = benchmark_sql_whitespace_kernel(iterations=iterations)
     rust_output_compatible = kernel_result.output_matched is not False
+    sql_parsing_target_met = (
+        None
+        if min_sql_parsing_ops_per_second is None
+        else parsing_result.operations_per_second >= min_sql_parsing_ops_per_second
+    )
+    rust_speedup_target_met = (
+        None
+        if min_rust_kernel_speedup is None
+        else kernel_result.speedup is not None
+        and kernel_result.speedup >= min_rust_kernel_speedup
+    )
     passed = (
         parsing_result.table_check_matched
         and not parsing_result.has_mutation
         and rust_output_compatible
+        and sql_parsing_target_met is not False
+        and rust_speedup_target_met is not False
     )
 
     return {
@@ -179,6 +197,14 @@ def _build_compatibility_report(iterations: int) -> dict[str, Any]:
             "sql_parsing_has_mutation": parsing_result.has_mutation,
             "rust_kernel_available": kernel_result.rust_available,
             "rust_kernel_output_compatible": rust_output_compatible,
+        },
+        "targets": {
+            "sql_parsing_min_operations_per_second": min_sql_parsing_ops_per_second,
+            "rust_kernel_min_speedup": min_rust_kernel_speedup,
+        },
+        "target_checks": {
+            "sql_parsing_operations_per_second_met": sql_parsing_target_met,
+            "rust_kernel_speedup_met": rust_speedup_target_met,
         },
         "inventory": _inventory_summary_to_dict(inventory_items),
         "benchmarks": {
@@ -243,14 +269,30 @@ def inventory(output_format: str, disposition: str | None) -> None:
     is_flag=True,
     help="Exit with an error when compatibility checks fail.",
 )
+@click.option(
+    "--min-sql-parsing-ops-per-second",
+    type=click.FloatRange(min=0.0),
+    help="Optional minimum SQL parsing throughput target.",
+)
+@click.option(
+    "--min-rust-kernel-speedup",
+    type=click.FloatRange(min=0.0),
+    help="Optional minimum Rust kernel speedup target.",
+)
 def compatibility_report(
     iterations: int,
     output_format: str,
     strict: bool,
+    min_sql_parsing_ops_per_second: float | None,
+    min_rust_kernel_speedup: float | None,
 ) -> None:
     """Generate a runtime modernization compatibility report."""
 
-    report = _build_compatibility_report(iterations)
+    report = _build_compatibility_report(
+        iterations,
+        min_sql_parsing_ops_per_second=min_sql_parsing_ops_per_second,
+        min_rust_kernel_speedup=min_rust_kernel_speedup,
+    )
 
     if output_format == "json":
         click.echo(json.dumps(report, sort_keys=True, indent=2))

@@ -167,9 +167,10 @@ product-specific and contract-oriented.
   `TS_MCP_ORCHESTRATION` and `TS_ASSET_SEARCH_SERVING`, with Python fallback.
 - MCP health check can shadow or serve from `ax-services` behind
   `TS_MCP_ORCHESTRATION` and `TS_HEALTH_CHECK_SERVING`, with Python fallback.
-- Compatibility, fallback behavior, and compact shadow mismatch reporting are
-  covered by unit tests. Production rollout evidence and latency targets still
-  need to be captured before this phase is complete.
+- Compatibility, fallback behavior, compact shadow mismatch reporting, and
+  opt-in compatibility report latency gates are covered by unit tests.
+  Production rollout evidence still needs to be captured before this phase is
+  complete.
 
 ## Phase 4: Rust Kernel Proof Of Concept
 
@@ -246,6 +247,9 @@ product-specific and contract-oriented.
 - `superset runtime-modernization compatibility-report` emits a
   machine-readable compatibility artifact that combines the runtime inventory,
   SQL parser benchmark checks, and Rust kernel compatibility checks.
+- The compatibility report accepts explicit SQL parsing throughput and Rust
+  speedup gates for release-candidate validation without making default CI runs
+  environment-sensitive.
 - Python unit CI uploads the compatibility report artifact on the current
   Python version. Additional production service dashboards, rollout evidence,
   and selective workflow migrations are still required before this phase is

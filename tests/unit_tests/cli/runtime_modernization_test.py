@@ -204,6 +204,14 @@ def test_runtime_modernization_compatibility_report_outputs_json(
         "sql_parsing_has_mutation": False,
         "sql_parsing_table_check_matched": True,
     }
+    assert payload["targets"] == {
+        "rust_kernel_min_speedup": None,
+        "sql_parsing_min_operations_per_second": None,
+    }
+    assert payload["target_checks"] == {
+        "rust_kernel_speedup_met": None,
+        "sql_parsing_operations_per_second_met": None,
+    }
     assert payload["inventory"]["by_disposition"]["candidate"] >= 1
     assert "mcp_orchestration" in payload["inventory"]["candidate_areas"]
     assert payload["benchmarks"]["sql_parsing_normalization"]["iterations"] == 7
@@ -255,6 +263,71 @@ def test_runtime_modernization_compatibility_report_strict_failure(
     )
 
     assert result.exit_code != 0
+    assert "runtime modernization compatibility failed" in result.output
+
+
+def test_runtime_modernization_compatibility_report_strict_target_failure(
+    mocker: MockerFixture,
+) -> None:
+    """Strict compatibility report exits nonzero when target gates fail."""
+
+    parsing_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+    )
+    parsing_benchmark.return_value = RuntimeBenchmarkResult(
+        area="sql_parsing_normalization",
+        operation="parse_format_table_check",
+        engine="postgresql",
+        iterations=3,
+        duration_ms=30.0,
+        operations_per_second=100.0,
+        statement_count=1,
+        formatted_bytes=128,
+        table_check_matched=True,
+        has_mutation=False,
+    )
+    kernel_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+    )
+    kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
+        area="sql_whitespace_kernel",
+        operation="normalize_whitespace",
+        iterations=3,
+        python_duration_ms=30.0,
+        python_operations_per_second=100.0,
+        rust_available=True,
+        rust_duration_ms=20.0,
+        rust_operations_per_second=150.0,
+        speedup=1.5,
+        output_matched=True,
+        output_bytes=64,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "compatibility-report",
+            "--iterations",
+            "3",
+            "--min-sql-parsing-ops-per-second",
+            "200",
+            "--min-rust-kernel-speedup",
+            "2",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    payload = json.loads(result.output.split("\nError:")[0])
+    assert payload["status"] == "failed"
+    assert payload["targets"] == {
+        "rust_kernel_min_speedup": 2.0,
+        "sql_parsing_min_operations_per_second": 200.0,
+    }
+    assert payload["target_checks"] == {
+        "rust_kernel_speedup_met": False,
+        "sql_parsing_operations_per_second_met": False,
+    }
     assert "runtime modernization compatibility failed" in result.output
 
 
