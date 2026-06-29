@@ -916,6 +916,10 @@ def validate_production_evidence(
         "schema_version": 1,
         "status": "passed" if passed else "failed",
         "workflow_names": [workflow.name for workflow in workflows],
+        "enabled_workflow_names": enabled_workflows,
+        "dashboard_required_workflow_names": [
+            workflow.name for workflow in dashboard_required_workflows
+        ],
         "checks": [check.to_dict() for check in checks],
     }
 

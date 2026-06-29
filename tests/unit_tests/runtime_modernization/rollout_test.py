@@ -403,6 +403,14 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
     )
 
     assert validation["status"] == "passed"
+    assert validation["enabled_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
+    assert validation["dashboard_required_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
     assert all(check["passed"] for check in validation["checks"])
 
 
@@ -484,6 +492,14 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
     checks = {check["name"]: check for check in validation["checks"]}
 
     assert validation["status"] == "passed"
+    assert validation["enabled_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
+    assert validation["dashboard_required_workflow_names"] == [
+        "mcp_asset_search",
+        "mcp_dashboard_list",
+    ]
     assert checks["production_flag_state"]["passed"] is True
     assert checks["operator_dashboard_snapshot"]["passed"] is True
 
@@ -805,6 +821,8 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     checks = {check["name"]: check for check in validation["checks"]}
 
     assert validation["status"] == "failed"
+    assert validation["enabled_workflow_names"] == []
+    assert validation["dashboard_required_workflow_names"] == ["mcp_asset_search"]
     assert checks["compatibility_report"]["passed"] is False
     assert checks["rust_kernel_benchmark"]["passed"] is False
     assert checks["rust_kernel_rollout_decision"]["passed"] is False

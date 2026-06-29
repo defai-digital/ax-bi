@@ -164,6 +164,9 @@ superset runtime-modernization completion-audit evidence-bundle.json --strict
 The audit only completes when compatibility evidence, production serving flags,
 operator dashboard gates, Rust kernel rollout decision evidence, and operator
 approval all pass.
+JSON validation output includes `enabled_workflow_names` and
+`dashboard_required_workflow_names` so release automation can report exactly
+which production-serving workflows were gated.
 
 ## Adding A TypeScript MCP Workflow
 
