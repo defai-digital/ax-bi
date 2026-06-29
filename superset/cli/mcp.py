@@ -32,6 +32,12 @@ def mcp() -> None:
 def run(host: str, port: int, debug: bool) -> None:
     """Run the MCP service"""
     try:
+        from superset.app import create_app
+
+        flask_app = create_app()
+        ctx = flask_app.app_context()
+        ctx.push()
+
         from superset.mcp_service.server import run_server
 
         run_server(host=host, port=port, debug=debug)
@@ -42,3 +48,6 @@ def run(host: str, port: int, debug: bool) -> None:
             err=True,
         )
         raise click.ClickException("MCP service not available") from e
+    finally:
+        if "ctx" in locals():
+            ctx.pop()

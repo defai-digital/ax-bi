@@ -293,25 +293,44 @@ const StyledDashboardContent = styled.div<{
       padding-left: 0;
     }
 
-    .grid-container {
-      /* without this, the grid will not get smaller upon toggling the builder panel on */
-      width: 0;
-      flex: 1;
-      position: relative;
-      margin: ${theme.sizeUnit * 4}px;
-      margin-left: ${marginLeft}px;
-      min-height: max-content;
+      .grid-container {
+        /* without this, the grid will not get smaller upon toggling the builder panel on */
+        width: 0;
+        flex: 1;
+        position: relative;
+        margin: ${theme.sizeUnit * 4}px;
+        margin-left: ${marginLeft}px;
+        min-height: max-content;
+        min-width: 0;
 
-      ${editMode &&
+        ${editMode &&
       `
+      min-width: min(100%, ${theme.sizeUnit * 80}px);
       max-width: calc(100% - ${
         BUILDER_SIDEPANEL_WIDTH + theme.sizeUnit * 16
       }px);
     `}
 
       /* this is the ParentSize wrapper */
-    & > div:first-of-type {
-        height: 100% !important;
+      & > div:first-of-type,
+      & > div:first-of-type > div {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
+      }
+
+      .ant-tabs {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
+      }
+
+      .ant-tabs-content-holder,
+      .ant-tabs-content,
+      .ant-tabs-tabpane {
+        height: auto !important;
+        min-height: 100%;
+        overflow: visible !important;
       }
     }
 

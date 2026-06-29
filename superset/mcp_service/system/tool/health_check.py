@@ -17,7 +17,6 @@
 
 """Simple health check tool for testing MCP service."""
 
-import datetime
 import logging
 import platform
 import time
@@ -26,6 +25,7 @@ from flask import current_app
 from superset_core.mcp.decorators import tool, ToolAnnotations
 
 from superset import is_feature_enabled
+from superset.mcp_service.common.error_schemas import mcp_error_timestamp
 from superset.mcp_service.system.schemas import HealthCheckResponse
 from superset.mcp_service.utils.config_utils import get_superset_app_name
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
@@ -57,7 +57,7 @@ def _build_health_response(service_name: str) -> HealthCheckResponse:
 
         response = HealthCheckResponse(
             status="healthy",
-            timestamp=datetime.datetime.now().isoformat(),
+            timestamp=mcp_error_timestamp().isoformat(),
             service=service_name,
             version=version,
             python_version=platform.python_version(),
@@ -73,7 +73,7 @@ def _build_health_response(service_name: str) -> HealthCheckResponse:
         # Return error status but don't raise to keep tool working
         response = HealthCheckResponse(
             status="error",
-            timestamp=datetime.datetime.now().isoformat(),
+            timestamp=mcp_error_timestamp().isoformat(),
             service=service_name,
             version="unknown",
             python_version=platform.python_version(),
