@@ -871,6 +871,90 @@ Events | take 100""",
     assert query.get_settings() == {"querytrace": True}
 
 
+def test_sqlscript_uses_rust_sql_kernel_when_enabled(
+    app_context: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Test that SQLScript routes ordinary SQL through the Rust kernel when enabled.
+    """
+    calls: list[tuple[str, bool | None]] = []
+
+    def normalize_sql_whitespace(sql: str, use_rust: bool | None = None) -> str:
+        calls.append((sql, use_rust))
+        return "SELECT 1"
+
+    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        normalize_sql_whitespace,
+    )
+
+    script = SQLScript(" SELECT   1 ", "postgresql")
+
+    assert calls == [(" SELECT   1 ", True)]
+    assert script.format() == "SELECT\n  1"
+
+
+def test_sqlscript_skips_rust_sql_kernel_for_special_engines(
+    app_context: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Test that non-SQL special engines do not use SQL whitespace normalization.
+    """
+    calls: list[tuple[str, bool | None]] = []
+
+    def normalize_sql_whitespace(sql: str, use_rust: bool | None = None) -> str:
+        calls.append((sql, use_rust))
+        return sql
+
+    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        normalize_sql_whitespace,
+    )
+
+    script = SQLScript("Events | take 1", "kustokql")
+
+    assert calls == []
+    assert script.format() == "Events | take 1"
+
+
+def test_sqlscript_falls_back_when_rust_sql_kernel_fails(
+    app_context: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Test that Rust kernel errors do not prevent SQLScript parsing.
+    """
+
+    def normalize_sql_whitespace(sql: str, use_rust: bool | None = None) -> str:
+        raise RuntimeError("kernel failed")
+
+    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        lambda: True,
+    )
+    monkeypatch.setattr(
+        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        normalize_sql_whitespace,
+    )
+
+    script = SQLScript(" SELECT   1 ", "postgresql")
+
+    assert script.format() == "SELECT\n  1"
+
+
 @pytest.mark.parametrize(
     "sql, engine, expected",
     [

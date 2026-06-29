@@ -1552,7 +1552,44 @@ class SQLScript:
     ):
         statement_class = self.special_engines.get(engine, SQLStatement)
         self.engine = engine
-        self.statements = statement_class.split_script(script, engine)
+        script_for_parsing = self._normalize_script_with_rust_kernel(script, engine)
+        self.statements = statement_class.split_script(script_for_parsing, engine)
+
+    @staticmethod
+    def _normalize_script_with_rust_kernel(script: str, engine: str) -> str:
+        """
+        Normalize SQL whitespace with the optional Rust kernel when enabled.
+        """
+        if engine in SQLScript.special_engines:
+            return script
+
+        try:
+            from flask import has_app_context  # pylint: disable=import-outside-toplevel
+
+            from superset import (
+                is_feature_enabled,  # pylint: disable=import-outside-toplevel
+            )
+
+            # pylint: disable-next=import-outside-toplevel
+            from superset.runtime_modernization.rust_sql import (
+                normalize_sql_whitespace,
+                rust_sql_kernel_available,
+            )
+
+            if (
+                not has_app_context()
+                or not is_feature_enabled("RUST_SQL_KERNEL")
+                or not rust_sql_kernel_available()
+            ):
+                return script
+
+            return normalize_sql_whitespace(script, use_rust=True)
+        except Exception:  # pylint: disable=broad-except
+            logger.debug(
+                "Rust SQL whitespace normalization failed; using original SQL",
+                exc_info=True,
+            )
+            return script
 
     def format(self, comments: bool = True) -> str:
         """

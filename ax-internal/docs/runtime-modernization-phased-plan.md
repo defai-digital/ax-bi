@@ -208,9 +208,13 @@ product-specific and contract-oriented.
 - `superset/runtime_modernization/rust_sql.py` keeps Python fallback behavior
   and routes to Rust only when the optional extension is importable and
   `RUST_SQL_KERNEL` is enabled.
-- Compatibility tests cover fallback and Rust-call routing. CI/build packaging
-  and material benchmark evidence still need to be completed before this phase
-  is complete.
+- `SQLScript` uses the Rust whitespace kernel for normal SQL parsing when the
+  feature flag and optional extension are both available, while special engines
+  and kernel failures fall back to the existing Python path.
+- Compatibility tests cover fallback, Rust-call routing, and parser-level
+  integration. CI checks cover Rust format, clippy, tests, and maturin wheel
+  builds. Material benchmark evidence and production rollout criteria still
+  need to be completed before this phase is complete.
 
 ## Phase 5: Expand Runtime Split Selectively
 
