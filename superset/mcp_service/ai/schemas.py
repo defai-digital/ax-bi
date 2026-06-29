@@ -23,9 +23,29 @@ and documentation for the tool interfaces.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, cast, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from superset.mcp_service.utils.sanitization import escape_llm_context_delimiters
+
+
+def _escape_optional_text(v: str | None) -> str | None:
+    """Escape MCP context delimiters in optional text."""
+    if v is None:
+        return None
+    return cast(str, escape_llm_context_delimiters(v))
+
+
+def _escape_text_list(v: list[str]) -> list[str]:
+    """Escape MCP context delimiters in a list of text values."""
+    return cast(list[str], escape_llm_context_delimiters(v))
+
+
+def _escape_metadata_dict(v: dict[str, Any]) -> dict[str, Any]:
+    """Escape MCP context delimiters in metadata dictionaries."""
+    return cast(dict[str, Any], escape_llm_context_delimiters(v))
+
 
 # ---------------------------------------------------------------------------
 # search_business_assets
@@ -61,12 +81,36 @@ class AssetResult(BaseModel):
     owners: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
 
+    @field_validator(
+        "asset_type",
+        "uuid",
+        "name",
+        "description",
+        "relevance_reason",
+    )
+    @classmethod
+    def escape_text_field(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in asset metadata."""
+        return _escape_optional_text(v)
+
+    @field_validator("owners", "tags")
+    @classmethod
+    def escape_text_list(cls, v: list[str]) -> list[str]:
+        """Escape MCP context delimiters in asset metadata lists."""
+        return _escape_text_list(v)
+
 
 class AssetSearchResponse(BaseModel):
     """Response schema for search_business_assets."""
 
     assets: list[AssetResult] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
+
+    @field_validator("warnings")
+    @classmethod
+    def escape_warnings(cls, v: list[str]) -> list[str]:
+        """Escape MCP context delimiters in warning text."""
+        return _escape_text_list(v)
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +135,18 @@ class ColumnDescription(BaseModel):
     aliases: list[str] = Field(default_factory=list)
     is_dimension: bool = False
 
+    @field_validator("name", "type", "description")
+    @classmethod
+    def escape_text_field(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in column metadata."""
+        return _escape_optional_text(v)
+
+    @field_validator("aliases")
+    @classmethod
+    def escape_aliases(cls, v: list[str]) -> list[str]:
+        """Escape MCP context delimiters in semantic aliases."""
+        return _escape_text_list(v)
+
 
 class MetricDescription(BaseModel):
     """AI-ready description of a saved metric."""
@@ -98,6 +154,12 @@ class MetricDescription(BaseModel):
     name: str
     expression: str
     description: str | None = None
+
+    @field_validator("name", "expression", "description")
+    @classmethod
+    def escape_text_field(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in metric metadata."""
+        return _escape_optional_text(v)
 
 
 class DatasetDescription(BaseModel):
@@ -112,12 +174,30 @@ class DatasetDescription(BaseModel):
     metrics: list[MetricDescription] = Field(default_factory=list)
     privacy: dict[str, Any] = Field(default_factory=dict)
 
+    @field_validator("name", "description", "main_time_column")
+    @classmethod
+    def escape_text_field(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in dataset metadata."""
+        return _escape_optional_text(v)
+
+    @field_validator("privacy")
+    @classmethod
+    def escape_privacy_metadata(cls, v: dict[str, Any]) -> dict[str, Any]:
+        """Escape MCP context delimiters in privacy metadata."""
+        return _escape_metadata_dict(v)
+
 
 class DatasetDescriptionResponse(BaseModel):
     """Response schema for describe_dataset_for_ai."""
 
     dataset: DatasetDescription
     warnings: list[str] = Field(default_factory=list)
+
+    @field_validator("warnings")
+    @classmethod
+    def escape_warnings(cls, v: list[str]) -> list[str]:
+        """Escape MCP context delimiters in warning text."""
+        return _escape_text_list(v)
 
 
 # ---------------------------------------------------------------------------
