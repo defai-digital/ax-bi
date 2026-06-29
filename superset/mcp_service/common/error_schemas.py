@@ -34,7 +34,10 @@ from pydantic import (
     model_validator,
 )
 
-from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
+from superset.mcp_service.utils.sanitization import (
+    escape_llm_context_delimiters,
+    sanitize_for_llm_context,
+)
 
 
 def mcp_error_timestamp() -> datetime:
@@ -132,8 +135,14 @@ class MCPBaseError(BaseModel):
 
     @field_serializer("suggestions")
     def _serialize_suggestions_for_llm(self, value: list[str]) -> list[str]:
-        """Wrap suggestion text as untrusted LLM context when serialized."""
-        return sanitize_prompt_value(value)
+        """Escape delimiter tokens in suggestion strings without wrapping.
+
+        Suggestions are server-generated column/metric names derived from
+        dataset metadata. They are not wrapped in UNTRUSTED-CONTENT (since
+        they are not user-controlled input), but any embedded delimiter
+        tokens are escaped to prevent injection.
+        """
+        return escape_llm_context_delimiters(value)
 
     @model_validator(mode="before")
     @classmethod

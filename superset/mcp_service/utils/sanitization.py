@@ -47,6 +47,7 @@ LLM_CONTEXT_EXCLUDED_FIELD_NAMES = frozenset(
         "schema",
         "schema_name",
         "slug",
+        "suggestions",
         "url",
         "urls",
         "uuid",
@@ -146,10 +147,15 @@ def sanitize_for_llm_context(
     )
 
     def _sanitize(current_value: Any, current_path: tuple[str, ...]) -> Any:
-        current_field_name = current_path[-1] if current_path else ""
-        if current_field_name and (
-            _normalize_field_name(current_field_name) in normalized_exclusions
-        ):
+        # Check if the current field or any ancestor field is excluded.
+        # This ensures list items under an excluded field (e.g. suggestions[0])
+        # are also excluded, not just the direct field value.
+        is_excluded = any(
+            _normalize_field_name(segment) in normalized_exclusions
+            for segment in current_path
+            if not segment.isdigit()
+        )
+        if is_excluded:
             return escape_llm_context_delimiters(current_value)
 
         if isinstance(current_value, str):
