@@ -40,6 +40,27 @@ export interface ReadinessResponseContract {
   };
 }
 
+export interface RouteMetricsContract {
+  count: number;
+  errorCount: number;
+  averageDurationMs: number;
+  maxDurationMs: number;
+}
+
+export interface MetricsResponseContract {
+  contractVersion: typeof RUNTIME_CONTRACT_VERSION;
+  service: 'ax-services';
+  status: 'ok';
+  uptimeSeconds: number;
+  requests: {
+    total: number;
+    errorCount: number;
+    averageDurationMs: number;
+    maxDurationMs: number;
+    routes: Record<string, RouteMetricsContract>;
+  };
+}
+
 const dependencyHealthSchema = {
   type: 'object',
   required: ['ok', 'url'],
@@ -49,6 +70,18 @@ const dependencyHealthSchema = {
     url: { type: 'string' },
     statusCode: { type: 'number' },
     error: { type: 'string' },
+  },
+} as const;
+
+const routeMetricsSchema = {
+  type: 'object',
+  required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
+  additionalProperties: false,
+  properties: {
+    count: { type: 'number' },
+    errorCount: { type: 'number' },
+    averageDurationMs: { type: 'number' },
+    maxDurationMs: { type: 'number' },
   },
 } as const;
 
@@ -84,7 +117,42 @@ export const readinessResponseSchema = {
   },
 } as const;
 
+export const metricsResponseSchema = {
+  $id: 'ax-services.metrics.v1.response',
+  type: 'object',
+  required: ['contractVersion', 'service', 'status', 'uptimeSeconds', 'requests'],
+  additionalProperties: false,
+  properties: {
+    contractVersion: { const: RUNTIME_CONTRACT_VERSION },
+    service: { const: 'ax-services' },
+    status: { const: 'ok' },
+    uptimeSeconds: { type: 'number' },
+    requests: {
+      type: 'object',
+      required: [
+        'total',
+        'errorCount',
+        'averageDurationMs',
+        'maxDurationMs',
+        'routes',
+      ],
+      additionalProperties: false,
+      properties: {
+        total: { type: 'number' },
+        errorCount: { type: 'number' },
+        averageDurationMs: { type: 'number' },
+        maxDurationMs: { type: 'number' },
+        routes: {
+          type: 'object',
+          additionalProperties: routeMetricsSchema,
+        },
+      },
+    },
+  },
+} as const;
+
 export const runtimeContractSchemas = {
   healthResponseSchema,
+  metricsResponseSchema,
   readinessResponseSchema,
 } as const;

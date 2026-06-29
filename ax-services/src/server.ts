@@ -24,16 +24,20 @@ import { ServiceConfig } from './config';
 import {
   HealthResponseContract,
   healthResponseSchema,
+  MetricsResponseContract,
+  metricsResponseSchema,
   ReadinessResponseContract,
   readinessResponseSchema,
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
+import { ServiceMetrics } from './metrics';
 import { SupersetHealthClient } from './supersetClient';
 
 export function buildServer(
   config: ServiceConfig,
   supersetClient: SupersetHealthClient,
 ): FastifyInstance {
+  const metrics = new ServiceMetrics();
   const server = Fastify({
     logger: config.logLevel !== 'silent',
     genReqId(request) {
@@ -47,6 +51,11 @@ export function buildServer(
 
   server.addHook('onRequest', async (request, reply) => {
     reply.header('x-request-id', request.id);
+    metrics.startRequest(request);
+  });
+
+  server.addHook('onResponse', async (request, reply) => {
+    metrics.recordResponse(request, reply);
   });
 
   server.get(
@@ -88,6 +97,18 @@ export function buildServer(
         },
       });
     },
+  );
+
+  server.get(
+    '/metrics',
+    {
+      schema: {
+        response: {
+          200: metricsResponseSchema,
+        },
+      },
+    },
+    async (): Promise<MetricsResponseContract> => metrics.snapshot(),
   );
 
   return server;

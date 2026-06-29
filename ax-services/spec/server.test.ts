@@ -122,3 +122,55 @@ test('ready endpoint returns unavailable when Superset is unreachable', async ()
     },
   });
 });
+
+test('metrics endpoint returns request counters by route', async () => {
+  const server = buildServer(config, {
+    async checkHealth() {
+      return {
+        ok: false,
+        error: 'connect ECONNREFUSED',
+        url: 'http://127.0.0.1:8088/health',
+      };
+    },
+  } as SupersetHealthClient);
+
+  await server.inject({
+    method: 'GET',
+    url: '/health',
+  });
+  await server.inject({
+    method: 'GET',
+    url: '/ready',
+  });
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toMatchObject({
+    contractVersion: 'runtime.v1',
+    service: 'ax-services',
+    status: 'ok',
+    requests: {
+      total: 2,
+      errorCount: 1,
+      routes: {
+        'GET /health': {
+          count: 1,
+          errorCount: 0,
+        },
+        'GET /ready': {
+          count: 1,
+          errorCount: 1,
+        },
+      },
+    },
+  });
+  expect(response.json().uptimeSeconds).toBeGreaterThanOrEqual(0);
+  expect(response.json().requests.averageDurationMs).toBeGreaterThanOrEqual(0);
+  expect(
+    response.json().requests.routes['GET /health'].averageDurationMs,
+  ).toBeGreaterThanOrEqual(0);
+});

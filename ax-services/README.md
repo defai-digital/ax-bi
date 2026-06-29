@@ -58,5 +58,6 @@ Current endpoints:
 
 - `GET /health`
 - `GET /ready`
+- `GET /metrics`
 
 Generated JSON schema artifacts live in `contracts/`.

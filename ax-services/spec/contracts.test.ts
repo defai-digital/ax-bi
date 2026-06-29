@@ -25,6 +25,7 @@ import {
 } from '../src/contracts/authorization';
 import {
   healthResponseSchema,
+  metricsResponseSchema,
   readinessResponseSchema,
   RUNTIME_CONTRACT_VERSION,
   runtimeContractSchemas,
@@ -58,6 +59,24 @@ test('readiness response schema is registered in runtime contracts', () => {
   );
   expect(readinessResponseSchema.properties.status).toEqual({
     enum: ['ready', 'not_ready'],
+  });
+});
+
+test('metrics response schema is registered in runtime contracts', () => {
+  expect(runtimeContractSchemas.metricsResponseSchema).toBe(metricsResponseSchema);
+  expect(metricsResponseSchema.properties.requests.properties.routes).toEqual({
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
+      additionalProperties: false,
+      properties: {
+        count: { type: 'number' },
+        errorCount: { type: 'number' },
+        averageDurationMs: { type: 'number' },
+        maxDurationMs: { type: 'number' },
+      },
+    },
   });
 });
 
