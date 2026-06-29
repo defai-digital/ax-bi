@@ -33,6 +33,15 @@ from superset.runtime_modernization.rollout import (
 )
 
 
+def _passing_service_health() -> dict[str, object]:
+    """Build passing sidecar service-health dashboard evidence."""
+
+    return {
+        "health_check": {"passed": True},
+        "readiness_check": {"passed": True},
+    }
+
+
 def _complete_production_evidence() -> dict[str, object]:
     """Build complete production evidence for audit tests."""
 
@@ -78,6 +87,7 @@ def _complete_production_evidence() -> dict[str, object]:
             },
             "operator_dashboard_snapshot": {
                 "snapshot_reference": "observability/dashboard/snapshot-123",
+                "service_health": _passing_service_health(),
                 "workflows": {
                     workflow.name: {
                         "gates": {gate.name: True for gate in workflow.gates},
@@ -377,6 +387,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                 },
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "service_health": _passing_service_health(),
                     "workflows": {
                         "mcp_asset_search": {
                             "gates": {
@@ -473,6 +484,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                 },
                 "operator_dashboard_snapshot": {
                     "snapshot_reference": "observability/dashboard/snapshot-123",
+                    "service_health": _passing_service_health(),
                     "workflows": {
                         "mcp_asset_search": {
                             "gates": {
@@ -526,6 +538,28 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
     ]
     assert checks["production_flag_state"]["passed"] is True
     assert checks["operator_dashboard_snapshot"]["passed"] is True
+
+
+def test_validate_production_evidence_requires_dashboard_service_health() -> None:
+    """Operator dashboard evidence must include sidecar service health."""
+
+    workflows = (
+        get_rollout_workflow("mcp_asset_search"),
+        get_rollout_workflow("mcp_dashboard_list"),
+    )
+    evidence = _complete_production_evidence()
+    artifacts = evidence["artifacts"]
+    assert isinstance(artifacts, dict)
+    dashboard_snapshot = artifacts["operator_dashboard_snapshot"]
+    assert isinstance(dashboard_snapshot, dict)
+    dashboard_snapshot.pop("service_health")
+
+    validation = validate_production_evidence(workflows, evidence)
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["operator_dashboard_snapshot"]["passed"] is False
+    assert "service health" in checks["operator_dashboard_snapshot"]["message"]
 
 
 def test_validate_production_evidence_requires_approval_for_enabled_workflows() -> None:
@@ -655,6 +689,18 @@ def test_build_production_evidence_template_includes_workflow_gates() -> None:
         "rationale": "",
     }
     assert dashboard_snapshot["snapshot_reference"] == ""
+    assert dashboard_snapshot["service_health"] == {
+        "health_check": {
+            "passed": False,
+            "metric": "runtime.v1.health.ok",
+            "target": "health endpoint returns success",
+        },
+        "readiness_check": {
+            "passed": False,
+            "metric": "runtime.v1.ready.ok",
+            "target": "readiness endpoint returns success",
+        },
+    }
     assert template["artifacts"]["operator_approval"] == {
         "approved": False,
         "boundary_decision": "",
@@ -775,15 +821,19 @@ def test_build_operator_dashboard_snapshot_includes_workflow_gates() -> None:
         (get_rollout_workflow("mcp_asset_search"),),
         snapshot_reference="observability/dashboard/snapshot-123",
         gates_passed=True,
+        service_health_passed=True,
         measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
         notes="canary window passed",
     )
 
     gates = snapshot["workflows"]["mcp_asset_search"]["gates"]
+    service_health = snapshot["service_health"]
 
     assert snapshot["snapshot_reference"] == "observability/dashboard/snapshot-123"
     assert snapshot["measurement_window"] == "2026-06-29T00:00Z/2026-06-29T01:00Z"
     assert snapshot["notes"] == "canary window passed"
+    assert service_health["health_check"]["passed"] is True
+    assert service_health["readiness_check"]["passed"] is True
     assert set(gates) == {
         "error_rate",
         "fallback_rate",
@@ -801,6 +851,7 @@ def test_build_operator_dashboard_snapshot_allows_gate_overrides() -> None:
         (get_rollout_workflow("mcp_asset_search"),),
         snapshot_reference="observability/dashboard/snapshot-123",
         gates_passed=True,
+        service_health_passed=True,
         gate_statuses={"latency_p95": False},
     )
 
@@ -820,6 +871,7 @@ def test_build_operator_dashboard_snapshot_allows_workflow_gate_overrides() -> N
         ),
         snapshot_reference="observability/dashboard/snapshot-123",
         gates_passed=True,
+        service_health_passed=True,
         workflow_gate_statuses={"mcp_dashboard_list": {"latency_p95": False}},
     )
 

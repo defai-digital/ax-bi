@@ -80,6 +80,10 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                     },
                     "operator_dashboard_snapshot": {
                         "snapshot_reference": "observability/dashboard/snapshot-123",
+                        "service_health": {
+                            "health_check": {"passed": True},
+                            "readiness_check": {"passed": True},
+                        },
                         "workflows": {
                             "mcp_asset_search": {
                                 "gates": {
@@ -535,6 +539,7 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> Non
             "--snapshot-reference",
             "observability/dashboard/snapshot-123",
             "--gates-passed",
+            "--service-health-passed",
             "--measurement-window",
             "2026-06-29T00:00Z/2026-06-29T01:00Z",
             "--notes",
@@ -545,9 +550,12 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_json() -> Non
     assert result.exit_code == 0
     payload = json.loads(result.output)
     gates = payload["workflows"]["mcp_asset_search"]["gates"]
+    service_health = payload["service_health"]
     assert payload["snapshot_reference"] == "observability/dashboard/snapshot-123"
     assert payload["measurement_window"] == "2026-06-29T00:00Z/2026-06-29T01:00Z"
     assert payload["notes"] == "canary window passed"
+    assert service_health["health_check"]["passed"] is True
+    assert service_health["readiness_check"]["passed"] is True
     assert set(gates) == {
         "error_rate",
         "fallback_rate",
@@ -576,6 +584,7 @@ def test_runtime_modernization_operator_dashboard_snapshot_outputs_text() -> Non
     assert result.exit_code == 0
     assert "runtime modernization operator dashboard snapshot" in result.output
     assert "snapshot reference: dashboards/runtime-modernization.png" in result.output
+    assert "service health failed: health_check, readiness_check" in result.output
     assert "mcp_dashboard_list" in result.output
     assert (
         "failed: shadow_mismatch_rate, fallback_rate, error_rate, latency_p95"
@@ -940,6 +949,10 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
         json.dumps(
             {
                 "snapshot_reference": "observability/dashboard/snapshot-123",
+                "service_health": {
+                    "health_check": {"passed": True},
+                    "readiness_check": {"passed": True},
+                },
                 "workflows": {
                     "mcp_asset_search": {
                         "gates": {
@@ -1112,6 +1125,10 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                     },
                     "operator_dashboard_snapshot": {
                         "snapshot_reference": "observability/dashboard/snapshot-123",
+                        "service_health": {
+                            "health_check": {"passed": True},
+                            "readiness_check": {"passed": True},
+                        },
                         "workflows": {
                             "mcp_asset_search": {
                                 "gates": {

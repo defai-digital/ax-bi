@@ -276,9 +276,24 @@ def _format_operator_approval_evidence(approval: dict[str, Any]) -> str:
 def _format_operator_dashboard_snapshot(snapshot: dict[str, Any]) -> str:
     """Render compact operator dashboard snapshot evidence."""
 
+    service_health = snapshot["service_health"]
+    service_passed = [
+        name
+        for name, gate in service_health.items()
+        if isinstance(gate, dict) and gate.get("passed") is True
+    ]
+    service_failed = [
+        name
+        for name, gate in service_health.items()
+        if isinstance(gate, dict) and gate.get("passed") is not True
+    ]
     lines = [
         "runtime modernization operator dashboard snapshot",
         f"  snapshot reference: {snapshot['snapshot_reference']}",
+        "  service health passed: "
+        + (", ".join(service_passed) if service_passed else "none"),
+        "  service health failed: "
+        + (", ".join(service_failed) if service_failed else "none"),
     ]
     if "measurement_window" in snapshot:
         lines.append(f"  measurement window: {snapshot['measurement_window']}")
@@ -795,6 +810,12 @@ def operator_approval(
     help="Whether all selected workflow dashboard gates passed.",
 )
 @click.option(
+    "--service-health-passed/--service-health-failed",
+    default=False,
+    show_default=True,
+    help="Whether service health and readiness dashboard gates passed.",
+)
+@click.option(
     "--passed-gate",
     multiple=True,
     help="Specific dashboard gate to mark passed. Can be supplied more than once.",
@@ -840,6 +861,7 @@ def operator_dashboard_snapshot(
     workflow: tuple[str, ...],
     snapshot_reference: str,
     gates_passed: bool,
+    service_health_passed: bool,
     passed_gate: tuple[str, ...],
     failed_gate: tuple[str, ...],
     passed_workflow_gate: tuple[str, ...],
@@ -873,6 +895,7 @@ def operator_dashboard_snapshot(
         workflows,
         snapshot_reference=snapshot_reference,
         gates_passed=gates_passed,
+        service_health_passed=service_health_passed,
         gate_statuses=gate_statuses,
         workflow_gate_statuses=workflow_gate_statuses,
         measurement_window=measurement_window,

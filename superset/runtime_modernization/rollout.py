@@ -364,10 +364,13 @@ PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
         phase="phase_5",
         source="production observability dashboard export or screenshot",
         description=(
-            "Operator view of latency, error rate, fallback rate, and shadow "
-            "mismatch metrics for migrated workflows."
+            "Operator view of sidecar service health, latency, error rate, "
+            "fallback rate, and shadow mismatch metrics for migrated workflows."
         ),
-        validation="fallback rate and error rate meet each workflow gate",
+        validation=(
+            "sidecar health and readiness pass, and fallback rate and error "
+            "rate meet each workflow gate"
+        ),
     ),
     RolloutEvidenceRequirement(
         name="operator_approval",
@@ -463,6 +466,18 @@ def build_production_evidence_template(
             },
             "operator_dashboard_snapshot": {
                 "snapshot_reference": "",
+                "service_health": {
+                    "health_check": {
+                        "passed": False,
+                        "metric": "runtime.v1.health.ok",
+                        "target": "health endpoint returns success",
+                    },
+                    "readiness_check": {
+                        "passed": False,
+                        "metric": "runtime.v1.ready.ok",
+                        "target": "readiness endpoint returns success",
+                    },
+                },
                 "workflows": {
                     workflow.name: {
                         "gates": {
@@ -544,6 +559,7 @@ def build_operator_dashboard_snapshot(
     *,
     snapshot_reference: str,
     gates_passed: bool,
+    service_health_passed: bool,
     gate_statuses: Mapping[str, bool] | None = None,
     workflow_gate_statuses: Mapping[str, Mapping[str, bool]] | None = None,
     measurement_window: str | None = None,
@@ -553,6 +569,18 @@ def build_operator_dashboard_snapshot(
 
     snapshot: dict[str, Any] = {
         "snapshot_reference": snapshot_reference,
+        "service_health": {
+            "health_check": {
+                "passed": service_health_passed,
+                "metric": "runtime.v1.health.ok",
+                "target": "health endpoint returns success",
+            },
+            "readiness_check": {
+                "passed": service_health_passed,
+                "metric": "runtime.v1.ready.ok",
+                "target": "readiness endpoint returns success",
+            },
+        },
         "workflows": {
             workflow.name: {
                 "gates": {
@@ -729,6 +757,18 @@ def _gate_passed(raw_gates: Any, gate_name: str) -> bool:
     return False
 
 
+def _service_health_passed(artifact: Mapping[str, Any]) -> bool:
+    """Return whether the operator dashboard proves sidecar health."""
+
+    raw_service_health = artifact.get("service_health")
+    if not isinstance(raw_service_health, Mapping):
+        return False
+    return all(
+        _gate_passed(raw_service_health, gate_name)
+        for gate_name in ("health_check", "readiness_check")
+    )
+
+
 def _non_empty_string(value: Any) -> bool:
     """Return whether a value is a non-empty string."""
 
@@ -861,8 +901,10 @@ def validate_production_evidence(
     dashboard_required_workflows = [
         workflow for workflow in workflows if workflow.name in enabled_workflows
     ] or list(workflows)
-    dashboard_passed = bool(workflows) and _non_empty_string(
-        (dashboard_snapshot or {}).get("snapshot_reference")
+    dashboard_passed = (
+        bool(workflows)
+        and _non_empty_string((dashboard_snapshot or {}).get("snapshot_reference"))
+        and _service_health_passed(dashboard_snapshot or {})
     )
     for workflow in dashboard_required_workflows:
         record = dashboard_records.get(workflow.name)
@@ -879,9 +921,13 @@ def validate_production_evidence(
             name="operator_dashboard_snapshot",
             passed=dashboard_passed,
             message=(
-                "operator dashboard reference and gates passed for enabled workflows"
+                "operator dashboard reference, service health, and gates passed "
+                "for enabled workflows"
                 if dashboard_passed
-                else ("operator dashboard reference or gates are missing or failing")
+                else (
+                    "operator dashboard reference, service health, or gates are "
+                    "missing or failing"
+                )
             ),
         )
     )
