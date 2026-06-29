@@ -38,6 +38,35 @@ test('should render children', () => {
   expect(getByTestId('mock-children')).toBeInTheDocument();
 });
 
+test('should expose its viewport offset for dashboard scrolling', () => {
+  const getBoundingClientRect = jest
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockReturnValue({
+      top: 64,
+      bottom: 864,
+      left: 0,
+      right: 1200,
+      width: 1200,
+      height: 800,
+      x: 0,
+      y: 64,
+      toJSON: () => {},
+    });
+
+  const { getByTestId } = render(
+    <DashboardWrapper>
+      <div data-test="mock-children" />
+    </DashboardWrapper>,
+    { useRedux: true, useDnd: true },
+  );
+
+  expect(getByTestId('dashboard-wrapper')).toHaveStyle({
+    '--dashboard-top-offset': '64px',
+  });
+
+  getBoundingClientRect.mockRestore();
+});
+
 // Note: Drag-and-drop test removed - DashboardWrapper uses react-dnd but
 // OptionControlLabel uses @dnd-kit, causing cross-library compatibility issues.
 // This test requires proper @dnd-kit testing utilities.

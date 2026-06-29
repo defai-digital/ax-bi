@@ -124,6 +124,7 @@ const StyledContent = styled.div<{
 }>`
   grid-column: 2;
   grid-row: 2;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -139,6 +140,7 @@ const DashboardContentWrapper = styled.div`
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 0;
 
       /* drop shadow for top-level tabs only */
       & .dashboard-component-tabs {
@@ -284,6 +286,7 @@ const StyledDashboardContent = styled.div<{
     flex-wrap: nowrap;
     height: auto;
     flex: 1;
+    min-height: 0;
 
     .grid-container .dashboard-component-tabs {
       box-shadow: none;
@@ -297,6 +300,7 @@ const StyledDashboardContent = styled.div<{
       position: relative;
       margin: ${theme.sizeUnit * 4}px;
       margin-left: ${marginLeft}px;
+      min-height: max-content;
 
       ${editMode &&
       `

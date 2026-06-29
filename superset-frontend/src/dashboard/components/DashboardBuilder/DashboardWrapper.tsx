@@ -16,7 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FC, PropsWithChildren, useEffect, useState } from 'react';
+import {
+  CSSProperties,
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { css, styled } from '@apache-superset/core/theme';
 import { Constants } from '@superset-ui/core/components';
@@ -34,6 +42,8 @@ const StyledDiv = styled.div`
     grid-template-columns: auto 1fr;
     grid-template-rows: auto 1fr;
     flex: 1;
+    min-height: 0;
+    height: calc(100vh - var(--dashboard-top-offset, 0px));
     /* Special cases */
 
     &.dragdroppable--dragging {
@@ -121,6 +131,26 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
   const [isDragged, setIsDragged] = useState(
     dragDropManager.getMonitor().isDragging(),
   );
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [topOffset, setTopOffset] = useState(0);
+
+  const updateTopOffset = useCallback(() => {
+    setTopOffset(wrapperRef.current?.getBoundingClientRect().top || 0);
+  }, []);
+
+  const setWrapperRef = useCallback((element: HTMLDivElement | null) => {
+    wrapperRef.current = element;
+    if (element) {
+      setTopOffset(element.getBoundingClientRect().top || 0);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateTopOffset);
+    return () => {
+      window.removeEventListener('resize', updateTopOffset);
+    };
+  }, [updateTopOffset]);
 
   useEffect(() => {
     const monitor = dragDropManager.getMonitor();
@@ -148,6 +178,13 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
 
   return (
     <StyledDiv
+      ref={setWrapperRef}
+      data-test="dashboard-wrapper"
+      style={
+        {
+          '--dashboard-top-offset': `${topOffset}px`,
+        } as CSSProperties
+      }
       className={classNames({
         'dragdroppable--dragging': editMode && isDragged,
       })}
