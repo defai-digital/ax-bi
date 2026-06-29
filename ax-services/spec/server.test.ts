@@ -33,6 +33,10 @@ import {
   DashboardListResponse,
 } from '../src/contracts/dashboardList';
 import {
+  DATABASE_LIST_CONTRACT_VERSION,
+  DatabaseListResponse,
+} from '../src/contracts/databaseList';
+import {
   DATASET_LIST_CONTRACT_VERSION,
   DatasetListResponse,
 } from '../src/contracts/datasetList';
@@ -42,6 +46,7 @@ import {
   SupersetAssetSearchClient,
   SupersetChartListClient,
   SupersetDashboardListClient,
+  SupersetDatabaseListClient,
   SupersetDatasetListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
@@ -70,6 +75,7 @@ function makeSupersetClient({
   onSearch,
   onListCharts,
   onListDashboards,
+  onListDatabases,
   onListDatasets,
   search = {
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -104,6 +110,20 @@ function makeSupersetClient({
     columnsLoaded: [],
     warnings: [],
   },
+  databaseList = {
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    databases: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  },
   datasetList = {
     contractVersion: DATASET_LIST_CONTRACT_VERSION,
     datasets: [],
@@ -124,18 +144,21 @@ function makeSupersetClient({
   search?: AssetSearchResponse;
   chartList?: ChartListResponse;
   dashboardList?: DashboardListResponse;
+  databaseList?: DatabaseListResponse;
   datasetList?: DatasetListResponse;
   onHealth?: (correlationId?: string) => void;
   onMetadata?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
+  onListDatabases?: (correlationId?: string) => void;
   onListDatasets?: (correlationId?: string) => void;
 } = {}): SupersetHealthClient &
   SupersetMetadataClient &
   SupersetAssetSearchClient &
   SupersetChartListClient &
   SupersetDashboardListClient &
+  SupersetDatabaseListClient &
   SupersetDatasetListClient {
   return {
     async checkHealth(correlationId) {
@@ -157,6 +180,10 @@ function makeSupersetClient({
     async listDashboards(_request, correlationId) {
       onListDashboards?.(correlationId);
       return dashboardList;
+    },
+    async listDatabases(_request, correlationId) {
+      onListDatabases?.(correlationId);
+      return databaseList;
     },
     async listDatasets(_request, correlationId) {
       onListDatasets?.(correlationId);
@@ -608,6 +635,84 @@ test('chart list endpoint delegates to Superset client', async () => {
     hasPrevious: false,
     columnsRequested: ['id', 'slice_name'],
     columnsLoaded: ['id', 'slice_name', 'viz_type', 'url'],
+    warnings: [],
+  });
+});
+
+test('database list endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      databaseList: {
+        contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+        databases: [
+          {
+            id: 13,
+            databaseName: 'examples',
+            backend: 'postgresql',
+            exposeInSqllab: true,
+          },
+        ],
+        count: 1,
+        totalCount: 1,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+        columnsRequested: ['id', 'database_name'],
+        columnsLoaded: ['id', 'database_name', 'backend', 'expose_in_sqllab'],
+        warnings: [],
+      },
+      onListDatabases(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/databases/list',
+    headers: {
+      'x-request-id': 'request-database-list',
+    },
+    payload: {
+      contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'database_name'],
+      search: 'examples',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-database-list');
+  expect(seenRequestIds).toEqual(['request-database-list']);
+  expect(response.json()).toEqual({
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    databases: [
+      {
+        id: 13,
+        databaseName: 'examples',
+        backend: 'postgresql',
+        exposeInSqllab: true,
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'database_name'],
+    columnsLoaded: ['id', 'database_name', 'backend', 'expose_in_sqllab'],
     warnings: [],
   });
 });

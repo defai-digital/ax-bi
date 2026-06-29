@@ -268,6 +268,47 @@ def test_list_charts_posts_to_ax_services_chart_list_endpoint() -> None:
     )
 
 
+def test_list_databases_posts_to_ax_services_database_list_endpoint() -> None:
+    """Database list requests use the sidecar TypeScript list endpoint."""
+
+    session = MagicMock()
+    session.post.return_value = make_response(payload={"databases": []})
+    client = AxServicesClient(AxServicesConfig(), session=session)
+
+    result = client.list_databases(
+        {
+            "contractVersion": "database-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "database_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+        },
+        request_id="request-databases",
+    )
+
+    assert result.ok is True
+    assert result.payload == {"databases": []}
+    session.post.assert_called_once_with(
+        "http://127.0.0.1:5010/mcp/databases/list",
+        json={
+            "contractVersion": "database-list.v1",
+            "filters": [],
+            "selectColumns": ["id", "database_name"],
+            "orderDirection": "asc",
+            "page": 1,
+            "pageSize": 10,
+            "createdByMe": False,
+        },
+        headers={
+            "content-type": "application/json",
+            "x-request-id": "request-databases",
+        },
+        timeout=2.0,
+    )
+
+
 def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
     """Dataset list requests use the sidecar TypeScript list endpoint."""
 

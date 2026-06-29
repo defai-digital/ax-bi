@@ -1,0 +1,241 @@
+{
+  "databaseListRequestSchema": {
+    "$id": "ax-services.database-list.v1.request",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "filters",
+      "selectColumns",
+      "orderDirection",
+      "page",
+      "pageSize",
+      "createdByMe"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "database-list.v1"
+      },
+      "filters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "col",
+            "opr",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "col": {
+              "type": "string"
+            },
+            "opr": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "selectColumns": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "search": {
+        "type": "string"
+      },
+      "orderColumn": {
+        "type": "string"
+      },
+      "orderDirection": {
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "page": {
+        "type": "number",
+        "minimum": 1
+      },
+      "pageSize": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100
+      },
+      "createdByMe": {
+        "type": "boolean"
+      }
+    }
+  },
+  "databaseListResponseSchema": {
+    "$id": "ax-services.database-list.v1.response",
+    "type": "object",
+    "required": [
+      "contractVersion",
+      "databases",
+      "count",
+      "totalCount",
+      "page",
+      "pageSize",
+      "totalPages",
+      "hasNext",
+      "hasPrevious",
+      "columnsRequested",
+      "columnsLoaded",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "contractVersion": {
+        "const": "database-list.v1"
+      },
+      "databases": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "number"
+            },
+            "uuid": {
+              "type": "string"
+            },
+            "databaseName": {
+              "type": "string"
+            },
+            "backend": {
+              "type": "string"
+            },
+            "exposeInSqllab": {
+              "type": "boolean"
+            },
+            "allowCtas": {
+              "type": "boolean"
+            },
+            "allowCvas": {
+              "type": "boolean"
+            },
+            "allowDml": {
+              "type": "boolean"
+            },
+            "allowFileUpload": {
+              "type": "boolean"
+            },
+            "allowRunAsync": {
+              "type": "boolean"
+            },
+            "cacheTimeout": {
+              "type": "number"
+            },
+            "configurationMethod": {
+              "type": "string"
+            },
+            "forceCtasSchema": {
+              "type": "string"
+            },
+            "impersonateUser": {
+              "type": "boolean"
+            },
+            "isManagedExternally": {
+              "type": "boolean"
+            },
+            "externalUrl": {
+              "type": "string"
+            },
+            "extra": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "changedOn": {
+              "type": "string"
+            },
+            "changedOnHumanized": {
+              "type": "string"
+            },
+            "createdOn": {
+              "type": "string"
+            },
+            "createdOnHumanized": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "count": {
+        "type": "number"
+      },
+      "totalCount": {
+        "type": "number"
+      },
+      "page": {
+        "type": "number"
+      },
+      "pageSize": {
+        "type": "number"
+      },
+      "totalPages": {
+        "type": "number"
+      },
+      "hasNext": {
+        "type": "boolean"
+      },
+      "hasPrevious": {
+        "type": "boolean"
+      },
+      "columnsRequested": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "columnsLoaded": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

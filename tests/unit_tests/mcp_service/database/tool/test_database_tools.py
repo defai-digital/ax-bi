@@ -23,6 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
+from flask import current_app
 from pydantic import ValidationError
 
 from superset.mcp_service.app import mcp
@@ -37,6 +38,7 @@ from superset.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     sanitize_for_llm_context,
 )
+from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
 logging.basicConfig(level=logging.DEBUG)
@@ -223,6 +225,34 @@ async def test_list_databases_without_request_returns_structured_privacy_error(
     assert data["error_type"] == DATA_MODEL_METADATA_ERROR_TYPE
 
 
+@pytest.mark.asyncio
+async def test_list_databases_privacy_denial_does_not_call_sidecar(
+    mcp_server,
+) -> None:
+    """Database sidecar serving is blocked by metadata privacy controls."""
+
+    with (
+        patch.object(
+            list_databases_module,
+            "user_can_view_data_model_metadata",
+            return_value=False,
+        ),
+        patch.object(
+            list_databases_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATABASE_LIST_SERVING"},
+        ),
+        patch.object(list_databases_module, "AxServicesClient") as client_class,
+    ):
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_databases", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["error_type"] == DATA_MODEL_METADATA_ERROR_TYPE
+    client_class.assert_not_called()
+
+
 @patch("superset.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_basic(mock_list, mcp_server):
@@ -362,6 +392,182 @@ def test_database_request_accepts_created_by_me() -> None:
     """created_by_me=True is the correct way to filter by current user."""
     request = ListDatabasesRequest(created_by_me=True)
     assert request.created_by_me is True
+
+
+@patch("superset.daos.database.DatabaseDAO.list")
+@pytest.mark.asyncio
+async def test_list_databases_shadows_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+    app_context: None,
+) -> None:
+    """Database listing can shadow the TypeScript sidecar candidate."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    database = create_mock_database(database_id=1)
+    database._mapping = {
+        "id": database.id,
+        "database_name": database.database_name,
+        "backend": database.backend,
+    }
+    mock_list.return_value = ([database], 1)
+
+    with (
+        patch.object(
+            list_databases_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
+        ),
+        patch.object(list_databases_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_databases.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "database-list.v1",
+                "databases": [
+                    {
+                        "id": 1,
+                        "databaseName": "examples",
+                        "backend": "postgresql",
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "database_name"],
+                "columnsLoaded": ["id", "database_name"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_databases",
+                {"request": ListDatabasesRequest(page=1, page_size=10).model_dump()},
+            )
+
+    data = json.loads(result.content[0].text)
+    assert [database["id"] for database in data["databases"]] == [1]
+    client_class.return_value.list_databases.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_databases.shadow_match"
+    )
+
+
+@patch("superset.daos.database.DatabaseDAO.list")
+@pytest.mark.asyncio
+async def test_list_databases_serves_ax_services_when_enabled(
+    mock_list,
+    mcp_server,
+    app_context: None,
+) -> None:
+    """Database listing can serve valid TypeScript sidecar results."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+
+    with (
+        patch.object(
+            list_databases_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATABASE_LIST_SERVING"},
+        ),
+        patch.object(list_databases_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_databases.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "database-list.v1",
+                "databases": [
+                    {
+                        "id": 9,
+                        "databaseName": "ts_examples",
+                        "backend": "postgresql",
+                        "exposeInSqllab": True,
+                    }
+                ],
+                "count": 1,
+                "totalCount": 1,
+                "page": 1,
+                "pageSize": 10,
+                "totalPages": 1,
+                "hasNext": False,
+                "hasPrevious": False,
+                "columnsRequested": ["id", "database_name", "backend"],
+                "columnsLoaded": ["id", "database_name", "backend"],
+                "warnings": [],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool(
+                "list_databases",
+                {"request": ListDatabasesRequest(page=1, page_size=10).model_dump()},
+            )
+
+    mock_list.assert_not_called()
+    data = json.loads(result.content[0].text)
+    assert data["databases"] == [
+        {
+            "id": 9,
+            "database_name": "ts_examples",
+            "backend": "postgresql",
+        }
+    ]
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_databases.served_candidate"
+    )
+
+
+@patch("superset.daos.database.DatabaseDAO.list")
+@pytest.mark.asyncio
+async def test_list_databases_serving_falls_back_on_invalid_candidate(
+    mock_list,
+    mcp_server,
+    app_context: None,
+) -> None:
+    """Database listing falls back to Python when sidecar output is invalid."""
+
+    stats_logger = MagicMock()
+    current_app.config["STATS_LOGGER"] = stats_logger
+    mock_list.return_value = ([], 0)
+
+    with (
+        patch.object(
+            list_databases_module,
+            "is_feature_enabled",
+            side_effect=lambda flag: flag
+            in {"TS_MCP_ORCHESTRATION", "TS_DATABASE_LIST_SERVING"},
+        ),
+        patch.object(list_databases_module, "AxServicesClient") as client_class,
+    ):
+        client_class.return_value.list_databases.return_value = AxServicesResponse(
+            ok=True,
+            status_code=200,
+            payload={
+                "contractVersion": "database-list.v1",
+                "databases": [{"databaseName": "missing id"}],
+            },
+        )
+
+        async with Client(mcp_server) as client:
+            result = await client.call_tool("list_databases", {})
+
+    data = json.loads(result.content[0].text)
+    assert data["databases"] == []
+    mock_list.assert_called_once()
+    stats_logger.incr.assert_any_call(
+        "runtime_modernization.mcp_orchestration.list_databases.fallback"
+    )
 
 
 @patch("superset.daos.database.DatabaseDAO.list")

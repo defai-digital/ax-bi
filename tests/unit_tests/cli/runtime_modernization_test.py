@@ -95,7 +95,21 @@ def test_runtime_modernization_rollout_manifest_outputs_text() -> None:
     assert result.exit_code == 0
     assert "mcp_dataset_list: POST /mcp/datasets/list" in result.output
     assert "TS_DATASET_LIST_SERVING" in result.output
+    assert "mcp_database_list: POST /mcp/databases/list" not in result.output
     assert "shadow_mismatch_rate" in result.output
+
+
+def test_runtime_modernization_rollout_manifest_outputs_database_list_text() -> None:
+    """Rollout manifest text mode includes database listing when selected."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["rollout-manifest", "--workflow", "mcp_database_list", "--format", "text"],
+    )
+
+    assert result.exit_code == 0
+    assert "mcp_database_list: POST /mcp/databases/list" in result.output
+    assert "TS_DATABASE_LIST_SERVING" in result.output
 
 
 def test_runtime_modernization_rollout_manifest_rejects_unknown_workflow() -> None:

@@ -34,6 +34,7 @@ def test_rollout_workflows_cover_migrated_mcp_paths() -> None:
         "mcp_asset_search",
         "mcp_chart_list",
         "mcp_dashboard_list",
+        "mcp_database_list",
         "mcp_dataset_list",
         "mcp_health_check",
     }
@@ -97,6 +98,23 @@ def test_rollout_workflow_includes_dataset_list() -> None:
     ]
     assert (
         "runtime_modernization.mcp_orchestration.list_datasets.shadow_mismatch"
+        in workflow.python_metrics
+    )
+
+
+def test_rollout_workflow_includes_database_list() -> None:
+    """Rollout manifest includes database listing as a TypeScript workflow."""
+
+    workflow = get_rollout_workflow("mcp_database_list")
+
+    assert workflow.sidecar_route == "POST /mcp/databases/list"
+    assert workflow.contract_version == "database-list.v1"
+    assert list(workflow.serving_flags) == [
+        "TS_MCP_ORCHESTRATION",
+        "TS_DATABASE_LIST_SERVING",
+    ]
+    assert (
+        "runtime_modernization.mcp_orchestration.list_databases.shadow_mismatch"
         in workflow.python_metrics
     )
 

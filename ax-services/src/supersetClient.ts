@@ -38,6 +38,13 @@ import {
   DashboardFilterValue,
 } from './contracts/dashboardList';
 import {
+  DATABASE_LIST_CONTRACT_VERSION,
+  DatabaseFilterValue,
+  DatabaseListItem,
+  DatabaseListRequest,
+  DatabaseListResponse,
+} from './contracts/databaseList';
+import {
   DATASET_LIST_CONTRACT_VERSION,
   DatasetFilterValue,
   DatasetListItem,
@@ -92,6 +99,13 @@ export interface SupersetChartListClient {
   ): Promise<ChartListResponse>;
 }
 
+export interface SupersetDatabaseListClient {
+  listDatabases(
+    request: DatabaseListRequest,
+    correlationId?: string,
+  ): Promise<DatabaseListResponse>;
+}
+
 export interface SupersetDatasetListClient {
   listDatasets(
     request: DatasetListRequest,
@@ -106,6 +120,7 @@ export class SupersetClient
     SupersetAssetSearchClient,
     SupersetDashboardListClient,
     SupersetChartListClient,
+    SupersetDatabaseListClient,
     SupersetDatasetListClient
 {
   private readonly healthUrl: string;
@@ -411,6 +426,54 @@ export class SupersetClient
     }
   }
 
+  async listDatabases(
+    request: DatabaseListRequest,
+    correlationId?: string,
+  ): Promise<DatabaseListResponse> {
+    const url = this.buildDatabaseListUrl(request);
+
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyDatabaseListResponse(request, [
+          `database list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const databases = extractSupersetResults(payload)
+        .map(toDatabaseListItem)
+        .filter(isDefined);
+      const totalCount = extractSupersetCount(payload, databases.length);
+      const totalPages = Math.ceil(totalCount / request.pageSize);
+
+      return {
+        contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+        databases,
+        count: databases.length,
+        totalCount,
+        page: request.page,
+        pageSize: request.pageSize,
+        totalPages,
+        hasNext: request.page < totalPages,
+        hasPrevious: request.page > 1,
+        columnsRequested: requestedDatabaseColumns(request),
+        columnsLoaded: databaseColumnsLoaded(databases),
+        warnings: [],
+      };
+    } catch (error) {
+      return emptyDatabaseListResponse(request, [
+        `database list failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ]);
+    }
+  }
+
   private async searchAssetType(
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
@@ -493,6 +556,14 @@ export class SupersetClient
     url.searchParams.set('q', buildDatasetListQuery(request));
     return url.toString();
   }
+
+  private buildDatabaseListUrl(request: DatabaseListRequest): string {
+    const url = new URL(
+      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.database}`,
+    );
+    url.searchParams.set('q', buildDatabaseListQuery(request));
+    return url.toString();
+  }
 }
 
 function extractObjectKeys(payload: unknown): string[] {
@@ -530,6 +601,22 @@ interface SupersetListItem {
   is_virtual?: boolean;
   database_id?: number;
   type?: string;
+  backend?: string;
+  expose_in_sqllab?: boolean;
+  allow_ctas?: boolean;
+  allow_cvas?: boolean;
+  allow_dml?: boolean;
+  allow_file_upload?: boolean;
+  allow_run_async?: boolean;
+  cache_timeout?: number | null;
+  configuration_method?: string;
+  force_ctas_schema?: string | null;
+  impersonate_user?: boolean;
+  is_managed_externally?: boolean;
+  external_url?: string | null;
+  extra?: unknown;
+  created_on?: string;
+  created_on_humanized?: string;
   owners?: unknown[];
   tags?: unknown[];
 }
@@ -639,6 +726,30 @@ function buildDatasetListQuery(request: DatasetListRequest): string {
   return `(${parts.join(',')})`;
 }
 
+function buildDatabaseListQuery(request: DatabaseListRequest): string {
+  const filters = [...request.filters];
+  if (request.search !== undefined && request.search !== '') {
+    filters.push({
+      col: 'database_name',
+      opr: 'ct',
+      value: request.search,
+    });
+  }
+
+  const parts = [
+    `page:${request.page - 1}`,
+    `page_size:${request.pageSize}`,
+    `filters:!(${filters.map(formatDatabaseFilter).join(',')})`,
+  ];
+
+  if (request.orderColumn !== undefined && request.orderColumn !== '') {
+    parts.push(`order_column:${request.orderColumn}`);
+    parts.push(`order_direction:${request.orderDirection}`);
+  }
+
+  return `(${parts.join(',')})`;
+}
+
 function formatDashboardFilter(filter: {
   col: string;
   opr: string;
@@ -669,6 +780,16 @@ function formatDatasetFilter(filter: {
   )})`;
 }
 
+function formatDatabaseFilter(filter: {
+  col: string;
+  opr: string;
+  value: DatabaseFilterValue;
+}): string {
+  return `(col:${filter.col},opr:${filter.opr},value:${formatDatabaseRisonValue(
+    filter.value,
+  )})`;
+}
+
 function formatRisonValue(value: DashboardFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
@@ -684,6 +805,13 @@ function formatChartRisonValue(value: ChartFilterValue): string {
 }
 
 function formatDatasetRisonValue(value: DatasetFilterValue): string {
+  if (Array.isArray(value)) {
+    return `!(${value.map(formatScalarRisonValue).join(',')})`;
+  }
+  return formatScalarRisonValue(value);
+}
+
+function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -812,6 +940,68 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
   };
 }
 
+function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefined {
+  if (typeof item.id !== 'number') {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
+    databaseName:
+      typeof item.database_name === 'string' ? item.database_name : undefined,
+    backend: typeof item.backend === 'string' ? item.backend : undefined,
+    exposeInSqllab:
+      typeof item.expose_in_sqllab === 'boolean'
+        ? item.expose_in_sqllab
+        : undefined,
+    allowCtas:
+      typeof item.allow_ctas === 'boolean' ? item.allow_ctas : undefined,
+    allowCvas:
+      typeof item.allow_cvas === 'boolean' ? item.allow_cvas : undefined,
+    allowDml: typeof item.allow_dml === 'boolean' ? item.allow_dml : undefined,
+    allowFileUpload:
+      typeof item.allow_file_upload === 'boolean'
+        ? item.allow_file_upload
+        : undefined,
+    allowRunAsync:
+      typeof item.allow_run_async === 'boolean'
+        ? item.allow_run_async
+        : undefined,
+    cacheTimeout:
+      typeof item.cache_timeout === 'number' ? item.cache_timeout : undefined,
+    configurationMethod:
+      typeof item.configuration_method === 'string'
+        ? item.configuration_method
+        : undefined,
+    forceCtasSchema:
+      typeof item.force_ctas_schema === 'string'
+        ? item.force_ctas_schema
+        : undefined,
+    impersonateUser:
+      typeof item.impersonate_user === 'boolean'
+        ? item.impersonate_user
+        : undefined,
+    isManagedExternally:
+      typeof item.is_managed_externally === 'boolean'
+        ? item.is_managed_externally
+        : undefined,
+    externalUrl:
+      typeof item.external_url === 'string' ? item.external_url : undefined,
+    extra: isRecord(item.extra) ? item.extra : undefined,
+    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOnHumanized:
+      typeof item.changed_on_humanized === 'string'
+        ? item.changed_on_humanized
+        : undefined,
+    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOnHumanized:
+      typeof item.created_on_humanized === 'string'
+        ? item.created_on_humanized
+        : undefined,
+  };
+}
+
 function extractDatabaseName(item: SupersetListItem): string | undefined {
   if (typeof item.database_name === 'string') {
     return item.database_name;
@@ -911,6 +1101,21 @@ function requestedDatasetColumns(request: DatasetListRequest): string[] {
       ];
 }
 
+function requestedDatabaseColumns(request: DatabaseListRequest): string[] {
+  return request.selectColumns.length > 0
+    ? request.selectColumns
+    : [
+        'id',
+        'uuid',
+        'database_name',
+        'backend',
+        'expose_in_sqllab',
+        'allow_file_upload',
+        'changed_on',
+        'changed_on_humanized',
+      ];
+}
+
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
   const loaded = new Set<string>(['id']);
   for (const dataset of datasets) {
@@ -933,6 +1138,41 @@ function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
     if (dataset.databaseId !== undefined) loaded.add('database_id');
     if (dataset.uuid !== undefined) loaded.add('uuid');
     if (dataset.url !== undefined) loaded.add('url');
+  }
+  return [...loaded];
+}
+
+function databaseColumnsLoaded(databases: DatabaseListItem[]): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const database of databases) {
+    if (database.uuid !== undefined) loaded.add('uuid');
+    if (database.databaseName !== undefined) loaded.add('database_name');
+    if (database.backend !== undefined) loaded.add('backend');
+    if (database.exposeInSqllab !== undefined) loaded.add('expose_in_sqllab');
+    if (database.allowCtas !== undefined) loaded.add('allow_ctas');
+    if (database.allowCvas !== undefined) loaded.add('allow_cvas');
+    if (database.allowDml !== undefined) loaded.add('allow_dml');
+    if (database.allowFileUpload !== undefined) loaded.add('allow_file_upload');
+    if (database.allowRunAsync !== undefined) loaded.add('allow_run_async');
+    if (database.cacheTimeout !== undefined) loaded.add('cache_timeout');
+    if (database.configurationMethod !== undefined) {
+      loaded.add('configuration_method');
+    }
+    if (database.forceCtasSchema !== undefined) loaded.add('force_ctas_schema');
+    if (database.impersonateUser !== undefined) loaded.add('impersonate_user');
+    if (database.isManagedExternally !== undefined) {
+      loaded.add('is_managed_externally');
+    }
+    if (database.externalUrl !== undefined) loaded.add('external_url');
+    if (database.extra !== undefined) loaded.add('extra');
+    if (database.changedOn !== undefined) loaded.add('changed_on');
+    if (database.changedOnHumanized !== undefined) {
+      loaded.add('changed_on_humanized');
+    }
+    if (database.createdOn !== undefined) loaded.add('created_on');
+    if (database.createdOnHumanized !== undefined) {
+      loaded.add('created_on_humanized');
+    }
   }
   return [...loaded];
 }
@@ -992,6 +1232,26 @@ function emptyDatasetListResponse(
     hasNext: false,
     hasPrevious: request.page > 1,
     columnsRequested: requestedDatasetColumns(request),
+    columnsLoaded: [],
+    warnings,
+  };
+}
+
+function emptyDatabaseListResponse(
+  request: DatabaseListRequest,
+  warnings: string[],
+): DatabaseListResponse {
+  return {
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    databases: [],
+    count: 0,
+    totalCount: 0,
+    page: request.page,
+    pageSize: request.pageSize,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: request.page > 1,
+    columnsRequested: requestedDatabaseColumns(request),
     columnsLoaded: [],
     warnings,
   };

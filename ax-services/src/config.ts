@@ -26,6 +26,7 @@ export interface ServiceConfig {
   supersetAssetSearchPaths: {
     chart: string;
     dashboard: string;
+    database: string;
     dataset: string;
   };
   supersetTimeoutMs: number;
@@ -43,6 +44,7 @@ const DEFAULT_SUPERSET_METADATA_PATH = '/api/v1/dashboard/_info';
 const DEFAULT_SUPERSET_PERMISSION_PATH = '/api/v1/security/permissions/check';
 const DEFAULT_SUPERSET_CHART_LIST_PATH = '/api/v1/chart/';
 const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
+const DEFAULT_SUPERSET_DATABASE_LIST_PATH = '/api/v1/database/';
 const DEFAULT_SUPERSET_DATASET_LIST_PATH = '/api/v1/dataset/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL = 'info';
@@ -106,6 +108,10 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       dashboard: normalizePath(
         env.AX_SUPERSET_DASHBOARD_LIST_PATH ||
           DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+      ),
+      database: normalizePath(
+        env.AX_SUPERSET_DATABASE_LIST_PATH ||
+          DEFAULT_SUPERSET_DATABASE_LIST_PATH,
       ),
       dataset: normalizePath(
         env.AX_SUPERSET_DATASET_LIST_PATH || DEFAULT_SUPERSET_DATASET_LIST_PATH,

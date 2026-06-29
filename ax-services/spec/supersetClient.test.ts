@@ -23,6 +23,7 @@ import { ASSET_SEARCH_CONTRACT_VERSION } from '../src/contracts/assetSearch';
 import { AUTHORIZATION_CONTRACT_VERSION } from '../src/contracts/authorization';
 import { CHART_LIST_CONTRACT_VERSION } from '../src/contracts/chartList';
 import { DASHBOARD_LIST_CONTRACT_VERSION } from '../src/contracts/dashboardList';
+import { DATABASE_LIST_CONTRACT_VERSION } from '../src/contracts/databaseList';
 import { DATASET_LIST_CONTRACT_VERSION } from '../src/contracts/datasetList';
 import { SupersetClient } from '../src/supersetClient';
 
@@ -837,6 +838,181 @@ test('listDatasets records warnings for failed Superset list responses', async (
     ],
     columnsLoaded: [],
     warnings: ['dataset list returned status 504 from Superset'],
+  });
+});
+
+test('listDatabases maps Superset database list responses', async () => {
+  let seenInput: RequestInfo | URL | undefined;
+  let seenInit: RequestInit | undefined;
+  global.fetch = async (input, init) => {
+    seenInput = input;
+    seenInit = init;
+    return Response.json({
+      count: 14,
+      result: [
+        {
+          id: 13,
+          uuid: 'database-uuid',
+          database_name: 'examples',
+          backend: 'postgresql',
+          expose_in_sqllab: true,
+          allow_ctas: false,
+          allow_cvas: true,
+          allow_dml: false,
+          allow_file_upload: true,
+          allow_run_async: false,
+          cache_timeout: 300,
+          configuration_method: 'sqlalchemy_form',
+          force_ctas_schema: 'tmp',
+          impersonate_user: true,
+          is_managed_externally: false,
+          external_url: 'https://example.test/database/13',
+          extra: {
+            metadata_params: {},
+          },
+          changed_on: '2026-01-04T00:00:00',
+          changed_on_humanized: '4 days ago',
+          created_on: '2026-01-01T00:00:00',
+          created_on_humanized: '1 week ago',
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(
+    buildConfig({
+      AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    }),
+  );
+
+  const result = await client.listDatabases(
+    {
+      contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+      filters: [{ col: 'expose_in_sqllab', opr: 'eq', value: true }],
+      selectColumns: ['id', 'database_name'],
+      search: 'examples',
+      orderColumn: 'database_name',
+      orderDirection: 'desc',
+      page: 2,
+      pageSize: 10,
+      createdByMe: false,
+    },
+    'request-databases',
+  );
+
+  expect(result).toEqual({
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    databases: [
+      {
+        id: 13,
+        uuid: 'database-uuid',
+        databaseName: 'examples',
+        backend: 'postgresql',
+        exposeInSqllab: true,
+        allowCtas: false,
+        allowCvas: true,
+        allowDml: false,
+        allowFileUpload: true,
+        allowRunAsync: false,
+        cacheTimeout: 300,
+        configurationMethod: 'sqlalchemy_form',
+        forceCtasSchema: 'tmp',
+        impersonateUser: true,
+        isManagedExternally: false,
+        externalUrl: 'https://example.test/database/13',
+        extra: {
+          metadata_params: {},
+        },
+        changedOn: '2026-01-04T00:00:00',
+        changedOnHumanized: '4 days ago',
+        createdOn: '2026-01-01T00:00:00',
+        createdOnHumanized: '1 week ago',
+      },
+    ],
+    count: 1,
+    totalCount: 14,
+    page: 2,
+    pageSize: 10,
+    totalPages: 2,
+    hasNext: false,
+    hasPrevious: true,
+    columnsRequested: ['id', 'database_name'],
+    columnsLoaded: [
+      'id',
+      'uuid',
+      'database_name',
+      'backend',
+      'expose_in_sqllab',
+      'allow_ctas',
+      'allow_cvas',
+      'allow_dml',
+      'allow_file_upload',
+      'allow_run_async',
+      'cache_timeout',
+      'configuration_method',
+      'force_ctas_schema',
+      'impersonate_user',
+      'is_managed_externally',
+      'external_url',
+      'extra',
+      'changed_on',
+      'changed_on_humanized',
+      'created_on',
+      'created_on_humanized',
+    ],
+    warnings: [],
+  });
+  expect(String(seenInput)).toContain('/api/v1/database/');
+  expect(String(seenInput)).toContain('q=');
+  expect(decodeURIComponent(String(seenInput))).toContain('page:1');
+  expect(decodeURIComponent(String(seenInput))).toContain("value:'examples'");
+  expect(seenInit?.headers).toEqual({
+    authorization: 'Bearer token-123',
+    'x-request-id': 'request-databases',
+  });
+});
+
+test('listDatabases records warnings for failed Superset list responses', async () => {
+  global.fetch = async () =>
+    new Response('upstream timeout', {
+      status: 504,
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDatabases({
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    databases: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'uuid',
+      'database_name',
+      'backend',
+      'expose_in_sqllab',
+      'allow_file_upload',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['database list returned status 504 from Superset'],
   });
 });
 

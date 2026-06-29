@@ -271,6 +271,7 @@ Recommended flags:
 - `TS_MCP_ORCHESTRATION`: route selected MCP workflows through TypeScript.
 - `TS_ASSET_SEARCH_SERVING`: serve MCP asset search from the TypeScript sidecar.
 - `TS_HEALTH_CHECK_SERVING`: serve MCP health check from the TypeScript sidecar.
+- `TS_DATABASE_LIST_SERVING`: serve MCP database listing from the TypeScript sidecar.
 - `TS_METADATA_INDEX`: enable TypeScript-derived metadata index.
 - `RUST_SQL_KERNEL`: enable Rust SQL parsing or normalization.
 - `RUST_CHART_VALIDATION_KERNEL`: enable Rust chart validation kernels.
