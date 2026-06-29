@@ -427,6 +427,20 @@ def test_production_evidence_manifest_lists_required_artifacts() -> None:
     assert len(get_production_evidence_requirements()) == len(artifact_names)
 
 
+def test_production_evidence_manifest_requires_workflows() -> None:
+    """Production evidence manifests require a concrete workflow scope."""
+
+    with pytest.raises(ValueError, match="requires at least one workflow"):
+        build_production_evidence_manifest(())
+
+
+def test_production_evidence_template_requires_workflows() -> None:
+    """Production evidence templates require a concrete workflow scope."""
+
+    with pytest.raises(ValueError, match="requires at least one workflow"):
+        build_production_evidence_template(())
+
+
 def test_validate_production_evidence_passes_complete_bundle() -> None:
     """Production evidence validation passes complete release evidence."""
 
@@ -1563,6 +1577,25 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert checks["rust_kernel_benchmark"]["passed"] is False
     assert checks["rust_kernel_rollout_decision"]["passed"] is False
     assert checks["production_flag_state"]["passed"] is False
+
+
+def test_validate_production_evidence_requires_workflow_scope() -> None:
+    """Production evidence validation fails without selected workflows."""
+
+    validation = validate_production_evidence(
+        (),
+        {
+            "schema_version": 1,
+            "artifacts": {},
+        },
+    )
+
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert validation["workflow_names"] == []
+    assert checks["workflow_scope"]["passed"] is False
+    assert "requires at least one workflow" in checks["workflow_scope"]["message"]
 
 
 def test_validate_production_evidence_rejects_malformed_target_checks() -> None:

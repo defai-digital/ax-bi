@@ -452,6 +452,11 @@ def build_production_evidence_manifest(
 ) -> dict[str, Any]:
     """Build the production evidence manifest for selected workflows."""
 
+    if not workflows:
+        raise ValueError(
+            "production evidence manifest requires at least one workflow",
+        )
+
     return {
         "schema_version": 1,
         "status": "requires_external_evidence",
@@ -470,6 +475,11 @@ def build_production_evidence_template(
     workflows: tuple[RolloutWorkflow, ...],
 ) -> dict[str, Any]:
     """Build a fillable production evidence bundle template."""
+
+    if not workflows:
+        raise ValueError(
+            "production evidence template requires at least one workflow",
+        )
 
     return {
         "schema_version": 1,
@@ -980,6 +990,19 @@ def validate_production_evidence(
     raw_artifacts = evidence.get("artifacts")
     artifacts = raw_artifacts if isinstance(raw_artifacts, Mapping) else {}
     checks: list[ProductionEvidenceCheck] = []
+
+    workflow_scope_passed = bool(workflows)
+    checks.append(
+        ProductionEvidenceCheck(
+            name="workflow_scope",
+            passed=workflow_scope_passed,
+            message=(
+                "production evidence is scoped to selected workflows"
+                if workflow_scope_passed
+                else "production evidence validation requires at least one workflow"
+            ),
+        )
+    )
 
     evidence_bundle_passed = evidence.get("schema_version") == 1 and isinstance(
         raw_artifacts, Mapping
