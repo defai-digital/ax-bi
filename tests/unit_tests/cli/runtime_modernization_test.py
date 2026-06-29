@@ -20,6 +20,7 @@ from pytest_mock import MockerFixture
 
 from superset.cli.runtime_modernization import runtime_modernization
 from superset.runtime_modernization.ax_services import AxServicesResponse
+from superset.runtime_modernization.benchmarks import RuntimeBenchmarkResult
 from superset.utils import json
 
 
@@ -52,6 +53,48 @@ def test_runtime_modernization_inventory_outputs_json() -> None:
     assert "mcp_orchestration" in areas
     assert "auth_rbac_security" not in areas
     assert all(item["disposition"] == "candidate" for item in payload)
+
+
+def test_runtime_modernization_benchmark_outputs_json(
+    mocker: MockerFixture,
+) -> None:
+    """Benchmark command emits stable JSON for automation."""
+
+    benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+    )
+    benchmark.return_value = RuntimeBenchmarkResult(
+        area="sql_parsing_normalization",
+        operation="parse_format_table_check",
+        engine="postgresql",
+        iterations=3,
+        duration_ms=12.5,
+        operations_per_second=240.0,
+        statement_count=1,
+        formatted_bytes=128,
+        table_check_matched=True,
+        has_mutation=False,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["benchmark", "--iterations", "3", "--format", "json"],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {
+        "area": "sql_parsing_normalization",
+        "duration_ms": 12.5,
+        "engine": "postgresql",
+        "formatted_bytes": 128,
+        "has_mutation": False,
+        "iterations": 3,
+        "operation": "parse_format_table_check",
+        "operations_per_second": 240.0,
+        "statement_count": 1,
+        "table_check_matched": True,
+    }
+    benchmark.assert_called_once_with(iterations=3)
 
 
 def test_runtime_modernization_ax_services_ready_outputs_text(

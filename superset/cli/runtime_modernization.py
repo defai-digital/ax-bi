@@ -29,6 +29,10 @@ from superset.runtime_modernization.ax_services import (
     AxServicesConfig,
     AxServicesResponse,
 )
+from superset.runtime_modernization.benchmarks import (
+    benchmark_sql_parsing_normalization,
+    RuntimeBenchmarkResult,
+)
 from superset.runtime_modernization.inventory import (
     get_runtime_inventory,
     MigrationDisposition,
@@ -95,6 +99,23 @@ def _response_to_dict(response: AxServicesResponse) -> dict[str, Any]:
     }
 
 
+def _benchmark_result_to_dict(result: RuntimeBenchmarkResult) -> dict[str, Any]:
+    """Serialize a runtime benchmark result for CLI output."""
+
+    return {
+        "area": result.area,
+        "operation": result.operation,
+        "engine": result.engine,
+        "iterations": result.iterations,
+        "duration_ms": result.duration_ms,
+        "operations_per_second": result.operations_per_second,
+        "statement_count": result.statement_count,
+        "formatted_bytes": result.formatted_bytes,
+        "table_check_matched": result.table_check_matched,
+        "has_mutation": result.has_mutation,
+    }
+
+
 @runtime_modernization.command()
 @click.option(
     "--format",
@@ -127,6 +148,50 @@ def inventory(output_format: str, disposition: str | None) -> None:
         return
 
     click.echo(_format_table(items))
+
+
+@runtime_modernization.command("benchmark")
+@click.option(
+    "--candidate",
+    type=click.Choice(("sql_parsing_normalization",)),
+    default="sql_parsing_normalization",
+    show_default=True,
+    help="Runtime modernization candidate to benchmark.",
+)
+@click.option(
+    "--iterations",
+    type=click.IntRange(min=1),
+    default=50,
+    show_default=True,
+    help="Number of benchmark iterations.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def benchmark(candidate: str, iterations: int, output_format: str) -> None:
+    """Run a local runtime modernization benchmark."""
+
+    if candidate != "sql_parsing_normalization":
+        raise click.ClickException(f"Unsupported benchmark candidate: {candidate}")
+
+    result = benchmark_sql_parsing_normalization(iterations=iterations)
+
+    if output_format == "json":
+        click.echo(
+            json.dumps(_benchmark_result_to_dict(result), sort_keys=True, indent=2)
+        )
+        return
+
+    click.echo(
+        f"{result.area} {result.operation}: "
+        f"{result.iterations} iterations in {result.duration_ms:.2f} ms "
+        f"({result.operations_per_second:.2f} ops/s)"
+    )
 
 
 @runtime_modernization.command("ax-services")
