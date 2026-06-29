@@ -981,6 +981,40 @@ def test_validate_production_evidence_fails_incomplete_bundle() -> None:
     assert checks["production_flag_state"]["passed"] is False
 
 
+def test_validate_production_evidence_requires_supported_bundle_schema() -> None:
+    """Production evidence validation rejects unsupported bundle schema versions."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 2,
+            "artifacts": {},
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["evidence_bundle"]["passed"] is False
+    assert "schema_version 1" in checks["evidence_bundle"]["message"]
+
+
+def test_validate_production_evidence_requires_object_artifacts() -> None:
+    """Production evidence validation rejects malformed artifact containers."""
+
+    validation = validate_production_evidence(
+        (get_rollout_workflow("mcp_asset_search"),),
+        {
+            "schema_version": 1,
+            "artifacts": [],
+        },
+    )
+    checks = {check["name"]: check for check in validation["checks"]}
+
+    assert validation["status"] == "failed"
+    assert checks["evidence_bundle"]["passed"] is False
+    assert "object-shaped artifacts" in checks["evidence_bundle"]["message"]
+
+
 def test_validate_production_evidence_rejects_unserved_rust_decision() -> None:
     """A served Rust decision must prove the production serving flag is enabled."""
 

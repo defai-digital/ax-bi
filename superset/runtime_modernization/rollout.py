@@ -816,6 +816,24 @@ def validate_production_evidence(
     artifacts = raw_artifacts if isinstance(raw_artifacts, Mapping) else {}
     checks: list[ProductionEvidenceCheck] = []
 
+    evidence_bundle_passed = evidence.get("schema_version") == 1 and isinstance(
+        raw_artifacts, Mapping
+    )
+    checks.append(
+        ProductionEvidenceCheck(
+            name="evidence_bundle",
+            passed=evidence_bundle_passed,
+            message=(
+                "production evidence bundle schema is supported"
+                if evidence_bundle_passed
+                else (
+                    "production evidence bundle must use schema_version 1 and "
+                    "object-shaped artifacts"
+                )
+            ),
+        )
+    )
+
     compatibility_report = _artifact_mapping(artifacts, "compatibility_report")
     compatibility_passed = (
         compatibility_report is not None

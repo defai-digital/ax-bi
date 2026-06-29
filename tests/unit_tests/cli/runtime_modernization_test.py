@@ -1241,6 +1241,36 @@ def test_runtime_modernization_validate_production_evidence_strict_failure(
     assert "runtime modernization production evidence failed" in result.output
 
 
+def test_runtime_modernization_validate_production_evidence_rejects_schema(
+    tmp_path,
+) -> None:
+    """Strict production evidence validation rejects unsupported bundle schemas."""
+
+    evidence_file = tmp_path / "runtime-evidence.json"
+    evidence_file.write_text(
+        json.dumps({"schema_version": 2, "artifacts": {}}),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        [
+            "validate-production-evidence",
+            str(evidence_file),
+            "--workflow",
+            "mcp_asset_search",
+            "--format",
+            "text",
+            "--strict",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "FAIL evidence_bundle" in result.output
+    assert "schema_version 1" in result.output
+    assert "runtime modernization production evidence failed" in result.output
+
+
 def test_runtime_modernization_completion_audit_outputs_json(tmp_path: Path) -> None:
     """Completion audit emits stable phase status JSON."""
 

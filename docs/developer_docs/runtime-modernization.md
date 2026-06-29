@@ -169,7 +169,8 @@ The audit only completes when compatibility evidence, production serving flags,
 operator dashboard measurement windows, service-health gates, workflow gates,
 Rust kernel rollout decision evidence, and operator approval all pass. Operator
 approval must include compatibility and security cost estimates for the
-accepted runtime boundary.
+accepted runtime boundary. Production evidence bundles are schema-versioned;
+validation accepts only `schema_version: 1` with object-shaped `artifacts`.
 JSON validation output includes `enabled_workflow_names` and
 `dashboard_required_workflow_names` so release automation can report exactly
 which production-serving workflows were gated.
