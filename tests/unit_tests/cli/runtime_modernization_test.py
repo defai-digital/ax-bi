@@ -110,6 +110,57 @@ def test_runtime_modernization_rollout_manifest_rejects_unknown_workflow() -> No
     assert "Unknown runtime modernization rollout workflow" in result.output
 
 
+def test_runtime_modernization_production_evidence_outputs_json() -> None:
+    """Production evidence command emits stable JSON for external rollout proof."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["production-evidence", "--workflow", "mcp_asset_search"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["status"] == "requires_external_evidence"
+    assert payload["minimum_typescript_serving_workflows"] == 2
+    assert [workflow["name"] for workflow in payload["workflows"]] == [
+        "mcp_asset_search"
+    ]
+    assert {artifact["name"] for artifact in payload["required_artifacts"]} == {
+        "compatibility_report",
+        "operator_approval",
+        "operator_dashboard_snapshot",
+        "production_flag_state",
+        "rust_kernel_benchmark",
+    }
+
+
+def test_runtime_modernization_production_evidence_outputs_text() -> None:
+    """Production evidence command has a compact operator-facing mode."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["production-evidence", "--workflow", "mcp_dashboard_list", "--format", "text"],
+    )
+
+    assert result.exit_code == 0
+    assert "runtime modernization production evidence" in result.output
+    assert "mcp_dashboard_list: POST /mcp/dashboards/list" in result.output
+    assert "operator_dashboard_snapshot" in result.output
+
+
+def test_runtime_modernization_production_evidence_rejects_unknown_workflow() -> None:
+    """Production evidence command fails on unknown workflow names."""
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["production-evidence", "--workflow", "missing"],
+    )
+
+    assert result.exit_code != 0
+    assert "Unknown runtime modernization rollout workflow" in result.output
+
+
 def test_runtime_modernization_benchmark_outputs_json(
     mocker: MockerFixture,
 ) -> None:

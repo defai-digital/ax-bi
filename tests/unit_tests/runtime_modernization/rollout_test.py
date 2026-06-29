@@ -17,6 +17,8 @@
 import pytest
 
 from superset.runtime_modernization.rollout import (
+    build_production_evidence_manifest,
+    get_production_evidence_requirements,
     get_rollout_workflow,
     get_rollout_workflows,
 )
@@ -68,3 +70,27 @@ def test_get_rollout_workflow_rejects_unknown_workflow() -> None:
 
     with pytest.raises(KeyError, match="Unknown runtime modernization"):
         get_rollout_workflow("missing")
+
+
+def test_production_evidence_manifest_lists_required_artifacts() -> None:
+    """Production evidence manifest names external completion artifacts."""
+
+    workflows = (get_rollout_workflow("mcp_asset_search"),)
+    manifest = build_production_evidence_manifest(workflows)
+
+    artifact_names = {artifact["name"] for artifact in manifest["required_artifacts"]}
+
+    assert manifest["schema_version"] == 1
+    assert manifest["status"] == "requires_external_evidence"
+    assert manifest["minimum_typescript_serving_workflows"] == 2
+    assert [workflow["name"] for workflow in manifest["workflows"]] == [
+        "mcp_asset_search"
+    ]
+    assert artifact_names == {
+        "compatibility_report",
+        "operator_approval",
+        "operator_dashboard_snapshot",
+        "production_flag_state",
+        "rust_kernel_benchmark",
+    }
+    assert len(get_production_evidence_requirements()) == len(artifact_names)

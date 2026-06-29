@@ -41,6 +41,7 @@ from superset.runtime_modernization.inventory import (
     RuntimeInventoryItem,
 )
 from superset.runtime_modernization.rollout import (
+    build_production_evidence_manifest,
     get_rollout_workflow,
     get_rollout_workflows,
     RolloutWorkflow,
@@ -186,6 +187,27 @@ def _format_rollout_workflows(workflows: tuple[RolloutWorkflow, ...]) -> str:
     return "\n".join(lines)
 
 
+def _format_production_evidence_manifest(manifest: dict[str, Any]) -> str:
+    """Render a compact production evidence manifest."""
+
+    lines = [
+        f"runtime modernization production evidence: {manifest['status']}",
+        (
+            "minimum TypeScript serving workflows: "
+            f"{manifest['minimum_typescript_serving_workflows']}"
+        ),
+    ]
+    lines.append("workflows:")
+    for workflow in manifest["workflows"]:
+        lines.append(f"  {workflow['name']}: {workflow['sidecar_route']}")
+    lines.append("required artifacts:")
+    for artifact in manifest["required_artifacts"]:
+        lines.append(
+            f"  {artifact['name']} ({artifact['phase']}): {artifact['source']}"
+        )
+    return "\n".join(lines)
+
+
 def _build_compatibility_report(
     iterations: int,
     *,
@@ -317,6 +339,40 @@ def rollout_manifest(workflow: str | None, output_format: str) -> None:
         return
 
     click.echo(_format_rollout_workflows(workflows))
+
+
+@runtime_modernization.command("production-evidence")
+@click.option(
+    "--workflow",
+    help="Optional rollout workflow name to include.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+def production_evidence(workflow: str | None, output_format: str) -> None:
+    """Print required production evidence for runtime modernization completion."""
+
+    try:
+        workflows = (
+            (get_rollout_workflow(workflow),)
+            if workflow is not None
+            else get_rollout_workflows()
+        )
+    except KeyError as ex:
+        raise click.ClickException(str(ex)) from ex
+
+    manifest = build_production_evidence_manifest(workflows)
+
+    if output_format == "json":
+        click.echo(json.dumps(manifest, sort_keys=True, indent=2))
+        return
+
+    click.echo(_format_production_evidence_manifest(manifest))
 
 
 @runtime_modernization.command("compatibility-report")

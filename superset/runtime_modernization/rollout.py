@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from superset.runtime_modernization.measurement import runtime_metric_key
 
@@ -72,6 +73,28 @@ class RolloutWorkflow:
             "python_metrics": list(self.python_metrics),
             "sidecar_metrics": list(self.sidecar_metrics),
             "gates": [gate.to_dict() for gate in self.gates],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RolloutEvidenceRequirement:
+    """One production evidence artifact required to complete rollout phases."""
+
+    name: str
+    phase: str
+    source: str
+    description: str
+    validation: str
+
+    def to_dict(self) -> dict[str, str]:
+        """Serialize the production evidence requirement for CLI output."""
+
+        return {
+            "name": self.name,
+            "phase": self.phase,
+            "source": self.source,
+            "description": self.description,
+            "validation": self.validation,
         }
 
 
@@ -180,6 +203,59 @@ ROLLOUT_WORKFLOWS: tuple[RolloutWorkflow, ...] = (
     ),
 )
 
+PRODUCTION_EVIDENCE_REQUIREMENTS: tuple[RolloutEvidenceRequirement, ...] = (
+    RolloutEvidenceRequirement(
+        name="compatibility_report",
+        phase="phase_3_phase_5",
+        source="runtime-modernization-compatibility-report CI artifact",
+        description=(
+            "Machine-readable compatibility report for parser behavior, "
+            "inventory, and optional release-candidate gates."
+        ),
+        validation="status is passed and target_checks are true or explicitly unset",
+    ),
+    RolloutEvidenceRequirement(
+        name="rust_kernel_benchmark",
+        phase="phase_4_phase_5",
+        source="sql-kernel-benchmark CI artifact",
+        description=(
+            "Rust PyO3 extension import, output compatibility, and speed "
+            "measurement evidence."
+        ),
+        validation="status is passed and output_matched is true",
+    ),
+    RolloutEvidenceRequirement(
+        name="production_flag_state",
+        phase="phase_3_phase_5",
+        source="deployment configuration or feature-flag export",
+        description=(
+            "Snapshot showing which runtime modernization shadow and serving "
+            "flags were enabled for each workflow."
+        ),
+        validation="at least two TypeScript workflow serving flag sets are enabled",
+    ),
+    RolloutEvidenceRequirement(
+        name="operator_dashboard_snapshot",
+        phase="phase_5",
+        source="production observability dashboard export or screenshot",
+        description=(
+            "Operator view of latency, error rate, fallback rate, and shadow "
+            "mismatch metrics for migrated workflows."
+        ),
+        validation="fallback rate and error rate meet each workflow gate",
+    ),
+    RolloutEvidenceRequirement(
+        name="operator_approval",
+        phase="phase_6",
+        source="change ticket, ADR sign-off, or release approval record",
+        description=(
+            "Operational approval for deployment complexity and remaining "
+            "runtime ownership boundaries."
+        ),
+        validation="approval names the accepted boundary decision and rollout scope",
+    ),
+)
+
 
 def get_rollout_workflows() -> tuple[RolloutWorkflow, ...]:
     """Return runtime modernization rollout workflows."""
@@ -196,3 +272,26 @@ def get_rollout_workflow(name: str) -> RolloutWorkflow:
         raise KeyError(
             f"Unknown runtime modernization rollout workflow: {name}"
         ) from ex
+
+
+def get_production_evidence_requirements() -> tuple[RolloutEvidenceRequirement, ...]:
+    """Return required production evidence artifacts for modernization completion."""
+
+    return PRODUCTION_EVIDENCE_REQUIREMENTS
+
+
+def build_production_evidence_manifest(
+    workflows: tuple[RolloutWorkflow, ...],
+) -> dict[str, Any]:
+    """Build the production evidence manifest for selected workflows."""
+
+    return {
+        "schema_version": 1,
+        "status": "requires_external_evidence",
+        "minimum_typescript_serving_workflows": 2,
+        "workflows": [workflow.to_dict() for workflow in workflows],
+        "required_artifacts": [
+            requirement.to_dict()
+            for requirement in get_production_evidence_requirements()
+        ],
+    }

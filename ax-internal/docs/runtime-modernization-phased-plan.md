@@ -264,6 +264,9 @@ product-specific and contract-oriented.
   sidecar routes, Python metrics, sidecar metrics, and rollout gates for each
   migrated MCP workflow so operator dashboards can be generated from a stable
   source.
+- `superset runtime-modernization production-evidence` emits the required
+  production artifacts for completion: compatibility report, Rust benchmark,
+  serving flag state, operator dashboard snapshot, and operator approval.
 - Python unit CI uploads the compatibility report artifact on the current
   Python version. Live production dashboard snapshots, rollout evidence, and
   additional selective workflow migrations are still required before this phase
