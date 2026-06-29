@@ -138,6 +138,56 @@ def _kernel_benchmark_result_to_dict(
     }
 
 
+def _inventory_summary_to_dict(
+    items: tuple[RuntimeInventoryItem, ...],
+) -> dict[str, Any]:
+    """Summarize runtime inventory items for compatibility reports."""
+
+    by_disposition = {disposition.value: 0 for disposition in MigrationDisposition}
+    for item in items:
+        by_disposition[item.disposition.value] += 1
+
+    return {
+        "total": len(items),
+        "by_disposition": by_disposition,
+        "candidate_areas": [
+            item.area
+            for item in items
+            if item.disposition == MigrationDisposition.CANDIDATE
+        ],
+    }
+
+
+def _build_compatibility_report(iterations: int) -> dict[str, Any]:
+    """Build a runtime modernization compatibility report."""
+
+    inventory_items = get_runtime_inventory()
+    parsing_result = benchmark_sql_parsing_normalization(iterations=iterations)
+    kernel_result = benchmark_sql_whitespace_kernel(iterations=iterations)
+    rust_output_compatible = kernel_result.output_matched is not False
+    passed = (
+        parsing_result.table_check_matched
+        and not parsing_result.has_mutation
+        and rust_output_compatible
+    )
+
+    return {
+        "schema_version": 1,
+        "status": "passed" if passed else "failed",
+        "checks": {
+            "sql_parsing_table_check_matched": parsing_result.table_check_matched,
+            "sql_parsing_has_mutation": parsing_result.has_mutation,
+            "rust_kernel_available": kernel_result.rust_available,
+            "rust_kernel_output_compatible": rust_output_compatible,
+        },
+        "inventory": _inventory_summary_to_dict(inventory_items),
+        "benchmarks": {
+            "sql_parsing_normalization": _benchmark_result_to_dict(parsing_result),
+            "sql_whitespace_kernel": _kernel_benchmark_result_to_dict(kernel_result),
+        },
+    }
+
+
 @runtime_modernization.command()
 @click.option(
     "--format",
@@ -170,6 +220,48 @@ def inventory(output_format: str, disposition: str | None) -> None:
         return
 
     click.echo(_format_table(items))
+
+
+@runtime_modernization.command("compatibility-report")
+@click.option(
+    "--iterations",
+    type=click.IntRange(min=1),
+    default=10,
+    show_default=True,
+    help="Number of benchmark iterations.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(("text", "json")),
+    default="json",
+    show_default=True,
+    help="Output format.",
+)
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Exit with an error when compatibility checks fail.",
+)
+def compatibility_report(
+    iterations: int,
+    output_format: str,
+    strict: bool,
+) -> None:
+    """Generate a runtime modernization compatibility report."""
+
+    report = _build_compatibility_report(iterations)
+
+    if output_format == "json":
+        click.echo(json.dumps(report, sort_keys=True, indent=2))
+    else:
+        click.echo(
+            f"runtime modernization compatibility: {report['status']} "
+            f"({iterations} benchmark iterations)"
+        )
+
+    if strict and report["status"] != "passed":
+        raise click.ClickException("runtime modernization compatibility failed")
 
 
 @runtime_modernization.command("benchmark")

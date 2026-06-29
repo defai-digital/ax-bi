@@ -241,6 +241,16 @@ product-specific and contract-oriented.
 - Operators have dashboards for service health and fallback rate.
 - Developer documentation covers runtime ownership and local setup.
 
+### Current Evidence
+
+- `superset runtime-modernization compatibility-report` emits a
+  machine-readable compatibility artifact that combines the runtime inventory,
+  SQL parser benchmark checks, and Rust kernel compatibility checks.
+- Python unit CI uploads the compatibility report artifact on the current
+  Python version. Additional production service dashboards, rollout evidence,
+  and selective workflow migrations are still required before this phase is
+  complete.
+
 ## Phase 6: Reevaluate Larger Boundaries
 
 **Estimated duration:** decision phase after 2-3 successful extractions

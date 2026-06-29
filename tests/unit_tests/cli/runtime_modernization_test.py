@@ -152,6 +152,112 @@ def test_runtime_modernization_kernel_benchmark_outputs_json(
     benchmark.assert_called_once_with(iterations=5)
 
 
+def test_runtime_modernization_compatibility_report_outputs_json(
+    mocker: MockerFixture,
+) -> None:
+    """Compatibility report command emits stable JSON for CI artifacts."""
+
+    parsing_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+    )
+    parsing_benchmark.return_value = RuntimeBenchmarkResult(
+        area="sql_parsing_normalization",
+        operation="parse_format_table_check",
+        engine="postgresql",
+        iterations=7,
+        duration_ms=14.0,
+        operations_per_second=500.0,
+        statement_count=1,
+        formatted_bytes=128,
+        table_check_matched=True,
+        has_mutation=False,
+    )
+    kernel_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+    )
+    kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
+        area="sql_whitespace_kernel",
+        operation="normalize_whitespace",
+        iterations=7,
+        python_duration_ms=21.0,
+        python_operations_per_second=333.3,
+        rust_available=True,
+        rust_duration_ms=7.0,
+        rust_operations_per_second=1000.0,
+        speedup=3.0,
+        output_matched=True,
+        output_bytes=64,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["compatibility-report", "--iterations", "7", "--format", "json"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == 1
+    assert payload["status"] == "passed"
+    assert payload["checks"] == {
+        "rust_kernel_available": True,
+        "rust_kernel_output_compatible": True,
+        "sql_parsing_has_mutation": False,
+        "sql_parsing_table_check_matched": True,
+    }
+    assert payload["inventory"]["by_disposition"]["candidate"] >= 1
+    assert "mcp_orchestration" in payload["inventory"]["candidate_areas"]
+    assert payload["benchmarks"]["sql_parsing_normalization"]["iterations"] == 7
+    assert payload["benchmarks"]["sql_whitespace_kernel"]["speedup"] == 3.0
+    parsing_benchmark.assert_called_once_with(iterations=7)
+    kernel_benchmark.assert_called_once_with(iterations=7)
+
+
+def test_runtime_modernization_compatibility_report_strict_failure(
+    mocker: MockerFixture,
+) -> None:
+    """Strict compatibility report exits nonzero when checks fail."""
+
+    parsing_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+    )
+    parsing_benchmark.return_value = RuntimeBenchmarkResult(
+        area="sql_parsing_normalization",
+        operation="parse_format_table_check",
+        engine="postgresql",
+        iterations=1,
+        duration_ms=1.0,
+        operations_per_second=1000.0,
+        statement_count=1,
+        formatted_bytes=128,
+        table_check_matched=False,
+        has_mutation=False,
+    )
+    kernel_benchmark = mocker.patch(
+        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+    )
+    kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
+        area="sql_whitespace_kernel",
+        operation="normalize_whitespace",
+        iterations=1,
+        python_duration_ms=1.0,
+        python_operations_per_second=1000.0,
+        rust_available=False,
+        rust_duration_ms=None,
+        rust_operations_per_second=None,
+        speedup=None,
+        output_matched=None,
+        output_bytes=64,
+    )
+
+    result = CliRunner().invoke(
+        runtime_modernization,
+        ["compatibility-report", "--iterations", "1", "--strict"],
+    )
+
+    assert result.exit_code != 0
+    assert "runtime modernization compatibility failed" in result.output
+
+
 def test_runtime_modernization_ax_services_ready_outputs_text(
     mocker: MockerFixture,
     app_context: None,
