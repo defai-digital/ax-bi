@@ -992,6 +992,30 @@ def test_build_production_flag_state_reads_workflow_serving_flags() -> None:
     }
 
 
+def test_build_production_flag_state_requires_workflow_scope() -> None:
+    """Production flag-state evidence must identify the scoped workflows."""
+
+    with pytest.raises(ValueError, match="at least one workflow"):
+        build_production_flag_state(
+            (),
+            lambda flag: flag == "TS_MCP_ORCHESTRATION",
+            environment="prod-us",
+            flag_state_reference="flags/runtime-modernization/prod-us-123",
+        )
+
+
+def test_build_production_flag_state_requires_provenance() -> None:
+    """Production flag-state evidence must name environment and source."""
+
+    with pytest.raises(ValueError, match="flag_state_reference"):
+        build_production_flag_state(
+            (get_rollout_workflow("mcp_asset_search"),),
+            lambda flag: flag == "TS_MCP_ORCHESTRATION",
+            environment="prod-us",
+            flag_state_reference="",
+        )
+
+
 def test_build_operator_approval_evidence_includes_required_fields() -> None:
     """Operator approval evidence includes the fields validation requires."""
 
@@ -1066,6 +1090,42 @@ def test_build_operator_approval_evidence_allows_empty_rejection_scope() -> None
     assert approval["workflow_names"] == []
 
 
+def test_build_operator_approval_evidence_requires_valid_migration_decision() -> None:
+    """Approved operator evidence must carry a supported migration decision."""
+
+    with pytest.raises(ValueError, match="migration_decision"):
+        build_operator_approval_evidence(
+            boundary_decision="split MCP by tool class",
+            rollout_scope="asset search and dashboard listing",
+            migration_decision="retry",
+            compatibility_cost_estimate=(
+                "versioned contracts and Python fallback keep compatibility risk low"
+            ),
+            security_cost_estimate=(
+                "Superset remains the authorization authority for extracted workflows"
+            ),
+            approval_reference="CHG-123",
+            workflow_names=("mcp_asset_search",),
+        )
+
+
+def test_build_operator_approval_evidence_requires_cost_estimates() -> None:
+    """Approved operator evidence must document compatibility and security cost."""
+
+    with pytest.raises(ValueError, match="compatibility_cost_estimate"):
+        build_operator_approval_evidence(
+            boundary_decision="split MCP by tool class",
+            rollout_scope="asset search and dashboard listing",
+            migration_decision="expand",
+            compatibility_cost_estimate="",
+            security_cost_estimate=(
+                "Superset remains the authorization authority for extracted workflows"
+            ),
+            approval_reference="CHG-123",
+            workflow_names=("mcp_asset_search",),
+        )
+
+
 def test_build_rust_kernel_rollout_decision_includes_required_fields() -> None:
     """Rust rollout decision evidence includes Phase 5 validation fields."""
 
@@ -1124,6 +1184,18 @@ def test_build_rust_kernel_rollout_decision_records_served_flag() -> None:
     assert decision["serving_flag_enabled"] is True
 
 
+def test_build_rust_kernel_rollout_decision_requires_provenance() -> None:
+    """Rust rollout evidence must name the kernel, reference, flag, and rationale."""
+
+    with pytest.raises(ValueError, match="decision_reference"):
+        build_rust_kernel_rollout_decision(
+            kernel="ax_sql.normalize_sql_whitespace",
+            decision="rejected",
+            decision_reference="",
+            rationale="benchmark gain did not justify rollout",
+        )
+
+
 def test_build_rust_kernel_rollout_decision_template_is_incomplete() -> None:
     """Rust rollout decision templates are fillable but do not pass validation."""
 
@@ -1169,6 +1241,31 @@ def test_build_operator_dashboard_snapshot_includes_workflow_gates() -> None:
     assert gates["fallback_rate"]["metric"].endswith(".fallback")
 
 
+def test_build_operator_dashboard_snapshot_requires_workflow_scope() -> None:
+    """Operator dashboard evidence must identify the scoped workflows."""
+
+    with pytest.raises(ValueError, match="at least one workflow"):
+        build_operator_dashboard_snapshot(
+            (),
+            snapshot_reference="observability/dashboard/snapshot-123",
+            gates_passed=True,
+            service_health_passed=True,
+            measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
+        )
+
+
+def test_build_operator_dashboard_snapshot_requires_measurement_window() -> None:
+    """Operator dashboard evidence must identify the production window."""
+
+    with pytest.raises(ValueError, match="measurement_window"):
+        build_operator_dashboard_snapshot(
+            (get_rollout_workflow("mcp_asset_search"),),
+            snapshot_reference="observability/dashboard/snapshot-123",
+            gates_passed=True,
+            service_health_passed=True,
+        )
+
+
 def test_build_operator_dashboard_snapshot_allows_gate_overrides() -> None:
     """Operator dashboard evidence can mark individual gates separately."""
 
@@ -1177,6 +1274,7 @@ def test_build_operator_dashboard_snapshot_allows_gate_overrides() -> None:
         snapshot_reference="observability/dashboard/snapshot-123",
         gates_passed=True,
         service_health_passed=True,
+        measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
         gate_statuses={"latency_p95": False},
     )
 
@@ -1197,6 +1295,7 @@ def test_build_operator_dashboard_snapshot_allows_workflow_gate_overrides() -> N
         snapshot_reference="observability/dashboard/snapshot-123",
         gates_passed=True,
         service_health_passed=True,
+        measurement_window="2026-06-29T00:00Z/2026-06-29T01:00Z",
         workflow_gate_statuses={"mcp_dashboard_list": {"latency_p95": False}},
     )
 

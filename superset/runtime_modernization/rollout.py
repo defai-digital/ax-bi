@@ -556,6 +556,16 @@ def build_production_flag_state(
 ) -> dict[str, Any]:
     """Build production flag-state evidence for selected workflows."""
 
+    if not workflows:
+        raise ValueError(
+            "production flag-state evidence requires at least one workflow",
+        )
+    _require_non_empty_evidence_field(environment, "environment")
+    _require_non_empty_evidence_field(
+        flag_state_reference,
+        "flag_state_reference",
+    )
+
     return {
         "environment": environment,
         "flag_state_reference": flag_state_reference,
@@ -586,10 +596,26 @@ def build_operator_approval_evidence(
 ) -> dict[str, Any]:
     """Build operator approval evidence for runtime modernization rollout."""
 
-    if approved and not workflow_names:
-        raise ValueError(
-            "approved operator evidence requires at least one workflow name",
+    if approved:
+        if not workflow_names:
+            raise ValueError(
+                "approved operator evidence requires at least one workflow name",
+            )
+        _require_non_empty_evidence_field(boundary_decision, "boundary_decision")
+        _require_non_empty_evidence_field(rollout_scope, "rollout_scope")
+        if not _migration_decision_passed(migration_decision):
+            raise ValueError(
+                "migration_decision must be 'expand', 'pause', or 'stop'",
+            )
+        _require_non_empty_evidence_field(
+            compatibility_cost_estimate,
+            "compatibility_cost_estimate",
         )
+        _require_non_empty_evidence_field(
+            security_cost_estimate,
+            "security_cost_estimate",
+        )
+        _require_non_empty_evidence_field(approval_reference, "approval_reference")
 
     evidence: dict[str, Any] = {
         "approved": approved,
@@ -620,6 +646,13 @@ def build_operator_dashboard_snapshot(
     notes: str | None = None,
 ) -> dict[str, Any]:
     """Build operator dashboard evidence for runtime modernization rollout."""
+
+    if not workflows:
+        raise ValueError(
+            "operator dashboard evidence requires at least one workflow",
+        )
+    _require_non_empty_evidence_field(snapshot_reference, "snapshot_reference")
+    _require_non_empty_evidence_field(measurement_window, "measurement_window")
 
     snapshot: dict[str, Any] = {
         "snapshot_reference": snapshot_reference,
@@ -672,6 +705,10 @@ def build_rust_kernel_rollout_decision(
 ) -> dict[str, Any]:
     """Build Rust kernel rollout decision evidence for Phase 5."""
 
+    _require_non_empty_evidence_field(kernel, "kernel")
+    _require_non_empty_evidence_field(decision_reference, "decision_reference")
+    _require_non_empty_evidence_field(rationale, "rationale")
+    _require_non_empty_evidence_field(serving_flag, "serving_flag")
     if decision not in {"served", "rejected"}:
         raise ValueError("Rust rollout decision must be 'served' or 'rejected'")
     if decision == "served" and serving_flag_enabled is not True:
@@ -746,6 +783,13 @@ def _artifact_mapping(
 
     value = artifacts.get(name)
     return value if isinstance(value, Mapping) else None
+
+
+def _require_non_empty_evidence_field(value: Any, field_name: str) -> None:
+    """Require a non-empty string field when building evidence artifacts."""
+
+    if not _non_empty_string(value):
+        raise ValueError(f"{field_name} is required")
 
 
 def _target_checks_passed(artifact: Mapping[str, Any]) -> bool:
