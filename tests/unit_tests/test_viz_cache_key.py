@@ -22,6 +22,7 @@ inclusion.
 from typing import Any
 from unittest.mock import patch
 
+from flask import current_app
 from flask_appbuilder.security.sqla.models import User
 
 from superset import viz
@@ -90,6 +91,27 @@ def test_same_user_same_query_idempotent():
 
     with override_user(User(username="alice")):
         assert obj.cache_key(QUERY_OBJ) == obj.cache_key(QUERY_OBJ)
+
+
+def test_cache_timeout_without_database_falls_back_to_default(app_context):
+    """Datasources without a database attribute fall back to configured defaults."""
+
+    class DatasourceWithoutDatabase:
+        cache_timeout = None
+
+    with patch.dict(
+        current_app.config,
+        {
+            "DATA_CACHE_CONFIG": {"CACHE_DEFAULT_TIMEOUT": None},
+            "CACHE_DEFAULT_TIMEOUT": 300,
+        },
+    ):
+        obj = viz.BaseViz(
+            datasource=DatasourceWithoutDatabase(),
+            form_data={"viz_type": "table"},
+        )
+
+        assert obj.cache_timeout == 300
 
 
 @patch("superset.utils.cache_keys.feature_flag_manager")

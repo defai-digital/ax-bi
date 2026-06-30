@@ -270,7 +270,7 @@ class Slice(  # pylint: disable=too-many-public-methods
             }
         )
 
-        if self.cache_timeout:
+        if self.cache_timeout is not None:
             form_data["cache_timeout"] = self.cache_timeout
         update_time_range(form_data)
         return form_data

@@ -157,6 +157,19 @@ class TestSlice:
             "datasource": "2__table",
         }
 
+    def test_form_data_includes_zero_cache_timeout(self):
+        """form_data should preserve an explicit zero cache timeout."""
+        slc = Slice(
+            id=1,
+            datasource_id=2,
+            datasource_type="table",
+            viz_type="table",
+            cache_timeout=0,
+            params="{}",
+        )
+
+        assert slc.form_data["cache_timeout"] == 0
+
     def test_get_query_context_ignores_non_object_json(self):
         """Non-object query_context JSON should not reach the factory."""
         slc = Slice(query_context="[]")

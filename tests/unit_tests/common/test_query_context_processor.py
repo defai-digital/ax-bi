@@ -100,6 +100,17 @@ def test_get_data_table_like(processor, mock_query_context):
     assert result == expected
 
 
+def test_get_cache_timeout_preserves_explicit_zero(app_context):
+    """An explicit zero cache timeout is a valid datasource/query override."""
+    mock_query_context = MagicMock()
+    mock_query_context.datasource = MagicMock()
+    mock_query_context.get_cache_timeout.return_value = 0
+
+    processor = QueryContextProcessor(mock_query_context)
+
+    assert processor.get_cache_timeout() == 0
+
+
 @patch("superset.common.query_context_processor.AnnotationLayerDAO.find_by_ids")
 def test_get_native_annotation_data_rejects_stale_layer_reference(
     mock_find_by_ids,

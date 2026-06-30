@@ -741,7 +741,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
         try:
             catalogs = database.get_all_catalog_names(
                 cache=database.catalog_cache_enabled,
-                cache_timeout=database.catalog_cache_timeout or None,
+                cache_timeout=database.catalog_cache_timeout,
                 force=kwargs["rison"].get("force", False),
             )
             catalogs = security_manager.get_catalogs_accessible_by_user(
@@ -809,7 +809,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             schemas = database.get_all_schema_names(
                 catalog=catalog,
                 cache=database.schema_cache_enabled,
-                cache_timeout=database.schema_cache_timeout or None,
+                cache_timeout=database.schema_cache_timeout,
                 force=params.get("force", False),
             )
             schemas = security_manager.get_schemas_accessible_by_user(

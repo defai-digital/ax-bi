@@ -228,8 +228,10 @@ class DatasourceRestApi(BaseSupersetApi):
                 warn_threshold,
             )
 
-        timeout = datasource.cache_timeout or app.config.get(
-            "CACHE_DEFAULT_TIMEOUT", 300
+        timeout = (
+            datasource.cache_timeout
+            if datasource.cache_timeout is not None
+            else app.config.get("CACHE_DEFAULT_TIMEOUT", 300)
         )
         cache_manager.data_cache.set(cache_key, payload, timeout=timeout)
         logger.debug(
@@ -522,8 +524,10 @@ class DatasourceRestApi(BaseSupersetApi):
             ),
         }
 
-        timeout = datasource.cache_timeout or app.config.get(
-            "CACHE_DEFAULT_TIMEOUT", 300
+        timeout = (
+            datasource.cache_timeout
+            if datasource.cache_timeout is not None
+            else app.config.get("CACHE_DEFAULT_TIMEOUT", 300)
         )
         cache_manager.data_cache.set(cache_key, result, timeout=timeout)
 

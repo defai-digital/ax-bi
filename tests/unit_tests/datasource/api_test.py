@@ -46,7 +46,7 @@ def test_compatible_ignores_malformed_selection_body(
 
     datasource = MagicMock()
     datasource.uid = "1__table"
-    datasource.cache_timeout = 60
+    datasource.cache_timeout = 0
     datasource.get_compatible_metrics.return_value = ["metric"]
     datasource.get_compatible_dimensions.return_value = ["dimension"]
     mock_dao.get_datasource.return_value = datasource
@@ -63,3 +63,5 @@ def test_compatible_ignores_malformed_selection_body(
     assert result[0] == 200
     datasource.get_compatible_metrics.assert_called_once_with([], ["dim"])
     datasource.get_compatible_dimensions.assert_called_once_with([], ["dim"])
+    mock_cache_manager.data_cache.set.assert_called_once()
+    assert mock_cache_manager.data_cache.set.call_args.kwargs["timeout"] == 0

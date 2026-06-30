@@ -1863,6 +1863,37 @@ def test_execute_uses_database_cache_timeout(
         assert call_kwargs.get("timeout") == 600
 
 
+def test_execute_preserves_zero_database_cache_timeout(
+    mocker: MockerFixture, database: Database, app_context: None
+) -> None:
+    """Test that a zero database cache timeout is not replaced by default."""
+    from superset.sql.execution.executor import SQLExecutor
+
+    mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
+    mocker.patch.dict(
+        current_app.config,
+        {
+            "SQL_QUERY_MUTATOR": None,
+            "SQLLAB_TIMEOUT": 30,
+            "SQL_MAX_ROW": None,
+            "QUERY_LOGGER": None,
+            "CACHE_DEFAULT_TIMEOUT": 300,
+        },
+    )
+
+    database.cache_timeout = 0
+
+    mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
+    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+
+    result = database.execute("SELECT * FROM users")
+
+    assert result.status == QueryStatus.SUCCESS
+    assert mock_cache_set.call_args is not None
+    call_kwargs = mock_cache_set.call_args[1]
+    assert call_kwargs.get("timeout") == 0
+
+
 def test_execute_uses_custom_cache_timeout_option(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
@@ -1893,6 +1924,38 @@ def test_execute_uses_custom_cache_timeout_option(
     if mock_cache_set.called:
         call_kwargs = mock_cache_set.call_args[1]
         assert call_kwargs.get("timeout") == 1200
+
+
+def test_execute_preserves_zero_custom_cache_timeout_option(
+    mocker: MockerFixture, database: Database, app_context: None
+) -> None:
+    """Test that a zero custom cache timeout is not replaced by fallback values."""
+    from superset.sql.execution.executor import SQLExecutor
+
+    mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
+    mocker.patch.dict(
+        current_app.config,
+        {
+            "SQL_QUERY_MUTATOR": None,
+            "SQLLAB_TIMEOUT": 30,
+            "SQL_MAX_ROW": None,
+            "QUERY_LOGGER": None,
+            "CACHE_DEFAULT_TIMEOUT": 300,
+        },
+    )
+
+    database.cache_timeout = 600
+
+    mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
+    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+
+    options = QueryOptions(cache=CacheOptions(timeout=0))
+    result = database.execute("SELECT * FROM users", options=options)
+
+    assert result.status == QueryStatus.SUCCESS
+    assert mock_cache_set.call_args is not None
+    call_kwargs = mock_cache_set.call_args[1]
+    assert call_kwargs.get("timeout") == 0
 
 
 # =============================================================================

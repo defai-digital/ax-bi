@@ -461,8 +461,8 @@ class BaseViz:  # pylint: disable=too-many-public-methods
             return self.datasource.cache_timeout
         if (
             hasattr(self.datasource, "database")
-            and self.datasource.database.cache_timeout
-        ) is not None:
+            and self.datasource.database.cache_timeout is not None
+        ):
             return self.datasource.database.cache_timeout
         if (
             current_app.config["DATA_CACHE_CONFIG"].get("CACHE_DEFAULT_TIMEOUT")

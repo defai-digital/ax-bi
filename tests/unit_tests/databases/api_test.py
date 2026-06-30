@@ -2419,6 +2419,7 @@ def test_catalogs(
     Test the `catalogs` endpoint.
     """
     database = mocker.MagicMock()
+    database.catalog_cache_timeout = 0
     database.get_all_catalog_names.return_value = {"db1", "db2"}
     DatabaseDAO = mocker.patch("superset.databases.api.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
@@ -2502,6 +2503,7 @@ def test_schemas(
     from superset.databases.api import DatabaseRestApi
 
     database = mocker.MagicMock()
+    database.schema_cache_timeout = 0
     database.get_all_schema_names.return_value = {"schema1", "schema2"}
     datamodel = mocker.patch.object(DatabaseRestApi, "datamodel")
     datamodel.get.return_value = database

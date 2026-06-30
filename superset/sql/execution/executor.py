@@ -849,11 +849,11 @@ class SQLExecutor:
             return
 
         cache_key = self._generate_cache_key(sql, opts)
-        timeout = (
-            (opts.cache.timeout if opts.cache else None)
-            or self.database.cache_timeout
-            or app.config.get("CACHE_DEFAULT_TIMEOUT", 300)
-        )
+        timeout = opts.cache.timeout if opts.cache else None
+        if timeout is None:
+            timeout = self.database.cache_timeout
+        if timeout is None:
+            timeout = app.config.get("CACHE_DEFAULT_TIMEOUT", 300)
 
         # Serialize statement results for caching.
         # Convert DataFrames to list-of-dicts so the cache backend

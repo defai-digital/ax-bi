@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from superset.common.query_object import QueryObject
 
 logger = logging.getLogger(__name__)
+LABEL_SPLIT_RE = re.compile(r"(?<!\\),\s")
 
 
 class QueryContextProcessor:
@@ -137,7 +138,7 @@ class QueryContextProcessor:
                     query_result=query_result,
                     annotation_data=annotation_data,
                     force_query=force_query,
-                    timeout=self.get_cache_timeout(),
+                    timeout=timeout,
                     datasource_uid=self._qc_datasource.uid,
                     region=CacheRegion.DATA,
                 )
@@ -147,11 +148,14 @@ class QueryContextProcessor:
 
         # the N-dimensional DataFrame has converted into flat DataFrame
         # by `flatten operator`, "comma" in the column is escaped by `escape_separator`
-        # the result DataFrame columns should be unescaped
+        # the result DataFrame columns should be unescaped.
+        # Skip regex split for columns that do not contain a separator.
         label_map = {
-            unescape_separator(col): [
-                unescape_separator(col) for col in re.split(r"(?<!\\),\s", col)
-            ]
+            unescape_separator(col): (
+                [unescape_separator(sub) for sub in LABEL_SPLIT_RE.split(col)]
+                if LABEL_SPLIT_RE.search(col)
+                else [unescape_separator(col)]
+            )
             for col in cache.df.columns.values
         }
         label_map.update(
@@ -188,7 +192,6 @@ class QueryContextProcessor:
                         ),
                     ]
                     for idx, metric_name in enumerate(query_obj.metric_names)
-                    if query_obj and query_obj.metrics
                 }
             )
         cache.df.columns = [unescape_separator(col) for col in cache.df.columns.values]
@@ -209,7 +212,7 @@ class QueryContextProcessor:
             "cache_key": cache_key,
             "cached_dttm": cache.cache_dttm,
             "queried_dttm": cache.queried_dttm,
-            "cache_timeout": self.get_cache_timeout(),
+            "cache_timeout": timeout,
             "df": cache.df,
             "applied_template_filters": cache.applied_template_filters,
             "applied_filter_columns": cache.applied_filter_columns,
@@ -458,7 +461,7 @@ class QueryContextProcessor:
         return return_value
 
     def get_cache_timeout(self) -> int:
-        if cache_timeout_rv := self._query_context.get_cache_timeout():
+        if (cache_timeout_rv := self._query_context.get_cache_timeout()) is not None:
             return cache_timeout_rv
         if (
             data_cache_timeout := current_app.config["DATA_CACHE_CONFIG"].get(
