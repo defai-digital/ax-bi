@@ -30,6 +30,7 @@ from superset.exceptions import SupersetException
 from superset.utils.core import (
     cast_to_boolean,
     check_is_safe_zip,
+    convert_legacy_filters_into_adhoc,
     DateColumn,
     FilterOperator,
     generic_find_constraint_name,
@@ -54,6 +55,7 @@ from superset.utils.core import (
     sanitize_cookie_token,
     sanitize_svg_content,
     sanitize_url,
+    split_adhoc_filters_into_base_filters,
 )
 from tests.conftest import with_config
 
@@ -948,6 +950,54 @@ def test_merge_extra_filters_ignores_malformed_adhoc_filters() -> None:
     assert form_data["adhoc_filters"][0]["subject"] == "a"
     assert form_data["applied_time_extras"] == {}
     assert "extra_filters" not in form_data
+
+
+def test_split_adhoc_filters_into_base_filters_ignores_malformed_entries() -> None:
+    form_data: dict[str, Any] = {
+        "adhoc_filters": [
+            None,
+            "bad filter",
+            {
+                "clause": "WHERE",
+                "comparator": "bar",
+                "expressionType": "SIMPLE",
+                "operator": "==",
+                "subject": "foo",
+            },
+        ],
+    }
+
+    split_adhoc_filters_into_base_filters(form_data, "sqlite")
+
+    assert form_data["where"] == ""
+    assert form_data["having"] == ""
+    assert form_data["filters"] == [{"col": "foo", "op": "==", "val": "bar"}]
+
+
+def test_convert_legacy_filters_into_adhoc_ignores_malformed_filters() -> None:
+    form_data: dict[str, Any] = {
+        "filters": [
+            None,
+            "bad filter",
+            {"col": "missing operator"},
+            {"op": "==", "val": "missing column"},
+            {"col": "foo", "op": "==", "val": "bar"},
+        ],
+    }
+
+    convert_legacy_filters_into_adhoc(form_data)
+
+    [adhoc_filter] = form_data["adhoc_filters"]
+    assert adhoc_filter["filterOptionName"]
+    assert adhoc_filter == {
+        "clause": "WHERE",
+        "comparator": "bar",
+        "expressionType": "SIMPLE",
+        "filterOptionName": adhoc_filter["filterOptionName"],
+        "operator": "==",
+        "subject": "foo",
+    }
+    assert "filters" not in form_data
 
 
 def test_merge_extra_filters_ignores_nones():

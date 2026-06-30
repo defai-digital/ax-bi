@@ -153,6 +153,52 @@ def test_prepare_form_data_for_query_preserves_existing_filters_with_adhoc(
     ]
 
 
+def test_prepare_form_data_for_query_ignores_malformed_legacy_filters(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        lambda datasource_id, datasource_type: "base",
+    )
+    form_data = {
+        "adhoc_filters": [],
+        "filters": [
+            None,
+            "bad filter",
+            {"col": "country", "op": "==", "val": "US"},
+        ],
+    }
+
+    prepare_form_data_for_query(form_data, 1, "table")
+
+    assert form_data["filters"] == [{"col": "country", "op": "==", "val": "US"}]
+
+
+def test_apply_form_data_filters_to_query_ignores_malformed_filter_container():
+    query = {"metrics": []}
+
+    apply_form_data_filters_to_query(query, {"filters": "bad filters"})
+
+    assert query["filters"] == []
+
+
+def test_apply_form_data_filters_to_query_ignores_malformed_filter_entries():
+    query = {"metrics": []}
+
+    apply_form_data_filters_to_query(
+        query,
+        {
+            "filters": [
+                None,
+                "bad filter",
+                {"col": "country", "op": "==", "val": "US"},
+            ]
+        },
+    )
+
+    assert query["filters"] == [{"col": "country", "op": "==", "val": "US"}]
+
+
 def test_prepare_form_data_for_query_merges_cached_and_request_extra_form_data(
     monkeypatch,
 ):
@@ -260,6 +306,23 @@ def test_merge_form_data_filters_into_query_applies_regular_overrides():
     assert query["time_grain_sqla"] == "P1D"
     assert query["where"] == "(region = 'NA') AND (name IS NOT NULL)"
     assert query["having"] == "(SUM(num) > 10) AND (COUNT(*) > 1)"
+
+
+def test_merge_form_data_filters_into_query_ignores_malformed_filters():
+    query = {"filters": "bad filters"}
+
+    merge_form_data_filters_into_query(
+        query,
+        {
+            "filters": [
+                None,
+                "bad filter",
+                {"col": "gender", "op": "==", "val": "boy"},
+            ],
+        },
+    )
+
+    assert query["filters"] == [{"col": "gender", "op": "==", "val": "boy"}]
 
 
 def test_merge_extra_form_data_filters_into_query_adds_only_extra_predicates(

@@ -396,16 +396,19 @@ def _add_adhoc_filters(
         ]
 
 
-def adhoc_filters_to_query_filters(
-    adhoc_filters: list[Dict[str, Any]],
-) -> list[Dict[str, Any]]:
+def adhoc_filters_to_query_filters(adhoc_filters: Any) -> list[Dict[str, Any]]:
     """Convert adhoc filter format to QueryObject filter format.
 
     Adhoc filters use ``{subject, operator, comparator}`` keys while
     ``QueryContextFactory`` expects ``{col, op, val}`` (QueryObjectFilterClause).
     """
+    if not isinstance(adhoc_filters, list):
+        return []
+
     result: list[Dict[str, Any]] = []
     for f in adhoc_filters:
+        if not isinstance(f, dict):
+            continue
         if f.get("expressionType") == "SIMPLE":
             result.append(
                 {
@@ -682,8 +685,11 @@ def _ensure_temporal_adhoc_filter(form_data: Dict[str, Any], column: str) -> Non
     shows a warning dialog asking the user to add it manually.
     """
     existing = form_data.get("adhoc_filters", [])
+    if not isinstance(existing, list):
+        existing = []
     if any(
-        f.get("operator") == FilterOperator.TEMPORAL_RANGE.value
+        isinstance(f, dict)
+        and f.get("operator") == FilterOperator.TEMPORAL_RANGE.value
         and f.get("subject") == column
         for f in existing
     ):

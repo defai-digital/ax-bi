@@ -1499,10 +1499,13 @@ def convert_legacy_filters_into_adhoc(  # pylint: disable=invalid-name
                 adhoc_filters.append(form_data_to_adhoc(form_data, clause))
 
         if "filters" in form_data:
+            legacy_filters = form_data["filters"]
+            if not isinstance(legacy_filters, list):
+                legacy_filters = []
             adhoc_filters.extend(
                 simple_filter_to_adhoc(fltr, "where")
-                for fltr in form_data["filters"]
-                if fltr is not None
+                for fltr in legacy_filters
+                if isinstance(fltr, dict) and "col" in fltr and "op" in fltr
             )
 
     for key in ("filters", "having", "where"):
@@ -1525,6 +1528,8 @@ def split_adhoc_filters_into_base_filters(  # pylint: disable=invalid-name
         sql_where_filters = []
         sql_having_filters = []
         for adhoc_filter in adhoc_filters:
+            if not isinstance(adhoc_filter, dict):
+                continue
             expression_type = adhoc_filter.get("expressionType")
             clause = adhoc_filter.get("clause")
             if expression_type == "SIMPLE":

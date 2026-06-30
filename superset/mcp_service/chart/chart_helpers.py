@@ -138,6 +138,9 @@ def prepare_form_data_for_query(
     )
 
     if isinstance(form_data.get("adhoc_filters"), list):
+        legacy_filters = form_data.get("filters") or []
+        if not isinstance(legacy_filters, list):
+            legacy_filters = []
         adhoc_filters = [
             *(
                 form_data_to_adhoc(form_data, clause)
@@ -146,8 +149,10 @@ def prepare_form_data_for_query(
             ),
             *(
                 simple_filter_to_adhoc(filter_, "where")
-                for filter_ in form_data.get("filters") or []
-                if filter_ is not None
+                for filter_ in legacy_filters
+                if isinstance(filter_, dict)
+                and "col" in filter_
+                and "op" in filter_
             ),
             *form_data["adhoc_filters"],
         ]
@@ -188,8 +193,9 @@ def apply_form_data_filters_to_query(
     form_data: dict[str, Any],
 ) -> None:
     """Copy normalized form_data filter fields into a fresh query payload."""
-    if filters := form_data.get("filters"):
-        query["filters"] = filters
+    filters = form_data.get("filters")
+    if isinstance(filters, list):
+        query["filters"] = [filter_ for filter_ in filters if isinstance(filter_, dict)]
     else:
         query.setdefault("filters", [])
 
@@ -231,13 +237,19 @@ def merge_form_data_filters_into_query(
     fields. This helper adds normalized predicates while applying request-level
     extra_form_data overrides for temporal query fields.
     """
+    raw_filters = form_data.get("filters") or []
+    form_filters = raw_filters if isinstance(raw_filters, list) else []
     if filters := [
         filter_
-        for filter_ in form_data.get("filters") or []
-        if not _is_temporal_override_filter(filter_, form_data)
+        for filter_ in form_filters
+        if isinstance(filter_, dict)
+        and not _is_temporal_override_filter(filter_, form_data)
     ]:
+        existing_filters = query.get("filters") or []
+        if not isinstance(existing_filters, list):
+            existing_filters = []
         query["filters"] = [
-            *(query.get("filters") or []),
+            *existing_filters,
             *filters,
         ]
 

@@ -1712,6 +1712,31 @@ class TestEnsureTemporalAdhocFilter:
 
         assert len(form_data["adhoc_filters"]) == 2
 
+    def test_ignores_malformed_existing_filters(self) -> None:
+        """Test malformed existing adhoc filters do not block temporal filter setup."""
+        form_data: dict[str, Any] = {"adhoc_filters": [None, "bad filter"]}
+        _ensure_temporal_adhoc_filter(form_data, "order_date")
+
+        assert form_data["adhoc_filters"] == [
+            None,
+            "bad filter",
+            {
+                "clause": "WHERE",
+                "expressionType": "SIMPLE",
+                "subject": "order_date",
+                "operator": FilterOperator.TEMPORAL_RANGE.value,
+                "comparator": NO_TIME_RANGE,
+            },
+        ]
+
+    def test_resets_malformed_filter_container(self) -> None:
+        """Test non-list adhoc filter containers are replaced with temporal filter."""
+        form_data: dict[str, Any] = {"adhoc_filters": "bad filters"}
+        _ensure_temporal_adhoc_filter(form_data, "order_date")
+
+        assert len(form_data["adhoc_filters"]) == 1
+        assert form_data["adhoc_filters"][0]["subject"] == "order_date"
+
     @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_temporal_x_axis_adds_filter_in_map_xy(self, mock_is_temporal) -> None:
         """Test map_xy_config adds TEMPORAL_RANGE filter for temporal x-axis"""
@@ -1967,6 +1992,26 @@ class TestAdhocFiltersToQueryFilters:
         ]
         result = adhoc_filters_to_query_filters(adhoc)
         assert result == []
+
+    def test_skips_malformed_filters(self) -> None:
+        adhoc = [
+            None,
+            "bad filter",
+            {
+                "clause": "WHERE",
+                "expressionType": "SIMPLE",
+                "subject": "genre",
+                "operator": "==",
+                "comparator": "Action",
+            },
+        ]
+
+        assert adhoc_filters_to_query_filters(adhoc) == [
+            {"col": "genre", "op": "==", "val": "Action"}
+        ]
+
+    def test_ignores_malformed_filter_container(self) -> None:
+        assert adhoc_filters_to_query_filters("bad filters") == []
 
 
 # ---------------------------------------------------------------------------
