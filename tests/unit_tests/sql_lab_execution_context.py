@@ -69,6 +69,14 @@ def test_sql_json_execution_context_ignores_non_object_template_params(query_par
     assert context.template_params == {}
 
 
+def test_sql_json_execution_context_accepts_dict_template_params(query_params):
+    query_params["templateParams"] = {"region": "EMEA"}
+
+    context = SqlJsonExecutionContext(query_params)
+
+    assert context.template_params == {"region": "EMEA"}
+
+
 @with_feature_flags(SQLLAB_FORCE_RUN_ASYNC=True)
 @pytest.mark.parametrize("runAsync, expected_async_flag", [(True, True), (False, True)])
 def test_sql_json_execution_context_feature_flag_false(

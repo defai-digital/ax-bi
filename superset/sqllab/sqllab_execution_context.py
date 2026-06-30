@@ -95,18 +95,21 @@ class SqlJsonExecutionContext:  # pylint: disable=too-many-instance-attributes
 
     @staticmethod
     def _get_template_params(query_params: dict[str, Any]) -> dict[str, Any]:
+        raw_template_params = query_params.get("templateParams")
+        if isinstance(raw_template_params, dict):
+            return raw_template_params
         try:
-            template_params = json.loads(query_params.get("templateParams") or "{}")
+            template_params = json.loads(raw_template_params or "{}")
         except (TypeError, json.JSONDecodeError):
             logger.warning(
                 "Invalid template parameter %s specified. Defaulting to empty dict",
-                str(query_params.get("templateParams")),
+                str(raw_template_params),
             )
             template_params = {}
         if not isinstance(template_params, dict):
             logger.warning(
                 "Invalid template parameter %s specified. Defaulting to empty dict",
-                str(query_params.get("templateParams")),
+                str(raw_template_params),
             )
             return {}
         return template_params
