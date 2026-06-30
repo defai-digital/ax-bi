@@ -20,6 +20,7 @@ from __future__ import annotations
 import atexit
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from enum import Enum
 from time import sleep
 from typing import Any, TYPE_CHECKING
@@ -45,6 +46,14 @@ from superset.utils.screenshot_utils import take_tiled_screenshot
 
 WindowSize = tuple[int, int]
 logger = logging.getLogger(__name__)
+
+
+def _coerce_dict(value: Any) -> dict[str, Any]:
+    """Return a shallow copy for mapping values, or an empty dict otherwise."""
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {}
+
 
 # Installation message for missing Playwright (Cypress doesn't work with DeckGL)
 PLAYWRIGHT_INSTALL_MESSAGE = (
@@ -616,7 +625,7 @@ class WebDriverSelenium(WebDriverProxy):
             options.add_argument(arg)
 
         # Fix timeout values for urllib3 2.x compatibility
-        webdriver_config = app.config["WEBDRIVER_CONFIGURATION"].copy()
+        webdriver_config = _coerce_dict(app.config["WEBDRIVER_CONFIGURATION"])
         webdriver_config = self._normalize_timeout_values(webdriver_config)
         kwargs.update(webdriver_config)
 
@@ -627,10 +636,8 @@ class WebDriverSelenium(WebDriverProxy):
         if version.parse(selenium_version) < version.parse("4.10.0"):
             kwargs |= webdriver_config
         else:
-            driver_opts = dict(
-                webdriver_config.get("options", {"capabilities": {}, "preferences": {}})
-            )
-            driver_srv = dict(
+            driver_opts = _coerce_dict(webdriver_config.get("options"))
+            driver_srv = _coerce_dict(
                 webdriver_config.get(
                     "service",
                     {
@@ -639,12 +646,12 @@ class WebDriverSelenium(WebDriverProxy):
                         "port": 0,
                         "env": {},
                     },
-                )
+                ),
             )
-            for name, value in driver_opts.get("capabilities", {}).items():
+            for name, value in _coerce_dict(driver_opts.get("capabilities")).items():
                 options.set_capability(name, value)
             if hasattr(options, "profile"):
-                for name, value in driver_opts.get("preferences", {}).items():
+                for name, value in _coerce_dict(driver_opts.get("preferences")).items():
                     options.profile.set_preference(str(name), value)
             kwargs |= {
                 "options": options,

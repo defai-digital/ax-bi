@@ -274,6 +274,40 @@ class TestWebDriverSelenium:
         mock_driver_class.assert_called_once()
 
     @patch("superset.utils.webdriver.app")
+    @patch("superset.utils.webdriver.chrome")
+    def test_none_nested_webdriver_config(self, mock_chrome, mock_app_patch):
+        """Test handling of None nested webdriver configuration sections."""
+        mock_app_patch.config = {
+            "WEBDRIVER_TYPE": "chrome",
+            "WEBDRIVER_OPTION_ARGS": [],
+            "SCREENSHOT_LOCATE_WAIT": 10,
+            "SCREENSHOT_LOAD_WAIT": 10,
+            "WEBDRIVER_WINDOW": {},
+            "WEBDRIVER_CONFIGURATION": {
+                "options": {
+                    "capabilities": None,
+                    "preferences": None,
+                },
+                "service": None,
+            },
+        }
+
+        mock_driver_class = MagicMock()
+        mock_chrome.webdriver.WebDriver = mock_driver_class
+        mock_service_class = MagicMock()
+        mock_chrome.service.Service = mock_service_class
+        mock_options = MagicMock()
+        mock_options.add_argument = MagicMock()
+        mock_chrome.options.Options = MagicMock(return_value=mock_options)
+
+        driver = WebDriverSelenium(driver_type="chrome")
+        driver.create()
+
+        mock_driver_class.assert_called_once()
+        mock_options.set_capability.assert_not_called()
+        mock_service_class.assert_called_once_with()
+
+    @patch("superset.utils.webdriver.app")
     def test_driver_sets_page_load_timeout(self, mock_app_patch: MagicMock) -> None:
         """driver.get() must be bounded so it can't block forever (#40047)."""
         mock_app_patch.config = {
