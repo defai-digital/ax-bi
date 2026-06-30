@@ -122,6 +122,18 @@ def test_create_table_as_select():
     assert ctas.target_table_name == "temp_table"
 
 
+def test_create_table_as_select_defaults_null_ctas_method_to_table():
+    query_params = {
+        "ctas_method": None,
+        "schema": "public",
+        "tmp_table_name": "temp_table",
+    }
+
+    ctas = CreateTableAsSelect.create_from(query_params)
+
+    assert ctas.ctas_method == CTASMethod.TABLE
+
+
 @pytest.mark.parametrize("schema_cls", [ExecutePayloadSchema, SqlJsonPayloadSchema])
 @pytest.mark.parametrize("ctas_method", ["TABLE", "table", "View"])
 def test_ctas_method_schema_accepts_known_values(

@@ -213,7 +213,7 @@ class CreateTableAsSelect:  # pylint: disable=too-few-public-methods
 
     @staticmethod
     def create_from(query_params: dict[str, Any]) -> CreateTableAsSelect:
-        ctas_method = CTASMethod[query_params.get("ctas_method", "table").upper()]
+        ctas_method = CTASMethod[(query_params.get("ctas_method") or "table").upper()]
         schema = cast(str, query_params.get("schema"))
         tmp_table_name = cast(str, query_params.get("tmp_table_name"))
         return CreateTableAsSelect(ctas_method, schema, tmp_table_name)
