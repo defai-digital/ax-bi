@@ -33,9 +33,15 @@ def wrapped(*args, **kwargs):
     [
         ("1.0.0", "This release tag 1.0.0 is older than the latest."),
         ("2.1.0", "Versions are equal\n"),
+        ("v2.1.0", "Versions are equal\n"),
         ("2.1.1", "This release tag 2.1.1 is newer than the latest."),
+        ("v2.1.1", "This release tag v2.1.1 is newer than the latest."),
         ("3.0.0", "This release tag 3.0.0 is newer than the latest."),
         ("2.1.0rc1", "This tag 2.1.0rc1 is not a valid release version. Not tagging."),
+        (
+            "v2.1.0rc1",
+            "This tag v2.1.0rc1 is not a valid release version. Not tagging.",
+        ),
         (
             "",
             "Missing tag parameter, usage: ./scripts/tag_latest_release.sh <GITHUB_TAG_NAME>",  # noqa: E501

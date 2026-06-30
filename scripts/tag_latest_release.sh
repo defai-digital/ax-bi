@@ -81,6 +81,10 @@ split_string () {
   echo "${components[@]}"
 }
 
+normalize_release_version () {
+  echo "${1#v}"
+}
+
 DRY_RUN=false
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -122,8 +126,8 @@ if [ -z "$(git_show_ref)" ]; then
     exit 0
 fi
 
-# check that this tag only contains a proper semantic version
-if ! [[ ${GITHUB_TAG_NAME} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+# check that this tag only contains a proper semantic version, with optional v prefix
+if ! [[ ${GITHUB_TAG_NAME} =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
 then
   echo "This tag ${GITHUB_TAG_NAME} is not a valid release version. Not tagging."
   set_github_output "SKIP_TAG=true"
@@ -131,7 +135,8 @@ then
 fi
 
 ## split the current GITHUB_TAG_NAME into an array at the dot
-THIS_TAG_NAME=$(split_string "${GITHUB_TAG_NAME}" ".")
+THIS_RELEASE_VERSION=$(normalize_release_version "${GITHUB_TAG_NAME}")
+THIS_TAG_NAME=$(split_string "${THIS_RELEASE_VERSION}" ".")
 
 # look up the 'latest' tag on git
 LATEST_TAG_LIST=$(get_latest_tag_list) || echo 'not found'
@@ -163,16 +168,17 @@ do
     LATEST_RELEASE_TAG="$tag"
     echo "LATEST_RELEASE_TAG: ${LATEST_RELEASE_TAG}"
 
-    # check that this only contains a proper semantic version
-    if ! [[ ${LATEST_RELEASE_TAG} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+    # check that this only contains a proper semantic version, with optional v prefix
+    if ! [[ ${LATEST_RELEASE_TAG} =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]
     then
       echo "'Latest' has been associated with tag ${LATEST_RELEASE_TAG} which is not a valid release version. Looking for another."
       continue
     fi
     echo "The current release with the latest tag is version ${LATEST_RELEASE_TAG}"
+    LATEST_RELEASE_VERSION=$(normalize_release_version "${LATEST_RELEASE_TAG}")
     # Split the version strings into arrays
     THIS_TAG_NAME_ARRAY=($(split_string "$THIS_TAG_NAME" "."))
-    LATEST_RELEASE_TAG_ARRAY=($(split_string "$LATEST_RELEASE_TAG" "."))
+    LATEST_RELEASE_TAG_ARRAY=($(split_string "$LATEST_RELEASE_VERSION" "."))
 
     # Iterate through the components of the version strings
     for (( j=0; j<${#THIS_TAG_NAME_ARRAY[@]}; j++ )); do
