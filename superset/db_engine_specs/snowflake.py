@@ -215,19 +215,20 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         catalog: Optional[str] = None,
         schema: Optional[str] = None,
     ) -> tuple[URL, dict[str, Any]]:
-        if "/" in uri.database:
+        if uri.database and "/" in uri.database:
             current_catalog, current_schema = uri.database.split("/", 1)
         else:
             current_catalog, current_schema = uri.database, None
 
         adjusted_database = "/".join(
             [
-                catalog or current_catalog,
+                catalog or current_catalog or "",
                 schema or current_schema or "",
             ]
         ).rstrip("/")
 
-        uri = uri.set(database=adjusted_database)
+        if adjusted_database:
+            uri = uri.set(database=adjusted_database)
 
         return uri, connect_args
 

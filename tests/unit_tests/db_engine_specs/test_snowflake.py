@@ -316,6 +316,33 @@ def test_adjust_engine_params_catalog_only() -> None:
     assert str(uri) == "snowflake://user:pass@account/new_catalog/new_schema"
 
 
+def test_adjust_engine_params_without_catalog() -> None:
+    """
+    Test the ``adjust_engine_params`` method when the URL has no catalog.
+    """
+    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+
+    url = make_url("snowflake://user:pass@account")
+
+    uri = SnowflakeEngineSpec.adjust_engine_params(url, {})[0]
+    assert str(uri) == "snowflake://user:pass@account"
+
+    uri = SnowflakeEngineSpec.adjust_engine_params(
+        url,
+        {},
+        catalog="new_catalog",
+    )[0]
+    assert str(uri) == "snowflake://user:pass@account/new_catalog"
+
+    uri = SnowflakeEngineSpec.adjust_engine_params(
+        url,
+        {},
+        catalog="new_catalog",
+        schema="new_schema",
+    )[0]
+    assert str(uri) == "snowflake://user:pass@account/new_catalog/new_schema"
+
+
 def test_get_default_catalog() -> None:
     """
     Test the ``get_default_catalog`` method.
