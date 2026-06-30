@@ -90,6 +90,19 @@ def test_build_sqlalchemy_uri_ignores_malformed_query_params(
     assert capsys.readouterr().out == ""
 
 
+def test_get_parameters_from_uri_handles_repeated_ssl_query_param(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+
+    parameters = CouchbaseEngineSpec.get_parameters_from_uri(
+        "couchbase://user:secret@localhost/bucket?ssl=true&ssl=false"
+    )
+
+    assert parameters["encryption"] is False
+    assert capsys.readouterr().out == ""
+
+
 @pytest.mark.parametrize(
     "native_type,sqla_type,attrs,generic_type,is_dttm",
     [

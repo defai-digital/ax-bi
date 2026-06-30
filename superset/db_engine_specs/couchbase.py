@@ -182,14 +182,16 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
     def get_parameters_from_uri(
         cls, uri: str, encrypted_extra: Optional[dict[str, Any]] = None
     ) -> BaseBasicParametersType:
-        print("get_parameters is called : ", uri)
         url = make_url_safe(uri)
         query = {
             key: value
             for key, value in url.query.items()
             if (key, value) not in cls.encryption_parameters.items()
         }
-        ssl_value = url.query.get("ssl", "false").lower()
+        raw_ssl_value = url.query.get("ssl", "false")
+        ssl_value = (
+            raw_ssl_value[-1] if isinstance(raw_ssl_value, tuple) else raw_ssl_value
+        ).lower()
         encryption = ssl_value == "true"
         return BaseBasicParametersType(
             username=url.username,
