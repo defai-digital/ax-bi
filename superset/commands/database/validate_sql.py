@@ -97,7 +97,16 @@ class ValidateSQLCommand(BaseCommand):
                 "Template syntax error during SQL validation",
                 extra={"errors": [err.message for err in ex.errors]},
             )
-            raise ValidatorSQL400Error(ex.errors[0]) from ex
+            error = (
+                ex.errors[0]
+                if ex.errors
+                else SupersetError(
+                    message=__("Template processing failed with a syntax error"),
+                    error_type=SupersetErrorType.GENERIC_COMMAND_ERROR,
+                    level=ErrorLevel.ERROR,
+                )
+            )
+            raise ValidatorSQL400Error(error) from ex
         except SupersetTemplateException as ex:
             # Internal template processing errors (e.g., recursion, unexpected failures)
             logger.error(

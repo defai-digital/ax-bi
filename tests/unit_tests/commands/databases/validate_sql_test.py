@@ -212,6 +212,31 @@ def test_validate_sql_template_syntax_error(
     mock_validator.validate.assert_not_called()
 
 
+def test_validate_sql_template_syntax_error_without_details(
+    mock_database: MagicMock,
+    mock_validator: MagicMock,
+    mock_template_processor: MagicMock,
+    mock_config: dict[str, Any],
+) -> None:
+    """Template syntax errors without details should still return a 400 error."""
+    mock_template_processor.process_template.side_effect = SupersetSyntaxErrorException(
+        []
+    )
+
+    command = ValidateSQLCommand(
+        model_id=1,
+        data={"sql": "SELECT {{", "schema": "public", "template_params": {}},
+    )
+
+    with pytest.raises(ValidatorSQL400Error) as exc_info:
+        command.run()
+
+    assert exc_info.value.error.message == (
+        "Template processing failed with a syntax error"
+    )
+    mock_validator.validate.assert_not_called()
+
+
 def test_validate_sql_template_processing_error(
     mock_database: MagicMock,
     mock_validator: MagicMock,
