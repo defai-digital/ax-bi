@@ -45,6 +45,9 @@ from superset.mcp_service.auth import (
     MCPNoAuthSourceError,
     MCPPermissionDeniedError,
 )
+from superset.mcp_service.composite_token_verifier import (
+    API_KEY_VALIDATED_USERNAME_CLAIM,
+)
 from superset.mcp_service.constants import (
     DEFAULT_TOKEN_LIMIT,
     DEFAULT_WARN_THRESHOLD_PCT,
@@ -841,7 +844,20 @@ class InMemoryRateLimiter:
 
 
 class RedisRateLimiter:
-    """Redis-backed rate limiter for production."""
+    """Redis-backed fixed-window rate limiter for production/multi-pod.
+
+    The counter lives under a per-window key (``{prefix}{key}:{bucket}`` where
+    ``bucket = floor(now / window)``), so the limit is shared across every MCP
+    worker/pod pointed at the same cache. The window is anchored to its bucket
+    boundary: the counter's TTL is set exactly once, when the bucket is first
+    created, and is never extended afterwards, so the count resets cleanly at
+    the end of each window.
+
+    This replaces an earlier implementation that re-set the TTL on every
+    request (so steady traffic kept the counter alive indefinitely and a
+    key, once limited, stayed limited forever) and that read ``get(full_key)``
+    as a list of ``(member, score)`` tuples it never actually wrote.
+    """
 
     def __init__(self) -> None:
         from superset.extensions import cache_manager
@@ -849,55 +865,71 @@ class RedisRateLimiter:
         self._cache = cache_manager.cache
         self._prefix = "mcp:ratelimit:"
 
+    @staticmethod
+    def _allow(limit: int, window: int) -> tuple[bool, dict[str, Any]]:
+        """Fail-open result used when the cache backend errors."""
+        return False, {
+            "limit": limit,
+            "remaining": limit,
+            "reset_time": 0,
+            "window_seconds": window,
+        }
+
+    def _increment_window_counter(self, full_key: str, window: int) -> int:
+        """Atomically increment the per-window counter and return its value.
+
+        ``add`` anchors the TTL to the window the first time the bucket is seen
+        (a no-op once it exists); ``inc`` then atomically bumps the counter
+        without touching the TTL, so the window expires at its boundary rather
+        than being extended on every call. Falls back to a best-effort get/set
+        when the backend lacks an atomic ``inc``.
+        """
+        # Anchor the window TTL exactly once for this bucket.
+        self._cache.add(full_key, 0, timeout=window)
+        new_count: int | None = None
+        # ``inc`` is an atomic backend operation (Redis INCRBY) that not every
+        # cache backend exposes; resolve it dynamically and fall back when it is
+        # absent or unimplemented.
+        inc = getattr(self._cache, "inc", None)
+        if callable(inc):
+            try:
+                new_count = inc(full_key, 1)
+            except NotImplementedError:
+                new_count = None
+        if new_count is None:
+            # Backend without atomic inc (or the bucket expired between add and
+            # inc): best-effort non-atomic increment.
+            new_count = int(self._cache.get(full_key) or 0) + 1
+            self._cache.set(full_key, new_count, timeout=window)
+        return int(new_count)
+
     def is_rate_limited(
         self, key: str, limit: int, window: int = 60
     ) -> tuple[bool, dict[str, Any]]:
-        """Check if request should be rate limited using Redis sliding window."""
+        """Check if a request should be limited using a fixed window counter."""
         current_time = time.time()
-        full_key = "%s%s" % (self._prefix, key)
+        bucket = int(current_time // window)
+        full_key = "%s%s:%d" % (self._prefix, key, bucket)
+        reset_time = (bucket + 1) * window
 
         try:
-            # Use Redis sorted set for sliding window
-            window_start = current_time - window
-
-            # Remove old entries outside the window
-            self._cache.delete_many(
-                [
-                    k
-                    for k, score in self._cache.get(full_key) or []
-                    if score < window_start
-                ]
-            )
-
-            # Get count of requests in window
-            request_count = self._cache.get("%s:count" % full_key) or 0
-
-            # Rate limit info
-            rate_limit_info = {
-                "limit": limit,
-                "remaining": max(0, limit - request_count),
-                "reset_time": int(current_time + window),
-                "window_seconds": window,
-            }
-
-            if request_count >= limit:
-                return True, rate_limit_info
-
-            # Increment counter with TTL
-            new_count = (request_count or 0) + 1
-            self._cache.set("%s:count" % full_key, new_count, timeout=window)
-
-            return False, rate_limit_info
-
+            count = self._increment_window_counter(full_key, window)
         except Exception as e:
             logger.warning("Redis rate limiter error: %s, allowing request", e)
-            # On Redis error, allow the request
-            return False, {
-                "limit": limit,
-                "remaining": limit,
-                "reset_time": 0,
-                "window_seconds": window,
-            }
+            return self._allow(limit, window)
+
+        rate_limit_info = {
+            "limit": limit,
+            "remaining": max(0, limit - count),
+            "reset_time": int(reset_time),
+            "window_seconds": window,
+        }
+        # Allow exactly `limit` requests per window; block once the running
+        # count for this window exceeds it.
+        if count > limit:
+            rate_limit_info["remaining"] = 0
+            return True, rate_limit_info
+        return False, rate_limit_info
 
     def cleanup(self) -> None:
         """No cleanup needed for Redis - TTL handles expiration."""
@@ -926,6 +958,37 @@ def create_rate_limiter() -> RateLimiterProtocol:
     # Fallback to in-memory rate limiter (development)
     logger.info("Using in-memory rate limiter")
     return InMemoryRateLimiter()
+
+
+def _principal_from_access_token() -> str | None:
+    """Derive a stable caller identity from the transport-layer token.
+
+    Available without a DB lookup, so the rate limiter can key on the real
+    principal even before ``g.user`` is populated (the auth hook runs inside
+    the tool function, after middleware). Returns a namespaced label for an
+    API-key owner or a JWT subject, or ``None`` when there is no token context
+    (dev mode / unauthenticated).
+    """
+    try:
+        from fastmcp.server.dependencies import get_access_token
+    except ImportError:
+        return None
+    try:
+        token = get_access_token()
+    except Exception:  # noqa: BLE001 - no token context for this request
+        return None
+    if token is None:
+        return None
+    claims = getattr(token, "claims", None)
+    if isinstance(claims, dict):
+        if username := claims.get(API_KEY_VALIDATED_USERNAME_CLAIM):
+            return f"apikey:{username}"
+        if sub := claims.get("sub"):
+            return f"jwt:{sub}"
+    client_id = getattr(token, "client_id", None)
+    if client_id and client_id != "api_key":
+        return f"jwt:{client_id}"
+    return None
 
 
 class RateLimitMiddleware(Middleware):
@@ -966,6 +1029,36 @@ class RateLimitMiddleware(Middleware):
         # Use hybrid rate limiter (Redis in production, in-memory in development)
         self._rate_limiter = create_rate_limiter()
 
+    def _resolve_principal(self, context: MiddlewareContext) -> tuple[str, bool]:
+        """Identify the caller for rate-limit bucketing.
+
+        Tries, in order: an authenticated Superset user id (set when an
+        upstream middleware already populated the request context), the
+        transport-layer token identity (JWT subject / API-key owner, resolved
+        without a DB hit), the MCP session/agent id, and finally a shared
+        ``anonymous`` bucket. Returns ``(label, is_known)`` where ``is_known``
+        is True for the first two, which get the higher per-principal limit;
+        session/anonymous callers get the default limit.
+        """
+        try:
+            user_id = get_user_id()
+        except Exception:  # noqa: BLE001 - user not authenticated yet
+            user_id = None
+        if user_id:
+            return f"user:{user_id}", True
+
+        if token_principal := _principal_from_access_token():
+            return token_principal, True
+
+        agent_id = None
+        if hasattr(context, "metadata") and context.metadata:
+            agent_id = context.metadata.get("agent_id")
+        if not agent_id and hasattr(context, "session") and context.session:
+            agent_id = getattr(context.session, "agent_id", None)
+        if agent_id:
+            return f"agent:{agent_id}", False
+        return "anonymous", False
+
     def _get_rate_limit_key(self, context: MiddlewareContext) -> tuple[str, int]:
         """
         Generate rate limit key and determine applicable limit.
@@ -973,42 +1066,29 @@ class RateLimitMiddleware(Middleware):
         Returns:
             Tuple of (key, requests_per_minute_limit)
         """
-        tool_name = getattr(context.message, "name", "unknown")
+        # Resolve the real tool name: when tool search is enabled, clients call
+        # the ``call_tool`` proxy with the actual tool name in params, so the
+        # expensive-tool limits must look through the proxy.
+        raw_name = getattr(context.message, "name", "unknown")
+        params = getattr(context.message, "params", {}) or {}
+        tool_name = LoggingMiddleware._resolve_tool_name(raw_name, params) or raw_name
 
-        # Get user context
-        user_id = None
-        try:
-            user_id = get_user_id()
-        except Exception:
-            user_id = None  # User not authenticated
+        principal, is_known = self._resolve_principal(context)
 
         # Determine rate limit
         if tool_name in self.expensive_tools:
             limit = self.expensive_rpm
             key_prefix = "expensive"
-        elif user_id:
+        elif is_known:
             limit = self.user_rpm
             key_prefix = "user"
         else:
             limit = self.default_rpm
             key_prefix = "default"
 
-        # Generate key
-        if user_id:
-            key = f"{key_prefix}:user:{user_id}:{tool_name}"
-        else:
-            # Use agent_id or session info as fallback
-            agent_id = None
-            if hasattr(context, "metadata") and context.metadata:
-                agent_id = context.metadata.get("agent_id")
-            if not agent_id and hasattr(context, "session") and context.session:
-                agent_id = getattr(context.session, "agent_id", None)
-
-            if agent_id:
-                key = f"{key_prefix}:agent:{agent_id}:{tool_name}"
-            else:
-                key = f"{key_prefix}:anonymous:{tool_name}"
-
+        # ``principal`` is already namespaced (user: / jwt: / apikey: / agent: /
+        # anonymous), keeping buckets for distinct caller classes disjoint.
+        key = f"{key_prefix}:{principal}:{tool_name}"
         return key, limit
 
     async def on_call_tool(
@@ -1500,4 +1580,60 @@ def create_response_size_guard_middleware() -> ResponseSizeGuardMiddleware | Non
 
     except (ImportError, AttributeError, KeyError) as e:
         logger.error("Failed to create ResponseSizeGuardMiddleware: %s", e)
+        return None
+
+
+def create_rate_limit_middleware() -> RateLimitMiddleware | None:
+    """
+    Factory function to create RateLimitMiddleware from config.
+
+    Reads configuration from Flask app's ``MCP_RATE_LIMIT_CONFIG``. Rate
+    limiting is opt-in: returns ``None`` (no limiter wired in) unless the
+    operator sets ``enabled: True``.
+
+    Returns:
+        RateLimitMiddleware instance, or None if disabled / misconfigured.
+    """
+    try:
+        from superset.mcp_service.flask_singleton import get_flask_app
+        from superset.mcp_service.mcp_config import MCP_RATE_LIMIT_CONFIG
+        from superset.mcp_service.utils.config_utils import (
+            get_mcp_rate_limit_config,
+        )
+
+        flask_app = get_flask_app()
+
+        config = get_mcp_rate_limit_config(
+            flask_app.config,
+            default=MCP_RATE_LIMIT_CONFIG,
+        )
+
+        if not config.get("enabled", False):
+            logger.info("MCP rate limiting is disabled")
+            return None
+
+        middleware = RateLimitMiddleware(
+            default_requests_per_minute=int(
+                config.get("default_requests_per_minute", 60)
+            ),
+            per_user_requests_per_minute=int(
+                config.get("per_user_requests_per_minute", 120)
+            ),
+            expensive_tool_requests_per_minute=int(
+                config.get("expensive_tool_requests_per_minute", 10)
+            ),
+            expensive_tools=config.get("expensive_tools"),
+        )
+
+        logger.info(
+            "Created RateLimitMiddleware (default=%d/min, user=%d/min, "
+            "expensive=%d/min)",
+            middleware.default_rpm,
+            middleware.user_rpm,
+            middleware.expensive_rpm,
+        )
+        return middleware
+
+    except (ImportError, AttributeError, KeyError) as e:
+        logger.error("Failed to create RateLimitMiddleware: %s", e)
         return None

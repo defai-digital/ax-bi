@@ -42,6 +42,7 @@ from superset.mcp_service.utils.config_utils import (
     get_mcp_jwt_issuer,
     get_mcp_jwt_public_key,
     get_mcp_jwt_secret,
+    get_mcp_rate_limit_config,
     get_mcp_rbac_enabled,
     get_mcp_required_scopes,
     get_mcp_response_size_config,
@@ -243,6 +244,25 @@ def test_get_mcp_response_size_config_preserves_empty_default() -> None:
     default: dict[str, Any] = {}
 
     assert get_mcp_response_size_config({}, default=default) is default
+
+
+def test_get_mcp_rate_limit_config_reads_supplied_config() -> None:
+    rate_limit_config = {"enabled": True}
+
+    assert (
+        get_mcp_rate_limit_config({"MCP_RATE_LIMIT_CONFIG": rate_limit_config})
+        is rate_limit_config
+    )
+
+
+def test_get_mcp_rate_limit_config_uses_supplied_default() -> None:
+    default = {"enabled": False}
+
+    assert get_mcp_rate_limit_config({}, default=default) is default
+
+
+def test_get_mcp_rate_limit_config_defaults_to_empty_dict() -> None:
+    assert get_mcp_rate_limit_config({}) == {}
 
 
 def test_get_mcp_disabled_tools_reads_supplied_config() -> None:

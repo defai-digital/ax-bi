@@ -39,6 +39,7 @@ from superset.mcp_service.mcp_config import (
     MCP_TOOL_SEARCH_CONFIG,
 )
 from superset.mcp_service.middleware import (
+    create_rate_limit_middleware,
     create_response_size_guard_middleware,
     GlobalErrorHandlerMiddleware,
     LoggingMiddleware,
@@ -848,7 +849,7 @@ def _build_starlette_middleware(
     ]
 
 
-def run_server(
+def run_server(  # noqa: C901
     host: str = "127.0.0.1",
     port: int = 5008,
     debug: bool = False,
@@ -899,6 +900,13 @@ def run_server(
         auth_provider = _create_auth_provider(flask_app)
 
         middleware_list = build_middleware_list()
+
+        # Rate limiting (opt-in). Positioned inside the core logging/error
+        # handlers, so a rate-limited call is still logged and its ToolError
+        # formatted, but outside the size-guard/caching layers so it runs
+        # before that work (and before cache short-circuits).
+        if rate_limit_middleware := create_rate_limit_middleware():
+            middleware_list.append(rate_limit_middleware)
 
         # Add optional middleware (innermost, closest to tool)
         size_guard_middleware = create_response_size_guard_middleware()

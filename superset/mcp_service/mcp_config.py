@@ -286,6 +286,48 @@ MCP_RESPONSE_SIZE_CONFIG: Dict[str, Any] = {
     ],
 }
 
+# =============================================================================
+# MCP Rate Limiting Configuration
+# =============================================================================
+#
+# Overview:
+# ---------
+# Sliding/fixed-window rate limiting that protects MCP tools from abuse. It is
+# OPT-IN (disabled by default) so existing deployments are unaffected until an
+# operator enables it.
+#
+# How it works:
+# -------------
+# - Each tool call is bucketed by caller principal and tool name. The caller is
+#   resolved as: authenticated user id -> transport token identity (JWT sub /
+#   API-key owner) -> MCP session/agent id -> a shared "anonymous" bucket.
+# - Known principals (user / token) get ``per_user_requests_per_minute``;
+#   session/anonymous callers get ``default_requests_per_minute``; tools listed
+#   in ``expensive_tools`` get the lower ``expensive_tool_requests_per_minute``.
+# - When ``cache_manager.cache`` (Redis) is available the limit is shared across
+#   all workers/pods; otherwise an in-memory per-process limiter is used.
+#
+# Configuration:
+# --------------
+# - enabled: Toggle rate limiting on/off (default: False)
+# - default_requests_per_minute: Limit for session/anonymous callers
+# - per_user_requests_per_minute: Limit for authenticated/token principals
+# - expensive_tool_requests_per_minute: Limit for tools in ``expensive_tools``
+# - expensive_tools: Tool names treated as expensive (preview/generation/data)
+# =============================================================================
+MCP_RATE_LIMIT_CONFIG: Dict[str, Any] = {
+    "enabled": False,  # Opt-in: no rate limiting until explicitly enabled
+    "default_requests_per_minute": 60,
+    "per_user_requests_per_minute": 120,
+    "expensive_tool_requests_per_minute": 10,
+    "expensive_tools": [
+        "get_chart_preview",
+        "generate_chart",
+        "generate_dashboard",
+        "get_chart_data",
+    ],
+}
+
 
 # =============================================================================
 # MCP Tool Search Transform Configuration

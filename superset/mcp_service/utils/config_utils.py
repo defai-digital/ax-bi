@@ -131,6 +131,15 @@ def get_mcp_response_size_config(
     return source.get("MCP_RESPONSE_SIZE_CONFIG", {} if default is None else default)
 
 
+def get_mcp_rate_limit_config(
+    config: Mapping[str, Any] | None = None,
+    default: Mapping[str, Any] | None = None,
+) -> Any:
+    """Read the MCP rate-limiting settings."""
+    source = config if config is not None else current_app.config
+    return source.get("MCP_RATE_LIMIT_CONFIG", {} if default is None else default)
+
+
 def get_mcp_disabled_tools(config: Mapping[str, Any] | None = None) -> Any:
     """Read the configured MCP tool names to suppress."""
     source = config if config is not None else current_app.config

@@ -432,6 +432,7 @@ The MCP service uses FastMCP middleware (registered in `server.py`):
 - **`GlobalErrorHandlerMiddleware`**: Catches unhandled exceptions, converts to ToolError
 - **`StructuredContentStripperMiddleware`**: Strips structuredContent from responses (Claude.ai compatibility)
 - **`ResponseSizeGuardMiddleware`**: Prevents oversized responses from crashing clients
+- **`RateLimitMiddleware`**: Optional per-principal/per-tool rate limiting (opt-in via `MCP_RATE_LIMIT_CONFIG`, disabled by default; Redis-backed when available, else in-memory)
 - **`ResponseCachingMiddleware`**: Optional response caching (in-memory by default, Redis when store enabled)
 
 Middleware is applied in `server.py` and should NOT be modified in individual tools.
