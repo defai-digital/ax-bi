@@ -17,7 +17,7 @@
 
 from marshmallow import fields, Schema
 
-from superset.sqllab.schemas import tmp_table_name_validator
+from superset.sqllab.schemas import ctas_method_validator, tmp_table_name_validator
 
 
 class SqlJsonPayloadSchema(Schema):
@@ -28,7 +28,7 @@ class SqlJsonPayloadSchema(Schema):
     sql_editor_id = fields.String(allow_none=True)
     schema = fields.String(allow_none=True)
     tab = fields.String(allow_none=True)
-    ctas_method = fields.String(allow_none=True)
+    ctas_method = fields.String(allow_none=True, validate=ctas_method_validator)
     templateParams = fields.String(allow_none=True)  # noqa: N815
     tmp_table_name = fields.String(
         allow_none=True,

@@ -17,12 +17,15 @@
 # pylint: disable=import-outside-toplevel, invalid-name, unused-argument, too-many-locals
 
 import pytest
+from marshmallow import ValidationError
 
 from superset.sql.parse import CTASMethod
+from superset.sqllab.schemas import ExecutePayloadSchema
 from superset.sqllab.sqllab_execution_context import (
     CreateTableAsSelect,
     SqlJsonExecutionContext,
 )
+from superset.views.sql_lab.schemas import SqlJsonPayloadSchema
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -117,3 +120,39 @@ def test_create_table_as_select():
     assert ctas.ctas_method == CTASMethod.TABLE
     assert ctas.target_schema_name == "public"
     assert ctas.target_table_name == "temp_table"
+
+
+@pytest.mark.parametrize("schema_cls", [ExecutePayloadSchema, SqlJsonPayloadSchema])
+@pytest.mark.parametrize("ctas_method", ["TABLE", "table", "View"])
+def test_ctas_method_schema_accepts_known_values(
+    query_params,
+    schema_cls,
+    ctas_method,
+):
+    payload = dict(query_params)
+    payload.pop("status")
+    if schema_cls is SqlJsonPayloadSchema:
+        payload.pop("catalog")
+    payload["select_as_cta"] = True
+    payload["ctas_method"] = ctas_method
+    payload["tmp_table_name"] = "temp_table"
+
+    schema_cls().load(payload)
+
+
+@pytest.mark.parametrize("schema_cls", [ExecutePayloadSchema, SqlJsonPayloadSchema])
+def test_ctas_method_schema_rejects_unknown_values(query_params, schema_cls):
+    payload = dict(query_params)
+    payload.pop("status")
+    if schema_cls is SqlJsonPayloadSchema:
+        payload.pop("catalog")
+    payload["select_as_cta"] = True
+    payload["ctas_method"] = "MATERIALIZED_VIEW"
+    payload["tmp_table_name"] = "temp_table"
+
+    with pytest.raises(ValidationError) as excinfo:
+        schema_cls().load(payload)
+
+    assert excinfo.value.messages == {
+        "ctas_method": ["ctas_method must be TABLE or VIEW"],
+    }

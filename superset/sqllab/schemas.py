@@ -14,9 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from marshmallow import fields, Schema, validate
+from marshmallow import fields, Schema, validate, ValidationError
 
 from superset.databases.schemas import ImportV1DatabaseSchema
+from superset.sql.parse import CTASMethod
 
 # Restricts the optional CTAS target name to a bare SQL identifier. Shared by the
 # SQL Lab execute payload schemas so both request paths validate it identically.
@@ -24,6 +25,15 @@ tmp_table_name_validator = validate.Regexp(
     r"^([A-Za-z_][A-Za-z0-9_]*)?\Z",
     error="tmp_table_name must contain only letters, digits, and underscores",
 )
+
+
+def ctas_method_validator(value: str | None) -> None:
+    """
+    Validate that a CTAS method maps to a supported SQL Lab CTAS operation.
+    """
+    if value is not None and value.upper() not in CTASMethod.__members__:
+        raise ValidationError("ctas_method must be TABLE or VIEW")
+
 
 sql_lab_get_results_schema = {
     "type": "object",
@@ -74,7 +84,7 @@ class ExecutePayloadSchema(Schema):
     catalog = fields.String(allow_none=True)
     schema = fields.String(allow_none=True)
     tab = fields.String(allow_none=True)
-    ctas_method = fields.String(allow_none=True)
+    ctas_method = fields.String(allow_none=True, validate=ctas_method_validator)
     templateParams = fields.String(allow_none=True)  # noqa: N815
     tmp_table_name = fields.String(
         allow_none=True,
