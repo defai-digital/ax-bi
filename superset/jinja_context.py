@@ -89,6 +89,14 @@ ALLOWED_TYPES = (
 COLLECTION_TYPES = ("list", "dict", "tuple", "set")
 
 
+def _get_adhoc_filters(form_data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return well-formed adhoc filter mappings from form data."""
+    adhoc_filters = form_data.get("adhoc_filters", [])
+    if not isinstance(adhoc_filters, list):
+        return []
+    return [flt for flt in adhoc_filters if isinstance(flt, dict)]
+
+
 @lru_cache(maxsize=LRU_CACHE_MAX_SIZE)
 def context_addons() -> dict[str, Any]:
     return current_app.config.get("JINJA_CONTEXT_ADDONS", {})
@@ -457,9 +465,7 @@ class ExtraCache:
 
         filters: list[Filter] = []
 
-        for flt in form_data.get("adhoc_filters", []):
-            if not isinstance(flt, dict):
-                continue
+        for flt in _get_adhoc_filters(form_data):
             val: Union[Any, list[Any]] = flt.get("comparator")
             op: str = flt["operator"].upper() if flt.get("operator") else None  # type: ignore
             if (
@@ -574,9 +580,8 @@ class ExtraCache:
             flt: dict[str, Any] | None = next(
                 (
                     flt
-                    for flt in form_data.get("adhoc_filters", [])
-                    if isinstance(flt, dict)
-                    and flt.get("operator") == FilterOperator.TEMPORAL_RANGE
+                    for flt in _get_adhoc_filters(form_data)
+                    if flt.get("operator") == FilterOperator.TEMPORAL_RANGE
                     and flt.get("subject") == column
                 ),
                 None,
