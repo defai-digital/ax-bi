@@ -33,10 +33,13 @@ def update_time_range(form_data: dict[str, Any]) -> None:
         form_data["time_range"] = f"{since} : {until}"
 
     if temporal_column := form_data.get("granularity_sqla"):
+        adhoc_filters = form_data.get("adhoc_filters", [])
+        if not isinstance(adhoc_filters, list):
+            adhoc_filters = []
         if any(
             isinstance(adhoc_filter, dict)
             and adhoc_filter.get("subject") == temporal_column
             and adhoc_filter.get("comparator") == "No filter"
-            for adhoc_filter in form_data.get("adhoc_filters", [])
+            for adhoc_filter in adhoc_filters
         ):
             form_data.setdefault("time_range", "No filter")

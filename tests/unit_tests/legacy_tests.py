@@ -103,3 +103,15 @@ def test_update_time_range_ignores_malformed_adhoc_filter_entries() -> None:
     update_time_range(form_data)
 
     assert form_data["time_range"] == "No filter"
+
+
+def test_update_time_range_ignores_malformed_adhoc_filter_container() -> None:
+    """
+    Malformed adhoc filter containers do not block legacy time range normalization.
+    """
+    form_data: dict[str, Any] = copy.deepcopy(original_form_data)
+    form_data["adhoc_filters"] = None
+
+    update_time_range(form_data)
+
+    assert "time_range" not in form_data
