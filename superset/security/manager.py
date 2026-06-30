@@ -397,6 +397,14 @@ def _get_native_filter_config(json_metadata: str | None) -> list[dict[str, Any]]
     return [flt for flt in filters if isinstance(flt, dict)]
 
 
+def _get_native_filter_targets(filter_config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return well-formed target mappings from native-filter metadata."""
+    targets = filter_config.get("targets", [])
+    if not isinstance(targets, list):
+        return []
+    return [target for target in targets if isinstance(target, dict)]
+
+
 def _native_filter_allowed_targets(
     query_context: "QueryContext", form_data: dict[str, Any]
 ) -> Optional[tuple[set[str], set[str]]]:
@@ -433,9 +441,7 @@ def _native_filter_allowed_targets(
     for fltr in _get_native_filter_config(dashboard.json_metadata):
         if fltr.get("id") != native_filter_id:
             continue
-        for target in fltr.get("targets", []):
-            if not isinstance(target, dict):
-                continue
+        for target in _get_native_filter_targets(fltr):
             column = target.get("column")
             if (
                 target.get("datasetId") == datasource_id
@@ -468,8 +474,7 @@ def _dashboard_native_filter_has_datasource(
         target.get("datasetId") == datasource_id
         for fltr in _get_native_filter_config(dashboard.json_metadata)
         if isinstance(fltr, dict) and native_filter_id == fltr.get("id")
-        for target in fltr.get("targets", [])
-        if isinstance(target, dict)
+        for target in _get_native_filter_targets(fltr)
     )
 
 

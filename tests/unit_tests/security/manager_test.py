@@ -856,9 +856,48 @@ def test_query_context_modified_native_filter_skips_malformed_entries(
     assert not query_context_modified(qc)
 
 
+def test_query_context_modified_native_filter_malformed_targets_blocked(
+    mocker: MockerFixture,
+) -> None:
+    """Malformed filter targets fail closed for native-filter requests."""
+    query = SimpleNamespace(columns=["region"], metrics=[], groupby=[])
+    qc = _native_filter_ctx(
+        mocker,
+        [query],
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    {
+                        "id": "F1",
+                        "targets": None,
+                    },
+                ]
+            }
+        ),
+    )
+    assert query_context_modified(qc)
+
+
 def test_dashboard_native_filter_has_datasource_malformed_metadata() -> None:
     """Malformed dashboard metadata does not grant native-filter datasource access."""
     dashboard = SimpleNamespace(json_metadata="{malformed")
+    assert not _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
+
+
+def test_dashboard_native_filter_has_datasource_malformed_targets() -> None:
+    """Malformed filter targets do not grant native-filter datasource access."""
+    dashboard = SimpleNamespace(
+        json_metadata=json.dumps(
+            {
+                "native_filter_configuration": [
+                    {
+                        "id": "F1",
+                        "targets": "bad-targets",
+                    }
+                ]
+            }
+        )
+    )
     assert not _dashboard_native_filter_has_datasource(dashboard, "F1", 20)
 
 
