@@ -1503,7 +1503,7 @@ def convert_legacy_filters_into_adhoc(  # pylint: disable=invalid-name
             if not isinstance(legacy_filters, list):
                 legacy_filters = []
             adhoc_filters.extend(
-                simple_filter_to_adhoc(fltr, "where")
+                simple_filter_to_adhoc(cast(QueryObjectFilterClause, fltr), "where")
                 for fltr in legacy_filters
                 if isinstance(fltr, dict) and "col" in fltr and "op" in fltr
             )
@@ -1543,6 +1543,8 @@ def split_adhoc_filters_into_base_filters(  # pylint: disable=invalid-name
                     )
             elif expression_type == "SQL":
                 sql_expression = adhoc_filter.get("sqlExpression")
+                if not isinstance(sql_expression, str):
+                    continue
                 sql_expression = sanitize_clause(sql_expression, engine)
                 if clause == "WHERE":
                     sql_where_filters.append(sql_expression)

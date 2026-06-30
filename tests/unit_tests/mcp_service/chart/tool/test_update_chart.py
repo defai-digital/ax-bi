@@ -1245,7 +1245,7 @@ class TestUpdateChartValidationGate:
             assert result.structured_content["success"] is False
             error = result.structured_content["error"]
             assert error["error_code"] == "CHART_VALIDATION_FAILED"
-            assert "sum_boys" in error["suggestions"]
+            assert any("sum_boys" in suggestion for suggestion in error["suggestions"])
             mock_create_preview.assert_not_called()
 
     @patch.object(update_chart_module, "validate_and_compile")

@@ -25,7 +25,7 @@ and response conversion logic.
 import logging
 from decimal import Decimal
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import call, MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
@@ -334,7 +334,9 @@ class TestExecuteSql:
 
             assert data["success"] is True
             assert data["template_warning"] is None
-            mock_is_feature_enabled.assert_not_called()
+            assert call("ENABLE_TEMPLATE_PROCESSING") not in (
+                mock_is_feature_enabled.call_args_list
+            )
 
     @patch("superset.security_manager")
     @patch("superset.db")

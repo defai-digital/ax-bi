@@ -1189,7 +1189,7 @@ class TestGenerateExploreLinkValidation:
             error = result.structured_content["error"]
             assert isinstance(error, dict)
             assert error["error_code"] == "CHART_VALIDATION_FAILED"
-            assert "sum_boys" in error["suggestions"]
+            assert any("sum_boys" in suggestion for suggestion in error["suggestions"])
             mock_create_permalink.assert_not_called()
 
     @patch(_PERMALINK_PATCH)

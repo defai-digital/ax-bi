@@ -26,7 +26,7 @@ URL parameter extraction. Config mapping logic lives in chart_utils.py.
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
 
 from superset.constants import EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS
@@ -133,6 +133,7 @@ def prepare_form_data_for_query(
         convert_legacy_filters_into_adhoc,
         form_data_to_adhoc,
         merge_extra_filters,
+        QueryObjectFilterClause,
         simple_filter_to_adhoc,
         split_adhoc_filters_into_base_filters,
     )
@@ -148,11 +149,12 @@ def prepare_form_data_for_query(
                 if form_data.get(clause)
             ),
             *(
-                simple_filter_to_adhoc(filter_, "where")
+                simple_filter_to_adhoc(
+                    cast(QueryObjectFilterClause, filter_),
+                    "where",
+                )
                 for filter_ in legacy_filters
-                if isinstance(filter_, dict)
-                and "col" in filter_
-                and "op" in filter_
+                if isinstance(filter_, dict) and "col" in filter_ and "op" in filter_
             ),
             *form_data["adhoc_filters"],
         ]
