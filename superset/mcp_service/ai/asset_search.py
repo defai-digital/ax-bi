@@ -39,6 +39,10 @@ from superset.runtime_modernization.ax_services import (
     AxServicesResponse,
 )
 from superset.runtime_modernization.measurement import runtime_metric_key
+from superset.runtime_modernization.rust_genai import (
+    rank_assets as rank_assets_with_rust,
+    rust_asset_ranking_kernel_available,
+)
 from superset.runtime_modernization.shadow import (
     execute_with_shadow,
     ShadowMismatchReport,
@@ -308,8 +312,79 @@ def _search_assets_python(
     # For now, metrics are surfaced via describe_dataset_for_ai
 
     # Sort by relevance score descending and apply final limit
-    all_results.sort(key=lambda r: r.relevance_score or 0.0, reverse=True)
-    return all_results[:limit]
+    return _rank_asset_results(query, all_results, limit)
+
+
+def _rust_asset_ranking_enabled() -> bool:
+    """Return whether asset results should be ranked through Rust."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("RUST_ASSET_RANKING_KERNEL")
+        and rust_asset_ranking_kernel_available()
+    )
+
+
+def _rank_asset_results_python(
+    _query: str,
+    results: list[AssetResult],
+    limit: int,
+) -> list[AssetResult]:
+    """Rank asset results through the Python compatibility path."""
+
+    results.sort(key=lambda result: result.relevance_score or 0.0, reverse=True)
+    return results[:limit]
+
+
+def _rank_asset_results_with_rust(
+    query: str,
+    results: list[AssetResult],
+    limit: int,
+) -> list[AssetResult] | None:
+    """Rank asset results through the optional Rust kernel."""
+
+    try:
+        ranked_payload = rank_assets_with_rust(
+            query,
+            [result.model_dump() for result in results],
+            limit,
+        )
+    except Exception:
+        logger.warning(
+            "Rust asset ranking failed; falling back to Python ranking",
+            exc_info=True,
+        )
+        return None
+
+    ranked_results: list[AssetResult] = []
+    for item in ranked_payload:
+        if not isinstance(item, dict):
+            return None
+        try:
+            ranked_results.append(AssetResult(**item))
+        except (TypeError, ValueError):
+            logger.warning(
+                "Rust asset ranking returned an invalid result; falling back",
+                exc_info=True,
+            )
+            return None
+
+    return ranked_results
+
+
+def _rank_asset_results(
+    query: str,
+    results: list[AssetResult],
+    limit: int,
+) -> list[AssetResult]:
+    """Rank authorized asset results with an optional Rust kernel."""
+
+    if _rust_asset_ranking_enabled():
+        ranked_results = _rank_asset_results_with_rust(query, results, limit)
+        if ranked_results is not None:
+            return ranked_results
+
+    return _rank_asset_results_python(query, results, limit)
 
 
 def _asset_search_shadow_enabled() -> bool:

@@ -91,6 +91,7 @@ def test_runtime_modernization_feature_flags_default_disabled() -> None:
     assert DEFAULT_FEATURE_FLAGS["TS_TASK_LIST_SERVING"] is False
     assert DEFAULT_FEATURE_FLAGS["TS_METADATA_INDEX"] is False
     assert DEFAULT_FEATURE_FLAGS["RUST_SQL_KERNEL"] is False
+    assert DEFAULT_FEATURE_FLAGS["RUST_ASSET_RANKING_KERNEL"] is False
     assert DEFAULT_FEATURE_FLAGS["RUST_CHART_VALIDATION_KERNEL"] is False
     assert DEFAULT_FEATURE_FLAGS["RUNTIME_SHADOW_EXECUTION"] is False
 

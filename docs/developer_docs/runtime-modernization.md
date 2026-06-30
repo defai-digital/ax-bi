@@ -99,6 +99,9 @@ Common control flags:
 - `TS_*_SERVING`: serves one workflow from TypeScript with Python fallback.
 - `RUST_SQL_KERNEL`: enables the optional Rust SQL whitespace kernel when the
   Python extension is importable.
+- `RUST_ASSET_RANKING_KERNEL`: enables optional Rust ranking for already
+  authorized GenAI asset-search candidates when the Python extension is
+  importable.
 
 Serving a TypeScript workflow generally requires both `TS_MCP_ORCHESTRATION`
 and that workflow's `TS_*_SERVING` flag.

@@ -26,6 +26,7 @@ from flask import current_app
 from superset.mcp_service.ai.asset_search import (
     _build_reason,
     _is_certified,
+    _rank_asset_results,
     _score_result,
     search_assets,
 )
@@ -226,6 +227,128 @@ def test_search_assets_sorts_by_relevance(
     assert results[0].relevance_score is not None
     assert results[1].relevance_score is not None
     assert results[0].relevance_score >= results[1].relevance_score
+
+
+def test_rank_asset_results_uses_rust_when_enabled(
+    app_context: None,
+    mocker,
+) -> None:
+    """Rust ranking can order already-authorized asset candidates."""
+
+    candidates = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="uuid-1",
+            name="sales_old",
+            description="",
+            certified=False,
+            relevance_score=0.5,
+            owners=[],
+            tags=[],
+        ),
+        AssetResult(
+            asset_type="dataset",
+            id=2,
+            uuid="uuid-2",
+            name="sales_new",
+            description="",
+            certified=True,
+            relevance_score=1.2,
+            owners=[],
+            tags=[],
+        ),
+    ]
+    rust_ranker = mocker.patch(
+        "superset.mcp_service.ai.asset_search.rank_assets_with_rust",
+        return_value=[
+            {
+                "asset_type": "dataset",
+                "id": 2,
+                "uuid": "uuid-2",
+                "name": "sales_new",
+                "description": "",
+                "certified": True,
+                "relevance_score": 1.2,
+                "relevance_reason": "name matches 'sales'",
+                "owners": [],
+                "tags": [],
+            },
+            {
+                "asset_type": "dataset",
+                "id": 1,
+                "uuid": "uuid-1",
+                "name": "sales_old",
+                "description": "",
+                "certified": False,
+                "relevance_score": 1.0,
+                "relevance_reason": "name matches 'sales'",
+                "owners": [],
+                "tags": [],
+            },
+        ],
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
+        return_value=True,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag == "RUST_ASSET_RANKING_KERNEL",
+    )
+
+    results = _rank_asset_results("sales", candidates, 10)
+
+    assert [result.id for result in results] == [2, 1]
+    rust_ranker.assert_called_once()
+
+
+def test_rank_asset_results_falls_back_when_rust_fails(
+    app_context: None,
+    mocker,
+) -> None:
+    """Rust ranking errors do not break asset search."""
+
+    candidates = [
+        AssetResult(
+            asset_type="dataset",
+            id=1,
+            uuid="uuid-1",
+            name="low",
+            description="",
+            certified=False,
+            relevance_score=0.5,
+            owners=[],
+            tags=[],
+        ),
+        AssetResult(
+            asset_type="dataset",
+            id=2,
+            uuid="uuid-2",
+            name="high",
+            description="",
+            certified=False,
+            relevance_score=1.0,
+            owners=[],
+            tags=[],
+        ),
+    ]
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.rank_assets_with_rust",
+        side_effect=RuntimeError("boom"),
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
+        return_value=True,
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        side_effect=lambda flag: flag == "RUST_ASSET_RANKING_KERNEL",
+    )
+
+    results = _rank_asset_results("sales", candidates, 10)
+
+    assert [result.id for result in results] == [2, 1]
 
 
 def test_search_assets_shadow_disabled_returns_python_results(

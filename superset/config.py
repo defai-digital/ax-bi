@@ -742,6 +742,9 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enable Rust-backed SQL parsing or normalization kernels.
     # @lifecycle: development
     "RUST_SQL_KERNEL": False,
+    # Enable Rust-backed asset search ranking kernels.
+    # @lifecycle: development
+    "RUST_ASSET_RANKING_KERNEL": False,
     # Enable Rust-backed chart validation kernels.
     # @lifecycle: development
     "RUST_CHART_VALIDATION_KERNEL": False,

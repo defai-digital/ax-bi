@@ -15,10 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-[workspace]
-members = ["crates/ax_genai", "crates/ax_sql"]
-resolver = "2"
+[build-system]
+requires = ["maturin>=1.12,<2"]
+build-backend = "maturin"
 
-[workspace.package]
-edition = "2021"
+[project]
+name = "ax-genai"
+version = "0.1.0"
+description = "AX-BI Rust GenAI helper kernels"
+requires-python = ">=3.10"
 license = "Apache-2.0"
+
+[tool.maturin]
+manifest-path = "../crates/ax_genai/Cargo.toml"
+module-name = "ax_genai"
+features = ["extension-module"]

@@ -124,6 +124,12 @@
         "description": "Run candidate runtime paths beside authoritative Python paths."
       },
       {
+        "name": "RUST_ASSET_RANKING_KERNEL",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable Rust-backed asset search ranking kernels."
+      },
+      {
         "name": "RUST_CHART_VALIDATION_KERNEL",
         "default": false,
         "lifecycle": "development",
