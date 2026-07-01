@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Registry, makeSingleton, OverwritePolicy } from '../..';
+import { Registry, OverwritePolicy } from '../..';
+import makeSingleton from '../../utils/makeSingleton';
 import ChartMetadata from '../models/ChartMetadata';
 
 class ChartMetadataRegistry extends Registry<ChartMetadata, ChartMetadata> {

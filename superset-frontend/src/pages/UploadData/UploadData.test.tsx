@@ -84,6 +84,7 @@ describe('UploadData', () => {
   test('renders the upload page with title and drop zone', () => {
     render(<UploadData />, {
       useRedux: true,
+      reducers: {},
       useRouter: true,
     });
 
@@ -115,6 +116,7 @@ describe('UploadData', () => {
 
     render(<UploadData />, {
       useRedux: true,
+      reducers: {},
       useRouter: true,
     });
 
@@ -147,6 +149,7 @@ describe('UploadData', () => {
       </Router>,
       {
         useRedux: true,
+        reducers: {},
       },
     );
 
@@ -192,6 +195,7 @@ describe('UploadData', () => {
       </Router>,
       {
         useRedux: true,
+        reducers: {},
       },
     );
 

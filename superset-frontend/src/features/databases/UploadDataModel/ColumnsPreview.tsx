@@ -20,7 +20,7 @@ import { FC } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
 import { Select, Typography } from '@superset-ui/core/components';
-import { type TagType, TagsList } from 'src/components';
+import { type TagType, TagsList } from 'src/components/TagsList';
 
 export type UploadColumnMetadata = {
   name: string;

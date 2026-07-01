@@ -38,10 +38,9 @@ const bootstrapData = getBootstrapData();
 const common = { ...bootstrapData.common };
 const user = { ...bootstrapData.user };
 
-const noopReducer =
-  <STATE = unknown>(initialState: STATE) =>
-  (state: STATE = initialState) =>
-    state;
+function noopReducer<STATE = unknown>(initialState: STATE) {
+  return (state: STATE = initialState) => state;
+}
 
 export default {
   charts,

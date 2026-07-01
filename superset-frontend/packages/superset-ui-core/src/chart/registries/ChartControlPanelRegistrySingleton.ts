@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Registry, makeSingleton } from '../..';
+import { Registry } from '../..';
+import makeSingleton from '../../utils/makeSingleton';
 import { ChartControlPanel } from '../models/ChartControlPanel';
 
 class ChartControlPanelRegistry extends Registry<

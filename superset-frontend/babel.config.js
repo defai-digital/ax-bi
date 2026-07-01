@@ -17,18 +17,23 @@
  * under the License.
  */
 const packageConfig = require('./package');
+const coreJsVersion = require('core-js/package.json').version;
+const isTest =
+  process.env.NODE_ENV === 'test' || process.env.BABEL_ENV === 'test';
 
 module.exports = {
   sourceMaps: true,
   sourceType: 'module',
   retainLines: true,
+  assumptions: {
+    noDocumentAll: true,
+    privateFieldsAsProperties: true,
+    setPublicClassFields: true,
+  },
   presets: [
     [
       '@babel/preset-env',
       {
-        useBuiltIns: 'usage',
-        corejs: 3,
-        loose: true,
         modules: false,
         shippedProposals: true,
         targets: packageConfig.browserslist,
@@ -44,22 +49,27 @@ module.exports = {
     '@babel/preset-typescript',
   ],
   plugins: [
-    'lodash',
-    '@babel/plugin-syntax-dynamic-import',
-    '@babel/plugin-transform-export-namespace-from',
-    ['@babel/plugin-transform-class-properties', { loose: true }],
-    '@babel/plugin-transform-class-static-block',
-    ['@babel/plugin-transform-optional-chaining', { loose: true }],
-    ['@babel/plugin-transform-private-methods', { loose: true }],
-    ['@babel/plugin-transform-nullish-coalescing-operator', { loose: true }],
-    ['@babel/plugin-transform-runtime', { corejs: 3 }],
     [
-      '@emotion/babel-plugin',
+      'polyfill-corejs3',
       {
-        autoLabel: 'dev-only',
-        labelFormat: '[local]',
+        method: 'usage-global',
+        proposals: true,
+        version: coreJsVersion,
       },
     ],
+    '@babel/plugin-transform-export-namespace-from',
+    ['@babel/plugin-transform-runtime', { corejs: 3 }],
+    ...(!isTest
+      ? [
+          [
+            '@emotion/babel-plugin',
+            {
+              autoLabel: 'dev-only',
+              labelFormat: '[local]',
+            },
+          ],
+        ]
+      : []),
   ],
   env: {
     // Setup a different config for tests as they run in node instead of a browser
@@ -68,11 +78,8 @@ module.exports = {
         [
           '@babel/preset-env',
           {
-            useBuiltIns: 'usage',
-            corejs: 3,
-            loose: true,
             shippedProposals: true,
-            modules: 'auto',
+            modules: 'commonjs',
             targets: { node: 'current' },
           },
         ],
@@ -86,8 +93,15 @@ module.exports = {
         '@babel/preset-typescript',
       ],
       plugins: [
+        [
+          'polyfill-corejs3',
+          {
+            method: 'usage-global',
+            proposals: true,
+            version: coreJsVersion,
+          },
+        ],
         'babel-plugin-dynamic-import-node',
-        '@babel/plugin-transform-modules-commonjs',
         '@babel/plugin-transform-export-namespace-from',
       ],
     },

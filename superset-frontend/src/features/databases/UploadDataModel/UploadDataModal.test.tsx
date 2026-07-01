@@ -127,7 +127,7 @@ const expectElementsNotVisible = (elements: any[]) => {
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('UploadDataModal - General Information Elements', () => {
   test('CSV renders correctly', () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const common = getCommonElements();
     const title = screen.getByRole('heading', { name: /csv upload/i });
@@ -153,7 +153,10 @@ describe('UploadDataModal - General Information Elements', () => {
   });
 
   test('Excel renders correctly', () => {
-    render(<UploadDataModal {...excelProps} />, { useRedux: true });
+    render(<UploadDataModal {...excelProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     const common = getCommonElements();
     const title = screen.getByRole('heading', { name: /excel upload/i });
@@ -185,7 +188,10 @@ describe('UploadDataModal - General Information Elements', () => {
   });
 
   test('Columnar renders correctly', () => {
-    render(<UploadDataModal {...columnarProps} />, { useRedux: true });
+    render(<UploadDataModal {...columnarProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     const common = getCommonElements();
     const title = screen.getByRole('heading', { name: /columnar upload/i });
@@ -221,7 +227,7 @@ describe('UploadDataModal - File Settings Elements', () => {
   };
 
   test('CSV file settings render correctly', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     expect(
       screen.queryByText('If Table Already Exists'),
@@ -241,7 +247,10 @@ describe('UploadDataModal - File Settings Elements', () => {
   });
 
   test('Excel file settings render correctly', async () => {
-    render(<UploadDataModal {...excelProps} />, { useRedux: true });
+    render(<UploadDataModal {...excelProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     expect(
       screen.queryByText('If Table Already Exists'),
@@ -265,7 +274,10 @@ describe('UploadDataModal - File Settings Elements', () => {
   });
 
   test('Columnar file settings render correctly', async () => {
-    render(<UploadDataModal {...columnarProps} />, { useRedux: true });
+    render(<UploadDataModal {...columnarProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     expect(
       screen.queryByText('If Table Already Exists'),
@@ -300,7 +312,7 @@ describe('UploadDataModal - Columns Elements', () => {
   };
 
   test('CSV columns render correctly', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     await openColumns();
     const switchDataFrameIndex = screen.getByTestId('dataFrameIndex');
@@ -317,7 +329,10 @@ describe('UploadDataModal - Columns Elements', () => {
   });
 
   test('Excel columns render correctly', async () => {
-    render(<UploadDataModal {...excelProps} />, { useRedux: true });
+    render(<UploadDataModal {...excelProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     await openColumns();
     const switchDataFrameIndex = screen.getByTestId('dataFrameIndex');
@@ -339,7 +354,10 @@ describe('UploadDataModal - Columns Elements', () => {
   });
 
   test('Columnar columns render correctly', async () => {
-    render(<UploadDataModal {...columnarProps} />, { useRedux: true });
+    render(<UploadDataModal {...columnarProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     await openColumns();
     const switchDataFrameIndex = screen.getByTestId('dataFrameIndex');
@@ -364,7 +382,7 @@ describe('UploadDataModal - Columns Elements', () => {
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('UploadDataModal - Rows Elements', () => {
   test('CSV/Excel rows render correctly', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const panelHeader = screen.getByText(/rows/i);
     await userEvent.click(panelHeader);
@@ -379,7 +397,10 @@ describe('UploadDataModal - Rows Elements', () => {
   });
 
   test('Columnar does not render rows', () => {
-    render(<UploadDataModal {...columnarProps} />, { useRedux: true });
+    render(<UploadDataModal {...columnarProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     const panelHeader = screen.queryByText(/rows/i);
     expect(panelHeader).not.toBeInTheDocument();
@@ -389,7 +410,7 @@ describe('UploadDataModal - Rows Elements', () => {
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('UploadDataModal - Database and Schema Population', () => {
   test('database and schema are correctly populated', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const selectDatabase = screen.getByRole('combobox', {
       name: /select a database/i,
@@ -421,7 +442,7 @@ describe('UploadDataModal - Database and Schema Population', () => {
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('UploadDataModal - Form Validation', () => {
   test('form validation without required fields', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const uploadButton = screen.getByRole('button', { name: 'Upload' });
     await userEvent.click(uploadButton);
@@ -438,7 +459,7 @@ describe('UploadDataModal - Form Validation', () => {
   });
 
   test('database validation error clears after selecting a database', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const uploadButton = screen.getByRole('button', { name: 'Upload' });
     await userEvent.click(uploadButton);
@@ -509,7 +530,7 @@ describe('UploadDataModal - Form Submission', () => {
   };
 
   test('CSV form submission', async () => {
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const { options } = await fillForm('csv', 'test.csv');
     const formData = options?.body as FormData;
@@ -563,7 +584,7 @@ describe('UploadDataModal - Form Submission', () => {
         ],
       },
     });
-    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true, reducers: {} });
 
     const { options } = await fillForm('csv', 'customers.tsv');
     const formData = options?.body as FormData;
@@ -576,7 +597,10 @@ describe('UploadDataModal - Form Submission', () => {
   }, 60000);
 
   test('Excel form submission', async () => {
-    render(<UploadDataModal {...excelProps} />, { useRedux: true });
+    render(<UploadDataModal {...excelProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     const { options } = await fillForm('excel', 'test.xls', 'text');
     const formData = options?.body as FormData;
@@ -588,7 +612,10 @@ describe('UploadDataModal - Form Submission', () => {
   }, 60000);
 
   test('Columnar form submission', async () => {
-    render(<UploadDataModal {...columnarProps} />, { useRedux: true });
+    render(<UploadDataModal {...columnarProps} />, {
+      useRedux: true,
+      reducers: {},
+    });
 
     const { options } = await fillForm('columnar', 'test.parquet', 'text');
     const formData = options?.body as FormData;
@@ -701,6 +728,7 @@ describe('UploadDataModal Collapse Tabs', () => {
   test('renders the collaps tab CSV correctly and resets to default tab after closing', async () => {
     const { rerender } = render(<UploadDataModal {...csvProps} />, {
       useRedux: true,
+      reducers: {},
     });
     const generalInfoTab = screen.getByRole('tab', {
       name: /expanded General information/i,
@@ -721,6 +749,7 @@ describe('UploadDataModal Collapse Tabs', () => {
   test('renders the collaps tab Excel correctly and resets to default tab after closing', async () => {
     const { rerender } = render(<UploadDataModal {...excelProps} />, {
       useRedux: true,
+      reducers: {},
     });
     const generalInfoTab = screen.getByRole('tab', {
       name: /expanded General information/i,
@@ -741,6 +770,7 @@ describe('UploadDataModal Collapse Tabs', () => {
   test('renders the collaps tab Columnar correctly and resets to default tab after closing', async () => {
     const { rerender } = render(<UploadDataModal {...columnarProps} />, {
       useRedux: true,
+      reducers: {},
     });
     const generalInfoTab = screen.getByRole('tab', {
       name: /expanded General information/i,

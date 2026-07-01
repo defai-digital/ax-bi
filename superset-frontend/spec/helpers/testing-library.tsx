@@ -38,7 +38,6 @@ import { Provider } from 'react-redux';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndContext } from '@dnd-kit/core';
-import reducerIndex from 'spec/helpers/reducerIndex';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
 import { configureStore, Store } from '@reduxjs/toolkit';
@@ -109,8 +108,11 @@ export function createWrapper(options?: Options) {
     }
 
     if (useRedux || store) {
+      const defaultReducers = () =>
+        // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+        require('spec/helpers/reducerIndex').default;
       const mockStore =
-        store ?? createStore(initialState, reducers || reducerIndex);
+        store ?? createStore(initialState, reducers || defaultReducers());
       result = <Provider store={mockStore}>{result}</Provider>;
     }
 

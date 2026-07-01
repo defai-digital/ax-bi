@@ -27,6 +27,28 @@ if (typeof Intl.DurationFormat === 'undefined') {
   require('@formatjs/intl-durationformat/polyfill.js');
 }
 
+class TestMessageChannel {
+  port1: { onmessage: ((event: MessageEvent) => void) | null } = {
+    onmessage: null,
+  };
+
+  port2 = {
+    postMessage: (data: unknown) => {
+      setTimeout(() => {
+        this.port1.onmessage?.({ data } as MessageEvent);
+      }, 0);
+    },
+  };
+}
+
+(
+  globalThis as typeof globalThis & {
+    MessageChannel: typeof TestMessageChannel;
+  }
+).MessageChannel = TestMessageChannel;
+window.MessageChannel =
+  TestMessageChannel as unknown as typeof window.MessageChannel;
+
 configureTestingLibrary({
   testIdAttribute: 'data-test',
 });

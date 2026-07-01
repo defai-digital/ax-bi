@@ -23,11 +23,11 @@ import { supersetTheme, SupersetTheme } from '@apache-superset/core/theme';
 import {
   AppSection,
   Behavior,
-  convertKeysToCamelCase,
   Datasource,
   FilterState,
   JsonObject,
 } from '../..';
+import convertKeysToCamelCase from '../../utils/convertKeysToCamelCase';
 import {
   HandlerFunction,
   LegendState,

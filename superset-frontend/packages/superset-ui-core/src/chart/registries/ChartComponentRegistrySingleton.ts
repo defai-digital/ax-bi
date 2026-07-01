@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Registry, makeSingleton, OverwritePolicy } from '../..';
+import { Registry, OverwritePolicy } from '../..';
+import makeSingleton from '../../utils/makeSingleton';
 import { ChartType } from '../models/ChartPlugin';
 
 class ChartComponentRegistry extends Registry<ChartType> {
