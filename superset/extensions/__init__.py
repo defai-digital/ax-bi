@@ -19,9 +19,10 @@ import logging
 import os
 from typing import Any, Callable, Optional
 
+# ruff: noqa: E402
 import celery
 from flask import Flask
-from flask_appbuilder import AppBuilder
+from flask_appbuilder import AppBuilder, Model
 
 # Temporary fix for missing flask_appbuilder.utils.legacy module
 try:
@@ -39,6 +40,20 @@ from flask_migrate import Migrate
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.local import LocalProxy
+
+# SQLAlchemy 2 requires mapped attributes to use Mapped[]. Superset's models
+# still use legacy annotations, so keep declarative mapping permissive until
+# those models can be migrated incrementally.
+Model.__allow_unmapped__ = True
+_model_init_subclass = Model.__init_subclass__
+
+
+def _allow_unmapped_model_init_subclass(cls: type[Model], **kwargs: Any) -> None:
+    cls.__allow_unmapped__ = True
+    _model_init_subclass(**kwargs)
+
+
+Model.__init_subclass__ = classmethod(_allow_unmapped_model_init_subclass)
 
 from superset.async_events.async_query_manager import AsyncQueryManager
 from superset.async_events.async_query_manager_factory import AsyncQueryManagerFactory

@@ -145,7 +145,7 @@ class SemanticLayer(AuditMixinNullable, Model):
     perm = Column(String(1000), nullable=True)
 
     # Semantic views relationship
-    semantic_views: list[SemanticView] = relationship(
+    semantic_views = relationship(
         "SemanticView",
         back_populates="semantic_layer",
         cascade="all, delete-orphan",
@@ -236,7 +236,7 @@ class SemanticView(AuditMixinNullable, Model):
         ForeignKey("semantic_layers.uuid", ondelete="CASCADE"),
         nullable=False,
     )
-    semantic_layer: SemanticLayer = relationship(
+    semantic_layer = relationship(
         "SemanticLayer",
         back_populates="semantic_views",
         foreign_keys=[semantic_layer_uuid],

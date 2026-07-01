@@ -187,7 +187,6 @@ cryptography==48.0.1
     #   paramiko
     #   pyjwt
     #   pyopenssl
-    #   secretstorage
 cycler==0.12.1
     # via matplotlib
 cyclopts==4.2.4
@@ -302,9 +301,10 @@ flask-session==0.8.0
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-flask-sqlalchemy==2.5.1
+flask-sqlalchemy==3.1.1
     # via
     #   -c requirements/base-constraint.txt
+    #   apache-superset
     #   flask-appbuilder
     #   flask-migrate
 flask-talisman==1.1.0
@@ -380,7 +380,6 @@ greenlet==3.5.1
     #   apache-superset
     #   gevent
     #   shillelagh
-    #   sqlalchemy
 griffelib==2.0.2
     # via fastmcp
 grpcio==1.81.1
@@ -458,10 +457,6 @@ jaraco-context==6.0.1
     # via keyring
 jaraco-functools==4.3.0
     # via keyring
-jeepney==0.9.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.6
     # via
     #   -c requirements/base-constraint.txt
@@ -919,8 +914,6 @@ ruff==0.9.7
     # via apache-superset
 s3transfer==0.16.0
     # via boto3
-secretstorage==3.5.0
-    # via keyring
 selenium==4.44.0
     # via
     #   -c requirements/base-constraint.txt
@@ -963,7 +956,7 @@ sortedcontainers==2.4.0
     # via
     #   -c requirements/base-constraint.txt
     #   trio
-sqlalchemy==1.4.54
+sqlalchemy==2.0.51
     # via
     #   -c requirements/base-constraint.txt
     #   alembic
@@ -1048,6 +1041,7 @@ typing-extensions==4.15.0
     #   referencing
     #   selenium
     #   shillelagh
+    #   sqlalchemy
     #   starlette
     #   typing-inspection
 typing-inspection==0.4.1

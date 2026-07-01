@@ -1,0 +1,138 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+"""Docker deployment configuration for AX-BI."""
+
+from __future__ import annotations
+
+import logging
+import os
+
+from celery.schedules import crontab
+from flask_caching.backends.filesystemcache import FileSystemCache
+
+
+def _required_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"{name} must be set for AX-BI Docker deployment")
+    return value
+
+
+def _bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+DATABASE_DIALECT = os.getenv("DATABASE_DIALECT", "postgresql")
+DATABASE_USER = os.getenv("DATABASE_USER", "superset")
+DATABASE_PASSWORD = _required_env("DATABASE_PASSWORD")
+DATABASE_HOST = os.getenv("DATABASE_HOST", "db")
+DATABASE_PORT = os.getenv("DATABASE_PORT", "5432")
+DATABASE_DB = os.getenv("DATABASE_DB", "superset")
+
+SECRET_KEY = _required_env("SUPERSET_SECRET_KEY")
+
+SQLALCHEMY_DATABASE_URI = (
+    f"{DATABASE_DIALECT}://"
+    f"{DATABASE_USER}:{DATABASE_PASSWORD}@"
+    f"{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DB}"
+)
+
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "0")
+REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "1")
+
+RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
+
+CACHE_CONFIG = {
+    "CACHE_TYPE": "RedisCache",
+    "CACHE_DEFAULT_TIMEOUT": int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300")),
+    "CACHE_KEY_PREFIX": os.getenv("CACHE_KEY_PREFIX", "axbi_"),
+    "CACHE_REDIS_HOST": REDIS_HOST,
+    "CACHE_REDIS_PORT": REDIS_PORT,
+    "CACHE_REDIS_DB": REDIS_RESULTS_DB,
+}
+DATA_CACHE_CONFIG = CACHE_CONFIG
+THUMBNAIL_CACHE_CONFIG = CACHE_CONFIG
+
+
+class CeleryConfig:
+    """Celery settings for the AX-BI Docker stack."""
+
+    broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
+    result_backend = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
+    imports = (
+        "superset.sql_lab",
+        "superset.tasks.scheduler",
+        "superset.tasks.thumbnails",
+        "superset.tasks.cache",
+    )
+    worker_prefetch_multiplier = 1
+    task_acks_late = False
+    beat_schedule = {
+        "reports.scheduler": {
+            "task": "reports.scheduler",
+            "schedule": crontab(minute="*", hour="*"),
+        },
+        "reports.prune_log": {
+            "task": "reports.prune_log",
+            "schedule": crontab(minute=10, hour=0),
+        },
+    }
+
+
+CELERY_CONFIG = CeleryConfig
+
+FEATURE_FLAGS = {
+    "ALERT_REPORTS": True,
+    "DATASET_FOLDERS": True,
+    "ENABLE_EXTENSIONS": True,
+    "SEMANTIC_LAYERS": True,
+}
+
+ENABLE_PROXY_FIX = _bool_env("ENABLE_PROXY_FIX", True)
+TALISMAN_ENABLED = _bool_env("TALISMAN_ENABLED", True)
+SQLLAB_CTAS_NO_LIMIT = _bool_env("SQLLAB_CTAS_NO_LIMIT", True)
+
+WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://superset:8088/")
+WEBDRIVER_BASEURL_USER_FRIENDLY = os.getenv(
+    "WEBDRIVER_BASEURL_USER_FRIENDLY",
+    "http://localhost:8088/",
+)
+
+MCP_AUTH_ENABLED = _bool_env("MCP_AUTH_ENABLED", False)
+MCP_DEV_USERNAME = os.getenv("MCP_DEV_USERNAME") or None
+MCP_JWT_ISSUER = os.getenv("MCP_JWT_ISSUER") or None
+MCP_JWT_AUDIENCE = os.getenv("MCP_JWT_AUDIENCE") or None
+MCP_JWT_ALGORITHM = os.getenv("MCP_JWT_ALGORITHM", "RS256")
+MCP_JWKS_URI = os.getenv("MCP_JWKS_URI") or None
+MCP_JWT_PUBLIC_KEY = os.getenv("MCP_JWT_PUBLIC_KEY") or None
+MCP_JWT_SECRET = os.getenv("MCP_JWT_SECRET") or None
+MCP_REQUIRED_SCOPES = [
+    scope.strip()
+    for scope in os.getenv("MCP_REQUIRED_SCOPES", "").split(",")
+    if scope.strip()
+]
+
+LOG_LEVEL = getattr(
+    logging,
+    os.getenv("SUPERSET_LOG_LEVEL", "INFO").upper(),
+    logging.INFO,
+)

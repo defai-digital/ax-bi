@@ -32,7 +32,6 @@ from datetime import datetime
 from functools import lru_cache
 from inspect import signature
 from typing import Any, Callable, cast, Optional, TYPE_CHECKING
-from urllib.parse import quote
 
 import numpy
 import pandas as pd
@@ -449,7 +448,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
             # do not over-write the password with the password mask
             self.password = conn.password
         conn = conn.set(password=PASSWORD_MASK if conn.password else None)
-        self.sqlalchemy_uri = str(conn)  # hides the password
+        self.sqlalchemy_uri = conn.render_as_string(hide_password=False)
 
     def get_effective_user(self, object_url: URL) -> str | None:
         """
@@ -1165,7 +1164,6 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
                 table.table,
                 meta,
                 schema=table.schema or None,
-                autoload=True,
                 autoload_with=engine,
             )
 
@@ -1259,16 +1257,11 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         else:
             raw_password = self.password
 
-        # Encode the password such that special characters
-        # are preserved when rendering to string and reparsing the URL.
         if raw_password is not None:
-            encoded_password = quote(raw_password, safe="")
-            conn = conn.set(password=encoded_password)
+            conn = conn.set(password=raw_password)
         else:
             conn = conn.set(password=None)
 
-        # render_as_string preserves the URL encoding of special
-        # characters in passwords
         return conn.render_as_string(hide_password=False)
 
     @property

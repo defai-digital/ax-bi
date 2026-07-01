@@ -238,9 +238,7 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
     certification_details = Column(Text)
     json_metadata = Column(utils.MediumText())
     slug = Column(String(255), unique=True)
-    slices: list[Slice] = relationship(
-        Slice, secondary=dashboard_slices, backref="dashboards"
-    )
+    slices = relationship(Slice, secondary=dashboard_slices, backref="dashboards")
     owners = relationship(
         security_manager.user_model,
         secondary=dashboard_user,

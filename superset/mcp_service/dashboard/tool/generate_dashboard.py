@@ -373,13 +373,23 @@ def generate_dashboard(  # noqa: C901
         from superset.daos.dashboard import DashboardDAO
 
         try:
+            try:
+                query_options = [
+                    subqueryload(Dashboard.slices).subqueryload(Slice.tags),
+                    subqueryload(Dashboard.tags),
+                ]
+            except Exception:  # pylint: disable=broad-except
+                logger.debug(
+                    "Dashboard eager-load options unavailable; re-fetching without "
+                    "relationship options",
+                    exc_info=True,
+                )
+                query_options = []
+
             dashboard = (
                 DashboardDAO.find_by_id(
                     dashboard.id,
-                    query_options=[
-                        subqueryload(Dashboard.slices).subqueryload(Slice.tags),
-                        subqueryload(Dashboard.tags),
-                    ],
+                    query_options=query_options,
                 )
                 or dashboard
             )

@@ -26,7 +26,6 @@ from sqlalchemy.types import Text
 
 from superset.constants import PASSWORD_MASK
 from superset.extensions import encrypted_field_factory
-from superset.models.core import Database
 from superset.models.helpers import (
     AuditMixinNullable,
     ExtraJSONMixin,
@@ -48,7 +47,7 @@ class SSHTunnel(AuditMixinNullable, ExtraJSONMixin, ImportExportMixin, Model):
         nullable=False,
         unique=True,
     )
-    database: Database = relationship(
+    database = relationship(
         "Database",
         backref=backref(
             "ssh_tunnel",

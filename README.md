@@ -151,11 +151,16 @@ Want to add support for your datastore or data engine? Read about the [technical
 
 AX-BI runs anywhere the underlying Superset platform runs.
 
-- **Quick local trial** — use the bundled Docker Compose stack:
+- **Docker deployment** — the recommended path for AX-BI users:
   ```bash
-  docker compose -f docker-compose-non-dev.yml up
+  cp docker/.env-axbi.example docker/.env-axbi
+  # Fill SUPERSET_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
+  # Generate secrets with: openssl rand -base64 42
+  docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
   ```
-- **Production deployments** — see the [Helm chart](helm/superset/) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
+  To build images from this checkout instead of pulling published images, add
+  `-f docker-compose-axbi-build.yml --build`.
+- **Production deployments** — use the Docker stack above with managed Postgres/Redis or see the [Helm chart](helm/superset/) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
 - **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](superset/mcp_service/PRODUCTION.md).
 
 ## Development

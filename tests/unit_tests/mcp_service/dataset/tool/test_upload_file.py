@@ -19,10 +19,12 @@
 
 import base64
 import importlib
+from io import BytesIO
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from fastmcp import Client
+from openpyxl import Workbook
 
 from superset.mcp_service.app import mcp
 from superset.mcp_service.dataset.schemas import DatasetError
@@ -215,9 +217,13 @@ class TestUploadFile:
         _set_query_result(mock_session, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_report_xyz"}
 
-        # Minimal xlsx bytes (not a real file, but enough for the tool flow
-        # when UploadCommand is mocked)
-        fake_xlsx = base64.b64encode(b"fake-xlsx-content").decode()
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.append(["name", "value"])
+        worksheet.append(["report", 1])
+        buffer = BytesIO()
+        workbook.save(buffer)
+        fake_xlsx = base64.b64encode(buffer.getvalue()).decode()
 
         async with Client(mcp_server) as client:
             result = await client.call_tool(

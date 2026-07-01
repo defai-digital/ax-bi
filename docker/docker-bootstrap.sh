@@ -106,7 +106,11 @@ case "${1}" in
     ;;
   mcp)
     echo "Starting MCP service..."
-    superset mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} --debug
+    MCP_DEBUG_FLAG=""
+    if [[ "${MCP_DEBUG:-}" == "true" ]]; then
+        MCP_DEBUG_FLAG="--debug"
+    fi
+    superset mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} ${MCP_DEBUG_FLAG}
     ;;
   *)
     echo "Unknown Operation!!!"

@@ -14,16 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-[pytest]
-testpaths =
-    tests
-python_files = *_test.py test_*.py *_tests.py *viz/utils.py
-# `-p no:warnings` temporarily disabled in favor of more finely tuned `filterwarnings`.
-#addopts = -p no:warnings
-asyncio_mode = auto
 
-# `ignore` is effectively equivalent to `-p no:warnings`.
-# SQLAlchemy 2 removed the 1.4-only RemovedIn20Warning class. Removed APIs are
-# guarded by tests/unit_tests/test_sqlalchemy2_compatibility.py.
-filterwarnings =
-    ignore
+x-axbi-build: &axbi-build
+  context: .
+  target: lean
+  args:
+    DEV_MODE: "false"
+    INCLUDE_CHROMIUM: ${INCLUDE_CHROMIUM:-false}
+    INCLUDE_FIREFOX: ${INCLUDE_FIREFOX:-false}
+    BUILD_TRANSLATIONS: ${BUILD_TRANSLATIONS:-false}
+
+services:
+  superset-init:
+    build: *axbi-build
+
+  superset:
+    build: *axbi-build
+
+  superset-worker:
+    build: *axbi-build
+
+  superset-worker-beat:
+    build: *axbi-build
+
+  mcp:
+    build: *axbi-build
+
+  ax-services:
+    build:
+      context: ./ax-services

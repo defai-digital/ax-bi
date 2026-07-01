@@ -1,0 +1,103 @@
+name: AX-BI Docker Images
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-publish:
+    name: build-publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: ax-bi
+            context: .
+            dockerfile: Dockerfile
+            target: lean
+          - name: ax-bi-services
+            context: ax-services
+            dockerfile: ax-services/Dockerfile
+            target: runtime
+    steps:
+      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Free up disk space
+        shell: bash
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /usr/local/.ghcup \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost || true
+          echo "Disk after cleanup:"; df -h /
+
+      - name: Setup Docker Environment
+        uses: ./.github/actions/setup-docker
+        with:
+          build: "true"
+          install-docker-compose: "false"
+          login-to-dockerhub: "false"
+
+      - name: Login to GHCR
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and publish image
+        shell: bash
+        env:
+          IMAGE_NAME: ${{ matrix.image.name }}
+          IMAGE_CONTEXT: ${{ matrix.image.context }}
+          IMAGE_DOCKERFILE: ${{ matrix.image.dockerfile }}
+          IMAGE_TARGET: ${{ matrix.image.target }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          repo="${GITHUB_REPOSITORY,,}"
+          image="ghcr.io/${repo%/*}/${IMAGE_NAME}"
+          short_sha="${GITHUB_SHA::12}"
+          tags=(--tag "${image}:sha-${short_sha}")
+
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            tags+=(--tag "${image}:main" --tag "${image}:latest")
+          fi
+
+          if [[ "$GITHUB_REF_NAME" == v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            tags+=(--tag "${image}:${GITHUB_REF_NAME}" --tag "${image}:${version}" --tag "${image}:latest")
+          fi
+
+          docker buildx build \
+            --push \
+            --platform linux/amd64,linux/arm64 \
+            --file "$IMAGE_DOCKERFILE" \
+            --target "$IMAGE_TARGET" \
+            --build-arg DEV_MODE=false \
+            --build-arg INCLUDE_CHROMIUM=false \
+            --build-arg INCLUDE_FIREFOX=false \
+            --build-arg BUILD_TRANSLATIONS=false \
+            "${tags[@]}" \
+            "$IMAGE_CONTEXT"

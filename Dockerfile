@@ -72,7 +72,7 @@ RUN --mount=type=bind,source=./superset-frontend/package.json,target=./package.j
     --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.npm \
     if [ "${DEV_MODE}" = "false" ]; then \
-        npm ci; \
+        npm ci --legacy-peer-deps; \
     else \
         echo "Skipping 'npm ci' in dev mode"; \
     fi
@@ -216,6 +216,8 @@ COPY --from=superset-node /app/superset/static/service-worker.j[s] superset/stat
 COPY superset superset
 # TODO in the meantime, remove the .po files
 RUN rm superset/translations/*/*/*.po
+RUN mkdir -p superset/static/uploads \
+    && chown -R superset:superset /app/data superset/static/uploads
 
 # Merging translations from backend and frontend stages
 COPY --from=superset-node /app/superset/translations superset/translations
@@ -235,12 +237,13 @@ COPY requirements/base.txt requirements/
 
 # Copy superset-core package needed for editable install in base.txt
 COPY superset-core superset-core
+COPY docker/pythonpath_axbi/superset_config.py /app/docker/pythonpath_axbi/superset_config.py
 
 RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
     /app/docker/pip-install.sh --requires-build-essential -r requirements/base.txt
 # Install the superset package
 RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
-    uv pip install -e .
+    uv pip install -e .[duckdb,fastmcp,postgres]
 RUN python -m compileall /app/superset
 
 USER superset

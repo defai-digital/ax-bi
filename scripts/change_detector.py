@@ -57,8 +57,13 @@ PATTERNS = {
         r"^tests/unit_tests/runtime_modernization/rust_sql_test\.py",
     ],
     "docker": [
+        r"^\.github/workflows/(axbi-docker|docker)\.yml",
         r"^Dockerfile$",
         r"^docker.*",
+        r"^pyproject\.toml$",
+        r"^requirements/(base|development)\.(in|txt)$",
+        r"^superset-core/",
+        r"^superset/mcp_service/",
     ],
     "docs": [
         r"^docs/",

@@ -14,16 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-[pytest]
-testpaths =
-    tests
-python_files = *_test.py test_*.py *_tests.py *viz/utils.py
-# `-p no:warnings` temporarily disabled in favor of more finely tuned `filterwarnings`.
-#addopts = -p no:warnings
-asyncio_mode = auto
 
-# `ignore` is effectively equivalent to `-p no:warnings`.
-# SQLAlchemy 2 removed the 1.4-only RemovedIn20Warning class. Removed APIs are
-# guarded by tests/unit_tests/test_sqlalchemy2_compatibility.py.
-filterwarnings =
-    ignore
+FROM node:24-trixie-slim AS build
+
+WORKDIR /app
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm ci
+COPY src src
+RUN npm run build
+
+FROM node:24-trixie-slim AS runtime
+
+ENV NODE_ENV=production \
+    AX_SERVICES_HOST=0.0.0.0 \
+    AX_SERVICES_PORT=5010
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/dist dist
+
+USER node
+EXPOSE 5010
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD node -e "fetch('http://127.0.0.1:' + (process.env.AX_SERVICES_PORT || '5010') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+CMD ["npm", "run", "start"]
