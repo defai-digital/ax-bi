@@ -50,12 +50,12 @@ const columnarProps = {
 };
 
 // Helper function to setup common mocks
-const setupMocks = () => {
+const setupMocks = (uploadMetadata = { result: { items: [] } }) => {
   fetchMock.post('glob:*api/v1/database/1/upload/', {});
   fetchMock.post('glob:*api/v1/database/csv_metadata/', {});
   fetchMock.post('glob:*api/v1/database/excel_metadata/', {});
   fetchMock.post('glob:*api/v1/database/columnar_metadata/', {});
-  fetchMock.post('glob:*api/v1/database/upload_metadata/', {});
+  fetchMock.post('glob:*api/v1/database/upload_metadata/', uploadMetadata);
 
   fetchMock.get(
     'glob:*api/v1/database/?q=(filters:!((col:allow_file_upload,opr:eq,value:!t)),page:0,page_size:100)',
@@ -311,7 +311,6 @@ describe('UploadDataModal - Columns Elements', () => {
       switchDataFrameIndex,
       screen.getByRole('textbox', { name: /Index label/i }),
       screen.getByRole('combobox', { name: /Choose columns to read/i }),
-      screen.getByRole('textbox', { name: /Column data types/i }),
     ];
 
     expectElementsVisible(elements);
@@ -519,6 +518,61 @@ describe('UploadDataModal - Form Submission', () => {
     expect(formData.get('table_name')).toBe('table1');
     expect(formData.get('schema')).toBe('public');
     expect((formData.get('file') as File).name).toBe('test.csv');
+  }, 60000);
+
+  test('CSV form submission applies reviewed field types and TSV delimiter', async () => {
+    fetchMock.clearHistory().removeRoutes();
+    setupMocks({
+      result: {
+        items: [
+          {
+            sheet_name: null,
+            column_names: ['customer_id', 'created_at', 'amount'],
+            columns: [
+              {
+                name: 'customer_id',
+                semantic_type: 'identifier',
+                suggested_type: 'text',
+                bi_role: 'Dimension',
+                n_unique_sampled: 2,
+                sample_values: ['00123', '00124'],
+                warnings: [
+                  'Leading zero values detected; text preserves codes.',
+                ],
+              },
+              {
+                name: 'created_at',
+                semantic_type: 'datetime',
+                suggested_type: 'datetime',
+                bi_role: 'Time column',
+                n_unique_sampled: 2,
+                sample_values: ['2026-01-01', '2026-01-02'],
+              },
+              {
+                name: 'amount',
+                semantic_type: 'decimal',
+                suggested_type: 'decimal',
+                bi_role: 'Measure',
+                n_unique_sampled: 2,
+                sample_values: ['10.50', '20.00'],
+              },
+            ],
+            sample_rows: [],
+            row_count_sampled: 2,
+          },
+        ],
+      },
+    });
+    render(<UploadDataModal {...csvProps} />, { useRedux: true });
+
+    const { options } = await fillForm('csv', 'customers.tsv');
+    const formData = options?.body as FormData;
+
+    expect(formData.get('delimiter')).toBe('\t');
+    expect(formData.get('column_data_types')).toBe(
+      JSON.stringify({ customer_id: 'string', amount: 'float64' }),
+    );
+    expect(formData.get('column_dates')).toBe('created_at');
   }, 60000);
 
   test('Excel form submission', async () => {

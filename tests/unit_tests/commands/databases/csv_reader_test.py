@@ -387,11 +387,17 @@ def test_csv_reader_file_metadata():
     )
     file = create_csv_file(CSV_DATA)
     metadata = csv_reader.file_metadata(file)
-    assert metadata == {
-        "items": [
-            {"column_names": ["Name", "Age", "City", "Birth"], "sheet_name": None}
-        ]
+    item = metadata["items"][0]
+    assert item["column_names"] == ["Name", "Age", "City", "Birth"]
+    assert item["sheet_name"] is None
+    assert item["row_count_sampled"] == 3
+    assert {column["name"]: column["suggested_type"] for column in item["columns"]} == {
+        "Name": "text",
+        "Age": "integer",
+        "City": "text",
+        "Birth": "datetime",
     }
+    assert item["sample_rows"][0]["Name"] == "name1"
     file.close()
 
     file = create_csv_file(CSV_DATA, delimiter="|")
@@ -399,12 +405,25 @@ def test_csv_reader_file_metadata():
         options=CSVReaderOptions(delimiter="|"),
     )
     metadata = csv_reader.file_metadata(file)
-    assert metadata == {
-        "items": [
-            {"column_names": ["Name", "Age", "City", "Birth"], "sheet_name": None}
-        ]
-    }
+    assert metadata["items"][0]["column_names"] == ["Name", "Age", "City", "Birth"]
     file.close()
+
+
+def test_csv_reader_file_metadata_sniffs_tsv_and_preserves_codes():
+    csv_reader = CSVReader(options=CSVReaderOptions())
+    file = FileStorage(
+        io.BytesIO(b"customer_id\tamount\n00123\t10.50\n00124\t20.00\n"),
+        filename="customers.tsv",
+    )
+    metadata = csv_reader.file_metadata(file)
+    item = metadata["items"][0]
+    columns = {column["name"]: column for column in item["columns"]}
+
+    assert item["column_names"] == ["customer_id", "amount"]
+    assert columns["customer_id"]["semantic_type"] == "identifier"
+    assert columns["customer_id"]["suggested_type"] == "text"
+    assert columns["customer_id"]["sample_values"] == ["00123", "00124"]
+    assert columns["amount"]["suggested_type"] == "decimal"
 
 
 def test_csv_reader_file_metadata_invalid_file():

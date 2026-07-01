@@ -27,6 +27,7 @@ from superset import is_feature_enabled
 from superset.commands.database.exceptions import DatabaseUploadFailed
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
+    build_upload_metadata_item,
     FileMetadata,
     ReaderOptions,
 )
@@ -40,6 +41,7 @@ MAX_DISPLAYED_ERRORS = 5
 ROWS_TO_READ_METADATA = 100
 DEFAULT_ENCODING = "utf-8"
 ENCODING_FALLBACKS = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
+DELIMITER_CANDIDATES = ("\t", "|", ";", ",")
 
 
 class CSVReaderOptions(ReaderOptions, total=False):
@@ -126,6 +128,36 @@ class CSVReader(BaseDataReader):
                 "Error selecting CSV engine: %s, falling back to 'c' engine", ex
             )
             return "c"
+
+    @staticmethod
+    def _sniff_delimiter(file: FileStorage, encoding: str) -> str:
+        """
+        Detect a delimiter from the first non-blank lines of a delimited file.
+
+        The heuristic mirrors SDSA's upload parser design: choose the delimiter
+        that appears a consistent, non-zero number of times near the start of
+        the file. It is used only when the caller does not provide a delimiter.
+        """
+        position = file.tell()
+        try:
+            sample = file.read(65536)
+            if isinstance(sample, str):
+                text = sample
+            else:
+                text = sample.decode(encoding, errors="ignore")
+        finally:
+            file.seek(position)
+
+        head = [line for line in text.splitlines()[:50] if line.strip()][:10]
+        best = ","
+        best_count = 0
+        for candidate in DELIMITER_CANDIDATES:
+            counts = [line.count(candidate) for line in head]
+            if counts and all(count == counts[0] for count in counts):
+                if counts[0] > best_count:
+                    best = candidate
+                    best_count = counts[0]
+        return best
 
     @staticmethod
     def _find_invalid_values_numeric(df: pd.DataFrame, column: str) -> pd.Series:
@@ -379,14 +411,15 @@ class CSVReader(BaseDataReader):
         try:
             types = None
             if "dtype" in kwargs and kwargs["dtype"]:
-                custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
-                if pandas_types:
-                    kwargs["dtype"] = pandas_types
-                else:
-                    kwargs.pop("dtype", None)
+                if isinstance(kwargs["dtype"], dict):
+                    custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
+                    if pandas_types:
+                        kwargs["dtype"] = pandas_types
+                    else:
+                        kwargs.pop("dtype", None)
 
-                # Custom types for our manual casting
-                types = custom_types if custom_types else None
+                    # Custom types for our manual casting
+                    types = custom_types if custom_types else None
 
             if "chunksize" in kwargs:
                 chunks = []
@@ -501,7 +534,11 @@ class CSVReader(BaseDataReader):
             ),
             "nrows": rows_to_read,
             "parse_dates": self._options.get("column_dates"),
-            "sep": self._options.get("delimiter", ","),
+            "sep": self._options.get("delimiter")
+            or self._sniff_delimiter(
+                file,
+                self._options.get("encoding", DEFAULT_ENCODING),
+            ),
             "skip_blank_lines": self._options.get("skip_blank_lines", False),
             "skipinitialspace": self._options.get("skip_initial_space", False),
             "skiprows": self._options.get("skip_rows", 0),
@@ -529,16 +566,13 @@ class CSVReader(BaseDataReader):
         kwargs = {
             "nrows": ROWS_TO_READ_METADATA,
             "header": self._options.get("header_row", 0),
-            "sep": self._options.get("delimiter", ","),
             "encoding": self._options.get("encoding", DEFAULT_ENCODING),
             "low_memory": False,
+            "dtype": "string",
         }
+        kwargs["sep"] = self._options.get("delimiter") or self._sniff_delimiter(
+            file,
+            kwargs["encoding"],
+        )
         df = self._read_csv(file, kwargs)
-        return {
-            "items": [
-                {
-                    "column_names": df.columns.tolist(),
-                    "sheet_name": None,
-                }
-            ]
-        }
+        return {"items": [build_upload_metadata_item(df, None)]}

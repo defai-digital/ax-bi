@@ -30,6 +30,7 @@ from werkzeug.datastructures import FileStorage
 from superset.commands.database.exceptions import DatabaseUploadFailed
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
+    build_upload_metadata_item,
     FileMetadata,
     ReaderOptions,
 )
@@ -37,6 +38,7 @@ from superset.exceptions import SupersetException
 from superset.utils.core import check_is_safe_zip
 
 logger = logging.getLogger(__name__)
+ROWS_TO_READ_METADATA = 100
 
 
 class ColumnarReaderOptions(ReaderOptions, total=False):
@@ -123,20 +125,35 @@ class ColumnarReader(BaseDataReader):
         )
 
     def file_metadata(self, file: FileStorage) -> FileMetadata:
-        column_names = set()
+        column_names: list[str] = []
+        sample_frames: list[pd.DataFrame] = []
+        rows_remaining = ROWS_TO_READ_METADATA
         try:
             for file_item in self._yield_files(file):
                 parquet_file = pq.ParquetFile(file_item)
-                column_names.update(parquet_file.metadata.schema.names)  # pylint: disable=no-member
+                for column_name in parquet_file.metadata.schema.names:  # pylint: disable=no-member
+                    if column_name not in column_names:
+                        column_names.append(column_name)
+                if rows_remaining <= 0:
+                    continue
+                try:
+                    batch = next(
+                        parquet_file.iter_batches(
+                            batch_size=rows_remaining,
+                            columns=self._options.get("columns_read"),
+                        )
+                    )
+                except StopIteration:
+                    continue
+                frame = batch.to_pandas()
+                sample_frames.append(frame)
+                rows_remaining -= len(frame)
         except ArrowException as ex:
             raise DatabaseUploadFailed(
                 message=_("Parsing error: %(error)s", error=str(ex))
             ) from ex
-        return {
-            "items": [
-                {
-                    "column_names": list(column_names),
-                    "sheet_name": None,
-                }
-            ]
-        }
+        if sample_frames:
+            df = pd.concat(sample_frames, ignore_index=True)
+        else:
+            df = pd.DataFrame(columns=list(column_names))
+        return {"items": [build_upload_metadata_item(df, None)]}

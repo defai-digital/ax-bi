@@ -29,6 +29,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
 from superset import db
+from superset.commands.database.uploaders.structured_reader import StructuredReader
 from superset.models.core import Database
 from tests.unit_tests.conftest import with_feature_flags
 
@@ -409,7 +410,7 @@ class TestAutoUploadEndpoint:
         """
         Test that auto_upload returns 400 for unsupported file types.
         """
-        data = {"file": (BytesIO(b"some data"), "test.json")}
+        data = {"file": (BytesIO(b"some data"), "test.exe")}
         response = client.post(
             "/api/v1/database/auto_upload/",
             data=data,
@@ -417,6 +418,72 @@ class TestAutoUploadEndpoint:
         )
         assert response.status_code == 400
         assert "Unsupported file type" in response.json.get("message", "")
+
+    @pytest.mark.parametrize(
+        ("filename", "content"),
+        [
+            ("customers.json", b'[{"customer_id":"00123","amount":10.5}]'),
+            ("customers.jsonl", b'{"customer_id":"00123","amount":10.5}\n'),
+            ("customers.ndjson", b'{"customer_id":"00123","amount":10.5}\n'),
+            (
+                "customers.xml",
+                b"<rows><row><customer_id>00123</customer_id><amount>10.5</amount></row></rows>",
+            ),
+            (
+                "customers.sql",
+                b"INSERT INTO customers (customer_id, amount) VALUES ('00123', 10.5);",
+            ),
+            (
+                "customers.dump",
+                b"INSERT INTO customers (customer_id, amount) VALUES ('00123', 10.5);",
+            ),
+            ("customers.sqlite", b"SQLite bytes are not parsed in this mocked test"),
+            ("customers.sqlite3", b"SQLite bytes are not parsed in this mocked test"),
+            ("customers.db", b"SQLite bytes are not parsed in this mocked test"),
+        ],
+    )
+    @patch("superset.databases.api.UploadCommand")
+    @patch("superset.databases.api.get_or_create_local_db")
+    def test_auto_upload_structured_formats_success(
+        self,
+        mock_get_local_db: MagicMock,
+        mock_upload_command: MagicMock,
+        filename: str,
+        content: bytes,
+        session: Session,
+        client: Any,
+        full_api_access: None,
+    ) -> None:
+        """
+        Test structured file formats route to StructuredReader and return a dataset.
+        """
+        mock_db = MagicMock()
+        mock_db.id = 9999
+        mock_get_local_db.return_value = mock_db
+
+        mock_cmd_instance = MagicMock()
+        mock_upload_command.return_value = mock_cmd_instance
+
+        mock_table = MagicMock()
+        mock_table.id = 12345
+
+        with patch.object(db.session, "query", return_value=MagicMock()) as mock_query:
+            mock_query.return_value.filter_by.return_value.one_or_none.return_value = (
+                mock_table
+            )
+
+            response = client.post(
+                "/api/v1/database/auto_upload/",
+                data={"file": (BytesIO(content), filename)},
+                content_type="multipart/form-data",
+            )
+
+        assert response.status_code == 201
+        assert response.json["database_id"] == 9999
+        assert response.json["dataset_id"] == 12345
+        assert response.json["table_name"].startswith("upload_customers_")
+        reader = mock_upload_command.call_args[0][4]
+        assert isinstance(reader, StructuredReader)
 
     @patch("superset.databases.api.UploadCommand")
     @patch("superset.databases.api.get_or_create_local_db")
@@ -464,6 +531,74 @@ class TestAutoUploadEndpoint:
         assert result["database_id"] == 9999
         assert result["dataset_id"] == 12345
         assert "upload_test_data" in result["table_name"]
+
+    def test_auto_upload_csv_creates_queryable_dataset(
+        self,
+        tmp_path: Any,
+        mocker: MockerFixture,
+        session: Session,
+        client: Any,
+        full_api_access: None,
+    ) -> None:
+        """
+        Test auto_upload writes data to DuckDB and creates a Superset datasource.
+        """
+        import duckdb
+        from flask_appbuilder.security.sqla.models import User
+
+        from superset.connectors.sqla.models import SqlaTable
+
+        Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
+        SqlaTable.metadata.create_all(session.get_bind())  # pylint: disable=no-member
+        User.metadata.create_all(session.get_bind())  # pylint: disable=no-member
+        upload_user = User(
+            first_name="Upload",
+            last_name="Tester",
+            email="upload_tester@example.org",
+            username="upload_tester",
+        )
+        session.add(upload_user)
+        session.flush()
+        mocker.patch(
+            "superset.commands.database.uploaders.base.get_user",
+            return_value=upload_user,
+        )
+
+        db_path = tmp_path / "local_files.duckdb"
+        mocker.patch.dict(
+            current_app.config,
+            {
+                "LOCAL_DB_PATH": str(db_path),
+                "UPLOAD_FOLDER": str(tmp_path),
+            },
+        )
+
+        response = client.post(
+            "/api/v1/database/auto_upload/",
+            data={
+                "file": (
+                    BytesIO(b"customer_id,amount\n00123,10.5\n00124,20.75\n"),
+                    "customers.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+
+        assert response.status_code == 201
+        result = response.json
+        dataset = (
+            db.session.query(SqlaTable).filter_by(id=result["dataset_id"]).one_or_none()
+        )
+        assert dataset is not None
+        assert dataset.table_name == result["table_name"]
+
+        with duckdb.connect(str(db_path)) as connection:
+            table_name = result["table_name"].replace('"', '""')
+            rows = connection.execute(
+                f'SELECT customer_id, amount FROM "{table_name}" '  # noqa: S608
+                "ORDER BY customer_id"
+            ).fetchall()
+        assert rows == [("00123", 10.5), ("00124", 20.75)]
 
     @patch("superset.databases.api.UploadCommand")
     @patch("superset.databases.api.get_or_create_local_db")

@@ -24,6 +24,7 @@ from werkzeug.datastructures import FileStorage
 from superset.commands.database.exceptions import DatabaseUploadFailed
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
+    build_upload_metadata_item,
     FileMetadata,
     ReaderOptions,
 )
@@ -35,6 +36,7 @@ ROWS_TO_READ_METADATA = 2
 
 class ExcelReaderOptions(ReaderOptions, total=False):
     sheet_name: str
+    column_data_types: dict[str, str]
     column_dates: list[str]
     columns_read: list[str]
     index_column: str
@@ -76,6 +78,7 @@ class ExcelReader(BaseDataReader):
             "skiprows": self._options.get("skip_rows", 0),
             "sheet_name": self._options.get("sheet_name", 0),
             "nrows": self._options.get("rows_to_read"),
+            "dtype": self._options.get("column_data_types"),
         }
         if self._options.get("columns_read"):
             kwargs["usecols"] = self._options.get("columns_read")
@@ -105,12 +108,6 @@ class ExcelReader(BaseDataReader):
 
         result: FileMetadata = {"items": []}
         for sheet in sheet_names:
-            df = excel_file.parse(sheet, nrows=ROWS_TO_READ_METADATA)
-            column_names = df.columns.tolist()
-            result["items"].append(
-                {
-                    "sheet_name": sheet,
-                    "column_names": column_names,
-                }
-            )
+            df = excel_file.parse(sheet, nrows=ROWS_TO_READ_METADATA, dtype="string")
+            result["items"].append(build_upload_metadata_item(df, sheet))
         return result

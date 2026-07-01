@@ -1440,7 +1440,23 @@ SUPERSET_WEBSERVER_DOMAINS = None  # deprecated
 EXCEL_EXTENSIONS = {"xlsx", "xls"}
 CSV_EXTENSIONS = {"csv", "tsv", "txt"}
 COLUMNAR_EXTENSIONS = {"parquet", "zip"}
-ALLOWED_EXTENSIONS = {*EXCEL_EXTENSIONS, *CSV_EXTENSIONS, *COLUMNAR_EXTENSIONS}
+STRUCTURED_EXTENSIONS = {
+    "json",
+    "jsonl",
+    "ndjson",
+    "xml",
+    "sql",
+    "dump",
+    "sqlite",
+    "sqlite3",
+    "db",
+}
+ALLOWED_EXTENSIONS = {
+    *EXCEL_EXTENSIONS,
+    *CSV_EXTENSIONS,
+    *COLUMNAR_EXTENSIONS,
+    *STRUCTURED_EXTENSIONS,
+}
 
 # CSV Options: key/value pairs that will be passed as argument to DataFrame.to_csv
 # method.

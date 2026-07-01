@@ -1,0 +1,3 @@
+customer_id,invoice_date,amount,active
+00123,2024-01-15,10.5,True
+00124,2024-02-20,20.75,False

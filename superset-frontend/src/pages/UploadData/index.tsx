@@ -29,7 +29,8 @@ import { URL_PARAMS } from 'src/constants';
 
 const { Dragger } = Upload;
 
-const ACCEPTED_EXTENSIONS = '.csv,.tsv,.txt,.xls,.xlsx,.parquet';
+const ACCEPTED_EXTENSIONS =
+  '.csv,.tsv,.txt,.xls,.xlsx,.parquet,.json,.jsonl,.ndjson,.xml,.sql,.dump,.sqlite,.sqlite3,.db';
 
 const PageWrapper = styled.div`
   max-width: 680px;
@@ -213,40 +214,43 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
       setFiles(entries);
       setBatchComplete(false);
 
-      const results: FileEntry[] = [];
+      try {
+        const results: FileEntry[] = [];
 
-      // Process sequentially
-      for (const entry of entries) {
-        updateFile(entry.id, { status: 'uploading', progress: 30 });
+        // Process sequentially
+        for (const entry of entries) {
+          updateFile(entry.id, { status: 'uploading', progress: 30 });
 
-        const result = await uploadSingleFile(entry.file);
-        const finalEntry: FileEntry = {
-          ...entry,
-          status: result.error ? 'error' : 'success',
-          progress: 100,
-          datasetId: result.datasetId,
-          error: result.error,
-        };
-        results.push(finalEntry);
-        updateFile(entry.id, {
-          status: finalEntry.status,
-          progress: 100,
-          datasetId: finalEntry.datasetId,
-          error: finalEntry.error,
-        });
-      }
+          const result = await uploadSingleFile(entry.file);
+          const finalEntry: FileEntry = {
+            ...entry,
+            status: result.error ? 'error' : 'success',
+            progress: 100,
+            datasetId: result.datasetId,
+            error: result.error,
+          };
+          results.push(finalEntry);
+          updateFile(entry.id, {
+            status: finalEntry.status,
+            progress: 100,
+            datasetId: finalEntry.datasetId,
+            error: finalEntry.error,
+          });
+        }
 
-      processingRef.current = false;
-      setBatchComplete(true);
+        setBatchComplete(true);
 
-      // Redirect to the first successfully uploaded dataset
-      const firstSuccess = results.find(r => r.status === 'success');
-      if (firstSuccess?.datasetId) {
-        setTimeout(() => {
-          history.push(
-            `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=${firstSuccess.datasetId}`,
-          );
-        }, 1500);
+        // Redirect to the first successfully uploaded dataset
+        const firstSuccess = results.find(r => r.status === 'success');
+        if (firstSuccess?.datasetId) {
+          setTimeout(() => {
+            history.push(
+              `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=${firstSuccess.datasetId}`,
+            );
+          }, 1500);
+        }
+      } finally {
+        processingRef.current = false;
       }
     },
     [history, uploadSingleFile, updateFile],
@@ -300,7 +304,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
           </p>
           <HelpText>
             {t(
-              'Supported formats: CSV, TSV, XLS, XLSX, Parquet. Multiple files supported.',
+              'Supported formats: CSV, TSV, TXT, XLS, XLSX, Parquet, JSON, JSONL, XML, SQL dumps, and SQLite. Multiple files supported.',
             )}
           </HelpText>
         </Dragger>

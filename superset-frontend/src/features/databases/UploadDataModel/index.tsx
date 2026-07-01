@@ -56,7 +56,10 @@ import {
   StyledFormItem,
   StyledSwitchContainer,
 } from './styles';
-import ColumnsPreview from './ColumnsPreview';
+import ColumnsPreview, {
+  type UploadColumnMetadata,
+  type UploadTargetType,
+} from './ColumnsPreview';
 import StyledFormItemWithTip from './StyledFormItemWithTip';
 
 type UploadType = 'csv' | 'excel' | 'columnar';
@@ -88,6 +91,7 @@ const CSVSpecificFields = [
 
 const ExcelSpecificFields = [
   'sheet_name',
+  'column_data_types',
   'column_dates',
   'decimal_character',
   'null_values',
@@ -223,9 +227,18 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
   const [currentDatabaseId, setCurrentDatabaseId] = useState<number>(0);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
+  const [columnMetadata, setColumnMetadata] = useState<UploadColumnMetadata[]>(
+    [],
+  );
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [sheetsColumnNames, setSheetsColumnNames] = useState<
     Record<string, string[]>
+  >({});
+  const [sheetsColumnMetadata, setSheetsColumnMetadata] = useState<
+    Record<string, UploadColumnMetadata[]>
+  >({});
+  const [selectedColumnTypes, setSelectedColumnTypes] = useState<
+    Record<string, UploadTargetType>
   >({});
   const [delimiter, setDelimiter] = useState<string>(',');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -314,9 +327,25 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     setDelimiter(value);
   };
 
+  const onChangeColumnType = (column: string, targetType: UploadTargetType) => {
+    setSelectedColumnTypes(previous => ({
+      ...previous,
+      [column]: targetType,
+    }));
+  };
+
+  const getSuggestedColumnTypes = (
+    metadata: UploadColumnMetadata[],
+  ): Record<string, UploadTargetType> =>
+    metadata.reduce<Record<string, UploadTargetType>>((acc, column) => {
+      acc[column.name] = column.suggested_type || 'auto';
+      return acc;
+    }, {});
+
   const clearModal = () => {
     setFileList([]);
     setColumns([]);
+    setColumnMetadata([]);
     setCurrentSchema('');
     setCurrentDatabaseId(0);
     setSheetNames([]);
@@ -325,6 +354,8 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     setPreviewUploadedFile(true);
     setFileLoading(false);
     setSheetsColumnNames({});
+    setSheetsColumnMetadata({});
+    setSelectedColumnTypes({});
     form.resetFields();
   };
 
@@ -392,36 +423,68 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
       headers: { Accept: 'application/json' },
     })
       .then(response => {
-        const { items } = response.json.result;
-        if (items && type !== 'excel') {
+        const items = response.json.result?.items || [];
+        if (items.length === 0) {
+          setColumns([]);
+          setColumnMetadata([]);
+          setSelectedColumnTypes({});
+          return;
+        }
+        if (type !== 'excel') {
           setColumns(items[0].column_names);
+          const metadata = items[0].columns || [];
+          setColumnMetadata(metadata);
+          setSelectedColumnTypes(getSuggestedColumnTypes(metadata));
         } else {
-          const { allSheetNames, sheetColumnNamesMap } = items.reduce(
-            (
-              acc: {
-                allSheetNames: string[];
-                sheetColumnNamesMap: Record<string, string[]>;
+          const { allSheetNames, sheetColumnNamesMap, sheetColumnMetadataMap } =
+            items.reduce(
+              (
+                acc: {
+                  allSheetNames: string[];
+                  sheetColumnNamesMap: Record<string, string[]>;
+                  sheetColumnMetadataMap: Record<
+                    string,
+                    UploadColumnMetadata[]
+                  >;
+                },
+                item: {
+                  sheet_name: string;
+                  column_names: string[];
+                  columns?: UploadColumnMetadata[];
+                },
+              ) => {
+                acc.allSheetNames.push(item.sheet_name);
+                acc.sheetColumnNamesMap[item.sheet_name] = item.column_names;
+                acc.sheetColumnMetadataMap[item.sheet_name] =
+                  item.columns || [];
+                return acc;
               },
-              item: { sheet_name: string; column_names: string[] },
-            ) => {
-              acc.allSheetNames.push(item.sheet_name);
-              acc.sheetColumnNamesMap[item.sheet_name] = item.column_names;
-              return acc;
-            },
-            { allSheetNames: [], sheetColumnNamesMap: {} },
-          );
+              {
+                allSheetNames: [],
+                sheetColumnNamesMap: {},
+                sheetColumnMetadataMap: {},
+              },
+            );
           setColumns(items[0].column_names);
+          const metadata = items[0].columns || [];
+          setColumnMetadata(metadata);
           setSheetNames(allSheetNames);
           form.setFieldsValue({ sheet_name: allSheetNames[0] });
           setSheetsColumnNames(sheetColumnNamesMap);
+          setSheetsColumnMetadata(sheetColumnMetadataMap);
+          setSelectedColumnTypes(getSuggestedColumnTypes(metadata));
         }
       })
       .catch(response =>
         getClientErrorObject(response).then(error => {
           addDangerToast(error.error || 'Error');
           setColumns([]);
+          setColumnMetadata([]);
           form.setFieldsValue({ sheet_name: undefined });
           setSheetNames([]);
+          setSheetsColumnNames({});
+          setSheetsColumnMetadata({});
+          setSelectedColumnTypes({});
         }),
       )
       .finally(() => {
@@ -442,6 +505,8 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
       if (
         !(
           allFieldsNotInType.includes(key) ||
+          value === undefined ||
+          value === null ||
           (NonNullFields.includes(key) &&
             (value === undefined || value === null))
         )
@@ -449,6 +514,42 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
         formData.append(key, value);
       }
     });
+  };
+
+  const selectedTypesToUploadFields = (
+    fields: Record<string, any>,
+  ): Record<string, any> => {
+    if (!(type === 'csv' || type === 'excel')) {
+      return fields;
+    }
+    const dtypeByColumn: Record<string, string> = {};
+    const dateColumns = new Set<string>(fields.column_dates || []);
+
+    Object.entries(selectedColumnTypes).forEach(([column, targetType]) => {
+      if (targetType === 'auto') {
+        return;
+      }
+      if (targetType === 'datetime' || targetType === 'date') {
+        dateColumns.add(column);
+      } else if (targetType === 'text') {
+        dtypeByColumn[column] = 'string';
+      } else if (targetType === 'integer') {
+        dtypeByColumn[column] = 'int64';
+      } else if (targetType === 'decimal' || targetType === 'float') {
+        dtypeByColumn[column] = 'float64';
+      } else if (targetType === 'boolean') {
+        dtypeByColumn[column] = 'bool';
+      }
+    });
+
+    return {
+      ...fields,
+      column_dates: Array.from(dateColumns),
+      column_data_types:
+        Object.keys(dtypeByColumn).length > 0
+          ? JSON.stringify(dtypeByColumn)
+          : undefined,
+    };
   };
 
   const onClose = () => {
@@ -460,7 +561,10 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     const fields = form.getFieldsValue();
     delete fields.database;
     fields.schema = currentSchema;
-    const mergedValues = { ...defaultUploadInfo, ...fields };
+    const mergedValues = selectedTypesToUploadFields({
+      ...defaultUploadInfo,
+      ...fields,
+    });
     const formData = new FormData();
     const file = fileList[0]?.originFileObj;
     if (file) {
@@ -493,13 +597,20 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
   const onRemoveFile = (removedFile: UploadFile) => {
     setFileList(fileList.filter(file => file.uid !== removedFile.uid));
     setColumns([]);
+    setColumnMetadata([]);
     setSheetNames([]);
+    setSheetsColumnNames({});
+    setSheetsColumnMetadata({});
+    setSelectedColumnTypes({});
     form.setFieldsValue({ sheet_name: undefined });
     return false;
   };
 
   const onSheetNameChange = (value: string) => {
     setColumns(sheetsColumnNames[value] ?? []);
+    const metadata = sheetsColumnMetadata[value] ?? [];
+    setColumnMetadata(metadata);
+    setSelectedColumnTypes(getSuggestedColumnTypes(metadata));
   };
 
   const columnsToOptions = () =>
@@ -515,6 +626,11 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     }));
 
   const onChangeFile = async (info: UploadChangeParam<any>) => {
+    const selectedFile = info.file.originFileObj as File | undefined;
+    if (type === 'csv' && selectedFile?.name.toLowerCase().endsWith('.tsv')) {
+      form.setFieldsValue({ delimiter: '\t' });
+      setDelimiter('\t');
+    }
     setFileList([
       {
         ...info.file,
@@ -611,7 +727,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
       data-test="upload-modal"
       onHandledPrimaryAction={form.submit}
       onHide={onClose}
-      width="500px"
+      width="900px"
       primaryButtonName={t('Upload')}
       centered
       show={show}
@@ -688,7 +804,13 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
                   {previewUploadedFile && (
                     <Row>
                       <Col span={24}>
-                        <ColumnsPreview columns={columns} />
+                        <ColumnsPreview
+                          columns={columns}
+                          columnMetadata={columnMetadata}
+                          selectedTypes={selectedColumnTypes}
+                          canOverrideTypes={type === 'csv' || type === 'excel'}
+                          onTypeChange={onChangeColumnType}
+                        />
                       </Col>
                     </Row>
                   )}
@@ -938,24 +1060,6 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
                       </StyledFormItem>
                     </Col>
                   </Row>
-                  {isFieldATypeSpecificField('column_data_types', type) && (
-                    <Row>
-                      <Col span={24}>
-                        <StyledFormItemWithTip
-                          label={t('Column data types')}
-                          tip={t(
-                            'A dictionary with column names and their data types if you need to change the defaults. Example: {"user_id":"int"}. Check Python\'s Pandas library for supported data types.',
-                          )}
-                          name="column_data_types"
-                        >
-                          <Input
-                            aria-label={t('Column data types')}
-                            type="text"
-                          />
-                        </StyledFormItemWithTip>
-                      </Col>
-                    </Row>
-                  )}
                   <Row>
                     <Col span={24}>
                       <StyledFormItem name="dataframe_index">

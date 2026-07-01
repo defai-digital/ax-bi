@@ -41,6 +41,7 @@ from werkzeug.utils import secure_filename
 from superset import db, is_feature_enabled
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
+    build_type_preserving_upload_options,
     UploadCommand,
     UploadFileType,
 )
@@ -54,6 +55,10 @@ from superset.commands.database.uploaders.excel_reader import (
     ExcelReaderOptions,
 )
 from superset.commands.database.uploaders.local_db import get_or_create_local_db
+from superset.commands.database.uploaders.structured_reader import (
+    StructuredReader,
+    StructuredReaderOptions,
+)
 from superset.connectors.sqla.models import SqlaTable
 from superset.mcp_service.dataset.schemas import (
     DatasetError,
@@ -74,6 +79,15 @@ FILE_TYPE_MAP: dict[str, UploadFileType] = {
     ".xls": UploadFileType.EXCEL,
     ".xlsx": UploadFileType.EXCEL,
     ".parquet": UploadFileType.COLUMNAR,
+    ".json": UploadFileType.STRUCTURED,
+    ".jsonl": UploadFileType.STRUCTURED,
+    ".ndjson": UploadFileType.STRUCTURED,
+    ".xml": UploadFileType.STRUCTURED,
+    ".sql": UploadFileType.STRUCTURED,
+    ".dump": UploadFileType.STRUCTURED,
+    ".sqlite": UploadFileType.STRUCTURED,
+    ".sqlite3": UploadFileType.STRUCTURED,
+    ".db": UploadFileType.STRUCTURED,
 }
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
@@ -197,15 +211,32 @@ def upload_single_file(  # noqa: C901
         reader: BaseDataReader
         if file_type == UploadFileType.CSV:
             csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
+            csv_metadata = CSVReader(csv_reader_options).file_metadata(file_storage)
+            file_storage.seek(0)
+            if column_data_types := build_type_preserving_upload_options(csv_metadata):
+                csv_reader_options["column_data_types"] = column_data_types
             reader = CSVReader(csv_reader_options)
         elif file_type == UploadFileType.EXCEL:
             excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+            excel_metadata = ExcelReader(excel_reader_options).file_metadata(
+                file_storage
+            )
+            file_storage.seek(0)
+            if column_data_types := build_type_preserving_upload_options(
+                excel_metadata
+            ):
+                excel_reader_options["column_data_types"] = column_data_types
             reader = ExcelReader(excel_reader_options)
         elif file_type == UploadFileType.COLUMNAR:
             columnar_reader_options: ColumnarReaderOptions = {
                 "already_exists": "replace"
             }
             reader = ColumnarReader(columnar_reader_options)
+        elif file_type == UploadFileType.STRUCTURED:
+            structured_reader_options: StructuredReaderOptions = {
+                "already_exists": "replace"
+            }
+            reader = StructuredReader(structured_reader_options)
         else:
             return DatasetError.create(
                 error="Unexpected file type", error_type="UnsupportedFileTypeError"

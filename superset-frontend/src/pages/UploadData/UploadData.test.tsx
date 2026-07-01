@@ -101,7 +101,7 @@ describe('UploadData', () => {
     // Check that supported formats are listed with multi-file note
     expect(
       screen.getByText(
-        'Supported formats: CSV, TSV, XLS, XLSX, Parquet. Multiple files supported.',
+        'Supported formats: CSV, TSV, TXT, XLS, XLSX, Parquet, JSON, JSONL, XML, SQL dumps, and SQLite. Multiple files supported.',
       ),
     ).toBeVisible();
   });
@@ -162,6 +162,63 @@ describe('UploadData', () => {
       () =>
         expect(pushSpy).toHaveBeenCalledWith(
           `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=1`,
+        ),
+      { timeout: 3000 },
+    );
+  });
+
+  test('uploads multiple selected files as a batch and redirects to the first dataset', async () => {
+    const history = createMemoryHistory();
+    const pushSpy = jest.spyOn(history, 'push');
+    mockedPost
+      .mockResolvedValueOnce({
+        json: {
+          database_id: 1,
+          dataset_id: 101,
+          table_name: 'upload_orders_abc123',
+        },
+      })
+      .mockResolvedValueOnce({
+        json: {
+          database_id: 1,
+          dataset_id: 202,
+          table_name: 'upload_customers_def456',
+        },
+      });
+
+    render(
+      <Router history={history}>
+        <UploadData />
+      </Router>,
+      {
+        useRedux: true,
+      },
+    );
+
+    fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
+      target: {
+        files: [
+          new File(['a,b\n1,2'], 'orders.csv', { type: 'text/csv' }),
+          new File(['{"a":1}\n'], 'customers.jsonl', {
+            type: 'application/x-ndjson',
+          }),
+        ],
+      },
+    });
+
+    expect((await screen.findAllByText('Uploaded')).length).toBe(2);
+    expect(mockedPost).toHaveBeenCalledTimes(2);
+    expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      'File "orders.csv" uploaded successfully!',
+    );
+    expect(mockAddSuccessToast).toHaveBeenCalledWith(
+      'File "customers.jsonl" uploaded successfully!',
+    );
+
+    await waitFor(
+      () =>
+        expect(pushSpy).toHaveBeenCalledWith(
+          `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=101`,
         ),
       { timeout: 3000 },
     );

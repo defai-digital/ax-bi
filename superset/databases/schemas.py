@@ -1235,6 +1235,7 @@ class BaseUploadFilePostSchemaMixin(Schema):
         UploadFileType.CSV.value: "CSV_EXTENSIONS",
         UploadFileType.EXCEL.value: "EXCEL_EXTENSIONS",
         UploadFileType.COLUMNAR.value: "COLUMNAR_EXTENSIONS",
+        UploadFileType.STRUCTURED.value: "STRUCTURED_EXTENSIONS",
     }
 
     @validates("file")
@@ -1458,6 +1459,17 @@ class UploadFileMetadataItemSchema(Schema):
     column_names = fields.List(
         fields.String(),
         metadata={"description": "A list of columns names in the sheet"},
+    )
+    columns = fields.List(
+        fields.Dict(keys=fields.String(), values=fields.Raw(allow_none=True)),
+        metadata={"description": "Detected BI-oriented metadata for each column"},
+    )
+    sample_rows = fields.List(
+        fields.Dict(keys=fields.String(), values=fields.Raw(allow_none=True)),
+        metadata={"description": "A small sample of original uploaded rows"},
+    )
+    row_count_sampled = fields.Integer(
+        metadata={"description": "Number of rows inspected for metadata"}
     )
 
 

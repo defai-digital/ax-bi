@@ -1,0 +1,2 @@
+{"customer_id": "00123", "invoice_date": "2024-01-15", "amount": 10.5, "active": true}
+{"customer_id": "00124", "invoice_date": "2024-02-20", "amount": 20.75, "active": false}

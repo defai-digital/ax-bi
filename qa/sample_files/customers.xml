@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customers>
+  <customer customer_id="00123">
+    <invoice_date>2024-01-15</invoice_date>
+    <amount>10.5</amount>
+    <active>true</active>
+  </customer>
+  <customer customer_id="00124">
+    <invoice_date>2024-02-20</invoice_date>
+    <amount>20.75</amount>
+    <active>false</active>
+  </customer>
+</customers>

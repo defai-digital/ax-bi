@@ -65,6 +65,7 @@ from superset.commands.database.test_connection import TestConnectionDatabaseCom
 from superset.commands.database.update import UpdateDatabaseCommand
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
+    build_type_preserving_upload_options,
     UploadCommand,
     UploadFileType,
 )
@@ -78,6 +79,10 @@ from superset.commands.database.uploaders.excel_reader import (
     ExcelReaderOptions,
 )
 from superset.commands.database.uploaders.local_db import get_or_create_local_db
+from superset.commands.database.uploaders.structured_reader import (
+    StructuredReader,
+    StructuredReaderOptions,
+)
 from superset.commands.database.validate import ValidateDatabaseParametersCommand
 from superset.commands.database.validate_sql import ValidateSQLCommand
 from superset.commands.importers.exceptions import (
@@ -1762,6 +1767,8 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             metadata = ExcelReader(parameters).file_metadata(parameters["file"])
         elif parameters["type"] == UploadFileType.COLUMNAR.value:
             metadata = ColumnarReader(parameters).file_metadata(parameters["file"])
+        elif parameters["type"] == UploadFileType.STRUCTURED.value:
+            metadata = StructuredReader(parameters).file_metadata(parameters["file"])
         else:
             self.response_400(message="Unexpected Invalid file type")
         return self.response(200, result=UploadFileMetadata().dump(metadata))
@@ -1831,6 +1838,8 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                 reader = ExcelReader(parameters)
             elif parameters["type"] == UploadFileType.COLUMNAR.value:
                 reader = ColumnarReader(parameters)
+            elif parameters["type"] == UploadFileType.STRUCTURED.value:
+                reader = StructuredReader(parameters)
             else:
                 return self.response_400(message="Unexpected Invalid file type")
             UploadCommand(
@@ -1867,7 +1876,9 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                     file:
                       type: string
                       format: binary
-                      description: The file to upload (CSV, XLSX, or Parquet)
+                      description: >-
+                        The file to upload (CSV, TSV, TXT, XLS, XLSX, Parquet,
+                        JSON, JSONL, XML, SQL dump, or SQLite)
                     table_name:
                       type: string
                       description: >-
@@ -1929,12 +1940,22 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                 ".xls": UploadFileType.EXCEL,
                 ".xlsx": UploadFileType.EXCEL,
                 ".parquet": UploadFileType.COLUMNAR,
+                ".json": UploadFileType.STRUCTURED,
+                ".jsonl": UploadFileType.STRUCTURED,
+                ".ndjson": UploadFileType.STRUCTURED,
+                ".xml": UploadFileType.STRUCTURED,
+                ".sql": UploadFileType.STRUCTURED,
+                ".dump": UploadFileType.STRUCTURED,
+                ".sqlite": UploadFileType.STRUCTURED,
+                ".sqlite3": UploadFileType.STRUCTURED,
+                ".db": UploadFileType.STRUCTURED,
             }
             file_type = file_type_map.get(ext)
             if not file_type:
                 return self.response_400(
                     message=f"Unsupported file type: {ext}. "
-                    "Supported types: CSV, TSV, TXT, XLS, XLSX, Parquet"
+                    "Supported types: CSV, TSV, TXT, XLS, XLSX, Parquet, "
+                    "JSON, JSONL, XML, SQL dumps, SQLite"
                 )
 
             # Derive table name from filename (sanitized)
@@ -1963,15 +1984,32 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             reader: BaseDataReader
             if file_type == UploadFileType.CSV:
                 csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
+                csv_metadata = CSVReader(csv_reader_options).file_metadata(file)
+                file.seek(0)
+                if column_data_types := build_type_preserving_upload_options(
+                    csv_metadata
+                ):
+                    csv_reader_options["column_data_types"] = column_data_types
                 reader = CSVReader(csv_reader_options)
             elif file_type == UploadFileType.EXCEL:
                 excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+                excel_metadata = ExcelReader(excel_reader_options).file_metadata(file)
+                file.seek(0)
+                if column_data_types := build_type_preserving_upload_options(
+                    excel_metadata
+                ):
+                    excel_reader_options["column_data_types"] = column_data_types
                 reader = ExcelReader(excel_reader_options)
             elif file_type == UploadFileType.COLUMNAR:
                 columnar_reader_options: ColumnarReaderOptions = {
                     "already_exists": "replace"
                 }
                 reader = ColumnarReader(columnar_reader_options)
+            elif file_type == UploadFileType.STRUCTURED:
+                structured_reader_options: StructuredReaderOptions = {
+                    "already_exists": "replace"
+                }
+                reader = StructuredReader(structured_reader_options)
             else:
                 return self.response_400(message="Unexpected Invalid file type")
 

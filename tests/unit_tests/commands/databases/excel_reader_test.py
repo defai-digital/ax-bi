@@ -247,11 +247,13 @@ def test_excel_reader_metadata():
     )
     file = create_excel_file(EXCEL_DATA)
     metadata = excel_reader.file_metadata(file)
-    assert metadata == {
-        "items": [
-            {"column_names": ["Name", "Age", "City", "Birth"], "sheet_name": "Sheet1"}
-        ]
-    }
+    item = metadata["items"][0]
+    assert item["column_names"] == ["Name", "Age", "City", "Birth"]
+    assert item["sheet_name"] == "Sheet1"
+    assert item["row_count_sampled"] == 2
+    assert {column["name"]: column["suggested_type"] for column in item["columns"]}[
+        "Age"
+    ] == "integer"
     file.close()
 
 
@@ -276,12 +278,13 @@ def test_excel_reader_metadata_mul_sheets():
         options=ExcelReaderOptions(),
     )
     metadata = excel_reader.file_metadata(file)
-    assert metadata == {
-        "items": [
-            {"column_names": ["col11", "col12"], "sheet_name": "Sheet1"},
-            {"column_names": ["col21", "col22"], "sheet_name": "Sheet2"},
-        ]
-    }
+    assert [
+        {"column_names": item["column_names"], "sheet_name": item["sheet_name"]}
+        for item in metadata["items"]
+    ] == [
+        {"column_names": ["col11", "col12"], "sheet_name": "Sheet1"},
+        {"column_names": ["col21", "col22"], "sheet_name": "Sheet2"},
+    ]
     file.close()
 
 

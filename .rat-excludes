@@ -33,6 +33,9 @@ apache_superset.egg-info
 # json and csv in general cannot have comments
 .*json
 .*csv
+# generated upload QA sample fixtures include binary files
+sample_files
+qa/sample_files/*
 # jinja templates often need to be as-is
 .*j2
 # Generated doc files

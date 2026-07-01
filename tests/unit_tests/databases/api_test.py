@@ -31,12 +31,14 @@ from flask import current_app
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
+from werkzeug.datastructures import FileStorage
 
 from superset import db
 from superset.commands.database.uploaders.base import UploadCommand
 from superset.commands.database.uploaders.columnar_reader import ColumnarReader
 from superset.commands.database.uploaders.csv_reader import CSVReader
 from superset.commands.database.uploaders.excel_reader import ExcelReader
+from superset.commands.database.uploaders.structured_reader import StructuredReader
 from superset.db_engine_specs.sqlite import SqliteEngineSpec
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import OAuth2RedirectError, SupersetSecurityException
@@ -2004,6 +2006,24 @@ def test_columnar_metadata(
     response = client.post(
         "/api/v1/database/upload_metadata/",
         data={"type": "columnar", "file": create_columnar_file()},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+
+
+def test_structured_metadata(
+    mocker: MockerFixture, client: Any, full_api_access: None
+) -> None:
+    _ = mocker.patch.object(StructuredReader, "file_metadata")
+    response = client.post(
+        "/api/v1/database/upload_metadata/",
+        data={
+            "type": "structured",
+            "file": FileStorage(
+                stream=BytesIO(b'[{"id":"001","amount":10.5}]'),
+                filename="test.json",
+            ),
+        },
         content_type="multipart/form-data",
     )
     assert response.status_code == 200

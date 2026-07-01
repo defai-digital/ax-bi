@@ -273,6 +273,10 @@ def test_columnar_reader_metadata():
     column_names = sorted(metadata["items"][0]["column_names"])
     assert column_names == ["Age", "Birth", "City", "Name"]
     assert metadata["items"][0]["sheet_name"] is None
+    assert metadata["items"][0]["row_count_sampled"] == 3
+    columns = {column["name"]: column for column in metadata["items"][0]["columns"]}
+    assert columns["Age"]["suggested_type"] == "integer"
+    assert columns["Birth"]["suggested_type"] == "datetime"
 
 
 def test_columnar_reader_metadata_invalid_file():
