@@ -923,8 +923,9 @@ postgresql:
 
   image:
     registry: docker.io
-    repository: bitnamilegacy/postgresql
-    tag: "14.17.0-debian-12-r3"
+    repository: bitnami/postgresql
+    tag: "latest"
+    digest: "sha256:6b092d90dd734cd60c00e74cd997aa58acfef3c25b9c44b028e9f267f5d0d25e"
 
   ## PostgreSQL Primary parameters
   primary:

@@ -40,6 +40,12 @@ x-axbi-env: &axbi-env
   MCP_JWT_AUDIENCE: ${MCP_JWT_AUDIENCE:-}
   MCP_JWKS_URI: ${MCP_JWKS_URI:-}
   MCP_REQUIRED_SCOPES: ${MCP_REQUIRED_SCOPES:-}
+  GENAI_SEMANTIC_INDEX: ${GENAI_SEMANTIC_INDEX:-false}
+  GENAI_SEMANTIC_INDEX_PGVECTOR: ${GENAI_SEMANTIC_INDEX_PGVECTOR:-false}
+  AI_SEMANTIC_EMBEDDING_PROVIDER: ${AI_SEMANTIC_EMBEDDING_PROVIDER:-ax_engine_http}
+  AI_SEMANTIC_EMBEDDING_ENDPOINT: ${AI_SEMANTIC_EMBEDDING_ENDPOINT:-http://host.docker.internal:8099/embed}
+  AI_SEMANTIC_EMBEDDING_MODEL: ${AI_SEMANTIC_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+  AI_SEMANTIC_EMBEDDING_DIMENSIONS: ${AI_SEMANTIC_EMBEDDING_DIMENSIONS:-1024}
 
 services:
   redis:
@@ -54,14 +60,16 @@ services:
       retries: 5
 
   db:
-    image: postgres:17
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg18}
     restart: unless-stopped
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${POSTGRES_DB:-superset}
       POSTGRES_USER: ${POSTGRES_USER:-superset}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
     volumes:
       - db_home:/var/lib/postgresql/data
+      - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test:
         [
@@ -98,6 +106,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "/app/docker/docker-healthcheck.sh"]
       interval: 30s
@@ -114,6 +124,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
@@ -151,6 +163,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
