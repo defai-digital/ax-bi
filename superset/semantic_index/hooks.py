@@ -81,8 +81,7 @@ def _queue_reindex(target: Any, dataset_id: int | None) -> None:
 
     if dataset_id is None:
         return
-    session = object_session(target)
-    if session is not None:
+    if (session := object_session(target)) is not None:
         _pending_ids(session).add(dataset_id)
 
 

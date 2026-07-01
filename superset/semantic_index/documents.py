@@ -42,8 +42,7 @@ def _alias_suffix(aliases: AliasMap | None, object_type: str, name: str) -> str:
 def _dataset_object_id(dataset: Any) -> str:
     """Return a stable dataset object identifier."""
 
-    dataset_uuid = getattr(dataset, "uuid", None)
-    if dataset_uuid:
+    if dataset_uuid := getattr(dataset, "uuid", None):
         return str(dataset_uuid)
     return str(dataset.id)
 
@@ -55,12 +54,10 @@ def _column_content(dataset_name: str, column: Any) -> str:
         f"Dataset: {dataset_name}",
         f"Column: {_clean(getattr(column, 'column_name', ''))}",
     ]
-    column_type = _clean(getattr(column, "type", ""))
-    if column_type:
+    if column_type := _clean(getattr(column, "type", "")):
         parts.append(f"Type: {column_type}")
 
-    description = _clean(getattr(column, "description", ""))
-    if description:
+    if description := _clean(getattr(column, "description", "")):
         parts.append(f"Description: {description}")
 
     flags = []
@@ -83,16 +80,13 @@ def _metric_content(dataset_name: str, metric: Any) -> str:
         f"Dataset: {dataset_name}",
         f"Metric: {_clean(getattr(metric, 'metric_name', ''))}",
     ]
-    expression = _clean(getattr(metric, "expression", ""))
-    if expression:
+    if expression := _clean(getattr(metric, "expression", "")):
         parts.append(f"Expression: {expression}")
 
-    description = _clean(getattr(metric, "description", ""))
-    if description:
+    if description := _clean(getattr(metric, "description", "")):
         parts.append(f"Description: {description}")
 
-    d3format = _clean(getattr(metric, "d3format", ""))
-    if d3format:
+    if d3format := _clean(getattr(metric, "d3format", "")):
         parts.append(f"Format: {d3format}")
 
     return "\n".join(parts)
@@ -151,8 +145,7 @@ def build_dataset_semantic_documents(  # noqa: C901
     if metric_names:
         summary_parts.append(f"Metrics: {', '.join(metric_names)}")
 
-    dataset_aka = aliases_for(aliases, "dataset", dataset_name)
-    if dataset_aka:
+    if dataset_aka := aliases_for(aliases, "dataset", dataset_name):
         summary_parts.append(f"Also known as: {', '.join(dataset_aka)}")
 
     glossary_entries = []

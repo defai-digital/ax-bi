@@ -321,8 +321,7 @@ def _generation_cases(
             raw = json.loads(handle.read())
         return [GenerationCase.from_dict(item) for item in raw]
 
-    authored = load_dataset_eval_cases(dataset)
-    if authored:
+    if authored := load_dataset_eval_cases(dataset):
         return [GenerationCase.from_dict(item) for item in authored]
 
     return build_generation_cases(contract)

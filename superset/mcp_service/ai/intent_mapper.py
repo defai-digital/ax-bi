@@ -210,8 +210,7 @@ def _build_dataset_context(dataset: Any) -> str:  # noqa: C901
         lines.extend(metric_lines[:20])
 
     # Governed grounding (instructions + glossary) — the highest-signal context.
-    governed = _governed_context(dataset)
-    if governed:
+    if governed := _governed_context(dataset):
         lines.append(governed)
 
     return "\n".join(lines)

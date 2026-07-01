@@ -235,8 +235,7 @@ def build_grounding_contract(  # noqa: C901
     for measure in measures:
         if measure.aliases:
             glossary[measure.name] = measure.aliases
-    dataset_aka = aliases_for(aliases, "dataset", dataset_name)
-    if dataset_aka:
+    if dataset_aka := aliases_for(aliases, "dataset", dataset_name):
         glossary[dataset_name] = dataset_aka
 
     return GroundingContract(

@@ -40,8 +40,7 @@ def _run(command: list[str], *, check: bool = True) -> subprocess.CompletedProce
 def _ax_engine_bench_path() -> str | None:
     """Return the ax-engine-bench executable path."""
 
-    found = shutil.which("ax-engine-bench")
-    if found:
+    if found := shutil.which("ax-engine-bench"):
         return found
     try:
         import ax_engine
@@ -104,8 +103,7 @@ def prepare_model(model_id: str, output_dir: Path, q_bits: int) -> dict[str, str
             ]
         )
 
-    bench = _ax_engine_bench_path()
-    if bench:
+    if bench := _ax_engine_bench_path():
         _run([bench, "generate-manifest", str(output_dir)])
 
     return {
