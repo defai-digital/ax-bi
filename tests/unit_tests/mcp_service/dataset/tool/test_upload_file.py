@@ -19,6 +19,7 @@
 
 import base64
 import importlib
+import re
 from io import BytesIO
 from unittest.mock import MagicMock, Mock, patch
 
@@ -524,8 +525,90 @@ class TestUploadFile:
             )
 
         call_args = mock_upload_cmd.call_args
-        assert len(call_args[0][1]) == 250
+        assert len(call_args[0][1]) == 63
         assert call_args[0][1].startswith("upload_")
+
+    @patch.object(upload_file_module, "serialize_dataset_object")
+    @patch.object(upload_file_module.db, "session")
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
+    async def test_generated_table_name_fits_postgres_identifier_limit(
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
+        mcp_server,
+    ) -> None:
+        """Long upload names must fit PostgreSQL's 63-byte identifier cap."""
+        local_db = _make_mock_local_db()
+        mock_get_local_db.return_value = local_db
+        mock_cmd_instance = MagicMock()
+        mock_upload_cmd.return_value = mock_cmd_instance
+        mock_dataset = _make_mock_dataset(table_name="upload_long")
+        _set_query_result(mock_session, mock_dataset)
+        mock_serialize.return_value = {"id": 99, "table_name": "upload_long"}
+
+        async with Client(mcp_server) as client:
+            await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": (
+                            "coded_service_revenue_by_client__lcy__"
+                            "jan_mar2026_top20.csv"
+                        ),
+                    }
+                },
+            )
+
+        table_name = mock_upload_cmd.call_args[0][1]
+        assert len(table_name.encode("utf-8")) <= 63
+        assert table_name.startswith("upload_coded_service_revenue_by_client")
+        assert re.match(r"^upload_[a-z0-9_]+_[0-9a-f]{6}$", table_name)
+
+    @patch.object(upload_file_module, "serialize_dataset_object")
+    @patch.object(upload_file_module.db, "session")
+    @patch.object(upload_file_module, "UploadCommand")
+    @patch.object(upload_file_module, "get_or_create_local_db")
+    @pytest.mark.asyncio
+    async def test_custom_table_name_fits_postgres_identifier_limit(
+        self,
+        mock_get_local_db,
+        mock_upload_cmd,
+        mock_session,
+        mock_serialize,
+        mcp_server,
+    ) -> None:
+        """Custom table names are also capped before reaching UploadCommand."""
+        local_db = _make_mock_local_db()
+        mock_get_local_db.return_value = local_db
+        mock_cmd_instance = MagicMock()
+        mock_upload_cmd.return_value = mock_cmd_instance
+        mock_dataset = _make_mock_dataset(table_name="custom_long")
+        _set_query_result(mock_session, mock_dataset)
+        mock_serialize.return_value = {"id": 99, "table_name": "custom_long"}
+
+        async with Client(mcp_server) as client:
+            await client.call_tool(
+                "upload_file",
+                {
+                    "request": {
+                        "file_content": _csv_base64(),
+                        "filename": "sales.csv",
+                        "table_name": (
+                            "coded_service_revenue_by_client__lcy__"
+                            "jan_mar2026_top20_6d5bb3"
+                        ),
+                    }
+                },
+            )
+
+        table_name = mock_upload_cmd.call_args[0][1]
+        assert len(table_name.encode("utf-8")) <= 63
+        assert table_name.startswith("coded_service_revenue_by_client")
 
     @patch.object(upload_file_module, "serialize_dataset_object")
     @patch.object(upload_file_module.db, "session")
