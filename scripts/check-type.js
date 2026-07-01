@@ -36,6 +36,7 @@ const SUPERSET_ROOT = dirname(__dirname);
 const PACKAGE_ARG_REGEX = /^package=/;
 const EXCLUDE_DECLARATION_DIR_REGEX = /^excludeDeclarationDir=/;
 const DECLARATION_FILE_REGEX = /\.d\.ts$/;
+const IGNORE_DEPRECATIONS_OPTION = "--ignoreDeprecations 6.0";
 
 // Configuration for batching and fallback
 const MAX_FILES_FOR_TARGETED_CHECK = 20; // Fallback to full check if more files
@@ -108,7 +109,7 @@ async function runFullTypeCheck(packageRootDir, excludeDeclarationDirArg) {
   const packageRootDirAbsolute = join(SUPERSET_ROOT, packageRootDir);
   const tsConfig = getTsConfig(packageRootDirAbsolute);
   // Use incremental compilation for better caching
-  const command = `--noEmit --allowJs --incremental --project ${tsConfig}`;
+  const command = `--noEmit --allowJs --incremental ${IGNORE_DEPRECATIONS_OPTION} --project ${tsConfig}`;
 
   await executeTypeCheck(packageRootDirAbsolute, command);
 }
@@ -144,7 +145,7 @@ async function runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationD
     const argsStr = batch.join(" ");
     const declarationFilesStr = declarationFiles.join(" ");
     // For targeted checks, keep composite false since we're passing specific files
-    const command = `--noEmit --allowJs --composite false --project ${tsConfig} ${argsStr} ${declarationFilesStr}`;
+    const command = `--noEmit --allowJs --composite false ${IGNORE_DEPRECATIONS_OPTION} --project ${tsConfig} ${argsStr} ${declarationFilesStr}`;
 
     try {
       await executeTypeCheck(packageRootDirAbsolute, command);

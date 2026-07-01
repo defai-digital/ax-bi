@@ -3362,6 +3362,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         """
         # pylint: disable=import-outside-toplevel
         from flask import current_app
+        from sqlalchemy.orm import object_session
 
         from superset import is_feature_enabled
         from superset.connectors.sqla.models import SqlaTable
@@ -3395,7 +3396,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                 client_id=shortid()[:10],
                 user_id=get_user_id(),
             )
-            self.session.expunge(query)
+            if session := object_session(query):
+                session.expunge(query)
 
         if database and table or query:
             if query:

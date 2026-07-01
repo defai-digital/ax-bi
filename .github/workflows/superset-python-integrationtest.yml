@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
+      contents: read
       id-token: write
     env:
       PYTHONPATH: ${{ github.workspace }}
@@ -130,6 +131,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
+      contents: read
       id-token: write
     strategy:
       matrix:
@@ -191,6 +193,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
+      contents: read
       id-token: write
     env:
       PYTHONPATH: ${{ github.workspace }}

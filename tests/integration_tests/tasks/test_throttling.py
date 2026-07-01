@@ -23,7 +23,6 @@ Tests verify:
 
 from __future__ import annotations
 
-import time
 import uuid
 
 from superset_core.tasks.types import TaskScope, TaskStatus
@@ -76,6 +75,7 @@ class TestUpdateTaskThrottling(SupersetTestCase):
             task_name="Test Throttled Updates",
             scope=TaskScope.SYSTEM,
         )
+        db.session.commit()
 
         # Use str(uuid) since Celery serializes args as JSON strings
         result = execute_task.apply(
@@ -158,10 +158,14 @@ class TestUpdateTaskThrottling(SupersetTestCase):
             assert task_step2.properties_dict.get("progress_percent") == 0.1
             assert task_step2.payload_dict.get("step") == 1
 
-            # === Step 4: Wait for deferred timer to fire ===
-            time.sleep(throttle_interval + 0.5)
+            # === Step 4: Flush the deferred update deterministically ===
+            deferred_timer = ctx._deferred_flush_timer
+            assert deferred_timer is not None
+            assert 0 < deferred_timer.interval <= throttle_interval
+            deferred_timer.cancel()
+            ctx._deferred_flush()
 
-            # Verify timer fired and wrote the LATEST update (third, not second)
+            # Verify deferred flush wrote the LATEST update (third, not second)
             db.session.expire_all()
             task_step3 = TaskDAO.find_one_or_none(uuid=task_uuid, skip_base_filter=True)
             assert task_step3 is not None

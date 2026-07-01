@@ -20,6 +20,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import yaml
 
 
@@ -126,6 +127,107 @@ def test_load_contents_builds_correct_import_structure():
         dataset_content = contents["datasets/examples/test_example.yaml"]
         assert "schema: main" not in dataset_content
         assert "schema: null" in dataset_content
+
+
+def test_load_contents_resolves_data_file_uris():
+    """data_file entries should point the importer at the bundled Parquet file."""
+    from superset.examples.utils import load_contents
+
+    with TemporaryDirectory() as tmpdir:
+        superset_dir = _create_example_tree(Path(tmpdir))
+        examples_dir = superset_dir / "examples"
+        example_dir = examples_dir / "test_example"
+
+        single_data = example_dir / "data.parquet"
+        single_data.write_bytes(b"")
+        single_config = yaml.safe_load((example_dir / "dataset.yaml").read_text())
+        single_config["data_file"] = "data.parquet"
+        (example_dir / "dataset.yaml").write_text(yaml.safe_dump(single_config))
+
+        nested_dir = examples_dir / "multi_example"
+        nested_data_dir = nested_dir / "data"
+        nested_datasets_dir = nested_dir / "datasets"
+        nested_data_dir.mkdir(parents=True)
+        nested_datasets_dir.mkdir()
+        nested_data = nested_data_dir / "nested_dataset.parquet"
+        nested_data.write_bytes(b"")
+        (nested_datasets_dir / "nested_dataset.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "table_name": "nested_dataset",
+                    "data_file": "nested_dataset.parquet",
+                    "schema": None,
+                    "uuid": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+                    "database_uuid": "a2dc77af-e654-49bb-b321-40f6b559a1ee",
+                    "version": "1.0.0",
+                }
+            )
+        )
+
+        mock_app = MagicMock()
+        mock_app.config = {"SQLALCHEMY_EXAMPLES_URI": "sqlite:///examples.db"}
+
+        with patch("superset.examples.utils.files", return_value=superset_dir):
+            with patch("flask.current_app", mock_app):
+                contents = load_contents()
+
+        single_content = yaml.safe_load(contents["datasets/examples/test_example.yaml"])
+        nested_content = yaml.safe_load(
+            contents["datasets/examples/nested_dataset.yaml"]
+        )
+
+        assert single_content["data_file_uri"] == single_data.resolve().as_uri()
+        assert nested_content["data_file_uri"] == nested_data.resolve().as_uri()
+
+
+def _read_example_data_file(path: Path) -> pd.DataFrame:
+    """Read a bundled example data file."""
+    if path.suffix == ".parquet":
+        return pd.read_parquet(path)
+    if path.suffix == ".gz":
+        return pd.read_csv(path, compression="gzip")
+    if path.suffix == ".csv":
+        return pd.read_csv(path)
+
+    raise AssertionError(f"Unsupported data file type: {path}")
+
+
+def test_bundled_data_file_varchar_columns_fit_default_length():
+    """Bundled example data should not exceed default VARCHAR storage."""
+    issues: list[str] = []
+
+    for yaml_path in sorted(Path("superset/examples").glob("**/datasets/*.yaml")):
+        config = yaml.safe_load(yaml_path.read_text())
+        if not isinstance(config, dict) or not config.get("data_file"):
+            continue
+
+        data_path = yaml_path.parents[1] / "data" / config["data_file"]
+        if not data_path.exists():
+            data_path = yaml_path.parent / config["data_file"]
+
+        assert data_path.exists(), f"Missing data file for {yaml_path}"
+        df = _read_example_data_file(data_path)
+        for column in config.get("columns", []):
+            if not isinstance(column, dict):
+                continue
+
+            column_name = column.get("column_name")
+            if not isinstance(column_name, str):
+                continue
+
+            column_type = str(column.get("type") or "").upper()
+            if column_type != "VARCHAR" or column_name not in df.columns:
+                continue
+
+            series = df[column_name].dropna().astype(str)
+            if series.empty:
+                continue
+
+            max_length = int(series.str.len().max())
+            if max_length > 255:
+                issues.append(f"{yaml_path}:{column_name} has max length {max_length}")
+
+    assert issues == []
 
 
 def test_load_contents_replaces_sqlalchemy_examples_uri_placeholder():

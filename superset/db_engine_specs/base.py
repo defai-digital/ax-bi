@@ -1756,12 +1756,18 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         Execute a statement using an inspector bind under SQLAlchemy 2.
         """
+
+        def result_to_list(result: Any) -> list[Any]:
+            if fetchall := getattr(result, "fetchall", None):
+                return list(fetchall())
+            return list(result)
+
         bind = inspector.bind
         if isinstance(bind, Engine):
             with bind.connect() as connection:
-                return list(connection.execute(statement))
+                return result_to_list(connection.execute(statement))
 
-        return list(bind.execute(statement))
+        return result_to_list(bind.execute(statement))
 
     @classmethod
     def get_schema_names(cls, inspector: Inspector) -> set[str]:

@@ -54,7 +54,7 @@ export function saveChartToDashboard(chartName: string, dashboardName: string) {
       cy.wait(500);
       cy.wrap($modal)
         .find(
-          '.ant-select-selection-search-input[aria-label*="Select a dashboard"]',
+          '[data-test="save-chart-modal-select-dashboard-form"] .ant-select-selection-search-input',
         )
         .type(dashboardName, { force: true });
       cy.wrap($modal)

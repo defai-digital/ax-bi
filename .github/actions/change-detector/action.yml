@@ -11,6 +11,9 @@ outputs:
   frontend:
     description: Whether frontend-related files were changed
     value: ${{ steps.change-detector.outputs.frontend }}
+  frontend_build:
+    description: Whether frontend package build-related files were changed
+    value: ${{ steps.change-detector.outputs.frontend_build }}
   docker:
     description: Whether docker-related files were changed
     value: ${{ steps.change-detector.outputs.docker }}

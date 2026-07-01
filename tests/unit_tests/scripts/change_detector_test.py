@@ -74,3 +74,22 @@ def test_superset_rust_changes_include_shared_change_detector() -> None:
 
     assert _detects("superset-rust", "scripts/change_detector.py")
     assert _detects("superset-rust", ".github/actions/change-detector/action.yml")
+
+
+def test_frontend_build_excludes_browser_test_harness() -> None:
+    """Browser test harness changes should not run full frontend package builds."""
+
+    assert not _detects(
+        "frontend_build",
+        "superset-frontend/cypress-base/cypress/e2e/explore/utils.ts",
+    )
+    assert not _detects(
+        "frontend_build",
+        "superset-frontend/playwright/components/core/Select.ts",
+    )
+
+
+def test_frontend_build_includes_app_source() -> None:
+    """Frontend app source changes still run full frontend package builds."""
+
+    assert _detects("frontend_build", "superset-frontend/src/views/index.tsx")

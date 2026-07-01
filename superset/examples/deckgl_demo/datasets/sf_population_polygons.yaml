@@ -64,7 +64,7 @@ columns:
   is_active: true
   is_dttm: false
   python_date_format: null
-  type: VARCHAR
+  type: TEXT
   verbose_name: null
 data_file: sf_population_polygons.parquet
 database_uuid: a2dc77af-e654-49bb-b321-40f6b559a1ee

@@ -185,6 +185,7 @@ class TestDatabaseModel(SupersetTestCase):
             expression="count('{{ 'bar_' + time_grain }}')",
             table=table,
         )
+        db.session.add(table)
         db.session.commit()
 
         sqla_query = table.get_sqla_query(**base_query_obj)
@@ -212,6 +213,7 @@ class TestDatabaseModel(SupersetTestCase):
         metric = SqlMetric(
             metric_name="count_jinja_metric", expression="count(*)", table=table
         )
+        db.session.add(metric)
         db.session.commit()
 
         base_query_obj = {
@@ -275,6 +277,7 @@ class TestDatabaseModel(SupersetTestCase):
         table = SqlaTable(
             table_name="test_validate_adhoc_sql", database=get_example_database()
         )
+        db.session.add(table)
         db.session.commit()
 
         with pytest.raises(QueryObjectValidationError):

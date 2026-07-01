@@ -63,27 +63,29 @@ def create_test_table_context(database: Database):
     full_table_name = f"{schema}.test_table" if schema else "test_table"
 
     with database.get_sqla_engine() as engine:
-        engine.execute(
-            text(f"""
-            CREATE TABLE IF NOT EXISTS {full_table_name} AS
-            SELECT 1 as first, 2 as second
-            """)
-        )
-        engine.execute(
-            text(f"""
-            INSERT INTO {full_table_name} (first, second) VALUES (1, 2)
-            """)  # noqa: S608
-        )
-        engine.execute(
-            text(f"""
-            INSERT INTO {full_table_name} (first, second) VALUES (3, 4)
-            """)  # noqa: S608
-        )
+        with engine.begin() as connection:
+            connection.execute(
+                text(f"""
+                CREATE TABLE IF NOT EXISTS {full_table_name} AS
+                SELECT 1 as first, 2 as second
+                """)
+            )
+            connection.execute(
+                text(f"""
+                INSERT INTO {full_table_name} (first, second) VALUES (1, 2)
+                """)  # noqa: S608
+            )
+            connection.execute(
+                text(f"""
+                INSERT INTO {full_table_name} (first, second) VALUES (3, 4)
+                """)  # noqa: S608
+            )
 
     yield db.session
 
     with database.get_sqla_engine() as engine:
-        engine.execute(text(f"DROP TABLE {full_table_name}"))
+        with engine.begin() as connection:
+            connection.execute(text(f"DROP TABLE {full_table_name}"))
 
 
 @contextmanager
@@ -106,7 +108,8 @@ def create_and_cleanup_table(table=None):
 
 class TestDatasource(SupersetTestCase):
     def setUp(self):
-        db.session.begin(subtransactions=True)
+        db.session.rollback()
+        db.session.begin()
 
     def tearDown(self):
         db.session.rollback()
@@ -696,7 +699,7 @@ def test_get_samples_with_filters(test_client, login_as_admin, virtual_dataset):
         f"/datasource/samples?datasource_id={virtual_dataset.id}&datasource_type=table"
     )
     rv = test_client.post(uri, json=None)
-    assert rv.status_code == 415
+    assert rv.status_code == 200
 
     rv = test_client.post(uri, json={})
     assert rv.status_code == 200

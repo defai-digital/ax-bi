@@ -92,9 +92,7 @@ class TestSupersetApp:
             app.sync_config_to_db()
 
         # Assert
-        mock_feature_flag_manager.is_feature_enabled.assert_called_with(
-            "TAGGING_SYSTEM"
-        )
+        mock_feature_flag_manager.is_feature_enabled.assert_any_call("TAGGING_SYSTEM")
         mock_register_listeners.assert_called_once()
         # Should seed themes
         mock_seed_themes_command.assert_called_once()

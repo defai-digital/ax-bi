@@ -26,7 +26,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 fi
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../.. && pwd )"
+ROOT_DIR="${SUPERSET_TRANSLATIONS_ROOT_DIR:-$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../.. && pwd )}"
 LICENSE_TMP=$(mktemp)
 cat <<'EOF'> "$LICENSE_TMP"
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -59,7 +59,7 @@ pybabel extract \
   -k _ -k __ -k t -k tn:1,2 -k tct .
 
 # Normalize .pot file
-msgcat --sort-by-msgid --no-wrap --no-location superset/translations/messages.pot -o superset/translations/messages.pot
+msgcat --sort-output --no-wrap --no-location superset/translations/messages.pot -o superset/translations/messages.pot
 
 cat "$LICENSE_TMP" superset/translations/messages.pot > messages.pot.tmp \
   && mv messages.pot.tmp superset/translations/messages.pot
