@@ -179,6 +179,14 @@ class SupersetApp(Flask):
 
                 register_sqla_event_listeners()
 
+            # Register SQLA event listeners that keep the semantic index fresh
+            if feature_flag_manager.is_feature_enabled("GENAI_SEMANTIC_INDEX"):
+                from superset.semantic_index.hooks import (
+                    register_semantic_index_listeners,
+                )
+
+                register_semantic_index_listeners()
+
             # Seed system themes from configuration
             from superset.commands.theme.seed import SeedSystemThemesCommand
 
