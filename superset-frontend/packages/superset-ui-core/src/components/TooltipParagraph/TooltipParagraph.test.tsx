@@ -19,44 +19,35 @@
 import { render, screen, userEvent, waitFor } from '@superset-ui/core/spec';
 import TooltipParagraph from '.';
 
-// jsdom has no layout, so antd Typography never detects truncation on its
-// own. Simulate an overflowing text node for the "truncated" test.
-const originalScrollWidth = Object.getOwnPropertyDescriptor(
-  HTMLElement.prototype,
-  'scrollWidth',
-);
-const originalOffsetWidth = Object.getOwnPropertyDescriptor(
-  HTMLElement.prototype,
-  'offsetWidth',
-);
+// antd v6 Typography detects truncation with real layout APIs
+// (getClientRects/canvas measurement) that jsdom cannot emulate, so the
+// onEllipsis callback never fires on its own. Stub the Paragraph to drive
+// the callback deterministically; the behavior under test is
+// TooltipParagraph's own (truncated -> tooltip title).
+let mockIsTruncated = false;
+jest.mock('@superset-ui/core/components/Typography', () => {
+  const actual = jest.requireActual(
+    '@superset-ui/core/components/Typography',
+  );
+  const { useEffect } = jest.requireActual('react');
+  const MockParagraph = ({ children, ellipsis, ...rest }: any) => {
+    useEffect(() => {
+      ellipsis?.onEllipsis?.(mockIsTruncated);
+    }, [ellipsis]);
+    return <div {...rest}>{children}</div>;
+  };
+  return {
+    ...actual,
+    Typography: {
+      ...actual.Typography,
+      Paragraph: MockParagraph,
+    },
+  };
+});
 
-const simulateOverflow = () => {
-  Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
-    configurable: true,
-    get: () => 500,
-  });
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-    configurable: true,
-    get: () => 100,
-  });
-};
-
-const restoreLayout = () => {
-  if (originalScrollWidth) {
-    Object.defineProperty(
-      HTMLElement.prototype,
-      'scrollWidth',
-      originalScrollWidth,
-    );
-  }
-  if (originalOffsetWidth) {
-    Object.defineProperty(
-      HTMLElement.prototype,
-      'offsetWidth',
-      originalOffsetWidth,
-    );
-  }
-};
+beforeEach(() => {
+  mockIsTruncated = false;
+});
 
 test('starts hidden with default props', () => {
   render(<TooltipParagraph>This is tooltip description.</TooltipParagraph>);
@@ -75,17 +66,16 @@ test('not render on hover when not truncated', async () => {
   await userEvent.hover(screen.getByTestId('test-text'));
 
   // Wait a moment for any potential tooltip to appear
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise(resolve => {
+    setTimeout(resolve, 100);
+  });
 
   // Check that no tooltip is visible in the document
   expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 });
 
-// antd v6 Typography measures truncation with real layout APIs
-// (getClientRects/canvas) that jsdom cannot emulate, so the ellipsis
-// callback never fires here; covered by real-browser suites instead
-test.skip('render on hover when truncated', async () => {
-  simulateOverflow();
+test('render on hover when truncated', async () => {
+  mockIsTruncated = true;
   render(
     <div style={{ width: '200px' }}>
       <TooltipParagraph>
@@ -94,25 +84,15 @@ test.skip('render on hover when truncated', async () => {
     </div>,
   );
 
-  // Get the div with the ellipsis class to verify it's truncated
-  const ellipsisElement = screen
-    .getByTestId('test-text')
-    .closest('.ant-typography-ellipsis');
-  expect(ellipsisElement).toBeInTheDocument();
+  // Hover over the text (the tooltip body re-renders the children, so use
+  // the first match — the trigger)
+  await userEvent.hover(screen.getAllByTestId('test-text')[0]);
 
-  // Hover over the text
-  await userEvent.hover(screen.getByTestId('test-text'));
-
-  // In Ant Design v5, we can check if the aria-describedby attribute is present
-  // which indicates the tooltip functionality is active
-  try {
-    await waitFor(() => {
-      const element = screen
-        .getByTestId('test-text')
-        .closest('[aria-describedby]');
-      expect(element).toHaveAttribute('aria-describedby');
-    });
-  } finally {
-    restoreLayout();
-  }
+  // The trigger is described by the visible tooltip once truncated
+  await waitFor(() => {
+    const element = screen
+      .getAllByTestId('test-text')[0]
+      .closest('[aria-describedby]');
+    expect(element).toHaveAttribute('aria-describedby');
+  });
 });
