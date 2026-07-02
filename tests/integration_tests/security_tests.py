@@ -137,7 +137,12 @@ class TestRolePermission(SupersetTestCase):
             s.schema_perm = ds.schema_perm
         create_schema_perm("[examples].[temp_schema]")
         gamma_user = security_manager.find_user(username="gamma")
-        gamma_user.roles.append(security_manager.find_role(SCHEMA_ACCESS_ROLE))
+        schema_access_role = security_manager.find_role(SCHEMA_ACCESS_ROLE)
+        # idempotent: a previously failed test can leave the role attached,
+        # which would otherwise fail the ab_user_role unique constraint and
+        # poison every subsequent test in the class
+        if schema_access_role not in gamma_user.roles:
+            gamma_user.roles.append(schema_access_role)
         db.session.commit()
 
     def tearDown(self):
