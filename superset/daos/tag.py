@@ -80,10 +80,14 @@ class TagDAO(BaseDAO[Tag]):
         if not tag:
             raise NoResultFound(message=f"Tag with name {tag_name} does not exist.")
 
-        tagged_object = db.session.query(TaggedObject).filter(
-            TaggedObject.tag_id == tag.id,
-            TaggedObject.object_type == object_type,
-            TaggedObject.object_id == object_id,
+        tagged_object = (
+            db.session.query(TaggedObject)
+            .filter(
+                TaggedObject.tag_id == tag.id,
+                TaggedObject.object_type == object_type,
+                TaggedObject.object_id == object_id,
+            )
+            .first()
         )
         if not tagged_object:
             raise NoResultFound(
@@ -92,7 +96,7 @@ class TagDAO(BaseDAO[Tag]):
                     and tag name: "{tag_name}" could not be found'
             )
 
-        db.session.delete(tagged_object.one())
+        db.session.delete(tagged_object)
 
     @staticmethod
     def delete_tags(tag_names: list[str]) -> None:

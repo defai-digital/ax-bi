@@ -1694,7 +1694,7 @@ class SQLScript:
         CTAS (`CREATE TABLE AS SELECT`) can only be run with scripts where the last
         statement is a `SELECT`.
         """
-        return self.statements[-1].is_select()
+        return bool(self.statements) and self.statements[-1].is_select()
 
     def is_valid_cvas(self) -> bool:
         """

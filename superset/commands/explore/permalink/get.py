@@ -63,7 +63,7 @@ class GetExplorePermalinkCommand(BaseExplorePermalinkCommand):
             KeyValueGetFailedError,
             KeyValueParseKeyError,
         ) as ex:
-            raise ExplorePermalinkGetFailedError(message=ex.message) from ex
+            raise ExplorePermalinkGetFailedError(message=str(ex)) from ex
         except SQLAlchemyError as ex:
             logger.exception("Error running get command")
             raise ExplorePermalinkGetFailedError() from ex

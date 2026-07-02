@@ -245,8 +245,8 @@ class Query(
         return self.database.name
 
     @property
-    def username(self) -> str:
-        return self.user.username
+    def username(self) -> str | None:
+        return self.user.username if self.user else None
 
     @property
     def columns(self) -> list["TableColumn"]:
@@ -360,8 +360,8 @@ class Query(
     @property
     def main_dttm_col(self) -> Optional[str]:
         for col in self.columns:
-            if col.get("is_dttm"):
-                return col.get("column_name")
+            if col.is_dttm:
+                return col.column_name
         return None
 
     @property
@@ -536,8 +536,8 @@ class SavedQuery(
         )
 
     @property
-    def user_email(self) -> str:
-        return self.user.email
+    def user_email(self) -> str | None:
+        return self.user.email if self.user else None
 
     @property
     def sqlalchemy_uri(self) -> URL:
@@ -548,10 +548,14 @@ class SavedQuery(
 
     @property
     def last_run_humanized(self) -> str:
+        if self.last_run:
+            return naturaltime(datetime.now() - self.last_run)
         return naturaltime(datetime.now() - self.changed_on)
 
     @property
     def _last_run_delta_humanized(self) -> str:
+        if self.last_run:
+            return naturaltime(datetime.now() - self.last_run)
         return naturaltime(datetime.now() - self.changed_on)
 
     @renders("changed_on")

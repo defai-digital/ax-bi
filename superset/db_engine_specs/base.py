@@ -1409,7 +1409,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         try:
             script = SQLScript(sql, engine=cls.engine)
-            return script.statements[-1].get_limit_value()
+            return script.statements[-1].get_limit_value() if script.statements else None
         except SupersetParseError:
             # SQL with a malformed LIMIT clause (e.g. LIMIT without a value) is
             # not parseable in sqlglot 30+, which now requires an expression arg.
