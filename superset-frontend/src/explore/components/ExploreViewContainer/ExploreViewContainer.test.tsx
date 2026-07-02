@@ -168,10 +168,13 @@ test('generates a new form_data param when none is available', async () => {
   );
   const history = createMemoryHistory({ initialEntries: [defaultPath] });
   const replaceSpy = jest.spyOn(history, 'replace');
-  await waitFor(() => renderWithRouter({ history }));
-  expect(replaceSpy).toHaveBeenCalledWith(
-    expect.stringMatching('form_data_key'),
-    expect.anything(),
+  renderWithRouter({ history });
+  // the form_data key is written to the URL after the async POST resolves
+  await waitFor(() =>
+    expect(replaceSpy).toHaveBeenCalledWith(
+      expect.stringMatching('form_data_key'),
+      expect.anything(),
+    ),
   );
   expect(replaceSpy).toHaveBeenCalledWith(
     expect.stringMatching('datasource_id'),
@@ -195,10 +198,12 @@ test('generates a form_data param with datasource_id when mounting with existing
     initialEntries: [`${defaultPath}${SEARCH}`],
   });
   const replaceSpy = jest.spyOn(history, 'replace');
-  await waitFor(() => renderWithRouter({ search: SEARCH, history }));
-  expect(replaceSpy).toHaveBeenCalledWith(
-    expect.stringMatching('datasource_id'),
-    expect.anything(),
+  renderWithRouter({ search: SEARCH, history });
+  await waitFor(() =>
+    expect(replaceSpy).toHaveBeenCalledWith(
+      expect.stringMatching('datasource_id'),
+      expect.anything(),
+    ),
   );
   replaceSpy.mockRestore();
 });
@@ -211,8 +216,8 @@ test('reuses the same form_data param when updating', async () => {
     initialEntries: [`${defaultPath}${SEARCH}`],
   });
   const replaceSpy = jest.spyOn(history, 'replace');
-  await waitFor(() => renderWithRouter({ search: SEARCH, history }));
-  expect(replaceSpy.mock.calls.length).toBe(1);
+  renderWithRouter({ search: SEARCH, history });
+  await waitFor(() => expect(replaceSpy.mock.calls.length).toBe(1));
   userEvent.click(screen.getByText('Update chart'));
   await waitFor(() => expect(replaceSpy.mock.calls.length).toBe(2));
   expect(replaceSpy.mock.calls[0]).toEqual(replaceSpy.mock.calls[1]);
@@ -244,12 +249,12 @@ test('preserves unknown parameters', async () => {
     initialEntries: [`${defaultPath}${SEARCH}&${unknownParam}`],
   });
   const replaceSpy = jest.spyOn(history, 'replace');
+  renderWithRouter({ search: `${SEARCH}&${unknownParam}`, history });
   await waitFor(() =>
-    renderWithRouter({ search: `${SEARCH}&${unknownParam}`, history }),
-  );
-  expect(replaceSpy).toHaveBeenCalledWith(
-    expect.stringMatching(unknownParam),
-    expect.anything(),
+    expect(replaceSpy).toHaveBeenCalledWith(
+      expect.stringMatching(unknownParam),
+      expect.anything(),
+    ),
   );
   replaceSpy.mockRestore();
 });
@@ -274,25 +279,27 @@ test('retains query mode requirements when query_mode is enabled', async () => {
     },
   };
 
-  await waitFor(() => renderWithRouter({ initialState: customState }));
-
-  const formDataEndpointCalls = fetchMock.callHistory.calls(
-    /api\/v1\/explore\/form_data/,
-  );
-  expect(formDataEndpointCalls.length).toBeGreaterThan(0);
-  const lastCall = formDataEndpointCalls[formDataEndpointCalls.length - 1];
-
-  const body = JSON.parse(lastCall.options?.body as string);
-  const formData = JSON.parse(body.form_data);
+  // drop calls recorded by earlier tests; the history is shared per file
+  fetchMock.clearHistory();
+  renderWithRouter({ initialState: customState });
 
   const queryModeFields = Object.keys(
     customState.explore.hiddenFormData,
   ).filter(key => QUERY_MODE_REQUISITES.has(key));
 
-  queryModeFields.forEach(key => {
-    expect(formData[key]).toBeDefined();
+  // the form_data POST including the hidden query-mode fields lands after
+  // the async URL sync settles
+  await waitFor(() => {
+    const calls = fetchMock.callHistory.calls(/api\/v1\/explore\/form_data/);
+    expect(calls.length).toBeGreaterThan(0);
+    const lastCall = calls[calls.length - 1];
+    const body = JSON.parse(lastCall.options?.body as string);
+    const formData = JSON.parse(body.form_data);
+    queryModeFields.forEach(key => {
+      expect(formData[key]).toBeDefined();
+    });
+    expect(formData.optional_key1).toBeUndefined();
   });
-  expect(formData.optional_key1).toBeUndefined();
 });
 
 test('does omit hiddenFormData when query_mode is not enabled', async () => {
@@ -314,19 +321,19 @@ test('does omit hiddenFormData when query_mode is not enabled', async () => {
     },
   };
 
-  await waitFor(() => renderWithRouter({ initialState: customState }));
+  // drop calls recorded by earlier tests; the history is shared per file
+  fetchMock.clearHistory();
+  renderWithRouter({ initialState: customState });
 
-  const formDataEndpointCalls = fetchMock.callHistory.calls(
-    /api\/v1\/explore\/form_data/,
-  );
-  expect(formDataEndpointCalls.length).toBeGreaterThan(0);
-  const lastCall = formDataEndpointCalls[formDataEndpointCalls.length - 1];
-
-  const body = JSON.parse(lastCall.options?.body as string);
-  const formData = JSON.parse(body.form_data);
-
-  Object.keys(customState.explore.hiddenFormData).forEach(key => {
-    expect(formData[key]).toBeUndefined();
+  await waitFor(() => {
+    const calls = fetchMock.callHistory.calls(/api\/v1\/explore\/form_data/);
+    expect(calls.length).toBeGreaterThan(0);
+    const lastCall = calls[calls.length - 1];
+    const body = JSON.parse(lastCall.options?.body as string);
+    const formData = JSON.parse(body.form_data);
+    Object.keys(customState.explore.hiddenFormData).forEach(key => {
+      expect(formData[key]).toBeUndefined();
+    });
   });
 });
 

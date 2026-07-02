@@ -680,7 +680,8 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
     db.session.commit()
 
     uri = (
-        f"/datasource/samples?datasource_id={virtual_dataset.id}&datasource_type=table"
+        f"/datasource/samples?datasource_id={virtual_dataset.id}"
+        "&datasource_type=table&force=true"
     )
     rv = test_client.post(uri, json={})
     assert rv.status_code == 422
