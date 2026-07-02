@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+
     // Path Resolution: Override baseUrl to maintain correct path mappings from parent config
     // (e.g., "@apache-superset/core" -> "./packages/superset-core/src")
     "baseUrl": "../..",

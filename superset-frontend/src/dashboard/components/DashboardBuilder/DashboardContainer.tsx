@@ -32,7 +32,9 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import {
+  ChartCustomization,
   ChartCustomizationConfiguration,
+  ChartCustomizationDivider,
   ChartCustomizationType,
   LabelsColorMapSource,
   NativeFilterType,
@@ -94,7 +96,9 @@ function normalizeChartCustomizationsForScopeCalculation(
   chartCustomizations: ChartCustomizationConfiguration,
   chartIds: number[],
 ): ChartCustomizationConfiguration {
-  const truthyCustomizations = chartCustomizations.filter(Boolean);
+  const truthyCustomizations = chartCustomizations.filter(
+    (item): item is ChartCustomization | ChartCustomizationDivider => !!item,
+  );
 
   if (!truthyCustomizations.some(isLegacyChartCustomizationFormat)) {
     return truthyCustomizations;
@@ -240,7 +244,9 @@ const DashboardContainer: FC<DashboardContainerProps> = ({ topLevelTabs }) => {
       normalizedCustomizations,
       chartIds,
       chartLayoutItems,
-      item => item.type === ChartCustomizationType.Divider,
+      item =>
+        (item as ChartCustomization | ChartCustomizationDivider).type ===
+        ChartCustomizationType.Divider,
     ).map(scope => ({
       customizationId: scope.id,
       chartsInScope: scope.chartsInScope,

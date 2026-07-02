@@ -77,7 +77,7 @@ export function deserializeThemeConfig(
   return {
     ...rest,
     algorithm: resolvedAlgorithm,
-  };
+  } as AntdThemeConfig;
 }
 
 /**

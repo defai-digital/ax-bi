@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { URL_PARAMS } from 'src/constants';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { RootState } from 'src/dashboard/types';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { Filter, isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import {
   useFilters,
   useNativeFiltersDataMask,
@@ -58,10 +58,12 @@ export const useNativeFilters = () => {
   const requiredFirstFilter = useMemo(
     () =>
       filterValues.filter(
-        filter =>
+        (filter): filter is Filter =>
+          typeof filter === 'object' &&
+          filter !== null &&
           'requiredFirst' in filter &&
-          filter.requiredFirst === true &&
-          filter.filterType !== 'filter_time',
+          (filter as Filter).requiredFirst === true &&
+          (filter as Filter).filterType !== 'filter_time',
       ),
     [filterValues],
   );
