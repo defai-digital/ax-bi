@@ -697,7 +697,7 @@ class SQLExecutor:
         :param script: Parsed SQL script
         :returns: Set of disallowed functions found, or None if none found
         """
-        disallowed_config = app.config.get("DISALLOWED_SQL_FUNCTIONS", {})
+        disallowed_config = app.config.get("DISALLOWED_SQL_FUNCTIONS") or {}
         engine_name = self.database.db_engine_spec.engine
 
         # Get disallowed functions for this engine
@@ -729,7 +729,7 @@ class SQLExecutor:
         :param script: Parsed SQL script
         :returns: Set of disallowed tables found, or None if none found
         """
-        disallowed_config = app.config.get("DISALLOWED_SQL_TABLES", {})
+        disallowed_config = app.config.get("DISALLOWED_SQL_TABLES") or {}
         engine_name = self.database.db_engine_spec.engine
 
         # Get disallowed tables for this engine
