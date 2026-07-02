@@ -24,7 +24,7 @@ from superset.commands.query.exceptions import (
     SavedQueryNotFoundError,
 )
 from superset.daos.query import SavedQueryDAO
-from superset.models.dashboard import Dashboard
+from superset.models.sql_lab import SavedQuery
 from superset.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class DeleteSavedQueryCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[Dashboard]] = None
+        self._models: Optional[list[SavedQuery]] = None
 
     @transaction(on_error=partial(on_error, reraise=SavedQueryDeleteFailedError))
     def run(self) -> None:

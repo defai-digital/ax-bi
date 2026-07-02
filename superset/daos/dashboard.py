@@ -212,7 +212,9 @@ class DashboardDAO(BaseDAO[Dashboard]):
         return DashboardDAO.get_by_id_or_slug(id_or_slug).slices
 
     @staticmethod
-    def get_dashboard_changed_on(id_or_slug_or_dashboard: str | Dashboard) -> datetime:
+    def get_dashboard_changed_on(
+        id_or_slug_or_dashboard: str | Dashboard,
+    ) -> datetime | None:
         """
         Get latest changed datetime for a dashboard.
 
@@ -226,7 +228,11 @@ class DashboardDAO(BaseDAO[Dashboard]):
             else id_or_slug_or_dashboard
         )
         # drop microseconds in datetime to match with last_modified header
-        return dashboard.changed_on.replace(microsecond=0)
+        return (
+            dashboard.changed_on.replace(microsecond=0)
+            if dashboard.changed_on
+            else None
+        )
 
     @staticmethod
     def get_dashboard_and_slices_changed_on(  # pylint: disable=invalid-name
@@ -248,11 +254,16 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dashboard_changed_on = DashboardDAO.get_dashboard_changed_on(dashboard)
         slices = dashboard.slices
         slices_changed_on = max(
-            [slc.changed_on for slc in slices]
+            [slc.changed_on for slc in slices if slc.changed_on]
             + ([datetime.fromtimestamp(0)] if len(slices) == 0 else [])
         )
         # drop microseconds in datetime to match with last_modified header
-        return max(dashboard_changed_on, slices_changed_on).replace(microsecond=0)
+        candidates = [
+            dt for dt in [dashboard_changed_on, slices_changed_on] if dt is not None
+        ]
+        if not candidates:
+            return datetime.fromtimestamp(0)
+        return max(candidates).replace(microsecond=0)
 
     @staticmethod
     def get_dashboard_and_datasets_changed_on(  # pylint: disable=invalid-name
@@ -274,11 +285,20 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dashboard_changed_on = DashboardDAO.get_dashboard_changed_on(dashboard)
         datasources = dashboard.datasources
         datasources_changed_on = max(
-            [datasource.changed_on for datasource in datasources]
+            [
+                datasource.changed_on
+                for datasource in datasources
+                if datasource.changed_on
+            ]
             + ([datetime.fromtimestamp(0)] if len(datasources) == 0 else [])
         )
         # drop microseconds in datetime to match with last_modified header
-        return max(dashboard_changed_on, datasources_changed_on).replace(microsecond=0)
+        candidates = [
+            dt for dt in [dashboard_changed_on, datasources_changed_on] if dt is not None
+        ]
+        if not candidates:
+            return datetime.fromtimestamp(0)
+        return max(candidates).replace(microsecond=0)
 
     @staticmethod
     def validate_slug_uniqueness(slug: str) -> bool:

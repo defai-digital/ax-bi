@@ -411,7 +411,10 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         #       "networkCost" : 3.41425774958E11
         #     }
         #   }
-        result = json.loads(cursor.fetchone()[0])
+        row = cursor.fetchone()
+        if not row:
+            return {}
+        result = json.loads(row[0])
         return result
 
     @classmethod

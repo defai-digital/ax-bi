@@ -214,6 +214,8 @@ def _find_columns_to_sanitize(cursor: Any) -> list[PlacedSanitizeFunc]:
     :param cursor: the result set cursor
     :returns: the list of tuples consisting of the column index and sanitization function
     """  # noqa: E501
+    if not cursor.description:
+        return []
     return [
         PlacedSanitizeFunc(i, _sanitized_ocient_type_codes[cursor.description[i][1]])
         for i in range(len(cursor.description))

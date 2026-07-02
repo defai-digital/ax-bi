@@ -347,5 +347,9 @@ class DorisEngineSpec(MySQLEngineSpec):
         if not sqlalchemy_uri.database:
             return None
 
-        schema = sqlalchemy_uri.database.split(".")[-1].strip("/")
+        database = sqlalchemy_uri.database.strip("/")
+        if not database or "." not in database:
+            return None
+
+        schema = database.split(".")[-1]
         return parse.unquote(schema)

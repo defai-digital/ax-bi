@@ -755,7 +755,10 @@ class PostgresEngineSpec(BasicParametersMixin, PostgresBaseEngineSpec):
         sql = f"EXPLAIN {statement}"
         cursor.execute(sql)
 
-        result = cursor.fetchone()[0]
+        row = cursor.fetchone()
+        if not row:
+            return {}
+        result = row[0]
         match = re.search(r"cost=([\d\.]+)\.\.([\d\.]+)", result)
         if match:
             return {

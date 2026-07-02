@@ -42,6 +42,8 @@ from superset.utils import json
 from superset.utils.core import get_user_agent, QuerySource
 from superset.utils.network import is_hostname_valid, is_port_open
 
+DEFAULT_CATALOG = "hive_metastore"
+
 if TYPE_CHECKING:
     from superset.models.core import Database
 
@@ -613,7 +615,7 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
                 if len(catalogs) == 1:
                     return catalogs.pop()
 
-                return connection.execute(text("SELECT current_catalog()")).scalar()
+                return connection.execute(text("SELECT current_catalog()")).scalar() or DEFAULT_CATALOG
 
     @classmethod
     def get_prequeries(

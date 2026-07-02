@@ -832,9 +832,11 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
             return self.response_400(message=error.messages)
         try:
             changed_model = UpdateDashboardCommand(pk, item).run()
-            last_modified_time = changed_model.changed_on.replace(
-                microsecond=0
-            ).timestamp()
+            last_modified_time = (
+                changed_model.changed_on.replace(microsecond=0).timestamp()
+                if changed_model.changed_on
+                else None
+            )
             response = self.response(
                 200,
                 id=changed_model.id,
@@ -2231,6 +2233,8 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
                 "id": dash.id,
                 "last_modified_time": dash.changed_on.replace(
                     microsecond=0
-                ).timestamp(),
+                ).timestamp()
+                if dash.changed_on
+                else None,
             },
         )
