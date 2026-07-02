@@ -125,6 +125,7 @@ const StyledContent = styled.div<{
   grid-column: 2;
   grid-row: 2;
   min-height: 0;
+  background-color: #050b12;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -159,7 +160,7 @@ const DashboardContentWrapper = styled.div`
       }
 
       .background--white {
-        background-color: ${theme.colorBgContainer};
+        background-color: #0f172a;
       }
     }
     &.dashboard--editing {
@@ -280,7 +281,7 @@ const StyledDashboardContent = styled.div<{
   marginLeft: number;
 }>`
   ${({ theme, editMode, marginLeft }) => css`
-    background-color: ${theme.colorBgLayout};
+    background-color: #050b12;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -295,6 +296,7 @@ const StyledDashboardContent = styled.div<{
 
       .grid-container {
         /* without this, the grid will not get smaller upon toggling the builder panel on */
+        background-color: #050b12;
         width: 0;
         flex: 1;
         position: relative;
@@ -332,7 +334,13 @@ const StyledDashboardContent = styled.div<{
         min-height: 100%;
         overflow: visible !important;
       }
-    }
+      }
+
+      .dashboard-grid,
+      .grid-content,
+      .grid-row {
+        background-color: #050b12;
+      }
 
     .dashboard-builder-sidepane {
       width: ${BUILDER_SIDEPANEL_WIDTH}px;
@@ -342,7 +350,10 @@ const StyledDashboardContent = styled.div<{
     .dashboard-component-chart-holder {
       width: 100%;
       height: 100%;
-      background-color: ${theme.colorBgContainer};
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: ${theme.borderRadius}px;
+      color: #e2e8f0;
       position: relative;
       padding: ${theme.sizeUnit * 4}px;
       box-sizing: border-box;

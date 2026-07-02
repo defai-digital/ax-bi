@@ -72,6 +72,55 @@ export default styled(CountryMap)`
       z-index: 10001;
     }
 
+    .superset-legacy-chart-country-map .country-map-inline-legend {
+      position: absolute;
+      left: ${theme.sizeUnit * 3}px;
+      bottom: ${theme.sizeUnit * 3}px;
+      z-index: 1;
+      max-width: min(360px, calc(100% - ${theme.sizeUnit * 6}px));
+      padding: ${theme.sizeUnit * 2}px ${theme.sizeUnit * 3}px;
+      border: 1px solid ${theme.colorSplit};
+      border-radius: ${theme.borderRadius}px;
+      background: ${theme.colorBgElevated};
+      color: ${theme.colorTextSecondary};
+      box-shadow: ${theme.boxShadowSecondary};
+      font-size: ${theme.fontSizeSM}px;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+
+    .superset-legacy-chart-country-map .country-map-inline-legend-title {
+      margin-bottom: ${theme.sizeUnit}px;
+      color: ${theme.colorText};
+      font-weight: ${theme.fontWeightStrong};
+    }
+
+    .superset-legacy-chart-country-map .country-map-inline-legend-row {
+      display: flex;
+      align-items: center;
+      gap: ${theme.sizeUnit * 2}px;
+      min-width: 0;
+    }
+
+    .superset-legacy-chart-country-map .country-map-inline-legend-row + .country-map-inline-legend-row {
+      margin-top: ${theme.sizeUnit}px;
+    }
+
+    .superset-legacy-chart-country-map .country-map-inline-legend-gradient {
+      width: ${theme.sizeUnit * 12}px;
+      height: ${theme.sizeUnit * 2}px;
+      flex: 0 0 auto;
+      border-radius: ${theme.borderRadiusSM}px;
+    }
+
+    .superset-legacy-chart-country-map .country-map-inline-legend-empty {
+      width: ${theme.sizeUnit * 3}px;
+      height: ${theme.sizeUnit * 3}px;
+      flex: 0 0 auto;
+      border: 1px solid ${theme.colorBorder};
+      border-radius: ${theme.borderRadiusSM}px;
+    }
+
     .superset-legacy-chart-country-map .map-layer {
       fill: ${theme.colorBgContainer};
       stroke: ${theme.colorBorderSecondary};

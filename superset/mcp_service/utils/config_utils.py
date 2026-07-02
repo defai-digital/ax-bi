@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Mapping
 from typing import Any
 
@@ -47,7 +48,10 @@ def get_superset_admin_role_name(config: Mapping[str, Any] | None = None) -> Any
 def get_superset_webserver_address(config: Mapping[str, Any] | None = None) -> Any:
     """Read Superset's configured public webserver address."""
     source = config if config is not None else current_app.config
-    return source.get("SUPERSET_WEBSERVER_ADDRESS", "")
+    return source.get("SUPERSET_WEBSERVER_ADDRESS") or os.environ.get(
+        "SUPERSET_WEBSERVER_ADDRESS",
+        "",
+    )
 
 
 def get_screenshot_selenium_headstart(
@@ -209,7 +213,7 @@ def get_fab_api_key_prefixes(config: Mapping[str, Any] | None = None) -> Any:
 def get_mcp_dev_username(config: Mapping[str, Any] | None = None) -> Any:
     """Read the configured MCP development username."""
     source = config if config is not None else current_app.config
-    return source.get("MCP_DEV_USERNAME")
+    return source.get("MCP_DEV_USERNAME") or os.environ.get("MCP_DEV_USERNAME")
 
 
 def is_mcp_jwt_configured(config: Mapping[str, Any] | None = None) -> bool:

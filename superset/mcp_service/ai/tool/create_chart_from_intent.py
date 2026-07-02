@@ -25,6 +25,7 @@ with a single intent-driven call.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -45,6 +46,79 @@ from superset.mcp_service.privacy import (
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
+
+_CHART_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\bname\s+it\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bnamed\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bcalled\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+)
+_DATASET_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(?:dataset|from|table)\s+['\"]?([A-Za-z0-9_.-]+)['\"]?",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b([A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)\b"),
+)
+
+
+def _extract_chart_name(prompt: str) -> str | None:
+    """Extract an explicit chart title from natural language when present."""
+    for pattern in _CHART_NAME_PATTERNS:
+        match = pattern.search(prompt)
+        if match:
+            chart_name = match.group(1).strip(" '\"")
+            return chart_name or None
+    return None
+
+
+def _dataset_name_candidates(prompt: str) -> list[str]:
+    """Extract likely dataset/table names mentioned directly in a prompt."""
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    for pattern in _DATASET_NAME_PATTERNS:
+        for match in pattern.finditer(prompt):
+            candidate = match.group(1).strip(" '\".,;:!?")
+            key = candidate.lower()
+            if candidate and key not in seen:
+                candidates.append(candidate)
+                seen.add(key)
+
+    return candidates
+
+
+def _discover_dataset_by_name(prompt: str) -> Any | None:
+    """Resolve a dataset when the prompt directly names a table/dataset."""
+    from superset.daos.dataset import DatasetDAO
+
+    candidates = _dataset_name_candidates(prompt)
+    for candidate in candidates:
+        dataset = DatasetDAO.find_one_or_none(table_name=candidate)
+        if dataset is not None:
+            return dataset
+
+    normalized_candidates = {candidate.lower() for candidate in candidates}
+    if not normalized_candidates:
+        return None
+
+    for dataset in DatasetDAO.find_all():
+        table_name = getattr(dataset, "table_name", "")
+        if table_name.lower() in normalized_candidates:
+            return dataset
+
+    return None
 
 
 def _discover_best_dataset(
@@ -78,6 +152,10 @@ def _discover_best_dataset(
 
         if dataset is None:
             warnings.append(f"Dataset {dataset_id} not found or not accessible.")
+        return dataset, warnings
+
+    dataset = _discover_dataset_by_name(prompt)
+    if dataset is not None:
         return dataset, warnings
 
     # Auto-discover via asset search
@@ -330,6 +408,7 @@ async def create_chart_from_intent(  # noqa: C901
         chart_request = GenerateChartRequest(
             dataset_id=dataset.id,
             config=config,
+            chart_name=_extract_chart_name(request.prompt),
             save_chart=request.save_chart,
             generate_preview=False,
         )

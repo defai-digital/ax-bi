@@ -160,6 +160,29 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   const mapLayer = g.append('g').classed('map-layer', true);
   // Add hover popup for tooltip
   const hoverPopup = div.append('div').attr('class', 'hover-popup');
+  const minMetric = extents[0];
+  const maxMetric = extents[1];
+  const lowColor = linearColorScale(minMetric) ?? '#99f6e4';
+  const highColor = linearColorScale(maxMetric) ?? '#0f766e';
+  const noDataColor = '#d9d9d9';
+
+  div.append('div').attr('class', 'country-map-inline-legend').html(`
+    <div class="country-map-inline-legend-title">Legend</div>
+    <div class="country-map-inline-legend-row">
+      <span
+        class="country-map-inline-legend-gradient"
+        style="background:linear-gradient(90deg, ${lowColor}, ${highColor})"
+      ></span>
+      <span>Region color: ${formatter(minMetric)} to ${formatter(maxMetric)}</span>
+    </div>
+    <div class="country-map-inline-legend-row">
+      <span
+        class="country-map-inline-legend-empty"
+        style="background:${noDataColor}"
+      ></span>
+      <span>No color: no sales data</span>
+    </div>
+  `);
 
   // Track mouse position to distinguish clicks from drags
   let mousedownPos: { x: number; y: number } | null = null;

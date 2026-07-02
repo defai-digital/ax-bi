@@ -19,6 +19,7 @@
 import { Link, useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
 import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { css, styled } from '@apache-superset/core/theme';
 import { CardStyles } from 'src/views/CRUD/utils';
 import {
   Dropdown,
@@ -47,6 +48,50 @@ interface DashboardCardProps {
   handleBulkDashboardExport: (dashboardsToExport: Dashboard[]) => void;
   onDelete: (dashboard: Dashboard) => void;
 }
+
+const StyledDashboardCard = styled(CardStyles)`
+  ${({ theme }) => css`
+    border-radius: ${theme.borderRadius}px;
+    transition:
+      transform 0.16s ease,
+      box-shadow 0.16s ease;
+
+    .ant-card {
+      border: 1px solid ${theme.colorBorderSecondary};
+      border-radius: ${theme.borderRadius}px;
+      overflow: hidden;
+      background: ${theme.colorBgContainer};
+      box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 3}px
+        rgba(15, 23, 42, 0.04);
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+
+      .ant-card {
+        border-color: ${theme.colorPrimaryBorder};
+        box-shadow: 0 ${theme.sizeUnit * 2}px ${theme.sizeUnit * 7}px
+          rgba(15, 23, 42, 0.08);
+      }
+    }
+
+    .ant-card-meta-title,
+    .ant-card-meta-description {
+      white-space: normal;
+    }
+
+    .ant-card-cover {
+      background:
+        linear-gradient(135deg, ${theme.colorPrimaryBg} 0%, transparent 52%),
+        ${theme.colorBgLayout};
+      border-bottom: 1px solid ${theme.colorBorderSecondary};
+    }
+
+    .ant-card-body {
+      padding: ${theme.sizeUnit * 4}px;
+    }
+  `}
+`;
 
 function DashboardCard({
   dashboard,
@@ -124,7 +169,7 @@ function DashboardCard({
   }
 
   return (
-    <CardStyles
+    <StyledDashboardCard
       onClick={() => {
         if (!bulkSelectEnabled) {
           history.push(dashboard.url);
@@ -172,7 +217,7 @@ function DashboardCard({
           </ListViewCard.Actions>
         }
       />
-    </CardStyles>
+    </StyledDashboardCard>
   );
 }
 

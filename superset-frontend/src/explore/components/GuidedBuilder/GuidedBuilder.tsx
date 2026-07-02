@@ -89,6 +89,7 @@ const SectionLabel = styled.div`
   ${({ theme }) => css`
     font-weight: ${theme.fontWeightStrong};
     color: ${theme.colorText};
+    font-size: ${theme.fontSizeSM}px;
   `}
 `;
 
@@ -106,6 +107,52 @@ const Container = styled.div`
     padding: ${theme.sizeUnit * 4}px;
     height: 100%;
     overflow: auto;
+    background: ${theme.colorBgLayout};
+  `}
+`;
+
+const Intro = styled.div`
+  ${({ theme }) => css`
+    padding: ${theme.sizeUnit * 4}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadius}px;
+    background: ${theme.colorBgContainer};
+    margin-bottom: ${theme.sizeUnit * 4}px;
+  `}
+`;
+
+const Eyebrow = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorPrimary};
+    font-weight: ${theme.fontWeightStrong};
+    font-size: ${theme.fontSizeSM}px;
+    margin-bottom: ${theme.sizeUnit}px;
+  `}
+`;
+
+const IntroTitle = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorText};
+    font-size: ${theme.fontSizeLG}px;
+    font-weight: ${theme.fontWeightStrong};
+    margin-bottom: ${theme.sizeUnit}px;
+  `}
+`;
+
+const IntroText = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorTextSecondary};
+    line-height: 1.5;
+  `}
+`;
+
+const BuilderCard = styled.div`
+  ${({ theme }) => css`
+    padding: ${theme.sizeUnit * 4}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadius}px;
+    background: ${theme.colorBgContainer};
+    margin-bottom: ${theme.sizeUnit * 4}px;
   `}
 `;
 
@@ -208,136 +255,158 @@ export default function GuidedBuilder({
 
   return (
     <Container data-test="guided-builder">
-      <Section>
-        <SectionLabel>{t('Visualization')}</SectionLabel>
-        <Select
-          ariaLabel={t('Visualization type')}
-          options={vizOptions}
-          value={intent.vizType}
-          onChange={value => apply({ ...intent, vizType: value as string })}
-        />
-      </Section>
+      <Intro>
+        <Eyebrow>{t('AX-BI builder')}</Eyebrow>
+        <IntroTitle>{t('Build the chart in a few choices')}</IntroTitle>
+        <IntroText>
+          {t(
+            'Pick what to measure, how to group it, and update the preview. Advanced options are still available when needed.',
+          )}
+        </IntroText>
+      </Intro>
 
-      {showMeasures && (
+      <BuilderCard>
         <Section>
-          <SectionLabel>{t('Measure')}</SectionLabel>
+          <SectionLabel>{t('Chart type')}</SectionLabel>
           <Select
-            ariaLabel={t('Measures')}
-            mode={measuresMulti ? 'multiple' : 'single'}
-            allowClear
-            options={metricOptions}
-            placeholder={t('Add a measure')}
-            value={measuresMulti ? intent.measures : intent.measures[0]}
-            onChange={value =>
-              apply({
-                ...intent,
-                measures: measuresMulti
-                  ? ((value as string[]) ?? [])
-                  : value
-                    ? [value as string]
-                    : [],
-              })
-            }
+            ariaLabel={t('Visualization type')}
+            options={vizOptions}
+            value={intent.vizType}
+            onChange={value => apply({ ...intent, vizType: value as string })}
           />
         </Section>
-      )}
 
-      {showDimensions && (
+        {showMeasures && (
+          <Section>
+            <SectionLabel>{t('What should AX-BI measure?')}</SectionLabel>
+            <Select
+              ariaLabel={t('Measures')}
+              mode={measuresMulti ? 'multiple' : 'single'}
+              allowClear
+              options={metricOptions}
+              placeholder={t('Choose a number, metric or amount')}
+              value={measuresMulti ? intent.measures : intent.measures[0]}
+              onChange={value =>
+                apply({
+                  ...intent,
+                  measures: measuresMulti
+                    ? ((value as string[]) ?? [])
+                    : value
+                      ? [value as string]
+                      : [],
+                })
+              }
+            />
+          </Section>
+        )}
+
+        {showDimensions && (
+          <Section>
+            <SectionLabel>
+              {descriptor?.hasXAxis
+                ? t('Break it down by')
+                : t('Group results by')}
+            </SectionLabel>
+            <Select
+              ariaLabel={t('Group by')}
+              mode="multiple"
+              allowClear
+              options={columnOptions}
+              placeholder={t('Choose fields like country, product or date')}
+              value={intent.dimensions}
+              onChange={value =>
+                apply({ ...intent, dimensions: (value as string[]) ?? [] })
+              }
+            />
+          </Section>
+        )}
+      </BuilderCard>
+
+      <BuilderCard>
         <Section>
-          <SectionLabel>
-            {descriptor?.hasXAxis ? t('X-axis & breakdown') : t('Group by')}
-          </SectionLabel>
-          <Select
-            ariaLabel={t('Group by')}
-            mode="multiple"
-            allowClear
-            options={columnOptions}
-            placeholder={t('Add a dimension')}
-            value={intent.dimensions}
-            onChange={value =>
-              apply({ ...intent, dimensions: (value as string[]) ?? [] })
-            }
-          />
-        </Section>
-      )}
-
-      <Section>
-        <SectionLabel>{t('Filters')}</SectionLabel>
-        {intent.filters.map((filter, index) => {
-          const valueless = DISABLE_INPUT_OPERATORS.includes(filter.operatorId);
-          return (
-            // eslint-disable-next-line react/no-array-index-key
-            <FilterRow key={index}>
-              <Select
-                ariaLabel={t('Filter column')}
-                options={columnOptions}
-                value={filter.column}
-                css={css`
-                  flex: 2;
-                `}
-                onChange={value =>
-                  updateFilter(index, { column: value as string })
-                }
-              />
-              <Select
-                ariaLabel={t('Filter operator')}
-                options={operatorOptions}
-                value={filter.operatorId}
-                css={css`
-                  flex: 2;
-                `}
-                onChange={value =>
-                  updateFilter(index, { operatorId: value as Operators })
-                }
-              />
-              {!valueless && (
-                <Input
-                  aria-label={t('Filter value')}
-                  placeholder={t('value')}
-                  value={filter.value ?? ''}
+          <SectionLabel>{t('Filters')}</SectionLabel>
+          {intent.filters.map((filter, index) => {
+            const valueless = DISABLE_INPUT_OPERATORS.includes(
+              filter.operatorId,
+            );
+            return (
+              // eslint-disable-next-line react/no-array-index-key
+              <FilterRow key={index}>
+                <Select
+                  ariaLabel={t('Filter column')}
+                  options={columnOptions}
+                  value={filter.column}
                   css={css`
                     flex: 2;
                   `}
-                  onChange={e => updateFilter(index, { value: e.target.value })}
+                  onChange={value =>
+                    updateFilter(index, { column: value as string })
+                  }
                 />
-              )}
-              <Button
-                buttonStyle="link"
-                buttonSize="small"
-                onClick={() => removeFilter(index)}
-                aria-label={t('Remove filter')}
-              >
-                <Icons.DeleteOutlined />
-              </Button>
-            </FilterRow>
-          );
-        })}
-        <Button
-          buttonStyle="link"
-          buttonSize="small"
-          onClick={addFilter}
-          disabled={!columnOptions.length}
-        >
-          <Icons.PlusOutlined /> {t('Add filter')}
-        </Button>
-      </Section>
+                <Select
+                  ariaLabel={t('Filter operator')}
+                  options={operatorOptions}
+                  value={filter.operatorId}
+                  css={css`
+                    flex: 2;
+                  `}
+                  onChange={value =>
+                    updateFilter(index, { operatorId: value as Operators })
+                  }
+                />
+                {!valueless && (
+                  <Input
+                    aria-label={t('Filter value')}
+                    placeholder={t('value')}
+                    value={filter.value ?? ''}
+                    css={css`
+                      flex: 2;
+                    `}
+                    onChange={e =>
+                      updateFilter(index, { value: e.target.value })
+                    }
+                  />
+                )}
+                <Button
+                  buttonStyle="link"
+                  buttonSize="small"
+                  onClick={() => removeFilter(index)}
+                  aria-label={t('Remove filter')}
+                >
+                  <Icons.DeleteOutlined />
+                </Button>
+              </FilterRow>
+            );
+          })}
+          <Button
+            buttonStyle="link"
+            buttonSize="small"
+            onClick={addFilter}
+            disabled={!columnOptions.length}
+          >
+            <Icons.PlusOutlined /> {t('Add filter')}
+          </Button>
+        </Section>
+      </BuilderCard>
 
-      <Section>
-        <SectionLabel>{t('Row limit')}</SectionLabel>
-        <Select
-          ariaLabel={t('Row limit')}
-          allowClear
-          options={ROW_LIMIT_OPTIONS.map(n => ({
-            label: String(n),
-            value: n,
-          }))}
-          value={intent.rowLimit}
-          placeholder={t('Default')}
-          onChange={value =>
-            apply({ ...intent, rowLimit: value as number | undefined })
-          }
-        />
-      </Section>
+      <BuilderCard>
+        <Section>
+          <SectionLabel>{t('Rows to preview')}</SectionLabel>
+          <Select
+            ariaLabel={t('Row limit')}
+            allowClear
+            options={ROW_LIMIT_OPTIONS.map(n => ({
+              label: String(n),
+              value: n,
+            }))}
+            value={intent.rowLimit}
+            placeholder={t('Default')}
+            onChange={value =>
+              apply({ ...intent, rowLimit: value as number | undefined })
+            }
+          />
+        </Section>
+      </BuilderCard>
 
       <Footer>
         <Button
@@ -349,7 +418,7 @@ export default function GuidedBuilder({
           {t('Update chart')}
         </Button>
         <Button buttonStyle="link" onClick={onSwitchToAdvanced}>
-          {t('Switch to advanced')}
+          {t('Advanced options')}
         </Button>
       </Footer>
     </Container>

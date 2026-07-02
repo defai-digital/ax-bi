@@ -33,20 +33,26 @@ interface CardCollectionProps {
 const CardContainer = styled.div<{ showThumbnails?: boolean }>`
   ${({ theme, showThumbnails }) => `
     display: grid;
-    justify-content: start;
-    grid-gap: ${theme.sizeUnit * 12}px ${theme.sizeUnit * 4}px;
-    grid-template-columns: repeat(auto-fit, 300px);
-    margin-top: ${theme.sizeUnit * -6}px;
+    justify-content: stretch;
+    grid-gap: ${theme.sizeUnit * 5}px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    margin-top: ${theme.sizeUnit * 2}px;
     padding: ${
       showThumbnails
-        ? `${theme.sizeUnit * 8 + 3}px ${theme.sizeUnit * 20}px`
-        : `${theme.sizeUnit * 8 + 1}px ${theme.sizeUnit * 20}px`
+        ? `${theme.sizeUnit * 5}px ${theme.sizeUnit * 6}px`
+        : `${theme.sizeUnit * 5}px ${theme.sizeUnit * 6}px`
     };
+
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      padding: ${theme.sizeUnit * 4}px;
+    }
   `}
 `;
 
 const CardWrapper = styled.div`
   border: 2px solid transparent;
+  border-radius: ${({ theme }) => theme.borderRadius}px;
   &.card-selected {
     border: 2px solid ${({ theme }) => theme.colorPrimary};
   }

@@ -350,6 +350,73 @@ function WorldMap(element: HTMLElement, props: WorldMapProps): void {
       .on('click', handleClick);
   }
 
+  const metricValues = filteredData
+    .map(d => d.m1)
+    .filter(value => typeof value === 'number' && Number.isFinite(value));
+  const minMetric = metricValues.length ? Math.min(...metricValues) : undefined;
+  const maxMetric = metricValues.length ? Math.max(...metricValues) : undefined;
+  const defaultFill =
+    typeof theme.colorBorder === 'string' ? theme.colorBorder : '#334155';
+  const textColor =
+    typeof theme.colorText === 'string' ? theme.colorText : '#e2e8f0';
+  const mutedTextColor =
+    typeof theme.colorTextSecondary === 'string'
+      ? theme.colorTextSecondary
+      : '#cbd5e1';
+  const legendBackground =
+    typeof theme.colorBgElevated === 'string'
+      ? theme.colorBgElevated
+      : 'rgba(15, 23, 42, 0.92)';
+  const legendBorder =
+    typeof theme.colorSplit === 'string' ? theme.colorSplit : '#1e293b';
+  const lowColor =
+    colorBy === ColorBy.Metric && minMetric !== undefined
+      ? colorFn(minMetric)
+      : defaultFill;
+  const highColor =
+    colorBy === ColorBy.Metric && maxMetric !== undefined
+      ? colorFn(maxMetric)
+      : color;
+  const lowLabel =
+    minMetric !== undefined ? formatter(minMetric) : 'Lower value';
+  const highLabel =
+    maxMetric !== undefined ? formatter(maxMetric) : 'Higher value';
+
+  div.append('div')
+    .attr('class', 'world-map-inline-legend')
+    .style('background', legendBackground)
+    .style('border-color', legendBorder)
+    .style('color', mutedTextColor).html(`
+      <div class="world-map-inline-legend-title" style="color:${textColor}">
+        Legend
+      </div>
+      <div class="world-map-inline-legend-row">
+        <span
+          class="world-map-inline-legend-gradient"
+          style="background:linear-gradient(90deg, ${lowColor}, ${highColor})"
+        ></span>
+        <span>Country color: ${lowLabel} to ${highLabel}</span>
+      </div>
+      ${
+        showBubbles
+          ? `<div class="world-map-inline-legend-row">
+              <span
+                class="world-map-inline-legend-bubble"
+                style="background:${color};border-color:${color}"
+              ></span>
+              <span>Bubble size: higher sales amount</span>
+            </div>`
+          : ''
+      }
+      <div class="world-map-inline-legend-row">
+        <span
+          class="world-map-inline-legend-empty"
+          style="background:${defaultFill}"
+        ></span>
+        <span>No color: no sales data</span>
+      </div>
+    `);
+
   if (filterState.selectedValues?.length > 0) {
     d3.selectAll('path.datamaps-subunit')
       .filter(

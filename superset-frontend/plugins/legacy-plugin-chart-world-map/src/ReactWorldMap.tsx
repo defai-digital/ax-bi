@@ -53,6 +53,53 @@ export default styled(WorldMapComponent)`
     svg {
       background-color: ${({ theme }) => theme.colorBgLayout};
     }
+    .world-map-inline-legend {
+      position: absolute;
+      left: ${({ theme }) => theme.sizeUnit * 3}px;
+      bottom: ${({ theme }) => theme.sizeUnit * 3}px;
+      z-index: 1;
+      max-width: min(360px, calc(100% - ${({ theme }) => theme.sizeUnit * 6}px));
+      padding: ${({ theme }) => theme.sizeUnit * 2}px
+        ${({ theme }) => theme.sizeUnit * 3}px;
+      border: 1px solid;
+      border-radius: ${({ theme }) => theme.borderRadius}px;
+      box-shadow: ${({ theme }) => theme.boxShadowSecondary};
+      font-size: ${({ theme }) => theme.fontSizeSM}px;
+      line-height: 1.35;
+      pointer-events: none;
+    }
+    .world-map-inline-legend-title {
+      margin-bottom: ${({ theme }) => theme.sizeUnit}px;
+      font-weight: ${({ theme }) => theme.fontWeightStrong};
+    }
+    .world-map-inline-legend-row {
+      display: flex;
+      align-items: center;
+      gap: ${({ theme }) => theme.sizeUnit * 1.5}px;
+      margin-top: ${({ theme }) => theme.sizeUnit}px;
+      white-space: normal;
+    }
+    .world-map-inline-legend-gradient {
+      display: inline-block;
+      flex: 0 0 ${({ theme }) => theme.sizeUnit * 10}px;
+      height: ${({ theme }) => theme.sizeUnit * 2}px;
+      border-radius: ${({ theme }) => theme.borderRadius}px;
+    }
+    .world-map-inline-legend-bubble {
+      display: inline-block;
+      flex: 0 0 ${({ theme }) => theme.sizeUnit * 3}px;
+      width: ${({ theme }) => theme.sizeUnit * 3}px;
+      height: ${({ theme }) => theme.sizeUnit * 3}px;
+      border: 2px solid;
+      border-radius: 50%;
+      opacity: 0.65;
+    }
+    .world-map-inline-legend-empty {
+      display: inline-block;
+      flex: 0 0 ${({ theme }) => theme.sizeUnit * 5}px;
+      height: ${({ theme }) => theme.sizeUnit * 2}px;
+      border-radius: ${({ theme }) => theme.borderRadius}px;
+    }
   }
   .hoverinfo {
     background-color: ${({ theme }) => theme.colorBgElevated};

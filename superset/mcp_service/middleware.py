@@ -516,7 +516,21 @@ class StructuredContentStripperMiddleware(Middleware):
                 meta={"mcp_call_id": mcp_call_id} if mcp_call_id else None,
             )
         if isinstance(result, ToolResult) and result.structured_content is not None:
-            result = ToolResult(content=result.content, meta=result.meta)
+            content = list(result.content or [])
+            if not content:
+                from superset.utils.json import dumps as json_dumps
+
+                content = [
+                    mt.TextContent(
+                        type="text",
+                        text=json_dumps(result.structured_content),
+                    )
+                ]
+                logger.debug(
+                    "Converted structured MCP response to text content: tool=%s",
+                    context.message.name,
+                )
+            result = ToolResult(content=content, meta=result.meta)
         return result
 
 

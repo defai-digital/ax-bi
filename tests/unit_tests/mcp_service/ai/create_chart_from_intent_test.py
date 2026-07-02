@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
 import sys
 import types
 from collections.abc import Callable
@@ -63,6 +65,8 @@ def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
 _saved = _force_passthrough_decorators()
 try:
     from superset.mcp_service.ai.tool.create_chart_from_intent import (
+        _dataset_name_candidates,
+        _extract_chart_name,
         _suggest_alternatives,
     )
 finally:
@@ -105,6 +109,58 @@ class TestSuggestAlternatives:
         alts = _suggest_alternatives("some_unknown_type")
         assert len(alts) == 1
         assert "different" in alts[0].lower()
+
+
+# ---------------------------------------------------------------------------
+# _extract_chart_name
+# ---------------------------------------------------------------------------
+
+
+class TestExtractChartName:
+    def test_extracts_name_it_phrase(self) -> None:
+        assert (
+            _extract_chart_name("Create a bar chart. Name it Test - Count by Island.")
+            == "Test - Count by Island"
+        )
+
+    def test_extracts_name_before_follow_up_instruction(self) -> None:
+        assert (
+            _extract_chart_name(
+                "Name it Penguins Count by Island. Return only the saved chart URL."
+            )
+            == "Penguins Count by Island"
+        )
+
+    def test_extracts_named_phrase(self) -> None:
+        assert (
+            _extract_chart_name("Create a chart named MCP Test - Revenue by Country")
+            == "MCP Test - Revenue by Country"
+        )
+
+    def test_returns_none_when_no_name_requested(self) -> None:
+        assert _extract_chart_name("Create a bar chart by island") is None
+
+
+# ---------------------------------------------------------------------------
+# _dataset_name_candidates
+# ---------------------------------------------------------------------------
+
+
+class TestDatasetNameCandidates:
+    def test_extracts_dataset_name_after_dataset_keyword(self) -> None:
+        assert _dataset_name_candidates("Find dataset palmer_penguins") == [
+            "palmer_penguins"
+        ]
+
+    def test_extracts_dataset_name_after_from_keyword(self) -> None:
+        assert _dataset_name_candidates("Create a chart from cleaned_sales_data") == [
+            "cleaned_sales_data"
+        ]
+
+    def test_deduplicates_dataset_candidates(self) -> None:
+        assert _dataset_name_candidates(
+            "Find dataset palmer_penguins from palmer_penguins"
+        ) == ["palmer_penguins"]
 
 
 # ---------------------------------------------------------------------------
@@ -168,3 +224,15 @@ class TestResolveChartConfigFromIntent:
             )
 
         assert any("failed" in w.lower() or "heuristic" in w.lower() for w in warnings)
+
+
+class TestCreateChartFromIntent:
+    def test_calls_generate_chart_with_keyword_ctx(self) -> None:
+        """Regression test for FastMCP wrappers receiving duplicate ctx values."""
+        module = importlib.import_module(
+            "superset.mcp_service.ai.tool.create_chart_from_intent"
+        )
+        source = inspect.getsource(module)
+
+        assert "generate_chart(chart_request, ctx=ctx)" in source
+        assert "generate_chart(chart_request, ctx)" not in source
