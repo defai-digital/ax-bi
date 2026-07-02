@@ -18,8 +18,11 @@
  */
 import { TreeProps, TreeDataNode } from '@superset-ui/core/components/Tree';
 import { ControlComponentProps } from '@superset-ui/chart-controls';
-import { Style } from 'geostyler-style';
-import { Data } from 'geostyler-data';
+// import type: geostyler packages ship type declarations only; a value
+// import makes jest resolve their d.ts entry (and its json-schema import)
+// as a runtime module
+import type { Style } from 'geostyler-style';
+import type { Data } from 'geostyler-data';
 
 export interface BaseLayerConf {
   title: string;

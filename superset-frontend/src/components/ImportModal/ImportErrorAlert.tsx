@@ -20,10 +20,12 @@
 import { FunctionComponent } from 'react';
 import { t } from '@apache-superset/core/translation';
 
-import { getDatabaseDocumentationLinks } from 'src/views/CRUD/hooks';
+// direct leaf import: src/views/CRUD/hooks is a monolith that can be
+// mid-evaluation (import cycle) when this module-scope constant computes
+import SupersetText from 'src/utils/textUtils';
 import { ErrorAlert } from 'src/components';
 
-const supersetTextDocs = getDatabaseDocumentationLinks();
+const supersetTextDocs = SupersetText.DB_CONNECTION_DOC_LINKS;
 export const DOCUMENTATION_LINK = supersetTextDocs
   ? supersetTextDocs.support
   : 'https://superset.apache.org/user-docs/databases/#installing-database-drivers';

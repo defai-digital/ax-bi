@@ -16,7 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { makeSingleton, QueryFormData } from '@superset-ui/core';
+// direct module imports: this module calls makeSingleton at module scope,
+// and the @superset-ui/core barrel can be mid-evaluation (import cycle)
+import makeSingleton from '@superset-ui/core/utils/makeSingleton';
+import type { QueryFormData } from '@superset-ui/core/query/types/QueryFormData';
 import { isStandardizedFormData, StandardizedControls } from '../types';
 
 class StandardizedControlsManager {

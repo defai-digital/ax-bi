@@ -17,8 +17,10 @@
  * under the License.
  */
 
-import { CurrencyFormatter } from '../currency-format';
-import { Currency } from '../query';
+// direct/type-only imports: barrel imports here create runtime cycles
+// (number-format <-> currency-format <-> query)
+import CurrencyFormatter from '../currency-format/CurrencyFormatter';
+import type { Currency } from '../query/types/Datasource';
 import NumberFormatter from './NumberFormatter';
 import { getNumberFormatter } from './NumberFormatterRegistrySingleton';
 

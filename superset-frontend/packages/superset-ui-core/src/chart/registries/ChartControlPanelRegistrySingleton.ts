@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Registry } from '../..';
+// direct import: the package barrel ('../..') can be mid-evaluation (cycle)
+import Registry from '../../models/Registry';
 import makeSingleton from '../../utils/makeSingleton';
 import { ChartControlPanel } from '../models/ChartControlPanel';
 

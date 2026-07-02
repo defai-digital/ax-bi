@@ -24,7 +24,10 @@ import { theme as antdThemeImport } from 'antd';
  * Get AntdThemeConfig type from the theme object
  */
 import type { ThemeConfig } from 'antd';
-import { Theme } from '.';
+// import type only: a value import of the barrel creates a runtime cycle
+// (types -> index -> exampleThemes -> types) that leaves the ThemeAlgorithm
+// enum undefined while exampleThemes evaluates
+import type { Theme } from '.';
 
 /**
  * Grab all antd tokens via getDesignToken(...).
