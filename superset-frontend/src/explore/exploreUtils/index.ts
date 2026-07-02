@@ -17,6 +17,10 @@
  * under the License.
  */
 
+// re-export first: consumers can reach this module mid-import-cycle, and
+// the leaf require must have run before the export getter is read
+// eslint-disable-next-line import/no-cycle
+export { formatSelectOptions } from './formatSelectOptions';
 import { useCallback, useEffect, DependencyList } from 'react';
 /* eslint camelcase: 0 */
 import URI from 'urijs';
@@ -525,5 +529,3 @@ export const getSimpleSQLExpression = (
   }
   return expression;
 };
-
-export { formatSelectOptions } from './formatSelectOptions';
