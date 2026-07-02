@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  DTTM_ALIAS,
-  getColumnLabel,
-  isQueryFormColumn,
-  QueryFormData,
-  QueryFormColumn,
-  Optional,
-} from '@superset-ui/core';
+// direct module imports: importing the package's own barrel
+// (@superset-ui/core) creates a cycle that leaves the value bindings
+// undefined while the barrel evaluates
+import { DTTM_ALIAS } from './constants';
+import getColumnLabel from './getColumnLabel';
+import { isQueryFormColumn, type QueryFormColumn } from './types/Column';
+import type { QueryFormData } from './types/QueryFormData';
+import type { Optional } from '../types';
 
 export const isXAxisSet = (formData: QueryFormData) =>
   isQueryFormColumn(formData.x_axis);

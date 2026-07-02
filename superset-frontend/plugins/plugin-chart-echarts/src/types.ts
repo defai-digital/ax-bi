@@ -35,7 +35,10 @@ import {
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import type { TooltipMarker } from 'echarts/types/src/util/format';
 import type { ECElementEvent } from 'echarts/types/src/util/types';
-import { StackControlsValue } from './constants';
+// import type only: a value import creates a runtime cycle
+// (types -> constants -> Timeseries/constants -> defaults -> types) that
+// leaves the LegendOrientation enum undefined while defaults.ts evaluates
+import type { StackControlsValue } from './constants';
 
 export type EchartsStylesProps = {
   height: number;

@@ -116,6 +116,10 @@ class TestDatasetApi(SupersetTestCase):
         db.session.commit()
         if fetch_metadata:
             table.fetch_metadata()
+            # fetch_metadata leaves its column/metric writes pending; commit so
+            # they don't hold the write lock against fixtures running in other
+            # app contexts (sessions are app-context-scoped under FSA 3.1)
+            db.session.commit()
         return table
 
     @staticmethod
