@@ -672,6 +672,10 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
         table=virtual_dataset,
         expression="INCORRECT SQL",
     )
+    # The API request runs in its own app context and session, which can't
+    # see this session's pending column; commit so the broken expression is
+    # actually part of the queried dataset
+    db.session.commit()
 
     uri = (
         f"/datasource/samples?datasource_id={virtual_dataset.id}&datasource_type=table"

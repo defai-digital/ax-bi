@@ -2274,6 +2274,12 @@ class RowLevelSecurityFilter(Model, AuditMixinNullable):
         Enum(
             *[filter_type.value for filter_type in utils.RowLevelSecurityFilterType],
             name="filter_type_enum",
+            # The migration created this column as VARCHAR(255); a native
+            # enum makes SQLAlchemy 2 reference a Postgres type that was
+            # never created (psycopg2 UndefinedObject)
+            native_enum=False,
+            create_constraint=False,
+            length=255,
         ),
     )
     group_key = Column(String(255), nullable=True)

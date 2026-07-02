@@ -480,7 +480,8 @@ class TestSqlLabApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
 
         database = get_example_database()
-        client_id = f"test_export_{random.getrandbits(64)}"
+        # Query.client_id is String(11); Postgres rejects longer values
+        client_id = f"{random.getrandbits(32):x}"
         query_obj = Query(
             client_id=client_id,
             database=database,
