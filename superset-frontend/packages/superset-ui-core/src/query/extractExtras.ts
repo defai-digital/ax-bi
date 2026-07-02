@@ -18,7 +18,9 @@
  */
 
 /* eslint-disable camelcase */
-import { TimeGranularity, QueryFormData } from '@superset-ui/core';
+// direct module imports: the package's own barrel can be mid-evaluation
+import { TimeGranularity } from '../time-format/types';
+import type { QueryFormData } from './types/QueryFormData';
 import {
   AppliedTimeExtras,
   QueryObjectExtras,

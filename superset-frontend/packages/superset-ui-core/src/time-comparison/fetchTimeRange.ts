@@ -18,11 +18,11 @@
  */
 import rison from 'rison';
 import { isEmpty } from 'lodash';
-import {
-  SupersetClient,
-  getClientErrorObject,
-  ensureIsArray,
-} from '@superset-ui/core';
+// direct module imports: the package's own barrel can be mid-evaluation
+// (import cycle), leaving these value bindings undefined
+import SupersetClient from '../connection/SupersetClient';
+import { getClientErrorObject } from '../query/getClientErrorObject';
+import ensureIsArray from '../utils/ensureIsArray';
 
 export const SEPARATOR = ' : ';
 

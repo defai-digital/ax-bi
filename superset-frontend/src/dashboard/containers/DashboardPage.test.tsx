@@ -116,6 +116,10 @@ jest.mock('src/dashboard/containers/Dashboard', () => ({
 }));
 
 jest.mock('src/components/MessageToasts/withToasts', () => ({
+  __esModule: true,
+  // pass-through HOC: transitively imported components wrap themselves with
+  // withToasts at module scope
+  default: (component: unknown) => component,
   useToasts: () => ({ addDangerToast: jest.fn(), addSuccessToast: jest.fn() }),
 }));
 
