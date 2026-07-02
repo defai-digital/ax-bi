@@ -334,13 +334,13 @@ const StyledDashboardContent = styled.div<{
         min-height: 100%;
         overflow: visible !important;
       }
-      }
 
       .dashboard-grid,
       .grid-content,
       .grid-row {
         background-color: #050b12;
       }
+    }
 
     .dashboard-builder-sidepane {
       width: ${BUILDER_SIDEPANEL_WIDTH}px;
