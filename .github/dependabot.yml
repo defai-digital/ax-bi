@@ -4,6 +4,122 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "npm"
+    ignore:
+      - dependency-name: "react-error-boundary"
+      - dependency-name: "@rjsf/*"
+      # remark-gfm v4+ requires react-markdown v9+, which needs React 18
+      - dependency-name: "remark-gfm"
+      - dependency-name: "react-markdown"
+      # TODO: remove below entries until React >= 19.0.0
+      - dependency-name: "react-icons"
+      # JSDOM v30 doesn't play well with Jest v30
+      # Source: https://jestjs.io/blog#known-issues
+      # GH thread: https://github.com/jsdom/jsdom/issues/3492
+      - dependency-name: "jest-environment-jsdom"
+      # `@swc/plugin-transform-imports` doesn't work with current Webpack-SWC hybrid setup
+      # See https://github.com/apache/superset/pull/37384#issuecomment-3793991389
+      # TODO: remove the plugin once Lodash usage has been migrated to a more readily tree-shakeable alternative
+      - dependency-name: "@swc/plugin-transform-imports"
+      # `just-handlerbars-helpers` library in plugin-chart-handlebars requires `currencyformatter`` to be < 2
+      - dependency-name: "currencyformatter.js"
+        update-types: ["version-update:semver-major"]
+      # TODO: remove below clause once https://github.com/pmmmwh/react-refresh-webpack-plugin/pull/940 lands onto a future release
+      # and confirm the issue https://github.com/apache/superset/issues/39600 is fixed
+      - dependency-name: "react-checkbox-tree"
+        update-types: ["version-update:semver-major"]
+    directory: "/superset-frontend/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - npm
+      - dependabot
+    open-pull-requests-limit: 20
+    versioning-strategy: increase
+    cooldown:
+      default-days: 7
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+      production-minor-patch:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    open-pull-requests-limit: 10
+    # Bump the lower bound to the new version, not just widen the upper
+    # bound. Without this, a `sqlglot>=28.10.0, <29` constraint upgraded
+    # to `<30` would keep the stale lower bound forever, dragging
+    # transitively-resolved versions with it. See #40186 (review thread).
+    versioning-strategy: increase
+    schedule:
+      interval: "weekly"
+    labels:
+      - pip
+      - dependabot
+    cooldown:
+      default-days: 7
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+      production-minor-patch:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: ".github/actions"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "npm"
+    directory: "/docs/"
+    ignore:
+      - dependency-name: "react-error-boundary"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "npm"
+    directory: "/superset-websocket/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - npm
+      - dependabot
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "npm"
+    directory: "/superset-websocket/utils/client-ws-app/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - npm
+      - dependabot
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    cooldown:
+      default-days: 7
+version: 2
+enable-beta-ecosystems: true
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
       interval: "daily"
     cooldown:
       default-days: 7
