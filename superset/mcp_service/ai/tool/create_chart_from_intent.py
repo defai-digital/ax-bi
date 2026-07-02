@@ -414,11 +414,13 @@ async def create_chart_from_intent(  # noqa: C901
         )
 
         # Import and call generate_chart directly (in-process, not via MCP).
-        # The @tool wrapper injects ctx itself, so we pass only the request —
-        # passing ctx here collides ("multiple values for argument 'ctx'").
+        # ctx is passed as a keyword argument: the @tool wrapper binds the
+        # first positional argument to the request, so passing ctx
+        # positionally collides ("multiple values for argument 'ctx'"). The
+        # keyword form supplies the already-resolved ctx without collision.
         from superset.mcp_service.chart.tool.generate_chart import generate_chart
 
-        chart_response = await generate_chart(chart_request)
+        chart_response = await generate_chart(chart_request, ctx=ctx)
 
     # Step 4: Build response
     await ctx.report_progress(4, 4, "Building response")
