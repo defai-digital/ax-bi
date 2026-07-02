@@ -17,8 +17,11 @@
  * under the License.
  */
 
-import { BinaryQueryObjectFilterClause, ExtraFormData } from '../../query';
-import { JsonObject } from '../..';
+// import type via direct modules: the query/package barrels cycle back
+// into chart types
+import type { BinaryQueryObjectFilterClause } from '../../query/types/Query';
+import type { ExtraFormData } from '../../query/types/QueryFormData';
+import type { JsonObject } from '../../connection/types';
 
 export type HandlerFunction = (...args: unknown[]) => void;
 

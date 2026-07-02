@@ -17,15 +17,13 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
-import {
-  COMMON_ERR_MESSAGES,
-  JsonObject,
-  SupersetClientResponse,
-  SupersetError,
-  ErrorTypeEnum,
-  isProbablyHTML,
-  isJsonString,
-} from '@superset-ui/core';
+// direct module imports: importing the package's own barrel
+// (@superset-ui/core) creates a cycle that leaves these value bindings
+// undefined while the barrel evaluates
+import { COMMON_ERR_MESSAGES } from '../connection/constants';
+import type { JsonObject, SupersetClientResponse } from '../connection/types';
+import { ErrorTypeEnum, type SupersetError } from './types/Query';
+import { isProbablyHTML, isJsonString } from '../utils/html';
 
 // The response always contains an error attribute, can contain anything from
 // the SupersetClientResponse object, and can contain a spread JSON blob

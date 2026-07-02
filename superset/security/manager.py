@@ -28,6 +28,7 @@ from typing import Any, Callable, cast, NamedTuple, Optional, TYPE_CHECKING, Uni
 from flask import current_app, Flask, g, Request
 from flask_appbuilder import Model
 from flask_appbuilder.models.filters import BaseFilter
+from flask_appbuilder.security.manager import BaseSecurityManager
 from flask_appbuilder.security.sqla.apis import GroupApi, RoleApi, UserApi
 from flask_appbuilder.security.sqla.apis.permission_view_menu.api import (
     PermissionViewMenuApi,
@@ -54,7 +55,7 @@ from flask_login import AnonymousUserMixin, LoginManager
 from jwt.api_jwt import _jwt_global_obj
 from sqlalchemy import and_, func as sa_func, inspect, or_
 from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm import eagerload, joinedload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy.orm.mapper import Mapper
 from sqlalchemy.orm.query import Query as SqlaQuery
@@ -753,6 +754,33 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     user_api = SupersetUserApi
     group_api = SupersetGroupApi
     permission_view_menu_api = SupersetPermissionViewMenuApi
+
+    def _create_db(self) -> None:
+        """
+        Create Flask-AppBuilder security tables using an engine-level DDL bind.
+
+        Flask-AppBuilder 5.2 obtains its DDL bind from ``session.get_bind()``,
+        which may return a session-bound connection. Under SQLAlchemy 2,
+        inspecting that connection can autobegin a transaction, and a following
+        ``create_all`` call on the same connection fails when it tries to begin
+        again. Using the Flask-SQLAlchemy engine keeps inspection and DDL on
+        separate connection scopes.
+        """
+        from superset.extensions import db  # pylint: disable=import-outside-toplevel
+
+        engine = db.engine
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        if (
+            "ab_user" not in existing_tables
+            or "ab_group" not in existing_tables
+            or "ab_api_key" not in existing_tables
+        ):
+            logger.info("Creating Flask-AppBuilder security tables")
+            Model.metadata.create_all(engine)
+            logger.info("Created Flask-AppBuilder security tables")
+
+        BaseSecurityManager.create_db(self)
 
     USER_MODEL_VIEWS = {
         "RegisterUserModelView",
@@ -1980,8 +2008,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         pvms = (
             self.session.query(self.permissionview_model)
             .options(
-                eagerload(self.permissionview_model.permission),
-                eagerload(self.permissionview_model.view_menu),
+                joinedload(self.permissionview_model.permission),
+                joinedload(self.permissionview_model.view_menu),
             )
             .all()
         )
@@ -2490,7 +2518,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             logger.warning(
                 "Dataset has no database will retry with database_id to set permission"
             )
-            database = self.session.query(Database).get(target.database_id)
+            database = self.session.get(Database, target.database_id)
             dataset_perm = self.get_dataset_perm(
                 target.id, target.table_name, database.database_name
             )
@@ -3334,6 +3362,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         """
         # pylint: disable=import-outside-toplevel
         from flask import current_app
+        from sqlalchemy.orm import object_session
 
         from superset import is_feature_enabled
         from superset.connectors.sqla.models import SqlaTable
@@ -3367,7 +3396,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
                 client_id=shortid()[:10],
                 user_id=get_user_id(),
             )
-            self.session.expunge(query)
+            if session := object_session(query):
+                session.expunge(query)
 
         if database and table or query:
             if query:

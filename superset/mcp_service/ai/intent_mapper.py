@@ -37,6 +37,13 @@ metadata (columns and metrics), produce a chart configuration.
 
 RULES:
 - Use ONLY column names and metric names that exist in the dataset metadata.
+- ALWAYS obey any "Governed instructions (MUST follow)" in the metadata — these
+  are authoritative business rules (for example, do not sum a value across a
+  dimension, or a required filter). Never produce a config that violates them.
+- Prefer the dataset's certified saved metrics over re-deriving an aggregate
+  from a raw column. Use a raw-column aggregate only when no saved metric fits.
+- Use the "Business glossary" to map the user's wording (synonyms) to the real
+  column/metric names.
 - For saved metrics (from the metrics list), use
   {"name": "<metric_name>", "saved_metric": true}.
   Do NOT add an aggregate when using saved_metric.
@@ -111,6 +118,53 @@ class IntentMapperResponse(BaseModel):
     )
 
 
+def _governed_context(dataset: Any) -> str:
+    """Return governed instructions + glossary from the semantic layer.
+
+    This is the grounding that raw column/metric metadata lacks: authoritative
+    business rules (for example, "do not sum across regions") and the synonym
+    glossary. Degrades to an empty string if the semantic layer is unavailable
+    so intent mapping never depends on it being configured.
+    """
+
+    try:
+        from superset.semantic_index.governance import (
+            load_dataset_aliases,
+            load_dataset_instructions,
+            load_dataset_policies,
+        )
+        from superset.semantic_index.grounding import build_grounding_contract
+
+        dataset_id = getattr(dataset, "id", None)
+        aliases = load_dataset_aliases(dataset_id) if dataset_id is not None else {}
+        contract = build_grounding_contract(
+            dataset,
+            aliases=aliases,
+            instructions=load_dataset_instructions(dataset),
+            policies=load_dataset_policies(dataset),
+        )
+    except Exception:  # pylint: disable=broad-except
+        return ""
+
+    lines: list[str] = []
+    if contract.instructions:
+        lines.append("Governed instructions (MUST follow):")
+        lines.extend(f"  - {instruction}" for instruction in contract.instructions)
+    for policy in contract.policies:
+        if policy.get("type") == "non_additive":
+            target = policy.get("target", "")
+            dims = ", ".join(policy.get("dimensions", []))
+            lines.append(
+                f"  - Do NOT aggregate '{target}' across {dims} without grouping "
+                "by or filtering it to a single value."
+            )
+    if contract.glossary:
+        lines.append("Business glossary (map synonyms to these names):")
+        for canonical, synonyms in contract.glossary.items():
+            lines.append(f"  - {canonical}: {', '.join(synonyms)}")
+    return "\n".join(lines)
+
+
 def _build_dataset_context(dataset: Any) -> str:  # noqa: C901
     """Build a compact text representation of the dataset for the LLM."""
     lines: list[str] = []
@@ -154,6 +208,10 @@ def _build_dataset_context(dataset: Any) -> str:  # noqa: C901
     if metric_lines:
         lines.append("Saved metrics (use saved_metric=true):")
         lines.extend(metric_lines[:20])
+
+    # Governed grounding (instructions + glossary) — the highest-signal context.
+    if governed := _governed_context(dataset):
+        lines.append(governed)
 
     return "\n".join(lines)
 

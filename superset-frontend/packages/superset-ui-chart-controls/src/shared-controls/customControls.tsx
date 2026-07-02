@@ -18,14 +18,16 @@
  */
 
 import { t } from '@apache-superset/core/translation';
-import {
-  ContributionType,
-  ensureIsArray,
-  getColumnLabel,
-  getMetricLabel,
+// direct module imports: this module reads ContributionType at module
+// scope, and the @superset-ui/core barrel can be mid-evaluation (cycle)
+import { ContributionType } from '@superset-ui/core/query/types/Query';
+import { ensureIsArray } from '@superset-ui/core/utils';
+import getColumnLabel from '@superset-ui/core/query/getColumnLabel';
+import getMetricLabel from '@superset-ui/core/query/getMetricLabel';
+import type {
   QueryFormColumn,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@superset-ui/core/query/types/QueryFormData';
 import { GenericDataType } from '@apache-superset/core/common';
 import {
   ControlPanelState,

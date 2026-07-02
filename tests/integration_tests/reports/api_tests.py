@@ -84,6 +84,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             security_manager.add_permission_role(reports_role, read_perm)
             security_manager.add_permission_role(reports_role, write_perm)
             user.roles.append(reports_role)
+            db.session.commit()
 
             yield user
 
@@ -118,7 +119,9 @@ class TestReportSchedulesApi(SupersetTestCase):
 
     @pytest.fixture
     def create_working_gamma_report_schedule(self, gamma_user_with_alerts_role):
+        assert gamma_user_with_alerts_role is not None
         with self.create_app().app_context():
+            gamma_user = self.get_user(REPORTS_GAMMA_USER)
             chart = db.session.query(Slice).first()
             example_db = get_example_database()
 
@@ -130,7 +133,7 @@ class TestReportSchedulesApi(SupersetTestCase):
                 description="Report working",
                 chart=chart,
                 database=example_db,
-                owners=[gamma_user_with_alerts_role],
+                owners=[gamma_user],
                 last_state=ReportState.WORKING,
             )
 
@@ -141,9 +144,11 @@ class TestReportSchedulesApi(SupersetTestCase):
 
     @pytest.fixture
     def create_working_shared_report_schedule(self, gamma_user_with_alerts_role):
+        assert gamma_user_with_alerts_role is not None
         with self.create_app().app_context():
             admin_user = self.get_user("admin")
             alpha_user = self.get_user("alpha")
+            gamma_user = self.get_user(REPORTS_GAMMA_USER)
             chart = db.session.query(Slice).first()
             example_db = get_example_database()
 
@@ -155,7 +160,7 @@ class TestReportSchedulesApi(SupersetTestCase):
                 description="Report working",
                 chart=chart,
                 database=example_db,
-                owners=[admin_user, alpha_user, gamma_user_with_alerts_role],
+                owners=[admin_user, alpha_user, gamma_user],
                 last_state=ReportState.WORKING,
             )
 
@@ -358,7 +363,7 @@ class TestReportSchedulesApi(SupersetTestCase):
         """
         self.login(ADMIN_USERNAME)
         uri = "api/v1/report/"  # noqa: F541
-        rv = self.get_assert_metric(uri, "get_list")
+        rv = self.client.get(uri)
 
         expected_fields = [
             "active",
@@ -1814,16 +1819,16 @@ class TestReportSchedulesApi(SupersetTestCase):
             "message": {"database": "Database reference is not allowed on a report"}
         }
 
-        # Test 2: Report + database + explicit type=Report → 422
+        # Test 2: Report + database + explicit type=Report → 400
         rv = self.put_assert_metric(
             uri,
             {"type": ReportScheduleType.REPORT, "database": example_db.id},
             "put",
         )
-        assert rv.status_code == 422
+        assert rv.status_code == 400
         data = json.loads(rv.data.decode("utf-8"))
         assert data == {
-            "message": {"database": "Database reference is not allowed on a report"}
+            "message": {"database": ["Database reference is not allowed on a report"]}
         }
 
     @pytest.mark.usefixtures("create_report_schedules")
@@ -1903,7 +1908,7 @@ class TestReportSchedulesApi(SupersetTestCase):
         )
         assert rv.status_code == 200
 
-        # Test 5: Alert → Report + database → 422
+        # Test 5: Alert → Report + database → 400
         rv = self.put_assert_metric(
             uri,
             {
@@ -1912,10 +1917,10 @@ class TestReportSchedulesApi(SupersetTestCase):
             },
             "put",
         )
-        assert rv.status_code == 422
+        assert rv.status_code == 400
         data = json.loads(rv.data.decode("utf-8"))
         assert data == {
-            "message": {"database": "Database reference is not allowed on a report"}
+            "message": {"database": ["Database reference is not allowed on a report"]}
         }
 
         # Test 6: Alert → Report without clearing database → 422

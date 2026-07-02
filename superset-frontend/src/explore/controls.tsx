@@ -65,7 +65,9 @@ import {
 } from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
 import { datasetLabel } from 'src/features/semanticLayers/label';
-import { formatSelectOptions } from 'src/explore/exploreUtils';
+// leaf import: the exploreUtils barrel drags a dependency graph that
+// cycles back into this module at eval time
+import { formatSelectOptions } from 'src/explore/exploreUtils/formatSelectOptions';
 import { TIME_FILTER_LABELS } from './constants';
 import { StyledColumnOption } from './components/optionRenderers';
 

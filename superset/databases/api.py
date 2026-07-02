@@ -1974,7 +1974,7 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             short_id = uuid.uuid4().hex[:6]
             suffix = f"_{short_id}"
             prefix = "upload_"
-            max_name_length = 250 - len(prefix) - len(suffix)
+            max_name_length = 63 - len(prefix) - len(suffix)
             table_name = f"{prefix}{table_name[:max_name_length]}{suffix}"
 
             # Get or create the local DuckDB database

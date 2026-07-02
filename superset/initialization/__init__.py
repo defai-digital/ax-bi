@@ -71,7 +71,6 @@ from superset.semantic_layers.labels import database_connections_menu_label
 from superset.sql.parse import SQLGLOT_DIALECTS
 from superset.superset_typing import FlaskResponse
 from superset.utils.core import is_test, pessimistic_connection_handling
-from superset.utils.decorators import transaction
 from superset.utils.log import DBEventLogger, get_event_logger_from_cfg_value
 
 if TYPE_CHECKING:
@@ -819,7 +818,8 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
         try:
             with self.superset_app.app_context():
                 # Simple connection test
-                db.engine.execute(text("SELECT 1"))
+                with db.engine.connect() as connection:
+                    connection.execute(text("SELECT 1"))
         except Exception:
             db_uri = self.database_uri
 
@@ -942,7 +942,6 @@ class SupersetAppInitializer:  # pylint: disable=too-many-public-methods
 
         SQLGLOT_DIALECTS.update(extensions)
 
-    @transaction()
     def configure_fab(self) -> None:
         if self.config["SILENCE_FAB"]:
             logging.getLogger("flask_appbuilder").setLevel(logging.ERROR)

@@ -149,15 +149,19 @@ class QueryContextProcessor:
         # the N-dimensional DataFrame has converted into flat DataFrame
         # by `flatten operator`, "comma" in the column is escaped by `escape_separator`
         # the result DataFrame columns should be unescaped.
-        # Skip regex split for columns that do not contain a separator.
-        label_map = {
-            unescape_separator(col): (
-                [unescape_separator(sub) for sub in LABEL_SPLIT_RE.split(col)]
-                if LABEL_SPLIT_RE.search(col)
-                else [unescape_separator(col)]
-            )
-            for col in cache.df.columns.values
-        }
+        # Fast path: unescape once, skip regex for columns without separator.
+        # Collect unescaped column names to avoid a second pass at the end.
+        label_map: dict[str, list[str]] = {}
+        unescaped_columns: list[str] = []
+        for col in cache.df.columns.values:
+            unescaped = unescape_separator(col)
+            unescaped_columns.append(unescaped)
+            if ", " in unescaped:
+                label_map[unescaped] = [
+                    unescape_separator(sub) for sub in LABEL_SPLIT_RE.split(col)
+                ]
+            else:
+                label_map[unescaped] = [unescaped]
         label_map.update(
             {
                 column_name: [
@@ -194,7 +198,7 @@ class QueryContextProcessor:
                     for idx, metric_name in enumerate(query_obj.metric_names)
                 }
             )
-        cache.df.columns = [unescape_separator(col) for col in cache.df.columns.values]
+        cache.df.columns = unescaped_columns
 
         warning: str | None = None
         if cache.bq_memory_limited:
@@ -303,14 +307,23 @@ class QueryContextProcessor:
         Uses ``df.assign()`` to replace only datetime columns, avoiding a full
         DataFrame copy when non-datetime columns dominate.
         """
-        datetime_cols = df.select_dtypes(include=["datetime", "datetimetz"]).columns
-        # Compute object columns once to avoid redundant DataFrame scan
-        obj_cols = df.select_dtypes(include=["object"]).columns
-        date_cols = obj_cols[
-            [infer_dtype(df[col], skipna=True) == "date" for col in obj_cols]
+        # Single pass through dtypes to classify columns, avoiding two
+        # separate select_dtypes scans of the full DataFrame.
+        datetime_cols: list[str] = []
+        obj_cols: list[str] = []
+        for col_name, dtype in df.dtypes.items():
+            if pd.api.types.is_datetime64_any_dtype(dtype):
+                datetime_cols.append(col_name)
+            elif dtype == np.object_:
+                obj_cols.append(col_name)
+
+        # Only infer_dtype on object columns; skip numeric/datetime dtypes
+        # that provably cannot contain date objects.
+        date_cols = [
+            col for col in obj_cols if infer_dtype(df[col], skipna=True) == "date"
         ]
 
-        if len(datetime_cols) == 0 and len(date_cols) == 0:
+        if not datetime_cols and not date_cols:
             return df.to_dict(orient="records")
 
         # Build converted columns from the original DataFrame (no copy yet),
@@ -324,6 +337,11 @@ class QueryContextProcessor:
             if hasattr(series.dtype, "tz") and series.dtype.tz:
                 # Timezone-aware: normalize to UTC before numeric conversion
                 series = series.dt.tz_convert("UTC")
+            # Normalize to nanosecond resolution before reinterpreting the
+            # underlying int64: pandas 2 series can be datetime64[s]/[ms]/[us]
+            # (e.g. from pyarrow), which would otherwise be misread as ns and
+            # come out as the wrong epoch unit.
+            series = series.dt.as_unit("ns")
             # Reinterpret datetime64/timestamp int64 as nanoseconds since epoch,
             # then convert to epoch milliseconds. NaT values become None so
             # they serialize to JSON ``null``.
@@ -335,7 +353,7 @@ class QueryContextProcessor:
 
         for col in date_cols:
             null_mask = np.asarray(pd.isna(df[col]))
-            dt_series = pd.to_datetime(df[col], errors="coerce")
+            dt_series = pd.to_datetime(df[col], errors="coerce").dt.as_unit("ns")
             ns = dt_series.values.view("int64").astype("float64")
             ns[null_mask] = np.nan
             ms = ns / 1e6

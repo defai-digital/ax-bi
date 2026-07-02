@@ -16,7 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DatasourceType } from '@superset-ui/core';
+// direct module import: read at module scope while the @superset-ui/core
+// barrel can be mid-evaluation (import cycle)
+import { DatasourceType } from '@superset-ui/core/query/types/Datasource';
 import { GenericDataType } from '@apache-superset/core/common';
 import { Dataset } from './types';
 

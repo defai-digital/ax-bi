@@ -91,7 +91,7 @@ FILE_TYPE_MAP: dict[str, UploadFileType] = {
 }
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
-MAX_TABLE_NAME_LENGTH = 250
+MAX_TABLE_NAME_LENGTH = 63
 
 
 def _safe_upload_filename(filename: str) -> str:
@@ -137,16 +137,41 @@ def _build_file_storage(file_bytes: bytes, filename: str) -> FileStorage:
     return FileStorage(stream=stream, filename=filename)
 
 
-def _sanitize_table_name(raw_name: str) -> str:
-    """Derive a safe table name from a filename stem."""
+def _sanitize_identifier(raw_name: str, default: str = "upload") -> str:
+    """Return a database-safe identifier fragment."""
     sanitized = re.sub(r"[^\w]", "_", raw_name).strip("_").lower()
     if not sanitized:
-        sanitized = "upload"
+        return default
+    return sanitized
+
+
+def _truncate_identifier_bytes(identifier: str, max_bytes: int) -> str:
+    """Truncate an identifier to a byte limit without splitting UTF-8."""
+    encoded = identifier.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return identifier
+
+    truncated = encoded[:max_bytes]
+    while truncated:
+        try:
+            return truncated.decode("utf-8").rstrip("_") or "upload"
+        except UnicodeDecodeError as ex:
+            truncated = truncated[: ex.start]
+    return "upload"
+
+
+def _sanitize_table_name(raw_name: str) -> str:
+    """Derive a safe, unique physical table name from a filename stem."""
+    sanitized = _sanitize_identifier(raw_name)
     short_id = uuid.uuid4().hex[:6]
     suffix = f"_{short_id}"
     prefix = "upload_"
-    max_name_length = MAX_TABLE_NAME_LENGTH - len(prefix) - len(suffix)
-    return f"{prefix}{sanitized[:max_name_length]}{suffix}"
+    max_name_bytes = (
+        MAX_TABLE_NAME_LENGTH
+        - len(prefix.encode("utf-8"))
+        - len(suffix.encode("utf-8"))
+    )
+    return f"{prefix}{_truncate_identifier_bytes(sanitized, max_name_bytes)}{suffix}"
 
 
 def upload_single_file(  # noqa: C901
@@ -195,10 +220,15 @@ def upload_single_file(  # noqa: C901
         )
 
     if table_name:
-        derived_name = re.sub(r"[^\w]", "_", table_name).strip("_").lower()
+        derived_name = _sanitize_identifier(table_name, default="")
         if not derived_name:
             stem = os.path.splitext(filename)[0]
             derived_name = _sanitize_table_name(stem)
+        else:
+            derived_name = _truncate_identifier_bytes(
+                derived_name,
+                MAX_TABLE_NAME_LENGTH,
+            )
     else:
         stem = os.path.splitext(filename)[0]
         derived_name = _sanitize_table_name(stem)

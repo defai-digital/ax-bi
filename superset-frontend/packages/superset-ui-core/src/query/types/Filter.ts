@@ -25,7 +25,9 @@ import {
   isBinaryOperator,
   isSetOperator,
 } from './Operator';
-import { TimeGranularity } from '../../time-format';
+// direct module import: the time-format barrel pulls formatters whose
+// dependency chain cycles back into query types
+import { TimeGranularity } from '../../time-format/types';
 
 interface BaseAdhocFilter {
   clause: 'WHERE' | 'HAVING';

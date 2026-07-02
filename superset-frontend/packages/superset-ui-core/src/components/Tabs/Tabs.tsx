@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { FC } from 'react';
+import { Children, isValidElement, type FC, type ReactNode } from 'react';
 import { css, styled } from '@apache-superset/core/theme';
 import { Tabs as AntdTabs, TabsProps as AntdTabsProps } from 'antd';
 import { Icons } from '@superset-ui/core/components/Icons';
@@ -30,6 +30,39 @@ export interface TabsProps extends AntdTabsProps {
   contentPadding?: SerializedStyles;
 }
 
+// antd v6 removed the legacy <Tabs.TabPane> children API (children are
+// silently ignored); convert them to the items prop so existing call sites
+// keep rendering
+function legacyChildrenToItems(
+  children: ReactNode,
+  items: AntdTabsProps['items'],
+): AntdTabsProps['items'] {
+  if (items || !children) {
+    return items;
+  }
+  const converted: NonNullable<AntdTabsProps['items']> = [];
+  Children.forEach(children, child => {
+    if (!isValidElement(child)) {
+      return;
+    }
+    const {
+      tab,
+      children: paneChildren,
+      ...paneRest
+    } = child.props as {
+      tab?: ReactNode;
+      children?: ReactNode;
+    };
+    converted.push({
+      ...paneRest,
+      key: String(child.key ?? converted.length),
+      label: tab,
+      children: paneChildren,
+    });
+  });
+  return converted.length ? converted : items;
+}
+
 const StyledTabs = ({
   animated = false,
   allowOverflow = true,
@@ -38,28 +71,27 @@ const StyledTabs = ({
   tabBarStyle,
   contentStyle,
   contentPadding,
+  children,
+  items,
   ...props
 }: TabsProps) => (
   <AntdTabs
     animated={animated}
     {...props}
+    items={legacyChildrenToItems(children, items)}
     tabBarStyle={tabBarStyle}
     css={theme => css`
       overflow: ${allowOverflow ? 'visible' : 'hidden'};
       ${fullHeight && 'height: 100%;'}
 
-      .ant-tabs-content-holder {
+      /* antd v6: the pane itself is .ant-tabs-content (the v5
+         .ant-tabs-content-holder / .ant-tabs-tabpane wrappers are gone) */
+      .ant-tabs-content {
         overflow: ${allowOverflow ? 'visible' : 'auto'};
         ${fullHeight && 'height: 100%;'}
         ${contentHeight &&
         `height: ${typeof contentHeight === 'number' ? `${contentHeight}px` : contentHeight};`}
         ${contentPadding}
-      }
-      .ant-tabs-content {
-        ${fullHeight && 'height: 100%;'}
-      }
-      .ant-tabs-tabpane {
-        ${fullHeight && 'height: 100%;'}
         ${contentStyle}
       }
       .ant-tabs-nav {
@@ -108,7 +140,7 @@ const Tabs = Object.assign(StyledTabs, {
 
 const StyledEditableTabs = styled(StyledTabs)`
   ${({ theme, contentStyle }) => `
-    .ant-tabs-content-holder {
+    .ant-tabs-content {
       background: ${theme.colorBgContainer};
       ${contentStyle}
     }

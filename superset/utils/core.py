@@ -74,7 +74,7 @@ from flask_babel import gettext as __
 from flask_sqlalchemy import SQLAlchemy
 from markupsafe import Markup
 from pandas.api.types import infer_dtype
-from pandas.core.dtypes.common import is_numeric_dtype
+from pandas.core.dtypes.common import is_bool_dtype, is_numeric_dtype, is_object_dtype
 from sqlalchemy import event, exc, inspect, select, Text
 from sqlalchemy.dialects.mysql import LONGTEXT, MEDIUMTEXT
 from sqlalchemy.engine import Connection, Engine
@@ -641,9 +641,7 @@ def generic_find_constraint_name(
     table: str, columns: set[str], referenced: str, database: SQLAlchemy
 ) -> str | None:
     """Utility to find a constraint name in alembic migrations"""
-    tbl = sa.Table(
-        table, database.metadata, autoload=True, autoload_with=database.engine
-    )
+    tbl = sa.Table(table, database.metadata, autoload_with=database.engine)
 
     for fk in tbl.foreign_key_constraints:
         if fk.referred_table.name == referenced and set(fk.column_keys) == columns:
@@ -818,6 +816,9 @@ def pessimistic_connection_handling(some_engine: Engine) -> None:
             else:
                 raise
         finally:
+            if connection.in_transaction():
+                connection.rollback()
+
             # restore 'close with result'
             connection.should_close_with_result = save_should_close_with_result
 
@@ -1882,7 +1883,7 @@ def get_metric_type_from_column(column: Any, datasource: Explorable) -> str:
     return ""
 
 
-def extract_dataframe_dtypes(
+def extract_dataframe_dtypes(  # noqa: C901
     df: pd.DataFrame,
     datasource: Explorable | None = None,
 ) -> list[GenericDataType]:
@@ -1913,30 +1914,60 @@ def extract_dataframe_dtypes(
     for column in df.columns:
         column_object = columns_by_name.get(str(column))
         series = df[column]
-        inferred_type: str = ""
-        if series.isna().all():
-            sql_type: Optional[str] = ""
-            if datasource and hasattr(datasource, "columns_types"):
+        dtype = series.dtype
+
+        # Check is_dttm from datasource metadata first — this avoids
+        # both isna().all() and infer_dtype for known datetime columns.
+        if column_object:
+            is_dttm = (
+                column_object.get("is_dttm")
+                if isinstance(column_object, dict)
+                else column_object.is_dttm
+            )
+            if is_dttm:
+                generic_types.append(GenericDataType.TEMPORAL)
+                continue
+
+        # Fast path: use pandas dtype to classify without calling
+        # infer_dtype() (expensive Python-level scan) or isna().all()
+        # (full-column scan).  Object dtype is the only one that
+        # requires runtime inference, so fall through for it.
+        if not is_object_dtype(dtype):
+            if is_bool_dtype(dtype):
+                generic_types.append(GenericDataType.BOOLEAN)
+                continue
+            if pd.api.types.is_datetime64_any_dtype(dtype):
+                generic_types.append(GenericDataType.TEMPORAL)
+                continue
+            if is_numeric_dtype(dtype):
+                generic_types.append(GenericDataType.NUMERIC)
+                continue
+
+        # Slow path: only for object dtype or unrecognized dtypes.
+        # Check isna().all() only when datasource metadata is available
+        # (to use SQL type as fallback); otherwise go straight to
+        # infer_dtype which handles all-NaN columns correctly
+        # (returns "empty" → STRING).
+        if (
+            column_object
+            and datasource is not None
+            and hasattr(datasource, "columns_types")
+        ):
+            if series.isna().all():
                 if column in datasource.columns_types:
                     sql_type = datasource.columns_types.get(column)
                     inferred_type = map_sql_type_to_inferred_type(sql_type)
                 else:
                     inferred_type = get_metric_type_from_column(column, datasource)
-        else:
-            inferred_type = infer_dtype(series)
-        if isinstance(column_object, dict):
-            generic_type = (
-                GenericDataType.TEMPORAL
-                if column_object and column_object.get("is_dttm")
-                else inferred_type_map.get(inferred_type, GenericDataType.STRING)
-            )
-        else:
-            generic_type = (
-                GenericDataType.TEMPORAL
-                if column_object and column_object.is_dttm
-                else inferred_type_map.get(inferred_type, GenericDataType.STRING)
-            )
-        generic_types.append(generic_type)
+                generic_types.append(
+                    inferred_type_map.get(inferred_type, GenericDataType.STRING)
+                )
+                continue
+
+        inferred_type = infer_dtype(series)
+        generic_types.append(
+            inferred_type_map.get(inferred_type, GenericDataType.STRING)
+        )
 
     return generic_types
 

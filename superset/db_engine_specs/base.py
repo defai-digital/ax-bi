@@ -1748,6 +1748,27 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         return set()
 
+    @staticmethod
+    def execute_inspector_statement(
+        inspector: Inspector,
+        statement: TextClause,
+    ) -> list[Any]:
+        """
+        Execute a statement using an inspector bind under SQLAlchemy 2.
+        """
+
+        def result_to_list(result: Any) -> list[Any]:
+            if fetchall := getattr(result, "fetchall", None):
+                return list(fetchall())
+            return list(result)
+
+        bind = inspector.bind
+        if isinstance(bind, Engine):
+            with bind.connect() as connection:
+                return result_to_list(connection.execute(statement))
+
+        return result_to_list(bind.execute(statement))
+
     @classmethod
     def get_schema_names(cls, inspector: Inspector) -> set[str]:
         """
@@ -2740,17 +2761,15 @@ class BasicParametersMixin:
                 )
             query.update(cls.encryption_parameters)
 
-        return str(
-            URL.create(
-                f"{cls.engine}+{cls.default_driver}".rstrip("+"),  # type: ignore
-                username=parameters.get("username"),
-                password=parameters.get("password"),
-                host=parameters["host"],
-                port=parameters["port"],
-                database=parameters["database"],
-                query=query,
-            )
-        )
+        return URL.create(
+            f"{cls.engine}+{cls.default_driver}".rstrip("+"),  # type: ignore
+            username=parameters.get("username"),
+            password=parameters.get("password"),
+            host=parameters["host"],
+            port=parameters["port"],
+            database=parameters["database"],
+            query=query,
+        ).render_as_string(hide_password=False)
 
     @classmethod
     def get_parameters_from_uri(  # pylint: disable=unused-argument

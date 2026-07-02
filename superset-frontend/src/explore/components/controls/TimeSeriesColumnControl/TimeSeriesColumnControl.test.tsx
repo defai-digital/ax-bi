@@ -115,7 +115,7 @@ test('time lag allows negative values', () => {
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ timeLag }));
 });
 
-test('triggers onChange when color bounds changes', () => {
+test('triggers onChange when color bounds changes', async () => {
   const min = 1;
   const max = 5;
   const onChange = jest.fn();
@@ -125,6 +125,10 @@ test('triggers onChange when color bounds changes', () => {
   const maxInput = screen.getByPlaceholderText('Max');
   userEvent.type(minInput, min.toString());
   userEvent.type(maxInput, max.toString());
+  // BoundsControl debounces its onChange by 300ms; let it commit before Save
+  await new Promise(resolve => {
+    setTimeout(resolve, 350);
+  });
   expect(onChange).not.toHaveBeenCalled();
   userEvent.click(screen.getByRole('button', { name: 'Save' }));
   expect(onChange).toHaveBeenLastCalledWith(
@@ -206,7 +210,7 @@ test('triggers onChange when show Y-axis changes', () => {
   );
 });
 
-test('triggers onChange when Y-axis bounds changes', () => {
+test('triggers onChange when Y-axis bounds changes', async () => {
   const min = 1;
   const max = 5;
   const onChange = jest.fn();
@@ -217,6 +221,10 @@ test('triggers onChange when Y-axis bounds changes', () => {
   userEvent.type(minInput, min.toString());
   userEvent.clear(maxInput);
   userEvent.type(maxInput, max.toString());
+  // BoundsControl debounces its onChange by 300ms; let it commit before Save
+  await new Promise(resolve => {
+    setTimeout(resolve, 350);
+  });
   expect(onChange).not.toHaveBeenCalled();
   userEvent.click(screen.getByRole('button', { name: 'Save' }));
   expect(onChange).toHaveBeenCalledWith(

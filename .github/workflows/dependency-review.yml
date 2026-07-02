@@ -32,6 +32,10 @@ jobs:
           persist-credentials: false
       - name: "Dependency Review"
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        # Dependency Review requires dependency graph/GitHub Advanced Security support.
+        # Keep it enforcing for upstream Superset and for repositories that opt in via
+        # DEPENDENCY_REVIEW_ENFORCED=true, while allowing forks without GHAS to run CI.
+        continue-on-error: ${{ github.repository != 'apache/superset' && vars.DEPENDENCY_REVIEW_ENFORCED != 'true' }}
         with:
           fail-on-severity: critical
           # compatible/incompatible licenses addressed here: https://www.apache.org/legal/resolved.html

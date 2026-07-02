@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
+from collections.abc import Collection
 from typing import Any, Callable
 
 import click
@@ -27,11 +28,17 @@ logger = logging.getLogger(__name__)
 
 
 def _should_skip_loader(
-    loader_name: str, load_big_data: bool, only_metadata: bool
+    loader_name: str,
+    load_big_data: bool,
+    only_metadata: bool,
+    auto_discovered_loaders: Collection[str] = frozenset(),
 ) -> bool:
     """Check if a loader should be skipped."""
     # Skip special loaders that aren't datasets
     if loader_name in ["load_css_templates", "load_examples_from_configs"]:
+        return True
+
+    if loader_name in auto_discovered_loaders:
         return True
 
     # Skip big data if not requested or when only metadata is requested
@@ -81,13 +88,20 @@ def load_examples_run(
 
     # Always load CSS templates
     examples.load_css_templates()
+    auto_discovered_loaders: Collection[str] = getattr(
+        examples,
+        "AUTO_DISCOVERED_LOADERS",
+        frozenset(),
+    )
 
-    # Auto-discover and load all datasets
+    # YAML configs own bundled Parquet examples; explicit loaders still run here.
     for loader_name in dir(examples):
         if not loader_name.startswith("load_"):
             continue
 
-        if _should_skip_loader(loader_name, load_big_data, only_metadata):
+        if _should_skip_loader(
+            loader_name, load_big_data, only_metadata, auto_discovered_loaders
+        ):
             continue
 
         loader = getattr(examples, loader_name)

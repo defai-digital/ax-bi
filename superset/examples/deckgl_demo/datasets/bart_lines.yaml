@@ -52,7 +52,7 @@ columns:
   is_active: true
   is_dttm: false
   python_date_format: null
-  type: VARCHAR
+  type: TEXT
   verbose_name: null
 - advanced_data_type: null
   column_name: polyline

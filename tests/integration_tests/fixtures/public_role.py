@@ -25,6 +25,12 @@ from tests.integration_tests.test_app import app
 def public_role_like_gamma(app_context: AppContext):
     app.config["PUBLIC_ROLE_LIKE"] = "Gamma"
     security_manager.sync_role_definitions()
+    # ``sync_role_definitions`` expects the caller to manage the transaction
+    # (production wraps it in ``@transaction()``). Commit here so the pending
+    # writes don't hold the metadata DB's write lock while the test runs —
+    # with app-context-scoped sessions, other fixtures use separate
+    # connections and would deadlock on SQLite/MySQL.
+    db.session.commit()
 
     yield
 
@@ -36,6 +42,7 @@ def public_role_like_gamma(app_context: AppContext):
 def public_role_like_test_role(app_context: AppContext):
     app.config["PUBLIC_ROLE_LIKE"] = "TestRole"
     security_manager.sync_role_definitions()
+    db.session.commit()
 
     yield
 
@@ -52,6 +59,7 @@ def public_role_builtin(app_context: AppContext):
     original_value = app.config.get("PUBLIC_ROLE_LIKE")
     app.config["PUBLIC_ROLE_LIKE"] = "Public"
     security_manager.sync_role_definitions()
+    db.session.commit()
 
     yield
 

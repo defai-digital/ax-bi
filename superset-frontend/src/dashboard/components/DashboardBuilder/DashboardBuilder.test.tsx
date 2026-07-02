@@ -662,6 +662,6 @@ test('should allow dashboard tab content to overflow into the scroll container',
     target: '.grid-container .ant-tabs-content-holder',
   });
   expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
-    target: '.grid-container .ant-tabs-tabpane',
+    target: '.grid-container .ant-tabs-content',
   });
 });

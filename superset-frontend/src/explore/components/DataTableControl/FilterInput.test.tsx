@@ -16,7 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, userEvent } from 'spec/helpers/testing-library';
+import {
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from 'spec/helpers/testing-library';
 import { FilterInput } from '.';
 
 jest.mock('lodash/debounce', () => ({
@@ -32,5 +37,6 @@ test('Render a FilterInput', async () => {
   expect(onChangeHandler).toHaveBeenCalledTimes(0);
   userEvent.type(screen.getByRole('textbox'), 'test');
 
-  expect(onChangeHandler).toHaveBeenCalledTimes(4);
+  // the handler is debounced (SLOW_DEBOUNCE); it fires once with the final text
+  await waitFor(() => expect(onChangeHandler).toHaveBeenCalledWith('test'));
 });

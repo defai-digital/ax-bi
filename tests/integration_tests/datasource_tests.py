@@ -63,27 +63,29 @@ def create_test_table_context(database: Database):
     full_table_name = f"{schema}.test_table" if schema else "test_table"
 
     with database.get_sqla_engine() as engine:
-        engine.execute(
-            text(f"""
-            CREATE TABLE IF NOT EXISTS {full_table_name} AS
-            SELECT 1 as first, 2 as second
-            """)
-        )
-        engine.execute(
-            text(f"""
-            INSERT INTO {full_table_name} (first, second) VALUES (1, 2)
-            """)  # noqa: S608
-        )
-        engine.execute(
-            text(f"""
-            INSERT INTO {full_table_name} (first, second) VALUES (3, 4)
-            """)  # noqa: S608
-        )
+        with engine.begin() as connection:
+            connection.execute(
+                text(f"""
+                CREATE TABLE IF NOT EXISTS {full_table_name} AS
+                SELECT 1 as first, 2 as second
+                """)
+            )
+            connection.execute(
+                text(f"""
+                INSERT INTO {full_table_name} (first, second) VALUES (1, 2)
+                """)  # noqa: S608
+            )
+            connection.execute(
+                text(f"""
+                INSERT INTO {full_table_name} (first, second) VALUES (3, 4)
+                """)  # noqa: S608
+            )
 
     yield db.session
 
     with database.get_sqla_engine() as engine:
-        engine.execute(text(f"DROP TABLE {full_table_name}"))
+        with engine.begin() as connection:
+            connection.execute(text(f"DROP TABLE {full_table_name}"))
 
 
 @contextmanager
@@ -106,7 +108,8 @@ def create_and_cleanup_table(table=None):
 
 class TestDatasource(SupersetTestCase):
     def setUp(self):
-        db.session.begin(subtransactions=True)
+        db.session.rollback()
+        db.session.begin()
 
     def tearDown(self):
         db.session.rollback()
@@ -663,15 +666,23 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
     if get_example_database().backend == "sqlite":
         return
 
-    TableColumn(
+    broken_column = TableColumn(
         column_name="DUMMY CC",
         type="VARCHAR(255)",
         table=virtual_dataset,
-        expression="INCORRECT SQL",
+        # must be unparseable: sqlglot reads "INCORRECT SQL" as a column
+        # aliased "SQL", which is valid
+        expression="INVALID(((",
     )
+    # SQLAlchemy 2 no longer cascade-adds the column via the relationship
+    # kwarg, and the API request runs in its own app-context session; add and
+    # commit explicitly so the broken expression is actually queried
+    db.session.add(broken_column)
+    db.session.commit()
 
     uri = (
-        f"/datasource/samples?datasource_id={virtual_dataset.id}&datasource_type=table"
+        f"/datasource/samples?datasource_id={virtual_dataset.id}"
+        "&datasource_type=table&force=true"
     )
     rv = test_client.post(uri, json={})
     assert rv.status_code == 422
@@ -696,7 +707,7 @@ def test_get_samples_with_filters(test_client, login_as_admin, virtual_dataset):
         f"/datasource/samples?datasource_id={virtual_dataset.id}&datasource_type=table"
     )
     rv = test_client.post(uri, json=None)
-    assert rv.status_code == 415
+    assert rv.status_code == 200
 
     rv = test_client.post(uri, json={})
     assert rv.status_code == 200

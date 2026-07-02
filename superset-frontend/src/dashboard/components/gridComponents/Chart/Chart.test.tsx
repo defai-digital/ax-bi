@@ -18,7 +18,6 @@
  */
 import { fireEvent, render } from 'spec/helpers/testing-library';
 import { FeatureFlag, VizType } from '@superset-ui/core';
-import * as redux from 'redux';
 
 import * as exploreUtils from 'src/explore/exploreUtils';
 import * as chartStateConverter from '../../../util/chartStateConverter';
@@ -110,26 +109,32 @@ function setup(
   });
 }
 
-const refreshChart = jest.fn();
-const logEvent = jest.fn();
-const changeFilter = jest.fn();
-const addSuccessToast = jest.fn();
-const addDangerToast = jest.fn();
-const toggleExpandSlice = jest.fn();
-const setFocusedFilterField = jest.fn();
-const unsetFocusedFilterField = jest.fn();
-beforeAll(() => {
-  jest.spyOn(redux, 'bindActionCreators').mockImplementation(() => ({
-    refreshChart,
-    logEvent,
-    changeFilter,
-    addSuccessToast,
-    addDangerToast,
-    toggleExpandSlice,
-    setFocusedFilterField,
-    unsetFocusedFilterField,
-  }));
-});
+const mockActions = {
+  refreshChart: jest.fn(),
+  logEvent: jest.fn(),
+  changeFilter: jest.fn(),
+  addSuccessToast: jest.fn(),
+  addDangerToast: jest.fn(),
+  toggleExpandSlice: jest.fn(),
+  setFocusedFilterField: jest.fn(),
+  unsetFocusedFilterField: jest.fn(),
+};
+const {
+  refreshChart,
+  logEvent,
+  changeFilter,
+  addSuccessToast,
+  addDangerToast,
+  toggleExpandSlice,
+  setFocusedFilterField,
+  unsetFocusedFilterField,
+} = mockActions;
+// redux 5 ships non-configurable ESM exports, so jest.spyOn can't
+// redefine bindActionCreators; mock the module instead
+jest.mock('redux', () => ({
+  ...jest.requireActual('redux'),
+  bindActionCreators: () => mockActions,
+}));
 
 afterEach(() => {
   jest.clearAllMocks();

@@ -19,10 +19,12 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from flask_appbuilder import Model
 from sqlalchemy import (
     Column,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -30,9 +32,29 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.types import UserDefinedType
 from sqlalchemy_utils import UUIDType
 
 from superset.models.helpers import AuditMixinNullable
+
+
+class PGVector(UserDefinedType):
+    """SQLAlchemy type for pgvector columns.
+
+    The Python ``pgvector`` package is intentionally not required for model
+    import. Runtime search writes vectors through SQL parameters and the
+    migration creates the PostgreSQL extension-backed column.
+    """
+
+    cache_ok = True
+
+    def __init__(self, dimensions: int) -> None:
+        self.dimensions = dimensions
+
+    def get_col_spec(self, **kw: Any) -> str:
+        """Return the PostgreSQL column specification."""
+
+        return f"vector({self.dimensions})"
 
 
 class AIGeneratedArtifact(Model, AuditMixinNullable):
@@ -133,3 +155,79 @@ class AIEvaluationRun(Model, AuditMixinNullable):
     scores = Column(Text, nullable=True, comment="JSON")
     model = Column(String(100), nullable=True)
     tool_versions = Column(Text, nullable=True, comment="JSON")
+
+
+class AISemanticDocument(Model, AuditMixinNullable):
+    """Distilled semantic document used for pgvector-backed BI retrieval.
+
+    Stores the AI-ready text generated from uploaded files, datasets, columns,
+    metrics, and example questions. The relational columns remain the source
+    of governance metadata; the vector column is used only for retrieval.
+    """
+
+    __tablename__ = "ai_semantic_documents"
+    __table_args__ = (
+        Index("ix_ai_sem_doc_object", "object_type", "object_id"),
+        Index("ix_ai_sem_doc_dataset", "dataset_id"),
+        Index("ix_ai_sem_doc_kind", "document_kind"),
+        Index("ix_ai_sem_doc_review_status", "review_status"),
+        Index(
+            "ix_ai_sem_doc_embedding_model",
+            "embedding_model",
+            "embedding_dimension",
+        ),
+        Index(
+            "ix_ai_sem_doc_source",
+            "object_type",
+            "object_id",
+            "document_kind",
+            "source_hash",
+        ),
+    )
+
+    uuid = Column(UUIDType(binary=True), default=uuid.uuid4, primary_key=True)
+    dataset_id = Column(
+        Integer,
+        ForeignKey("tables.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    object_type = Column(
+        String(50),
+        nullable=False,
+        comment="dataset, column, metric, dashboard, chart, or upload",
+    )
+    object_id = Column(
+        String(500),
+        nullable=False,
+        comment="Stable identifier for the source object.",
+    )
+    object_name = Column(String(500), nullable=False)
+    document_kind = Column(
+        String(50),
+        nullable=False,
+        comment="summary, column_profile, metric_candidate, sample_question, or note",
+    )
+    source = Column(
+        String(50),
+        nullable=False,
+        comment="upload, dataset_profile, user, admin, usage, or generated",
+    )
+    source_hash = Column(
+        String(64),
+        nullable=False,
+        comment="SHA-256 hash of the source text and metadata.",
+    )
+    content = Column(Text, nullable=False)
+    extra_json = Column(Text, nullable=True, comment="JSON")
+    embedding_provider = Column(String(100), nullable=False)
+    embedding_model = Column(String(200), nullable=False)
+    embedding_dimension = Column(Integer, nullable=False)
+    embedding = Column(PGVector(1024), nullable=True)
+    review_status = Column(
+        String(50),
+        nullable=False,
+        default="generated",
+        comment="generated, approved, rejected, or stale",
+    )
+    last_embedded_at = Column(DateTime(), nullable=True)
+    embedding_error = Column(Text, nullable=True)

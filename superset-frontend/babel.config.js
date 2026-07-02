@@ -16,10 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+const { createRequire } = require('node:module');
+
 const packageConfig = require('./package');
 const coreJsVersion = require('core-js/package.json').version;
 const isTest =
   process.env.NODE_ENV === 'test' || process.env.BABEL_ENV === 'test';
+
+// @babel/core 8 removed NodePath.hoist(), but @emotion/babel-plugin
+// (<= 11.13.5, the latest release) still calls it after replacing css``
+// expressions, crashing builds with "path.hoist is not a function".
+// Hoisting is purely a memoization optimization, so a no-op is safe.
+try {
+  const coreRequire = createRequire(
+    require.resolve('@babel/core/package.json'),
+  );
+  const { NodePath } = coreRequire('@babel/traverse');
+  if (NodePath && !NodePath.prototype.hoist) {
+    NodePath.prototype.hoist = function hoist() {};
+  }
+} catch {
+  // older @babel/core resolutions still provide hoist natively
+}
 
 module.exports = {
   sourceMaps: true,
@@ -37,13 +55,6 @@ module.exports = {
         modules: false,
         shippedProposals: true,
         targets: packageConfig.browserslist,
-      },
-    ],
-    [
-      '@babel/preset-react',
-      {
-        development: process.env.BABEL_ENV === 'development',
-        runtime: 'automatic',
       },
     ],
     '@babel/preset-typescript',
@@ -83,13 +94,6 @@ module.exports = {
             targets: { node: 'current' },
           },
         ],
-        [
-          '@babel/preset-react',
-          {
-            development: process.env.BABEL_ENV === 'development',
-            runtime: 'automatic',
-          },
-        ],
         '@babel/preset-typescript',
       ],
       plugins: [
@@ -119,9 +123,11 @@ module.exports = {
     production: {
       plugins: [
         [
-          'babel-plugin-jsx-remove-data-test-id',
+          // Local plugin; babel-plugin-jsx-remove-data-test-id calls builder
+          // aliases that @babel/core 8 removed (t.jSXOpeningElement)
+          require.resolve('./scripts/babel-plugin-remove-data-test-attributes'),
           {
-            // The plugin matches attribute names exactly (no prefix match),
+            // Attribute names are matched exactly (no prefix match),
             // so each data-test* attribute must be listed explicitly.
             attributes: [
               'data-test',
@@ -140,6 +146,21 @@ module.exports = {
     {
       test: './plugins/plugin-chart-handlebars/node_modules/just-handlebars-helpers/*',
       sourceType: 'unambiguous',
+    },
+    {
+      // preset-react force-enables JSX syntax for every file it touches;
+      // plain .ts files must stay JSX-free so TypeScript angle-bracket
+      // casts and generic arrow functions (`<T>(...) =>`) keep parsing
+      exclude: /\.ts$/,
+      presets: [
+        [
+          '@babel/preset-react',
+          {
+            development: process.env.BABEL_ENV === 'development',
+            runtime: 'automatic',
+          },
+        ],
+      ],
     },
   ],
 };

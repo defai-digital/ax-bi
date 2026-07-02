@@ -1657,6 +1657,62 @@ def test_async_handle_get_result_no_results_key(
     assert "Results not available" in query_result.error_message
 
 
+def test_iter_dicts_returns_empty_for_non_list_values() -> None:
+    """Non-list cached payload values yield no entries instead of erroring."""
+    from superset.sql.execution.executor import _iter_dicts
+
+    assert _iter_dicts(None) == []
+    assert _iter_dicts({"columns": []}) == []
+    assert _iter_dicts("junk") == []
+    assert _iter_dicts([{"a": 1}, "junk", 2]) == [{"a": 1}]
+
+
+def test_async_handle_get_result_non_dict_payload(
+    mocker: MockerFixture,
+    database: Database,
+    app_context: None,
+    mock_db_session: MagicMock,
+) -> None:
+    """A cached payload that isn't a mapping fails cleanly instead of crashing."""
+    from superset.models.sql_lab import Query
+
+    mock_query = MagicMock(spec=Query)
+    mock_query.status = "success"
+    mock_query.error_message = None
+    mock_query.executed_sql = "SELECT * FROM users"
+    mock_query.results_key = "result_key_123"
+
+    filter_mock = mock_db_session.query.return_value.filter_by.return_value
+    filter_mock.one_or_none.return_value = mock_query
+
+    # A list payload is valid msgpack but not the expected mapping shape
+    payload = msgpack.dumps(["not", "a", "dict"])
+
+    mock_results_backend = MagicMock()
+    mock_results_backend.get.return_value = b"compressed_data"
+
+    mock_results_backend_manager = MagicMock()
+    mock_results_backend_manager.results_backend = mock_results_backend
+
+    mocker.patch(
+        "superset.results_backend_manager",
+        mock_results_backend_manager,
+    )
+    mocker.patch("superset.utils.core.zlib_decompress", return_value=payload)
+    mocker.patch.dict(
+        current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
+    )
+    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+
+    result = database.execute_async("SELECT * FROM users")
+
+    query_result = result.get_result()
+
+    assert query_result.status == QueryStatus.FAILED
+    assert query_result.error_message is not None
+    assert "Malformed query result payload" in query_result.error_message
+
+
 def test_async_handle_get_status_query_not_found(
     mocker: MockerFixture,
     database: Database,

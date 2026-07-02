@@ -257,21 +257,30 @@ def test_adjust_engine_params_fully_qualified() -> None:
     url = make_url("snowflake://user:pass@account/database_name/default")
 
     uri = SnowflakeEngineSpec.adjust_engine_params(url, {})[0]
-    assert str(uri) == "snowflake://user:pass@account/database_name/default"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/database_name/default"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
         {},
         schema="new_schema",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/database_name/new_schema"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/database_name/new_schema"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
         {},
         catalog="new_catalog",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog/default"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog/default"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
@@ -279,7 +288,10 @@ def test_adjust_engine_params_fully_qualified() -> None:
         catalog="new_catalog",
         schema="new_schema",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog/new_schema"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog/new_schema"
+    )
 
 
 def test_adjust_engine_params_catalog_only() -> None:
@@ -291,21 +303,30 @@ def test_adjust_engine_params_catalog_only() -> None:
     url = make_url("snowflake://user:pass@account/database_name")
 
     uri = SnowflakeEngineSpec.adjust_engine_params(url, {})[0]
-    assert str(uri) == "snowflake://user:pass@account/database_name"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/database_name"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
         {},
         schema="new_schema",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/database_name/new_schema"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/database_name/new_schema"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
         {},
         catalog="new_catalog",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
@@ -313,7 +334,10 @@ def test_adjust_engine_params_catalog_only() -> None:
         catalog="new_catalog",
         schema="new_schema",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog/new_schema"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog/new_schema"
+    )
 
 
 def test_adjust_engine_params_without_catalog() -> None:
@@ -325,14 +349,17 @@ def test_adjust_engine_params_without_catalog() -> None:
     url = make_url("snowflake://user:pass@account")
 
     uri = SnowflakeEngineSpec.adjust_engine_params(url, {})[0]
-    assert str(uri) == "snowflake://user:pass@account"
+    assert uri.render_as_string(hide_password=False) == "snowflake://user:pass@account"
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
         {},
         catalog="new_catalog",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog"
+    )
 
     uri = SnowflakeEngineSpec.adjust_engine_params(
         url,
@@ -340,7 +367,10 @@ def test_adjust_engine_params_without_catalog() -> None:
         catalog="new_catalog",
         schema="new_schema",
     )[0]
-    assert str(uri) == "snowflake://user:pass@account/new_catalog/new_schema"
+    assert (
+        uri.render_as_string(hide_password=False)
+        == "snowflake://user:pass@account/new_catalog/new_schema"
+    )
 
 
 def test_get_default_catalog() -> None:

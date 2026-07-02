@@ -38,10 +38,46 @@ def test_transpile_virtual_dataset_sql_empty_sql():
     assert config["sql"] == ""
 
 
+@patch("superset.commands.importers.v1.examples.load_dataset_data")
+def test_load_example_data_file_loads_missing_table(mock_load_dataset_data):
+    """Bundled data_file_uri content is loaded when the table is absent."""
+    from superset.commands.importers.v1.examples import load_example_data_file
+
+    dataset = MagicMock()
+    dataset.table_name = "example_table"
+    dataset.schema = None
+    dataset.catalog = None
+    dataset.database.has_table.return_value = False
+
+    load_example_data_file(dataset, "file:///tmp/example.parquet", False)
+
+    mock_load_dataset_data.assert_called_once_with(
+        "file:///tmp/example.parquet",
+        dataset,
+        dataset.database,
+    )
+
+
+@patch("superset.commands.importers.v1.examples.load_dataset_data")
+def test_load_example_data_file_skips_existing_table(mock_load_dataset_data):
+    """Existing example tables are preserved unless force_data is true."""
+    from superset.commands.importers.v1.examples import load_example_data_file
+
+    dataset = MagicMock()
+    dataset.table_name = "example_table"
+    dataset.schema = None
+    dataset.catalog = None
+    dataset.database.has_table.return_value = True
+
+    load_example_data_file(dataset, "file:///tmp/example.parquet", False)
+
+    mock_load_dataset_data.assert_not_called()
+
+
 @patch("superset.commands.importers.v1.examples.db")
 def test_transpile_virtual_dataset_sql_database_not_found(mock_db):
     """Test graceful handling when database is not found."""
-    mock_db.session.query.return_value.get.return_value = None
+    mock_db.session.get.return_value = None
 
     config = {"table_name": "my_table", "sql": "SELECT * FROM foo"}
     original_sql = config["sql"]
@@ -58,7 +94,7 @@ def test_transpile_virtual_dataset_sql_success(mock_transpile, mock_db):
     """Test successful SQL transpilation with source engine."""
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "mysql"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     mock_transpile.return_value = "SELECT * FROM `foo`"
 
@@ -79,7 +115,7 @@ def test_transpile_virtual_dataset_sql_no_source_engine(mock_transpile, mock_db)
     """Test transpilation when source_db_engine is not specified (legacy)."""
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "mysql"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     mock_transpile.return_value = "SELECT * FROM `foo`"
 
@@ -97,7 +133,7 @@ def test_transpile_virtual_dataset_sql_no_change(mock_transpile, mock_db):
     """Test when transpilation returns same SQL (no dialect differences)."""
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "postgresql"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     original_sql = "SELECT * FROM foo"
     mock_transpile.return_value = original_sql
@@ -120,7 +156,7 @@ def test_transpile_virtual_dataset_sql_error_fallback(mock_transpile, mock_db):
 
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "mysql"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     mock_transpile.side_effect = QueryClauseValidationException("Parse error")
 
@@ -142,7 +178,7 @@ def test_transpile_virtual_dataset_sql_postgres_to_duckdb(mock_transpile, mock_d
     """Test transpilation from PostgreSQL to DuckDB."""
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "duckdb"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     original_sql = """
         SELECT DATE_TRUNC('month', created_at) AS month, COUNT(*) AS cnt
@@ -175,7 +211,7 @@ def test_transpile_virtual_dataset_sql_postgres_to_clickhouse(mock_transpile, mo
     """
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "clickhouse"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     # PostgreSQL syntax
     original_sql = "SELECT DATE_TRUNC('month', created_at) AS month FROM orders"
@@ -203,7 +239,7 @@ def test_transpile_virtual_dataset_sql_postgres_to_mysql(mock_transpile, mock_db
     """
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "mysql"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     # PostgreSQL syntax with :: casting
     original_sql = "SELECT created_at::DATE AS date_only FROM orders"
@@ -228,7 +264,7 @@ def test_transpile_virtual_dataset_sql_postgres_to_sqlite(mock_transpile, mock_d
     """Test transpilation from PostgreSQL to SQLite."""
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "sqlite"
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
 
     original_sql = "SELECT * FROM orders WHERE created_at > NOW() - INTERVAL '7 days'"
     transpiled_sql = (

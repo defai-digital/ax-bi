@@ -163,6 +163,34 @@ def _resolve_chart_config_from_intent(
     return heuristic_chart_config(prompt, dataset, warnings)
 
 
+def _governance_violations(dataset: Any, config: dict[str, Any] | None) -> list[Any]:
+    """Return governance-policy violations for a resolved chart config.
+
+    Builds the dataset's grounding contract and checks the config against its
+    structured policies. Returns an empty list if the semantic layer is
+    unavailable so chart creation never depends on it being configured.
+    """
+    try:
+        from superset.semantic_index.governance import (
+            load_dataset_aliases,
+            load_dataset_instructions,
+            load_dataset_policies,
+        )
+        from superset.semantic_index.grounding import build_grounding_contract
+        from superset.semantic_index.guardrail import check_config
+
+        contract = build_grounding_contract(
+            dataset,
+            aliases=load_dataset_aliases(dataset.id),
+            instructions=load_dataset_instructions(dataset),
+            policies=load_dataset_policies(dataset),
+        )
+        return check_config(config, contract)
+    except Exception:  # pylint: disable=broad-except
+        logger.debug("Governance guardrail unavailable", exc_info=True)
+        return []
+
+
 @tool(
     tags=["mutate", "ai"],
     class_permission_name="Chart",
@@ -173,7 +201,7 @@ def _resolve_chart_config_from_intent(
     ),
 )
 @requires_data_model_metadata_access
-async def create_chart_from_intent(
+async def create_chart_from_intent(  # noqa: C901
     request: CreateChartFromIntentRequest, ctx: Context
 ) -> dict[str, Any]:
     """Create a chart from a natural language description.
@@ -243,6 +271,15 @@ async def create_chart_from_intent(
         "Dataset resolved: id=%s, name=%s" % (dataset.id, dataset_info["name"])
     )
 
+    # Surface governed rules so they reach the caller even on the heuristic path.
+    try:
+        from superset.semantic_index.governance import load_dataset_instructions
+
+        for instruction in load_dataset_instructions(dataset):
+            all_warnings.append(f"Governed rule: {instruction}")
+    except Exception:  # pylint: disable=broad-except
+        logger.debug("Governed instructions unavailable", exc_info=True)
+
     # Step 2: Map intent to chart config
     await ctx.report_progress(2, 4, "Mapping intent to chart configuration")
     with mcp_event_log_context(action="mcp.create_chart_from_intent.resolve"):
@@ -261,6 +298,30 @@ async def create_chart_from_intent(
             confidence=confidence,
         ).model_dump()
 
+    # Governance guardrail: deterministically enforce structured policies on the
+    # resolved config, independent of whether an LLM produced it. A prompt rule
+    # is a suggestion; this is the enforcement.
+    blocking_violations: list[str] = []
+    for violation in _governance_violations(dataset, config):
+        all_warnings.append(f"Governance violation: {violation.message}")
+        if violation.severity == "block":
+            blocking_violations.append(violation.message)
+
+    if blocking_violations:
+        await ctx.warning(
+            "Chart blocked by governance policy: %s" % blocking_violations[0]
+        )
+        return CreateChartFromIntentResponse(
+            dataset_used=dataset_info,
+            chart_type_selected=chart_type,
+            explanation=(
+                "Blocked by a governance policy. " + (explanation or "")
+            ).strip(),
+            confidence=confidence,
+            warnings=all_warnings,
+            alternatives=_suggest_alternatives(chart_type),
+        ).model_dump()
+
     # Step 3: Generate the chart via existing generate_chart tool
     await ctx.report_progress(3, 4, "Generating chart")
     with mcp_event_log_context(action="mcp.create_chart_from_intent.generate"):
@@ -273,10 +334,12 @@ async def create_chart_from_intent(
             generate_preview=False,
         )
 
-        # Import and call generate_chart directly (in-process, not via MCP)
+        # Import and call generate_chart directly (in-process, not via MCP).
+        # The @tool wrapper injects ctx itself, so we pass only the request —
+        # passing ctx here collides ("multiple values for argument 'ctx'").
         from superset.mcp_service.chart.tool.generate_chart import generate_chart
 
-        chart_response = await generate_chart(chart_request, ctx)
+        chart_response = await generate_chart(chart_request)
 
     # Step 4: Build response
     await ctx.report_progress(4, 4, "Building response")

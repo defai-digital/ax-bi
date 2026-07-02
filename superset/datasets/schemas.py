@@ -383,6 +383,8 @@ class ImportV1DatasetSchema(Schema):
     folders = fields.List(fields.Nested(FolderSchema), required=False, allow_none=True)
     # data_file is used by the example loading system to reference Parquet files
     data_file = fields.String(allow_none=True, load_default=None)
+    # data_file_uri is injected for bundled examples after resolving data_file
+    data_file_uri = fields.String(allow_none=True, load_default=None)
 
 
 class GetOrCreateDatasetSchema(Schema):

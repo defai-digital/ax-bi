@@ -335,7 +335,7 @@ class BaseDatasource(
         return self.kind == DatasourceKind.VIRTUAL
 
     @declared_attr
-    def slices(self) -> RelationshipProperty:
+    def slices(self):  # type: ignore[no-untyped-def]
         return relationship(
             "Slice",
             overlaps="table",
@@ -1316,6 +1316,8 @@ class SqlaTable(
 ):  # pylint: disable=too-many-public-methods
     """An ORM object for SqlAlchemy table references"""
 
+    __allow_unmapped__ = True
+
     type = "table"
     query_language = "sql"
     is_rls_supported = True
@@ -1354,7 +1356,7 @@ class SqlaTable(
     database_id = Column(Integer, ForeignKey("dbs.id"), nullable=False)
     fetch_values_predicate = Column(Text)
     owners = relationship(owner_class, secondary=sqlatable_user, backref="tables")
-    database: Database = relationship(
+    database = relationship(
         "Database",
         backref=backref("tables", cascade="all, delete-orphan"),
         foreign_keys=[database_id],
@@ -2272,6 +2274,12 @@ class RowLevelSecurityFilter(Model, AuditMixinNullable):
         Enum(
             *[filter_type.value for filter_type in utils.RowLevelSecurityFilterType],
             name="filter_type_enum",
+            # The migration created this column as VARCHAR(255); a native
+            # enum makes SQLAlchemy 2 reference a Postgres type that was
+            # never created (psycopg2 UndefinedObject)
+            native_enum=False,
+            create_constraint=False,
+            length=255,
         ),
     )
     group_key = Column(String(255), nullable=True)

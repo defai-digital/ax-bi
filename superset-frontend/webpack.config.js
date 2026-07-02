@@ -466,6 +466,7 @@ const config = {
     alias: {
       '@storybook-shared': path.resolve(APP_DIR, '.storybook/shared'),
       react: path.resolve(path.join(APP_DIR, './node_modules/react')),
+      'react-js-cron': path.resolve(APP_DIR, './node_modules/react-js-cron'),
       // TODO: remove Handlebars alias once Handlebars NPM package has been updated to
       // correctly support webpack import (https://github.com/handlebars-lang/handlebars.js/issues/953)
       handlebars: 'handlebars/dist/handlebars.js',

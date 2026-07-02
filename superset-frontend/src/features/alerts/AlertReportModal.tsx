@@ -2525,7 +2525,11 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
                         <StyledTreeSelect
                           disabled={tabOptions?.length === 0}
                           treeData={tabOptions}
-                          value={currentAlert?.extra?.dashboard?.anchor}
+                          // antd v6 treats '' as a real value and hides the
+                          // placeholder; normalize the cleared anchor
+                          value={
+                            currentAlert?.extra?.dashboard?.anchor || undefined
+                          }
                           onSelect={updateAnchorState}
                           placeholder={t('Select a tab')}
                         />

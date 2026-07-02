@@ -24,6 +24,8 @@ from superset.models.ai import (
     AIEvaluationRun,
     AIGeneratedArtifact,
     AISemanticAlias,
+    AISemanticDocument,
+    PGVector,
 )
 
 
@@ -114,6 +116,50 @@ def test_ai_evaluation_run_pk_is_uuid() -> None:
     pk_cols = list(AIEvaluationRun.__table__.primary_key.columns)
     assert len(pk_cols) == 1
     assert pk_cols[0].name == "uuid"
+
+
+def test_ai_semantic_document_table_name() -> None:
+    assert AISemanticDocument.__tablename__ == "ai_semantic_documents"
+
+
+def test_ai_semantic_document_columns() -> None:
+    columns = {c.name for c in AISemanticDocument.__table__.columns}
+    expected = {
+        "uuid",
+        "dataset_id",
+        "object_type",
+        "object_id",
+        "object_name",
+        "document_kind",
+        "source",
+        "source_hash",
+        "content",
+        "extra_json",
+        "embedding_provider",
+        "embedding_model",
+        "embedding_dimension",
+        "embedding",
+        "review_status",
+        "last_embedded_at",
+        "embedding_error",
+        "created_on",
+        "changed_on",
+    }
+    assert expected.issubset(columns)
+
+
+def test_ai_semantic_document_indexes() -> None:
+    index_names = {idx.name for idx in AISemanticDocument.__table__.indexes}
+    assert "ix_ai_sem_doc_object" in index_names
+    assert "ix_ai_sem_doc_dataset" in index_names
+    assert "ix_ai_sem_doc_kind" in index_names
+    assert "ix_ai_sem_doc_review_status" in index_names
+    assert "ix_ai_sem_doc_embedding_model" in index_names
+    assert "ix_ai_sem_doc_source" in index_names
+
+
+def test_pgvector_column_spec() -> None:
+    assert PGVector(1024).get_col_spec() == "vector(1024)"
 
 
 def test_uuid_generation_on_instances() -> None:

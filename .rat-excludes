@@ -92,3 +92,15 @@ CLAUDE.md
 CURSOR.md
 GEMINI.md
 GPT.md
+
+# AX-BI fork: files that cannot carry an ASF header
+.*svg
+.*pot
+.*patch
+.npmrc
+.npmignore
+.env-axbi.example
+BOUNDARY_REPORT.md
+# superset-desktop is a separate Tauri sub-app
+Cargo.toml
+superset-desktop/*

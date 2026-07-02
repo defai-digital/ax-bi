@@ -1974,7 +1974,8 @@ describe('plugin-chart-table', () => {
         );
 
         const arrow = container.querySelector(
-          '.dt-select-page-size .ant-select .ant-select-arrow',
+          // antd v6 renders the suffix icon in .ant-select-suffix (was .ant-select-arrow)
+          '.dt-select-page-size .ant-select .ant-select-suffix',
         );
         expect(arrow).not.toBeNull();
         expect(getComputedStyle(arrow as HTMLElement).zIndex).toBe('11');

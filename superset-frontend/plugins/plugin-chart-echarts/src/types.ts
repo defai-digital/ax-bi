@@ -18,9 +18,14 @@
  */
 import { RefObject, Ref } from 'react';
 
-import {
+// value imports use direct modules: the @superset-ui/core barrel can be
+// mid-evaluation (import cycle), leaving ChartPlugin/ChartProps undefined
+// when EchartsChartPlugin evaluates
+import ChartPlugin from '@superset-ui/core/chart/models/ChartPlugin';
+import ChartProps from '@superset-ui/core/chart/models/ChartProps';
+import ChartMetadata from '@superset-ui/core/chart/models/ChartMetadata';
+import type {
   ChartDataResponseResult,
-  ChartProps,
   ContextMenuFilters,
   FilterState,
   HandlerFunction,
@@ -28,14 +33,15 @@ import {
   PlainObject,
   QueryFormColumn,
   SetDataMaskHook,
-  ChartPlugin,
   SqlaFormData,
-  ChartMetadata,
 } from '@superset-ui/core';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import type { TooltipMarker } from 'echarts/types/src/util/format';
 import type { ECElementEvent } from 'echarts/types/src/util/types';
-import { StackControlsValue } from './constants';
+// import type only: a value import creates a runtime cycle
+// (types -> constants -> Timeseries/constants -> defaults -> types) that
+// leaves the LegendOrientation enum undefined while defaults.ts evaluates
+import type { StackControlsValue } from './constants';
 
 export type EchartsStylesProps = {
   height: number;

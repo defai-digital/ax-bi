@@ -58,6 +58,12 @@ if make_url(SQLALCHEMY_DATABASE_URI).get_backend_name() == "sqlite":
         "SQLite Database support for metadata databases will be "
         "removed in a future version of Superset."
     )
+    # The integration test suite runs a Celery worker against the same SQLite
+    # metadata database, so the test process and the worker contend for SQLite's
+    # single-writer lock. Give writers a generous busy timeout so they wait for
+    # the lock to be released instead of failing immediately with
+    # "sqlite3.OperationalError: database is locked".
+    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"timeout": 60}}
 
 # Speeding up the tests.integration_tests.
 PRESTO_POLL_INTERVAL = 0.1
