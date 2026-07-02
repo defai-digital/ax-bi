@@ -17,10 +17,9 @@
  * under the License.
  */
 
-// re-export first: consumers can reach this module mid-import-cycle, and
-// the leaf require must have run before the export getter is read
-// eslint-disable-next-line import/no-cycle
-export { formatSelectOptions } from './formatSelectOptions';
+// leaf import first: consumers can reach this module mid-import-cycle, and
+// the leaf's require must have run before the re-export getter is read
+import { formatSelectOptions } from './formatSelectOptions';
 import { useCallback, useEffect, DependencyList } from 'react';
 /* eslint camelcase: 0 */
 import URI from 'urijs';
@@ -49,6 +48,8 @@ import {
 } from 'src/explore/constants';
 import { DashboardStandaloneMode } from 'src/dashboard/util/constants';
 import { Slice } from 'src/types/Chart';
+
+export { formatSelectOptions };
 
 // Type definitions
 export type EndpointType =
