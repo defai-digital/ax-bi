@@ -526,8 +526,4 @@ export const getSimpleSQLExpression = (
   return expression;
 };
 
-export function formatSelectOptions<T extends { toString(): string }>(
-  options: T[],
-): [T, string][] {
-  return options.map(opt => [opt, opt.toString()]);
-}
+export { formatSelectOptions } from './formatSelectOptions';

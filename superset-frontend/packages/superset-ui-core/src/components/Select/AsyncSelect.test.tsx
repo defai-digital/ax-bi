@@ -1327,7 +1327,7 @@ test('appends page>1 results during an active search and discards them when sear
   // Wait for loading to finish so handlePagination's `!isLoading` gate is
   // open before we fire scroll.
   await waitFor(() =>
-    expect(document.querySelector('.ant-select-arrow .ant-spin')).toBeNull(),
+    expect(document.querySelector('.ant-select-suffix .ant-spin')).toBeNull(),
   );
 
   // Trigger pagination by dispatching a scroll event on the virtual-list

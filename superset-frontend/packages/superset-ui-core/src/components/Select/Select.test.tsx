@@ -845,9 +845,7 @@ test('dropdown width matches input width after tags collapse in oneLine mode', a
 
   // Wait for RAF to complete and tags to collapse
   await waitFor(() => {
-    const withinSelector = within(
-      getElementByClassName('.ant-select-content'),
-    );
+    const withinSelector = within(getElementByClassName('.ant-select-content'));
     expect(
       withinSelector.queryByText(OPTIONS[0].label),
     ).not.toBeInTheDocument();
