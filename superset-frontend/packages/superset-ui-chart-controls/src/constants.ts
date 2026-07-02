@@ -17,7 +17,11 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
-import { DTTM_ALIAS, QueryColumn, QueryMode } from '@superset-ui/core';
+// direct module imports: this module reads QueryMode at module scope, and
+// the @superset-ui/core barrel can be mid-evaluation (import cycle)
+import { DTTM_ALIAS } from '@superset-ui/core/query/constants';
+import { QueryMode } from '@superset-ui/core/query/types/QueryFormData';
+import type { QueryColumn } from '@superset-ui/core/query/types/Query';
 import { GenericDataType } from '@apache-superset/core/common';
 import { ColumnMeta, SortSeriesData, SortSeriesType } from './types';
 

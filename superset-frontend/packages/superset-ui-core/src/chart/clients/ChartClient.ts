@@ -17,15 +17,17 @@
  * under the License.
  */
 
-import {
-  isDefined,
-  SupersetClient,
+// direct module imports: importing the package barrel ('../..') creates a
+// runtime cycle that leaves value bindings undefined while it evaluates
+import isDefined from '../../utils/isDefined';
+import SupersetClient from '../../connection/SupersetClient';
+import SupersetClientClass from '../../connection/SupersetClientClass';
+import type {
   SupersetClientInterface,
   RequestConfig,
-  SupersetClientClass,
-  QueryFormData,
-  Datasource,
-} from '../..';
+} from '../../connection/types';
+import type { QueryFormData } from '../../query/types/QueryFormData';
+import type { Datasource } from '../../query/types/Datasource';
 import getChartBuildQueryRegistry from '../registries/ChartBuildQueryRegistrySingleton';
 import getChartMetadataRegistry from '../registries/ChartMetadataRegistrySingleton';
 import { QueryData } from '../types/QueryResponse';

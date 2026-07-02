@@ -18,9 +18,8 @@ from typing import Any
 
 from flask import g, has_request_context, request
 from flask_babel import lazy_gettext as _
-from flask_sqlalchemy import BaseQuery
 from sqlalchemy import or_
-from sqlalchemy.orm.query import Query
+from sqlalchemy.orm import Query, Query as BaseQuery
 
 from superset import security_manager
 from superset.models.sql_lab import SavedQuery

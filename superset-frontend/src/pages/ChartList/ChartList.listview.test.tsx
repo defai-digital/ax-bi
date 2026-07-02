@@ -227,10 +227,15 @@ test('sorts table when clicking column headers', async () => {
 
   const allHeaders = table.querySelectorAll('.ant-table-column-sorters');
 
-  const sortableHeaders = Array.from(allHeaders).filter(
-    header => !header.closest('.ant-table-measure-cell-content'),
+  // antd v6 renders a hidden duplicate header row for measurement, so
+  // count distinct visible column titles instead of raw sorter nodes
+  const sortableTitles = new Set(
+    Array.from(allHeaders).map(
+      header =>
+        header.querySelector('.ant-table-column-title')?.textContent ?? '',
+    ),
   );
-  expect(sortableHeaders).toHaveLength(3);
+  expect(sortableTitles.size).toBe(3);
 
   const nameHeader = within(table).getByTitle('Name');
   await userEvent.click(nameHeader);

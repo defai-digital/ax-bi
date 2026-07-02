@@ -326,7 +326,12 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         """
         Get all catalogs.
         """
-        return {catalog for (catalog,) in inspector.bind.execute(text("SHOW CATALOGS"))}
+        return {
+            catalog
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector, text("SHOW CATALOGS")
+            )
+        }
 
     @classmethod
     def adjust_engine_params(
@@ -555,6 +560,7 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
 
         for col_name, value in zip(col_names, values, strict=False):
             col_type = column_type_by_name.get(col_name)
+            literal_value = value
 
             if isinstance(col_type, str):
                 col_type_class = getattr(types, col_type, None)
@@ -562,10 +568,16 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
 
             if isinstance(col_type, types.DATE):
                 col_type = Date()
+                literal_value = literal_column(
+                    f"DATE '{str(value).replace(chr(39), chr(39) * 2)}'"
+                )
             elif isinstance(col_type, types.TIMESTAMP):
                 col_type = TimeStamp()
+                literal_value = literal_column(
+                    f"TIMESTAMP '{str(value).replace(chr(39), chr(39) * 2)}'"
+                )
 
-            query = query.where(Column(col_name, col_type) == value)
+            query = query.where(Column(col_name, col_type) == literal_value)
 
         return query
 
@@ -715,9 +727,9 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         :return: list of column objects
         """
         full_table_name = cls.quote_table(table, inspector.engine.dialect)
-        return inspector.bind.execute(
-            text(f"SHOW COLUMNS FROM {full_table_name}")
-        ).fetchall()
+        return cls.execute_inspector_statement(
+            inspector, text(f"SHOW COLUMNS FROM {full_table_name}")
+        )
 
     @classmethod
     def _create_column_info(

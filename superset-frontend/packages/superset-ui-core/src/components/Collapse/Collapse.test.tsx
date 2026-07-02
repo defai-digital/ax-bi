@@ -82,8 +82,10 @@ test('collapses on click', async () => {
 
   await userEvent.click(screen.getAllByRole('button')[0]);
 
+  // antd v6 marks the collapsed panel with ant-collapse-panel-hidden
+  // (the v5 ant-collapse-content-hidden class no longer exists)
   expect(screen.getByText('Content 1').parentNode).toHaveClass(
-    'ant-collapse-content-hidden',
+    'ant-collapse-panel-hidden',
   );
   expect(screen.queryByText('Content 2')).not.toBeInTheDocument();
 });

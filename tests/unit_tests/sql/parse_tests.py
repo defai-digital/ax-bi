@@ -3795,6 +3795,17 @@ def test_parse_error_with_incomplete_location_metadata() -> None:
             SQLScript("SELECT", "base")
 
 
+def test_parse_error_without_error_metadata() -> None:
+    """A sqlglot ParseError with no structured errors raises SupersetParseError
+    without location details instead of crashing on the missing metadata."""
+    with patch(
+        "superset.sql.parse.sqlglot.parse",
+        side_effect=errors.ParseError("no metadata", errors=[]),
+    ):
+        with pytest.raises(SupersetParseError):
+            SQLScript("SELECT", "base")
+
+
 def test_backtick_fallback_logs_warning(caplog: pytest.LogCaptureFixture) -> None:
     """
     Test that the MySQL dialect fallback emits a warning log.

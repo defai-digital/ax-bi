@@ -116,6 +116,10 @@ class TestDatasetApi(SupersetTestCase):
         db.session.commit()
         if fetch_metadata:
             table.fetch_metadata()
+            # fetch_metadata leaves its column/metric writes pending; commit so
+            # they don't hold the write lock against fixtures running in other
+            # app contexts (sessions are app-context-scoped under FSA 3.1)
+            db.session.commit()
         return table
 
     @staticmethod
@@ -895,9 +899,13 @@ class TestDatasetApi(SupersetTestCase):
 
         example_db = get_example_database()
         with example_db.get_sqla_engine() as engine:
-            engine.execute(
-                text(f"CREATE TABLE {CTAS_SCHEMA_NAME}.birth_names AS SELECT 2 as two")
-            )
+            with engine.begin() as connection:
+                connection.execute(
+                    text(f"""
+                    CREATE TABLE {CTAS_SCHEMA_NAME}.birth_names AS
+                    SELECT 2 as two
+                    """)
+                )
 
         self.login(ADMIN_USERNAME)
         table_data = {
@@ -916,7 +924,8 @@ class TestDatasetApi(SupersetTestCase):
         rv = self.client.delete(uri)
         assert rv.status_code == 200
         with example_db.get_sqla_engine() as engine:
-            engine.execute(text(f"DROP TABLE {CTAS_SCHEMA_NAME}.birth_names"))
+            with engine.begin() as connection:
+                connection.execute(text(f"DROP TABLE {CTAS_SCHEMA_NAME}.birth_names"))
 
     def test_create_dataset_validate_database(self):
         """
@@ -2956,10 +2965,13 @@ class TestDatasetApi(SupersetTestCase):
 
         examples_db = get_example_database()
         with examples_db.get_sqla_engine() as engine:
-            engine.execute(text("DROP TABLE IF EXISTS test_create_sqla_table_api"))
-            engine.execute(
-                text("CREATE TABLE test_create_sqla_table_api AS SELECT 2 as col")
-            )
+            with engine.begin() as connection:
+                connection.execute(
+                    text("DROP TABLE IF EXISTS test_create_sqla_table_api")
+                )
+                connection.execute(
+                    text("CREATE TABLE test_create_sqla_table_api AS SELECT 2 as col")
+                )
 
         rv = self.client.post(
             "api/v1/dataset/get_or_create/",
@@ -2983,7 +2995,8 @@ class TestDatasetApi(SupersetTestCase):
         self.items_to_delete = [table]
 
         with examples_db.get_sqla_engine() as engine:
-            engine.execute(text("DROP TABLE test_create_sqla_table_api"))
+            with engine.begin() as connection:
+                connection.execute(text("DROP TABLE test_create_sqla_table_api"))
 
     def test_get_or_create_dataset_disambiguates_by_schema(self):
         """

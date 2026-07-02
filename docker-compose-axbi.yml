@@ -1,0 +1,200 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+x-axbi-image: &axbi-image ${AXBI_IMAGE:-ghcr.io/defai-digital/ax-bi:latest}
+x-axbi-services-image: &axbi-services-image ${AX_SERVICES_IMAGE:-ghcr.io/defai-digital/ax-bi-services:latest}
+
+x-axbi-env: &axbi-env
+  SUPERSET_CONFIG_PATH: /app/docker/pythonpath_axbi/superset_config.py
+  SUPERSET_ENV: production
+  SUPERSET_LOAD_EXAMPLES: ${SUPERSET_LOAD_EXAMPLES:-no}
+  SUPERSET_LOG_LEVEL: ${SUPERSET_LOG_LEVEL:-info}
+  SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?Set SUPERSET_SECRET_KEY in docker/.env-axbi}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in docker/.env-axbi}
+  DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
+  DATABASE_HOST: ${DATABASE_HOST:-db}
+  DATABASE_PORT: ${DATABASE_PORT:-5432}
+  DATABASE_DB: ${DATABASE_DB:-superset}
+  DATABASE_USER: ${DATABASE_USER:-superset}
+  DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  ENABLE_PROXY_FIX: ${ENABLE_PROXY_FIX:-true}
+  MCP_AUTH_ENABLED: ${MCP_AUTH_ENABLED:-false}
+  MCP_DEV_USERNAME: ${MCP_DEV_USERNAME:-}
+  MCP_JWT_ISSUER: ${MCP_JWT_ISSUER:-}
+  MCP_JWT_AUDIENCE: ${MCP_JWT_AUDIENCE:-}
+  MCP_JWKS_URI: ${MCP_JWKS_URI:-}
+  MCP_REQUIRED_SCOPES: ${MCP_REQUIRED_SCOPES:-}
+  GENAI_SEMANTIC_INDEX: ${GENAI_SEMANTIC_INDEX:-false}
+  GENAI_SEMANTIC_INDEX_PGVECTOR: ${GENAI_SEMANTIC_INDEX_PGVECTOR:-false}
+  AI_SEMANTIC_EMBEDDING_PROVIDER: ${AI_SEMANTIC_EMBEDDING_PROVIDER:-ax_engine_http}
+  AI_SEMANTIC_EMBEDDING_ENDPOINT: ${AI_SEMANTIC_EMBEDDING_ENDPOINT:-http://host.docker.internal:8099/embed}
+  AI_SEMANTIC_EMBEDDING_MODEL: ${AI_SEMANTIC_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+  AI_SEMANTIC_EMBEDDING_DIMENSIONS: ${AI_SEMANTIC_EMBEDDING_DIMENSIONS:-1024}
+
+services:
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg18}
+    restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: ${POSTGRES_DB:-superset}
+      POSTGRES_USER: ${POSTGRES_USER:-superset}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
+    volumes:
+      - db_home:/var/lib/postgresql/data
+      - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  superset-init:
+    image: *axbi-image
+    command: ["/app/docker/docker-init.sh"]
+    environment: *axbi-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - superset_home:/app/superset_home
+    healthcheck:
+      disable: true
+
+  superset:
+    image: *axbi-image
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    restart: unless-stopped
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+    environment: *axbi-env
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "/app/docker/docker-healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  superset-worker:
+    image: *axbi-image
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    restart: unless-stopped
+    environment: *axbi-env
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  superset-worker-beat:
+    image: *axbi-image
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    restart: unless-stopped
+    environment: *axbi-env
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - superset_home:/app/superset_home
+    healthcheck:
+      disable: true
+
+  mcp:
+    image: *axbi-image
+    command: ["/app/docker/docker-bootstrap.sh", "mcp"]
+    restart: unless-stopped
+    ports:
+      - "${MCP_PORT:-5008}:5008"
+    environment:
+      <<: *axbi-env
+      MCP_PORT: 5008
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - superset_home:/app/superset_home
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 5008), 5).close()",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ax-services:
+    image: *axbi-services-image
+    restart: unless-stopped
+    environment:
+      AX_SERVICES_HOST: 0.0.0.0
+      AX_SERVICES_PORT: 5010
+      AX_SUPERSET_BASE_URL: http://superset:8088
+      AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
+    ports:
+      - "${AX_SERVICES_PORT:-5010}:5010"
+    depends_on:
+      superset:
+        condition: service_healthy
+
+volumes:
+  superset_home:
+    external: false
+  db_home:
+    external: false
+  redis:
+    external: false

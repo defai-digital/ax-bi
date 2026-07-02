@@ -78,8 +78,11 @@ test('does not render the tooltip with anchors', async () => {
     />,
   );
   userEvent.hover(screen.getByRole('link', { name: 'datasource-name' }));
-  expect(await screen.findByRole('tooltip')).toBeInTheDocument();
-  const tooltip = await screen.findByRole('tooltip');
-  expect(within(tooltip).queryByRole('link')).not.toBeInTheDocument();
+  // the mocked useState forces every tooltip open; assert none renders links
+  const tooltips = await screen.findAllByRole('tooltip');
+  expect(tooltips.length).toBeGreaterThan(0);
+  tooltips.forEach(tooltip => {
+    expect(within(tooltip).queryByRole('link')).not.toBeInTheDocument();
+  });
   mock.mockRestore();
 });

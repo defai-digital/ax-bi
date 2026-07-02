@@ -9,6 +9,11 @@ This is the **AX-BI fork** of Apache Superset — a data visualization platform 
 - **MCP service** (`superset/mcp_service/`) — a Model Context Protocol server exposing Superset resources to LLM agents. Has its own [`ARCHITECTURE.md`](superset/mcp_service/ARCHITECTURE.md), [`SECURITY.md`](superset/mcp_service/SECURITY.md), and [`PRODUCTION.md`](superset/mcp_service/PRODUCTION.md). **Read those before touching `superset/mcp_service/`.**
 - **GenAI BI direction** — see [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for the product direction (prompt-to-dashboard, governed semantic layer, AI-ready metadata).
 - **Boundary-cleanup effort** — [`BOUNDARY_REPORT.md`](BOUNDARY_REPORT.md) tracks module-boundary findings and which are done vs. deferred. Bug write-ups live in `ax-internal/bugs/`. Consult these before large refactors.
+- **`superset-core`** (`superset-core/`) — local editable Python package (`apache-superset-core`) providing shared base classes: `BaseDAO`, `BaseCommand` mixins, `RestApi`, semantic layer types, task framework, and MCP decorators (`superset_core.*` namespace). Changes here propagate to the main app.
+- **`ax-services`** (`ax-services/`) — TypeScript sidecar (port 5010) for runtime modernization: health/readiness checks, MCP asset search proxy, and Superset connectivity. Has its own `jest.config.js` and contract schemas in `contracts/`.
+- **`superset-desktop`** (`superset-desktop/`) — thin Tauri v2 desktop shell that loads the web app. Rust backend in `src-tauri/`, TypeScript bridge in `src/`. Supports `axbi://` deep links, system tray, and cross-platform builds.
+- **`superset-extensions-cli`** (`superset-extensions-cli/`) — CLI tool (`superset-extensions init/build/bundle`) for scaffolding and packaging Superset extensions.
+- **`ax-internal/`** — internal design docs (`docs/`), reference implementations (`reference/evidence/`), and bug reports (`bugs/`). Read before starting features covered by existing ADRs/PRDs.
 
 The agent-instruction files (`CLAUDE.md`, `GEMINI.md`, `GPT.md`) are **symlinks to `AGENTS.md`**. Edit this file — all four update together.
 
@@ -104,6 +109,29 @@ Common pre-commit failures:
 - **Type errors** — mypy (Python) and `type-checking-frontend` (tsc) need manual fixes
 - **Linting** — ruff, pylint (Python) and oxlint (frontend) issues; oxlint can auto-fix many with `npm run lint-fix`
 
+### AX Services (TypeScript Sidecar)
+
+All commands run from `ax-services/`:
+
+```bash
+cd ax-services
+npm install
+npm run dev-server     # Development server (port 5010)
+npm run build          # Production build
+npm test               # Jest tests
+npm run type           # TypeScript type checking
+npm run contracts:write  # Regenerate contract JSON schemas
+```
+
+### Desktop (Tauri)
+
+```bash
+cd superset-desktop
+npm install            # First time only
+npm run dev            # Builds Rust + launches native window (needs frontend dev-server on :9000)
+npm run build          # Release build with platform installers
+```
+
 ### Playwright E2E Tests
 
 ```bash
@@ -143,6 +171,20 @@ HTTP Request
 - DAOs extend `BaseDAO` (from `superset_core.common.daos`) with generic CRUD + filtering
 - Route authorization uses `@protect()` (REST API), `@has_access_api` (legacy views), or `@has_access` (HTML views)
 - Object authorization uses `security_manager.raise_for_access(...)` for data-bearing resources
+
+### `superset-core` Package
+
+The `superset-core/` directory is a standalone Python package (`apache-superset-core`) installed as editable local via `uv`. It provides foundational abstractions used by the main app:
+
+- `superset_core.common.daos` — `BaseDAO` with generic CRUD, filtering, pagination
+- `superset_core.common.models` — Shared model mixins
+- `superset_core.rest_api` — `RestApi` base class and `@api` decorator
+- `superset_core.semantic_layers` — Semantic layer types, DAOs, decorators
+- `superset_core.tasks` — Background task framework with `@task` decorator
+- `superset_core.mcp` — MCP tool/prompt decorators (`@tool`, `@prompt`)
+- `superset_core.queries` — Query types and DAOs
+
+When adding new base abstractions that should be reusable by extensions, put them here rather than in `superset/`.
 
 ### Global Extensions (`superset/extensions/__init__.py`)
 
@@ -229,14 +271,15 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 
 - **New Python files** require ASF license headers. LLM instruction files (AGENTS.md, etc.) are excluded via `.rat-excludes`.
 - **Code comments**: avoid time-specific language ("now", "currently", "today"). Write timeless comments.
-- **JSON imports**: use `superset.utils.json` instead of `json` or `simplejson` (enforced by ruff).
+- **JSON imports**: use `superset.utils.json` (or `superset.utils.json_fast` for non-ORM performance-critical paths) instead of `json` or `simplejson` (enforced by ruff `banned-api`).
 - **Breaking changes**: add to `UPDATING.md`.
 - **Docstrings**: required for new functions/classes.
 - **Docs**: update `docs/` for user-facing changes.
+- **Feature flags**: adding or removing flags in `superset/config.py` triggers the `feature-flags-sync` pre-commit hook, which updates `docs/static/feature-flags.json`. If this hook fails, run it again — the second pass succeeds after the file is updated.
 
 ## Test Utilities
 
-**Python:** `SupersetTestCase` base class (`tests/integration_tests/base_tests.py`), `@with_config` / `@with_feature_flags` decorators, `login_as()` / `login_as_admin()` helpers, `create_dashboard()` / `create_slice()` utilities. Use `MagicMock()` for config objects; avoid `AsyncMock` for synchronous code.
+**Python:** `SupersetTestCase` base class (`tests/integration_tests/base_tests.py`), `@with_config` / `@with_feature_flags` decorators, `login_as()` / `login_as_admin()` helpers, `create_dashboard()` / `create_slice()` utilities. Use `MagicMock()` for config objects; avoid `AsyncMock` for synchronous code. Test discovery uses `tests/` as root (`pytest.ini`). `asyncio_mode = auto` is set — async test functions run without explicit markers. SQLAlchemy 1.4→2.0 deprecation warnings are configured as errors in `pytest.ini` to prevent regression.
 
 **TypeScript:** Custom `render()` with providers at `superset-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
 

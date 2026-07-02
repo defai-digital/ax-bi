@@ -49,8 +49,10 @@ services:
         required: true
       - path: docker/.env-local # optional override
         required: false
-    image: postgres:17
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg18}
     container_name: superset_db
+    environment:
+      PGDATA: /var/lib/postgresql/data
     restart: unless-stopped
     volumes:
       - db_home:/var/lib/postgresql/data

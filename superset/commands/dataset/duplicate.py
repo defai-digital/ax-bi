@@ -55,7 +55,7 @@ class DuplicateDatasetCommand(CreateMixin, BaseCommand):
         database_id = self._base_model.database_id
         table_name = self._properties["table_name"]
         owners = self._properties["owners"]
-        database = db.session.query(Database).get(database_id)
+        database = db.session.get(Database, database_id)
         if not database:
             raise SupersetErrorException(
                 SupersetError(

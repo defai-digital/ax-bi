@@ -108,10 +108,25 @@ const findAllSelectOptions = () =>
   waitFor(() => getElementsByClassName('.ant-select-item-option-content'));
 
 const findSelectValue = () =>
-  waitFor(() => getElementByClassName('.ant-select-selection-item'));
+  waitFor(() => {
+    // antd v6: single mode renders the value in .ant-select-content-has-value;
+    // multiple mode keeps .ant-select-selection-item tags
+    const el = document.querySelector(
+      '.ant-select-selection-item, .ant-select-content-has-value',
+    ) as HTMLElement | null;
+    if (!el) {
+      throw new Error('Select value not found');
+    }
+    return el;
+  });
 
 const findAllSelectValues = () =>
-  waitFor(() => [...getElementsByClassName('.ant-select-selection-item')]);
+  waitFor(() => [
+    // antd v6: single mode renders the value in .ant-select-content-has-value
+    ...getElementsByClassName(
+      '.ant-select-selection-item, .ant-select-content-has-value',
+    ),
+  ]);
 
 const clearAll = () => userEvent.click(screen.getByLabelText('close-circle'));
 
@@ -363,7 +378,7 @@ test('searches for custom fields', async () => {
 
 test('removes duplicated values', async () => {
   render(<Select {...defaultProps} mode="multiple" allowNewOptions />);
-  const input = getElementByClassName('.ant-select-selection-search-input');
+  const input = getElementByClassName('input.ant-select-input');
   const paste = createEvent.paste(input, {
     clipboardData: {
       getData: () => 'a,b,b,b,c,d,d',
@@ -760,7 +775,7 @@ test('Renders only an overflow tag if dropdown is open in oneLine mode', async (
   );
   await open();
 
-  const withinSelector = within(getElementByClassName('.ant-select-selector'));
+  const withinSelector = within(getElementByClassName('.ant-select-content'));
   await waitFor(() => {
     expect(
       withinSelector.queryByText(OPTIONS[0].label),
@@ -793,7 +808,7 @@ test('Maintains stable maxTagCount to prevent click target disappearing in oneLi
     />,
   );
 
-  const withinSelector = within(getElementByClassName('.ant-select-selector'));
+  const withinSelector = within(getElementByClassName('.ant-select-content'));
   expect(withinSelector.getByText(OPTIONS[0].label)).toBeVisible();
   expect(withinSelector.getByText('+ 2 ...')).toBeVisible();
 
@@ -830,9 +845,7 @@ test('dropdown width matches input width after tags collapse in oneLine mode', a
 
   // Wait for RAF to complete and tags to collapse
   await waitFor(() => {
-    const withinSelector = within(
-      getElementByClassName('.ant-select-selector'),
-    );
+    const withinSelector = within(getElementByClassName('.ant-select-content'));
     expect(
       withinSelector.queryByText(OPTIONS[0].label),
     ).not.toBeInTheDocument();
@@ -1068,7 +1081,7 @@ test('fires onChange when pasting a selection', async () => {
   const onChange = jest.fn();
   render(<Select {...defaultProps} onChange={onChange} />);
   await open();
-  const input = getElementByClassName('.ant-select-selection-search-input');
+  const input = getElementByClassName('input.ant-select-input');
   const paste = createEvent.paste(input, {
     clipboardData: {
       getData: () => OPTIONS[0].label,
@@ -1096,7 +1109,7 @@ test('does not duplicate options when using numeric values', async () => {
 test('pasting an existing option does not duplicate it', async () => {
   render(<Select {...defaultProps} options={[OPTIONS[0]]} />);
   await open();
-  const input = getElementByClassName('.ant-select-selection-search-input');
+  const input = getElementByClassName('input.ant-select-input');
   const paste = createEvent.paste(input, {
     clipboardData: {
       getData: () => OPTIONS[0].label,
@@ -1122,7 +1135,7 @@ test('pasting an existing option does not duplicate it in multiple mode', async 
     />,
   );
   await open();
-  const input = getElementByClassName('.ant-select-selection-search-input');
+  const input = getElementByClassName('input.ant-select-input');
   const paste = createEvent.paste(input, {
     clipboardData: {
       getData: () => 'John,Liam,Peter',
@@ -1136,7 +1149,7 @@ test('pasting an existing option does not duplicate it in multiple mode', async 
 test('pasting an non-existent option should not add it if allowNewOptions is false', async () => {
   render(<Select {...defaultProps} options={[]} allowNewOptions={false} />);
   await open();
-  const input = getElementByClassName('.ant-select-selection-search-input');
+  const input = getElementByClassName('input.ant-select-input');
   const paste = createEvent.paste(input, {
     clipboardData: {
       getData: () => 'John',

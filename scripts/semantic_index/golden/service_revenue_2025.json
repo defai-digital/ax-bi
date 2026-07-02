@@ -1,0 +1,18 @@
+[
+  {
+    "prompt": "revenue by region",
+    "expect_measure": "total_revenue"
+  },
+  {
+    "prompt": "top clients by revenue",
+    "expect_measure": "total_revenue"
+  },
+  {
+    "prompt": "monthly revenue trend",
+    "expect_measure": "total_revenue"
+  },
+  {
+    "prompt": "total revenue for a single region",
+    "expect_measure": "total_revenue"
+  }
+]

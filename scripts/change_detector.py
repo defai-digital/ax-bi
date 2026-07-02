@@ -40,6 +40,9 @@ PATTERNS = {
         r"^\.github/workflows/.*(bashlib|frontend|e2e)",
         r"^superset-frontend/",
     ],
+    "frontend_build": [
+        r"^superset-frontend/(?!(?:cypress-base|playwright)/)",
+    ],
     "ax-services": [
         r"^\.github/workflows/ax-services\.yml",
         r"^\.github/actions/change-detector/",
@@ -57,8 +60,13 @@ PATTERNS = {
         r"^tests/unit_tests/runtime_modernization/rust_sql_test\.py",
     ],
     "docker": [
+        r"^\.github/workflows/(axbi-docker|docker)\.yml",
         r"^Dockerfile$",
         r"^docker.*",
+        r"^pyproject\.toml$",
+        r"^requirements/(base|development)\.(in|txt)$",
+        r"^superset-core/",
+        r"^superset/mcp_service/",
     ],
     "docs": [
         r"^docs/",

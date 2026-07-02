@@ -18,7 +18,8 @@
  */
 import { themeObject, css, exampleThemes } from '@apache-superset/core/theme';
 import { combineReducers, createStore, applyMiddleware, compose } from 'redux';
-import thunk from 'redux-thunk';
+// redux-thunk v3 dropped the default export
+import { thunk } from 'redux-thunk';
 import { Provider } from 'react-redux';
 import reducerIndex from 'spec/helpers/reducerIndex';
 import { Global } from '@emotion/react';

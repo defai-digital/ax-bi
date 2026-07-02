@@ -194,6 +194,13 @@ def invalidate_user_sessions(
         # Ceiling the stamp guarantees it strictly exceeds any login time from
         # the same second.
         now_epoch = math.ceil(now_epoch)
+    else:
+        # Floor the epoch to a whole second. MySQL DATETIME columns *round*
+        # fractional seconds (they don't truncate), so a fractional stamp can
+        # land up to half a second in the future and invalidate sessions
+        # created shortly *after* it — e.g. a logout epoch killing the very
+        # next login.
+        now_epoch = math.floor(now_epoch)
     now = datetime.fromtimestamp(now_epoch, timezone.utc).replace(tzinfo=None)
 
     def _stamp_existing() -> int:

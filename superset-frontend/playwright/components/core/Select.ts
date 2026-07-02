@@ -26,7 +26,7 @@ import { TIMEOUT } from '../../utils/constants';
 const SELECT_SELECTORS = {
   DROPDOWN: '.ant-select-dropdown',
   OPTION: '.ant-select-item-option',
-  SEARCH_INPUT: '.ant-select-selection-search-input',
+  SEARCH_INPUT: 'input.ant-select-selection-search-input',
   CLEAR: '.ant-select-clear',
 } as const;
 
@@ -149,20 +149,30 @@ export class Select {
    * @param text - The text to type
    */
   async type(text: string): Promise<void> {
-    // Find the actual search input inside the select component
-    const searchInput = this.locator.locator(SELECT_SELECTORS.SEARCH_INPUT);
-    try {
-      // Wait for search input in case dropdown is still rendering
-      await searchInput.first().waitFor({ state: 'attached', timeout: 1000 });
-      await searchInput.first().fill(text);
-    } catch (error) {
-      // Only handle TimeoutError (search input not found); re-throw other errors
-      if (!(error instanceof Error) || error.name !== 'TimeoutError') {
-        throw error;
-      }
-      // Fallback: locator might be the input itself (e.g., from getByRole('combobox'))
-      await this.locator.fill(text);
+    const target = this.locator.first();
+    const tagName = await target
+      .evaluate(element => element.tagName.toLowerCase())
+      .catch(() => '');
+    if (tagName === 'input' || tagName === 'textarea') {
+      await target.fill(text);
+      return;
     }
+
+    const searchInput = this.locator
+      .locator(SELECT_SELECTORS.SEARCH_INPUT)
+      .first();
+    if ((await searchInput.count()) > 0) {
+      await searchInput.fill(text);
+      return;
+    }
+
+    const nestedInput = this.locator.locator('input').first();
+    if ((await nestedInput.count()) > 0) {
+      await nestedInput.fill(text);
+      return;
+    }
+
+    await this.page.keyboard.insertText(text);
   }
 
   /**

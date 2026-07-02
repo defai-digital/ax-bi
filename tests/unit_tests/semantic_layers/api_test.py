@@ -1175,6 +1175,16 @@ def test_serialize_layer_malformed_config(
     assert response.json["result"]["configuration"] == {}
 
 
+def test_get_required_fields_non_dict_variant_def() -> None:
+    """A $defs entry that isn't a mapping yields no required fields."""
+    from superset.semantic_layers.api import _get_required_fields
+
+    assert (
+        _get_required_fields({"VariantA": "not-a-dict"}, "#/$defs/VariantA", "disc")
+        == set()
+    )
+
+
 def test_infer_discriminators_injects_discriminator() -> None:
     """Test _infer_discriminators injects discriminator values."""
     from superset.semantic_layers.api import _infer_discriminators

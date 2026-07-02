@@ -18,7 +18,11 @@
  */
 
 import { ComponentType } from 'react';
-import { isRequired, Plugin, QueryFormData } from '../..';
+// direct module imports: the package barrel ('../..') can be mid-evaluation
+// (import cycle), leaving Plugin undefined when this class evaluates
+import isRequired from '../../utils/isRequired';
+import Plugin from '../../models/Plugin';
+import type { QueryFormData } from '../../query/types/QueryFormData';
 import ChartMetadata from './ChartMetadata';
 import getChartMetadataRegistry from '../registries/ChartMetadataRegistrySingleton';
 import getChartBuildQueryRegistry from '../registries/ChartBuildQueryRegistrySingleton';
@@ -27,7 +31,7 @@ import getChartControlPanelRegistry from '../registries/ChartControlPanelRegistr
 import getChartTransformPropsRegistry from '../registries/ChartTransformPropsRegistrySingleton';
 import { BuildQueryFunction, TransformProps } from '../types/TransformFunction';
 import { ChartControlPanel } from './ChartControlPanel';
-import { ChartProps } from '..';
+import ChartProps from './ChartProps';
 
 function IDENTITY<T>(x: T) {
   return x;

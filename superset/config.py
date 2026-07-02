@@ -696,6 +696,12 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Enable embedded dashboard AI assistant flows
     # @lifecycle: development
     "GENAI_EMBEDDED_ASSISTANT": False,
+    # Enable GenAI BI semantic document generation and retrieval
+    # @lifecycle: development
+    "GENAI_SEMANTIC_INDEX": False,
+    # Enable pgvector-backed GenAI BI semantic retrieval
+    # @lifecycle: development
+    "GENAI_SEMANTIC_INDEX_PGVECTOR": False,
     # Parent flag for runtime modernization experiments.
     # @lifecycle: development
     "RUNTIME_MODERNIZATION": False,
@@ -1644,6 +1650,7 @@ class CeleryConfig:  # pylint: disable=too-few-public-methods
         "superset.tasks.thumbnails",
         "superset.tasks.cache",
         "superset.tasks.slack",
+        "superset.semantic_index.tasks",
     )
     result_backend = "db+sqlite:///celery_results.sqlite"
     worker_prefetch_multiplier = 1
@@ -1941,6 +1948,23 @@ FAB_API_KEY_PREFIXES = ["sst_"]
 # This config is read by the LLM provider factory in
 # superset.mcp_service.ai.provider_factory.
 GENAI_LLM_PROVIDER_CONFIG: dict[str, Any] = {}
+
+# Semantic index configuration for GenAI BI retrieval.
+# ``ax_engine_http`` expects the host-side script in
+# scripts/semantic_index/ax_engine_embedding_server.py.
+AI_SEMANTIC_EMBEDDING_PROVIDER = "disabled"
+AI_SEMANTIC_EMBEDDING_ENDPOINT = ""
+AI_SEMANTIC_EMBEDDING_MODEL_DIR = ""
+AI_SEMANTIC_EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-0.6B"
+AI_SEMANTIC_EMBEDDING_DIMENSIONS = 1024
+AI_SEMANTIC_EMBEDDING_MAX_LENGTH = 8192
+AI_SEMANTIC_EMBEDDING_TIMEOUT = 120
+AI_SEMANTIC_INDEX_TOP_K = 10
+AI_SEMANTIC_INDEX_HNSW_EF_SEARCH = 100
+AI_SEMANTIC_QUERY_INSTRUCTION = (
+    "Given a BI analytics question, retrieve relevant datasets, columns, "
+    "metrics, and dashboard examples."
+)
 
 # The link to a page containing common errors and their resolutions
 # It will be appended at the bottom of sql_lab errors.

@@ -85,7 +85,8 @@ test('shows a loading state when config.refreshingSchema is true', () => {
   const { container } = render(
     <MultiEnumControl {...baseProps({ config: { refreshingSchema: true } })} />,
   );
-  expect(container.querySelector('.ant-select-arrow-loading')).toBeTruthy();
+  // antd v6 marks a loading select with .ant-select-loading on the root
+  expect(container.querySelector('.ant-select-loading')).toBeTruthy();
 });
 
 test('treats non-array data as an empty selection without crashing', () => {

@@ -22,9 +22,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      # Required for the zizmor action to upload its SARIF results to
-      # GitHub code scanning (advanced-security is enabled by default).
-      security-events: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -37,6 +34,7 @@ jobs:
           node-version: "20"
 
       - name: Install Dependencies
+        # zizmor: ignore[adhoc-packages] - action-validator is installed only to statically validate workflow files.
         run: npm install -g @action-validator/core @action-validator/cli --save-dev
 
       - name: Run Script
@@ -44,3 +42,10 @@ jobs:
 
       - name: Check for security issues on GHA workflows
         uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+        with:
+          # Scope this root validator to root workflows/actions. Nested apps may
+          # carry their own workflow policy and release cadence.
+          inputs: .github
+          # Run zizmor as a blocking check without requiring code scanning/GHAS
+          # support for SARIF upload in forks.
+          advanced-security: false

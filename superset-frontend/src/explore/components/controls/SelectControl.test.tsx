@@ -84,26 +84,26 @@ describe('SelectControl', () => {
   describe('render', () => {
     test('renders with Select by default', () => {
       renderSelectControl();
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      // antd v6 puts the aria-label on the input; the root div only carries data-test
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      const selectorInput = within(selectorWrapper).getByLabelText(
-        'Row Limit',
-        { selector: 'input' },
-      );
+      const selectorWrapper = selectorInput.closest(
+        '.ant-select',
+      ) as HTMLElement;
       expect(selectorWrapper).toBeInTheDocument();
       expect(selectorInput).toBeInTheDocument();
     });
 
     test('renders as mode multiple', () => {
       renderSelectControl({ multi: true });
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      // antd v6 puts the aria-label on the input; the root div only carries data-test
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      const selectorInput = within(selectorWrapper).getByLabelText(
-        'Row Limit',
-        { selector: 'input' },
-      );
+      const selectorWrapper = selectorInput.closest(
+        '.ant-select',
+      ) as HTMLElement;
       expect(selectorWrapper).toBeInTheDocument();
       expect(selectorInput).toBeInTheDocument();
       userEvent.click(selectorInput);
@@ -112,13 +112,13 @@ describe('SelectControl', () => {
 
     test('renders with allowNewOptions when freeForm', () => {
       renderSelectControl({ freeForm: true });
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      // antd v6 puts the aria-label on the input; the root div only carries data-test
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      const selectorInput = within(selectorWrapper).getByLabelText(
-        'Row Limit',
-        { selector: 'input' },
-      );
+      const selectorWrapper = selectorInput.closest(
+        '.ant-select',
+      ) as HTMLElement;
       expect(selectorWrapper).toBeInTheDocument();
       expect(selectorInput).toBeInTheDocument();
 
@@ -126,20 +126,19 @@ describe('SelectControl', () => {
       userEvent.click(selectorInput);
       userEvent.type(selectorInput, 'a new option');
       act(() => jest.runAllTimers());
-      expect(within(selectorWrapper).getByRole('option')).toHaveTextContent(
-        'a new option',
-      );
+      // the dropdown renders in a portal next to the select, not inside it
+      expect(screen.getByRole('option')).toHaveTextContent('a new option');
     });
 
     test('renders with allowNewOptions=false when freeForm=false', () => {
       const container = renderSelectControl({ freeForm: false });
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      // antd v6 puts the aria-label on the input; the root div only carries data-test
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      const selectorInput = within(selectorWrapper).getByLabelText(
-        'Row Limit',
-        { selector: 'input' },
-      );
+      const selectorWrapper = selectorInput.closest(
+        '.ant-select',
+      ) as HTMLElement;
       expect(selectorWrapper).toBeInTheDocument();
       expect(selectorInput).toBeInTheDocument();
 
@@ -151,20 +150,19 @@ describe('SelectControl', () => {
       expect(
         container.querySelector('[role="option"]'),
       ).not.toBeInTheDocument();
-      expect(
-        within(selectorWrapper).getByText('No data', { selector: 'div' }),
-      ).toBeInTheDocument();
+      // the dropdown renders in a portal next to the select, not inside it
+      expect(screen.getAllByText('No data').length).toBeGreaterThan(0);
     });
 
     test('renders with tokenSeparators', () => {
       renderSelectControl({ tokenSeparators: ['\n', '\t', ';'], multi: true });
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      // antd v6 puts the aria-label on the input; the root div only carries data-test
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      const selectorInput = within(selectorWrapper).getByLabelText(
-        'Row Limit',
-        { selector: 'input' },
-      );
+      const selectorWrapper = selectorInput.closest(
+        '.ant-select',
+      ) as HTMLElement;
       expect(selectorWrapper).toBeInTheDocument();
       expect(selectorInput).toBeInTheDocument();
 
@@ -414,10 +412,10 @@ describe('SelectControl', () => {
 
       // The SelectControl should receive a sortComparator for numeric values
       // This is tested by verifying the component renders without errors
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      expect(selectorWrapper).toBeInTheDocument();
+      expect(selectorInput.closest('.ant-select')).toBeInTheDocument();
     });
 
     test('applies numeric sorting to options automatically', () => {
@@ -429,10 +427,10 @@ describe('SelectControl', () => {
       renderSelectControl({ options: numericOptions, choices: undefined });
 
       // The SelectControl should receive a sortComparator for numeric values
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      expect(selectorWrapper).toBeInTheDocument();
+      expect(selectorInput.closest('.ant-select')).toBeInTheDocument();
     });
 
     test('does not apply numeric sorting to mixed-type choices', () => {
@@ -444,10 +442,10 @@ describe('SelectControl', () => {
       renderSelectControl({ choices: mixedChoices });
 
       // Should render without errors and not apply numeric sorting
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      expect(selectorWrapper).toBeInTheDocument();
+      expect(selectorInput.closest('.ant-select')).toBeInTheDocument();
     });
 
     test('respects explicit sortComparator over automatic numeric sorting', () => {
@@ -465,10 +463,10 @@ describe('SelectControl', () => {
         sortComparator: explicitComparator,
       });
 
-      const selectorWrapper = screen.getByLabelText('Row Limit', {
-        selector: 'div',
+      const selectorInput = screen.getByRole('combobox', {
+        name: 'Row Limit',
       });
-      expect(selectorWrapper).toBeInTheDocument();
+      expect(selectorInput.closest('.ant-select')).toBeInTheDocument();
     });
   });
 });

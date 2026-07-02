@@ -63,7 +63,7 @@ def test_validate_raises_when_database_not_found(
     mock_security_manager: MagicMock,
 ) -> None:
     """404 is raised before the access check when the database does not exist."""
-    mock_db.session.query.return_value.get.return_value = None
+    mock_db.session.get.return_value = None
 
     command = QueryEstimationCommand(_make_params())
     with pytest.raises(SupersetErrorException) as exc_info:
@@ -86,7 +86,7 @@ def test_validate_raises_when_database_access_denied(
 ) -> None:
     """SupersetSecurityException propagates when raise_for_access denies access."""
     mock_database = MagicMock()
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     command = QueryEstimationCommand(_make_params())
@@ -111,7 +111,7 @@ def test_validate_succeeds_for_authorised_user(
 ) -> None:
     """validate() completes without error when access is granted."""
     mock_database = MagicMock()
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
     mock_security_manager.raise_for_access.return_value = None
 
     command = QueryEstimationCommand(_make_params())
@@ -136,7 +136,7 @@ def test_raise_for_access_called_with_correct_database(
     """The database object fetched from the session is passed to raise_for_access."""
     mock_database = MagicMock()
     mock_database.id = 42
-    mock_db.session.query.return_value.get.return_value = mock_database
+    mock_db.session.get.return_value = mock_database
     mock_security_manager.raise_for_access.return_value = None
 
     command = QueryEstimationCommand(_make_params(database_id=42))
@@ -219,13 +219,13 @@ def test_apply_sql_security_allows_benign_select(mock_app: MagicMock) -> None:
 
 @patch("superset.commands.sql_lab.estimate.apply_rls")
 @patch("superset.commands.sql_lab.estimate.Query")
-@patch("superset.commands.sql_lab.estimate.db")
+@patch("superset.commands.sql_lab.estimate.object_session")
 @patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
 @patch("superset.commands.sql_lab.estimate.app")
 def test_apply_sql_security_injects_rls_when_enabled(
     mock_app: MagicMock,
     mock_is_feature_enabled: MagicMock,
-    mock_db: MagicMock,
+    mock_object_session: MagicMock,
     mock_query: MagicMock,
     mock_apply_rls: MagicMock,
 ) -> None:
@@ -238,9 +238,13 @@ def test_apply_sql_security_injects_rls_when_enabled(
 
     mock_is_feature_enabled.assert_called_with("RLS_IN_SQLLAB")
     mock_apply_rls.assert_called_once()
-    # The transient probe Query is expunged so its (deliberately incomplete)
-    # row can't autoflush into the session when apply_rls queries below.
-    mock_db.session.expunge.assert_called_once_with(mock_query.return_value)
+    # The probe Query is expunged from whichever session it is attached to, so
+    # its (deliberately incomplete) row can't autoflush into the session when
+    # apply_rls queries below.
+    mock_object_session.assert_called_once_with(mock_query.return_value)
+    mock_object_session.return_value.expunge.assert_called_once_with(
+        mock_query.return_value
+    )
     assert isinstance(result, str)
 
 

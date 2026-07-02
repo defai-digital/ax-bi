@@ -76,7 +76,10 @@ export const Label = forwardRef<HTMLSpanElement, LabelProps>((props, ref) => {
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       style={style}
-      icon={icon}
+      // antd v6's Tag clones its icon and overwrites the icon's style prop
+      // (with styles.icon, undefined by default), which erases per-icon
+      // colors like iconColor. Wrap the icon so the clone hits the wrapper.
+      icon={icon ? <span css={{ display: 'inline-flex' }}>{icon}</span> : icon}
       css={labelStyles}
       {...rest}
     >

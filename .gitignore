@@ -142,6 +142,7 @@ PROJECT.md
 .claude_rc*
 .claude/
 .claude/settings.local.json
+models/
 
 # Local/internal planning artifacts.
 ax-internal/

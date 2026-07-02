@@ -23,8 +23,10 @@ import { css, styled, useTheme } from '@apache-superset/core/theme';
 import { Button } from '@superset-ui/core/components/Button';
 import { Form } from '@superset-ui/core/components/Form';
 import Tabs from '@superset-ui/core/components/Tabs';
-import { Data as GsData } from 'geostyler-data';
-import { Style as GsStyle } from 'geostyler-style';
+// import type: geostyler packages ship type declarations only; a value
+// import makes jest resolve their d.ts entry as a runtime module
+import type { Data as GsData } from 'geostyler-data';
+import type { Style as GsStyle } from 'geostyler-style';
 import WfsDataParser, {
   RequestParams1_1_0,
   RequestParams2_0_0,

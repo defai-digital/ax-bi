@@ -18,12 +18,14 @@
  */
 
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import {
+// import type via direct modules: a value import of the package barrel
+// ('../..') creates a runtime cycle
+import type {
   SupersetClientInterface,
   RequestConfig,
-  QueryFormData,
-  Datasource,
-} from '../..';
+} from '../../connection/types';
+import type { QueryFormData } from '../../query/types/QueryFormData';
+import type { Datasource } from '../../query/types/Datasource';
 import ChartClient, { SliceIdAndOrFormData } from '../clients/ChartClient';
 import { QueryData } from '../types/QueryResponse';
 

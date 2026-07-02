@@ -101,9 +101,9 @@ class TestUtils(SupersetTestCase):
                     "expressionType": "SIMPLE",
                     # SHA-256 hash with default HASH_ALGORITHM
                     "filterOptionName": (
-                        "d72b098cd87dc5040410c322373562ca65d1a736e1e53e9cae39254394b42a44"
+                        "38fba7ce90de104b075718b296c66f50b6475d5eddebabeafce84a11d5731f81"
                     ),
-                    "operator": "in",
+                    "operator": "IN",
                     "subject": "a",
                 }
             ]

@@ -540,17 +540,15 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
                 )
             query.update(cls.encryption_parameters)
 
-        return str(
-            URL.create(
-                f"{cls.engine}+{cls.default_driver}".rstrip("+"),
-                username="token",
-                password=parameters.get("access_token"),
-                host=parameters["host"],
-                port=parameters["port"],
-                database=parameters["database"],
-                query=query,
-            )
-        )
+        return URL.create(
+            f"{cls.engine}+{cls.default_driver}".rstrip("+"),
+            username="token",
+            password=parameters.get("access_token"),
+            host=parameters["host"],
+            port=parameters["port"],
+            database=parameters["database"],
+            query=query,
+        ).render_as_string(hide_password=False)
 
     @classmethod
     def get_parameters_from_uri(  # type: ignore
@@ -608,11 +606,14 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
             return default_catalog
 
         with database.get_sqla_engine() as engine:
-            catalogs = {catalog for (catalog,) in engine.execute(text("SHOW CATALOGS"))}
-            if len(catalogs) == 1:
-                return catalogs.pop()
+            with engine.connect() as connection:
+                catalogs = {
+                    catalog for (catalog,) in connection.execute(text("SHOW CATALOGS"))
+                }
+                if len(catalogs) == 1:
+                    return catalogs.pop()
 
-            return engine.execute(text("SELECT current_catalog()")).scalar()
+                return connection.execute(text("SELECT current_catalog()")).scalar()
 
     @classmethod
     def get_prequeries(
@@ -636,7 +637,12 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
         database: Database,
         inspector: Inspector,
     ) -> set[str]:
-        return {catalog for (catalog,) in inspector.bind.execute(text("SHOW CATALOGS"))}
+        return {
+            catalog
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector, text("SHOW CATALOGS")
+            )
+        }
 
 
 class DatabricksPythonConnectorEngineSpec(DatabricksDynamicBaseEngineSpec):
@@ -753,16 +759,14 @@ class DatabricksPythonConnectorEngineSpec(DatabricksDynamicBaseEngineSpec):
         if parameters.get("encryption"):
             query.update(cls.encryption_parameters)
 
-        return str(
-            URL.create(
-                cls.engine,
-                username="token",
-                password=parameters.get("access_token"),
-                host=parameters["host"],
-                port=parameters["port"],
-                query=query,
-            )
-        )
+        return URL.create(
+            cls.engine,
+            username="token",
+            password=parameters.get("access_token"),
+            host=parameters["host"],
+            port=parameters["port"],
+            query=query,
+        ).render_as_string(hide_password=False)
 
     @classmethod
     def get_parameters_from_uri(  # type: ignore
@@ -800,7 +804,12 @@ class DatabricksPythonConnectorEngineSpec(DatabricksDynamicBaseEngineSpec):
         database: Database,
         inspector: Inspector,
     ) -> set[str]:
-        return {catalog for (catalog,) in inspector.bind.execute(text("SHOW CATALOGS"))}
+        return {
+            catalog
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector, text("SHOW CATALOGS")
+            )
+        }
 
     @classmethod
     def adjust_engine_params(

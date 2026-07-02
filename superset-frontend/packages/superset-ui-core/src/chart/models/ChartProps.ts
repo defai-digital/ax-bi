@@ -20,21 +20,22 @@
 import { RefObject } from 'react';
 import { createSelector, lruMemoize } from 'reselect';
 import { supersetTheme, SupersetTheme } from '@apache-superset/core/theme';
+// direct module imports: importing the package barrel ('../..' / '..')
+// creates a runtime cycle that leaves the enum bindings undefined while
+// this module evaluates
 import {
   AppSection,
   Behavior,
-  Datasource,
-  FilterState,
-  JsonObject,
-} from '../..';
-import convertKeysToCamelCase from '../../utils/convertKeysToCamelCase';
-import {
-  HandlerFunction,
-  LegendState,
-  PlainObject,
-  SetDataMaskHook,
+  type FilterState,
+  type HandlerFunction,
+  type LegendState,
+  type PlainObject,
+  type SetDataMaskHook,
 } from '../types/Base';
-import { QueryData, DataRecordFilters } from '..';
+import type { Datasource } from '../../query/types/Datasource';
+import type { JsonObject } from '../../connection/types';
+import convertKeysToCamelCase from '../../utils/convertKeysToCamelCase';
+import type { QueryData, DataRecordFilters } from '../types/QueryResponse';
 
 // TODO: more specific typing for these fields of ChartProps
 type AnnotationData = PlainObject;

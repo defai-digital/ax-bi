@@ -37,7 +37,13 @@ import type {
   TimeFormatter,
 } from '@superset-ui/core';
 import { GenericDataType } from '@apache-superset/core/common';
-import { sharedControls, sharedControlComponents } from './shared-controls';
+// import type only: a value import creates a runtime cycle
+// (types -> shared-controls -> constants -> types) that leaves the
+// SortSeriesType enum undefined while constants.ts evaluates
+import type {
+  sharedControls,
+  sharedControlComponents,
+} from './shared-controls';
 
 export type { Metric } from '@superset-ui/core';
 export type { ControlComponentProps } from './shared-controls/components/types';

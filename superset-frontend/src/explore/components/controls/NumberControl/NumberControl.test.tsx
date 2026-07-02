@@ -89,9 +89,8 @@ test('stepper arrows trigger onChange immediately', async () => {
     onChange: jest.fn(),
   };
   render(<NumberControl {...props} />);
-  const upButton = document.querySelector(
-    '.ant-input-number-handler-up',
-  ) as HTMLElement;
+  // antd v6 renders steppers as role=button with aria-labels
+  const upButton = screen.getByRole('button', { name: 'Increase Value' });
   expect(upButton).toBeInTheDocument();
   await userEvent.click(upButton);
   expect(props.onChange).toHaveBeenCalledWith(6);
