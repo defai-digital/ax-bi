@@ -54,7 +54,9 @@ export function saveChartToDashboard(chartName: string, dashboardName: string) {
       cy.wait(500);
       cy.wrap($modal)
         .find(
-          '[data-test="save-chart-modal-select-dashboard-form"] .ant-select-selection-search-input',
+          // antd v6 renders the combobox search input as `input.ant-select-input`
+          // (the v5 `.ant-select-selection-search-input` class no longer exists)
+          '[data-test="save-chart-modal-select-dashboard-form"] input.ant-select-input',
         )
         .type(dashboardName, { force: true });
       cy.wrap($modal)
