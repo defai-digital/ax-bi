@@ -148,7 +148,7 @@ async function runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationD
     const command = `--noEmit --allowJs --composite false ${IGNORE_DEPRECATIONS_OPTION} --project ${tsConfig} ${argsStr} ${declarationFilesStr}`;
 
     try {
-      await executeTypeCheck(packageRootDirAbsolute, command);
+      await executeTypeCheck(packageRootDirAbsolute, command, new Set(batch.map(normalizeDiagnosticPath)));
     } catch (error) {
       hasErrors = true;
       // Continue processing other batches to show all errors
@@ -160,14 +160,86 @@ async function runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationD
   }
 }
 
+/** Normalize a diagnostic file path for comparison across platforms */
+function normalizeDiagnosticPath(filePath) {
+  return filePath.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
+const DIAGNOSTIC_START_REGEX = /^(.+?\.(?:tsx?|jsx?)):\d+:\d+ - (?:error|warning) TS\d+/;
+
 /**
- * Execute the TypeScript type check command
+ * Keep only the diagnostic blocks that belong to the target files.
+ *
+ * tsc reports errors for the whole program (every file the targets import),
+ * so a targeted check would otherwise fail on pre-existing errors in
+ * unchanged dependency files.
  */
-async function executeTypeCheck(packageRootDirAbsolute, command) {
+function filterDiagnostics(stdout, onlyFiles) {
+  const lines = stdout.split("\n");
+  const kept = [];
+  let keepBlock = false;
+  let droppedCount = 0;
+  let keptCount = 0;
+
+  for (const line of lines) {
+    const plain = line.replace(ANSI_REGEX, "");
+    const match = plain.match(DIAGNOSTIC_START_REGEX);
+    if (match) {
+      keepBlock = onlyFiles.has(normalizeDiagnosticPath(match[1]));
+      if (keepBlock) {
+        keptCount += 1;
+      } else {
+        droppedCount += 1;
+      }
+    } else if (/^(Found \d+ errors?|Errors {2}Files)/.test(plain)) {
+      // Drop tsc's own summary; it counts program-wide errors
+      keepBlock = false;
+      continue;
+    }
+    if (keepBlock) {
+      kept.push(line);
+    }
+  }
+
+  return { output: kept.join("\n").trim(), keptCount, droppedCount };
+}
+
+/**
+ * Execute the TypeScript type check command.
+ *
+ * When `onlyFiles` is provided, only diagnostics located in those files fail
+ * the check; program-wide diagnostics in other files are reported as skipped.
+ */
+async function executeTypeCheck(packageRootDirAbsolute, command, onlyFiles) {
   try {
     chdir(packageRootDirAbsolute);
     const tscw = packageRequire("tscw-config");
     const child = await tscw`${command}`;
+
+    if (onlyFiles) {
+      const { output, keptCount, droppedCount } = filterDiagnostics(
+        child.stdout || "",
+        onlyFiles
+      );
+      if (output) {
+        console.log(output);
+      }
+      if (child.stderr) {
+        console.error(child.stderr);
+      }
+      if (droppedCount > 0) {
+        console.log(
+          `Ignored ${droppedCount} pre-existing type error(s) in unchanged dependency files.`
+        );
+      }
+      if (keptCount > 0) {
+        throw new Error(
+          `Type check failed with ${keptCount} error(s) in changed files`
+        );
+      }
+      return;
+    }
 
     if (child.stdout) {
       console.log(child.stdout);

@@ -1252,6 +1252,9 @@ class TestRolePermission(SupersetTestCase):
         db.session.commit()
 
         security_manager.sync_role_definitions()
+        # The caller owns the transaction (production uses ``@transaction()``);
+        # commit so the pending role changes don't hold the DB write lock.
+        db.session.commit()
         public_role = security_manager.get_public_role()
         public_role_resource_names = [
             permission.view_menu.name for permission in public_role.permissions

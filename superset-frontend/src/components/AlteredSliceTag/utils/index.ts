@@ -47,7 +47,8 @@ export const formatValueHandler = (
     if (!value.length) return '[]';
 
     return value
-      .map((v: FilterItemType): string => {
+      .map((item): string => {
+        const v = item as FilterItemType;
         const filterVal: string | string[] | undefined =
           v.comparator && v.comparator.constructor === Array
             ? `[${v.comparator.join(', ')}]`
@@ -64,7 +65,7 @@ export const formatValueHandler = (
 
   if (controlsMap[key]?.type === 'CollectionControl' && Array.isArray(value))
     return value
-      .map((v: FilterItemType): string => safeStringify(v))
+      .map((v): string => safeStringify(v as FilterItemType))
       .join(', ');
 
   if (
@@ -72,7 +73,10 @@ export const formatValueHandler = (
     value.constructor === Array
   ) {
     const formattedValue: (string | FilterItemType)[] = value.map(
-      (v: FilterItemType): string | FilterItemType => v?.label ?? v,
+      (item): string | FilterItemType => {
+        const v = item as FilterItemType;
+        return v?.label ?? v;
+      },
     );
     return formattedValue.length ? formattedValue.join(', ') : '[]';
   }
