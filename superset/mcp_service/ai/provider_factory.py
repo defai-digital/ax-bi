@@ -24,6 +24,7 @@ and returns the appropriate ``LLMProvider`` instance. Falls back to
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any
 
 from flask import current_app
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Module-level singleton to avoid re-creating the provider on every call.
 _provider_instance: LLMProvider | None = None
+_provider_lock = threading.Lock()
 
 
 def get_llm_provider() -> LLMProvider:
@@ -50,33 +52,37 @@ def get_llm_provider() -> LLMProvider:
     if _provider_instance is not None:
         return _provider_instance
 
-    config: dict[str, Any] = {}
-    try:
-        config = current_app.config.get("GENAI_LLM_PROVIDER_CONFIG", {})
-    except RuntimeError:
-        # Outside app context — fall back to stub
-        logger.debug("No Flask app context; returning StubLLMProvider")
+    with _provider_lock:
+        # Double-checked locking: re-check after acquiring the lock.
+        if _provider_instance is not None:
+            return _provider_instance
 
-    if not config:
+        config: dict[str, Any] = {}
+        try:
+            config = current_app.config.get("GENAI_LLM_PROVIDER_CONFIG", {})
+        except RuntimeError:
+            # Outside app context — fall back to stub
+            logger.debug("No Flask app context; returning StubLLMProvider")
+
+        if not config:
+            _provider_instance = StubLLMProvider()
+            return _provider_instance
+
+        provider_name = config.get("provider", "").lower()
+
+        if provider_name == "anthropic":
+            from superset.mcp_service.ai.anthropic_provider import AnthropicProvider
+
+            _provider_instance = AnthropicProvider(config)
+            return _provider_instance
+
+        logger.warning(
+            "Unknown LLM provider '%s'; returning StubLLMProvider. "
+            "Supported providers will be added in future iterations.",
+            provider_name,
+        )
         _provider_instance = StubLLMProvider()
         return _provider_instance
-
-    provider_name = config.get("provider", "").lower()
-
-    if provider_name == "anthropic":
-        from superset.mcp_service.ai.anthropic_provider import AnthropicProvider
-
-        _provider_instance = AnthropicProvider(config)
-        return _provider_instance
-
-    logger.warning(
-        "Unknown LLM provider '%s'; returning StubLLMProvider. "
-        "Supported providers will be added in future iterations.",
-        provider_name,
-    )
-    _provider_instance = StubLLMProvider()
-    return _provider_instance
-
 
 def reset_provider() -> None:
     """Reset the cached provider instance.

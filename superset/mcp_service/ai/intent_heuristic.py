@@ -50,6 +50,55 @@ _TABLE_KEYWORDS = re.compile(
     r"\b(list|table|detail|all rows|raw data|export|grid)\b",
     re.IGNORECASE,
 )
+_EXPLICIT_CHART_TYPE_PATTERNS: tuple[tuple[re.Pattern[str], str, str, str], ...] = (
+    (
+        re.compile(r"\b(bar|column)\s+(chart|graph|plot)\b", re.IGNORECASE),
+        "xy",
+        "bar",
+        "Detected explicit bar chart request.",
+    ),
+    (
+        re.compile(r"\bscatter\s+(chart|graph|plot)\b", re.IGNORECASE),
+        "xy",
+        "scatter",
+        "Detected explicit scatter chart request.",
+    ),
+    (
+        re.compile(r"\bline\s+(chart|graph|plot)\b", re.IGNORECASE),
+        "xy",
+        "line",
+        "Detected explicit line chart request.",
+    ),
+    (
+        re.compile(r"\barea\s+(chart|graph|plot)\b", re.IGNORECASE),
+        "xy",
+        "area",
+        "Detected explicit area chart request.",
+    ),
+    (
+        re.compile(r"\b(pie|donut|doughnut)\s+(chart|graph|plot)\b", re.IGNORECASE),
+        "pie",
+        "pie",
+        "Detected explicit pie chart request.",
+    ),
+    (
+        re.compile(r"\b(table|grid)\s+(chart|view|visualization)\b", re.IGNORECASE),
+        "table",
+        "table",
+        "Detected explicit table request.",
+    ),
+)
+_DIMENSION_PHRASE = re.compile(
+    r"\b(?:by|per|group(?:ed)?\s+by|split\s+by|broken\s+down\s+by)\s+"
+    r"([a-zA-Z_][\w\s-]*?)(?=\s+(?:showing|using|with|where|for|named|name|"
+    r"sorted|colored|coloured|and|as)\b|[.,;!?]|$)",
+    re.IGNORECASE,
+)
+
+
+def _normalize_column_token(value: str) -> str:
+    """Normalize a prompt phrase or column name for matching."""
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
 
 
 def _find_time_column(dataset: Any) -> str | None:
@@ -112,12 +161,40 @@ def _find_first_dimension(dataset: Any) -> str | None:
     return None
 
 
+def _find_dimension_from_prompt(prompt: str, dataset: Any) -> str | None:
+    """Find a requested dimension column from prompt phrases like 'by region'."""
+    columns = [
+        getattr(col, "column_name", "")
+        for col in getattr(dataset, "columns", []) or []
+        if getattr(col, "column_name", "")
+    ]
+    if not columns:
+        return None
+
+    normalized_columns = {_normalize_column_token(col): col for col in columns}
+    for match in _DIMENSION_PHRASE.finditer(prompt):
+        requested = _normalize_column_token(match.group(1))
+        if not requested:
+            continue
+        if requested in normalized_columns:
+            return normalized_columns[requested]
+        for normalized, column in normalized_columns.items():
+            if requested in normalized or normalized in requested:
+                return column
+
+    return None
+
+
 def _detect_chart_type(prompt: str, dataset: Any) -> tuple[str, str, str]:
     """Detect the best chart type from keywords.
 
     Returns:
         Tuple of (chart_type, kind_or_subtype, explanation).
     """
+    for pattern, chart_type, kind, explanation in _EXPLICIT_CHART_TYPE_PATTERNS:
+        if pattern.search(prompt):
+            return chart_type, kind, explanation
+
     if _SINGLE_VALUE_KEYWORDS.search(prompt):
         return "big_number", "big_number", "Detected request for a single KPI metric."
 
@@ -200,7 +277,9 @@ def heuristic_chart_config(  # noqa: C901
     if chart_type == "xy":
         metric = _find_first_metric(dataset)
         time_col = _find_time_column(dataset)
-        dimension = _find_first_dimension(dataset)
+        dimension = _find_dimension_from_prompt(prompt, dataset) or (
+            _find_first_dimension(dataset)
+        )
 
         if not metric:
             warnings.append("No suitable metric found.")

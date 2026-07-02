@@ -17,7 +17,6 @@
  * under the License.
  */
 import { useSelector } from 'react-redux';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import {
   Button,
   EmptyState as EmptyStateComponent,
@@ -31,11 +30,27 @@ import type { RootState } from 'src/views/store';
 import { WelcomeTable } from './types';
 
 const EmptyContainer = styled.div`
-  min-height: 200px;
+  min-height: 260px;
   display: flex;
   color: ${({ theme }) => theme.colorTextDescription};
   flex-direction: column;
   justify-content: space-around;
+  border: 1px dashed ${({ theme }) => theme.colorBorderSecondary};
+  border-radius: ${({ theme }) => theme.borderRadius}px;
+  background: ${({ theme }) => theme.colorBgLayout};
+  margin: ${({ theme }) => theme.sizeUnit * 4}px
+    ${({ theme }) => theme.sizeUnit * 5}px;
+  padding: ${({ theme }) => theme.sizeUnit * 5}px;
+`;
+
+const EmptyActions = styled.div`
+  ${({ theme }) => `
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: ${theme.sizeUnit * 2}px;
+    margin-top: ${theme.sizeUnit * 3}px;
+  `}
 `;
 
 const ICONS = {
@@ -87,7 +102,11 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
     findPermission('can_upload', 'Database', state.user?.roles),
   );
   const uploadEnabled =
-    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
+    canUploadData &&
+    Boolean(
+      (window as { featureFlags?: Record<string, unknown> }).featureFlags
+        ?.ENABLE_LOCAL_FILE_UPLOAD,
+    );
   const showUploadCta =
     uploadEnabled &&
     tab !== TableTab.Favorite &&
@@ -108,40 +127,49 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
       ? REDIRECTS.viewAll[tableName]
       : REDIRECTS.create[tableName];
 
-    return (
-      <Button
-        buttonStyle="secondary"
-        onClick={() => {
-          navigateTo(url);
-        }}
-      >
-        {isFavorite
-          ? t('See all %(tableName)s', { tableName: buttonText })
-          : buttonText}
-      </Button>
-    );
+    return {
+      buttonText: isFavorite
+        ? t('See all %(tableName)s', { tableName: buttonText })
+        : t('Create %(tableName)s', { tableName: buttonText }),
+      url,
+    };
   };
 
   const image =
     tab === TableTab.Favorite ? 'star-circle.svg' : ICONS[tableName];
 
+  const action = getActionButton();
+  const description =
+    tableName === WelcomeTable.Charts
+      ? t('Upload data or create a chart to start visual analysis.')
+      : tableName === WelcomeTable.Dashboards
+        ? t('Create a dashboard or generate one from uploaded data.')
+        : t('Your recent analytics activity will appear here.');
+
   return (
     <EmptyContainer>
-      <EmptyStateComponent
-        image={image}
-        size="large"
-        description={t('Nothing here yet')}
-      >
-        {getActionButton()}
-        {showUploadCta && (
-          <Button
-            buttonStyle="link"
-            onClick={() => navigateTo('/upload/')}
-            data-test="empty-state-upload-data"
-          >
-            {t('Upload data')}
-          </Button>
-        )}
+      <EmptyStateComponent image={image} size="large" description={description}>
+        <EmptyActions>
+          {showUploadCta && (
+            <Button
+              buttonStyle="primary"
+              onClick={() => navigateTo('/upload/')}
+              data-test="empty-state-upload-data"
+            >
+              {t('Upload data')}
+            </Button>
+          )}
+          {action && (
+            <Button
+              buttonStyle={showUploadCta ? 'secondary' : 'primary'}
+              onClick={() => {
+                navigateTo(action.url);
+              }}
+            >
+              {action.buttonText}
+            </Button>
+          )}
+        </EmptyActions>
       </EmptyStateComponent>
     </EmptyContainer>
   );

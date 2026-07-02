@@ -353,6 +353,10 @@ async def generate_chart(  # noqa: C901
                 config, dataset_name=dataset_name
             )
             await ctx.debug("Chart name: chart_name=%s" % (chart_name,))
+            form_data_with_datasource = {
+                **form_data,
+                "datasource": f"{dataset.id}__table",
+            }
 
             try:
                 with mcp_event_log_context(action="mcp.generate_chart.db_write"):
@@ -362,7 +366,7 @@ async def generate_chart(  # noqa: C901
                             "viz_type": form_data["viz_type"],
                             "datasource_id": dataset.id,
                             "datasource_type": "table",
-                            "params": json.dumps(form_data),
+                            "params": json.dumps(form_data_with_datasource),
                         }
                     )
 
@@ -490,12 +494,6 @@ async def generate_chart(  # noqa: C901
                         MCPCreateFormDataCommand,
                     )
                     from superset.utils.core import DatasourceType
-
-                    # Add datasource to form_data for the cache
-                    form_data_with_datasource = {
-                        **form_data,
-                        "datasource": f"{dataset.id}__table",
-                    }
 
                     cmd_params = CommandParameters(
                         datasource_type=DatasourceType.TABLE,
@@ -772,8 +770,14 @@ async def generate_chart(  # noqa: C901
             else:
                 chart_data = chart_info  # Pass through as-is
 
+        response_form_data = (
+            form_data_with_datasource if request.save_chart and chart else form_data
+        )
         result = {
             "chart": chart_data,
+            "chart_id": chart.id if chart else None,
+            "chart_name": chart_name,
+            "chart_url": explore_url,
             "error": None,
             # Enhanced fields for better LLM integration
             "previews": previews,
@@ -782,7 +786,9 @@ async def generate_chart(  # noqa: C901
             "explore_url": explore_url,
             "chart_type_label": get_table_chart_type_label(form_data.get("viz_type")),
             # Form data fields - REQUIRED for chatbot/external client rendering
-            "form_data": _sanitize_generate_chart_form_data_for_llm_context(form_data),
+            "form_data": _sanitize_generate_chart_form_data_for_llm_context(
+                response_form_data
+            ),
             "form_data_key": form_data_key,
             "api_endpoints": {
                 "data": f"{get_superset_base_url()}/api/v1/chart/{chart.id}/data/"
@@ -808,6 +814,17 @@ async def generate_chart(  # noqa: C901
             % (
                 chart.id if chart else None,
                 int((time.time() - start_time) * 1000),
+            )
+        )
+        await ctx.debug(
+            "Final chart response: success=True, chart_id=%s, chart_name=%s, "
+            "chart_url=%s, form_data_key=%s, warnings=%s"
+            % (
+                chart.id if chart else None,
+                chart_name,
+                explore_url,
+                form_data_key,
+                len(result["warnings"]),
             )
         )
         return GenerateChartResponse.model_validate(result)

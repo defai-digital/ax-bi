@@ -85,6 +85,10 @@ const RightMenu = ({
   const canUploadData = useSelector((state: RootState) =>
     findPermission('can_upload', 'Database', state.user?.roles),
   );
+  const localFileUploadEnabled = Boolean(
+    (window as { featureFlags?: Record<string, unknown> }).featureFlags
+      ?.ENABLE_LOCAL_FILE_UPLOAD,
+  );
   const {
     setThemeMode,
     themeMode,
@@ -167,10 +171,7 @@ const RightMenu = ({
           ),
           icon: <Icons.DashboardOutlined />,
         });
-        if (
-          canUploadData &&
-          isFeatureEnabled(FeatureFlag.EnableLocalFileUpload)
-        ) {
+        if (canUploadData && localFileUploadEnabled) {
           createItems.push({
             key: 'create-upload-data',
             label: <Link to="/upload/">{t('Upload data')}</Link>,
@@ -425,6 +426,15 @@ const RightMenu = ({
       items.push(languageMenuItem);
     }
 
+    if (canUploadData && localFileUploadEnabled) {
+      items.push({
+        key: 'upload-data',
+        label: <Link to="/upload/">{t('Upload data')}</Link>,
+        icon: <Icons.UploadOutlined />,
+        className: 'primary-upload-action',
+      });
+    }
+
     items.push({
       key: 'settings',
       label: t('Settings'),
@@ -443,6 +453,7 @@ const RightMenu = ({
     navbarRight,
     dashboardId,
     canUploadData,
+    localFileUploadEnabled,
     canSetMode,
     themeMenuItem,
     languageMenuItem,
@@ -473,6 +484,18 @@ const RightMenu = ({
           .ant-menu-item,
           .ant-menu-submenu {
             padding: 0 ${theme.sizeUnit}px;
+          }
+
+          .primary-upload-action {
+            border: 1px solid ${theme.colorPrimaryBorder};
+            border-radius: ${theme.borderRadius}px;
+            background: ${theme.colorPrimaryBg};
+            padding: 0 ${theme.sizeUnit * 3}px;
+
+            .ant-menu-title-content a {
+              color: ${theme.colorPrimaryText};
+              font-weight: ${theme.fontWeightStrong};
+            }
           }
 
           .submenu-with-caret {

@@ -2278,6 +2278,9 @@ class GenerateChartResponse(BaseModel):
 
     # Core chart information
     chart: ChartInfo | None = Field(None, description="Complete chart metadata")
+    chart_id: int | None = Field(None, description="Saved chart ID")
+    chart_name: str | None = Field(None, description="Saved chart name")
+    chart_url: str | None = Field(None, description="Saved chart explore page URL")
 
     # Multiple preview formats available
     previews: Dict[str, ChartPreviewContent] = Field(

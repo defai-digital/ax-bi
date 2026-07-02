@@ -60,6 +60,7 @@ def test_extract_permalink_key_from_url_with_path_prefix():
 
 
 def test_get_superset_base_url_reads_user_friendly_url(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
@@ -69,9 +70,27 @@ def test_get_superset_base_url_reads_user_friendly_url(monkeypatch: pytest.Monke
     assert get_superset_base_url() == "https://superset.example"
 
 
+def test_get_superset_base_url_prefers_webserver_address(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        url_utils,
+        "get_superset_webserver_address",
+        lambda: "http://127.0.0.1:8080/",
+    )
+    monkeypatch.setattr(
+        url_utils,
+        "get_webdriver_baseurl_user_friendly",
+        lambda: "http://0.0.0.0:8080/",
+    )
+
+    assert get_superset_base_url() == "http://127.0.0.1:8080"
+
+
 def test_get_superset_base_url_strips_whitespace(
     monkeypatch: pytest.MonkeyPatch,
 ):
+    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
@@ -84,6 +103,7 @@ def test_get_superset_base_url_strips_whitespace(
 def test_get_superset_base_url_falls_back_for_blank_config(
     monkeypatch: pytest.MonkeyPatch,
 ):
+    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
@@ -99,6 +119,7 @@ def test_get_superset_base_url_falls_back_when_config_read_fails(
     def raise_key_error():
         raise KeyError("WEBDRIVER_BASEURL_USER_FRIENDLY")
 
+    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",

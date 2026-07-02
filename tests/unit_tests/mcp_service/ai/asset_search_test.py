@@ -25,6 +25,7 @@ from flask import current_app
 
 from superset.mcp_service.ai.asset_search import (
     _build_reason,
+    _dataset_name_candidates,
     _is_certified,
     _rank_asset_results,
     _score_result,
@@ -94,6 +95,24 @@ def test_build_reason_description_match() -> None:
 def test_build_reason_no_match() -> None:
     reason = _build_reason("Other", "No match", "sales")
     assert reason == "tag/owner match"
+
+
+def test_dataset_name_candidates_extracts_named_dataset() -> None:
+    assert _dataset_name_candidates("Find dataset palmer_penguins") == [
+        "palmer_penguins"
+    ]
+
+
+def test_dataset_name_candidates_extracts_from_dataset() -> None:
+    assert _dataset_name_candidates("Create a chart from cleaned_sales_data") == [
+        "cleaned_sales_data"
+    ]
+
+
+def test_dataset_name_candidates_deduplicates_names() -> None:
+    assert _dataset_name_candidates(
+        "Find dataset palmer_penguins from palmer_penguins"
+    ) == ["palmer_penguins"]
 
 
 def test_search_assets_empty_query() -> None:

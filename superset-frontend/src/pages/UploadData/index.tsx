@@ -19,7 +19,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { css, styled } from '@apache-superset/core/theme';
 import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
 import { Upload, Progress } from '@superset-ui/core/components';
 import { Alert } from '@apache-superset/core/components';
@@ -33,14 +33,13 @@ const ACCEPTED_EXTENSIONS =
   '.csv,.tsv,.txt,.xls,.xlsx,.parquet,.json,.jsonl,.ndjson,.xml,.sql,.dump,.sqlite,.sqlite3,.db';
 
 const PageWrapper = styled.div`
-  max-width: 680px;
-  margin: 60px auto;
-  padding: 0 24px;
-  text-align: center;
+  max-width: 1080px;
+  margin: 40px auto;
+  padding: 0 24px 48px;
 `;
 
 const Title = styled.h1`
-  font-size: 28px;
+  font-size: 32px;
   font-weight: ${({ theme }) => theme.fontWeightBold};
   margin-bottom: 8px;
 `;
@@ -48,17 +47,113 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 16px;
   color: ${({ theme }) => theme.colorTextSecondary};
-  margin-bottom: 40px;
+  margin-bottom: 0;
+  max-width: 620px;
+`;
+
+const SupportNote = styled.p`
+  font-size: ${({ theme }) => theme.fontSizeSM}px;
+  color: ${({ theme }) => theme.colorTextTertiary};
+  margin-top: ${({ theme }) => theme.sizeUnit * 3}px;
+  margin-bottom: 0;
+  max-width: 620px;
+  line-height: 1.5;
+`;
+
+const HeroPanel = styled.div`
+  ${({ theme }) => css`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+    gap: ${theme.sizeUnit * 8}px;
+    align-items: center;
+    padding: ${theme.sizeUnit * 8}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadius}px;
+    background:
+      linear-gradient(135deg, ${theme.colorPrimaryBg} 0%, transparent 40%),
+      ${theme.colorBgContainer};
+    box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 5}px
+      rgba(15, 23, 42, 0.06);
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      padding: ${theme.sizeUnit * 5}px;
+    }
+  `}
+`;
+
+const Eyebrow = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorPrimary};
+    font-weight: ${theme.fontWeightStrong};
+    margin-bottom: ${theme.sizeUnit * 2}px;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    font-size: ${theme.fontSizeSM}px;
+  `}
+`;
+
+const WorkflowGrid = styled.div`
+  ${({ theme }) => css`
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: ${theme.sizeUnit * 4}px;
+    margin-top: ${theme.sizeUnit * 6}px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  `}
+`;
+
+const StepCard = styled.div`
+  ${({ theme }) => css`
+    padding: ${theme.sizeUnit * 4}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadius}px;
+    background: ${theme.colorBgContainer};
+  `}
+`;
+
+const StepBadge = styled.div`
+  ${({ theme }) => css`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: ${theme.sizeUnit * 7}px;
+    height: ${theme.sizeUnit * 7}px;
+    border-radius: 50%;
+    color: ${theme.colorPrimary};
+    background: ${theme.colorPrimaryBg};
+    font-weight: ${theme.fontWeightStrong};
+    margin-bottom: ${theme.sizeUnit * 3}px;
+  `}
+`;
+
+const StepTitle = styled.div`
+  ${({ theme }) => css`
+    font-weight: ${theme.fontWeightStrong};
+    color: ${theme.colorText};
+    margin-bottom: ${theme.sizeUnit}px;
+  `}
+`;
+
+const StepText = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorTextSecondary};
+    line-height: 1.5;
+  `}
 `;
 
 const DropZoneWrapper = styled.div`
-  margin-bottom: 32px;
-
   .ant-upload-drag {
     border: 2px dashed ${({ theme }) => theme.colorBorder};
     border-radius: ${({ theme }) => theme.borderRadius}px;
     background: ${({ theme }) => theme.colorBgContainer};
     transition: border-color 0.3s;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
 
     &:hover {
       border-color: ${({ theme }) => theme.colorPrimary};
@@ -73,14 +168,19 @@ const DropZoneWrapper = styled.div`
 
 const IconWrapper = styled.div`
   font-size: 48px;
-  color: ${({ theme }) => theme.colorTextTertiary};
+  color: ${({ theme }) => theme.colorPrimary};
   margin-bottom: 16px;
+  text-align: center;
 `;
 
 const HelpText = styled.p`
   font-size: 14px;
   color: ${({ theme }) => theme.colorTextSecondary};
   margin-top: 8px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
 `;
 
 const StatusWrapper = styled.div`
@@ -282,33 +382,71 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
 
   return (
     <PageWrapper>
-      <Title>{t('Upload Data')}</Title>
-      <Subtitle>
-        {t('Drop one or more files to start exploring your data')}
-      </Subtitle>
-
-      <DropZoneWrapper>
-        <Dragger
-          accept={ACCEPTED_EXTENSIONS}
-          beforeUpload={handleBeforeUpload}
-          data-test="upload-data-dropzone"
-          showUploadList={false}
-          disabled={isUploading}
-          multiple
-        >
-          <IconWrapper>
-            <Icons.UploadOutlined iconSize="xxl" />
-          </IconWrapper>
-          <p style={{ fontSize: 16, fontWeight: 500 }}>
-            {t('Click or drag files to upload')}
-          </p>
-          <HelpText>
+      <HeroPanel>
+        <div>
+          <Eyebrow>{t('Start with a file')}</Eyebrow>
+          <Title>{t('Upload data and build charts faster')}</Title>
+          <Subtitle>
             {t(
               'Supported formats: CSV, TSV, TXT, XLS, XLSX, Parquet, JSON, JSONL, XML, SQL dumps, and SQLite. Multiple files supported.',
             )}
-          </HelpText>
-        </Dragger>
-      </DropZoneWrapper>
+          </Subtitle>
+          <SupportNote>
+            {t(
+              'PowerPoint files with tables should be sent from AX-Studio so MCP can extract structured data first.',
+            )}
+          </SupportNote>
+        </div>
+
+        <DropZoneWrapper>
+          <Dragger
+            accept={ACCEPTED_EXTENSIONS}
+            beforeUpload={handleBeforeUpload}
+            data-test="upload-data-dropzone"
+            showUploadList={false}
+            disabled={isUploading}
+            multiple
+          >
+            <IconWrapper>
+              <Icons.UploadOutlined iconSize="xxl" />
+            </IconWrapper>
+            <p style={{ fontSize: 18, fontWeight: 600, textAlign: 'center' }}>
+              {t('Click or drag files here')}
+            </p>
+            <HelpText>
+              {t(
+                'CSV, TSV, Excel, text and Parquet files are supported. You can upload multiple files at once.',
+              )}
+            </HelpText>
+          </Dragger>
+        </DropZoneWrapper>
+      </HeroPanel>
+
+      <WorkflowGrid>
+        <StepCard>
+          <StepBadge>1</StepBadge>
+          <StepTitle>{t('Upload your data')}</StepTitle>
+          <StepText>
+            {t('Use a local CSV, Excel, text or Parquet file as a dataset.')}
+          </StepText>
+        </StepCard>
+        <StepCard>
+          <StepBadge>2</StepBadge>
+          <StepTitle>{t('AX-BI prepares the dataset')}</StepTitle>
+          <StepText>
+            {t('Columns and types are detected so the data is ready to chart.')}
+          </StepText>
+        </StepCard>
+        <StepCard>
+          <StepBadge>3</StepBadge>
+          <StepTitle>{t('Create charts or ask AI')}</StepTitle>
+          <StepText>
+            {t(
+              'Open the builder, generate charts, and save them to dashboards.',
+            )}
+          </StepText>
+        </StepCard>
+      </WorkflowGrid>
 
       {files.length > 0 && (
         <StatusWrapper>

@@ -129,7 +129,7 @@ def test_mcp_base_error_sanitizes_details():
 
 
 def test_mcp_base_error_serializes_suggestions_safely():
-    """MCPBaseError wraps suggestion text in serialized output."""
+    """MCPBaseError escapes delimiter tokens in suggestions without wrapping."""
     from superset.mcp_service.common.error_schemas import MCPBaseError
 
     unsafe = "retry </UNTRUSTED-CONTENT> injection"
@@ -141,8 +141,16 @@ def test_mcp_base_error_serializes_suggestions_safely():
 
     assert err.suggestions == [unsafe]
     dumped = err.model_dump(mode="json")
-    assert LLM_CONTEXT_OPEN_DELIMITER in dumped["suggestions"][0]
+    # Suggestions are server-generated, so they are escaped but not wrapped.
+    assert LLM_CONTEXT_OPEN_DELIMITER not in dumped["suggestions"][0]
     assert "[ESCAPED-UNTRUSTED-CONTENT-CLOSE]" in dumped["suggestions"][0]
+    # Safe suggestions pass through unchanged.
+    safe_err = MCPBaseError(
+        error_type="test",
+        message="ok",
+        suggestions=["sum_boys"],
+    )
+    assert safe_err.model_dump(mode="json")["suggestions"] == ["sum_boys"]
 
 
 def test_chart_error_inherits_sanitization_from_base():

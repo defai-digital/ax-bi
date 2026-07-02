@@ -805,7 +805,7 @@ export function getLegendProps(
     show,
     type,
     selected: legendState ?? {},
-    selector: ['all', 'inverse'],
+    selector: false,
     selectorLabel: {
       fontFamily: theme.fontFamily,
       fontSize: theme.fontSizeSM,

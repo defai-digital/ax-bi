@@ -37,8 +37,6 @@ import {
   MatrixifyFormData,
   DatasourceType,
   ensureIsArray,
-  isFeatureEnabled,
-  FeatureFlag,
 } from '@superset-ui/core';
 import {
   ControlStateMapping,
@@ -104,12 +102,14 @@ const ExplorePanelContainer = styled.div`
     position: relative;
     width: 100%;
     max-height: 100%;
-    background-color: ${theme.colorBgContainer};
+    background-color: ${theme.colorBgLayout};
     min-height: 0;
     display: flex;
     flex: 1;
     flex-wrap: nowrap;
-    border-top: 1px solid ${theme.colorSplit};
+    gap: ${theme.sizeUnit * 3}px;
+    padding: ${theme.sizeUnit * 3}px;
+    border-top: 1px solid ${theme.colorBorderSecondary};
     .explore-column {
       display: flex;
       flex-direction: column;
@@ -118,26 +118,42 @@ const ExplorePanelContainer = styled.div`
     }
     .data-source-selection {
       padding: ${theme.sizeUnit * 2}px 0;
-      border-right: 1px solid ${theme.colorSplit};
+      border: 1px solid ${theme.colorBorderSecondary};
+      border-radius: ${theme.borderRadius}px;
+      background: ${theme.colorBgContainer};
     }
     .main-explore-content {
       flex: 1;
       min-width: ${theme.sizeUnit * 128}px;
-      border-left: 1px solid ${theme.colorSplit};
-      padding: 0 ${theme.sizeUnit * 4}px;
+      padding: 0;
       .panel {
         margin-bottom: 0;
+      }
+      .chart-container {
+        border: 1px solid ${theme.colorBorderSecondary};
+        border-radius: ${theme.borderRadius}px;
+        background: ${theme.colorBgContainer};
+        box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 5}px
+          rgba(15, 23, 42, 0.06);
+      }
+      .panel-body {
+        padding: ${theme.sizeUnit * 4}px;
       }
     }
     .controls-column {
       align-self: flex-start;
       padding: 0;
+      border: 1px solid ${theme.colorBorderSecondary};
+      border-radius: ${theme.borderRadius}px;
+      background: ${theme.colorBgContainer};
+      overflow: hidden;
     }
     .title-container {
       position: relative;
       display: flex;
       flex-direction: row;
-      padding: 0 ${theme.sizeUnit * 2}px 0 ${theme.sizeUnit * 4}px;
+      padding: ${theme.sizeUnit}px ${theme.sizeUnit * 2}px
+        ${theme.sizeUnit * 3}px ${theme.sizeUnit * 4}px;
       justify-content: space-between;
       .horizontal-text {
         font-size: ${theme.fontSize}px;
@@ -392,7 +408,10 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
   // builder when enabled and the current viz type is one it supports. The
   // builder and the advanced control panel drive the same form_data, so users
   // can switch between them at will. Default to guided for supported viz types.
-  const guidedBuilderEnabled = isFeatureEnabled(FeatureFlag.GuidedChartBuilder);
+  const guidedBuilderEnabled = Boolean(
+    (window as { featureFlags?: Record<string, unknown> }).featureFlags
+      ?.GUIDED_CHART_BUILDER,
+  );
   const [builderMode, setBuilderMode] = useState<'guided' | 'advanced'>(() =>
     guidedBuilderEnabled && isGuidedVizType(props.form_data?.viz_type)
       ? 'guided'
