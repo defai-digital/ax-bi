@@ -31,11 +31,7 @@ const Wrapper = styled.div`
     height: 100%;
   }
 
-  .ant-tabs-content {
-    height: 100%;
-  }
-
-  .ant-tabs-tabpane {
+  .ant-tabs-content:not(.ant-tabs-content-hidden) {
     display: flex;
     flex-direction: column;
   }

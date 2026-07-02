@@ -84,14 +84,21 @@ const StyledTabs = ({
       overflow: ${allowOverflow ? 'visible' : 'hidden'};
       ${fullHeight && 'height: 100%;'}
 
-      /* antd v6: the pane itself is .ant-tabs-content (the v5
-         .ant-tabs-content-holder / .ant-tabs-tabpane wrappers are gone) */
-      .ant-tabs-content {
+      /* antd v6 DOM: .ant-tabs-body-holder > .ant-tabs-body >
+         .ant-tabs-content (the pane). The v5 .ant-tabs-content-holder maps
+         to body-holder/body, and .ant-tabs-tabpane maps to content. */
+      .ant-tabs-body-holder {
         overflow: ${allowOverflow ? 'visible' : 'auto'};
         ${fullHeight && 'height: 100%;'}
         ${contentHeight &&
         `height: ${typeof contentHeight === 'number' ? `${contentHeight}px` : contentHeight};`}
         ${contentPadding}
+      }
+      .ant-tabs-body {
+        height: 100%;
+      }
+      .ant-tabs-content {
+        ${fullHeight && 'height: 100%;'}
         ${contentStyle}
       }
       .ant-tabs-nav {
@@ -140,7 +147,7 @@ const Tabs = Object.assign(StyledTabs, {
 
 const StyledEditableTabs = styled(StyledTabs)`
   ${({ theme, contentStyle }) => `
-    .ant-tabs-content {
+    .ant-tabs-body-holder {
       background: ${theme.colorBgContainer};
       ${contentStyle}
     }

@@ -61,11 +61,15 @@ describe('Tabs', () => {
       const { container } = render(<Tabs items={defaultItems} />);
       const tabsElement = container.querySelector('.ant-tabs');
       const tabsNav = container.querySelector('.ant-tabs-nav');
-      const tabsContent = container.querySelector('.ant-tabs-content-holder');
+      const tabsBodyHolder = container.querySelector('.ant-tabs-body-holder');
+      const tabsBody = container.querySelector('.ant-tabs-body');
+      const tabsPane = container.querySelector('.ant-tabs-content');
 
-      expect(tabsElement).toBeDefined();
-      expect(tabsNav).toBeDefined();
-      expect(tabsContent).toBeDefined();
+      expect(tabsElement).toBeInTheDocument();
+      expect(tabsNav).toBeInTheDocument();
+      expect(tabsBodyHolder).toBeInTheDocument();
+      expect(tabsBody).toBeInTheDocument();
+      expect(tabsPane).toBeInTheDocument();
     });
 
     test('should apply default tabBarStyle with padding', () => {
@@ -310,7 +314,8 @@ describe('Tabs', () => {
 test('fullHeight prop renders component hierarchy correctly', () => {
   const { container } = render(<Tabs items={defaultItems} fullHeight />);
 
-  // antd v6: the pane itself is .ant-tabs-content (no content-holder)
+  // antd v6 DOM: .ant-tabs-body-holder > .ant-tabs-body > .ant-tabs-content
+  // (the pane)
   const tabsElement = container.querySelector('.ant-tabs');
   const content = container.querySelector('.ant-tabs-content');
 

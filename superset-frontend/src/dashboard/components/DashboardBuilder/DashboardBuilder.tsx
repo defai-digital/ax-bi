@@ -294,18 +294,18 @@ const StyledDashboardContent = styled.div<{
       padding-left: 0;
     }
 
-      .grid-container {
-        /* without this, the grid will not get smaller upon toggling the builder panel on */
-        background-color: #050b12;
-        width: 0;
-        flex: 1;
-        position: relative;
-        margin: ${theme.sizeUnit * 4}px;
-        margin-left: ${marginLeft}px;
-        min-height: max-content;
-        min-width: 0;
+    .grid-container {
+      /* without this, the grid will not get smaller upon toggling the builder panel on */
+      background-color: #050b12;
+      width: 0;
+      flex: 1;
+      position: relative;
+      margin: ${theme.sizeUnit * 4}px;
+      margin-left: ${marginLeft}px;
+      min-height: max-content;
+      min-width: 0;
 
-        ${editMode &&
+      ${editMode &&
       `
       min-width: min(100%, ${theme.sizeUnit * 80}px);
       max-width: calc(100% - ${
@@ -327,9 +327,9 @@ const StyledDashboardContent = styled.div<{
         overflow: visible !important;
       }
 
-      .ant-tabs-content-holder,
-      .ant-tabs-content,
-      .ant-tabs-tabpane {
+      .ant-tabs-body-holder,
+      .ant-tabs-body,
+      .ant-tabs-content {
         height: auto !important;
         min-height: 100%;
         overflow: visible !important;

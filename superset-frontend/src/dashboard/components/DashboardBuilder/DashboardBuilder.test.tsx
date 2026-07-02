@@ -656,12 +656,12 @@ test('should allow dashboard tab content to overflow into the scroll container',
     target: '.grid-container .ant-tabs',
   });
   expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
-    target: '.grid-container .ant-tabs-content-holder',
+    target: '.grid-container .ant-tabs-body-holder',
   });
   expect(dashboardContent).toHaveStyleRule('height', 'auto!important', {
-    target: '.grid-container .ant-tabs-content-holder',
+    target: '.grid-container .ant-tabs-body-holder',
   });
   expect(dashboardContent).toHaveStyleRule('overflow', 'visible!important', {
-    target: '.grid-container .ant-tabs-content',
+    target: '.grid-container .ant-tabs-body',
   });
 });
