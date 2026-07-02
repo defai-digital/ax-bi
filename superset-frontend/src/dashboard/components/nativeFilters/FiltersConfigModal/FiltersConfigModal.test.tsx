@@ -1061,7 +1061,7 @@ test('numerical range filter — Range Type selector lets the user pick a displa
   // the default selection.
   expect(
     // antd v6: single mode puts the title on .ant-select-content
-      document.querySelector('.ant-select-content[title="Slider"]'),
+    document.querySelector('.ant-select-content[title="Slider"]'),
   ).not.toBeInTheDocument();
 
   await userEvent.click(rangeTypeCombobox);
