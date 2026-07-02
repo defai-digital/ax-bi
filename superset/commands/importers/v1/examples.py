@@ -33,7 +33,10 @@ from superset.commands.dashboard.importers.v1.utils import (
 from superset.commands.database.importers.v1 import ImportDatabasesCommand
 from superset.commands.database.importers.v1.utils import import_database
 from superset.commands.dataset.importers.v1 import ImportDatasetsCommand
-from superset.commands.dataset.importers.v1.utils import import_dataset
+from superset.commands.dataset.importers.v1.utils import (
+    import_dataset,
+    load_data as load_dataset_data,
+)
 from superset.commands.exceptions import CommandException
 from superset.commands.importers.v1 import ImportModelsCommand
 from superset.commands.importers.v1.utils import (
@@ -45,7 +48,7 @@ from superset.databases.schemas import ImportV1DatabaseSchema
 from superset.datasets.schemas import ImportV1DatasetSchema
 from superset.exceptions import QueryClauseValidationException
 from superset.models.core import Database
-from superset.sql.parse import transpile_to_dialect
+from superset.sql.parse import Table, transpile_to_dialect
 from superset.utils.core import get_example_default_schema
 from superset.utils.decorators import transaction
 
@@ -98,6 +101,30 @@ def transpile_virtual_dataset_sql(config: dict[str, Any], database_id: int) -> N
             target_engine,
             ex,
         )
+
+
+def load_example_data_file(
+    dataset: Any,
+    data_file_uri: str | None,
+    force_data: bool,
+) -> None:
+    """Load bundled example data when the imported table is missing."""
+    if not data_file_uri:
+        return
+
+    try:
+        table_exists = dataset.database.has_table(
+            Table(dataset.table_name, dataset.schema, dataset.catalog),
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.warning(
+            "Couldn't check if table %s exists, assuming it does",
+            dataset.table_name,
+        )
+        table_exists = True
+
+    if not table_exists or force_data:
+        load_dataset_data(data_file_uri, dataset, dataset.database)
 
 
 class ImportExamplesCommand(ImportModelsCommand):
@@ -183,6 +210,11 @@ class ImportExamplesCommand(ImportModelsCommand):
                         overwrite=overwrite,
                         force_data=force_data,
                         ignore_permissions=True,
+                    )
+                    load_example_data_file(
+                        dataset,
+                        config.get("data_file_uri"),
+                        force_data,
                     )
                 except MultipleResultsFound:
                     # Multiple results can be found for datasets. There was a bug in

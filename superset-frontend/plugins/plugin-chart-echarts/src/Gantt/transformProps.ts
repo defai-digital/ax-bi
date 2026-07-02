@@ -36,7 +36,8 @@ import {
 } from '@superset-ui/core';
 import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
 import { GenericDataType } from '@apache-superset/core/common';
-import { CallbackDataParams } from 'echarts/types/src/util/types';
+// import type: echarts' internal types path has no runtime module to resolve
+import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import {
   Cartesian2dCoordSys,
   EchartsGanttChartProps,

@@ -71,8 +71,10 @@ export type AntdExposedProps = Pick<
   | 'virtual'
   | 'getPopupContainer'
   | 'menuItemSelectedIcon'
-  | 'dropdownAlign'
->;
+  // `dropdownAlign` is declared required on rc-select's trigger props, so it
+  // must be exposed as optional rather than picked directly
+> &
+  Partial<Pick<AntdProps, 'dropdownAlign'>>;
 
 export type SelectOptionsType = Exclude<AntdProps['options'], undefined>;
 

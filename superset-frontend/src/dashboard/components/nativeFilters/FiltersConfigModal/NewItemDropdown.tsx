@@ -75,7 +75,8 @@ const NewItemDropdown: FC<Props> = ({ onAddFilter, onAddCustomization }) => {
   );
 
   return (
-    <Dropdown overlay={menu} trigger={['hover']}>
+    // antd v6 removed the Dropdown overlay prop; popupRender replaces it
+    <Dropdown popupRender={() => menu} trigger={['hover']}>
       <Button
         buttonSize="default"
         buttonStyle="secondary"

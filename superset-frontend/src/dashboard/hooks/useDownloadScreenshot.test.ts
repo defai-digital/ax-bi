@@ -22,6 +22,9 @@ import { useDownloadScreenshot } from './useDownloadScreenshot';
 import { DownloadScreenshotFormat } from '../components/menu/DownloadMenuItems/types';
 
 jest.mock('@superset-ui/core', () => ({
+  // keep the real module surface: transitively imported modules read many
+  // other exports (initFeatureFlags, formatters, registries) at module scope
+  ...jest.requireActual('@superset-ui/core'),
   SupersetClient: {
     post: jest.fn(),
     get: jest.fn(),
@@ -40,6 +43,10 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('src/components/MessageToasts/withToasts', () => ({
+  __esModule: true,
+  // pass-through HOC: transitively imported components wrap themselves with
+  // withToasts at module scope
+  default: (component: unknown) => component,
   useToasts: () => ({
     addDangerToast: jest.fn(),
     addSuccessToast: jest.fn(),

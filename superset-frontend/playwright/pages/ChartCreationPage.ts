@@ -41,7 +41,13 @@ export class ChartCreationPage {
    * Gets the dataset selector container (includes the displayed selection value)
    */
   getDatasetSelectContainer(): Locator {
-    return this.page.getByLabel('Dataset', { exact: false }).first();
+    // antd v6 puts the aria-label on the search input, which stays empty; the
+    // selected value text renders in the surrounding .ant-select container
+    return this.page
+      .locator('.ant-select', {
+        has: this.page.getByRole('combobox', { name: /dataset/i }),
+      })
+      .first();
   }
 
   /**

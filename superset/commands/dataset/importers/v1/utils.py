@@ -21,7 +21,7 @@ import re
 from typing import Any
 from urllib import request
 from urllib.parse import urljoin, urlparse
-from urllib.request import HTTPRedirectHandler
+from urllib.request import HTTPRedirectHandler, url2pathname
 
 import pandas as pd
 from flask import current_app as app
@@ -125,11 +125,21 @@ def get_sqla_type(native_type: str) -> TypeEngine[Any]:
 
 
 def get_dtype(df: pd.DataFrame, dataset: SqlaTable) -> dict[str, TypeEngine[Any]]:
-    return {
-        column.column_name: get_sqla_type(column.type)
-        for column in dataset.columns
-        if column.column_name in df.keys()
-    }
+    dtype: dict[str, TypeEngine[Any]] = {}
+    for column in dataset.columns:
+        if not column.type or column.column_name not in df.keys():
+            continue
+
+        try:
+            dtype[column.column_name] = get_sqla_type(column.type)
+        except Exception:  # pylint: disable=broad-except
+            logger.debug(
+                "Skipping unsupported imported dtype %s for column %s",
+                column.type,
+                column.column_name,
+            )
+
+    return dtype
 
 
 def validate_data_uri(data_uri: str) -> None:
@@ -345,6 +355,28 @@ def _convert_temporal_columns(df: pd.DataFrame, dtype: dict[str, Any]) -> None:
                 df[column_name] = converted
 
 
+def _read_dataframe_from_uri(data_uri: str) -> pd.DataFrame:
+    """Read supported imported dataset files into a dataframe."""
+    parsed = urlparse(data_uri)
+    if parsed.scheme == "file":
+        file_path = url2pathname(parsed.path)
+        if file_path.endswith(".parquet"):
+            return pd.read_parquet(file_path)
+        if file_path.endswith(".gz"):
+            with gzip.open(file_path) as data:
+                return pd.read_csv(data, encoding="utf-8")
+        return pd.read_csv(file_path, encoding="utf-8")
+
+    opener = request.build_opener(_ValidatingRedirectHandler)
+    with opener.open(data_uri) as data:  # noqa: S310
+        if data_uri.endswith(".parquet"):
+            return pd.read_parquet(data)
+        if data_uri.endswith(".gz"):
+            with gzip.open(data) as uncompressed:
+                return pd.read_csv(uncompressed, encoding="utf-8")
+        return pd.read_csv(data, encoding="utf-8")
+
+
 def load_data(data_uri: str, dataset: SqlaTable, database: Database) -> None:
     """
     Load data from a data URI into a dataset.
@@ -359,11 +391,7 @@ def load_data(data_uri: str, dataset: SqlaTable, database: Database) -> None:
 
     validate_data_uri(data_uri)
     logger.info("Downloading data from %s", data_uri)
-    opener = request.build_opener(_ValidatingRedirectHandler)
-    data = opener.open(data_uri)  # pylint: disable=consider-using-with  # noqa: S310
-    if data_uri.endswith(".gz"):
-        data = gzip.open(data)
-    df = pd.read_csv(data, encoding="utf-8")
+    df = _read_dataframe_from_uri(data_uri)
     dtype = get_dtype(df, dataset)
 
     _convert_temporal_columns(df, dtype)

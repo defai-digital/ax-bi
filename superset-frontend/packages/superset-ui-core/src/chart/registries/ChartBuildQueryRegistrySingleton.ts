@@ -17,13 +17,12 @@
  * under the License.
  */
 
-import {
-  Registry,
-  OverwritePolicy,
-  QueryContext,
-  SetDataMaskHook,
-  JsonObject,
-} from '../..';
+// direct module imports: importing the package barrel ('../..') creates a
+// runtime cycle that leaves Registry undefined when this class evaluates
+import Registry, { OverwritePolicy } from '../../models/Registry';
+import type { QueryContext } from '../../query/types/Query';
+import type { SetDataMaskHook } from '../types/Base';
+import type { JsonObject } from '../../connection/types';
 import makeSingleton from '../../utils/makeSingleton';
 
 // Ideally this would be <T extends QueryFormData>

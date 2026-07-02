@@ -22,6 +22,7 @@ import {
   useImperativeHandle,
   useMemo,
   useState,
+  type ComponentProps,
   type RefObject,
 } from 'react';
 import { t } from '@apache-superset/core/translation';
@@ -37,8 +38,11 @@ import {
   Constants,
   Divider,
   Icons,
-  Select,
 } from '@superset-ui/core/components';
+// imported directly (not via the components barrel) so `styled(Select)` at
+// module scope doesn't read an uninitialized binding when this module is
+// reached through an import cycle
+import { Select } from '@superset-ui/core/components/Select';
 import { useDebouncedEffect } from 'src/explore/exploreUtils';
 import {
   FRAME_OPTIONS,
@@ -61,7 +65,11 @@ interface TimeRangeFilterProps {
   onClose: () => void;
 }
 
-const StyledRangeType = styled(Select)`
+// wrap in a function component so the Select binding is dereferenced at
+// render time — at module-eval time it can be uninitialized (import cycle)
+const StyledRangeType = styled((props: ComponentProps<typeof Select>) => (
+  <Select {...props} />
+))`
   width: 272px;
 `;
 

@@ -38,6 +38,42 @@ def test_transpile_virtual_dataset_sql_empty_sql():
     assert config["sql"] == ""
 
 
+@patch("superset.commands.importers.v1.examples.load_dataset_data")
+def test_load_example_data_file_loads_missing_table(mock_load_dataset_data):
+    """Bundled data_file_uri content is loaded when the table is absent."""
+    from superset.commands.importers.v1.examples import load_example_data_file
+
+    dataset = MagicMock()
+    dataset.table_name = "example_table"
+    dataset.schema = None
+    dataset.catalog = None
+    dataset.database.has_table.return_value = False
+
+    load_example_data_file(dataset, "file:///tmp/example.parquet", False)
+
+    mock_load_dataset_data.assert_called_once_with(
+        "file:///tmp/example.parquet",
+        dataset,
+        dataset.database,
+    )
+
+
+@patch("superset.commands.importers.v1.examples.load_dataset_data")
+def test_load_example_data_file_skips_existing_table(mock_load_dataset_data):
+    """Existing example tables are preserved unless force_data is true."""
+    from superset.commands.importers.v1.examples import load_example_data_file
+
+    dataset = MagicMock()
+    dataset.table_name = "example_table"
+    dataset.schema = None
+    dataset.catalog = None
+    dataset.database.has_table.return_value = True
+
+    load_example_data_file(dataset, "file:///tmp/example.parquet", False)
+
+    mock_load_dataset_data.assert_not_called()
+
+
 @patch("superset.commands.importers.v1.examples.db")
 def test_transpile_virtual_dataset_sql_database_not_found(mock_db):
     """Test graceful handling when database is not found."""

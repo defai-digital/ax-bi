@@ -64,7 +64,8 @@ test('Column and value should be visible', () => {
 
 test('Tag should be closable', () => {
   setup(mockedProps);
-  expect(screen.getByRole('img', { name: 'Close' })).toBeInTheDocument();
+  // antd v6 renders the closable tag icon as role=button
+  expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
 });
 
 test('Divider should not be visible', () => {

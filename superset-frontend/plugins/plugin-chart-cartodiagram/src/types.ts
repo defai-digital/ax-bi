@@ -24,7 +24,8 @@ import Source from 'ol/source/Source';
 import { Coordinate } from 'ol/coordinate';
 import { Map } from 'ol';
 import { Feature, FeatureCollection, Point } from 'geojson';
-import { Style } from 'geostyler-style';
+// import type: geostyler-style ships type declarations only
+import type { Style } from 'geostyler-style';
 
 export interface CartodiagramPluginStylesProps {
   height: number;

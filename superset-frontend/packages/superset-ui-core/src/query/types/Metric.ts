@@ -17,7 +17,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Currency, Maybe, QueryFormMetric } from '../../types';
+// import type: the types barrel re-exports query modules, so a value
+// import creates a runtime cycle back into this directory
+import type { Currency, Maybe, QueryFormMetric } from '../../types';
 import { Column } from './Column';
 
 export type Aggregate =

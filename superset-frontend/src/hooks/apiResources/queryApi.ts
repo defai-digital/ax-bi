@@ -34,7 +34,9 @@ export const supersetClientQuery: BaseQueryFn<
   Pick<RequestBase, 'method' | 'body' | 'jsonPayload' | 'postPayload'> & {
     endpoint: string;
     parseMethod?: ParseMethod;
-    transformResponse?: (response: SupersetClientResponse) => JsonValue;
+    // Method syntax (not arrow property) so parameters are checked
+    // bivariantly — endpoints narrow the response to JsonResponse etc.
+    transformResponse?(response: SupersetClientResponse): JsonValue;
     urlParams?: Record<string, number | string | undefined | boolean | object>;
   },
   JsonValue,

@@ -357,27 +357,23 @@ class TestCore(SupersetTestCase):
         for k in keys:
             assert k in resp.keys()
 
-    @pytest.mark.parametrize(
-        "datasource_key",
-        [
-            ("bad",),
-            ("1__table__extra",),
-            ("bad__table",),
-            ("1__bad_type",),
-        ],
-    )
-    def test_fetch_datasource_metadata_rejects_malformed_datasource_key(
-        self,
-        datasource_key: str,
-    ):
+    def test_fetch_datasource_metadata_rejects_malformed_datasource_key(self):
         self.login(ADMIN_USERNAME)
-        resp = self.client.get(
-            f"/superset/fetch_datasource_metadata?datasourceKey={datasource_key}"
-        )
-        payload = json.loads(resp.data.decode("utf-8"))
+        datasource_keys = [
+            "bad",
+            "1__table__extra",
+            "bad__table",
+            "1__bad_type",
+        ]
 
-        assert resp.status_code == 400
-        assert payload["error"] == "The data source seems to have been deleted"
+        for datasource_key in datasource_keys:
+            resp = self.client.get(
+                f"/superset/fetch_datasource_metadata?datasourceKey={datasource_key}"
+            )
+            payload = json.loads(resp.data.decode("utf-8"))
+
+            assert resp.status_code == 400
+            assert payload["error"] == "The data source seems to have been deleted"
 
     def test_fetch_datasource_metadata_rejects_missing_datasource_key(self):
         self.login(ADMIN_USERNAME)

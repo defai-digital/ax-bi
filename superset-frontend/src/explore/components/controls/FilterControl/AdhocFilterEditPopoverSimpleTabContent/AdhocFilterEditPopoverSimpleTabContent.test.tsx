@@ -24,7 +24,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import configureStore from 'redux-mock-store';
 
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
@@ -725,7 +725,8 @@ test('advanced data type operator list should update after API response', async 
 
   expect(
     await screen.findByText('Equal to (=)', {
-      selector: '.ant-select-selection-item',
+      // antd v6: single mode renders the value in .ant-select-content-has-value
+      selector: '.ant-select-content-has-value',
     }),
   ).toBeInTheDocument();
 });

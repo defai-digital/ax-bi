@@ -320,9 +320,7 @@ class QueryContextProcessor:
         # Only infer_dtype on object columns; skip numeric/datetime dtypes
         # that provably cannot contain date objects.
         date_cols = [
-            col
-            for col in obj_cols
-            if infer_dtype(df[col], skipna=True) == "date"
+            col for col in obj_cols if infer_dtype(df[col], skipna=True) == "date"
         ]
 
         if not datetime_cols and not date_cols:
@@ -339,6 +337,11 @@ class QueryContextProcessor:
             if hasattr(series.dtype, "tz") and series.dtype.tz:
                 # Timezone-aware: normalize to UTC before numeric conversion
                 series = series.dt.tz_convert("UTC")
+            # Normalize to nanosecond resolution before reinterpreting the
+            # underlying int64: pandas 2 series can be datetime64[s]/[ms]/[us]
+            # (e.g. from pyarrow), which would otherwise be misread as ns and
+            # come out as the wrong epoch unit.
+            series = series.dt.as_unit("ns")
             # Reinterpret datetime64/timestamp int64 as nanoseconds since epoch,
             # then convert to epoch milliseconds. NaT values become None so
             # they serialize to JSON ``null``.
@@ -350,7 +353,7 @@ class QueryContextProcessor:
 
         for col in date_cols:
             null_mask = np.asarray(pd.isna(df[col]))
-            dt_series = pd.to_datetime(df[col], errors="coerce")
+            dt_series = pd.to_datetime(df[col], errors="coerce").dt.as_unit("ns")
             ns = dt_series.values.view("int64").astype("float64")
             ns[null_mask] = np.nan
             ms = ns / 1e6

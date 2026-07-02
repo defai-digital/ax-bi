@@ -16,7 +16,7 @@
 # under the License.
 """Tests for superset/commands/dataset/importers/v1/utils.py temporal helpers."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -173,6 +173,49 @@ def test_load_configs_rejects_non_object_ssh_tunnel_without_crashing(
             "ssh_tunnel": ["Not a valid mapping type."],
         },
     }
+
+
+def test_read_dataframe_from_uri_supports_file_parquet(tmp_path) -> None:
+    """Bundled example imports use local Parquet files."""
+    from superset.commands.dataset.importers.v1.utils import _read_dataframe_from_uri
+
+    expected = pd.DataFrame({"name": ["alpha", "beta"], "value": [1, 2]})
+    parquet_path = tmp_path / "example.parquet"
+    expected.to_parquet(parquet_path)
+
+    result = _read_dataframe_from_uri(parquet_path.resolve().as_uri())
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_get_dtype_skips_columns_without_supported_native_type() -> None:
+    """Columns without supported imported types should let pandas infer SQL types."""
+    from sqlalchemy import Text
+
+    from superset.commands.dataset.importers.v1.utils import get_dtype
+
+    dataset = MagicMock()
+    dataset.columns = [
+        MagicMock(column_name="name", type=None),
+        MagicMock(column_name="category", type="VAR_STRING"),
+        MagicMock(column_name="description", type="TEXT"),
+        MagicMock(column_name="value", type="BIGINT"),
+    ]
+    df = pd.DataFrame(
+        {
+            "name": ["alpha"],
+            "category": ["a"],
+            "description": ["long text"],
+            "value": [1],
+        }
+    )
+
+    dtype = get_dtype(df, dataset)
+
+    assert "name" not in dtype
+    assert "category" not in dtype
+    assert isinstance(dtype["description"], Text)
+    assert str(dtype["value"]) == "BIGINT"
 
 
 class TestConvertTemporalColumns:

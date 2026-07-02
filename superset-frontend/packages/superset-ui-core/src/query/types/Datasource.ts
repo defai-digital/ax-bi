@@ -17,8 +17,10 @@
  * under the License.
  */
 import { nanoid } from 'nanoid';
-import { Column } from './Column';
-import { Metric } from './Metric';
+// import type: keeps Datasource.ts a leaf so the DatasourceType enum is
+// initialized before the rest of the query types evaluate (cycle)
+import type { Column } from './Column';
+import type { Metric } from './Metric';
 
 export enum DatasourceType {
   Table = 'table',

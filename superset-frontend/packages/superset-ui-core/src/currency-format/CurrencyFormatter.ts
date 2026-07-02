@@ -23,7 +23,9 @@ import { ExtensibleFunction } from '../models';
 // which imports CurrencyFormatter).
 import { getNumberFormatter } from '../number-format/NumberFormatterRegistrySingleton';
 import NumberFormats from '../number-format/NumberFormats';
-import { Currency } from '../query';
+// import type: a value import of the query barrel creates a runtime
+// cycle through number-format/currency-format
+import type { Currency } from '../query';
 import { RowData, RowDataValue } from './types';
 import { AUTO_CURRENCY_SYMBOL, ISO_4217_REGEX } from './CurrencyFormats';
 

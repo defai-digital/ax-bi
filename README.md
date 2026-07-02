@@ -69,7 +69,7 @@ Available GenAI BI MCP tools include:
 - `describe_dataset_for_ai` — returns compact, AI-ready dataset context with
   semantic alias lookup and privacy-aware metadata controls.
 
-The MCP service lives in [`superset/mcp_service/`](superset/mcp_service/) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](GENAI_BI_ROADMAP.md) for the product direction.
+The MCP service lives in [`superset/mcp_service/`](https://github.com/defai-digital/ax-bi/tree/main/superset/mcp_service) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for the product direction.
 
 ## Supported Databases
 
@@ -160,8 +160,8 @@ AX-BI runs anywhere the underlying Superset platform runs.
   ```
   To build images from this checkout instead of pulling published images, add
   `-f docker-compose-axbi-build.yml --build`.
-- **Production deployments** — use the Docker stack above with managed Postgres/Redis or see the [Helm chart](helm/superset/) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
-- **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](superset/mcp_service/PRODUCTION.md).
+- **Production deployments** — use the Docker stack above with managed Postgres/Redis or see the [Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
+- **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md).
 
 ## Development
 
@@ -185,17 +185,17 @@ cd superset-frontend && npm run test   # frontend
 pre-commit run --all-files
 ```
 
-See [`CLAUDE.md`](CLAUDE.md) for the full engineering guide (commands, architecture, conventions, and the MCP service), [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for product direction, and [`SECURITY.md`](SECURITY.md) for the security and threat model.
+See [`CLAUDE.md`](https://github.com/defai-digital/ax-bi/blob/main/CLAUDE.md) for the full engineering guide (commands, architecture, conventions, and the MCP service), [`GENAI_BI_ROADMAP.md`](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for product direction, and [`SECURITY.md`](https://github.com/defai-digital/ax-bi/blob/main/SECURITY.md) for the security and threat model.
 
 ## Built on Apache Superset
 
-AX-BI is a derivative work of [Apache Superset](https://superset.apache.org), a project of the Apache Software Foundation, used under the [Apache License 2.0](LICENSE). DEFAI Private Limited is grateful to the Apache Superset community for the foundation this product is built on.
+AX-BI is a derivative work of [Apache Superset](https://superset.apache.org), a project of the Apache Software Foundation, used under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). DEFAI Private Limited is grateful to the Apache Superset community for the foundation this product is built on.
 
-*Apache Superset, Apache, and the Apache feather logo are trademarks of the Apache Software Foundation. DEFAI Private Limited and AX-BI are not affiliated with or endorsed by the Apache Software Foundation.* Upstream attribution and license terms are retained in the [`NOTICE`](NOTICE) and [`LICENSE`](LICENSE) files; the documentation links above point to the upstream Apache Superset docs, which apply to the corresponding AX-BI functionality.
+*Apache Superset, Apache, and the Apache feather logo are trademarks of the Apache Software Foundation. DEFAI Private Limited and AX-BI are not affiliated with or endorsed by the Apache Software Foundation.* Upstream attribution and license terms are retained in the [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) and [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) files; the documentation links above point to the upstream Apache Superset docs, which apply to the corresponding AX-BI functionality.
 
 ## License
 
-AX-BI is distributed under the [Apache License 2.0](LICENSE). See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for details.
+AX-BI is distributed under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). See [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) and [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) for details.
 
 ## About DEFAI
 

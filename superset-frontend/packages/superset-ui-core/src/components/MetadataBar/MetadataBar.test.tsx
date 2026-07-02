@@ -17,7 +17,6 @@
  * under the License.
  */
 import { render, screen, userEvent, within } from '@superset-ui/core/spec';
-import * as resizeDetector from 'react-resize-detector';
 import { hexToRgb } from '@superset-ui/core';
 import { supersetTheme } from '@apache-superset/core/theme';
 import MetadataBar, {
@@ -41,10 +40,23 @@ const TAGS = ['management', 'research', 'poc'];
 const A_WEEK_AGO = 'a week ago';
 const TWO_DAYS_AGO = '2 days ago';
 
+// react-resize-detector ships non-configurable ESM exports, so
+// jest.spyOn can't redefine useResizeDetector; route through a module mock
+const mockUseResizeDetector = jest.fn();
+jest.mock('react-resize-detector', () => {
+  const actual = jest.requireActual('react-resize-detector');
+  return {
+    ...actual,
+    useResizeDetector: (props: unknown) =>
+      mockUseResizeDetector.getMockImplementation()
+        ? mockUseResizeDetector(props)
+        : actual.useResizeDetector(props),
+  };
+});
+
 const runWithBarCollapsed = async (func: Function) => {
-  const spy = jest.spyOn(resizeDetector, 'useResizeDetector');
   let width: number;
-  spy.mockImplementation(props => {
+  mockUseResizeDetector.mockImplementation(props => {
     if (props?.onResize && !width) {
       width = 80;
       props.onResize(width);
@@ -52,7 +64,7 @@ const runWithBarCollapsed = async (func: Function) => {
     return { ref: { current: undefined } };
   });
   await func();
-  spy.mockRestore();
+  mockUseResizeDetector.mockReset();
 };
 
 const ITEMS: ContentType[] = [

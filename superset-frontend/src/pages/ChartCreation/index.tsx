@@ -231,7 +231,8 @@ export class ChartCreation extends PureComponent<
     this.props.history.push(this.exploreUrl());
   }
 
-  changeDatasource(datasource: { label: string | ReactNode; value: string }) {
+  changeDatasource(value: unknown) {
+    const datasource = value as { label: string | ReactNode; value: string };
     this.setState({ datasource });
   }
 
@@ -334,47 +335,53 @@ export class ChartCreation extends PureComponent<
     return (
       <StyledContainer>
         <h3>{t('Create a new chart')}</h3>
-        <Steps direction="vertical" size="small">
-          <Steps.Step
-            title={
-              <StyledStepTitle>
-                {t('Choose a %s', datasetLabelLower())}
-              </StyledStepTitle>
-            }
-            status={this.state.datasource?.value ? 'finish' : 'process'}
-            description={
-              <StyledStepDescription className="dataset">
-                <AsyncSelect
-                  autoFocus
-                  ariaLabel={datasetLabel()}
-                  name="select-datasource"
-                  onChange={this.changeDatasource}
-                  options={this.loadDatasources}
-                  optionFilterProps={['id', 'table_name']}
-                  placeholder={t('Choose a %s', datasetLabelLower())}
-                  showSearch
-                  value={this.state.datasource}
-                />
-                {datasetHelpText}
-              </StyledStepDescription>
-            }
-          />
-          <Steps.Step
-            title={<StyledStepTitle>{t('Choose chart type')}</StyledStepTitle>}
-            status={this.state.vizType ? 'finish' : 'process'}
-            description={
-              <StyledStepDescription>
-                <VizTypeGallery
-                  denyList={denyList}
-                  className="viz-gallery"
-                  onChange={this.changeVizType}
-                  onDoubleClick={this.onVizTypeDoubleClick}
-                  selectedViz={this.state.vizType}
-                />
-              </StyledStepDescription>
-            }
-          />
-        </Steps>
+        <Steps
+          direction="vertical"
+          size="small"
+          items={[
+            {
+              title: (
+                <StyledStepTitle>
+                  {t('Choose a %s', datasetLabelLower())}
+                </StyledStepTitle>
+              ),
+              status: this.state.datasource?.value ? 'finish' : 'process',
+              description: (
+                <StyledStepDescription className="dataset">
+                  <AsyncSelect
+                    autoFocus
+                    ariaLabel={datasetLabel()}
+                    name="select-datasource"
+                    onChange={this.changeDatasource}
+                    options={this.loadDatasources}
+                    optionFilterProps={['id', 'table_name']}
+                    placeholder={t('Choose a %s', datasetLabelLower())}
+                    showSearch
+                    value={this.state.datasource}
+                  />
+                  {datasetHelpText}
+                </StyledStepDescription>
+              ),
+            },
+            {
+              title: (
+                <StyledStepTitle>{t('Choose chart type')}</StyledStepTitle>
+              ),
+              status: this.state.vizType ? 'finish' : 'process',
+              description: (
+                <StyledStepDescription>
+                  <VizTypeGallery
+                    denyList={denyList}
+                    className="viz-gallery"
+                    onChange={this.changeVizType}
+                    onDoubleClick={this.onVizTypeDoubleClick}
+                    selectedViz={this.state.vizType}
+                  />
+                </StyledStepDescription>
+              ),
+            },
+          ]}
+        />
         <div className="footer">
           {isButtonDisabled && (
             <span>

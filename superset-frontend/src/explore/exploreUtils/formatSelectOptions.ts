@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,20 +17,13 @@
  * under the License.
  */
 
-// direct import: the package barrel ('../..') can be mid-evaluation (cycle)
-import Registry, { OverwritePolicy } from '../../models/Registry';
-import makeSingleton from '../../utils/makeSingleton';
-import { TransformProps } from '../types/TransformFunction';
-
-class ChartTransformPropsRegistry extends Registry<TransformProps<any>> {
-  constructor() {
-    super({
-      name: 'ChartTransformProps',
-      overwritePolicy: OverwritePolicy.Warn,
-    });
-  }
+/**
+ * Kept in its own module (re-exported by the exploreUtils barrel) so leaf
+ * consumers like explore/controls.tsx don't pull the whole exploreUtils
+ * dependency graph at module scope, which creates runtime import cycles.
+ */
+export function formatSelectOptions<T extends { toString(): string }>(
+  options: T[],
+): [T, string][] {
+  return options.map(opt => [opt, opt.toString()]);
 }
-
-const getInstance = makeSingleton(ChartTransformPropsRegistry);
-
-export default getInstance;

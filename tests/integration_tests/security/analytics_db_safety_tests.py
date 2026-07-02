@@ -17,6 +17,7 @@
 from typing import Optional
 
 import pytest
+from flask import current_app
 from sqlalchemy.engine.url import make_url
 
 from superset.exceptions import SupersetSecurityException
@@ -120,8 +121,13 @@ from superset.security.analytics_db_safety import check_sqlalchemy_uri
     ],
 )
 def test_check_sqlalchemy_uri(
-    sqlalchemy_uri: str, error: bool, error_message: Optional[str]
+    app_context,
+    monkeypatch,
+    sqlalchemy_uri: str,
+    error: bool,
+    error_message: Optional[str],
 ):
+    monkeypatch.setitem(current_app.config, "ALLOW_DUCKDB_CONNECTIONS", False)
     if error:
         with pytest.raises(SupersetSecurityException) as excinfo:  # noqa: PT012
             check_sqlalchemy_uri(make_url(sqlalchemy_uri))

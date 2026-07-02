@@ -21,6 +21,7 @@ from typing import Any, TypedDict
 
 from flask import current_app as app
 from flask_babel import gettext as __
+from sqlalchemy.orm import object_session
 
 from superset import db, is_feature_enabled, security_manager
 from superset.commands.base import BaseCommand
@@ -140,7 +141,8 @@ class QueryEstimationCommand(BaseCommand):
                 client_id=utils.shortid()[:10],
                 user_id=utils.get_user_id(),
             )
-            db.session.expunge(probe_query)
+            if session := object_session(probe_query):
+                session.expunge(probe_query)
             # Always resolve through ``get_default_schema_for_query`` — even when
             # the caller pinned a schema — so the engine's per-query security gate
             # runs (e.g. ``PostgresEngineSpec`` rejects a query that sets

@@ -99,7 +99,9 @@ export default styled.div`
       background-color: ${theme.colorBgLayout};
     }
 
-    .dt-select-page-size .ant-select .ant-select-arrow {
+    /* antd v6 renders the suffix icon in .ant-select-suffix (was
+       .ant-select-arrow) */
+    .dt-select-page-size .ant-select .ant-select-suffix {
       color: ${theme.colorTextQuaternary};
       z-index: 11;
     }
