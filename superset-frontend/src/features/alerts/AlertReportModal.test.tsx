@@ -239,9 +239,17 @@ const tabsEndpoint = 'glob:*/api/v1/dashboard/1/tabs';
 
 fetchMock.get(ownersEndpoint, { result: [] });
 fetchMock.get(databaseEndpoint, { result: [] });
-fetchMock.get(dashboardEndpoint, { result: [] });
+// named so tests can removeRoute(dashboardEndpoint): fetch-mock v12
+// removes routes by NAME only; removing an unnamed route is a no-op
+fetchMock.get(dashboardEndpoint, { result: [] }, { name: dashboardEndpoint });
 fetchMock.get(chartEndpoint, { result: [{ text: 'table chart', value: 1 }] });
-fetchMock.get(reportDashboardEndpoint, { result: [] });
+fetchMock.get(
+  reportDashboardEndpoint,
+  { result: [] },
+  {
+    name: reportDashboardEndpoint,
+  },
+);
 fetchMock.get(reportChartEndpoint, {
   result: [{ text: 'table chart', value: 1 }],
 });
@@ -1108,9 +1116,13 @@ test('dashboard switching resets tab and filter selections', async () => {
     count: 2,
   };
   fetchMock.removeRoute(dashboardEndpoint);
-  fetchMock.get(dashboardEndpoint, dashboardOptions);
+  fetchMock.get(dashboardEndpoint, dashboardOptions, {
+    name: dashboardEndpoint,
+  });
   fetchMock.removeRoute(reportDashboardEndpoint);
-  fetchMock.get(reportDashboardEndpoint, dashboardOptions);
+  fetchMock.get(reportDashboardEndpoint, dashboardOptions, {
+    name: reportDashboardEndpoint,
+  });
 
   // Dashboard 1 has tabs and filters
   fetchMock.removeRoute(tabsEndpoint);
@@ -1157,9 +1169,13 @@ test('dashboard switching resets tab and filter selections', async () => {
   const dashboardSelect = screen.getByRole('combobox', {
     name: /dashboard/i,
   });
-  // antd v6 keeps the search input empty even with a selection, so there
-  // is nothing to clear; clearing confuses the combobox focus state
-  userEvent.type(dashboardSelect, 'Other Dashboard{enter}');
+  // open the dropdown (retried click, as in the AsyncSelect suite) so the
+  // lazy options fetch fires, then pick the option explicitly
+  await waitFor(() => userEvent.click(dashboardSelect));
+  const otherDashboardOption = await screen.findByRole('option', {
+    name: /Other Dashboard/,
+  });
+  userEvent.click(otherDashboardOption);
 
   // Tab selector should reset: "Other Dashboard" has no tabs, so disabled with placeholder
   await waitFor(
@@ -1185,9 +1201,17 @@ test('dashboard switching resets tab and filter selections', async () => {
 
   // Restore dashboard endpoints
   fetchMock.removeRoute(dashboardEndpoint);
-  fetchMock.get(dashboardEndpoint, { result: [] });
+  // named so tests can removeRoute(dashboardEndpoint): fetch-mock v12
+  // removes routes by NAME only; removing an unnamed route is a no-op
+  fetchMock.get(dashboardEndpoint, { result: [] }, { name: dashboardEndpoint });
   fetchMock.removeRoute(reportDashboardEndpoint);
-  fetchMock.get(reportDashboardEndpoint, { result: [] });
+  fetchMock.get(
+    reportDashboardEndpoint,
+    { result: [] },
+    {
+      name: reportDashboardEndpoint,
+    },
+  );
   fetchMock.removeRoute(tabs99);
 }, 45000);
 
