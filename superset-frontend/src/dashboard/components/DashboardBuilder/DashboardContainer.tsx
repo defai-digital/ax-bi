@@ -263,7 +263,10 @@ const DashboardContainer: FC<DashboardContainerProps> = ({ topLevelTabs }) => {
     () => (topLevelTabs ? topLevelTabs.children : [DASHBOARD_GRID_ID]),
     [topLevelTabs],
   );
-  const min = Math.min(tabIndex, childIds.length - 1);
+  const min =
+    childIds.length === 0
+      ? 0
+      : Math.max(0, Math.min(tabIndex, childIds.length - 1));
   const activeKey = min === 0 ? DASHBOARD_GRID_ID : min.toString();
 
   useEffect(() => {
