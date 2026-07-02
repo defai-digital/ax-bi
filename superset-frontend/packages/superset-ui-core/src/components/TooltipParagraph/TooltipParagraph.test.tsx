@@ -26,9 +26,7 @@ import TooltipParagraph from '.';
 // TooltipParagraph's own (truncated -> tooltip title).
 let mockIsTruncated = false;
 jest.mock('@superset-ui/core/components/Typography', () => {
-  const actual = jest.requireActual(
-    '@superset-ui/core/components/Typography',
-  );
+  const actual = jest.requireActual('@superset-ui/core/components/Typography');
   const { useEffect } = jest.requireActual('react');
   const MockParagraph = ({ children, ellipsis, ...rest }: any) => {
     useEffect(() => {
