@@ -167,16 +167,8 @@ const Styles = styled.div`
   }
 
   // Ensure Ant Design tabs allow content to expand
-  .ant-tabs-body {
-    overflow: visible;
-    height: auto;
-  }
-
-  .ant-tabs-body-holder {
-    overflow: visible;
-    height: auto;
-  }
-
+  .ant-tabs-body-holder,
+  .ant-tabs-body,
   .ant-tabs-content {
     overflow: visible;
     height: auto;

@@ -71,11 +71,6 @@ const SqlLabStyles = styled.div`
         height: 100%;
       }
 
-      .ant-tabs-body-holder {
-        /* This is needed for Safari */
-        height: 100%;
-      }
-
       .ant-tabs-body {
         height: 100%;
         position: relative;

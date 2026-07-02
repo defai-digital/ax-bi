@@ -375,10 +375,6 @@ const StyledTableTabs = styled(Tabs)`
     padding-top: ${({ theme }) => theme.paddingMD}px;
   }
 
-  .ant-tabs-body {
-    height: 100%;
-  }
-
   .ant-tabs-content-active {
     height: 100%;
   }

@@ -331,8 +331,9 @@ const DashboardContainer: FC<DashboardContainerProps> = ({ topLevelTabs }) => {
   const renderTabBar = useCallback(() => <></>, []);
   const handleFocus = useCallback((e: ReactFocusEvent<HTMLElement>) => {
     if (
-      // prevent scrolling when tabbing to the tab pane
-      e.target.classList.contains('ant-tabs-content') &&
+      // prevent scrolling when tabbing to the tab pane; match on the
+      // stable tabpanel role rather than antd's private class names
+      e.target.getAttribute('role') === 'tabpanel' &&
       window.scrollY < TOP_OF_PAGE_RANGE
     ) {
       // prevent window from jumping down when tabbing

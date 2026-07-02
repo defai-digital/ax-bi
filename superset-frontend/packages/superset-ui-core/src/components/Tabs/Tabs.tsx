@@ -147,7 +147,7 @@ const Tabs = Object.assign(StyledTabs, {
 
 const StyledEditableTabs = styled(StyledTabs)`
   ${({ theme, contentStyle }) => `
-    .ant-tabs-content {
+    .ant-tabs-body-holder {
       background: ${theme.colorBgContainer};
       ${contentStyle}
     }

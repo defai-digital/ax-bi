@@ -67,13 +67,6 @@ const BuilderComponentPane = ({ topOffset = 0 }) => (
           line-height: inherit;
           margin-top: ${theme.sizeUnit * 2}px;
           height: 100%;
-
-          & .ant-tabs-body-holder {
-            height: 100%;
-            & .ant-tabs-body {
-              height: 100%;
-            }
-          }
         `}
         items={[
           {
