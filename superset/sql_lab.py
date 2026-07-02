@@ -420,7 +420,7 @@ def execute_sql_statements(  # noqa: C901
 
     parsed_script = SQLScript(rendered_query, engine=db_engine_spec.engine)
 
-    disallowed_functions = app.config["DISALLOWED_SQL_FUNCTIONS"].get(
+    disallowed_functions = (app.config.get("DISALLOWED_SQL_FUNCTIONS") or {}).get(
         db_engine_spec.engine,
         set(),
     )
@@ -429,7 +429,7 @@ def execute_sql_statements(  # noqa: C901
     ):
         raise SupersetDisallowedSQLFunctionException(disallowed_functions)
 
-    disallowed_tables = app.config["DISALLOWED_SQL_TABLES"].get(
+    disallowed_tables = (app.config.get("DISALLOWED_SQL_TABLES") or {}).get(
         db_engine_spec.engine,
         set(),
     )
@@ -500,6 +500,7 @@ def execute_sql_statements(  # noqa: C901
             db.session.commit()
 
         block_count = len(blocks)
+        result_set = None
         for i, block in enumerate(blocks):
             # Check if stopped
             db.session.refresh(query)
@@ -539,9 +540,14 @@ def execute_sql_statements(  # noqa: C901
                 payload = handle_query_error(ex, query, payload, prefix_message)
                 return payload
 
-        # Commit the connection so CTA queries will create the table and any DML.
-        if parsed_script.has_mutation() or query.select_as_cta:
-            conn.commit()
+            # Commit the connection so CTA queries will create the table and any DML.
+            if parsed_script.has_mutation() or query.select_as_cta:
+                conn.commit()
+
+    # Handle empty script case
+    if result_set is None:
+        payload.update({"status": QueryStatus.SUCCESS})
+        return payload
 
     # Success, updating the query entry in database
     query.rows = result_set.size
