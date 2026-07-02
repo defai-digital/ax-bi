@@ -88,13 +88,20 @@ jobs:
         if: steps.check.outputs.python == 'true' || steps.check.outputs.frontend == 'true'
         env:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # For PRs use the base branch; for direct pushes compare against the previous commit.
           BASE_REF="$PR_BASE_REF"
+          AUTH_HEADER="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)"
+          fetch_base() {
+            git \
+              -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${AUTH_HEADER}" \
+              fetch "$@"
+          }
           if [ -n "$BASE_REF" ]; then
-            git fetch --depth=1 origin "$BASE_REF"
+            fetch_base --depth=1 origin "$BASE_REF"
           else
-            git fetch --depth=2 origin "$GITHUB_REF"
+            fetch_base --depth=2 origin "$GITHUB_REF"
           fi
           git worktree add /tmp/base-worktree FETCH_HEAD
 
@@ -104,7 +111,8 @@ jobs:
       # up in the PR run, so it cancels out in the comparison.
       - name: Baseline — run babel_update against BASE source
         if: steps.check.outputs.python == 'true' || steps.check.outputs.frontend == 'true'
-        working-directory: /tmp/base-worktree
+        env:
+          SUPERSET_TRANSLATIONS_ROOT_DIR: /tmp/base-worktree
         run: ./scripts/translations/babel_update.sh
 
       - name: Record baseline translation counts

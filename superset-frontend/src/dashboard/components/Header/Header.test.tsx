@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import * as redux from 'redux';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import { screen, userEvent, within, waitFor } from '@superset-ui/core/spec';
 import { ActionCreators as UndoActionCreators } from 'redux-undo';
@@ -186,6 +185,75 @@ const recordError = jest.fn();
 const setPaused = jest.fn();
 const setPausedByTab = jest.fn();
 
+const mockBoundActions = {
+  get addSuccessToast() {
+    return addSuccessToast;
+  },
+  get addDangerToast() {
+    return addDangerToast;
+  },
+  get addWarningToast() {
+    return addWarningToast;
+  },
+  get onUndo() {
+    return onUndo;
+  },
+  get onRedo() {
+    return onRedo;
+  },
+  get setEditMode() {
+    return setEditMode;
+  },
+  get setUnsavedChanges() {
+    return setUnsavedChanges;
+  },
+  get fetchFaveStar() {
+    return fetchFaveStar;
+  },
+  get saveFaveStar() {
+    return saveFaveStar;
+  },
+  get savePublished() {
+    return savePublished;
+  },
+  get fetchCharts() {
+    return fetchCharts;
+  },
+  get updateDashboardTitle() {
+    return updateDashboardTitle;
+  },
+  get updateCss() {
+    return updateCss;
+  },
+  get onChange() {
+    return onChange;
+  },
+  get onSave() {
+    return onSave;
+  },
+  get setMaxUndoHistoryExceeded() {
+    return setMaxUndoHistoryExceeded;
+  },
+  get maxUndoHistoryToast() {
+    return maxUndoHistoryToast;
+  },
+  get logEvent() {
+    return logEvent;
+  },
+  get setRefreshFrequency() {
+    return setRefreshFrequency;
+  },
+  get onRefresh() {
+    return onRefresh;
+  },
+  get dashboardInfoChanged() {
+    return dashboardInfoChanged;
+  },
+  get dashboardTitleChanged() {
+    return dashboardTitleChanged;
+  },
+};
+
 jest.mock('src/hooks/useUnsavedChangesPrompt', () => ({
   useUnsavedChangesPrompt: jest.fn(),
 }));
@@ -208,35 +276,21 @@ const useRealTimeDashboardMock = jest.requireMock(
 const useAutoRefreshTabPauseMock = jest.requireMock(
   'src/dashboard/hooks/useAutoRefreshTabPause',
 ).useAutoRefreshTabPause as jest.Mock;
-beforeAll(() => {
-  jest.spyOn(redux, 'bindActionCreators').mockImplementation(() => ({
-    addSuccessToast,
-    addDangerToast,
-    addWarningToast,
-    onUndo,
-    onRedo,
-    setEditMode,
-    setUnsavedChanges,
-    fetchFaveStar,
-    saveFaveStar,
-    savePublished,
-    fetchCharts,
-    updateDashboardTitle,
-    updateCss,
-    onChange,
-    onSave,
-    setMaxUndoHistoryExceeded,
-    maxUndoHistoryToast,
-    logEvent,
-    setRefreshFrequency,
-    onRefresh,
-    dashboardInfoChanged,
-    dashboardTitleChanged,
-  }));
-});
+// redux 5 ships non-configurable ESM exports, so jest.spyOn can't
+// redefine bindActionCreators; mock the module instead
+const mockBindActionCreators = jest.fn();
+jest.mock('redux', () => ({
+  ...jest.requireActual('redux'),
+  bindActionCreators: (...args: unknown[]) =>
+    mockBindActionCreators.getMockImplementation()
+      ? mockBindActionCreators(...args)
+      : mockBoundActions,
+}));
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // drop any per-test bindActionCreators override (clearAllMocks keeps it)
+  mockBindActionCreators.mockReset();
   const { useLocation } = jest.requireMock('react-router-dom');
   useLocation.mockReturnValue({
     pathname: '/dashboard',
@@ -922,29 +976,8 @@ test('should call setShowUnsavedChangesModal(false) on cancel', async () => {
 test('should clear history and unsaved changes when entering edit mode', () => {
   const clearDashboardHistory = jest.fn();
 
-  jest.spyOn(redux, 'bindActionCreators').mockImplementation(() => ({
-    addSuccessToast,
-    addDangerToast,
-    addWarningToast,
-    onUndo,
-    onRedo,
-    setEditMode,
-    setUnsavedChanges,
-    fetchFaveStar,
-    saveFaveStar,
-    savePublished,
-    fetchCharts,
-    updateDashboardTitle,
-    updateCss,
-    onChange,
-    onSave,
-    setMaxUndoHistoryExceeded,
-    maxUndoHistoryToast,
-    logEvent,
-    setRefreshFrequency,
-    onRefresh,
-    dashboardInfoChanged,
-    dashboardTitleChanged,
+  mockBindActionCreators.mockImplementation(() => ({
+    ...mockBoundActions,
     clearDashboardHistory,
   }));
 

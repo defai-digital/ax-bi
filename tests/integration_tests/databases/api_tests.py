@@ -1608,18 +1608,7 @@ class TestDatabaseApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         rv = self.client.get(uri)
         data = json.loads(rv.data.decode("utf-8"))
-        if example_db.backend == "sqlite":
-            assert rv.status_code == 200
-            assert data == {
-                "columns": [],
-                "comment": None,
-                "foreignKeys": [],
-                "indexes": [],
-                "name": "wrong_table",
-                "primaryKey": {"constrained_columns": None, "name": None},
-                "selectStar": "SELECT\n  *\nFROM wrong_table\nLIMIT 100\nOFFSET 0",
-            }
-        elif example_db.backend == "mysql":
+        if example_db.backend == "mysql":
             assert rv.status_code == 422
             assert data == {"message": "`wrong_table`"}
         else:

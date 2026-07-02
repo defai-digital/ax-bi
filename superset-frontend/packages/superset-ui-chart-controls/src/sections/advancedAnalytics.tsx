@@ -17,7 +17,12 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
-import { RollingType, ComparisonType } from '@superset-ui/core';
+// direct module import: this module reads RollingType at module scope,
+// and the @superset-ui/core barrel can be mid-evaluation (import cycle)
+import {
+  RollingType,
+  ComparisonType,
+} from '@superset-ui/core/query/types/AdvancedAnalytics';
 
 import { ControlSubSectionHeader } from '../components/ControlSubSectionHeader';
 import { ControlPanelSectionConfig } from '../types';

@@ -130,7 +130,7 @@ class DuckDBParametersMixin:
         ):
             return MotherDuckEngineSpec.build_sqlalchemy_uri(parameters)
 
-        return str(URL(drivername=cls.engine, database=database, query=query))
+        return str(URL.create(cls.engine, database=database, query=query))
 
     @classmethod
     def get_parameters_from_uri(  # pylint: disable=unused-argument
@@ -448,9 +448,7 @@ class MotherDuckEngineSpec(DuckDBEngineSpec):
                 f"Need MotherDuck token to connect to database '{database}'."
             )
 
-        return str(
-            URL(drivername=DuckDBEngineSpec.engine, database=database, query=query)
-        )
+        return str(URL.create(DuckDBEngineSpec.engine, database=database, query=query))
 
     @classmethod
     def adjust_engine_params(
@@ -481,7 +479,8 @@ class MotherDuckEngineSpec(DuckDBEngineSpec):
     ) -> set[str]:
         return {
             catalog
-            for (catalog,) in inspector.bind.execute(
-                text("SELECT alias FROM MD_ALL_DATABASES() WHERE is_attached;")
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector,
+                text("SELECT alias FROM MD_ALL_DATABASES() WHERE is_attached;"),
             )
         }

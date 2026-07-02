@@ -63,9 +63,11 @@ def get_llm_provider() -> LLMProvider:
 
     provider_name = config.get("provider", "").lower()
 
-    # Future: dispatch to concrete providers based on provider_name
-    # e.g. if provider_name == "openai": return OpenAIProvider(config)
-    #      elif provider_name == "anthropic": return AnthropicProvider(config)
+    if provider_name == "anthropic":
+        from superset.mcp_service.ai.anthropic_provider import AnthropicProvider
+
+        _provider_instance = AnthropicProvider(config)
+        return _provider_instance
 
     logger.warning(
         "Unknown LLM provider '%s'; returning StubLLMProvider. "

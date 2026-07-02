@@ -34,18 +34,22 @@
  */
 import { isEmpty } from 'lodash';
 import { t } from '@apache-superset/core/translation';
+// direct module imports: this module calls the scheme registries at module
+// scope, and the @superset-ui/core barrel can be mid-evaluation (import
+// cycle), leaving the bindings undefined
 import {
   getCategoricalSchemeRegistry,
   getSequentialSchemeRegistry,
   SequentialScheme,
+} from '@superset-ui/core/color';
+import {
   legacyValidateInteger,
-  ComparisonType,
-  ensureIsArray,
-  isDefined,
-  NO_TIME_RANGE,
   validateMaxValue,
-  getColumnLabel,
-} from '@superset-ui/core';
+} from '@superset-ui/core/validator';
+import { ComparisonType } from '@superset-ui/core/query/types/AdvancedAnalytics';
+import { ensureIsArray, isDefined } from '@superset-ui/core/utils';
+import { NO_TIME_RANGE } from '@superset-ui/core/query/constants';
+import getColumnLabel from '@superset-ui/core/query/getColumnLabel';
 
 import {
   formatSelectOptions,

@@ -95,11 +95,12 @@ class FireboltOld(Firebolt):
             self,
             skip_join_token: bool = False,
             parse_bracket: bool = False,
+            **kwargs: object,
         ) -> exp.Join | None:
             if unnest := self._parse_unnest():
                 return self.expression(exp.Join(this=unnest))
 
-            return super()._parse_join(skip_join_token, parse_bracket)
+            return super()._parse_join(skip_join_token, parse_bracket, **kwargs)
 
         def _parse_unnest(self, with_alias: bool = True) -> exp.Unnest | None:
             if not self._match(TokenType.UNNEST):

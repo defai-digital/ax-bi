@@ -58,9 +58,11 @@ const catalogApiRoute = 'glob:*/api/v1/database/*/catalogs/?*';
 const schemaApiRoute = 'glob:*/api/v1/database/*/schemas/?*';
 const tablesApiRoute = 'glob:*/api/v1/database/*/tables/*';
 
+// antd v6: single mode renders the value in .ant-select-content-has-value
+// (multiple mode keeps .ant-select-selection-item tags)
 const getSelectItemContainer = (select: HTMLElement) =>
-  select.parentElement?.parentElement?.getElementsByClassName(
-    'ant-select-selection-item',
+  select.parentElement?.parentElement?.querySelectorAll(
+    '.ant-select-selection-item, .ant-select-content-has-value',
   );
 
 // Add cleanup and increase timeout

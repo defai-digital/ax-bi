@@ -54,6 +54,33 @@ const DATASETS = [
   },
 ];
 
+// antd v6's cssinjs occasionally probes the DOM with selectors that
+// jsdom's nwsapi rejects (e.g. joined empty prefix segments +
+// :focus-visible); swallow those instead of crashing the timer callbacks
+const swallowInvalidSelector = <T,>(
+  orig: (this: T, selectors: string) => Element | null,
+) =>
+  function patched(this: T, selectors: string) {
+    try {
+      return orig.call(this, selectors);
+    } catch (error) {
+      // jsdom throws a DOMException named SyntaxError, not a JS SyntaxError
+      if ((error as Error)?.name === 'SyntaxError') {
+        return null;
+      }
+      throw error;
+    }
+  };
+
+beforeAll(() => {
+  Element.prototype.querySelector = swallowInvalidSelector(
+    Element.prototype.querySelector,
+  );
+  Document.prototype.querySelector = swallowInvalidSelector(
+    Document.prototype.querySelector,
+  );
+});
+
 const mockOnChange = jest.fn();
 
 afterEach(() => {
@@ -180,7 +207,8 @@ test('calls onChange when a dataset is selected', async () => {
   await waitFor(() => {
     expect(mockOnChange).toHaveBeenCalled();
     const callArg = mockOnChange.mock.calls[0][0];
-    expect(callArg).toEqual({ key: 1, label: expect.anything(), value: 1 });
+    // antd v6 labelInValue payloads no longer include the key field
+    expect(callArg).toEqual({ label: expect.anything(), value: 1 });
   });
 });
 

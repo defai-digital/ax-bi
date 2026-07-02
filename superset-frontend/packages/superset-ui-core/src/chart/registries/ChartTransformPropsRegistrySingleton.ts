@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Registry, OverwritePolicy } from '../..';
+// direct import: the package barrel ('../..') can be mid-evaluation (cycle)
+import Registry, { OverwritePolicy } from '../../models/Registry';
 import makeSingleton from '../../utils/makeSingleton';
 import { TransformProps } from '../types/TransformFunction';
 

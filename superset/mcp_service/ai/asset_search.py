@@ -117,8 +117,11 @@ def _search_datasets(
 
     escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        SqlaTable.table_name.ilike(f"%{escaped_query}%"),
-        cast(Any, SqlaTable.description).ilike(f"%{escaped_query}%"),
+        SqlaTable.table_name.ilike(f"%{escaped_query}%", escape="\\"),
+        cast(Any, SqlaTable.description).ilike(
+            f"%{escaped_query}%",
+            escape="\\",
+        ),
     )
 
     session = db.session
@@ -165,8 +168,8 @@ def _search_charts(
 
     escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        Slice.slice_name.ilike(f"%{escaped_query}%"),
-        Slice.description.ilike(f"%{escaped_query}%"),
+        Slice.slice_name.ilike(f"%{escaped_query}%", escape="\\"),
+        Slice.description.ilike(f"%{escaped_query}%", escape="\\"),
     )
 
     session = db.session
@@ -215,8 +218,8 @@ def _search_dashboards(
 
     escaped_query = _escape_like_pattern(query)
     search_filter = or_(
-        Dashboard.dashboard_title.ilike(f"%{escaped_query}%"),
-        Dashboard.description.ilike(f"%{escaped_query}%"),
+        Dashboard.dashboard_title.ilike(f"%{escaped_query}%", escape="\\"),
+        Dashboard.description.ilike(f"%{escaped_query}%", escape="\\"),
     )
 
     session = db.session
@@ -279,7 +282,7 @@ def _search_assets_python(
     :param limit: Maximum number of results to return.
     :returns: List of AssetResult sorted by relevance_score descending.
     """
-    if not query or not query.strip():
+    if not query or not query.strip() or limit <= 0:
         return []
 
     types_to_search = set(asset_types) if asset_types else _VALID_ASSET_TYPES
@@ -289,6 +292,12 @@ def _search_assets_python(
         return []
 
     all_results: list[AssetResult] = []
+    semantic_results = _search_assets_semantic(
+        query,
+        asset_types=asset_types,
+        include_certified_only=include_certified_only,
+        limit=limit,
+    )
 
     # Allocate limit per type to ensure diversity
     per_type_limit = max(limit, 1)
@@ -311,8 +320,129 @@ def _search_assets_python(
     # "metric" type searches would require querying SqlMetric directly
     # For now, metrics are surfaced via describe_dataset_for_ai
 
+    all_results = _merge_asset_results(semantic_results, all_results)
+
     # Sort by relevance score descending and apply final limit
     return _rank_asset_results(query, all_results, limit)
+
+
+def _merge_asset_results(
+    primary_results: list[AssetResult],
+    fallback_results: list[AssetResult],
+) -> list[AssetResult]:
+    """Merge asset results while keeping one result per concrete asset."""
+
+    merged: list[AssetResult] = []
+    seen: set[tuple[str, int]] = set()
+    for result in [*primary_results, *fallback_results]:
+        key = (result.asset_type, result.id)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(result)
+    return merged
+
+
+def _semantic_asset_search_enabled() -> bool:
+    """Return whether pgvector semantic asset search should be attempted."""
+
+    return (
+        has_app_context()
+        and is_feature_enabled("GENAI_SEMANTIC_INDEX")
+        and is_feature_enabled("GENAI_SEMANTIC_INDEX_PGVECTOR")
+    )
+
+
+def _semantic_score(distance: float | None) -> float:
+    """Convert cosine distance into a compact relevance score."""
+
+    if distance is None:
+        return 0.0
+    return round(max(0.0, 2.0 - distance), 4)
+
+
+def _search_assets_semantic(  # noqa: C901
+    query: str,
+    asset_types: list[str] | None,
+    include_certified_only: bool,
+    limit: int,
+) -> list[AssetResult]:
+    """Search indexed semantic documents and return authorized datasets."""
+
+    if limit <= 0:
+        return []
+
+    if not _semantic_asset_search_enabled():
+        return []
+
+    types_to_search = set(asset_types) if asset_types else _VALID_ASSET_TYPES
+    if "dataset" not in types_to_search:
+        return []
+
+    try:
+        from superset.connectors.sqla.models import SqlaTable
+        from superset.daos.dataset import DatasetDAO
+        from superset.semantic_index.service import SemanticIndexService
+
+        semantic_results = SemanticIndexService().search(
+            query,
+            limit=limit * 4,
+            object_types=["dataset", "column", "metric"],
+        )
+    except Exception:
+        logger.warning(
+            "Semantic asset search failed; falling back to lexical search",
+            exc_info=True,
+        )
+        return []
+
+    dataset_ids: list[int] = []
+    seen_dataset_ids: set[int] = set()
+    best_by_dataset: dict[int, tuple[float, str]] = {}
+    for result in semantic_results:
+        if result.dataset_id is None or result.dataset_id in seen_dataset_ids:
+            continue
+        seen_dataset_ids.add(result.dataset_id)
+        dataset_ids.append(result.dataset_id)
+        best_by_dataset[result.dataset_id] = (
+            _semantic_score(result.distance),
+            f"semantic match via {result.document_kind}: {result.object_name}",
+        )
+        if len(dataset_ids) >= limit:
+            break
+
+    if not dataset_ids:
+        return []
+
+    model_query = db.session.query(SqlaTable)
+    model_query = DatasetDAO._apply_base_filter(model_query)  # noqa: SLF001
+    model_query = model_query.filter(SqlaTable.id.in_(dataset_ids))
+    if include_certified_only:
+        model_query = model_query.filter(SqlaTable.certified_by.isnot(None))
+
+    datasets = {dataset.id: dataset for dataset in model_query.all()}
+    assets: list[AssetResult] = []
+    for dataset_id in dataset_ids:
+        dataset = datasets.get(dataset_id)
+        if dataset is None:
+            continue
+        score, reason = best_by_dataset.get(dataset_id, (0.0, "semantic match"))
+        assets.append(
+            AssetResult(
+                asset_type="dataset",
+                id=dataset.id,
+                uuid=str(getattr(dataset, "uuid", "")),
+                name=dataset.table_name or "",
+                description=dataset.description or "",
+                certified=_is_certified(dataset),
+                relevance_score=score,
+                relevance_reason=reason,
+                owners=_get_owners(dataset),
+                tags=_get_tags(dataset),
+            )
+        )
+
+    return assets[:limit]
 
 
 def _rust_asset_ranking_enabled() -> bool:

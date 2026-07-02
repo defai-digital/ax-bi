@@ -447,6 +447,7 @@ class DashboardDAO(BaseDAO[Dashboard]):
         dash.params = original_dash.params
         cls.set_dash_metadata(dash, metadata, old_to_new_slice_ids)
         db.session.add(dash)
+        db.session.flush()
         return dash
 
     @classmethod

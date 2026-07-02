@@ -784,11 +784,12 @@ class PostgresEngineSpec(BasicParametersMixin, PostgresBaseEngineSpec):
         """
         return {
             catalog
-            for (catalog,) in inspector.bind.execute(
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector,
                 text("""
 SELECT datname FROM pg_database
 WHERE datistemplate = false;
-                """)
+                """),
             )
         }
 

@@ -103,13 +103,19 @@ class TimeStamp(TypeDecorator):
     """
 
     impl = TIMESTAMP
+    cache_ok = True
 
-    @classmethod
     # pylint: disable=arguments-differ
-    def process_bind_param(cls, value: str, dialect: Dialect) -> str:
+    def process_bind_param(self, value: str, dialect: Dialect) -> str:
         """
         Used for in-line rendering of TIMESTAMP data type
         as Presto does not support automatic casting.
+        """
+        return f"TIMESTAMP '{value}'"
+
+    def process_literal_param(self, value: str, dialect: Dialect) -> str:
+        """
+        Render TIMESTAMP literals for SQLAlchemy literal_binds compilation.
         """
         return f"TIMESTAMP '{value}'"
 
@@ -120,12 +126,18 @@ class Date(TypeDecorator):
     """
 
     impl = DATE
+    cache_ok = True
 
-    @classmethod
     # pylint: disable=arguments-differ
-    def process_bind_param(cls, value: str, dialect: Dialect) -> str:
+    def process_bind_param(self, value: str, dialect: Dialect) -> str:
         """
         Used for in-line rendering of DATE data type
         as Presto does not support automatic casting.
+        """
+        return f"DATE '{value}'"
+
+    def process_literal_param(self, value: str, dialect: Dialect) -> str:
+        """
+        Render DATE literals for SQLAlchemy literal_binds compilation.
         """
         return f"DATE '{value}'"

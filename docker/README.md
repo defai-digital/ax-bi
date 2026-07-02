@@ -17,43 +17,100 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Getting Started with Superset using Docker
+# Getting Started with AX-BI using Docker
 
-Docker is an easy way to get started with Superset.
+Docker is the recommended way to deploy AX-BI for users who want a
+self-contained stack. The AX-BI stack includes Superset, the MCP service, the
+TypeScript `ax-services` sidecar, Postgres, Redis, Celery worker, and Celery
+beat.
 
 ## Prerequisites
 
 1. [Docker](https://www.docker.com/get-started)
 2. [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Configuration
+## AX-BI Deployment
 
-The `/app/pythonpath` folder is mounted from [`./docker/pythonpath_dev`](./pythonpath_dev)
-which contains a base configuration [`./docker/pythonpath_dev/superset_config.py`](./pythonpath_dev/superset_config.py)
-intended for use with local development.
+Use [`../docker-compose-axbi.yml`](../docker-compose-axbi.yml) for user-facing
+AX-BI deployments:
 
-### Local overrides
+```bash
+cp docker/.env-axbi.example docker/.env-axbi
 
-#### Environment Variables
+# Fill required secrets:
+# - SUPERSET_SECRET_KEY
+# - DATABASE_PASSWORD
+# - ADMIN_PASSWORD
+#
+# Generate secret values with:
+#   openssl rand -base64 42
+
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
+```
+
+This pulls the published `ghcr.io/defai-digital/ax-bi` and
+`ghcr.io/defai-digital/ax-bi-services` images. To build from this checkout
+instead, run:
+
+```bash
+docker compose \
+  --env-file docker/.env-axbi \
+  -f docker-compose-axbi.yml \
+  -f docker-compose-axbi-build.yml \
+  up -d --build
+```
+
+Services are exposed on:
+
+| Service | Default URL |
+|---------|-------------|
+| AX-BI web app | `http://localhost:8088` |
+| MCP service | `http://localhost:5008` |
+| AX services sidecar | `http://localhost:5010` |
+
+For a local single-user trial, set `MCP_DEV_USERNAME=admin` in
+`docker/.env-axbi`. For production, leave `MCP_DEV_USERNAME` empty and configure
+JWT settings for the MCP service (`MCP_AUTH_ENABLED`, `MCP_JWT_ISSUER`,
+`MCP_JWT_AUDIENCE`, `MCP_JWKS_URI`, and optional `MCP_REQUIRED_SCOPES`).
+
+### Configuration
+
+The AX-BI Docker image includes
+[`./docker/pythonpath_axbi/superset_config.py`](./pythonpath_axbi/superset_config.py),
+an environment-driven configuration for Docker deployments.
+
+### Local Development Stack
+
+The default [`../docker-compose.yml`](../docker-compose.yml) remains a
+development stack with bind mounts, hot reload, frontend dev server, and
+development defaults.
+
+The `/app/pythonpath` folder is mounted from
+[`./docker/pythonpath_dev`](./pythonpath_dev), which contains a base
+configuration intended for local development.
+
+#### Local overrides
+
+##### Environment Variables
 
 To override environment variables locally, create a `./docker/.env-local` file (git-ignored). This file will be loaded after `.env` and can override any settings.
 
-#### Python Configuration
+##### Python Configuration
 
 In order to override configuration settings locally, simply make a copy of [`./docker/pythonpath_dev/superset_config_local.example`](./pythonpath_dev/superset_config_local.example)
 into `./docker/pythonpath_dev/superset_config_docker.py` (git-ignored) and fill in your overrides.
 
-#### WebSocket Configuration
+##### WebSocket Configuration
 
 To customize the WebSocket server configuration, create `./docker/superset-websocket/config.json` (git-ignored) based on [`./docker/superset-websocket/config.example.json`](./superset-websocket/config.example.json).
 
 Then update the `superset-websocket`.`volumes` config to mount it.
 
-#### Docker Compose Overrides
+##### Docker Compose Overrides
 
 For advanced Docker Compose customization, create a `docker-compose-override.yml` file (git-ignored) to override or extend services without modifying the main compose file.
 
-### Local packages
+#### Local packages
 
 If you want to add Python packages in order to test things like databases locally, you can simply add a local requirements.txt (`./docker/requirements-local.txt`)
 and rebuild your Docker stack.
@@ -70,9 +127,9 @@ Steps:
 
 The database will initialize itself upon startup via the init container ([`superset-init`](./docker-init.sh)). This may take a minute.
 
-## Normal Operation
+## Development Operation
 
-To run the container, simply run: `docker compose up`
+To run the development containers, run: `docker compose up`
 
 After waiting several minutes for Superset initialization to finish, you can open a browser and view [`http://localhost:8088`](http://localhost:8088)
 to start your journey.
@@ -109,10 +166,6 @@ From a subdirectory, use: `make -C $(git rev-parse --show-toplevel) up`
 
 While running, the container server will reload on modification of the Superset Python and JavaScript source code.
 Don't forget to reload the page to take the new frontend into account though.
-
-## Production
-
-It is possible to run Superset in non-development mode by using [`docker-compose-non-dev.yml`](../docker-compose-non-dev.yml). This file excludes the volumes needed for development.
 
 ## Resource Constraints
 

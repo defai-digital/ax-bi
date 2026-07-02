@@ -639,7 +639,8 @@ class TestAutoUploadEndpoint:
 
         assert response.status_code == 201
         table_name = response.json["table_name"]
-        assert len(table_name) == 250
+        assert len(table_name) == 63
+        assert table_name.startswith("upload_")
         assert mock_upload_command.call_args[0][1] == table_name
 
     @patch("superset.databases.api.UploadCommand")

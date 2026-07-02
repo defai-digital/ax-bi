@@ -17,7 +17,9 @@
  * under the License.
  */
 import { GenericDataType } from '@apache-superset/core/common';
-import { TimeseriesDataRecord } from '../../chart';
+// import type via the direct module: the chart barrel pulls chart models
+// whose imports cycle back into query types
+import type { TimeseriesDataRecord } from '../../chart/types/QueryResponse';
 import { AnnotationData } from './AnnotationLayer';
 
 /**

@@ -170,6 +170,18 @@ def test_enforce_fails_open_on_error() -> None:
         logger.warning.assert_called_once()
 
 
+def test_invalidate_epoch_is_whole_second_when_not_rounding_up() -> None:
+    """With round_up=False the stamp must be floored to a whole second:
+    MySQL DATETIME rounds fractional seconds, so a fractional stamp could
+    land in the future and invalidate the very next login."""
+    connection = MagicMock()
+    connection.execute.return_value.rowcount = 1
+    invalidate_user_sessions(connection, user_id=7, round_up=False)
+    values = connection.execute.call_args[0][0].compile().params
+    stamped = values["sessions_invalidated_at"]
+    assert stamped.microsecond == 0
+
+
 def test_invalidate_updates_existing_row() -> None:
     """When a row already exists, the upsert updates it and skips the insert."""
     connection = MagicMock()

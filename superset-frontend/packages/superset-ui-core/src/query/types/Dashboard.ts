@@ -17,7 +17,10 @@
  * under the License.
  */
 
-import { AdhocFilter, DataMask } from '@superset-ui/core';
+// import type via direct modules: a value import of the package's own
+// barrel creates a runtime cycle
+import type { AdhocFilter } from './Filter';
+import type { DataMask } from '../../chart/types/Base';
 
 export interface ColumnOption {
   label: string;

@@ -344,7 +344,7 @@ class StarRocksEngineSpec(MySQLEngineSpec):
         The command returns columns: Catalog, Type, Comment
         """
         try:
-            result = inspector.bind.execute(text("SHOW CATALOGS"))
+            result = cls.execute_inspector_statement(inspector, text("SHOW CATALOGS"))
             catalogs = set()
 
             for row in result:
@@ -375,7 +375,7 @@ class StarRocksEngineSpec(MySQLEngineSpec):
         (e.g., "catalog." sets the context to that catalog).
         """
         try:
-            result = inspector.bind.execute(text("SHOW DATABASES"))
+            result = cls.execute_inspector_statement(inspector, text("SHOW DATABASES"))
             return {row[0] for row in result}
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception("Error fetching schema names from SHOW DATABASES: %s", ex)

@@ -274,8 +274,9 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         """
         return {
             catalog
-            for (catalog,) in inspector.bind.execute(
-                text("SELECT DATABASE_NAME from information_schema.databases")
+            for (catalog,) in cls.execute_inspector_statement(
+                inspector,
+                text("SELECT DATABASE_NAME from information_schema.databases"),
             )
         }
 

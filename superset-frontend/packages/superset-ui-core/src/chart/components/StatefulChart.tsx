@@ -20,14 +20,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ParentSize } from '@visx/responsive';
 import { t } from '@apache-superset/core/translation';
-import {
-  QueryFormData,
-  QueryData,
+// direct module imports: the package barrel ('../..') can be
+// mid-evaluation (import cycle), leaving value bindings undefined
+import buildQueryContext from '../../query/buildQueryContext';
+import { getClientErrorObject } from '../../query/getClientErrorObject';
+import type { QueryFormData } from '../../query/types/QueryFormData';
+import type { QueryData } from '../types/QueryResponse';
+import type {
   SupersetClientInterface,
-  buildQueryContext,
   RequestConfig,
-  getClientErrorObject,
-} from '../..';
+} from '../../connection/types';
 import { Loading } from '../../components/Loading';
 import ChartClient from '../clients/ChartClient';
 import getChartBuildQueryRegistry from '../registries/ChartBuildQueryRegistrySingleton';

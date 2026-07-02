@@ -17,12 +17,12 @@
  * under the License.
  */
 
-import {
-  QueryFormData,
-  QueryContext,
-  SetDataMaskHook,
-  JsonObject,
-} from '../..';
+// import type via direct modules: a value import of the package barrel
+// ('../..') creates a runtime cycle
+import type { QueryFormData } from '../../query/types/QueryFormData';
+import type { QueryContext } from '../../query/types/Query';
+import type { SetDataMaskHook } from './Base';
+import type { JsonObject } from '../../connection/types';
 import ChartProps from '../models/ChartProps';
 import { PlainObject } from './Base';
 

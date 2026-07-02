@@ -18,7 +18,9 @@
  */
 /* eslint-disable no-underscore-dangle */
 
-import { QueryFormData } from '@superset-ui/core';
+// import type via the direct module: the package's own barrel can be
+// mid-evaluation (import cycle)
+import type { QueryFormData } from './types/QueryFormData';
 import { TimeGranularity } from '../time-format';
 
 export default function extractTimegrain(

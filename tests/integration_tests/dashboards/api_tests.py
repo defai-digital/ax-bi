@@ -28,7 +28,6 @@ import pytest
 import rison
 import yaml
 
-from freezegun import freeze_time
 from sqlalchemy import and_
 from superset import db, security_manager  # noqa: F401
 from superset.models.dashboard import Dashboard
@@ -175,6 +174,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                 crontab="* * * * *",
                 dashboard=dashboard,
             )
+            db.session.add(report_schedule)
             db.session.commit()
 
             yield dashboard
@@ -762,31 +762,33 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         """
         Dashboard API: Test get dashboards changed on
         """
-        from datetime import datetime
         import humanize
 
-        with freeze_time("2020-01-01T00:00:00Z"):
-            admin = self.get_user("admin")
-            dashboard = self.insert_dashboard("title", "slug1", [admin.id])
+        admin = self.get_user("admin")
+        dashboard = self.insert_dashboard("title", "slug1", [admin.id])
+        frozen_now = dashboard.changed_on
+        assert frozen_now is not None
 
-            self.login(ADMIN_USERNAME)
+        self.login(ADMIN_USERNAME)
 
-            arguments = {
-                "order_column": "changed_on_delta_humanized",
-                "order_direction": "desc",
-            }
-            uri = f"api/v1/dashboard/?q={rison.dumps(arguments)}"
+        arguments = {
+            "order_column": "changed_on_delta_humanized",
+            "order_direction": "desc",
+        }
+        uri = f"api/v1/dashboard/?q={rison.dumps(arguments)}"
 
-            rv = self.get_assert_metric(uri, "get_list")
-            assert rv.status_code == 200
-            data = json.loads(rv.data.decode("utf-8"))
-            assert data["result"][0][
-                "changed_on_delta_humanized"
-            ] == humanize.naturaltime(datetime.now())
+        with patch("superset.models.helpers.datetime") as mock_datetime:
+            mock_datetime.now.return_value = frozen_now
+            rv = self.client.get(uri)
+        assert rv.status_code == 200
+        data = json.loads(rv.data.decode("utf-8"))
+        assert data["result"][0]["changed_on_delta_humanized"] == humanize.naturaltime(
+            frozen_now - dashboard.changed_on
+        )
 
-            # rollback changes
-            db.session.delete(dashboard)
-            db.session.commit()
+        # rollback changes
+        db.session.delete(dashboard)
+        db.session.commit()
 
     def test_get_dashboards_admin_sees_existing_dashboards(self):
         """Regression for #25890: GET /api/v1/dashboard/ as an Admin user should
@@ -2807,16 +2809,19 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         "load_world_bank_dashboard_with_slices",
         "load_birth_names_dashboard_with_slices",
     )
-    @freeze_time("2022-01-01")
     def test_export(self):
         """
         Dashboard API: Test dashboard export
         """
+        from datetime import datetime
+
         self.login(ADMIN_USERNAME)
         dashboards_ids = get_dashboards_ids(["world_health", "births"])
         uri = f"api/v1/dashboard/export/?q={rison.dumps(dashboards_ids)}"
 
-        rv = self.get_assert_metric(uri, "export")
+        with patch("superset.dashboards.api.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(2022, 1, 1)
+            rv = self.client.get(uri)
 
         headers = "attachment; filename=dashboard_export_20220101T000000.zip"  # noqa: F541
         assert rv.status_code == 200

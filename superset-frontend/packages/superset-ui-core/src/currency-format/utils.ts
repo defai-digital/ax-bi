@@ -16,16 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  Currency,
-  CurrencyFormatter,
-  ensureIsArray,
-  getNumberFormatter,
-  isSavedMetric,
-  QueryFormMetric,
-  ValueFormatter,
-} from '@superset-ui/core';
-import { normalizeCurrency, hasMixedCurrencies } from './CurrencyFormatter';
+// direct module imports: importing the package's own barrel
+// (@superset-ui/core) creates a runtime cycle that leaves the value
+// bindings undefined while the barrel evaluates
+import type { Currency } from '../query/types/Datasource';
+import type { QueryFormMetric } from '../query/types/QueryFormData';
+import type { ValueFormatter } from '../types';
+import { isSavedMetric } from '../query/types/Metric';
+import { ensureIsArray } from '../utils';
+import { getNumberFormatter } from '../number-format';
+import CurrencyFormatter, {
+  normalizeCurrency,
+  hasMixedCurrencies,
+} from './CurrencyFormatter';
 import { RowData, RowDataValue } from './types';
 import { AUTO_CURRENCY_SYMBOL } from './CurrencyFormats';
 

@@ -41,7 +41,8 @@ const defaultProps: PageHeaderWithActionsProps = {
       data-test="additional-actions-menu"
     />
   ),
-  menuDropdownProps: { onVisibleChange: jest.fn(), visible: true },
+  // antd v6 Dropdown uses onOpenChange/open (onVisibleChange was removed)
+  menuDropdownProps: { onOpenChange: jest.fn(), open: true },
 };
 
 test('Renders', async () => {
@@ -52,5 +53,5 @@ test('Renders', async () => {
   expect(screen.getByText('Save')).toBeVisible();
 
   await userEvent.click(screen.getByLabelText('Menu actions trigger'));
-  expect(defaultProps.menuDropdownProps.onVisibleChange).toHaveBeenCalled();
+  expect(defaultProps.menuDropdownProps.onOpenChange).toHaveBeenCalled();
 });

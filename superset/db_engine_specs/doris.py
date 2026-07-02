@@ -307,9 +307,10 @@ class DorisEngineSpec(MySQLEngineSpec):
 
         # if not, iterate over existing catalogs and find the current one
         with database.get_sqla_engine() as engine:
-            for catalog in engine.execute("SHOW CATALOGS"):
-                if catalog.IsCurrent:
-                    return catalog.CatalogName
+            with engine.connect() as connection:
+                for catalog in connection.execute(text("SHOW CATALOGS")):
+                    if catalog.IsCurrent:
+                        return catalog.CatalogName
 
         # fallback to "internal"
         return DEFAULT_CATALOG
@@ -326,7 +327,7 @@ class DorisEngineSpec(MySQLEngineSpec):
         CatalogId, CatalogName, Type, IsCurrent, CreateTime, LastUpdateTime, Comment
         We need to extract just the CatalogName column.
         """
-        result = inspector.bind.execute(text("SHOW CATALOGS"))
+        result = cls.execute_inspector_statement(inspector, text("SHOW CATALOGS"))
         return {row.CatalogName for row in result}
 
     @classmethod

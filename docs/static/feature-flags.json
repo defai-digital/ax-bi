@@ -82,6 +82,18 @@
         "description": "Enable prompt-to-dashboard planning and composition"
       },
       {
+        "name": "GENAI_SEMANTIC_INDEX",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable GenAI BI semantic document generation and retrieval"
+      },
+      {
+        "name": "GENAI_SEMANTIC_INDEX_PGVECTOR",
+        "default": false,
+        "lifecycle": "development",
+        "description": "Enable pgvector-backed GenAI BI semantic retrieval"
+      },
+      {
         "name": "GRANULAR_EXPORT_CONTROLS",
         "default": false,
         "lifecycle": "development",

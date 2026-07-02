@@ -17,11 +17,14 @@
  * under the License.
  */
 import { t } from '@apache-superset/core/translation';
+// direct module imports: this module calls getNumberFormatter at module
+// scope, and the @superset-ui/core barrel can be mid-evaluation (import
+// cycle), leaving the binding undefined
 import {
-  SMART_DATE_ID,
   NumberFormats,
   getNumberFormatter,
-} from '@superset-ui/core';
+} from '@superset-ui/core/number-format';
+import { SMART_DATE_ID } from '@superset-ui/core/time-format';
 
 // D3 specific formatting config
 export const D3_FORMAT_DOCS = t(

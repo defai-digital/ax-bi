@@ -48,6 +48,30 @@ def _read_file_if_exists(base: Any, path: Any) -> str | None:
     return None
 
 
+def _attach_data_file_uri(content: str, base: Any, data_dir: Any) -> str:
+    """Attach a file URI for bundled example data referenced by data_file."""
+    try:
+        config = yaml.safe_load(content)
+    except yaml.YAMLError:
+        return content
+
+    if not isinstance(config, dict):
+        return content
+
+    data_file = config.get("data_file")
+    if not data_file or config.get("data"):
+        return content
+
+    data_path = data_dir / str(data_file)
+    data_resource = base / str(data_path)
+    if not data_resource.is_file():
+        _logger.warning("data_file '%s' specified in YAML does not exist", data_file)
+        return content
+
+    config["data_file_uri"] = Path(str(data_resource)).resolve().as_uri()
+    return yaml.safe_dump(config, sort_keys=False)
+
+
 def _load_shared_configs(examples_root: Any) -> dict[str, str]:
     """Load shared database and metadata configs from _shared directory."""
     from flask import current_app
@@ -83,6 +107,7 @@ def _should_skip_directory(item: Any) -> bool:
 
 def _load_datasets_from_folder(
     base: Any,
+    example_dir: Any,
     datasets_dir: Any,
     test_re: re.Pattern[str],
     load_test_data: bool,
@@ -102,6 +127,7 @@ def _load_datasets_from_folder(
         content = _read_file_if_exists(base, dataset_file)
         if content:
             dataset_name = Path(dataset_filename).stem
+            content = _attach_data_file_uri(content, base, example_dir / "data")
             contents[f"datasets/examples/{dataset_name}.yaml"] = (
                 _normalize_dataset_schema(content)
             )
@@ -143,6 +169,7 @@ def _load_example_contents(
     # Single dataset.yaml at root (backward compatible)
     dataset_content = _read_file_if_exists(base, example_dir / "dataset.yaml")
     if dataset_content and (load_test_data or not test_re.search("dataset.yaml")):
+        dataset_content = _attach_data_file_uri(dataset_content, base, example_dir)
         contents[f"datasets/examples/{example_name}.yaml"] = _normalize_dataset_schema(
             dataset_content
         )
@@ -150,7 +177,7 @@ def _load_example_contents(
     # Multiple datasets in datasets/ folder
     contents.update(
         _load_datasets_from_folder(
-            base, example_dir / "datasets", test_re, load_test_data
+            base, example_dir, example_dir / "datasets", test_re, load_test_data
         )
     )
 

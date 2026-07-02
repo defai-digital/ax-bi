@@ -180,13 +180,15 @@ sqlatable_user_table = sa.Table(
 
 
 class SqlaTable(AuxiliaryColumnsMixin, Base):
+    __allow_unmapped__ = True
+
     __tablename__ = "tables"
     __table_args__ = (UniqueConstraint("database_id", "schema", "table_name"),)
 
     id = sa.Column(sa.Integer, primary_key=True)
     extra = sa.Column(sa.Text)
     database_id = sa.Column(sa.Integer, sa.ForeignKey("dbs.id"), nullable=False)
-    database: Database = relationship(
+    database = relationship(
         "Database",
         backref=backref("tables", cascade="all, delete-orphan"),
         foreign_keys=[database_id],
@@ -257,6 +259,8 @@ class NewColumn(AuxiliaryColumnsMixin, Base):
 
 
 class NewTable(AuxiliaryColumnsMixin, Base):
+    __allow_unmapped__ = True
+
     __tablename__ = "sl_tables"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -269,7 +273,7 @@ class NewTable(AuxiliaryColumnsMixin, Base):
     name = sa.Column(sa.Text)
     external_url = sa.Column(sa.Text, nullable=True)
     extra_json = sa.Column(MediumText(), default="{}")
-    database: Database = relationship(
+    database = relationship(
         "Database",
         backref=backref("new_tables", cascade="all, delete-orphan"),
         foreign_keys=[database_id],

@@ -71,8 +71,9 @@ test('renders FormattingPopoverContent component', () => {
 
   // Assert that the component renders correctly
   expect(screen.getByLabelText('Column')).toBeInTheDocument();
-  expect(screen.getAllByLabelText('Color scheme')).toHaveLength(2);
-  expect(screen.getAllByLabelText('Operator')).toHaveLength(2);
+  // antd v6 applies the aria-label only to the combobox input
+  expect(screen.getAllByLabelText('Color scheme')).toHaveLength(1);
+  expect(screen.getAllByLabelText('Operator')).toHaveLength(1);
   expect(screen.queryByLabelText('Left value')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Right value')).not.toBeInTheDocument();
   expect(screen.getByText('Apply')).toBeInTheDocument();

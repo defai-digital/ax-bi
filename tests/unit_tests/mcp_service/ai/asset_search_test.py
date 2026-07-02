@@ -28,6 +28,7 @@ from superset.mcp_service.ai.asset_search import (
     _is_certified,
     _rank_asset_results,
     _score_result,
+    _search_assets_python,
     search_assets,
 )
 from superset.mcp_service.ai.schemas import AssetResult
@@ -227,6 +228,74 @@ def test_search_assets_sorts_by_relevance(
     assert results[0].relevance_score is not None
     assert results[1].relevance_score is not None
     assert results[0].relevance_score >= results[1].relevance_score
+
+
+def test_search_assets_merges_semantic_dataset_with_other_requested_types(
+    mocker,
+) -> None:
+    semantic_dataset = AssetResult(
+        asset_type="dataset",
+        id=1,
+        uuid="dataset-uuid",
+        name="revenue_fact",
+        description="Revenue fact table",
+        certified=False,
+        relevance_score=2.0,
+        relevance_reason="semantic match via metric: total_revenue",
+        owners=[],
+        tags=[],
+    )
+    lexical_duplicate = AssetResult(
+        asset_type="dataset",
+        id=1,
+        uuid="dataset-uuid",
+        name="revenue_fact",
+        description="Revenue fact table",
+        certified=False,
+        relevance_score=1.5,
+        relevance_reason="name matches 'revenue'",
+        owners=[],
+        tags=[],
+    )
+    chart = AssetResult(
+        asset_type="chart",
+        id=2,
+        uuid="chart-uuid",
+        name="Revenue by region",
+        description="",
+        certified=False,
+        relevance_score=1.0,
+        owners=[],
+        tags=[],
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_assets_semantic",
+        return_value=[semantic_dataset],
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_datasets",
+        return_value=[lexical_duplicate],
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_charts",
+        return_value=[chart],
+    )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._search_dashboards",
+        return_value=[],
+    )
+
+    results = _search_assets_python(
+        "revenue",
+        asset_types=["dataset", "chart"],
+        limit=10,
+    )
+
+    assert [(result.asset_type, result.id) for result in results] == [
+        ("dataset", 1),
+        ("chart", 2),
+    ]
+    assert results[0].relevance_reason == "semantic match via metric: total_revenue"
 
 
 def test_rank_asset_results_uses_rust_when_enabled(

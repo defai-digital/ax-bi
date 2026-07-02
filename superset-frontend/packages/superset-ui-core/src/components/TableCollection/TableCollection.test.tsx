@@ -99,9 +99,13 @@ test('Body should be visible', () => {
 test('Body content should be blurred loading', () => {
   render(<TableCollection {...defaultProps} loading />);
 
-  expect(screen.getByTestId('listview-table').parentNode).toHaveClass(
-    'ant-spin-blur',
-  );
+  // antd v6 dropped the ant-spin-blur class; the blur is applied via the
+  // spinning Spin's container
+  const container = screen
+    .getByTestId('listview-table')
+    .closest('.ant-spin-container');
+  expect(container).toBeInTheDocument();
+  expect(container?.closest('.ant-spin-spinning')).toBeInTheDocument();
 });
 
 test('Should the loading-indicator be visible during loading', () => {

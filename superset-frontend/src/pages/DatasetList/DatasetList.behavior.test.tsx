@@ -40,7 +40,9 @@ jest.mock('src/utils/export');
 // Mock withToasts HOC to be a passthrough so we can spy on toast calls
 jest.mock('src/components/MessageToasts/withToasts', () => ({
   __esModule: true,
-  default: <P extends object>(Component: ComponentType<P>) => Component,
+  // no type imports here: jest.mock factories can't reference out-of-scope
+  // variables such as ComponentType
+  default: (component: unknown) => component,
 }));
 
 // Increase default timeout for tests that involve multiple async operations

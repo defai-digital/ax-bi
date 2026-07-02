@@ -92,9 +92,7 @@ class TestSupersetApp:
             app.sync_config_to_db()
 
         # Assert
-        mock_feature_flag_manager.is_feature_enabled.assert_called_with(
-            "TAGGING_SYSTEM"
-        )
+        mock_feature_flag_manager.is_feature_enabled.assert_any_call("TAGGING_SYSTEM")
         mock_register_listeners.assert_called_once()
         # Should seed themes
         mock_seed_themes_command.assert_called_once()
@@ -195,7 +193,8 @@ class TestSupersetAppInitializer:
         mock_app.app_context.return_value.__enter__.return_value = MagicMock()
 
         with patch("superset.initialization.db") as mock_db:
-            mock_db.engine.execute.side_effect = Exception("Connection Failed")
+            connection = mock_db.engine.connect.return_value.__enter__.return_value
+            connection.execute.side_effect = Exception("Connection Failed")
 
             with patch.object(
                 SupersetAppInitializer,
@@ -219,7 +218,8 @@ class TestSupersetAppInitializer:
         mock_app.app_context.return_value.__enter__.return_value = MagicMock()
 
         with patch("superset.initialization.db") as mock_db:
-            mock_db.engine.execute.side_effect = Exception("Connection Failed")
+            connection = mock_db.engine.connect.return_value.__enter__.return_value
+            connection.execute.side_effect = Exception("Connection Failed")
 
             with patch.object(
                 SupersetAppInitializer,

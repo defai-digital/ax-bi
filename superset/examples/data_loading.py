@@ -179,10 +179,12 @@ except RuntimeError:
 
 # Add auto-discovered loaders to module namespace
 globals().update(_auto_loaders)
+AUTO_DISCOVERED_LOADERS = frozenset(_auto_loaders)
 
 # Build __all__ list dynamically
 __all__ = [
     # Custom loaders (always included)
+    "AUTO_DISCOVERED_LOADERS",
     "load_big_data",
     "load_css_templates",
     "load_examples_from_configs",
