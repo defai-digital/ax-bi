@@ -1845,15 +1845,13 @@ def process_jinja_sql(
         ):
             # Try to extract the table referenced in the macro.
             try:
-                tables.add(
-                    Table(
-                        *[
-                            remove_quotes(part.strip())
-                            for part in node.args[0].as_const().split(".")[::-1]
-                            if len(node.args) == 1
-                        ]
-                    )
-                )
+                # Only process if there's exactly one argument
+                if len(node.args) == 1:
+                    parts = [
+                        remove_quotes(part.strip())
+                        for part in node.args[0].as_const().split(".")[::-1]
+                    ]
+                    tables.add(Table(*parts))
             except nodes.Impossible:
                 pass
 

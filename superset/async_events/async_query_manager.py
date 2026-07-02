@@ -125,8 +125,8 @@ class AsyncQueryManager:
         self._load_explore_json_into_cache_job: Any = None
 
     def init_app(self, app: Flask) -> None:
-        cache_type = app.config.get("CACHE_CONFIG", {}).get("CACHE_TYPE")
-        data_cache_type = app.config.get("DATA_CACHE_CONFIG", {}).get("CACHE_TYPE")
+        cache_type = (app.config.get("CACHE_CONFIG") or {}).get("CACHE_TYPE")
+        data_cache_type = (app.config.get("DATA_CACHE_CONFIG") or {}).get("CACHE_TYPE")
         if cache_type in [None, "null"] or data_cache_type in [None, "null"]:
             raise Exception(  # pylint: disable=broad-exception-raised
                 """

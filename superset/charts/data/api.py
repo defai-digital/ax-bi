@@ -768,7 +768,7 @@ class ChartDataRestApi(ChartRestApi):
         csv_generator_callable = command.run()
 
         # Get encoding from config
-        encoding = app.config.get("CSV_EXPORT", {}).get("encoding", "utf-8")
+        encoding = (app.config.get("CSV_EXPORT") or {}).get("encoding", "utf-8")
 
         # Create response with streaming headers
         response = Response(
