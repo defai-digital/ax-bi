@@ -666,7 +666,7 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
     if get_example_database().backend == "sqlite":
         return
 
-    TableColumn(
+    broken_column = TableColumn(
         column_name="DUMMY CC",
         type="VARCHAR(255)",
         table=virtual_dataset,
@@ -674,9 +674,10 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
         # aliased "SQL", which is valid
         expression="INVALID(((",
     )
-    # The API request runs in its own app context and session, which can't
-    # see this session's pending column; commit so the broken expression is
-    # actually part of the queried dataset
+    # SQLAlchemy 2 no longer cascade-adds the column via the relationship
+    # kwarg, and the API request runs in its own app-context session; add and
+    # commit explicitly so the broken expression is actually queried
+    db.session.add(broken_column)
     db.session.commit()
 
     uri = (
