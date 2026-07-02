@@ -2396,9 +2396,7 @@ test('edit mode shows friendly filter names instead of raw IDs', async () => {
   });
 
   expect(
-    document.querySelector(
-      '.ant-select-content[title="NATIVE_FILTER-abc123"]',
-    ),
+    document.querySelector('.ant-select-content[title="NATIVE_FILTER-abc123"]'),
   ).not.toBeInTheDocument();
 });
 
@@ -2524,9 +2522,7 @@ test('selecting filter triggers chart data request with correct params', async (
 
   // Select the Country Filter using comboboxSelect pattern
   await comboboxSelect(filterDropdown, 'Country Filter', () =>
-    document.querySelector(
-      '.ant-select-content[title="Country Filter"]',
-    ),
+    document.querySelector('.ant-select-content[title="Country Filter"]'),
   );
 
   // getChartDataRequest should have been called for filter values
@@ -2575,9 +2571,7 @@ test('selected filter excluded from other row dropdowns', async () => {
 
   // Select Country Filter in row 1
   await comboboxSelect(filterDropdown, 'Country Filter', () =>
-    document.querySelector(
-      '.ant-select-content[title="Country Filter"]',
-    ),
+    document.querySelector('.ant-select-content[title="Country Filter"]'),
   );
 
   // Wait for getChartDataRequest to complete AND state update to propagate.

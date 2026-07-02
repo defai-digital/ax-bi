@@ -670,7 +670,9 @@ def test_get_samples_with_incorrect_cc(test_client, login_as_admin, virtual_data
         column_name="DUMMY CC",
         type="VARCHAR(255)",
         table=virtual_dataset,
-        expression="INCORRECT SQL",
+        # must be unparseable: sqlglot reads "INCORRECT SQL" as a column
+        # aliased "SQL", which is valid
+        expression="INVALID(((",
     )
     # The API request runs in its own app context and session, which can't
     # see this session's pending column; commit so the broken expression is
