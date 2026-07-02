@@ -219,7 +219,11 @@ test('reuses the same form_data param when updating', async () => {
   renderWithRouter({ search: SEARCH, history });
   await waitFor(() => expect(replaceSpy.mock.calls.length).toBe(1));
   userEvent.click(screen.getByText('Update chart'));
-  await waitFor(() => expect(replaceSpy.mock.calls.length).toBe(2));
+  // the second URL sync lands after the async form_data PUT; CI needs more
+  // than waitFor's default 1s
+  await waitFor(() => expect(replaceSpy.mock.calls.length).toBe(2), {
+    timeout: 10000,
+  });
   expect(replaceSpy.mock.calls[0]).toEqual(replaceSpy.mock.calls[1]);
   replaceSpy.mockRestore();
   getChartControlPanelRegistry().remove('table');
