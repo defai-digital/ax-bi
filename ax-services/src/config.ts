@@ -64,6 +64,7 @@ const DEFAULT_SUPERSET_TAG_LIST_PATH = '/api/v1/tag/';
 const DEFAULT_SUPERSET_TASK_LIST_PATH = '/api/v1/task/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL = 'info';
+const MAX_PORT = 65535;
 
 function parsePositiveInteger(
   value: string | undefined,
@@ -80,6 +81,15 @@ function parsePositiveInteger(
   }
 
   return parsed;
+}
+
+function parsePort(value: string | undefined): number {
+  const port = parsePositiveInteger(value, DEFAULT_PORT, 'AX_SERVICES_PORT');
+  if (port > MAX_PORT) {
+    throw new Error(`AX_SERVICES_PORT must be between 1 and ${MAX_PORT}`);
+  }
+
+  return port;
 }
 
 function normalizeSupersetBaseUrl(value: string): string {
@@ -106,14 +116,15 @@ function normalizePath(value: string, name: string): string {
   return `/${trimmed.replace(/^\/+/, '')}`;
 }
 
+function normalizeOptionalSecret(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed === '' ? undefined : trimmed;
+}
+
 export function buildConfig(env: Environment = process.env): ServiceConfig {
   return {
     host: env.AX_SERVICES_HOST || DEFAULT_HOST,
-    port: parsePositiveInteger(
-      env.AX_SERVICES_PORT,
-      DEFAULT_PORT,
-      'AX_SERVICES_PORT',
-    ),
+    port: parsePort(env.AX_SERVICES_PORT),
     supersetBaseUrl: normalizeSupersetBaseUrl(
       env.AX_SUPERSET_BASE_URL || DEFAULT_SUPERSET_BASE_URL,
     ),
@@ -188,7 +199,9 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       DEFAULT_SUPERSET_TIMEOUT_MS,
       'AX_SUPERSET_TIMEOUT_MS',
     ),
-    supersetInternalToken: env.AX_SUPERSET_INTERNAL_TOKEN || undefined,
+    supersetInternalToken: normalizeOptionalSecret(
+      env.AX_SUPERSET_INTERNAL_TOKEN,
+    ),
     logLevel: env.AX_SERVICES_LOG_LEVEL || DEFAULT_LOG_LEVEL,
   };
 }

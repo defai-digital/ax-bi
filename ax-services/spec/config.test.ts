@@ -71,7 +71,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_TAG_LIST_PATH: 'tags',
     AX_SUPERSET_TASK_LIST_PATH: 'tasks',
     AX_SUPERSET_TIMEOUT_MS: '1500',
-    AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
+    AX_SUPERSET_INTERNAL_TOKEN: '  token-123  ',
     AX_SERVICES_LOG_LEVEL: 'debug',
   });
 
@@ -114,9 +114,18 @@ test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SERVICES_PORT: 'abc' })).toThrow(
     'AX_SERVICES_PORT must be a positive integer',
   );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '65536' })).toThrow(
+    'AX_SERVICES_PORT must be between 1 and 65535',
+  );
   expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '0' })).toThrow(
     'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
   );
+});
+
+test('buildConfig treats blank optional token as absent', () => {
+  const config = buildConfig({ AX_SUPERSET_INTERNAL_TOKEN: '   ' });
+
+  expect(config.supersetInternalToken).toBeUndefined();
 });
 
 test('buildConfig rejects invalid Superset URL', () => {
