@@ -189,6 +189,12 @@ def test_validate_python_package_name_keywords(keyword):
         validate_python_package_name(keyword)
 
 
+def test_validate_python_package_name_rejects_empty_name():
+    """Test empty Python package names are rejected with a domain error."""
+    with pytest.raises(ExtensionNameError, match="Package name cannot be empty"):
+        validate_python_package_name("")
+
+
 @pytest.mark.parametrize(
     ("invalid_package",),
     [

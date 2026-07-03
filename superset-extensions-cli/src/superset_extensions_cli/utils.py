@@ -194,6 +194,9 @@ def validate_python_package_name(name: str) -> None:
     Raises:
         ExtensionNameError: If name is invalid
     """
+    if not name:
+        raise ExtensionNameError("Package name cannot be empty")
+
     # Check if it starts with a number (invalid for Python identifiers)
     if name[0].isdigit():
         raise ExtensionNameError(f"Package name '{name}' cannot start with a number")
