@@ -175,6 +175,24 @@ test('buildConfig rejects blank Superset path overrides', () => {
   );
 });
 
+test('buildConfig rejects ambiguous Superset path overrides', () => {
+  const message =
+    'AX_SUPERSET_HEALTH_PATH must be a URL path without query, fragment, backslash, or control characters';
+
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health?verbose=true' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health#ready' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: String.raw`api\v1\health` }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health\nready' }),
+  ).toThrow(message);
+});
+
 test('buildConfig rejects unsupported log levels', () => {
   expect(() => buildConfig({ AX_SERVICES_LOG_LEVEL: 'verbose' })).toThrow(
     'AX_SERVICES_LOG_LEVEL must be one of: debug, info, warn, error, silent',

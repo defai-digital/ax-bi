@@ -128,6 +128,11 @@ function normalizePath(value: string, name: string): string {
   if (trimmed === '') {
     throw new Error(`${name} must not be empty`);
   }
+  if (/[?#\\\u0000-\u001f\u007f]/.test(trimmed)) {
+    throw new Error(
+      `${name} must be a URL path without query, fragment, backslash, or control characters`,
+    );
+  }
 
   return `/${trimmed.replace(/^\/+/, '')}`;
 }
