@@ -1114,6 +1114,56 @@ def test_publish_staged_output_directory_restores_existing_target_when_staged_di
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_target_before_backup_move(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test directory publishing refuses a target changed before backup move."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    saved_output = isolated_filesystem / "saved-frontend"
+    replacement_output = isolated_filesystem / "replacement-frontend"
+    replacement_output.mkdir()
+    (replacement_output / "replacement.js").write_text("replacement")
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def swap_target_after_backup_root_creation(parent, prefix, label):
+        backup_root = original_create_temporary_output_directory(parent, prefix, label)
+        if parent == output_path.parent and prefix.startswith(".frontend-backup."):
+            output_path.rename(saved_output)
+            replacement_output.rename(output_path)
+        return backup_root
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        swap_target_after_backup_root_creation,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to back up dist/frontend directory: path changed",
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(saved_output / "old.js")
+    assert_file_exists(output_path / "replacement.js")
+    assert_file_exists(staged_dir / "new.js")
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_restores_existing_target_when_staged_dir_replaced(
     isolated_filesystem,
     monkeypatch,

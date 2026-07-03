@@ -662,6 +662,14 @@ def publish_staged_output_directory(
             f"temporary {label} backup directory",
         )
         backup_path = backup_root / target_path.name
+        if get_directory_path_identity(target_path) != target_identity:
+            try:
+                remove_output_directory(
+                    backup_root, f"temporary {label} backup directory"
+                )
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: path changed.")
         try:
             target_path.replace(backup_path)
         except OSError as ex:
