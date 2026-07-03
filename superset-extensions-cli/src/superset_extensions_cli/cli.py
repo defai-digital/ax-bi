@@ -522,10 +522,26 @@ def remove_output_directory(path: Path, label: str) -> None:
 def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> Path:
     """Create a temporary output directory inside an already-validated parent."""
     validate_output_directory(parent, f"parent for {label}")
+    parent_identity = get_directory_path_identity(parent)
+    if parent_identity is None:
+        raise click.ClickException(
+            f"Refusing to create {label}: parent path is unsafe."
+        )
     try:
-        return Path(tempfile.mkdtemp(prefix=prefix, suffix=".tmp", dir=parent))
+        temp_path = Path(tempfile.mkdtemp(prefix=prefix, suffix=".tmp", dir=parent))
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+    current_parent_identity = get_directory_path_identity(parent)
+    if (
+        current_parent_identity is None
+        or current_parent_identity[:2] != parent_identity[:2]
+    ):
+        try:
+            remove_output_directory(temp_path, label)
+        except click.ClickException:
+            pass
+        raise click.ClickException(f"Refusing to create {label}: parent path changed.")
+    return temp_path
 
 
 def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:

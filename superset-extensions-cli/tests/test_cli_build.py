@@ -610,6 +610,45 @@ def test_create_temporary_output_directory_rejects_non_directory_parent(
 
 
 @pytest.mark.unit
+def test_create_temporary_output_directory_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test temporary output creation refuses a changed parent directory."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.mkdir()
+    saved_parent = isolated_filesystem / "saved-dist"
+    replacement_parent = isolated_filesystem / "replacement-dist"
+    replacement_parent.mkdir()
+
+    from superset_extensions_cli import cli
+
+    original_mkdtemp = cli.tempfile.mkdtemp
+
+    def swap_parent_before_mkdtemp(*args, **kwargs):
+        if kwargs.get("dir") == output_parent:
+            output_parent.rename(saved_parent)
+            replacement_parent.rename(output_parent)
+        return original_mkdtemp(*args, **kwargs)
+
+    monkeypatch.setattr(cli.tempfile, "mkdtemp", swap_parent_before_mkdtemp)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create temporary frontend output directory: parent path changed",
+    ):
+        create_temporary_output_directory(
+            output_parent,
+            ".frontend.",
+            "temporary frontend output directory",
+        )
+
+    assert saved_parent.is_dir()
+    assert output_parent.is_dir()
+    assert list(output_parent.iterdir()) == []
+
+
+@pytest.mark.unit
 def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
     """Test output directory creation refuses symlinked parent directories."""
     outside_dir = isolated_filesystem / "outside"
