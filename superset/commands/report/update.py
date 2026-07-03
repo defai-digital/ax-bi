@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.models.sqla import Model
 from marshmallow import ValidationError
@@ -56,7 +56,7 @@ class UpdateReportScheduleCommand(UpdateMixin, BaseReportScheduleCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[ReportSchedule] = None
+        self._model: ReportSchedule | None = None
 
     @transaction(on_error=partial(on_error, reraise=ReportScheduleUpdateFailedError))
     def run(self) -> Model:
@@ -90,7 +90,7 @@ class UpdateReportScheduleCommand(UpdateMixin, BaseReportScheduleCommand):
 
         # Optional fields
         database_id = self._properties.get("database")
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
+        owner_ids: list[int] | None = self._properties.get("owners")
 
         exceptions: list[ValidationError] = []
 

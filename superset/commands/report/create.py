@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import g
 from marshmallow import ValidationError
@@ -101,7 +101,7 @@ class CreateReportScheduleCommand(CreateMixin, BaseReportScheduleCommand):
         chart_id = self._properties.get("chart")
         creation_method = self._properties.get("creation_method")
         dashboard_id = self._properties.get("dashboard")
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
+        owner_ids: list[int] | None = self._properties.get("owners")
 
         exceptions: list[ValidationError] = []
 
