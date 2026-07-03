@@ -1970,6 +1970,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
         validate_bundle_output_path(zip_path)
+        output_parent_identity = get_directory_path_identity(zip_path.parent)
+        if output_parent_identity is None:
+            raise click.ClickException(
+                f"Refusing to write bundle: parent directory is unsafe: "
+                f"{zip_path.parent}."
+            )
 
         bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]] = []
         for file in dist_dir.rglob("*"):
@@ -1993,6 +1999,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             if resolved_file == resolved_zip_path:
                 continue
             bundle_entries.append((file, relative_file, identity))
+
+        if get_directory_path_identity(zip_path.parent) != output_parent_identity:
+            raise click.ClickException(
+                f"Refusing to write bundle: parent directory changed: "
+                f"{zip_path.parent}."
+            )
 
         with tempfile.NamedTemporaryFile(
             delete=False,
