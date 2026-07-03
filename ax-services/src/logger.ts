@@ -42,6 +42,30 @@ function normalizeContext(context: LogContext = {}): LogContext {
   );
 }
 
+function createSafeLogReplacer(): (key: string, value: unknown) => unknown {
+  const seen = new WeakSet<object>();
+
+  return (_key: string, value: unknown): unknown => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    if (value instanceof Error) {
+      return serializeError(value);
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}
+
+function stringifyLogEntry(entry: LogContext): string {
+  return JSON.stringify(entry, createSafeLogReplacer());
+}
+
 const LOG_LEVEL_PRIORITY: Record<Exclude<LogLevel, 'silent'>, number> = {
   debug: 10,
   info: 20,
@@ -69,7 +93,7 @@ export function createLogger(logLevel: LogLevel): ServiceLogger {
         return;
       }
       console.log(
-        JSON.stringify({
+        stringifyLogEntry({
           level: 'info',
           message,
           ...normalizeContext(context),
@@ -81,7 +105,7 @@ export function createLogger(logLevel: LogLevel): ServiceLogger {
         return;
       }
       console.error(
-        JSON.stringify({
+        stringifyLogEntry({
           level: 'error',
           message,
           ...normalizeContext(context),

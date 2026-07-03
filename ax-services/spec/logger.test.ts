@@ -69,3 +69,42 @@ test('logger suppresses all messages at silent level', () => {
   expect(log).not.toHaveBeenCalled();
   expect(error).not.toHaveBeenCalled();
 });
+
+test('logger serializes bigint context values without throwing', () => {
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const logger = createLogger('info');
+
+  expect(() =>
+    logger.info('request completed', { elapsedNanos: 123n }),
+  ).not.toThrow();
+
+  expect(log).toHaveBeenCalledWith(
+    JSON.stringify({
+      level: 'info',
+      message: 'request completed',
+      elapsedNanos: '123',
+    }),
+  );
+});
+
+test('logger serializes circular context values without throwing', () => {
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const logger = createLogger('info');
+  const context: { requestId: string; self?: unknown } = {
+    requestId: 'request-abc',
+  };
+  context.self = context;
+
+  expect(() => logger.info('request completed', { context })).not.toThrow();
+
+  expect(log).toHaveBeenCalledWith(
+    JSON.stringify({
+      level: 'info',
+      message: 'request completed',
+      context: {
+        requestId: 'request-abc',
+        self: '[Circular]',
+      },
+    }),
+  );
+});
