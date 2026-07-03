@@ -40,6 +40,12 @@ import {
   assetSearchResponseSchema,
 } from './contracts/assetSearch';
 import {
+  PermissionCheckRequest,
+  PermissionCheckResult,
+  permissionCheckRequestSchema,
+  permissionCheckResponseSchema,
+} from './contracts/authorization';
+import {
   ChartListRequest,
   ChartListResponse,
   chartListRequestSchema,
@@ -128,6 +134,7 @@ import {
   SupersetDatabaseListClient,
   SupersetDatasetListClient,
   SupersetQueryListClient,
+  SupersetPermissionClient,
   SupersetReportListClient,
   SupersetRoleListClient,
   SupersetRlsListClient,
@@ -166,6 +173,7 @@ export function buildServer(
     SupersetAnnotationListClient &
     SupersetAnnotationLayerListClient &
     SupersetAssetSearchClient &
+    SupersetPermissionClient &
     SupersetDashboardListClient &
     SupersetChartListClient &
     SupersetDatabaseListClient &
@@ -331,6 +339,23 @@ export function buildServer(
     },
     async (request): Promise<AssetSearchResponse> =>
       supersetClient.searchAssets(request.body, request.id),
+  );
+
+  server.post<{
+    Body: PermissionCheckRequest;
+    Reply: PermissionCheckResult;
+  }>(
+    '/mcp/permissions/check',
+    {
+      schema: {
+        body: permissionCheckRequestSchema,
+        response: {
+          200: permissionCheckResponseSchema,
+        },
+      },
+    },
+    async (request): Promise<PermissionCheckResult> =>
+      supersetClient.checkPermission(request.body, request.id),
   );
 
   server.post<{

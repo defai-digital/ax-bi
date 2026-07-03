@@ -150,6 +150,13 @@ export interface SupersetAssetSearchClient {
   ): Promise<AssetSearchResponse>;
 }
 
+export interface SupersetPermissionClient {
+  checkPermission(
+    request: PermissionCheckRequest,
+    correlationId?: string,
+  ): Promise<PermissionCheckResult>;
+}
+
 export interface SupersetAnnotationListClient {
   listAnnotations(
     request: AnnotationListRequest,
@@ -248,6 +255,7 @@ export class SupersetClient
     SupersetAnnotationListClient,
     SupersetAnnotationLayerListClient,
     SupersetAssetSearchClient,
+    SupersetPermissionClient,
     SupersetDashboardListClient,
     SupersetChartListClient,
     SupersetDatabaseListClient,

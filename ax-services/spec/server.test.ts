@@ -33,6 +33,10 @@ import {
   AssetSearchResponse,
 } from '../src/contracts/assetSearch';
 import {
+  AUTHORIZATION_CONTRACT_VERSION,
+  PermissionCheckResult,
+} from '../src/contracts/authorization';
+import {
   CHART_LIST_CONTRACT_VERSION,
   ChartListResponse,
 } from '../src/contracts/chartList';
@@ -89,6 +93,7 @@ import {
   SupersetQueryListClient,
   SupersetHealthClient,
   SupersetMetadataClient,
+  SupersetPermissionClient,
   SupersetReportListClient,
   SupersetRoleListClient,
   SupersetRlsListClient,
@@ -121,6 +126,7 @@ function makeSupersetClient({
   onMetadata,
   onListAnnotations,
   onListAnnotationLayers,
+  onCheckPermission,
   onSearch,
   onListCharts,
   onListDashboards,
@@ -137,6 +143,10 @@ function makeSupersetClient({
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     assets: [],
     warnings: [],
+  },
+  permissionCheck = {
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
   },
   annotationLayerList = {
     contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
@@ -325,6 +335,7 @@ function makeSupersetClient({
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  permissionCheck?: PermissionCheckResult;
   annotationList?: AnnotationListResponse;
   annotationLayerList?: AnnotationLayerListResponse;
   chartList?: ChartListResponse;
@@ -342,6 +353,7 @@ function makeSupersetClient({
   onMetadata?: (correlationId?: string) => void;
   onListAnnotations?: (correlationId?: string) => void;
   onListAnnotationLayers?: (correlationId?: string) => void;
+  onCheckPermission?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
@@ -359,6 +371,7 @@ function makeSupersetClient({
   SupersetAnnotationListClient &
   SupersetAnnotationLayerListClient &
   SupersetAssetSearchClient &
+  SupersetPermissionClient &
   SupersetChartListClient &
   SupersetDashboardListClient &
   SupersetDatabaseListClient &
@@ -382,6 +395,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async checkPermission(_request, correlationId) {
+      onCheckPermission?.(correlationId);
+      return permissionCheck;
     },
     async listAnnotations(_request, correlationId) {
       onListAnnotations?.(correlationId);
@@ -765,6 +782,53 @@ test('asset search endpoint delegates to Superset client', async () => {
       },
     ],
     warnings: [],
+  });
+});
+
+test('permission check endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      permissionCheck: {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: true,
+        reason: 'allowed by Superset',
+      },
+      onCheckPermission(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/permissions/check',
+    headers: {
+      'x-request-id': 'request-permission',
+    },
+    payload: {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-permission');
+  expect(seenRequestIds).toEqual(['request-permission']);
+  expect(response.json()).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: true,
+    reason: 'allowed by Superset',
   });
 });
 
