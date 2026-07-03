@@ -451,6 +451,28 @@ def test_write_manifest_rejects_symlinked_dist_path(isolated_filesystem):
     assert not (outside_dir / "manifest.json").exists()
 
 
+@pytest.mark.unit
+def test_write_manifest_rejects_symlinked_manifest_path(isolated_filesystem):
+    """Test write_manifest refuses symlinked manifest output paths."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    outside_manifest = isolated_filesystem / "outside-manifest.json"
+    outside_manifest.write_text("keep")
+    (dist_dir / "manifest.json").symlink_to(outside_manifest)
+
+    with pytest.raises(click.ClickException, match="dist/manifest.json"):
+        write_manifest(isolated_filesystem, manifest)
+
+    assert outside_manifest.read_text() == "keep"
+
+
 # Frontend Build Tests
 @pytest.mark.unit
 def test_clean_dist_frontend_removes_frontend_dist(isolated_filesystem):

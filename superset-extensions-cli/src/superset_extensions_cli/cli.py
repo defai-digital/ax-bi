@@ -167,6 +167,16 @@ def ensure_output_directory(path: Path, label: str) -> None:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
+def validate_output_file(path: Path, label: str) -> None:
+    """Validate that an output file path is safe to write."""
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to write {label}: path is a symlink.")
+    if path.exists() and not path.is_file():
+        raise click.ClickException(
+            f"Refusing to write {label}: path exists but is not a file."
+        )
+
+
 def clean_dist_frontend(cwd: Path) -> None:
     frontend_dist = cwd / "dist" / "frontend"
     remove_output_directory(frontend_dist, "dist/frontend directory")
@@ -317,7 +327,9 @@ def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
 def write_manifest(cwd: Path, manifest: Manifest) -> None:
     dist_dir = cwd / "dist"
     ensure_output_directory(dist_dir, "dist directory")
-    (dist_dir / "manifest.json").write_text(
+    manifest_path = dist_dir / "manifest.json"
+    validate_output_file(manifest_path, "dist/manifest.json")
+    manifest_path.write_text(
         manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True)
     )
     click.secho("✅ Manifest updated", fg="green")
