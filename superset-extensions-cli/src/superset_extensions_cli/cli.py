@@ -1465,13 +1465,25 @@ def create_scaffold_directory(path: Path, label: str) -> None:
         ) from ex
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+    created_identity = get_directory_path_identity(path)
+    if created_identity is None:
+        raise click.ClickException(f"Refusing to create {label}: path changed.")
     current_anchor_identity = get_directory_path_identity(anchor)
     if (
         current_anchor_identity is None
         or current_anchor_identity[:2] != anchor_identity[:2]
     ):
+        try:
+            cleanup_scaffold_directory(
+                path,
+                label,
+                created_identity,
+                allow_content_changes=False,
+            )
+        except click.ClickException:
+            pass
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
-    if not path.is_dir() or path.is_symlink():
+    if get_directory_path_identity(path) != created_identity:
         raise click.ClickException(f"Refusing to create {label}: path changed.")
 
 

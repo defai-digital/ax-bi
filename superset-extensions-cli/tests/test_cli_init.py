@@ -305,7 +305,46 @@ def test_create_scaffold_directory_rejects_changed_parent(
         create_scaffold_directory(target_dir, "extension directory")
 
     assert_directory_exists(saved_parent)
-    assert_directory_exists(target_dir)
+    assert not target_dir.exists()
+
+
+@pytest.mark.unit
+def test_create_scaffold_directory_rejects_changed_created_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test scaffold directory creation refuses a replaced created path."""
+    target_dir = isolated_filesystem / "test-extension"
+    saved_target_dir = isolated_filesystem / "saved-test-extension"
+    replacement_dir = isolated_filesystem / "replacement-test-extension"
+    replacement_dir.mkdir()
+    (replacement_dir / "replacement.txt").write_text("replacement")
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    target_identity_reads = 0
+
+    def replace_target_after_created_identity(path):
+        nonlocal target_identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == target_dir and identity is not None:
+            target_identity_reads += 1
+            if target_identity_reads == 1:
+                target_dir.rename(saved_target_dir)
+                replacement_dir.rename(target_dir)
+        return identity
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.get_directory_path_identity",
+        replace_target_after_created_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create extension directory: path changed",
+    ):
+        create_scaffold_directory(target_dir, "extension directory")
+
+    assert_directory_exists(saved_target_dir)
+    assert_file_exists(target_dir / "replacement.txt")
 
 
 @pytest.mark.cli
