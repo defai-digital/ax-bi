@@ -18,7 +18,7 @@ import logging
 import os
 import time
 from collections.abc import Callable, Iterator
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 from alembic import op
@@ -57,7 +57,7 @@ DEFAULT_BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 1000))
 def get_table_column(
     table_name: str,
     column_name: str,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Get the specified column.
 
@@ -150,7 +150,7 @@ def assign_uuids(
 
 def paginated_update(
     query: Query,
-    print_page_progress: Optional[Union[Callable[[int, int], None], bool]] = None,
+    print_page_progress: Callable[[int, int], None] | bool | None = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> Iterator[Any]:
     """
@@ -183,7 +183,7 @@ def paginated_update(
             print_page_progress(processed, total)
 
 
-def try_load_json(data: Optional[str]) -> dict[str, Any]:
+def try_load_json(data: str | None) -> dict[str, Any]:
     return data and json.loads(data) or {}
 
 
@@ -513,7 +513,7 @@ def create_fks_for_table(
     referenced_table: str,
     local_cols: list[str],
     remote_cols: list[str],
-    ondelete: Optional[str] = None,
+    ondelete: str | None = None,
 ) -> None:
     """
     Create a foreign key constraint for a table, ensuring compatibility with sqlite.

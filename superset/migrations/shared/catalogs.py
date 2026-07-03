@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -96,7 +96,7 @@ class Slice(Base):
     schema_perm = sa.Column(sa.String(1000))
 
 
-ModelType = Union[type[Query], type[SavedQuery], type[TabState], type[TableSchema]]
+ModelType = type[Query] | type[SavedQuery] | type[TabState] | type[TableSchema]
 
 MODELS: list[tuple[ModelType, str]] = [
     (Query, "database_id"),

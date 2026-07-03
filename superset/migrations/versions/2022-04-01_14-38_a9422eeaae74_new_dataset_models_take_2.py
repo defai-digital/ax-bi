@@ -24,7 +24,6 @@ Create Date: 2022-04-01 14:38:09.499483
 
 import os
 from datetime import datetime
-from typing import Optional, Union
 from uuid import uuid4
 
 import sqlalchemy as sa
@@ -105,7 +104,7 @@ class AuxiliaryColumnsMixin(UUIDMixin):
 
 
 def insert_from_select(
-    target: Union[str, sa.Table, type[Base]], source: sa.sql.expression.Select
+    target: str | sa.Table | type[Base], source: sa.sql.expression.Select
 ) -> None:
     """
     Execute INSERT FROM SELECT to copy data from a SELECT query to the target table.
@@ -296,7 +295,7 @@ class NewDataset(AuxiliaryColumnsMixin, Base):
 def find_tables(
     session: Session,
     database_id: int,
-    default_schema: Optional[str],
+    default_schema: str | None,
     tables: set[Table],
 ) -> list[int]:
     """
