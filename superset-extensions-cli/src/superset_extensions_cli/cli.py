@@ -621,7 +621,7 @@ def validate() -> None:
             backend_dir / "src" / publisher_snake / name_snake / "entrypoint.py"
         )
 
-        if not expected_entry_file.exists():
+        if not expected_entry_file.is_file():
             click.secho(
                 f"❌ Backend entry point not found at expected location: {expected_entry_file.relative_to(cwd)}",
                 err=True,
@@ -642,7 +642,7 @@ def validate() -> None:
         sys.exit(1)
     if frontend_dir.exists():
         expected_frontend_entry = frontend_dir / "src" / "index.tsx"
-        if not expected_frontend_entry.exists():
+        if not expected_frontend_entry.is_file():
             click.secho(
                 f"❌ Frontend entry point not found at expected location: {expected_frontend_entry.relative_to(cwd)}",
                 err=True,

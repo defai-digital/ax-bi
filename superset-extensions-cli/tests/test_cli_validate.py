@@ -148,6 +148,55 @@ include = "src/**/*.py"
 
 
 @pytest.mark.cli
+def test_validate_fails_when_backend_entrypoint_is_directory(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate requires backend entrypoint.py to be a file."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    entrypoint_path = (
+        isolated_filesystem
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_extension"
+        / "entrypoint.py"
+    )
+    entrypoint_path.unlink()
+    entrypoint_path.mkdir()
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Backend entry point not found" in result.output
+
+
+@pytest.mark.cli
+def test_validate_fails_when_frontend_entrypoint_is_directory(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate requires frontend src/index.tsx to be a file."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    entrypoint_path = isolated_filesystem / "frontend" / "src" / "index.tsx"
+    entrypoint_path.unlink()
+    entrypoint_path.mkdir()
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Frontend entry point not found" in result.output
+
+
+@pytest.mark.cli
 @pytest.mark.parametrize(
     ("path_name", "path_factory", "expected_message"),
     [
