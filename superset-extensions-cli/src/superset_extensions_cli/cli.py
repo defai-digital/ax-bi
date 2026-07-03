@@ -161,6 +161,17 @@ def ensure_output_directory(path: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path exists but is not a directory."
         )
+
+    symlinked_parent = next(
+        (parent for parent in path.parents if parent.exists() and parent.is_symlink()),
+        None,
+    )
+    if symlinked_parent is not None:
+        raise click.ClickException(
+            f"Refusing to write {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
+
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError as ex:

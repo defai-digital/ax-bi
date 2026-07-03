@@ -29,6 +29,7 @@ from superset_extensions_cli.cli import (
     clean_dist,
     copy_backend_files,
     copy_frontend_dist,
+    ensure_output_directory,
     init_frontend_deps,
     write_manifest,
 )
@@ -232,6 +233,23 @@ def test_clean_dist_rejects_dist_file(isolated_filesystem):
 
     with pytest.raises(click.ClickException, match="not a directory"):
         clean_dist(isolated_filesystem)
+
+
+@pytest.mark.unit
+def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
+    """Test output directory creation refuses symlinked parent directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_link = isolated_filesystem / "dist"
+    output_link.symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/frontend directory: parent directory is a symlink",
+    ):
+        ensure_output_directory(output_link / "frontend", "dist/frontend directory")
+
+    assert not (outside_dir / "frontend").exists()
 
 
 # Frontend Dependencies Tests
