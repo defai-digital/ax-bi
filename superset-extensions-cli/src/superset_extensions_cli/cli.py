@@ -990,7 +990,15 @@ def input_file_exists(path: Path, label: str) -> bool:
         )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"Invalid {label}: path exists but is not a file.")
-    return path.exists()
+    if not path.exists():
+        return False
+    file_identity = get_read_path_identity(path)
+    if file_identity is None:
+        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+    current_identity = get_read_path_identity(path)
+    if current_identity is None or current_identity[:2] != file_identity[:2]:
+        raise click.ClickException(f"Failed to read {label}: path changed.")
+    return True
 
 
 def read_input_text(path: Path, label: str) -> str | None:

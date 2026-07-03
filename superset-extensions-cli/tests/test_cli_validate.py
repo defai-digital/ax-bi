@@ -188,6 +188,39 @@ def test_optional_file_exists_rejects_changed_path(
 
 
 @pytest.mark.unit
+def test_metadata_loader_rejects_changed_input_during_existence_check(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test metadata loaders refuse an input changed during existence validation."""
+    metadata_file = isolated_filesystem / "metadata.json"
+    metadata_file.write_text("{}")
+    saved_file = isolated_filesystem / "saved-metadata.json"
+    replacement_file = isolated_filesystem / "replacement-metadata.json"
+    replacement_file.write_text('{"version": "9.9.9"}')
+    original_get_read_path_identity = cli.get_read_path_identity
+    identity_reads = 0
+
+    def swap_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_read_path_identity(path)
+        if path == metadata_file:
+            identity_reads += 1
+            if identity_reads == 1:
+                metadata_file.rename(saved_file)
+                replacement_file.rename(metadata_file)
+        return identity
+
+    monkeypatch.setattr(cli, "get_read_path_identity", swap_file_after_first_identity)
+
+    with pytest.raises(click.ClickException, match="Failed to read metadata.json"):
+        load_json_object(metadata_file, "metadata.json")
+
+    assert saved_file.read_text() == "{}"
+    assert metadata_file.read_text() == '{"version": "9.9.9"}'
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("loader", "filename", "content"),
     [
