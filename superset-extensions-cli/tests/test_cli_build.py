@@ -2410,6 +2410,48 @@ def test_copy_output_file_rejects_target_changed_during_copy(
 
 
 @pytest.mark.unit
+def test_copy_output_file_rejects_target_parent_changed_during_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test output file copy refuses a swapped target parent directory."""
+    source_file = isolated_filesystem / "source.py"
+    source_file.write_text("# source")
+    target_parent = isolated_filesystem / "target-parent"
+    target_parent.mkdir()
+    target_file = target_parent / "target.py"
+    saved_target_parent = isolated_filesystem / "saved-target-parent"
+    replacement_parent = isolated_filesystem / "replacement-target-parent"
+    replacement_parent.mkdir()
+    original_copy2 = shutil.copy2
+
+    def swap_target_parent_after_copy(source, target, *args, **kwargs):
+        result = original_copy2(source, target, *args, **kwargs)
+        if target == target_file:
+            target_parent.rename(saved_target_parent)
+            replacement_parent.rename(target_parent)
+        return result
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.shutil.copy2",
+        swap_target_parent_after_copy,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "Refusing to copy backend file target.py: "
+            "target parent path changed during copy"
+        ),
+    ):
+        copy_output_file(source_file, target_file, "backend file target.py")
+
+    assert (saved_target_parent / "target.py").read_text() == "# source"
+    assert target_parent.is_dir()
+    assert not target_file.exists()
+
+
+@pytest.mark.unit
 def test_copy_output_file_rejects_target_content_changed_during_copy(
     isolated_filesystem,
     monkeypatch,

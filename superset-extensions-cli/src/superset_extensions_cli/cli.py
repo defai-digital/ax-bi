@@ -558,10 +558,31 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
     if source_identity is None:
         raise click.ClickException(f"Refusing to copy {label}: source path is unsafe.")
     validate_output_file(target, label)
+    target_parent_identity = get_directory_path_identity(target.parent)
+    if target_parent_identity is None:
+        raise click.ClickException(
+            f"Refusing to copy {label}: target parent path is unsafe."
+        )
     try:
+        current_parent_identity = get_directory_path_identity(target.parent)
+        if (
+            current_parent_identity is None
+            or current_parent_identity[:2] != target_parent_identity[:2]
+        ):
+            raise click.ClickException(
+                f"Refusing to copy {label}: target parent path changed."
+            )
         shutil.copy2(source, target)
     except (OSError, shutil.Error) as ex:
         raise click.ClickException(f"Failed to copy {label}: {ex}") from ex
+    current_parent_identity = get_directory_path_identity(target.parent)
+    if (
+        current_parent_identity is None
+        or current_parent_identity[:2] != target_parent_identity[:2]
+    ):
+        raise click.ClickException(
+            f"Refusing to copy {label}: target parent path changed during copy."
+        )
     if get_output_copy_source_identity(source) != source_identity:
         raise click.ClickException(
             f"Refusing to copy {label}: source path changed during copy."
