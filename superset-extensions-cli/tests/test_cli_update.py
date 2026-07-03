@@ -349,6 +349,41 @@ def test_update_reports_json_write_failures(
 
 
 @pytest.mark.cli
+def test_update_rolls_back_completed_writes_on_later_failure(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update restores earlier files when a later metadata write fails."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    backend_pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    original_replace = Path.replace
+
+    def fail_backend_pyproject_replace(path, target):
+        if target == backend_pyproject_path:
+            raise OSError("disk full")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_backend_pyproject_replace)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Failed to write TOML file" in result.output
+    assert "disk full" in result.output
+    assert "Updated extension.json" not in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert (
+        read_json(isolated_filesystem / "frontend" / "package.json")["version"]
+        == "1.0.0"
+    )
+    assert read_toml(backend_pyproject_path)["project"]["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):

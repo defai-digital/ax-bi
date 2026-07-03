@@ -1289,15 +1289,38 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
+    pending_writes = [*pending_json_writes, *pending_toml_writes]
+    try:
+        original_contents = {path: path.read_text() for path, _, _ in pending_writes}
+    except OSError as ex:
+        click.secho(
+            f"❌ Failed to read original metadata before update: {ex}",
+            err=True,
+            fg="red",
+        )
+        sys.exit(1)
+
+    written_paths: list[tuple[Path, str]] = []
     try:
         for path, label, data in pending_json_writes:
             write_json(path, data)
+            written_paths.append((path, label))
             updated.append(label)
 
         for path, label, data in pending_toml_writes:
             write_toml(path, data)
+            written_paths.append((path, label))
             updated.append(label)
     except OSError as ex:
+        for path, label in reversed(written_paths):
+            try:
+                write_text_atomic(path, original_contents[path])
+            except OSError as rollback_ex:
+                click.secho(
+                    f"❌ Failed to roll back {label}: {rollback_ex}",
+                    err=True,
+                    fg="red",
+                )
         click.secho(f"❌ {ex}", err=True, fg="red")
         sys.exit(1)
 
