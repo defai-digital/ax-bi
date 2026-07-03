@@ -127,7 +127,8 @@
           "additionalProperties": false,
           "properties": {
             "id": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             "sql": {
               "type": "string"
@@ -139,16 +140,20 @@
               "type": "string"
             },
             "startTime": {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             },
             "endTime": {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             },
             "rows": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             "databaseId": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             "schema": {
               "type": "string"
@@ -166,16 +171,19 @@
               "type": "string"
             },
             "limit": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             "progress": {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             },
             "changedOn": {
               "type": "string"
             },
             "userId": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             }
           }
         }
