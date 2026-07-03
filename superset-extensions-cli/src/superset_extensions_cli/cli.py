@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import zipfile
 from pathlib import Path, PureWindowsPath
@@ -1304,6 +1305,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     else:
         zip_path = output
 
+    temp_path: Path | None = None
     try:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
@@ -1323,10 +1325,26 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 )
             bundle_entries.append((file, file.relative_to(dist_dir)))
 
-        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            dir=zip_path.parent,
+            prefix=f".{zip_path.name}.",
+            suffix=".tmp",
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+
+        with zipfile.ZipFile(temp_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file, arcname in bundle_entries:
                 zipf.write(file, arcname)
+
+        temp_path.replace(zip_path)
+        temp_path = None
     except Exception as ex:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
         click.secho(f"❌ Failed to create bundle: {ex}", err=True, fg="red")
         sys.exit(1)
 

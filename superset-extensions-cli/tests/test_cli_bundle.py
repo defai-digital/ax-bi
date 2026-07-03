@@ -259,6 +259,35 @@ def test_bundle_command_handles_zip_creation_error(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_preserves_existing_output_on_zip_write_error(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle writes atomically when archive creation fails mid-write."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_path = isolated_filesystem / "existing.supx"
+    output_path.write_text("original bundle")
+
+    def fail_zip_write(self, *args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(zipfile.ZipFile, "write", fail_zip_write)
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "disk full" in result.output
+    assert output_path.read_text() == "original bundle"
+    assert list(isolated_filesystem.glob(".existing.supx.*.tmp")) == []
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_includes_all_files_recursively(
     mock_build, cli_runner, isolated_filesystem
 ):
