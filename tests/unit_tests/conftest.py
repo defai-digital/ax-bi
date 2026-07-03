@@ -19,8 +19,8 @@ import functools
 import importlib
 import os
 import unittest.mock
-from collections.abc import Iterator
-from typing import Any, Callable, Union
+from collections.abc import Callable, Iterator
+from typing import Any, Union
 from unittest.mock import patch
 
 import pytest
