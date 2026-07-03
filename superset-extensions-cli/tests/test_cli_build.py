@@ -484,6 +484,24 @@ def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_ensure_output_directory_rejects_broken_symlinked_parent(
+    isolated_filesystem,
+):
+    """Test output directory creation refuses broken symlink parent directories."""
+    output_link = isolated_filesystem / "dist"
+    output_link.symlink_to(isolated_filesystem / "missing-dist")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/frontend directory: parent directory is a symlink",
+    ):
+        ensure_output_directory(output_link / "frontend", "dist/frontend directory")
+
+    assert output_link.is_symlink()
+    assert not (isolated_filesystem / "missing-dist").exists()
+
+
+@pytest.mark.unit
 def test_ensure_output_directory_rejects_non_directory_parent(isolated_filesystem):
     """Test output directory creation refuses file parent paths."""
     output_parent = isolated_filesystem / "dist"
