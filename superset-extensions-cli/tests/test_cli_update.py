@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -346,6 +347,52 @@ def test_update_reports_json_write_failures(
     assert "disk full" in result.output
     assert "Updated extension.json" not in result.output
     assert read_json(extension_json_path)["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_fails_when_original_metadata_becomes_unsafe_before_write(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update aborts when rollback snapshot metadata becomes unsafe."""
+    extension_with_versions(isolated_filesystem, ext_version="1.0.0")
+    extension_json_path = isolated_filesystem / "extension.json"
+    original_extension_json = extension_json_path.read_text()
+    outside_extension_json = isolated_filesystem / "outside-extension.json"
+    outside_extension_json.write_text(
+        json.dumps(
+            {
+                "publisher": "outside-org",
+                "name": "outside-extension",
+                "displayName": "Outside Extension",
+                "version": "9.9.9",
+                "license": "Apache-2.0",
+                "permissions": [],
+            }
+        )
+    )
+    original_read_text = Path.read_text
+    extension_json_reads = 0
+
+    def replace_extension_json_during_snapshot(path, *args, **kwargs):
+        nonlocal extension_json_reads
+        if path == extension_json_path:
+            extension_json_reads += 1
+            if extension_json_reads == 2:
+                extension_json_path.unlink()
+                extension_json_path.symlink_to(outside_extension_json)
+                return original_extension_json
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_extension_json_during_snapshot)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Failed to read original metadata before update" in result.output
+    assert "path is a symlink" in result.output
+    assert "Updated extension.json" not in result.output
+    assert extension_json_path.is_symlink()
+    assert read_json(outside_extension_json)["version"] == "9.9.9"
 
 
 @pytest.mark.cli

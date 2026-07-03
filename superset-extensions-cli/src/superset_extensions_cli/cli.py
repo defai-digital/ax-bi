@@ -1552,10 +1552,15 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
     pending_writes = [*pending_json_writes, *pending_toml_writes]
     try:
-        original_contents = {path: path.read_text() for path, _, _ in pending_writes}
-    except OSError as ex:
+        original_contents: dict[Path, str] = {}
+        for path, label, _ in pending_writes:
+            original_content = read_input_text(path, label)
+            if original_content is None:
+                raise click.ClickException(f"Failed to read {label}: file not found.")
+            original_contents[path] = original_content
+    except click.ClickException as ex:
         click.secho(
-            f"❌ Failed to read original metadata before update: {ex}",
+            f"❌ Failed to read original metadata before update: {ex.message}",
             err=True,
             fg="red",
         )
