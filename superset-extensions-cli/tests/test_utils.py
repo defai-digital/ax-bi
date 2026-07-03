@@ -580,6 +580,41 @@ def test_write_text_atomic_rejects_swapped_temporary_file(
     assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
 
 
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse an output parent changed before publish."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+    original_named_temporary_file = utils.tempfile.NamedTemporaryFile
+
+    def swap_parent_before_temp_file(*args, **kwargs):
+        if kwargs.get("dir") == output_dir:
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.rename(output_dir)
+        return original_named_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr(
+        utils.tempfile,
+        "NamedTemporaryFile",
+        swap_parent_before_temp_file,
+    )
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert (saved_output_dir / "metadata.txt").read_text() == "old"
+    assert not output_path.exists()
+    assert list(output_dir.glob(".metadata.txt.*.tmp")) == []
+
+
 # Write JSON Tests
 @pytest.mark.unit
 def test_write_json_round_trip(isolated_filesystem):

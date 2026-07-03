@@ -122,6 +122,20 @@ def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
+def get_write_parent_identity(path: Path) -> tuple[int, int] | None:
+    """Return output parent identity unless it crosses a symlink boundary."""
+    parent = Path(path).parent
+    if parent.is_symlink() or not parent.is_dir():
+        return None
+    if any(ancestor.is_symlink() for ancestor in (parent, *parent.parents)):
+        return None
+    try:
+        stat = parent.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino)
+
+
 def read_toml(path: Path) -> dict[str, Any] | None:
     read_path = validate_read_path(path)
     if read_path is None:
@@ -196,6 +210,9 @@ def validate_write_path(path: Path) -> Path:
 def write_text_atomic(path: Path, content: str) -> None:
     """Write text via a same-directory temporary file before replacing the target."""
     path = validate_write_path(path)
+    parent_identity = get_write_parent_identity(path)
+    if parent_identity is None:
+        raise OSError(f"Refusing to write through unsafe parent: {path.parent}")
     temp_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -211,6 +228,8 @@ def write_text_atomic(path: Path, content: str) -> None:
         temp_identity = get_read_path_identity(temp_path)
         if temp_identity is None:
             raise OSError(f"Refusing to promote unsafe temporary file: {temp_path}")
+        if get_write_parent_identity(path) != parent_identity:
+            raise OSError(f"Refusing to promote through changed parent: {path.parent}")
         validate_write_path(path)
         if get_read_path_identity(temp_path) != temp_identity:
             raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
