@@ -45,6 +45,7 @@ from superset_extensions_cli.types import ExtensionNames
 from superset_extensions_cli.utils import (
     NodeIdentity,
     PathIdentity,
+    find_non_directory_parent,
     find_symlinked_parent,
     find_symlinked_path_or_parent,
     generate_extension_names,
@@ -486,11 +487,7 @@ def validate_output_directory(path: Path, label: str) -> None:
             f"{symlinked_parent}."
         )
 
-    invalid_parent = next(
-        (parent for parent in path.parents if parent.exists() and not parent.is_dir()),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
@@ -687,15 +684,7 @@ def validate_output_file(path: Path, label: str) -> None:
             f"Refusing to write {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
         )
-    invalid_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.exists() and not parent.is_dir()
-        ),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
@@ -723,11 +712,7 @@ def remove_output_directory(
             f"Refusing to clean {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
         )
-    invalid_parent = next(
-        (parent for parent in path.parents if parent.exists() and not parent.is_dir()),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to clean {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
@@ -1525,11 +1510,7 @@ def create_scaffold_directory(path: Path, label: str) -> None:
             f"Refusing to create {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
         )
-    invalid_parent = next(
-        (parent for parent in path.parents if parent.exists() and not parent.is_dir()),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to create {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
@@ -2041,15 +2022,7 @@ def validate_bundle_output_path(path: Path) -> None:
     if path.is_symlink():
         raise click.ClickException(f"Refusing to write bundle to symlink: {path}.")
 
-    symlinked_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.is_symlink()
-        ),
-        None,
-    )
-    if symlinked_parent is not None:
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to write bundle through symlinked directory: {symlinked_parent}."
         )
@@ -2057,15 +2030,7 @@ def validate_bundle_output_path(path: Path) -> None:
         raise click.ClickException(
             f"Refusing to write bundle: {path} exists but is not a file."
         )
-    invalid_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.exists() and not parent.is_dir()
-        ),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to write bundle: parent exists but is not a directory: "
             f"{invalid_parent}."

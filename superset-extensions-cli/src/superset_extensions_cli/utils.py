@@ -130,6 +130,18 @@ def find_symlinked_path_or_parent(path: Path) -> Path | None:
     return find_symlinked_parent(path)
 
 
+def find_non_directory_parent(path: Path) -> Path | None:
+    """Return the first existing parent path that is not a directory."""
+    return next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.exists() and not parent.is_dir()
+        ),
+        None,
+    )
+
+
 def get_read_path_identity(path: Path) -> PathIdentity | None:
     """Return file identity for a safe input path."""
     read_path = validate_read_path(path)
@@ -236,15 +248,7 @@ def validate_write_path(path: Path) -> Path:
         raise OSError(
             f"Refusing to write through symlinked directory: {symlinked_parent}"
         )
-    invalid_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.exists() and not parent.is_dir()
-        ),
-        None,
-    )
-    if invalid_parent is not None:
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
         raise OSError(
             f"Refusing to write through non-directory parent: {invalid_parent}"
         )

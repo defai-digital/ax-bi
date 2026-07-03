@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
+    find_non_directory_parent,
     find_symlinked_parent,
     find_symlinked_path_or_parent,
     get_directory_node_identity,
@@ -56,6 +57,15 @@ def test_find_symlinked_path_or_parent_returns_symlinked_path(isolated_filesyste
     linked_file.symlink_to(outside_file)
 
     assert find_symlinked_path_or_parent(linked_file) == linked_file
+
+
+@pytest.mark.unit
+def test_find_non_directory_parent_returns_file_parent(isolated_filesystem):
+    """Test non-directory parent discovery returns an existing file parent."""
+    file_parent = isolated_filesystem / "metadata"
+    file_parent.write_text("not a directory")
+
+    assert find_non_directory_parent(file_parent / "metadata.json") == file_parent
 
 
 @pytest.mark.unit
