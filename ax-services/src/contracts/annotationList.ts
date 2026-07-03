@@ -95,13 +95,13 @@ const annotationListItemSchema = {
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     shortDescr: { type: 'string' },
     longDescr: { type: 'string' },
     startDttm: { type: 'string' },
     endDttm: { type: 'string' },
     jsonMetadata: { type: 'string' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
   },
 } as const;
 
@@ -169,7 +169,7 @@ export const annotationListResponseSchema = {
     totalPages: { type: 'number' },
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
     columnsRequested: {
       type: 'array',
       items: { type: 'string' },

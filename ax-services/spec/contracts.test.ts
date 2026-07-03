@@ -269,13 +269,13 @@ test('annotation list request schema is registered in annotation list contracts'
     annotationListContractSchemas.annotationListResponseSchema.properties.annotations
       .items.properties,
   ).toEqual({
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     shortDescr: { type: 'string' },
     longDescr: { type: 'string' },
     startDttm: { type: 'string' },
     endDttm: { type: 'string' },
     jsonMetadata: { type: 'string' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
   });
 });
 
@@ -287,7 +287,7 @@ test('role list request schema is registered in role list contracts', () => {
   expect(
     roleListContractSchemas.roleListResponseSchema.properties.roles.items.properties,
   ).toEqual({
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     name: { type: 'string' },
   });
 });

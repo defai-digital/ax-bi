@@ -103,7 +103,7 @@ const rlsTableRefSchema = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     tableName: { type: 'string' },
   },
 } as const;
@@ -112,7 +112,7 @@ const rlsRoleRefSchema = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     name: { type: 'string' },
   },
 } as const;
@@ -122,7 +122,7 @@ const rlsListItemSchema = {
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     name: { type: 'string' },
     filterType: { type: 'string' },
     tables: { type: 'array', items: rlsTableRefSchema },

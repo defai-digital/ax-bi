@@ -62,7 +62,7 @@ const assetSearchResultSchema = {
   additionalProperties: false,
   properties: {
     assetType: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     name: { type: 'string' },
     description: { type: 'string' },

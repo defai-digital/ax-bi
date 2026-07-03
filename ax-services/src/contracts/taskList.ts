@@ -95,7 +95,7 @@ const taskListItemSchema = {
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     taskType: { type: 'string' },
     taskKey: { type: 'string' },

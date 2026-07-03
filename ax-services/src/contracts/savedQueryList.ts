@@ -97,11 +97,11 @@ const savedQueryListItemSchema = {
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     label: { type: 'string' },
     sql: { type: 'string' },
-    dbId: { type: 'number' },
+    dbId: { type: 'integer', minimum: 0 },
     schema: { type: 'string' },
     catalog: { type: 'string' },
     description: { type: 'string' },

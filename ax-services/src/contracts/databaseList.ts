@@ -108,7 +108,7 @@ const databaseListItemSchema = {
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     databaseName: { type: 'string' },
     backend: { type: 'string' },
