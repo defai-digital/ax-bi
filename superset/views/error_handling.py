@@ -20,8 +20,9 @@ import dataclasses
 import functools
 import logging
 import typing
+from collections.abc import Callable
 from importlib.resources import files
-from typing import Any, Callable, cast
+from typing import Any
 
 from flask import (
     Flask,

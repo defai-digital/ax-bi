@@ -21,9 +21,9 @@ import functools
 import logging
 import os
 import traceback
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from flask import (
     abort,

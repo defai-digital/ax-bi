@@ -16,8 +16,9 @@
 # under the License.
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, DefaultDict, Optional, Union
+from typing import Any, Optional, Union
 from urllib import parse
 
 import msgpack
@@ -158,7 +159,7 @@ def get_config_value(key: str) -> Any:
 
 def get_permissions(
     user: User,
-) -> tuple[dict[str, list[tuple[str]]], DefaultDict[str, list[str]]]:
+) -> tuple[dict[str, list[tuple[str]]], defaultdict[str, list[str]]]:
     if not user.roles and not user.groups:
         raise AttributeError("User object does not have roles or groups")
 

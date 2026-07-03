@@ -21,8 +21,9 @@ import contextlib
 import logging
 import os
 import re
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 from urllib import parse
 
 from flask import (
