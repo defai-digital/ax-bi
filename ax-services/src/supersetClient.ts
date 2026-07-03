@@ -3690,7 +3690,15 @@ function hasValidListFilters(request: unknown): request is ListFilterRequest {
   return (
     isRecord(request) &&
     Array.isArray(request['filters']) &&
-    request['filters'].every(isListFilter)
+    request['filters'].every(isListFilter) &&
+    hasValidListSearch(request)
+  );
+}
+
+function hasValidListSearch(request: Record<string, unknown>): boolean {
+  return (
+    request['search'] === undefined ||
+    isRisonScalarString(request['search'])
   );
 }
 

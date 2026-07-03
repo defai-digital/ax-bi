@@ -1983,6 +1983,34 @@ test('listDashboards rejects invalid filters before querying Superset', async ()
   expect(fetchCalled).toBe(false);
 });
 
+test('listDashboards rejects invalid search values before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  for (const search of ['sales\nregion', { query: 'sales' }]) {
+    const result = await client.listDashboards({
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: [],
+      search,
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    } as unknown as Parameters<SupersetClient['listDashboards']>[0]);
+
+    expect(result.warnings).toEqual([
+      'dashboard list request contains invalid filters',
+    ]);
+  }
+  expect(fetchCalled).toBe(false);
+});
+
 test('listDashboards rejects control characters in filter values', async () => {
   let fetchCalled = false;
   global.fetch = async () => {
