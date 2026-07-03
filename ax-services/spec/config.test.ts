@@ -128,14 +128,36 @@ test('buildConfig defaults blank host and log level values', () => {
   expect(config.logLevel).toBe('info');
 });
 
+test('buildConfig defaults blank numeric settings', () => {
+  const config = buildConfig({
+    AX_SERVICES_PORT: '   ',
+    AX_SUPERSET_TIMEOUT_MS: '   ',
+  });
+
+  expect(config.port).toBe(5010);
+  expect(config.supersetTimeoutMs).toBe(2000);
+});
+
 test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SERVICES_PORT: 'abc' })).toThrow(
+    'AX_SERVICES_PORT must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '0x1392' })).toThrow(
+    'AX_SERVICES_PORT must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '5_010' })).toThrow(
     'AX_SERVICES_PORT must be a positive integer',
   );
   expect(() => buildConfig({ AX_SERVICES_PORT: '65536' })).toThrow(
     'AX_SERVICES_PORT must be between 1 and 65535',
   );
   expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '0' })).toThrow(
+    'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '1e3' })).toThrow(
+    'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '1000.5' })).toThrow(
     'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
   );
   expect(() =>

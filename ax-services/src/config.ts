@@ -108,15 +108,16 @@ function parsePositiveInteger(
   defaultValue: number,
   name: string,
 ): number {
-  if (value === undefined || value === '') {
+  const normalized = value?.trim();
+  if (normalized === undefined || normalized === '') {
     return defaultValue;
   }
 
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
+  if (!/^[1-9]\d*$/.test(normalized)) {
     throw new Error(`${name} must be a positive integer`);
   }
 
+  const parsed = Number(normalized);
   return parsed;
 }
 
