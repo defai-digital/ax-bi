@@ -741,6 +741,54 @@ def test_start_dist_replacement_restores_dist_when_replacement_create_fails(
 
 
 @pytest.mark.unit
+def test_start_dist_replacement_rejects_changed_restored_dist(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dist replacement setup verifies restored dist after create failure."""
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("previous")
+    replacement_dist = isolated_filesystem / "replacement-dist"
+    replacement_dist.mkdir()
+    (replacement_dist / "manifest.json").write_text("replacement")
+    saved_restored = isolated_filesystem / "saved-restored-dist"
+    original_ensure_output_directory = ensure_output_directory
+    original_replace = Path.replace
+
+    def fail_replacement_dist(path, label):
+        if path == dist_dir and not path.exists():
+            raise click.ClickException("cannot create replacement dist")
+        original_ensure_output_directory(path, label)
+
+    def swap_restored_dist(path, target):
+        result = original_replace(path, target)
+        if target == dist_dir and path.parent.name.startswith(".dist-backup."):
+            dist_dir.rename(saved_restored)
+            replacement_dist.rename(dist_dir)
+        return result
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.ensure_output_directory",
+        fail_replacement_dist,
+    )
+    monkeypatch.setattr(Path, "replace", swap_restored_dist)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "cannot create replacement dist; also failed to restore previous "
+            "dist directory: restored backup path changed"
+        ),
+    ):
+        start_dist_replacement(isolated_filesystem)
+
+    assert (saved_restored / "manifest.json").read_text() == "previous"
+    assert (dist_dir / "manifest.json").read_text() == "replacement"
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_start_dist_replacement_rejects_changed_dist_before_backup_move(
     isolated_filesystem,
     monkeypatch,

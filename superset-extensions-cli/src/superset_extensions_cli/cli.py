@@ -290,6 +290,8 @@ def start_dist_replacement(
             if get_directory_path_identity(backup_path) != backup_identity:
                 raise OSError("backup path changed")
             backup_path.replace(dist_dir)
+            if get_directory_path_identity(dist_dir) != backup_identity:
+                raise OSError("restored backup path changed")
         except OSError as restore_ex:
             raise click.ClickException(
                 f"{ex.message}; also failed to restore previous dist directory: "
