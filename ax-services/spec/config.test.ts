@@ -128,6 +128,15 @@ test('buildConfig defaults blank host and log level values', () => {
   expect(config.logLevel).toBe('info');
 });
 
+test('buildConfig rejects host values with whitespace or control characters', () => {
+  expect(() => buildConfig({ AX_SERVICES_HOST: '127.0.0.1 localhost' })).toThrow(
+    'AX_SERVICES_HOST must not contain whitespace or control characters',
+  );
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost\nready' })).toThrow(
+    'AX_SERVICES_HOST must not contain whitespace or control characters',
+  );
+});
+
 test('buildConfig defaults blank numeric settings', () => {
   const config = buildConfig({
     AX_SERVICES_PORT: '   ',

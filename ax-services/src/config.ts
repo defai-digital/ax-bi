@@ -100,7 +100,16 @@ const LOG_LEVELS = new Set<LogLevel>([
 
 function normalizeHost(value: string | undefined): string {
   const host = value?.trim();
-  return host === '' || host === undefined ? DEFAULT_HOST : host;
+  if (host === '' || host === undefined) {
+    return DEFAULT_HOST;
+  }
+  if (/\s|[\u0000-\u001f\u007f]/.test(host)) {
+    throw new Error(
+      'AX_SERVICES_HOST must not contain whitespace or control characters',
+    );
+  }
+
+  return host;
 }
 
 function parsePositiveInteger(
