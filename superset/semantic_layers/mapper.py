@@ -24,9 +24,10 @@ single dataframe.
 
 """
 
+from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta, tzinfo
 from time import time as current_time
-from typing import Any, cast, Sequence, TypeGuard
+from typing import Any, cast, TypeGuard
 from zoneinfo import ZoneInfo
 
 import isodate
