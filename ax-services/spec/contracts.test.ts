@@ -309,7 +309,7 @@ test('asset search request schema is registered in asset search contracts', () =
   expect(assetSearchContractSchemas.assetSearchRequestSchema.properties.query).toEqual(
     {
       type: 'string',
-      minLength: 1,
+      pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
     },
   );
   expect(

@@ -834,6 +834,37 @@ test('asset search endpoint delegates to Superset client', async () => {
   });
 });
 
+test('asset search endpoint rejects unsafe query values', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onSearch(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const query of ['   ', 'sales\nregion']) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/assets/search',
+      payload: {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        query,
+        assetTypes: ['dataset'],
+        includeCertifiedOnly: false,
+        limit: 10,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
 test('permission check endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(

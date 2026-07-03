@@ -93,7 +93,10 @@ export const assetSearchRequestSchema = {
   additionalProperties: false,
   properties: {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
-    query: { type: 'string', minLength: 1 },
+    query: {
+      type: 'string',
+      pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+    },
     assetTypes: {
       type: 'array',
       items: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
