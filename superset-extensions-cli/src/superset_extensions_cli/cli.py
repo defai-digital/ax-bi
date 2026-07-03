@@ -261,7 +261,11 @@ def remove_output_directory(path: Path, label: str) -> None:
 def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
     """Load an optional JSON metadata file and require an object when present."""
     try:
+        if not input_file_exists(path, label):
+            return None
         data = read_json(path)
+    except click.ClickException:
+        raise
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 
@@ -274,7 +278,11 @@ def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
 def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
     """Load an optional TOML metadata file and wrap parser errors for the CLI."""
     try:
+        if not input_file_exists(path, label):
+            return None
         return read_toml(path)
+    except click.ClickException:
+        raise
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 

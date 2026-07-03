@@ -25,6 +25,8 @@ import pytest
 import click
 from superset_extensions_cli.cli import (
     app,
+    load_json_object,
+    load_toml_object,
     optional_directory_exists,
     optional_file_exists,
     validate_npm,
@@ -97,6 +99,27 @@ def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     broken_link.symlink_to(isolated_filesystem / "missing-target")
     with pytest.raises(click.ClickException, match="path is a symlink"):
         optional_file_exists(broken_link, "pyproject.toml")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("loader", "filename", "content"),
+    [
+        (load_json_object, "metadata.json", "{}"),
+        (load_toml_object, "pyproject.toml", "[project]\n"),
+    ],
+)
+def test_metadata_loaders_refuse_symlinked_inputs(
+    isolated_filesystem, loader, filename, content
+):
+    """Test metadata loaders enforce the input file boundary directly."""
+    outside_file = isolated_filesystem / f"outside-{filename}"
+    outside_file.write_text(content)
+    metadata_link = isolated_filesystem / filename
+    metadata_link.symlink_to(outside_file)
+
+    with pytest.raises(click.ClickException, match="Refusing to read"):
+        loader(metadata_link, filename)
 
 
 # Validate Command Tests
