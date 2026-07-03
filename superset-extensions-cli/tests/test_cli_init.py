@@ -283,10 +283,50 @@ def test_init_reports_scaffold_file_write_errors(
     assert result.exit_code == 1
     assert "Failed to create extension.json: disk full" in result.output
     assert not extension_json_path.exists()
+    assert not (isolated_filesystem / "test-extension").exists()
     assert (
         list((isolated_filesystem / "test-extension").glob(".extension.json.*.tmp"))
         == []
     )
+
+
+@pytest.mark.cli
+def test_init_cleans_partial_scaffold_on_nested_directory_error(
+    cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test init removes the target directory when nested scaffolding fails."""
+    frontend_src_path = isolated_filesystem / "test-extension" / "frontend" / "src"
+    original_mkdir = Path.mkdir
+
+    def fail_frontend_src_mkdir(path, *args, **kwargs):
+        if path == frontend_src_path:
+            raise OSError("cannot create src")
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", fail_frontend_src_mkdir)
+
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "1.0.0",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--no-backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to create frontend src directory: cannot create src" in result.output
+    assert not (isolated_filesystem / "test-extension").exists()
 
 
 @pytest.mark.cli

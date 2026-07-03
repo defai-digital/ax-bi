@@ -519,6 +519,27 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
+def cleanup_scaffold_directory(path: Path, label: str) -> None:
+    """Remove a scaffold directory created during a failed init run."""
+    if not path.exists():
+        return
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
+    if not path.is_dir():
+        raise click.ClickException(
+            f"Refusing to clean {label}: path exists but is not a directory."
+        )
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to clean {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
+    try:
+        shutil.rmtree(path)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
+
+
 def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
     _, extension = load_extension_config(cwd / "extension.json")
 
@@ -1625,9 +1646,11 @@ def init(
         "version": version,
     }
 
+    created_target_dir = False
     try:
         # Create base directory
         create_scaffold_directory(target_dir, "extension directory")
+        created_target_dir = True
         extension_json = env.get_template("extension.json.j2").render(ctx)
         write_scaffold_file(
             target_dir / "extension.json",
@@ -1717,6 +1740,11 @@ def init(
 
             click.secho("✅ Created backend folder structure", fg="green")
     except click.ClickException as ex:
+        if created_target_dir:
+            try:
+                cleanup_scaffold_directory(target_dir, "extension directory")
+            except click.ClickException as cleanup_ex:
+                click.secho(f"❌ {cleanup_ex.message}", err=True, fg="red")
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
