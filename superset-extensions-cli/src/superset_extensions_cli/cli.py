@@ -435,7 +435,9 @@ def copy_frontend_dist(cwd: Path) -> str:
     dist_dir = cwd / "dist"
     frontend_output_dir = dist_dir / "frontend"
     frontend_dist_output_dir = frontend_output_dir / "dist"
-    frontend_dist_path = cwd / "frontend" / "dist"
+    frontend_dir_path = cwd / "frontend"
+    require_optional_directory(frontend_dir_path, "frontend")
+    frontend_dist_path = frontend_dir_path / "dist"
     require_optional_directory(frontend_dist_path, "frontend/dist")
     frontend_dist = frontend_dist_path.resolve()
     frontend_files: list[Path] = []
