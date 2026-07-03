@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 from collections.abc import Callable
-from typing import Optional
 
 import pytest
 
@@ -88,7 +87,7 @@ def _create_dashboards():
 def _create_table(
     table_name: str,
     database: "Database",
-    fetch_values_predicate: Optional[str] = None,
+    fetch_values_predicate: str | None = None,
 ):
     table = create_table_metadata(
         table_name=table_name,
