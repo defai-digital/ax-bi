@@ -132,6 +132,24 @@ def test_read_json_with_various_valid_content(
     assert result == expected
 
 
+@pytest.mark.unit
+def test_read_json_reports_read_errors(isolated_filesystem, monkeypatch):
+    """Test read_json reports filesystem read failures with path context."""
+    json_file = isolated_filesystem / "test.json"
+    json_file.write_text("{}")
+    original_read_text = Path.read_text
+
+    def fail_json_read(path, *args, **kwargs):
+        if path == json_file:
+            raise OSError("permission denied")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fail_json_read)
+
+    with pytest.raises(OSError, match="Failed to read JSON file .*permission denied"):
+        read_json(json_file)
+
+
 # Read TOML Tests
 @pytest.mark.unit
 def test_read_toml_with_valid_file(isolated_filesystem):
@@ -218,6 +236,24 @@ def test_read_toml_with_invalid_toml(isolated_filesystem):
 
     with pytest.raises(Exception):  # tomli raises various exceptions for invalid TOML
         read_toml(invalid_toml_file)
+
+
+@pytest.mark.unit
+def test_read_toml_reports_read_errors(isolated_filesystem, monkeypatch):
+    """Test read_toml reports filesystem read failures with path context."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text("[project]\nname = 'test'\n")
+    original_open = Path.open
+
+    def fail_toml_open(path, *args, **kwargs):
+        if path == toml_file:
+            raise OSError("permission denied")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_toml_open)
+
+    with pytest.raises(OSError, match="Failed to read TOML file .*permission denied"):
+        read_toml(toml_file)
 
 
 @pytest.mark.unit

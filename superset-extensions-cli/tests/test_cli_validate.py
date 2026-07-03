@@ -159,6 +159,35 @@ def test_metadata_loaders_refuse_symlinked_input_parents(
         loader(metadata_parent / filename, filename)
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("loader", "filename", "content"),
+    [
+        (load_json_object, "metadata.json", "{}"),
+        (load_toml_object, "pyproject.toml", "[project]\n"),
+    ],
+)
+def test_metadata_loaders_report_read_errors(
+    isolated_filesystem, loader, filename, content, monkeypatch
+):
+    """Test metadata loaders distinguish filesystem read errors from invalid data."""
+    metadata_file = isolated_filesystem / filename
+    metadata_file.write_text(content)
+
+    def fail_metadata_read(path, *args, **kwargs):
+        if path == metadata_file:
+            raise OSError("permission denied")
+        raise AssertionError(f"unexpected path: {path}")
+
+    if filename.endswith(".json"):
+        monkeypatch.setattr(Path, "read_text", fail_metadata_read)
+    else:
+        monkeypatch.setattr(Path, "open", fail_metadata_read)
+
+    with pytest.raises(click.ClickException, match="Failed to read"):
+        loader(metadata_file, filename)
+
+
 # Validate Command Tests
 @pytest.mark.cli
 def test_validate_command_success(cli_runner, isolated_filesystem):

@@ -114,8 +114,11 @@ def read_toml(path: Path) -> dict[str, Any] | None:
     if read_path is None:
         return None
 
-    with read_path.open("rb") as f:
-        return tomllib.load(f)
+    try:
+        with read_path.open("rb") as f:
+            return tomllib.load(f)
+    except OSError as ex:
+        raise OSError(f"Failed to read TOML file {read_path}: {ex}") from ex
 
 
 def read_json(path: Path) -> dict[str, Any] | None:
@@ -123,7 +126,10 @@ def read_json(path: Path) -> dict[str, Any] | None:
     if read_path is None:
         return None
 
-    return json.loads(read_path.read_text())
+    try:
+        return json.loads(read_path.read_text())
+    except OSError as ex:
+        raise OSError(f"Failed to read JSON file {read_path}: {ex}") from ex
 
 
 def validate_write_path(path: Path) -> Path:

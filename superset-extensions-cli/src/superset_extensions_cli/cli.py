@@ -331,6 +331,8 @@ def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
         data = read_json(path)
     except click.ClickException:
         raise
+    except OSError as ex:
+        raise click.ClickException(f"Failed to read {label}: {ex}") from ex
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 
@@ -348,6 +350,8 @@ def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
         return read_toml(path)
     except click.ClickException:
         raise
+    except OSError as ex:
+        raise click.ClickException(f"Failed to read {label}: {ex}") from ex
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 
