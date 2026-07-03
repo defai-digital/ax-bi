@@ -16,7 +16,7 @@
 # under the License.
 
 
-from typing import Any, cast, Optional, Union
+from typing import Any, cast
 
 from flask import g
 
@@ -40,9 +40,9 @@ from superset.viz import viz_types
 class ChartWarmUpCacheCommand(BaseCommand):
     def __init__(
         self,
-        chart_or_id: Union[int, Slice],
-        dashboard_id: Optional[int],
-        extra_filters: Optional[str],
+        chart_or_id: int | Slice,
+        dashboard_id: int | None,
+        extra_filters: str | None,
     ):
         self._chart_or_id = chart_or_id
         self._dashboard_id = dashboard_id
