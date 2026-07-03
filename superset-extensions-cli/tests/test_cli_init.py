@@ -529,3 +529,33 @@ def test_init_non_interactive_validates_technical_name(cli_runner, isolated_file
 
     assert result.exit_code == 1
     assert "must start with a letter" in result.output.lower()
+
+
+@pytest.mark.cli
+def test_init_non_interactive_validates_initial_version(
+    cli_runner, isolated_filesystem
+):
+    """Test that init validates generated extension metadata before writing files."""
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "not-a-version",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "invalid initial extension metadata" in result.output.lower()
+    assert "version" in result.output.lower()
+    assert not (isolated_filesystem / "test-extension").exists()

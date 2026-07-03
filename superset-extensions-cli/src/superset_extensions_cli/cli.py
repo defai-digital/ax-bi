@@ -177,6 +177,25 @@ def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     return extension_data, extension
 
 
+def validate_initial_extension_config(
+    names: ExtensionNames, version: str, license_: str
+) -> None:
+    """Validate the metadata that init writes to extension.json."""
+    try:
+        ExtensionConfig.model_validate(
+            {
+                "publisher": names["publisher"],
+                "name": names["name"],
+                "displayName": names["display_name"],
+                "version": version,
+                "license": license_,
+                "permissions": [],
+            }
+        )
+    except Exception as ex:
+        raise click.ClickException(f"Invalid initial extension metadata: {ex}") from ex
+
+
 def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
     _, extension = load_extension_config(cwd / "extension.json")
 
@@ -957,6 +976,12 @@ def init(
         if backend_opt is not None
         else click.confirm("Include backend?", default=True)
     )
+
+    try:
+        validate_initial_extension_config(names, version, license_)
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
 
     target_dir = Path.cwd() / names["name"]
     if target_dir.exists():
