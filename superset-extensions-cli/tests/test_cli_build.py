@@ -209,6 +209,29 @@ def test_clean_dist_creates_dist_directory_if_missing(isolated_filesystem):
     assert_directory_exists(dist_dir)
 
 
+@pytest.mark.unit
+def test_clean_dist_rejects_symlinked_dist_directory(isolated_filesystem):
+    """Test clean_dist refuses a symlinked dist path."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "artifact.txt").write_text("keep")
+    (isolated_filesystem / "dist").symlink_to(outside_dir)
+
+    with pytest.raises(click.ClickException, match="path is a symlink"):
+        clean_dist(isolated_filesystem)
+
+    assert_file_exists(outside_dir / "artifact.txt")
+
+
+@pytest.mark.unit
+def test_clean_dist_rejects_dist_file(isolated_filesystem):
+    """Test clean_dist refuses a dist path that is not a directory."""
+    (isolated_filesystem / "dist").write_text("not a directory")
+
+    with pytest.raises(click.ClickException, match="not a directory"):
+        clean_dist(isolated_filesystem)
+
+
 # Frontend Dependencies Tests
 @pytest.mark.unit
 @patch("subprocess.run")
@@ -403,6 +426,24 @@ def test_clean_dist_frontend_handles_nonexistent_directory(isolated_filesystem):
     clean_dist_frontend(isolated_filesystem)
 
     # Should not raise error
+
+
+@pytest.mark.unit
+def test_clean_dist_frontend_rejects_symlinked_directory(isolated_filesystem):
+    """Test clean_dist_frontend refuses a symlinked frontend output path."""
+    from superset_extensions_cli.cli import clean_dist_frontend
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    outside_dir = isolated_filesystem / "outside-frontend"
+    outside_dir.mkdir()
+    (outside_dir / "artifact.js").write_text("keep")
+    (dist_dir / "frontend").symlink_to(outside_dir)
+
+    with pytest.raises(click.ClickException, match="path is a symlink"):
+        clean_dist_frontend(isolated_filesystem)
+
+    assert_file_exists(outside_dir / "artifact.js")
 
 
 @pytest.mark.unit

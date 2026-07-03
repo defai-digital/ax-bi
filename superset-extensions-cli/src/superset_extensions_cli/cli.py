@@ -145,15 +145,32 @@ def init_frontend_deps(frontend_dir: Path) -> None:
 
 def clean_dist(cwd: Path) -> None:
     dist_dir = cwd / "dist"
-    if dist_dir.exists():
-        shutil.rmtree(dist_dir)
-    dist_dir.mkdir(parents=True)
+    remove_output_directory(dist_dir, "dist directory")
+    try:
+        dist_dir.mkdir(parents=True)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create dist directory: {ex}") from ex
 
 
 def clean_dist_frontend(cwd: Path) -> None:
     frontend_dist = cwd / "dist" / "frontend"
-    if frontend_dist.exists():
-        shutil.rmtree(frontend_dist)
+    remove_output_directory(frontend_dist, "dist/frontend directory")
+
+
+def remove_output_directory(path: Path, label: str) -> None:
+    """Remove an output directory after validating the path is safe to clean."""
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
+    if not path.exists():
+        return
+    if not path.is_dir():
+        raise click.ClickException(
+            f"Refusing to clean {label}: path exists but is not a directory."
+        )
+    try:
+        shutil.rmtree(path)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
 
 
 def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
