@@ -646,10 +646,18 @@ export class SupersetClient
           statusCode: response.status,
         };
       }
+      if (typeof payload['allowed'] !== 'boolean') {
+        return {
+          contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+          allowed: false,
+          error: 'authorization response allowed field must be boolean',
+          statusCode: response.status,
+        };
+      }
 
       const result: PermissionCheckResult = {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
-        allowed: payload['allowed'] === true,
+        allowed: payload['allowed'],
         statusCode: response.status,
       };
       if (typeof payload['reason'] === 'string') {

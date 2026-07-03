@@ -500,6 +500,38 @@ test('checkPermission fails closed for non-object authorization responses', asyn
   });
 });
 
+test('checkPermission fails closed for malformed authorization allowed fields', async () => {
+  global.fetch = async () =>
+    Response.json(
+      {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: 'true',
+        reason: 'malformed upstream response',
+      },
+      { status: 200 },
+    );
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization response allowed field must be boolean',
+    statusCode: 200,
+  });
+});
+
 test('probeMetadata returns sanitized Superset metadata summary', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
