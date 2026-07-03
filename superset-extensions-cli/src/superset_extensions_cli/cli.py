@@ -1388,6 +1388,8 @@ def cleanup_scaffold_directory(
     path: Path,
     label: str,
     expected_identity: tuple[int, int, int, int] | None = None,
+    *,
+    allow_content_changes: bool = True,
 ) -> None:
     """Remove a scaffold directory created during a failed init run."""
     if path.is_symlink():
@@ -1408,7 +1410,10 @@ def cleanup_scaffold_directory(
         raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
     if (
         expected_identity is not None
-        and directory_identity[:2] != expected_identity[:2]
+        and directory_identity != expected_identity
+        and not (
+            allow_content_changes and directory_identity[:2] == expected_identity[:2]
+        )
     ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
@@ -2827,32 +2832,57 @@ def init(
 
     created_target_dir = False
     target_dir_identity: tuple[int, int, int, int] | None = None
-    try:
-        # Create base directory
-        create_scaffold_directory(target_dir, "extension directory")
-        created_target_dir = True
+    expected_target_entries: set[str] = set()
+
+    def refresh_target_dir_identity() -> None:
+        nonlocal target_dir_identity
         target_dir_identity = get_directory_path_identity(target_dir)
         if target_dir_identity is None:
             raise click.ClickException(
                 "Refusing to create extension directory: path changed."
             )
+
+    def ensure_target_entries_unchanged() -> None:
+        if (
+            not target_dir.exists()
+            or target_dir.is_symlink()
+            or not target_dir.is_dir()
+        ):
+            return
+        current_entries = {entry.name for entry in target_dir.iterdir()}
+        if current_entries != expected_target_entries:
+            raise click.ClickException(
+                "Refusing to clean extension directory: path changed."
+            )
+
+    try:
+        # Create base directory
+        create_scaffold_directory(target_dir, "extension directory")
+        created_target_dir = True
+        refresh_target_dir_identity()
         extension_json = env.get_template("extension.json.j2").render(ctx)
         write_scaffold_file(
             target_dir / "extension.json",
             "extension.json",
             extension_json,
         )
+        expected_target_entries.add("extension.json")
+        refresh_target_dir_identity()
         click.secho("✅ Created extension.json", fg="green")
 
         # Create .gitignore
         gitignore = env.get_template("gitignore.j2").render(ctx)
         write_scaffold_file(target_dir / ".gitignore", ".gitignore", gitignore)
+        expected_target_entries.add(".gitignore")
+        refresh_target_dir_identity()
         click.secho("✅ Created .gitignore", fg="green")
 
         # Initialize frontend files
         if include_frontend:
             frontend_dir = target_dir / "frontend"
             create_scaffold_directory(frontend_dir, "frontend directory")
+            expected_target_entries.add("frontend")
+            refresh_target_dir_identity()
             frontend_src_dir = frontend_dir / "src"
             create_scaffold_directory(frontend_src_dir, "frontend src directory")
 
@@ -2889,6 +2919,8 @@ def init(
         if include_backend:
             backend_dir = target_dir / "backend"
             create_scaffold_directory(backend_dir, "backend directory")
+            expected_target_entries.add("backend")
+            refresh_target_dir_identity()
             backend_src_dir = backend_dir / "src"
             create_scaffold_directory(backend_src_dir, "backend src directory")
 
@@ -2927,6 +2959,7 @@ def init(
     except click.ClickException as ex:
         if created_target_dir:
             try:
+                ensure_target_entries_unchanged()
                 cleanup_scaffold_directory(
                     target_dir,
                     "extension directory",
