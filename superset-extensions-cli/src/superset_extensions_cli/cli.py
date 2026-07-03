@@ -947,7 +947,15 @@ def require_optional_directory(path: Path, label: str) -> None:
 def optional_directory_exists(path: Path, label: str) -> bool:
     """Return whether an optional project directory exists after validation."""
     require_optional_directory(path, label)
-    return path.exists()
+    if not path.exists():
+        return False
+    directory_identity = get_directory_path_identity(path)
+    if directory_identity is None:
+        raise click.ClickException(f"{label} path is no longer safe.")
+    current_identity = get_directory_path_identity(path)
+    if current_identity is None or current_identity[:2] != directory_identity[:2]:
+        raise click.ClickException(f"{label} path changed during validation.")
+    return True
 
 
 def optional_file_exists(path: Path, label: str) -> bool:
@@ -960,7 +968,15 @@ def optional_file_exists(path: Path, label: str) -> bool:
         )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"{label} path exists but is not a file.")
-    return path.exists()
+    if not path.exists():
+        return False
+    file_identity = get_read_path_identity(path)
+    if file_identity is None:
+        raise click.ClickException(f"{label} path is no longer safe.")
+    current_identity = get_read_path_identity(path)
+    if current_identity is None or current_identity[:2] != file_identity[:2]:
+        raise click.ClickException(f"{label} path changed during validation.")
+    return True
 
 
 def input_file_exists(path: Path, label: str) -> bool:

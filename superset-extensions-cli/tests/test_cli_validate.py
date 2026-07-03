@@ -23,6 +23,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import click
+import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import (
     app,
     load_json_object,
@@ -81,6 +82,43 @@ def test_optional_directory_exists_validates_project_paths(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_optional_directory_exists_rejects_changed_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional directory helper refuses a path changed during validation."""
+    source_dir = isolated_filesystem / "frontend"
+    source_dir.mkdir()
+    saved_dir = isolated_filesystem / "saved-frontend"
+    replacement_dir = isolated_filesystem / "replacement-frontend"
+    replacement_dir.mkdir()
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def swap_directory_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                source_dir.rename(saved_dir)
+                replacement_dir.rename(source_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_directory_after_first_identity,
+    )
+
+    with pytest.raises(click.ClickException, match="frontend path changed"):
+        optional_directory_exists(source_dir, "frontend")
+
+    assert saved_dir.is_dir()
+    assert source_dir.is_dir()
+
+
+@pytest.mark.unit
 def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     """Test optional file helper accepts only regular files or missing paths."""
     missing_path = isolated_filesystem / "missing.json"
@@ -114,6 +152,39 @@ def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     parent_link.symlink_to(nested_target_dir)
     with pytest.raises(click.ClickException, match="parent directory is a symlink"):
         optional_file_exists(parent_link / "package.json", "frontend/package.json")
+
+
+@pytest.mark.unit
+def test_optional_file_exists_rejects_changed_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional file helper refuses a path changed during validation."""
+    metadata_file = isolated_filesystem / "extension.json"
+    metadata_file.write_text("{}")
+    saved_file = isolated_filesystem / "saved-extension.json"
+    replacement_file = isolated_filesystem / "replacement-extension.json"
+    replacement_file.write_text('{"version": "9.9.9"}')
+    original_get_read_path_identity = cli.get_read_path_identity
+    identity_reads = 0
+
+    def swap_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_read_path_identity(path)
+        if path == metadata_file:
+            identity_reads += 1
+            if identity_reads == 1:
+                metadata_file.rename(saved_file)
+                replacement_file.rename(metadata_file)
+        return identity
+
+    monkeypatch.setattr(cli, "get_read_path_identity", swap_file_after_first_identity)
+
+    with pytest.raises(click.ClickException, match="extension.json path changed"):
+        optional_file_exists(metadata_file, "extension.json")
+
+    assert saved_file.read_text() == "{}"
+    assert metadata_file.read_text() == '{"version": "9.9.9"}'
 
 
 @pytest.mark.unit
