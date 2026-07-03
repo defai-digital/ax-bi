@@ -1124,7 +1124,11 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
-def cleanup_scaffold_directory(path: Path, label: str) -> None:
+def cleanup_scaffold_directory(
+    path: Path,
+    label: str,
+    expected_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     """Remove a scaffold directory created during a failed init run."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
@@ -1142,6 +1146,11 @@ def cleanup_scaffold_directory(path: Path, label: str) -> None:
     directory_identity = get_directory_path_identity(path)
     if directory_identity is None:
         raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
+    if (
+        expected_identity is not None
+        and directory_identity[:2] != expected_identity[:2]
+    ):
+        raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
         if get_directory_path_identity(path) != directory_identity:
             raise click.ClickException(f"Refusing to clean {label}: path changed.")
@@ -2441,10 +2450,16 @@ def init(
     }
 
     created_target_dir = False
+    target_dir_identity: tuple[int, int, int, int] | None = None
     try:
         # Create base directory
         create_scaffold_directory(target_dir, "extension directory")
         created_target_dir = True
+        target_dir_identity = get_directory_path_identity(target_dir)
+        if target_dir_identity is None:
+            raise click.ClickException(
+                "Refusing to create extension directory: path changed."
+            )
         extension_json = env.get_template("extension.json.j2").render(ctx)
         write_scaffold_file(
             target_dir / "extension.json",
@@ -2536,7 +2551,11 @@ def init(
     except click.ClickException as ex:
         if created_target_dir:
             try:
-                cleanup_scaffold_directory(target_dir, "extension directory")
+                cleanup_scaffold_directory(
+                    target_dir,
+                    "extension directory",
+                    target_dir_identity,
+                )
             except click.ClickException as cleanup_ex:
                 click.secho(f"❌ {cleanup_ex.message}", err=True, fg="red")
         click.secho(f"❌ {ex.message}", err=True, fg="red")

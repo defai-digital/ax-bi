@@ -429,6 +429,56 @@ def test_init_cleans_partial_scaffold_on_nested_directory_error(
 
 
 @pytest.mark.cli
+def test_init_refuses_cleanup_when_scaffold_root_changes(
+    cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test init does not clean a replacement scaffold root on rollback."""
+    target_dir = isolated_filesystem / "test-extension"
+    saved_target_dir = isolated_filesystem / "saved-test-extension"
+    replacement_dir = isolated_filesystem / "replacement-test-extension"
+    replacement_dir.mkdir()
+    (replacement_dir / "replacement.txt").write_text("replacement")
+    original_write_scaffold_file = cli.write_scaffold_file
+
+    def swap_target_before_scaffold_failure(path, label, content):
+        if label == ".gitignore":
+            target_dir.rename(saved_target_dir)
+            replacement_dir.rename(target_dir)
+            raise click.ClickException("scaffold failed")
+        original_write_scaffold_file(path, label, content)
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.write_scaffold_file",
+        swap_target_before_scaffold_failure,
+    )
+
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "1.0.0",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Refusing to clean extension directory: path changed" in result.output
+    assert "scaffold failed" in result.output
+    assert_file_exists(saved_target_dir / "extension.json")
+    assert_file_exists(target_dir / "replacement.txt")
+
+
+@pytest.mark.cli
 def test_extension_json_content_is_correct(
     cli_runner, isolated_filesystem, cli_input_both
 ):
