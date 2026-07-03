@@ -1594,8 +1594,15 @@ def build(ctx: click.Context) -> None:
         # Build manifest and write it
         manifest = build_manifest(cwd, remote_entry)
         write_manifest(cwd, manifest)
-    except Exception:
-        rollback_dist_replacement(cwd, dist_backup_root, dist_backup_path)
+    except Exception as ex:
+        try:
+            rollback_dist_replacement(cwd, dist_backup_root, dist_backup_path)
+        except click.ClickException as rollback_ex:
+            if isinstance(ex, click.ClickException):
+                raise click.ClickException(
+                    f"{ex.message}; {rollback_ex.message}"
+                ) from ex
+            raise click.ClickException(f"{ex}; {rollback_ex.message}") from ex
         raise
 
     cleanup_dist_replacement_backup(dist_backup_root)
