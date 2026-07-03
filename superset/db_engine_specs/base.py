@@ -21,14 +21,14 @@ from __future__ import annotations
 import logging
 import re
 import warnings
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from inspect import signature
 from re import Match, Pattern
 from typing import (
     Any,
-    Callable,
     cast,
-    ContextManager,
     NamedTuple,
     Optional,
     TYPE_CHECKING,
@@ -1049,7 +1049,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         catalog: str | None = None,
         schema: str | None = None,
         source: utils.QuerySource | None = None,
-    ) -> ContextManager[Engine]:
+    ) -> AbstractContextManager[Engine]:
         """
         Return an engine context manager.
 
@@ -1409,7 +1409,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         try:
             script = SQLScript(sql, engine=cls.engine)
-            return script.statements[-1].get_limit_value() if script.statements else None
+            return (
+                script.statements[-1].get_limit_value() if script.statements else None
+            )
         except SupersetParseError:
             # SQL with a malformed LIMIT clause (e.g. LIMIT without a value) is
             # not parseable in sqlglot 30+, which now requires an expression arg.

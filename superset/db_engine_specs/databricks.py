@@ -16,8 +16,9 @@
 # under the License.
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TYPE_CHECKING, TypedDict, Union
+from typing import Any, TYPE_CHECKING, TypedDict, Union
 
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -615,7 +616,10 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
                 if len(catalogs) == 1:
                     return catalogs.pop()
 
-                return connection.execute(text("SELECT current_catalog()")).scalar() or DEFAULT_CATALOG
+                return (
+                    connection.execute(text("SELECT current_catalog()")).scalar()
+                    or DEFAULT_CATALOG
+                )
 
     @classmethod
     def get_prequeries(

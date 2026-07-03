@@ -167,8 +167,8 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
     @classmethod
     def get_oauth2_authorization_uri(
         cls,
-        config: "OAuth2ClientConfig",
-        state: "OAuth2State",
+        config: OAuth2ClientConfig,
+        state: OAuth2State,
         code_verifier: str | None = None,
     ) -> str:
         """

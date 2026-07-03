@@ -18,8 +18,9 @@
 import contextlib
 import re
 import threading
+from collections.abc import Callable
 from re import Pattern
-from typing import Any, Callable, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from flask_babel import gettext as __
 from sqlalchemy.engine.reflection import Inspector

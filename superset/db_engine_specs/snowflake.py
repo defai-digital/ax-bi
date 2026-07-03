@@ -252,7 +252,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return parse.unquote(database.split("/")[1])
 
     @classmethod
-    def get_default_catalog(cls, database: "Database") -> Optional[str]:
+    def get_default_catalog(cls, database: Database) -> Optional[str]:
         """
         Return the default catalog.
         """
@@ -264,7 +264,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
     @classmethod
     def get_catalog_names(
         cls,
-        database: "Database",
+        database: Database,
         inspector: Inspector,
     ) -> set[str]:
         """
@@ -303,7 +303,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return None
 
     @staticmethod
-    def mutate_db_for_connection_test(database: "Database") -> None:
+    def mutate_db_for_connection_test(database: Database) -> None:
         """
         By default, snowflake doesn't validate if the user/role has access to the chosen
         database.
@@ -449,7 +449,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
 
     @staticmethod
     def update_params_from_encrypted_extra(
-        database: "Database",
+        database: Database,
         params: dict[str, Any],
     ) -> None:
         if not database.encrypted_extra:

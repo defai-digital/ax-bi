@@ -19,10 +19,11 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
+from collections.abc import Callable
 from datetime import datetime
 from decimal import Decimal
 from re import Pattern
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 from urllib import parse
 
 from flask_babel import gettext as __
