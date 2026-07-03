@@ -368,6 +368,11 @@ export class SupersetClient
         ['annotation layer list request contains invalid pagination'],
       );
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyAnnotationLayerListResponse(request, [
+        'annotation layer list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildAnnotationLayerListUrl(request);
 
@@ -427,6 +432,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyAnnotationListResponse(withFallbackListPagination(request), [
         'annotation list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptyAnnotationListResponse(request, [
+        'annotation list request contains invalid ordering',
       ]);
     }
 
@@ -579,6 +589,11 @@ export class SupersetClient
         'dashboard list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyDashboardListResponse(request, [
+        'dashboard list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildDashboardListUrl(request);
 
@@ -631,6 +646,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyChartListResponse(withFallbackListPagination(request), [
         'chart list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptyChartListResponse(request, [
+        'chart list request contains invalid ordering',
       ]);
     }
 
@@ -687,6 +707,11 @@ export class SupersetClient
         'dataset list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyDatasetListResponse(request, [
+        'dataset list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildDatasetListUrl(request);
 
@@ -739,6 +764,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyDatabaseListResponse(withFallbackListPagination(request), [
         'database list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptyDatabaseListResponse(request, [
+        'database list request contains invalid ordering',
       ]);
     }
 
@@ -795,6 +825,11 @@ export class SupersetClient
         'query list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyQueryListResponse(request, [
+        'query list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildQueryListUrl(request);
 
@@ -847,6 +882,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptySavedQueryListResponse(withFallbackListPagination(request), [
         'saved query list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptySavedQueryListResponse(request, [
+        'saved query list request contains invalid ordering',
       ]);
     }
 
@@ -903,6 +943,11 @@ export class SupersetClient
         'report list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyReportListResponse(request, [
+        'report list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildReportListUrl(request);
 
@@ -957,6 +1002,11 @@ export class SupersetClient
         'role list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyRoleListResponse(request, [
+        'role list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildRoleListUrl(request);
 
@@ -1007,6 +1057,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyRlsListResponse(withFallbackListPagination(request), [
         'RLS filter list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptyRlsListResponse(request, [
+        'RLS filter list request contains invalid ordering',
       ]);
     }
 
@@ -1063,6 +1118,11 @@ export class SupersetClient
         'tag list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListOrdering(request)) {
+      return emptyTagListResponse(request, [
+        'tag list request contains invalid ordering',
+      ]);
+    }
 
     const url = this.buildTagListUrl(request);
 
@@ -1113,6 +1173,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyTaskListResponse(withFallbackListPagination(request), [
         'task list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListOrdering(request)) {
+      return emptyTaskListResponse(request, [
+        'task list request contains invalid ordering',
       ]);
     }
 
@@ -1343,6 +1408,11 @@ type SearchableAssetType = Exclude<AssetType, 'metric'>;
 interface ListPaginationRequest {
   page: number;
   pageSize: number;
+}
+
+interface ListOrderingRequest {
+  orderColumn?: unknown;
+  orderDirection: unknown;
 }
 
 interface SupersetListItem {
@@ -3228,6 +3298,25 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isListPageSize(value: unknown): value is number {
   return isInteger(value) && value >= 1 && value <= 100;
+}
+
+function hasValidListOrdering(request: ListOrderingRequest): boolean {
+  return (
+    isListOrderDirection(request.orderDirection) &&
+    isOptionalListOrderColumn(request.orderColumn)
+  );
+}
+
+function isListOrderDirection(value: unknown): value is 'asc' | 'desc' {
+  return value === 'asc' || value === 'desc';
+}
+
+function isOptionalListOrderColumn(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (typeof value === 'string' &&
+      (value === '' || /^[A-Za-z0-9_]+$/.test(value)))
+  );
 }
 
 function isAssetSearchLimit(value: unknown): value is number {
