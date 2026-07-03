@@ -471,10 +471,10 @@ def test_build_command_reports_failed_dist_cleanup_during_rollback(
 
     original_remove_output_directory = cli.remove_output_directory
 
-    def fail_partial_dist_cleanup(path, label, expected_identity=None):
+    def fail_partial_dist_cleanup(path, label, expected_identity=None, **kwargs):
         if path == previous_dist and label == "dist directory":
             raise click.ClickException("cleanup denied")
-        original_remove_output_directory(path, label, expected_identity)
+        original_remove_output_directory(path, label, expected_identity, **kwargs)
 
     monkeypatch.setattr(cli, "remove_output_directory", fail_partial_dist_cleanup)
 
@@ -1845,6 +1845,52 @@ def test_publish_output_file_rejects_changed_backup_cleanup_root(
 
 
 @pytest.mark.unit
+def test_publish_output_file_preserves_backup_moved_to_new_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test file backup cleanup refuses a backup root moved under a new parent."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = output_dir / "bundle.supx"
+    output_path.write_text("original bundle")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    moved_backup_root: Path | None = None
+    from superset_extensions_cli import cli
+
+    original_remove_output_directory = cli.remove_output_directory
+
+    def move_parent_before_backup_cleanup(
+        path, label, expected_identity=None, **kwargs
+    ):
+        nonlocal moved_backup_root
+        if path.parent == output_dir and path.name.startswith(".bundle.supx-backup."):
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / "bundle.supx").rename(
+                replacement_output_dir / "bundle.supx"
+            )
+            (saved_output_dir / path.name).rename(replacement_output_dir / path.name)
+            replacement_output_dir.rename(output_dir)
+            moved_backup_root = output_dir / path.name
+        original_remove_output_directory(path, label, expected_identity, **kwargs)
+
+    monkeypatch.setattr(
+        cli, "remove_output_directory", move_parent_before_backup_cleanup
+    )
+
+    publish_output_file(staged_file, output_path, "bundle")
+
+    assert moved_backup_root is not None
+    assert output_path.read_text() == "new bundle"
+    assert (moved_backup_root / "bundle.supx").read_text() == "original bundle"
+    assert not (saved_output_dir / moved_backup_root.name).exists()
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):
@@ -2389,10 +2435,10 @@ def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
 
     original_remove_output_directory = cli.remove_output_directory
 
-    def fail_backup_cleanup(path, label, expected_identity=None):
+    def fail_backup_cleanup(path, label, expected_identity=None, **kwargs):
         if path.name.startswith(".frontend-backup."):
             raise click.ClickException("backup cleanup failed")
-        original_remove_output_directory(path, label, expected_identity)
+        original_remove_output_directory(path, label, expected_identity, **kwargs)
 
     monkeypatch.setattr(cli, "remove_output_directory", fail_backup_cleanup)
 
@@ -2440,6 +2486,52 @@ def test_publish_staged_output_directory_rejects_changed_backup_cleanup_root(
     assert_file_exists(output_path / "new.js")
     assert_file_exists(swapped_backup_root / "replacement.txt")
     assert_file_exists(saved_backup_root / "frontend" / "old.js")
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_preserves_backup_moved_to_new_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backup cleanup refuses a backup root moved under a new parent."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = output_dir / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    moved_backup_root: Path | None = None
+    from superset_extensions_cli import cli
+
+    original_remove_output_directory = cli.remove_output_directory
+
+    def move_parent_before_backup_cleanup(
+        path, label, expected_identity=None, **kwargs
+    ):
+        nonlocal moved_backup_root
+        if path.parent == output_dir and path.name.startswith(".frontend-backup."):
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / "frontend").rename(replacement_output_dir / "frontend")
+            (saved_output_dir / path.name).rename(replacement_output_dir / path.name)
+            replacement_output_dir.rename(output_dir)
+            moved_backup_root = output_dir / path.name
+        original_remove_output_directory(path, label, expected_identity, **kwargs)
+
+    monkeypatch.setattr(
+        cli, "remove_output_directory", move_parent_before_backup_cleanup
+    )
+
+    publish_staged_output_directory(staged_dir, output_path, "dist/frontend directory")
+
+    assert moved_backup_root is not None
+    assert_file_exists(output_path / "new.js")
+    assert_file_exists(moved_backup_root / "frontend" / "old.js")
+    assert not (saved_output_dir / moved_backup_root.name).exists()
 
 
 @pytest.mark.unit

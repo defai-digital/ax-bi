@@ -909,6 +909,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -921,6 +922,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -932,6 +934,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -975,6 +978,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1029,6 +1033,7 @@ def publish_staged_output_directory(
                 backup_root,
                 f"temporary {label} backup directory",
                 backup_root_identity,
+                expected_parent_identity=target_parent_identity[:2],
             )
         except click.ClickException:
             pass
@@ -1097,6 +1102,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1109,6 +1115,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1121,6 +1128,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1132,6 +1140,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1183,6 +1192,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1195,6 +1205,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException:
                 pass
@@ -1248,6 +1259,7 @@ def publish_output_file(
                 backup_root,
                 f"temporary {label} backup",
                 backup_root_identity,
+                expected_parent_identity=target_parent_identity[:2],
             )
         except click.ClickException:
             pass
