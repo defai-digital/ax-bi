@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const ANNOTATION_LAYER_LIST_CONTRACT_VERSION =
   'annotation-layer-list.v1';
 
@@ -118,10 +120,7 @@ export const annotationLayerListRequestSchema = {
       type: 'array',
       items: annotationLayerFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

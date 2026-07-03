@@ -76,7 +76,8 @@
       "selectColumns": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "search": {

@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const DASHBOARD_LIST_CONTRACT_VERSION = 'dashboard-list.v1';
 
 export type DashboardFilterValue =
@@ -133,10 +135,7 @@ export const dashboardListRequestSchema = {
       type: 'array',
       items: dashboardFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

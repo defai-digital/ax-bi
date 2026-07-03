@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const DATASET_LIST_CONTRACT_VERSION = 'dataset-list.v1';
 
 export type DatasetFilterValue =
@@ -137,10 +139,7 @@ export const datasetListRequestSchema = {
       type: 'array',
       items: datasetFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

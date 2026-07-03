@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const ROLE_LIST_CONTRACT_VERSION = 'role-list.v1';
 
 export type RoleFilterValue =
@@ -111,10 +113,7 @@ export const roleListRequestSchema = {
       type: 'array',
       items: roleFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

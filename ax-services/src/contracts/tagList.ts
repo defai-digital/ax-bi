@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const TAG_LIST_CONTRACT_VERSION = 'tag-list.v1';
 
 export type TagFilterValue =
@@ -123,10 +125,7 @@ export const tagListRequestSchema = {
       type: 'array',
       items: tagFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

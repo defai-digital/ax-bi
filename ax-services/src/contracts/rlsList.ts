@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const RLS_LIST_CONTRACT_VERSION = 'rls-list.v1';
 
 export type RlsFilterValue =
@@ -148,7 +150,7 @@ export const rlsListRequestSchema = {
   properties: {
     contractVersion: { const: RLS_LIST_CONTRACT_VERSION },
     filters: { type: 'array', items: rlsFilterSchema },
-    selectColumns: { type: 'array', items: { type: 'string' } },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

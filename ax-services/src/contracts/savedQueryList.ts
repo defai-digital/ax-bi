@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const SAVED_QUERY_LIST_CONTRACT_VERSION = 'saved-query-list.v1';
 
 export type SavedQueryFilterValue =
@@ -129,10 +131,7 @@ export const savedQueryListRequestSchema = {
       type: 'array',
       items: savedQueryFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const CHART_LIST_CONTRACT_VERSION = 'chart-list.v1';
 
 export type ChartFilterValue =
@@ -131,10 +133,7 @@ export const chartListRequestSchema = {
       type: 'array',
       items: chartFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },

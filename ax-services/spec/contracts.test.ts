@@ -59,6 +59,7 @@ import {
   RUNTIME_CONTRACT_VERSION,
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
+import { listColumnSchema } from '../src/contracts/listColumn';
 import {
   queryListContractSchemas,
   QUERY_LIST_CONTRACT_VERSION,
@@ -255,10 +256,23 @@ test('RLS list request schema is registered in RLS list contracts', () => {
     minimum: 1,
   });
   expect(
+    rlsListContractSchemas.rlsListRequestSchema.properties.selectColumns,
+  ).toBe(listColumnSchema);
+  expect(
     rlsListContractSchemas.rlsListResponseSchema.properties.rlsFilters.items
       .properties.clause,
   ).toEqual({
     type: 'string',
+  });
+});
+
+test('dashboard list request schema restricts requested columns to tokens', () => {
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties
+      .selectColumns,
+  ).toEqual({
+    type: 'array',
+    items: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
   });
 });
 

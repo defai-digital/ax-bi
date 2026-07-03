@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { listColumnSchema } from './listColumn';
+
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
 
 export type DatabaseFilterValue =
@@ -154,10 +156,7 @@ export const databaseListRequestSchema = {
       type: 'array',
       items: databaseFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    selectColumns: listColumnSchema,
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },
