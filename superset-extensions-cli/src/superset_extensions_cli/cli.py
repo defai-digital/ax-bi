@@ -730,9 +730,6 @@ def copy_backend_files(cwd: Path) -> None:
     require_optional_directory(backend_dir_path, "backend")
     backend_dir = backend_dir_path.resolve()
 
-    ensure_output_directory(dist_dir, "dist directory")
-    ensure_output_directory(backend_output_dir, "dist/backend directory")
-
     # Read build config from pyproject.toml
     pyproject_path = backend_dir / "pyproject.toml"
     if not input_file_exists(pyproject_path, "backend/pyproject.toml"):
@@ -770,6 +767,9 @@ def copy_backend_files(cwd: Path) -> None:
                 continue
 
             copy_targets.append((f, backend_output_dir / relative_path))
+
+    ensure_output_directory(dist_dir, "dist directory")
+    ensure_output_directory(backend_output_dir, "dist/backend directory")
 
     for _, tgt in copy_targets:
         ensure_output_file_parent(

@@ -1232,6 +1232,8 @@ license = "Apache-2.0"
     with pytest.raises(click.ClickException, match="Invalid backend build config"):
         copy_backend_files(isolated_filesystem)
 
+    assert not (isolated_filesystem / "dist" / "backend").exists()
+
 
 @pytest.mark.unit
 def test_copy_backend_files_rejects_invalid_build_parent_config(
@@ -1275,6 +1277,8 @@ def test_copy_backend_files_rejects_malformed_pyproject_toml(
     with pytest.raises(click.ClickException, match="Invalid backend pyproject.toml"):
         copy_backend_files(isolated_filesystem)
 
+    assert not (isolated_filesystem / "dist" / "backend").exists()
+
 
 @pytest.mark.unit
 def test_copy_backend_files_rejects_missing_pyproject_toml(
@@ -1290,6 +1294,8 @@ def test_copy_backend_files_rejects_missing_pyproject_toml(
 
     with pytest.raises(click.ClickException, match="backend pyproject.toml not found"):
         copy_backend_files(isolated_filesystem)
+
+    assert not (isolated_filesystem / "dist" / "backend").exists()
 
 
 @pytest.mark.unit
