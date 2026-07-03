@@ -277,7 +277,7 @@ class HashDevEmbeddingProvider:
 
         embeddings = []
         for text in texts:
-            seed = sha256(f"{is_query}:{text}".encode("utf-8")).digest()
+            seed = sha256(f"{is_query}:{text}".encode()).digest()
             values: list[float] = []
             while len(values) < self.dimensions:
                 seed = sha256(seed).digest()
