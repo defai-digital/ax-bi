@@ -331,6 +331,26 @@ def test_bundle_rejects_symlink_output_path(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_symlink_output_directory(
+    mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
+):
+    """Test bundle refuses output directories that are symlinks."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_dir)])
+
+    assert result.exit_code == 1
+    assert "Refusing to write bundle through symlinked directory" in result.output
+    assert not (outside_dir / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_non_file_output_path(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):
