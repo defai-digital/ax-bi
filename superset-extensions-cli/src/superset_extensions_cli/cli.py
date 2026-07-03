@@ -101,9 +101,9 @@ def validate_npm() -> None:
             )
             sys.exit(1)
 
-    except FileNotFoundError:
+    except OSError as ex:
         click.secho(
-            "❌ npm was not found when checking its version.",
+            f"❌ Failed to run `npm -v`: {ex}",
             err=True,
             fg="red",
         )

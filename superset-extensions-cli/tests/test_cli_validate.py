@@ -239,39 +239,26 @@ def test_validate_npm_version_comparison_edge_cases(
 @pytest.mark.unit
 @patch("shutil.which")
 @patch("subprocess.run")
-def test_validate_npm_handles_file_not_found_exception(mock_run, mock_which):
-    """Test validate_npm handles FileNotFoundError gracefully."""
+@pytest.mark.parametrize(
+    "exception_type",
+    [
+        FileNotFoundError,
+        OSError,
+        PermissionError,
+    ],
+)
+def test_validate_npm_handles_subprocess_launch_errors(
+    mock_run, mock_which, capsys, exception_type
+):
+    """Test validate_npm handles npm launch errors gracefully."""
     mock_which.return_value = "/usr/bin/npm"
-    mock_run.side_effect = FileNotFoundError("Test error")
+    mock_run.side_effect = exception_type("Test error")
 
     with pytest.raises(SystemExit) as exc_info:
         validate_npm()
 
     assert exc_info.value.code == 1
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "exception_type",
-    [
-        OSError,
-        PermissionError,
-    ],
-)
-@patch("shutil.which")
-@patch("subprocess.run")
-def test_validate_npm_does_not_catch_other_subprocess_exceptions(
-    mock_run, mock_which, exception_type
-):
-    """
-    Test validate_npm does not catch OSError and PermissionError (they propagate up).
-    """
-    mock_which.return_value = "/usr/bin/npm"
-    mock_run.side_effect = exception_type("Test error")
-
-    # These exceptions should propagate up, not be caught
-    with pytest.raises(exception_type):
-        validate_npm()
+    assert "Failed to run `npm -v`: Test error" in capsys.readouterr().err
 
 
 @pytest.mark.unit
