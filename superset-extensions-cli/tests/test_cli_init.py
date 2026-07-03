@@ -21,6 +21,7 @@ from pathlib import Path
 
 import click
 import pytest
+import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import app, cleanup_scaffold_directory
 
 from tests.utils import (
@@ -225,6 +226,47 @@ def test_cleanup_scaffold_directory_rejects_broken_symlink_target(
         cleanup_scaffold_directory(target_link, "extension directory")
 
     assert target_link.is_symlink()
+
+
+@pytest.mark.unit
+def test_cleanup_scaffold_directory_rejects_changed_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test scaffold cleanup refuses a directory changed before deletion."""
+    target_dir = isolated_filesystem / "test-extension"
+    target_dir.mkdir()
+    (target_dir / "extension.json").write_text("{}")
+    replacement_dir = isolated_filesystem / "replacement-extension"
+    replacement_dir.mkdir()
+    (replacement_dir / "replacement.json").write_text("{}")
+    saved_original = isolated_filesystem / "saved-original-extension"
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def replace_target_after_initial_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == target_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                target_dir.rename(saved_original)
+                replacement_dir.rename(target_dir)
+        return identity
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.get_directory_path_identity",
+        replace_target_after_initial_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean extension directory: path changed",
+    ):
+        cleanup_scaffold_directory(target_dir, "extension directory")
+
+    assert_file_exists(saved_original / "extension.json")
+    assert_file_exists(target_dir / "replacement.json")
 
 
 @pytest.mark.cli

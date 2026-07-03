@@ -952,8 +952,15 @@ def cleanup_scaffold_directory(path: Path, label: str) -> None:
             f"Refusing to clean {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
         )
+    directory_identity = get_directory_path_identity(path)
+    if directory_identity is None:
+        raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
     try:
+        if get_directory_path_identity(path) != directory_identity:
+            raise click.ClickException(f"Refusing to clean {label}: path changed.")
         shutil.rmtree(path)
+    except click.ClickException:
+        raise
     except OSError as ex:
         raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
 
