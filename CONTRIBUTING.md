@@ -23,6 +23,9 @@ AX-BI is developed and maintained by DEFAI Private Limited.
 At this time, AX-BI is not accepting unsolicited public code contributions or
 pull requests.
 
+All project interactions are governed by the
+[AX-BI Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## What We Welcome
 
 - Bug reports
