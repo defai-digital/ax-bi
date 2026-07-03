@@ -145,16 +145,7 @@ def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
 
 def _get_parent_directory_identity(path: Path) -> tuple[int, int] | None:
     """Return parent identity unless it crosses a symlink boundary."""
-    parent = Path(path).parent
-    if parent.is_symlink() or not parent.is_dir():
-        return None
-    if any(ancestor.is_symlink() for ancestor in (parent, *parent.parents)):
-        return None
-    try:
-        stat = parent.stat()
-    except OSError:
-        return None
-    return (stat.st_dev, stat.st_ino)
+    return get_directory_node_identity(Path(path).parent)
 
 
 def get_read_parent_identity(path: Path) -> tuple[int, int] | None:

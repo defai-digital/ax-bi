@@ -23,12 +23,68 @@ from pathlib import Path
 import pytest
 import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
+    get_directory_node_identity,
+    get_directory_path_identity,
     read_json,
     read_toml,
     write_json,
     write_text_atomic,
     write_toml,
 )
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_returns_directory_metadata(isolated_filesystem):
+    """Test directory path identity includes node and content metadata."""
+    directory = isolated_filesystem / "metadata"
+    directory.mkdir()
+
+    identity = get_directory_path_identity(directory)
+    stat = directory.stat()
+
+    assert identity == (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+@pytest.mark.unit
+def test_get_directory_node_identity_returns_stable_node_identity(isolated_filesystem):
+    """Test directory node identity excludes directory content metadata."""
+    directory = isolated_filesystem / "metadata"
+    directory.mkdir()
+
+    path_identity = get_directory_path_identity(directory)
+    node_identity = get_directory_node_identity(directory)
+
+    assert path_identity is not None
+    assert node_identity == path_identity[:2]
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_rejects_symlinked_directory(
+    isolated_filesystem,
+):
+    """Test directory path identity refuses a symlinked directory path."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    directory_link = isolated_filesystem / "metadata"
+    directory_link.symlink_to(outside_dir)
+
+    assert get_directory_path_identity(directory_link) is None
+    assert get_directory_node_identity(directory_link) is None
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_rejects_symlinked_ancestor(
+    isolated_filesystem,
+):
+    """Test directory path identity refuses paths below symlinked ancestors."""
+    outside_dir = isolated_filesystem / "outside"
+    nested_outside_dir = outside_dir / "metadata"
+    nested_outside_dir.mkdir(parents=True)
+    directory_link = isolated_filesystem / "linked"
+    directory_link.symlink_to(outside_dir)
+
+    assert get_directory_path_identity(directory_link / "metadata") is None
+    assert get_directory_node_identity(directory_link / "metadata") is None
 
 
 # Read JSON Tests
