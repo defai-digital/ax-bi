@@ -23,10 +23,11 @@ import logging
 import signal
 import threading
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from queue import Empty, Full, Queue
-from typing import Any, Dict, Generator
+from typing import Any
 
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -94,7 +95,7 @@ class WebDriverPool:
 
         # Thread-safe pool management
         self._pool: Queue[PooledWebDriver] = Queue(maxsize=max_pool_size)
-        self._active_drivers: Dict[int, PooledWebDriver] = {}
+        self._active_drivers: dict[int, PooledWebDriver] = {}
         self._lock = threading.RLock()
         self._last_health_check = time.time()
 
@@ -108,7 +109,7 @@ class WebDriverPool:
             "evictions": 0,
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get pool statistics for monitoring"""
         with self._lock:
             return {
