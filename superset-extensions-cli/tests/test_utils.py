@@ -666,6 +666,42 @@ def test_write_text_atomic_rejects_changed_temp_cleanup_path(
 
 
 @pytest.mark.unit
+def test_write_text_atomic_rejects_changed_temp_cleanup_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic write cleanup refuses a changed temporary file."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    original_validate_write_path = utils.validate_write_path
+    temp_path: Path | None = None
+    validation_calls = 0
+
+    def change_temp_before_validation_failure(path):
+        nonlocal temp_path, validation_calls
+        result = original_validate_write_path(path)
+        validation_calls += 1
+        if validation_calls == 2:
+            temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+            assert len(temp_files) == 1
+            temp_path = temp_files[0]
+            temp_path.write_text("changed temp")
+            raise OSError("validation failed")
+        return result
+
+    monkeypatch.setattr(
+        utils, "validate_write_path", change_temp_before_validation_failure
+    )
+
+    with pytest.raises(OSError, match="validation failed"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "old"
+    assert temp_path is not None
+    assert temp_path.read_text() == "changed temp"
+
+
+@pytest.mark.unit
 def test_write_text_atomic_rejects_changed_promoted_target(
     isolated_filesystem,
     monkeypatch,

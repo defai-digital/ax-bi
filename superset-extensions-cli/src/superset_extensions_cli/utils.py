@@ -244,7 +244,7 @@ def write_text_atomic(path: Path, content: str) -> None:
                 current_temp_identity = get_read_path_identity(temp_path)
                 if (
                     current_temp_identity is not None
-                    and current_temp_identity[:2] == temp_identity[:2]
+                    and current_temp_identity == temp_identity
                     and get_read_path_identity(temp_path) == current_temp_identity
                 ):
                     temp_path.unlink()
