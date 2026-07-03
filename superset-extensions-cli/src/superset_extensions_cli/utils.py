@@ -99,21 +99,31 @@ TECHNICAL_NAME_REGEX = re.compile(TECHNICAL_NAME_PATTERN)
 DISPLAY_NAME_REGEX = re.compile(DISPLAY_NAME_PATTERN)
 
 
-def read_toml(path: Path) -> dict[str, Any] | None:
+def validate_read_path(path: Path) -> Path | None:
+    """Return a normalized input path unless it crosses a symlink boundary."""
     path = Path(path)
     if path.is_symlink() or not path.is_file():
         return None
+    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
+        return None
+    return path
 
-    with path.open("rb") as f:
+
+def read_toml(path: Path) -> dict[str, Any] | None:
+    read_path = validate_read_path(path)
+    if read_path is None:
+        return None
+
+    with read_path.open("rb") as f:
         return tomllib.load(f)
 
 
 def read_json(path: Path) -> dict[str, Any] | None:
-    path = Path(path)
-    if path.is_symlink() or not path.is_file():
+    read_path = validate_read_path(path)
+    if read_path is None:
         return None
 
-    return json.loads(path.read_text())
+    return json.loads(read_path.read_text())
 
 
 def validate_write_path(path: Path) -> Path:

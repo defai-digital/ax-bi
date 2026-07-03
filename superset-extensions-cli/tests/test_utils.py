@@ -81,6 +81,35 @@ def test_read_json_with_symlinked_file(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_json_with_symlinked_parent(isolated_filesystem):
+    """Test read_json returns None when a parent directory is a symlink."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "metadata.json").write_text('{"name": "outside"}')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_json(output_dir / "metadata.json")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_json_with_symlinked_ancestor(isolated_filesystem):
+    """Test read_json returns None below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    (outside_nested / "metadata.json").write_text('{"name": "outside"}')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_json(output_dir / "nested" / "metadata.json")
+
+    assert result is None
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
@@ -147,6 +176,35 @@ def test_read_toml_with_symlinked_file(isolated_filesystem):
     toml_link.symlink_to(outside_file)
 
     result = read_toml(toml_link)
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_with_symlinked_parent(isolated_filesystem):
+    """Test read_toml returns None when a parent directory is a symlink."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "pyproject.toml").write_text('[project]\nname = "outside"')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_toml(output_dir / "pyproject.toml")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_with_symlinked_ancestor(isolated_filesystem):
+    """Test read_toml returns None below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    (outside_nested / "pyproject.toml").write_text('[project]\nname = "outside"')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_toml(output_dir / "nested" / "pyproject.toml")
 
     assert result is None
 
