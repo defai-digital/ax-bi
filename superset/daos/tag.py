@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask import g
 from sqlalchemy.exc import NoResultFound
@@ -163,7 +163,7 @@ class TagDAO(BaseDAO[Tag]):
 
     @staticmethod
     def get_tagged_objects_by_tag_ids(
-        tag_ids: Optional[list[int]], obj_types: Optional[list[str]] = None
+        tag_ids: list[int] | None, obj_types: list[str] | None = None
     ) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
 
@@ -249,7 +249,7 @@ class TagDAO(BaseDAO[Tag]):
 
     @staticmethod
     def get_tagged_objects_by_tag_names(
-        tag_names: Optional[list[str]] = None, obj_types: Optional[list[str]] = None
+        tag_names: list[str] | None = None, obj_types: list[str] | None = None
     ) -> list[dict[str, Any]]:
         """
         returns a list of tagged objects filtered by tag names and object types
