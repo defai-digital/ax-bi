@@ -18,7 +18,7 @@
 import logging
 from datetime import datetime
 from io import BytesIO
-from typing import Any, cast, Optional
+from typing import Any, cast
 from zipfile import is_zipfile, ZipFile
 
 from flask import current_app, redirect, request, Response, send_file, url_for
@@ -114,7 +114,7 @@ class ChartRestApi(BaseSupersetModelRestApi):
     allow_browser_login = True
 
     @before_request(only=["thumbnail", "screenshot", "cache_screenshot"])
-    def ensure_thumbnails_enabled(self) -> Optional[Response]:
+    def ensure_thumbnails_enabled(self) -> Response | None:
         if not is_feature_enabled("THUMBNAILS"):
             return self.response_404()
         return None
@@ -1031,7 +1031,7 @@ class ChartRestApi(BaseSupersetModelRestApi):
 
         return self.response(200, result="OK")
 
-    def _pre_related_check(self, column_name: str) -> Optional[Response]:
+    def _pre_related_check(self, column_name: str) -> Response | None:
         """Restrict the owners related field to users with write access."""
         if (
             column_name == "owners"
