@@ -2368,6 +2368,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         zip_path = output
 
     temp_path: Path | None = None
+    temp_identity: tuple[int, int, int, int] | None = None
     try:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
@@ -2423,6 +2424,11 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             suffix=".tmp",
         ) as temp_file:
             temp_path = Path(temp_file.name)
+        temp_identity = get_read_path_identity(temp_path)
+        if temp_identity is None:
+            raise click.ClickException(
+                "Refusing to write bundle: temporary archive path is unsafe."
+            )
 
         with zipfile.ZipFile(temp_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file, arcname, identity in bundle_entries:
@@ -2434,14 +2440,22 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 )
                 zipf.write(file, arcname)
 
+        current_temp_identity = get_read_path_identity(temp_path)
+        if (
+            current_temp_identity is None
+            or current_temp_identity[:2] != temp_identity[:2]
+        ):
+            raise click.ClickException(
+                "Refusing to publish bundle: temporary archive path changed."
+            )
         validate_bundle_output_path(zip_path)
         publish_output_file(temp_path, zip_path, "bundle")
         temp_path = None
     except Exception as ex:
-        if temp_path is not None:
+        if temp_path is not None and temp_identity is not None:
             try:
-                temp_path.unlink(missing_ok=True)
-            except OSError:
+                remove_output_file(temp_path, "temporary bundle", temp_identity)
+            except click.ClickException:
                 pass
         click.secho(f"❌ Failed to create bundle: {ex}", err=True, fg="red")
         sys.exit(1)

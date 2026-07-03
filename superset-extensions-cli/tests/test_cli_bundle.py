@@ -536,6 +536,47 @@ def test_bundle_revalidates_output_path_before_publish(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_changed_temp_archive_before_publish(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses to publish a replaced temporary archive."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    saved_temp = isolated_filesystem / "saved-temp.supx"
+    replacement_temp = isolated_filesystem / "replacement-temp.supx"
+    replacement_temp.write_text("replacement bundle")
+    swapped_temp_path: Path | None = None
+    original_zip_write = zipfile.ZipFile.write
+
+    def swap_temp_after_zip_write(self, *args, **kwargs):
+        nonlocal swapped_temp_path
+        result = original_zip_write(self, *args, **kwargs)
+        if swapped_temp_path is None:
+            temp_archive = Path(self.filename)
+            temp_archive.rename(saved_temp)
+            replacement_temp.replace(temp_archive)
+            swapped_temp_path = temp_archive
+        return result
+
+    monkeypatch.setattr(zipfile.ZipFile, "write", swap_temp_after_zip_write)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "temporary archive path changed" in result.output
+    assert swapped_temp_path is not None
+    assert swapped_temp_path.read_text() == "replacement bundle"
+    assert saved_temp.exists()
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_output_parent_changed_before_temp_creation(
     mock_build,
     cli_runner,
