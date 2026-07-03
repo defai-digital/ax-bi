@@ -1269,9 +1269,7 @@ class SqlMetric(AuditMixinNullable, ImportExportMixin, CertificationMixin, Model
     @property
     def perm(self) -> str | None:
         return (
-            ("{parent_name}.[{obj.metric_name}](id:{obj.id})").format(
-                obj=self, parent_name=self.table.full_name
-            )
+            f"{self.table.full_name}.[{self.metric_name}](id:{self.id})"
             if self.table
             else None
         )
