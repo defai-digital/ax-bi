@@ -568,10 +568,49 @@ def test_bundle_rejects_changed_temp_archive_before_publish(
 
     assert result.exit_code == 1
     assert "Failed to create bundle" in result.output
-    assert "temporary archive path changed" in result.output
+    assert "temporary archive is not a valid zip" in result.output
     assert swapped_temp_path is not None
     assert swapped_temp_path.read_text() == "replacement bundle"
     assert saved_temp.exists()
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_invalid_temp_archive_before_publish(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle verifies the temporary archive before publishing."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    original_exit = zipfile.ZipFile.__exit__
+    rewritten_temp_path: Path | None = None
+
+    def rewrite_temp_archive_after_zip_close(self, exc_type, exc_value, traceback):
+        nonlocal rewritten_temp_path
+        result = original_exit(self, exc_type, exc_value, traceback)
+        if rewritten_temp_path is None:
+            temp_archive = Path(self.filename)
+            if temp_archive.name.startswith(".test-extension-1.0.0.supx."):
+                temp_archive.write_text("not a zip")
+                rewritten_temp_path = temp_archive
+        return result
+
+    monkeypatch.setattr(
+        zipfile.ZipFile, "__exit__", rewrite_temp_archive_after_zip_close
+    )
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "temporary archive is not a valid zip" in result.output
+    assert rewritten_temp_path is not None
+    assert not rewritten_temp_path.exists()
     assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
 
 

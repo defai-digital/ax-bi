@@ -1885,6 +1885,46 @@ def get_bundle_default_filename(extension_name: str, extension_version: str) -> 
     return filename
 
 
+def verify_bundle_archive_contents(
+    archive_path: Path,
+    bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]],
+    resolved_dist_dir: Path,
+) -> None:
+    """Verify a temporary bundle archive still matches planned dist entries."""
+    expected_names = {arcname.as_posix() for _, arcname, _ in bundle_entries}
+    try:
+        with zipfile.ZipFile(archive_path, "r") as zipf:
+            archive_names = zipf.namelist()
+            actual_names = set(archive_names)
+            if (
+                len(archive_names) != len(expected_names)
+                or actual_names != expected_names
+            ):
+                raise click.ClickException(
+                    "Refusing to publish bundle: temporary archive content changed."
+                )
+            for file, arcname, identity in bundle_entries:
+                ensure_copy_source_unchanged(
+                    file,
+                    resolved_dist_dir,
+                    identity,
+                    f"bundle entry {arcname}",
+                )
+                if zipf.read(arcname.as_posix()) != file.read_bytes():
+                    raise click.ClickException(
+                        "Refusing to publish bundle: temporary archive content "
+                        f"changed for {arcname}."
+                    )
+    except zipfile.BadZipFile as ex:
+        raise click.ClickException(
+            "Refusing to publish bundle: temporary archive is not a valid zip."
+        ) from ex
+    except OSError as ex:
+        raise click.ClickException(
+            f"Failed to verify temporary bundle archive: {ex}"
+        ) from ex
+
+
 class FrontendChangeHandler(FileSystemEventHandler):
     def __init__(self, trigger_build: Callable[[], None]):
         self.trigger_build = trigger_build
@@ -2585,6 +2625,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 )
                 zipf.write(file, arcname)
 
+        verify_bundle_archive_contents(temp_path, bundle_entries, resolved_dist_dir)
         current_temp_identity = get_read_path_identity(temp_path)
         if (
             current_temp_identity is None
