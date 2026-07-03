@@ -1000,13 +1000,14 @@ def ensure_directory_identity_unchanged(
     path: Path,
     label: str,
     identity: tuple[int, int, int, int] | None,
+    operation: str = "metadata update",
 ) -> None:
     """Fail if an optional project directory changed after validation."""
     if identity is None:
         return
     current_identity = get_directory_path_identity(path)
     if current_identity is None or current_identity[:2] != identity[:2]:
-        raise click.ClickException(f"{label} path changed before metadata update.")
+        raise click.ClickException(f"{label} path changed before {operation}.")
 
 
 def optional_file_exists(path: Path, label: str) -> bool:
@@ -2040,11 +2041,25 @@ def build(ctx: click.Context) -> None:
     frontend_dir = cwd / "frontend"
     backend_dir = cwd / "backend"
 
-    has_frontend = optional_directory_exists(frontend_dir, "frontend")
-    has_backend = optional_directory_exists(backend_dir, "backend")
+    frontend_identity = get_optional_directory_identity(frontend_dir, "frontend")
+    backend_identity = get_optional_directory_identity(backend_dir, "backend")
+    has_frontend = frontend_identity is not None
+    has_backend = backend_identity is not None
     remote_entry = None
     if has_frontend:
+        ensure_directory_identity_unchanged(
+            frontend_dir,
+            "frontend",
+            frontend_identity,
+            "build",
+        )
         init_frontend_deps(frontend_dir)
+        ensure_directory_identity_unchanged(
+            frontend_dir,
+            "frontend",
+            frontend_identity,
+            "build",
+        )
         frontend_result = run_frontend_build(frontend_dir)
         if frontend_result.returncode != 0:
             click.secho(
@@ -2059,15 +2074,33 @@ def build(ctx: click.Context) -> None:
     )
     try:
         if has_frontend:
+            ensure_directory_identity_unchanged(
+                frontend_dir,
+                "frontend",
+                frontend_identity,
+                "build",
+            )
             remote_entry = copy_frontend_dist(cwd)
             click.secho("✅ Frontend rebuilt", fg="green")
 
         # Build backend independently if it exists
         if has_backend:
+            ensure_directory_identity_unchanged(
+                backend_dir,
+                "backend",
+                backend_identity,
+                "build",
+            )
             pyproject = load_toml_object(
                 backend_dir / "pyproject.toml", "backend pyproject.toml"
             )
             if pyproject:
+                ensure_directory_identity_unchanged(
+                    backend_dir,
+                    "backend",
+                    backend_identity,
+                    "build",
+                )
                 rebuild_backend(cwd)
 
         # Build manifest and write it

@@ -448,6 +448,55 @@ def test_build_command_restores_existing_dist_when_remote_entry_missing(
     assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
 
 
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+def test_build_command_rejects_changed_backend_before_metadata_read(
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+    monkeypatch,
+):
+    """Test build refuses a changed backend directory before metadata reads."""
+    extension_with_build_structure(isolated_filesystem, include_frontend=False)
+    backend_dir = isolated_filesystem / "backend"
+    saved_backend_dir = isolated_filesystem / "saved-backend"
+    replacement_backend_dir = isolated_filesystem / "replacement-backend"
+    replacement_backend_dir.mkdir()
+    (replacement_backend_dir / "pyproject.toml").write_text(
+        """[project]
+name = "replacement"
+version = "9.9.9"
+
+[tool.apache_superset_extensions.build]
+include = ["**/*.py"]
+exclude = []
+"""
+    )
+
+    from superset_extensions_cli import cli
+
+    original_start_dist_replacement = cli.start_dist_replacement
+
+    def swap_backend_after_source_decision(cwd):
+        result = original_start_dist_replacement(cwd)
+        backend_dir.rename(saved_backend_dir)
+        replacement_backend_dir.rename(backend_dir)
+        return result
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.start_dist_replacement",
+        swap_backend_after_source_decision,
+    )
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "backend path changed before build" in result.output
+    assert not (isolated_filesystem / "dist" / "backend").exists()
+    assert (backend_dir / "pyproject.toml").read_text().find("replacement") != -1
+
+
 # Clean Dist Tests
 @pytest.mark.unit
 def test_clean_dist_removes_existing_dist_directory(isolated_filesystem):
