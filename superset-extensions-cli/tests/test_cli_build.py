@@ -467,6 +467,25 @@ def test_build_manifest_handles_minimal_extension(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_build_manifest_rejects_symlinked_backend_directory(isolated_filesystem):
+    """Test build_manifest refuses a symlinked backend directory."""
+    extension_data = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_data))
+    outside_backend = isolated_filesystem / "outside-backend"
+    outside_backend.mkdir()
+    (isolated_filesystem / "backend").symlink_to(outside_backend)
+
+    with pytest.raises(click.ClickException, match="backend path is a symlink"):
+        build_manifest(isolated_filesystem, None)
+
+
+@pytest.mark.unit
 def test_build_manifest_exits_when_extension_json_missing(isolated_filesystem):
     """Test build_manifest fails when extension.json is missing."""
     with pytest.raises(click.ClickException, match="extension.json not found"):
