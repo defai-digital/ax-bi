@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import json  # noqa: TID251
 import re
 import shutil
 import subprocess
@@ -610,10 +609,13 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         )
         sys.exit(1)
 
-    manifest = json.loads(manifest_path.read_text())
-    name = manifest["name"]
-    version = manifest["version"]
-    default_filename = f"{name}-{version}.supx"
+    try:
+        manifest = Manifest.model_validate_json(manifest_path.read_text())
+    except Exception as ex:
+        click.secho(f"❌ Invalid dist/manifest.json: {ex}", err=True, fg="red")
+        sys.exit(1)
+
+    default_filename = f"{manifest.name}-{manifest.version}.supx"
 
     if output is None:
         zip_path = Path(default_filename)

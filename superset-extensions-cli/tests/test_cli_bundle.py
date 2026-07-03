@@ -125,6 +125,42 @@ def test_bundle_command_fails_without_manifest(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_command_fails_with_malformed_manifest_json(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle command fails cleanly when manifest.json is malformed."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("{ invalid json")
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Invalid dist/manifest.json" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_command_fails_with_invalid_manifest_schema(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle command fails cleanly when manifest.json is incomplete."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text(json.dumps({"version": "1.0.0"}))
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Invalid dist/manifest.json" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_handles_zip_creation_error(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):
