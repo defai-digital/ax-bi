@@ -1933,6 +1933,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             for file, arcname in bundle_entries:
                 zipf.write(file, arcname)
 
+        validate_bundle_output_path(zip_path)
         publish_output_file(temp_path, zip_path, "bundle")
         temp_path = None
     except Exception as ex:

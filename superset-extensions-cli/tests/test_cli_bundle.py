@@ -495,6 +495,47 @@ def test_bundle_preserves_existing_output_on_publish_error(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_revalidates_output_path_before_publish(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses an output path changed after archive creation."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_path = isolated_filesystem / "existing.supx"
+    output_path.write_text("original bundle")
+    outside_file = isolated_filesystem / "outside.supx"
+    outside_file.write_text("outside bundle")
+    original_zip_write = zipfile.ZipFile.write
+
+    def replace_output_with_symlink_after_zip_write(self, *args, **kwargs):
+        result = original_zip_write(self, *args, **kwargs)
+        if output_path.exists() and not output_path.is_symlink():
+            output_path.unlink()
+            output_path.symlink_to(outside_file)
+        return result
+
+    monkeypatch.setattr(
+        zipfile.ZipFile,
+        "write",
+        replace_output_with_symlink_after_zip_write,
+    )
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "Refusing to write bundle to symlink" in result.output
+    assert output_path.is_symlink()
+    assert outside_file.read_text() == "outside bundle"
+    assert list(isolated_filesystem.glob(".existing.supx.*.tmp")) == []
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_includes_all_files_recursively(
     mock_build, cli_runner, isolated_filesystem
 ):
