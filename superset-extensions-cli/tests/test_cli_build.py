@@ -1056,6 +1056,25 @@ def test_copy_frontend_dist_rejects_multiple_remote_entries(isolated_filesystem)
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_rejects_nested_remote_entry(isolated_filesystem):
+    """Test copy_frontend_dist rejects remote entries outside frontend/dist root."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    nested_dir = frontend_dist / "assets"
+    nested_dir.mkdir()
+    (nested_dir / "remoteEntry.abc123.js").write_text("remote entry content")
+    (frontend_dist / "main.js").write_text("main content")
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="Remote entry file must be"):
+        copy_frontend_dist(isolated_filesystem)
+
+    copied_main = isolated_filesystem / "dist" / "frontend" / "dist" / "main.js"
+    assert not copied_main.exists()
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_exits_when_no_remote_entry(isolated_filesystem):
     """Test copy_frontend_dist exits when no remoteEntry file found."""
     # Create frontend/dist without remoteEntry file

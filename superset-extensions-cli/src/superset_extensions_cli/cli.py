@@ -324,6 +324,11 @@ def copy_frontend_dist(cwd: Path) -> str:
                 f"frontend dist directory {frontend_dist}."
             )
         if REMOTE_ENTRY_REGEX.match(f.name):
+            if f.parent != frontend_dist:
+                raise click.ClickException(
+                    f"Remote entry file must be in frontend/dist: "
+                    f"{f.relative_to(frontend_dist)}."
+                )
             remote_entries.append(f.name)
         frontend_files.append(f)
 
