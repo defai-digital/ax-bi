@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const ROLE_LIST_CONTRACT_VERSION = 'role-list.v1';
@@ -167,10 +168,7 @@ export const roleListResponseSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

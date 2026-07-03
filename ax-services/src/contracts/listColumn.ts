@@ -43,3 +43,14 @@ export const listFilterStringArraySchema = {
   type: 'array',
   items: listFilterStringSchema,
 } as const;
+
+export const warningSchema = {
+  type: 'array',
+  maxItems: 10,
+  items: {
+    type: 'string',
+    minLength: 1,
+    maxLength: 512,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  },
+} as const;

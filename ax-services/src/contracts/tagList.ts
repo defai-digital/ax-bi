@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const TAG_LIST_CONTRACT_VERSION = 'tag-list.v1';
@@ -179,10 +180,7 @@ export const tagListResponseSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

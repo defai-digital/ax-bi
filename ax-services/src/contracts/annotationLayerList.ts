@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const ANNOTATION_LAYER_LIST_CONTRACT_VERSION =
@@ -174,10 +175,7 @@ export const annotationLayerListResponseSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const QUERY_LIST_CONTRACT_VERSION = 'query-list.v1';
@@ -197,10 +198,7 @@ export const queryListResponseSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

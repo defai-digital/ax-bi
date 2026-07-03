@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const RLS_LIST_CONTRACT_VERSION = 'rls-list.v1';
@@ -195,7 +196,7 @@ export const rlsListResponseSchema = {
     hasPrevious: { type: 'boolean' },
     columnsRequested: { type: 'array', items: { type: 'string' } },
     columnsLoaded: { type: 'array', items: { type: 'string' } },
-    warnings: { type: 'array', items: { type: 'string' } },
+    warnings: warningSchema,
   },
 } as const;
 

@@ -59,7 +59,7 @@ import {
   RUNTIME_CONTRACT_VERSION,
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
-import { listColumnSchema } from '../src/contracts/listColumn';
+import { listColumnSchema, warningSchema } from '../src/contracts/listColumn';
 import {
   queryListContractSchemas,
   QUERY_LIST_CONTRACT_VERSION,
@@ -153,6 +153,64 @@ test('tag list contract version is explicit', () => {
 
 test('task list contract version is explicit', () => {
   expect(TASK_LIST_CONTRACT_VERSION).toBe('task-list.v1');
+});
+
+test('response warning schemas are bounded and shared', () => {
+  expect(warningSchema).toEqual({
+    type: 'array',
+    maxItems: 10,
+    items: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 512,
+      pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+    },
+  });
+  expect(
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema
+      .properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    annotationListContractSchemas.annotationListResponseSchema.properties
+      .warnings,
+  ).toBe(warningSchema);
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    chartListContractSchemas.chartListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    databaseListContractSchemas.databaseListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    datasetListContractSchemas.datasetListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    queryListContractSchemas.queryListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    reportListContractSchemas.reportListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    roleListContractSchemas.roleListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    rlsListContractSchemas.rlsListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    savedQueryListContractSchemas.savedQueryListResponseSchema.properties
+      .warnings,
+  ).toBe(warningSchema);
+  expect(
+    tagListContractSchemas.tagListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    taskListContractSchemas.taskListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
 });
 
 test('health response schema is stable', () => {

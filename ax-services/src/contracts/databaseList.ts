@@ -22,6 +22,7 @@ import {
   listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
+  warningSchema,
 } from './listColumn';
 
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
@@ -211,10 +212,7 @@ export const databaseListResponseSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

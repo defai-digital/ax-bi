@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { warningSchema } from './listColumn';
+
 export const ASSET_SEARCH_CONTRACT_VERSION = 'asset-search.v1';
 
 export type AssetType = 'chart' | 'dashboard' | 'dataset' | 'metric';
@@ -137,10 +139,7 @@ export const assetSearchResponseSchema = {
       type: 'array',
       items: assetSearchResultSchema,
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

@@ -233,8 +233,12 @@
       },
       "warnings": {
         "type": "array",
+        "maxItems": 10,
         "items": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
         }
       }
     }
