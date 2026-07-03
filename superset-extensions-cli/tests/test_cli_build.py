@@ -1044,6 +1044,44 @@ def test_copy_backend_files_rejects_missing_pyproject_toml(
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_symlinked_pyproject_toml(
+    isolated_filesystem,
+):
+    """Test copy_backend_files refuses symlinked backend build metadata."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+    outside_pyproject = isolated_filesystem / "outside-pyproject.toml"
+    outside_pyproject.write_text(
+        """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    )
+    (backend_dir / "pyproject.toml").symlink_to(outside_pyproject)
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to read backend/pyproject.toml: path is a symlink",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert not (
+        isolated_filesystem / "dist" / "backend" / "src" / "test_org" / "test_ext"
+    ).exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_rejects_symlinked_backend_root(isolated_filesystem):
     """Test copy_backend_files refuses a symlinked backend root."""
     outside_backend = isolated_filesystem / "outside-backend"

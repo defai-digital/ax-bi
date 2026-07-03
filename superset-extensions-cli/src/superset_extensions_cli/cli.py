@@ -532,9 +532,10 @@ def copy_backend_files(cwd: Path) -> None:
     ensure_output_directory(backend_output_dir, "dist/backend directory")
 
     # Read build config from pyproject.toml
-    pyproject = load_toml_object(
-        backend_dir / "pyproject.toml", "backend pyproject.toml"
-    )
+    pyproject_path = backend_dir / "pyproject.toml"
+    if not input_file_exists(pyproject_path, "backend/pyproject.toml"):
+        raise click.ClickException("backend pyproject.toml not found.")
+    pyproject = load_toml_object(pyproject_path, "backend pyproject.toml")
     if pyproject is None:
         raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
