@@ -1023,6 +1023,45 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_symlinked_backend_output_root(
+    isolated_filesystem,
+):
+    """Test copy_backend_files refuses a symlinked dist/backend output root."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    outside_output = isolated_filesystem / "outside-backend-output"
+    outside_output.mkdir()
+    (dist_dir / "backend").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/backend directory: path is a symlink",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert not (
+        outside_output / "src" / "test_org" / "test_ext" / "__init__.py"
+    ).exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"
