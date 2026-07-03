@@ -330,6 +330,16 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
+      if (!isRecord(payload)) {
+        return {
+          ok: false,
+          statusCode: response.status,
+          error: 'metadata response must be a JSON object',
+          url: this.metadataUrl,
+          keyCount: 0,
+          keys: [],
+        };
+      }
       const keys = extractObjectKeys(payload);
 
       return {

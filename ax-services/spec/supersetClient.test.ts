@@ -315,6 +315,38 @@ test('probeMetadata reports non-success Superset responses without parsing body'
   });
 });
 
+test('probeMetadata reports successful array payloads as unhealthy', async () => {
+  global.fetch = async () => Response.json(['permissions'], { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.probeMetadata();
+
+  expect(result).toEqual({
+    ok: false,
+    statusCode: 200,
+    error: 'metadata response must be a JSON object',
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    keyCount: 0,
+    keys: [],
+  });
+});
+
+test('probeMetadata reports successful primitive payloads as unhealthy', async () => {
+  global.fetch = async () => Response.json('ok', { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.probeMetadata();
+
+  expect(result).toEqual({
+    ok: false,
+    statusCode: 200,
+    error: 'metadata response must be a JSON object',
+    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    keyCount: 0,
+    keys: [],
+  });
+});
+
 test('probeMetadata returns an error result when fetch fails', async () => {
   global.fetch = async () => {
     throw new Error('metadata failed');
