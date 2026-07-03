@@ -32,6 +32,7 @@ module.exports = {
       ],
     },
     'runtime-modernization',
+    'upstream-sync-policy',
     {
       type: 'category',
       label: 'Extensions',

@@ -337,13 +337,9 @@ curl -f http://localhost:8088/health && echo "✅ Superset ready"
 ### LLM Session Best Practices
 - Always validate environment setup first using the health checks above
 - Use focused validation commands: `pre-commit run` (not `--all-files`)
-- **Read [LLMS.md](https://github.com/apache/superset/blob/master/LLMS.md) first** - Contains comprehensive development guidelines, coding standards, and critical refactor information
-- **Check platform-specific files** when available:
-  - `CLAUDE.md` - For Claude/Anthropic tools
-  - `CURSOR.md` - For Cursor editor
-  - `GEMINI.md` - For Google Gemini tools
-  - `GPT.md` - For OpenAI/ChatGPT tools
-- Follow the TypeScript migration guidelines and avoid deprecated patterns listed in LLMS.md
+- Follow the repository's public developer docs, style guides, and testing instructions
+- Keep AI-agent working notes local; do not publish local agent instruction files to GitHub
+- Follow the TypeScript migration guidelines and avoid deprecated patterns
 
 ### Key Development Commands
 ```bash

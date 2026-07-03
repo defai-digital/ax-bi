@@ -302,7 +302,13 @@ cd superset-frontend && npm run test   # frontend
 pre-commit run --all-files
 ```
 
-See [`CLAUDE.md`](https://github.com/defai-digital/ax-bi/blob/main/CLAUDE.md) for the full engineering guide (commands, architecture, conventions, and the MCP service), [`GENAI_BI_ROADMAP.md`](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for product direction, and [`SECURITY.md`](https://github.com/defai-digital/ax-bi/blob/main/SECURITY.md) for the security and threat model.
+See [`GENAI_BI_ROADMAP.md`](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for product direction, [`SECURITY.md`](https://github.com/defai-digital/ax-bi/blob/main/SECURITY.md) for the security and threat model, and the developer docs for engineering guidance.
+
+AX-BI tracks Apache Superset through a controlled upstream sync process: security
+fixes and critical bug fixes are prioritized, stable release branches are
+reviewed in dedicated sync branches, and AX-BI-specific MCP/GenAI/governance
+behavior must be regression-tested before merge. See the
+[`Upstream Sync Policy`](https://github.com/defai-digital/ax-bi/blob/main/docs/developer_docs/upstream-sync-policy.md).
 
 ## Contributing
 
