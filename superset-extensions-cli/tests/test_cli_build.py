@@ -877,6 +877,28 @@ def test_rebuild_frontend_handles_build_results(
         assert result == expected_result
 
 
+@pytest.mark.unit
+def test_rebuild_frontend_preserves_existing_output_on_build_failure(
+    isolated_filesystem,
+):
+    """Test failed frontend builds do not remove the existing staged frontend."""
+    from superset_extensions_cli.cli import rebuild_frontend
+
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    existing_output = isolated_filesystem / "dist" / "frontend" / "dist"
+    existing_output.mkdir(parents=True)
+    (existing_output / "remoteEntry.previous.js").write_text("previous")
+
+    with patch("superset_extensions_cli.cli.run_frontend_build") as mock_build:
+        mock_build.return_value = Mock(returncode=1)
+
+        result = rebuild_frontend(isolated_filesystem, frontend_dir)
+
+    assert result is None
+    assert (existing_output / "remoteEntry.previous.js").read_text() == "previous"
+
+
 # Backend Build Tests
 @pytest.mark.unit
 def test_rebuild_backend_calls_copy_and_shows_message(isolated_filesystem):

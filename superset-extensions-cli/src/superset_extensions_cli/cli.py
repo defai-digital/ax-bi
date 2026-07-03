@@ -833,13 +833,12 @@ def copy_backend_files(cwd: Path) -> None:
 
 def rebuild_frontend(cwd: Path, frontend_dir: Path) -> str | None:
     """Clean and rebuild frontend, return the remoteEntry filename."""
-    clean_dist_frontend(cwd)
-
     res = run_frontend_build(frontend_dir)
     if res.returncode != 0:
         click.secho("❌ Frontend build failed", fg="red")
         return None
 
+    clean_dist_frontend(cwd)
     remote_entry = copy_frontend_dist(cwd)
     click.secho("✅ Frontend rebuilt", fg="green")
     return remote_entry
