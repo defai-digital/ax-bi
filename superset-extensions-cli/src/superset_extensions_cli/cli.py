@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import filecmp
 import re
 import shutil
 import subprocess
@@ -523,6 +524,18 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
     if target_identity is None:
         raise click.ClickException(
             f"Refusing to copy {label}: target path changed during copy."
+        )
+    try:
+        target_matches_source = filecmp.cmp(source, target, shallow=False)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to verify copied {label}: {ex}") from ex
+    if not target_matches_source:
+        raise click.ClickException(
+            f"Refusing to copy {label}: target content changed during copy."
+        )
+    if get_output_copy_source_identity(source) != source_identity:
+        raise click.ClickException(
+            f"Refusing to copy {label}: source path changed during copy."
         )
     if get_read_path_identity(target) != target_identity:
         raise click.ClickException(
