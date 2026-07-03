@@ -215,6 +215,9 @@ def init_frontend_deps(frontend_dir: Path) -> None:
     frontend_identity = get_directory_path_identity(frontend_dir)
     if frontend_identity is None:
         raise click.ClickException("frontend path is no longer safe.")
+    frontend_parent_identity = get_read_parent_identity(frontend_dir)
+    if frontend_parent_identity is None:
+        raise click.ClickException("frontend path is no longer safe.")
     node_modules = frontend_dir / "node_modules"
     validate_node_modules_path(node_modules)
 
@@ -231,11 +234,14 @@ def init_frontend_deps(frontend_dir: Path) -> None:
 
         npm_executable = validate_npm()
         validate_node_modules_path(node_modules)
-        current_frontend_identity = get_directory_path_identity(frontend_dir)
-        if current_frontend_identity != frontend_identity:
-            raise click.ClickException(
-                "frontend path changed before dependency install."
-            )
+        ensure_directory_identity_unchanged(
+            frontend_dir,
+            "frontend",
+            frontend_identity,
+            "dependency install",
+            allow_content_changes=False,
+            expected_parent_identity=frontend_parent_identity,
+        )
         npm_command = [get_npm_executable_path(npm_executable), *npm_command[1:]]
         try:
             res = subprocess.run(  # noqa: S603
@@ -1692,13 +1698,21 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
     frontend_identity = get_directory_path_identity(frontend_dir)
     if frontend_identity is None:
         raise click.ClickException("frontend path is no longer safe.")
+    frontend_parent_identity = get_read_parent_identity(frontend_dir)
+    if frontend_parent_identity is None:
+        raise click.ClickException("frontend path is no longer safe.")
 
     click.echo()
     click.secho("⚙️  Building frontend assets…", fg="cyan")
     npm_executable = validate_npm()
-    current_frontend_identity = get_directory_path_identity(frontend_dir)
-    if current_frontend_identity != frontend_identity:
-        raise click.ClickException("frontend path changed before frontend build.")
+    ensure_directory_identity_unchanged(
+        frontend_dir,
+        "frontend",
+        frontend_identity,
+        "frontend build",
+        allow_content_changes=False,
+        expected_parent_identity=frontend_parent_identity,
+    )
     command = [get_npm_executable_path(npm_executable), "run", "build"]
     try:
         return subprocess.run(  # noqa: S603

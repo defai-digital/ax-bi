@@ -2805,6 +2805,42 @@ def test_init_frontend_deps_rejects_frontend_content_change_before_install(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_frontend_parent_change_before_install(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dependency install refuses a frontend directory moved under a new parent."""
+    project_dir = isolated_filesystem / "project"
+    frontend_dir = project_dir / "frontend"
+    frontend_dir.mkdir(parents=True)
+    saved_project_dir = isolated_filesystem / "saved-project"
+    replacement_project_dir = isolated_filesystem / "replacement-project"
+
+    def move_frontend_under_replaced_parent():
+        project_dir.rename(saved_project_dir)
+        replacement_project_dir.mkdir()
+        (saved_project_dir / "frontend").rename(replacement_project_dir / "frontend")
+        replacement_project_dir.rename(project_dir)
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.validate_npm",
+        move_frontend_under_replaced_parent,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed before dependency install",
+    ):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert not (saved_project_dir / "frontend").exists()
+    assert frontend_dir.is_dir()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 def test_init_frontend_deps_rejects_node_modules_symlink_before_install(
     mock_run,
     isolated_filesystem,
@@ -3478,6 +3514,43 @@ def test_run_frontend_build_rejects_frontend_content_change_before_launch(
 
     mock_run.assert_not_called()
     assert (frontend_dir / "unexpected.txt").read_text() == "unexpected"
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
+def test_run_frontend_build_rejects_frontend_parent_change_before_launch(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend build refuses a frontend directory moved under a new parent."""
+    from superset_extensions_cli import cli
+    from superset_extensions_cli.cli import run_frontend_build
+
+    project_dir = isolated_filesystem / "project"
+    frontend_dir = project_dir / "frontend"
+    frontend_dir.mkdir(parents=True)
+    saved_project_dir = isolated_filesystem / "saved-project"
+    replacement_project_dir = isolated_filesystem / "replacement-project"
+
+    def move_frontend_under_replaced_parent():
+        project_dir.rename(saved_project_dir)
+        replacement_project_dir.mkdir()
+        (saved_project_dir / "frontend").rename(replacement_project_dir / "frontend")
+        replacement_project_dir.rename(project_dir)
+        return "npm"
+
+    monkeypatch.setattr(cli, "validate_npm", move_frontend_under_replaced_parent)
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed before frontend build",
+    ):
+        run_frontend_build(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert not (saved_project_dir / "frontend").exists()
+    assert frontend_dir.is_dir()
 
 
 @pytest.mark.unit
