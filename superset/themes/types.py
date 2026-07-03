@@ -15,33 +15,33 @@
 # specific language governing permissions and limitations
 # under the License.
 from enum import Enum
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, TypedDict
 
 ThemeAlgorithmCombination = list[
-    Union[Literal["default"], Literal["dark"], Literal["compact"]]
+    Literal["default"] | Literal["dark"] | Literal["compact"]
 ]
 
 
-ThemeAlgorithmOption = Union[
-    Literal["default"], Literal["dark"], Literal["compact"], ThemeAlgorithmCombination
-]
+ThemeAlgorithmOption = (
+    Literal["default"]
+    | Literal["dark"]
+    | Literal["compact"]
+    | ThemeAlgorithmCombination
+)
 
 
 class Theme(TypedDict, total=False):
     """
     Represents a theme configuration.
-    token: Optional[dict[str, Any]]
-    components: Optional[dict[str, Any]]
-    algorithm: Optional[ThemeAlgorithmOption]
-    hashed: Optional[bool]
-    inherit: Optional[bool]
+
+    All keys are optional because theme configuration is partial.
     """
 
     token: dict[str, Any]
-    components: Optional[dict[str, Any]]
-    algorithm: Optional[ThemeAlgorithmOption]
-    hashed: Optional[bool]
-    inherit: Optional[bool]
+    components: dict[str, Any] | None
+    algorithm: ThemeAlgorithmOption | None
+    hashed: bool | None
+    inherit: bool | None
 
 
 class ThemeMode(str, Enum):
