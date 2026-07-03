@@ -140,7 +140,12 @@ export const healthResponseSchema = {
     service: { const: 'ax-services' },
     status: { const: 'ok' },
     timestamp: { type: 'string' },
-    version: { type: 'string' },
+    version: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[^\\u0000-\\u001f\\u007f]+$',
+    },
     nodeVersion: { type: 'string' },
     platform: { type: 'string' },
     uptimeSeconds: { type: 'number' },

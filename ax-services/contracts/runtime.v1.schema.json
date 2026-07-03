@@ -27,7 +27,10 @@
         "type": "string"
       },
       "version": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
       },
       "nodeVersion": {
         "type": "string"

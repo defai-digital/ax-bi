@@ -477,6 +477,47 @@ test('health endpoint returns service metadata', async () => {
   });
 });
 
+test('health endpoint sanitizes package version metadata', async () => {
+  const previousVersion = process.env['npm_package_version'];
+
+  try {
+    process.env['npm_package_version'] = '  1.2.3-build.4  ';
+    const server = buildServer(config, makeSupersetClient());
+
+    const response = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().version).toBe('1.2.3-build.4');
+
+    process.env['npm_package_version'] = '1.2.3\nextra';
+    const unsafeResponse = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(unsafeResponse.statusCode).toBe(200);
+    expect(unsafeResponse.json().version).toBe('0.0.1');
+
+    process.env['npm_package_version'] = '1'.repeat(129);
+    const longResponse = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(longResponse.statusCode).toBe(200);
+    expect(longResponse.json().version).toBe('0.0.1');
+  } finally {
+    if (previousVersion === undefined) {
+      delete process.env['npm_package_version'];
+    } else {
+      process.env['npm_package_version'] = previousVersion;
+    }
+  }
+});
+
 test('ready endpoint returns ok when Superset is reachable', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(

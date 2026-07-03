@@ -146,6 +146,25 @@ import {
 
 export { normalizeRequestIdHeader } from './requestId';
 
+const DEFAULT_RUNTIME_VERSION = '0.0.1';
+const MAX_RUNTIME_VERSION_LENGTH = 128;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
+
+function runtimeVersion(): string {
+  const version = process.env['npm_package_version']?.trim();
+
+  if (
+    version === undefined ||
+    version.length === 0 ||
+    version.length > MAX_RUNTIME_VERSION_LENGTH ||
+    CONTROL_CHARACTER_PATTERN.test(version)
+  ) {
+    return DEFAULT_RUNTIME_VERSION;
+  }
+
+  return version;
+}
+
 export function buildServer(
   config: ServiceConfig,
   supersetClient: SupersetHealthClient &
@@ -201,7 +220,7 @@ export function buildServer(
       service: 'ax-services',
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: process.env['npm_package_version'] || '0.0.1',
+      version: runtimeVersion(),
       nodeVersion: process.version,
       platform: process.platform,
       uptimeSeconds: Number(process.hrtime.bigint() - serviceStartTime) / 1e9,
