@@ -19,8 +19,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import click
 import pytest
-from superset_extensions_cli.cli import app
+from superset_extensions_cli.cli import app, cleanup_scaffold_directory
 
 from tests.utils import (
     assert_directory_exists,
@@ -207,6 +208,23 @@ def test_init_fails_when_target_is_broken_symlink(
     assert result.exit_code == 1
     assert "already exists" in result.output
     assert existing_link.is_symlink()
+
+
+@pytest.mark.unit
+def test_cleanup_scaffold_directory_rejects_broken_symlink_target(
+    isolated_filesystem,
+):
+    """Test scaffold cleanup refuses a broken symlink target."""
+    target_link = isolated_filesystem / "test-extension"
+    target_link.symlink_to(isolated_filesystem / "missing-target")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean extension directory: path is a symlink",
+    ):
+        cleanup_scaffold_directory(target_link, "extension directory")
+
+    assert target_link.is_symlink()
 
 
 @pytest.mark.cli

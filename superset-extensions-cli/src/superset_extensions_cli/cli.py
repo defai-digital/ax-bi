@@ -738,10 +738,10 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
 
 def cleanup_scaffold_directory(path: Path, label: str) -> None:
     """Remove a scaffold directory created during a failed init run."""
-    if not path.exists():
-        return
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
+    if not path.exists():
+        return
     if not path.is_dir():
         raise click.ClickException(
             f"Refusing to clean {label}: path exists but is not a directory."
