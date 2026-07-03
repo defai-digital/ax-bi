@@ -246,8 +246,10 @@ def rollback_dist_replacement(
     dist_dir = cwd / "dist"
     try:
         remove_output_directory(dist_dir, "dist directory")
-    except click.ClickException:
-        pass
+    except click.ClickException as ex:
+        raise click.ClickException(
+            f"Failed to clean failed dist directory before restore: {ex.message}"
+        ) from ex
 
     if backup_root is None or backup_path is None:
         return

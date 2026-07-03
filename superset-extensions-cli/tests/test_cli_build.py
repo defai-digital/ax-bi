@@ -304,6 +304,62 @@ def test_build_command_reports_original_and_rollback_failures(
 @patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
 @patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.read_toml")
+def test_build_command_reports_failed_dist_cleanup_during_rollback(
+    mock_read_toml,
+    mock_rebuild_backend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+    monkeypatch,
+):
+    """Test full build reports rollback cleanup failures instead of hiding them."""
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    mock_copy_frontend_dist.return_value = "remoteEntry.abc123.js"
+    mock_rebuild_backend.side_effect = click.ClickException("backend failed")
+    mock_read_toml.return_value = {
+        "project": {"name": "test", "version": "1.0.0"},
+        "tool": {
+            "apache_superset_extensions": {
+                "build": {"include": ["src/test_org/test_extension/**/*.py"]}
+            }
+        },
+    }
+
+    extension_with_build_structure(isolated_filesystem)
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
+
+    from superset_extensions_cli import cli
+
+    original_remove_output_directory = cli.remove_output_directory
+
+    def fail_partial_dist_cleanup(path, label):
+        if path == previous_dist and label == "dist directory":
+            raise click.ClickException("cleanup denied")
+        original_remove_output_directory(path, label)
+
+    monkeypatch.setattr(cli, "remove_output_directory", fail_partial_dist_cleanup)
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "backend failed" in result.output
+    assert "Failed to clean failed dist directory before restore" in result.output
+    assert "cleanup denied" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.run_frontend_build")
 def test_build_command_restores_existing_dist_when_remote_entry_missing(
     mock_run_frontend_build,
     mock_init_frontend_deps,
