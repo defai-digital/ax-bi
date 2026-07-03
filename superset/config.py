@@ -37,7 +37,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from importlib.resources import files
-from typing import Any, Literal, Optional, TYPE_CHECKING, TypedDict
+from typing import Any, Literal, TYPE_CHECKING, TypedDict
 
 import click
 from celery.schedules import crontab
@@ -1179,12 +1179,10 @@ _THEME_DARK_BASE: Theme = {
     "algorithm": "dark",
 }
 
-THEME_DARK: Optional[Theme] = _THEME_DARK_BASE
+THEME_DARK: Theme | None = _THEME_DARK_BASE
 
 
-def sync_theme_logo_href(
-    theme: Optional[Theme], logo_target_path: Optional[str]
-) -> None:
+def sync_theme_logo_href(theme: Theme | None, logo_target_path: str | None) -> None:
     """
     Apply ``LOGO_TARGET_PATH`` to a theme's ``brandLogoHref`` token.
 
