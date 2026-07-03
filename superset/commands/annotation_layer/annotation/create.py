@@ -17,7 +17,7 @@
 import logging
 from datetime import datetime
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.models.sqla import Model
 from marshmallow import ValidationError
@@ -47,9 +47,9 @@ class CreateAnnotationCommand(BaseCommand):
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
-        layer_id: Optional[int] = self._properties.get("layer")
-        start_dttm: Optional[datetime] = self._properties.get("start_dttm")
-        end_dttm: Optional[datetime] = self._properties.get("end_dttm")
+        layer_id: int | None = self._properties.get("layer")
+        start_dttm: datetime | None = self._properties.get("start_dttm")
+        end_dttm: datetime | None = self._properties.get("end_dttm")
         short_descr = self._properties.get("short_descr", "")
 
         # Validate/populate model exists
