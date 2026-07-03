@@ -150,6 +150,7 @@ def test_frontend_change_handler_init():
     [
         "/path/to/frontend/dist/file.js",
         "/path/to/frontend/dist/assets/style.css",
+        r"C:\path\to\frontend\dist\file.js",
     ],
 )
 def test_frontend_change_handler_ignores_dist_changes(source_path):
@@ -175,6 +176,7 @@ def test_frontend_change_handler_ignores_dist_changes(source_path):
         "/path/to/frontend/webpack.config.js",
         "/path/to/frontend/package.json",
         "/path/to/frontend/dist-helper/source.ts",
+        r"C:\path\to\frontend\dist-helper\source.ts",
     ],
 )
 def test_frontend_change_handler_triggers_on_source_changes(source_path):

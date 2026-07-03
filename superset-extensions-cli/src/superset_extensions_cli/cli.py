@@ -489,7 +489,7 @@ class FrontendChangeHandler(FileSystemEventHandler):
 
 def is_frontend_dist_path(path: str) -> bool:
     """Return whether a watched frontend path is inside frontend/dist."""
-    parts = Path(path).parts
+    parts = [part for part in re.split(r"[\\/]+", path) if part]
     return any(
         part == "frontend" and index + 1 < len(parts) and parts[index + 1] == "dist"
         for index, part in enumerate(parts)
