@@ -389,10 +389,26 @@ def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     return extension_data, extension
 
 
+def find_symlinked_parent(path: Path) -> Path | None:
+    """Return the first symlinked parent directory in a path."""
+    return next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.is_symlink()
+        ),
+        None,
+    )
+
+
 def require_optional_directory(path: Path, label: str) -> None:
     """Require an optional project path to be a directory when present."""
     if path.is_symlink():
         raise click.ClickException(f"{label} path is a symlink.")
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"{label} parent directory is a symlink: {symlinked_parent}."
+        )
     if (path.exists() or path.is_symlink()) and not path.is_dir():
         raise click.ClickException(f"{label} path exists but is not a directory.")
 
@@ -407,6 +423,10 @@ def optional_file_exists(path: Path, label: str) -> bool:
     """Return whether an optional project file exists after validation."""
     if path.is_symlink():
         raise click.ClickException(f"{label} path is a symlink.")
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"{label} parent directory is a symlink: {symlinked_parent}."
+        )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"{label} path exists but is not a file.")
     return path.exists()
@@ -416,6 +436,11 @@ def input_file_exists(path: Path, label: str) -> bool:
     """Return whether an input file exists after validating it is safe to read."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to read {label}: path is a symlink.")
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to read {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"Invalid {label}: path exists but is not a file.")
     return path.exists()

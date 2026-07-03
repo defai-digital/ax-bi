@@ -72,6 +72,13 @@ def test_optional_directory_exists_validates_project_paths(isolated_filesystem):
     with pytest.raises(click.ClickException, match="path is a symlink"):
         optional_directory_exists(source_link, "linked")
 
+    nested_target_dir = isolated_filesystem / "outside-nested"
+    nested_target_dir.mkdir()
+    parent_link = isolated_filesystem / "linked-parent"
+    parent_link.symlink_to(nested_target_dir)
+    with pytest.raises(click.ClickException, match="parent directory is a symlink"):
+        optional_directory_exists(parent_link / "frontend", "linked/frontend")
+
 
 @pytest.mark.unit
 def test_optional_file_exists_validates_project_paths(isolated_filesystem):
@@ -100,6 +107,14 @@ def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     with pytest.raises(click.ClickException, match="path is a symlink"):
         optional_file_exists(broken_link, "pyproject.toml")
 
+    nested_target_dir = isolated_filesystem / "outside-metadata"
+    nested_target_dir.mkdir()
+    (nested_target_dir / "package.json").write_text("{}")
+    parent_link = isolated_filesystem / "linked-parent"
+    parent_link.symlink_to(nested_target_dir)
+    with pytest.raises(click.ClickException, match="parent directory is a symlink"):
+        optional_file_exists(parent_link / "package.json", "frontend/package.json")
+
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
@@ -120,6 +135,28 @@ def test_metadata_loaders_refuse_symlinked_inputs(
 
     with pytest.raises(click.ClickException, match="Refusing to read"):
         loader(metadata_link, filename)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("loader", "filename", "content"),
+    [
+        (load_json_object, "metadata.json", "{}"),
+        (load_toml_object, "pyproject.toml", "[project]\n"),
+    ],
+)
+def test_metadata_loaders_refuse_symlinked_input_parents(
+    isolated_filesystem, loader, filename, content
+):
+    """Test metadata loaders reject files reached through symlinked parents."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / filename).write_text(content)
+    metadata_parent = isolated_filesystem / "linked-parent"
+    metadata_parent.symlink_to(outside_dir)
+
+    with pytest.raises(click.ClickException, match="parent directory is a symlink"):
+        loader(metadata_parent / filename, filename)
 
 
 # Validate Command Tests
