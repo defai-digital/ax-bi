@@ -86,9 +86,16 @@ def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     with pytest.raises(click.ClickException, match="not a file"):
         optional_file_exists(metadata_dir, "package.json")
 
+    target_file = isolated_filesystem / "outside-package.json"
+    target_file.write_text("{}")
+    metadata_link = isolated_filesystem / "linked-package.json"
+    metadata_link.symlink_to(target_file)
+    with pytest.raises(click.ClickException, match="path is a symlink"):
+        optional_file_exists(metadata_link, "linked-package.json")
+
     broken_link = isolated_filesystem / "pyproject.toml"
     broken_link.symlink_to(isolated_filesystem / "missing-target")
-    with pytest.raises(click.ClickException, match="not a file"):
+    with pytest.raises(click.ClickException, match="path is a symlink"):
         optional_file_exists(broken_link, "pyproject.toml")
 
 
@@ -160,6 +167,63 @@ def test_validate_rejects_symlinked_extension_json(cli_runner, isolated_filesyst
 
     assert result.exit_code == 1
     assert "Refusing to read extension.json: path is a symlink" in result.output
+
+
+@pytest.mark.cli
+def test_validate_rejects_symlinked_frontend_package_json(
+    cli_runner,
+    isolated_filesystem,
+):
+    """Test validate refuses to read symlinked frontend package metadata."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    frontend_src = frontend_dir / "src"
+    frontend_src.mkdir()
+    (frontend_src / "index.tsx").write_text("export default {}")
+    outside_package = isolated_filesystem / "outside-package.json"
+    outside_package.write_text("{}")
+    (frontend_dir / "package.json").symlink_to(outside_package)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "frontend/package.json path is a symlink" in result.output
+
+
+@pytest.mark.cli
+def test_validate_rejects_symlinked_backend_pyproject_toml(
+    cli_runner,
+    isolated_filesystem,
+):
+    """Test validate refuses to read symlinked backend project metadata."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+    backend_dir = isolated_filesystem / "backend"
+    backend_dir.mkdir()
+    outside_pyproject = isolated_filesystem / "outside-pyproject.toml"
+    outside_pyproject.write_text('[project]\nname = "test"\n')
+    (backend_dir / "pyproject.toml").symlink_to(outside_pyproject)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "backend/pyproject.toml path is a symlink" in result.output
 
 
 @pytest.mark.cli

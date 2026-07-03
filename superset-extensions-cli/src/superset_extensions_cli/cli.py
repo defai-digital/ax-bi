@@ -273,9 +273,10 @@ def optional_directory_exists(path: Path, label: str) -> bool:
 
 def optional_file_exists(path: Path, label: str) -> bool:
     """Return whether an optional project file exists after validation."""
-    if path.exists() or path.is_symlink():
-        if not path.is_file():
-            raise click.ClickException(f"{label} path exists but is not a file.")
+    if path.is_symlink():
+        raise click.ClickException(f"{label} path is a symlink.")
+    if path.exists() and not path.is_file():
+        raise click.ClickException(f"{label} path exists but is not a file.")
     return path.exists()
 
 
