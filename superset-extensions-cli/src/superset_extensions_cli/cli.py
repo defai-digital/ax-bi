@@ -1039,6 +1039,12 @@ def create_scaffold_directory(path: Path, label: str) -> None:
             f"Refusing to create {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
         )
+    anchor = get_existing_output_directory_anchor(path)
+    anchor_identity = get_directory_path_identity(anchor)
+    if anchor_identity is None:
+        raise click.ClickException(
+            f"Refusing to create {label}: parent path is unsafe."
+        )
 
     try:
         path.mkdir()
@@ -1048,6 +1054,14 @@ def create_scaffold_directory(path: Path, label: str) -> None:
         ) from ex
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+    current_anchor_identity = get_directory_path_identity(anchor)
+    if (
+        current_anchor_identity is None
+        or current_anchor_identity[:2] != anchor_identity[:2]
+    ):
+        raise click.ClickException(f"Refusing to create {label}: parent path changed.")
+    if not path.is_dir() or path.is_symlink():
+        raise click.ClickException(f"Refusing to create {label}: path changed.")
 
 
 def write_scaffold_file(path: Path, label: str, content: str) -> None:

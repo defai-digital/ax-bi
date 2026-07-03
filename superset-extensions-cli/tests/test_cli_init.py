@@ -22,7 +22,11 @@ from pathlib import Path
 import click
 import pytest
 import superset_extensions_cli.cli as cli
-from superset_extensions_cli.cli import app, cleanup_scaffold_directory
+from superset_extensions_cli.cli import (
+    app,
+    cleanup_scaffold_directory,
+    create_scaffold_directory,
+)
 
 from tests.utils import (
     assert_directory_exists,
@@ -267,6 +271,41 @@ def test_cleanup_scaffold_directory_rejects_changed_target(
 
     assert_file_exists(saved_original / "extension.json")
     assert_file_exists(target_dir / "replacement.json")
+
+
+@pytest.mark.unit
+def test_create_scaffold_directory_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test scaffold directory creation refuses a changed parent directory."""
+    parent_dir = isolated_filesystem / "workspace"
+    parent_dir.mkdir()
+    target_dir = parent_dir / "test-extension"
+    saved_parent = isolated_filesystem / "saved-workspace"
+    replacement_parent = isolated_filesystem / "replacement-workspace"
+    replacement_parent.mkdir()
+    original_mkdir = Path.mkdir
+    swapped = False
+
+    def swap_parent_before_mkdir(path, *args, **kwargs):
+        nonlocal swapped
+        if path == target_dir and not swapped:
+            parent_dir.rename(saved_parent)
+            replacement_parent.rename(parent_dir)
+            swapped = True
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", swap_parent_before_mkdir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create extension directory: parent path changed",
+    ):
+        create_scaffold_directory(target_dir, "extension directory")
+
+    assert_directory_exists(saved_parent)
+    assert_directory_exists(target_dir)
 
 
 @pytest.mark.cli
