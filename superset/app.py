@@ -20,7 +20,7 @@ import logging
 import os
 import sys
 from collections.abc import Iterable
-from typing import cast, Optional
+from typing import cast
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -50,8 +50,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_app(
-    superset_config_module: Optional[str] = None,
-    superset_app_root: Optional[str] = None,
+    superset_config_module: str | None = None,
+    superset_app_root: str | None = None,
 ) -> Flask:
     app = SupersetApp(__name__)
 
