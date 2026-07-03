@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from superset.commands.base import BaseCommand
 from superset.commands.query.exceptions import (
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 class DeleteSavedQueryCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[SavedQuery]] = None
+        self._models: list[SavedQuery] | None = None
 
     @transaction(on_error=partial(on_error, reraise=SavedQueryDeleteFailedError))
     def run(self) -> None:

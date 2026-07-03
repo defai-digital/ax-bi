@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from flask_appbuilder import Model
@@ -67,7 +67,7 @@ def _load_ui_export_dataset_params(
     return params
 
 
-def lookup_sqla_table(table: SqlaTable) -> Optional[SqlaTable]:
+def lookup_sqla_table(table: SqlaTable) -> SqlaTable | None:
     return (
         db.session.query(SqlaTable)
         .join(Database)
@@ -80,7 +80,7 @@ def lookup_sqla_table(table: SqlaTable) -> Optional[SqlaTable]:
     )
 
 
-def lookup_sqla_database(table: SqlaTable) -> Optional[Database]:
+def lookup_sqla_database(table: SqlaTable) -> Database | None:
     database = (
         db.session.query(Database)
         .filter_by(database_name=table.params_dict["database_name"])
@@ -93,8 +93,8 @@ def lookup_sqla_database(table: SqlaTable) -> Optional[Database]:
 
 def import_dataset(
     i_datasource: BaseDatasource,
-    database_id: Optional[int] = None,
-    import_time: Optional[int] = None,
+    database_id: int | None = None,
+    import_time: int | None = None,
 ) -> int:
     """Imports the datasource from the object to the database.
 
@@ -103,8 +103,8 @@ def import_dataset(
     superset instances. Audit metadata isn't copied over.
     """
 
-    lookup_database: Callable[[BaseDatasource], Optional[Database]]
-    lookup_datasource: Callable[[BaseDatasource], Optional[BaseDatasource]]
+    lookup_database: Callable[[BaseDatasource], Database | None]
+    lookup_datasource: Callable[[BaseDatasource], BaseDatasource | None]
     if isinstance(i_datasource, SqlaTable):
         lookup_database = lookup_sqla_database
         lookup_datasource = lookup_sqla_table
@@ -153,10 +153,10 @@ def import_column(column: TableColumn) -> TableColumn:
 
 def import_datasource(
     i_datasource: Model,
-    lookup_database: Callable[[Model], Optional[Model]],
-    lookup_datasource: Callable[[Model], Optional[Model]],
-    import_time: Optional[int] = None,
-    database_id: Optional[int] = None,
+    lookup_database: Callable[[Model], Model | None],
+    lookup_datasource: Callable[[Model], Model | None],
+    import_time: int | None = None,
+    database_id: int | None = None,
 ) -> int:
     """Imports the datasource from the object to the database.
 
@@ -231,7 +231,7 @@ def import_simple_obj(i_obj: Model, lookup_obj: Callable[[Model], Model]) -> Mod
     return i_obj
 
 
-def import_from_dict(data: dict[str, Any], sync: Optional[list[str]] = None) -> None:
+def import_from_dict(data: dict[str, Any], sync: list[str] | None = None) -> None:
     """Imports databases from dictionary"""
     if not sync:
         sync = []
