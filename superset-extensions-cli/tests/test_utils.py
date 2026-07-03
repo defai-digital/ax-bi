@@ -577,7 +577,10 @@ def test_write_text_atomic_rejects_swapped_temporary_file(
 
     assert output_path.read_text() == "old"
     assert outside_file.read_text() == "outside"
-    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+    temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+    assert len(temp_files) == 1
+    assert temp_files[0].is_symlink()
+    assert temp_files[0].resolve() == outside_file
 
 
 @pytest.mark.unit
@@ -613,6 +616,53 @@ def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
     assert (saved_output_dir / "metadata.txt").read_text() == "old"
     assert not output_path.exists()
     assert list(output_dir.glob(".metadata.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_temp_cleanup_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic write cleanup refuses a replaced temporary file path."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+    saved_temp = isolated_filesystem / "saved-temp.txt"
+    replacement_temp = isolated_filesystem / "replacement-temp.txt"
+    replacement_temp.write_text("replacement temp")
+
+    original_get_read_path_identity = utils.get_read_path_identity
+    temp_path: Path | None = None
+
+    def swap_temp_before_parent_recheck(path):
+        nonlocal temp_path
+        identity = original_get_read_path_identity(path)
+        if (
+            path.parent == output_dir
+            and path.name.startswith(".metadata.txt.")
+            and temp_path is None
+        ):
+            temp_path = path
+            path.rename(saved_temp)
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.rename(output_dir)
+            replacement_temp.replace(path)
+        return identity
+
+    monkeypatch.setattr(
+        utils, "get_read_path_identity", swap_temp_before_parent_recheck
+    )
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert temp_path is not None
+    assert temp_path.read_text() == "replacement temp"
+    assert saved_temp.exists()
 
 
 @pytest.mark.unit

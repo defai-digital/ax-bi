@@ -214,6 +214,7 @@ def write_text_atomic(path: Path, content: str) -> None:
     if parent_identity is None:
         raise OSError(f"Refusing to write through unsafe parent: {path.parent}")
     temp_path: Path | None = None
+    temp_identity: tuple[int, int, int, int] | None = None
     try:
         with tempfile.NamedTemporaryFile(
             "w",
@@ -238,9 +239,15 @@ def write_text_atomic(path: Path, content: str) -> None:
             raise OSError(f"Failed to verify promoted temporary file: {path}")
         temp_path = None
     except OSError:
-        if temp_path is not None:
+        if temp_path is not None and temp_identity is not None:
             try:
-                temp_path.unlink(missing_ok=True)
+                current_temp_identity = get_read_path_identity(temp_path)
+                if (
+                    current_temp_identity is not None
+                    and current_temp_identity[:2] == temp_identity[:2]
+                    and get_read_path_identity(temp_path) == current_temp_identity
+                ):
+                    temp_path.unlink()
             except OSError:
                 pass
         raise
