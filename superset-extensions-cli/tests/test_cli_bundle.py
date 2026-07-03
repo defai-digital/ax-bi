@@ -570,6 +570,26 @@ def test_bundle_rejects_non_directory_output_ancestor(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_missing_output_parent(
+    mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
+):
+    """Test bundle refuses output paths below missing directories."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    missing_parent = isolated_filesystem / "missing"
+
+    result = cli_runner.invoke(
+        app,
+        ["bundle", "--output", str(missing_parent / "bundle.supx")],
+    )
+
+    assert result.exit_code == 1
+    assert "parent directory does not exist" in result.output
+    assert not missing_parent.exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_short_option(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):
