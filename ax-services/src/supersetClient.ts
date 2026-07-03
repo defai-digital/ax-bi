@@ -3415,6 +3415,7 @@ function hasValidAuthorizationRequestShape(
 
   const { principal, resource } = request;
   return (
+    request['contractVersion'] === AUTHORIZATION_CONTRACT_VERSION &&
     isRecord(principal) &&
     isRecord(resource) &&
     isPrincipalType(principal['type']) &&
@@ -3580,6 +3581,7 @@ function hasValidAssetSearchRequestShape(
 ): request is AssetSearchRequest {
   return (
     isRecord(request) &&
+    request['contractVersion'] === ASSET_SEARCH_CONTRACT_VERSION &&
     typeof request['query'] === 'string' &&
     Array.isArray(request['assetTypes']) &&
     request['assetTypes'].every(isAssetType) &&

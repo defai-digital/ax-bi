@@ -218,6 +218,34 @@ test('checkPermission fails closed for invalid request shapes', async () => {
   expect(fetchCalled).toBe(false);
 });
 
+test('checkPermission fails closed for wrong authorization request contract version', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: 'authorization.v0',
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  } as unknown as Parameters<SupersetClient['checkPermission']>[0]);
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization request contains invalid request shape',
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('checkPermission fails closed for non-success Superset responses', async () => {
   global.fetch = async () =>
     Response.json(
@@ -625,6 +653,30 @@ test('searchAssets rejects invalid request shapes before querying Superset', asy
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     query: 'sales',
     assetTypes: 'dashboard',
+    includeCertifiedOnly: false,
+    limit: 10,
+  } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['asset search request contains invalid request shape'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
+test('searchAssets rejects wrong request contract versions before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: 'asset-search.v0',
+    query: 'sales',
+    assetTypes: ['dashboard'],
     includeCertifiedOnly: false,
     limit: 10,
   } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
