@@ -449,7 +449,7 @@ def ensure_output_directory(path: Path, label: str) -> None:
     """Create an output directory after validating the path is safe to write."""
     validate_output_directory(path, label)
     anchor = get_existing_output_directory_anchor(path)
-    anchor_identity = get_directory_path_identity(anchor)
+    anchor_identity = get_directory_node_identity(anchor)
     if anchor_identity is None:
         raise click.ClickException(
             f"Refusing to create {label}: parent path is unsafe."
@@ -459,11 +459,8 @@ def ensure_output_directory(path: Path, label: str) -> None:
         path.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
-    current_anchor_identity = get_directory_path_identity(anchor)
-    if (
-        current_anchor_identity is None
-        or current_anchor_identity[:2] != anchor_identity[:2]
-    ):
+    current_anchor_identity = get_directory_node_identity(anchor)
+    if current_anchor_identity is None or current_anchor_identity != anchor_identity:
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
     validate_output_directory(path, label)
 
@@ -553,7 +550,7 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
     """Create an output file parent after validating existing ancestors."""
     validate_output_file_parent(path, root, label)
     anchor = get_existing_output_directory_anchor(root)
-    anchor_identity = get_directory_path_identity(anchor)
+    anchor_identity = get_directory_node_identity(anchor)
     if anchor_identity is None:
         raise click.ClickException(
             f"Refusing to create parent for {label}: parent path is unsafe."
@@ -563,11 +560,8 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
         parent.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise click.ClickException(f"Failed to create parent for {label}: {ex}") from ex
-    current_anchor_identity = get_directory_path_identity(anchor)
-    if (
-        current_anchor_identity is None
-        or current_anchor_identity[:2] != anchor_identity[:2]
-    ):
+    current_anchor_identity = get_directory_node_identity(anchor)
+    if current_anchor_identity is None or current_anchor_identity != anchor_identity:
         raise click.ClickException(
             f"Refusing to create parent for {label}: parent path changed."
         )
@@ -835,7 +829,7 @@ def remove_output_file(
 def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> Path:
     """Create a temporary output directory inside an already-validated parent."""
     validate_output_directory(parent, f"parent for {label}")
-    parent_identity = get_directory_path_identity(parent)
+    parent_identity = get_directory_node_identity(parent)
     if parent_identity is None:
         raise click.ClickException(
             f"Refusing to create {label}: parent path is unsafe."
@@ -847,11 +841,8 @@ def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> 
     temp_identity = get_directory_path_identity(temp_path)
     if temp_identity is None:
         raise click.ClickException(f"Refusing to create {label}: temp path is unsafe.")
-    current_parent_identity = get_directory_path_identity(parent)
-    if (
-        current_parent_identity is None
-        or current_parent_identity[:2] != parent_identity[:2]
-    ):
+    current_parent_identity = get_directory_node_identity(parent)
+    if current_parent_identity is None or current_parent_identity != parent_identity:
         try:
             remove_output_directory(temp_path, label, temp_identity)
         except click.ClickException:
@@ -871,6 +862,14 @@ def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     except OSError:
         return None
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
+    """Return stable directory node identity without content metadata."""
+    identity = get_directory_path_identity(path)
+    if identity is None:
+        return None
+    return identity[:2]
 
 
 def publish_staged_output_directory(
@@ -1582,7 +1581,7 @@ def create_scaffold_directory(path: Path, label: str) -> None:
             f"{invalid_parent}."
         )
     anchor = get_existing_output_directory_anchor(path)
-    anchor_identity = get_directory_path_identity(anchor)
+    anchor_identity = get_directory_node_identity(anchor)
     if anchor_identity is None:
         raise click.ClickException(
             f"Refusing to create {label}: parent path is unsafe."
@@ -1599,11 +1598,8 @@ def create_scaffold_directory(path: Path, label: str) -> None:
     created_identity = get_directory_path_identity(path)
     if created_identity is None:
         raise click.ClickException(f"Refusing to create {label}: path changed.")
-    current_anchor_identity = get_directory_path_identity(anchor)
-    if (
-        current_anchor_identity is None
-        or current_anchor_identity[:2] != anchor_identity[:2]
-    ):
+    current_anchor_identity = get_directory_node_identity(anchor)
+    if current_anchor_identity is None or current_anchor_identity != anchor_identity:
         try:
             cleanup_scaffold_directory(
                 path,
