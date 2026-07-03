@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import Mock, patch
 
 import pytest
@@ -35,7 +36,6 @@ def test_validate_command_success(cli_runner, isolated_filesystem):
         "version": "1.0.0",
         "permissions": [],
     }
-    import json
 
     (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
 
@@ -75,8 +75,6 @@ def test_validate_fails_with_invalid_backend_build_config(
     cli_runner, isolated_filesystem
 ):
     """Test validate reports malformed backend build config cleanly."""
-    import json
-
     extension_json = {
         "publisher": "test-org",
         "name": "test-extension",
@@ -105,6 +103,43 @@ include = "src/**/*.py"
 
     assert result.exit_code == 1
     assert "Invalid backend build config" in result.output
+
+
+@pytest.mark.cli
+@pytest.mark.parametrize(
+    ("path_name", "path_factory", "expected_message"),
+    [
+        ("frontend", lambda path: path.write_text("not a directory"), "frontend path"),
+        (
+            "backend",
+            lambda path: path.symlink_to(path.parent / "missing-backend"),
+            "backend path",
+        ),
+    ],
+)
+def test_validate_fails_when_source_path_is_not_directory(
+    cli_runner,
+    isolated_filesystem,
+    path_name,
+    path_factory,
+    expected_message,
+):
+    """Test validate rejects source paths that are not real directories."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+    path_factory(isolated_filesystem / path_name)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert f"{expected_message} exists but is not a directory" in result.output
 
 
 @pytest.mark.cli

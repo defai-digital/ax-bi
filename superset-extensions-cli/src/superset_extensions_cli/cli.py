@@ -233,6 +233,12 @@ def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     return extension_data, extension
 
 
+def require_optional_directory(path: Path, label: str) -> None:
+    """Require an optional project path to be a directory when present."""
+    if (path.exists() or path.is_symlink()) and not path.is_dir():
+        raise click.ClickException(f"{label} path exists but is not a directory.")
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
@@ -531,6 +537,11 @@ def validate() -> None:
 
     # Validate conventional backend structure if backend directory exists
     backend_dir = cwd / "backend"
+    try:
+        require_optional_directory(backend_dir, "backend")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
     if backend_dir.exists():
         # Check for pyproject.toml
         pyproject_path = backend_dir / "pyproject.toml"
@@ -583,6 +594,11 @@ def validate() -> None:
 
     # Validate conventional frontend entry point if frontend directory exists
     frontend_dir = cwd / "frontend"
+    try:
+        require_optional_directory(frontend_dir, "frontend")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
     if frontend_dir.exists():
         expected_frontend_entry = frontend_dir / "src" / "index.tsx"
         if not expected_frontend_entry.exists():
