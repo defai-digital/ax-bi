@@ -2835,6 +2835,50 @@ def test_copy_output_file_rejects_symlinked_target_parent(isolated_filesystem):
     assert list(outside_dir.iterdir()) == []
 
 
+@pytest.mark.unit
+def test_get_copy_source_identity_accepts_relative_root(isolated_filesystem):
+    """Test copy source identity resolves relative root paths internally."""
+    source_root = Path("source-root")
+    source_root.mkdir()
+    source_file = source_root / "module.py"
+    source_file.write_text("# source")
+
+    identity = cli.get_copy_source_identity(source_file, source_root)
+    stat = source_file.stat()
+
+    assert identity == (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+@pytest.mark.unit
+def test_get_copy_source_identity_rejects_symlinked_root(isolated_filesystem):
+    """Test copy source identity refuses roots behind symlink paths."""
+    outside_root = isolated_filesystem / "outside-root"
+    outside_root.mkdir()
+    source_root = isolated_filesystem / "source-root"
+    source_root.symlink_to(outside_root)
+    source_file = source_root / "module.py"
+    (outside_root / "module.py").write_text("# source")
+
+    identity = cli.get_copy_source_identity(source_file, source_root)
+
+    assert identity is None
+
+
+@pytest.mark.unit
+def test_get_copy_source_identity_rejects_symlink_outside_root(isolated_filesystem):
+    """Test copy source identity refuses source paths resolving outside root."""
+    source_root = isolated_filesystem / "source-root"
+    source_root.mkdir()
+    outside_file = isolated_filesystem / "outside.py"
+    outside_file.write_text("# outside")
+    source_link = source_root / "module.py"
+    source_link.symlink_to(outside_file)
+
+    identity = cli.get_copy_source_identity(source_link, source_root)
+
+    assert identity is None
+
+
 # Frontend Dependencies Tests
 @pytest.mark.unit
 @patch("subprocess.run")
