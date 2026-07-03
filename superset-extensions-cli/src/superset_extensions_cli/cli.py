@@ -469,6 +469,19 @@ def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> 
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
+def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
+    """Return directory identity unless the path crosses a symlink boundary."""
+    if path.is_symlink() or not path.is_dir():
+        return None
+    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
+        return None
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
 def publish_staged_output_directory(
     staged_path: Path, target_path: Path, label: str
 ) -> None:
@@ -480,6 +493,11 @@ def publish_staged_output_directory(
     if not staged_path.is_dir():
         raise click.ClickException(
             f"Refusing to publish {label}: staged path is not a directory."
+        )
+    staged_identity = get_directory_path_identity(staged_path)
+    if staged_identity is None:
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is not safe to publish."
         )
     validate_output_directory(target_path, label)
 
@@ -508,6 +526,10 @@ def publish_staged_output_directory(
         staged_path.replace(target_path)
         target_replaced = True
         validate_output_directory(target_path, label)
+        if get_directory_path_identity(target_path) != staged_identity:
+            raise click.ClickException(
+                f"Failed to publish {label}: staged path changed during publish."
+            )
     except OSError as ex:
         publish_error = click.ClickException(f"Failed to publish {label}: {ex}")
     except click.ClickException as ex:

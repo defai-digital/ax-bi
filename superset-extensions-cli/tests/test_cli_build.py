@@ -813,6 +813,47 @@ def test_publish_staged_output_directory_restores_existing_target_when_staged_di
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_restores_existing_target_when_staged_dir_replaced(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged directory publishing rejects a replacement staged directory."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    replacement_dir = isolated_filesystem / "replacement-frontend"
+    replacement_dir.mkdir()
+    (replacement_dir / "replacement.js").write_text("replacement")
+    original_replace = Path.replace
+
+    def replace_staged_with_replacement(path, target):
+        if path == staged_dir and target == output_path:
+            shutil.rmtree(staged_dir)
+            original_replace(replacement_dir, staged_dir)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", replace_staged_with_replacement)
+
+    with pytest.raises(
+        click.ClickException,
+        match="staged path changed during publish",
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(output_path / "old.js")
+    assert not (output_path / "replacement.js").exists()
+    assert not replacement_dir.exists()
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
     isolated_filesystem, monkeypatch
 ):
