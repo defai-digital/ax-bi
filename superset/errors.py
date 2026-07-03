@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import lazy_gettext as _
 
@@ -217,7 +217,7 @@ class SupersetError:
     message: str
     error_type: SupersetErrorType
     level: ErrorLevel
-    extra: Optional[dict[str, Any]] = None
+    extra: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """
