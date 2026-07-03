@@ -486,9 +486,18 @@ def validate_bundle_output_path(path: Path) -> None:
     """Validate that a bundle output path can be safely opened for writing."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to write bundle to symlink: {path}.")
-    if path.parent.is_symlink():
+
+    symlinked_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.is_symlink()
+        ),
+        None,
+    )
+    if symlinked_parent is not None:
         raise click.ClickException(
-            f"Refusing to write bundle through symlinked directory: {path.parent}."
+            f"Refusing to write bundle through symlinked directory: {symlinked_parent}."
         )
     if path.exists() and not path.is_file():
         raise click.ClickException(
