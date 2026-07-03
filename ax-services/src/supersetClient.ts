@@ -1933,7 +1933,7 @@ function extractSupersetCount(payload: unknown, fallback: number): number {
 function toDashboardListItem(
   item: SupersetListItem,
 ): DashboardListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -1962,7 +1962,7 @@ function toDashboardListItem(
 }
 
 function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -1989,7 +1989,7 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
 }
 
 function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2027,7 +2027,7 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
 }
 
 function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2091,7 +2091,7 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
 function toSavedQueryListItem(
   item: SupersetListItem,
 ): SavedQueryListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2114,7 +2114,7 @@ function toSavedQueryListItem(
 function toAnnotationLayerListItem(
   item: SupersetListItem,
 ): AnnotationLayerListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2131,7 +2131,7 @@ function toAnnotationListItem(
   item: SupersetListItem,
   fallbackLayerId: number,
 ): AnnotationListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2149,7 +2149,7 @@ function toAnnotationListItem(
 }
 
 function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2180,7 +2180,7 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
 }
 
 function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2221,7 +2221,7 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
 }
 
 function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2232,7 +2232,7 @@ function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
 }
 
 function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2285,7 +2285,7 @@ function toRlsRoleRef(value: unknown): RlsRoleRef | undefined {
 }
 
 function toTagListItem(item: SupersetListItem): TagListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2309,7 +2309,7 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
 }
 
 function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -2966,7 +2966,7 @@ function toAssetSearchResult(
   item: SupersetListItem,
   query: string,
 ): AssetSearchResult | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
@@ -3053,6 +3053,10 @@ function extractNameList(values: unknown[] | undefined): string[] {
 
 function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
+}
+
+function isSupersetId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

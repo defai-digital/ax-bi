@@ -859,6 +859,48 @@ test('listDashboards ignores Superset counts lower than mapped results', async (
   expect(result.hasNext).toBe(false);
 });
 
+test('listDashboards skips invalid Superset item IDs', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 3,
+      result: [
+        {
+          id: 7,
+          dashboard_title: 'Sales dashboard',
+        },
+        {
+          id: -1,
+          dashboard_title: 'Invalid negative ID',
+        },
+        {
+          id: 2.5,
+          dashboard_title: 'Invalid fractional ID',
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.dashboards).toEqual([
+    {
+      id: 7,
+      dashboardTitle: 'Sales dashboard',
+    },
+  ]);
+  expect(result.count).toBe(1);
+  expect(result.totalCount).toBe(3);
+});
+
 test('listDashboards records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {
