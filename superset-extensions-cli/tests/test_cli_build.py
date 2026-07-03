@@ -2632,6 +2632,25 @@ def test_validate_output_file_parent_rejects_symlinked_root_parent(
 
 
 @pytest.mark.unit
+def test_validate_output_file_parent_rejects_non_directory_root_parent(
+    isolated_filesystem,
+):
+    """Test output file parent validation refuses a file root parent."""
+    dist_path = isolated_filesystem / "dist"
+    dist_path.write_text("not a directory")
+    root = dist_path / "backend"
+    target = root / "src" / "test_org" / "module.py"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file .*parent exists but is not a directory",
+    ):
+        validate_output_file_parent(target, root, "backend file src/test_org/module.py")
+
+    assert dist_path.read_text() == "not a directory"
+
+
+@pytest.mark.unit
 def test_ensure_output_file_parent_rejects_changed_root(
     isolated_filesystem,
     monkeypatch,

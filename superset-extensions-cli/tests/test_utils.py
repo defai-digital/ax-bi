@@ -24,6 +24,7 @@ import pytest
 import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
     find_non_directory_parent,
+    find_non_directory_path_or_parent,
     find_symlinked_parent,
     find_symlinked_path_or_parent,
     get_directory_node_identity,
@@ -66,6 +67,15 @@ def test_find_non_directory_parent_returns_file_parent(isolated_filesystem):
     file_parent.write_text("not a directory")
 
     assert find_non_directory_parent(file_parent / "metadata.json") == file_parent
+
+
+@pytest.mark.unit
+def test_find_non_directory_path_or_parent_returns_file_path(isolated_filesystem):
+    """Test non-directory path discovery returns the path before parents."""
+    file_path = isolated_filesystem / "metadata"
+    file_path.write_text("not a directory")
+
+    assert find_non_directory_path_or_parent(file_path) == file_path
 
 
 @pytest.mark.unit

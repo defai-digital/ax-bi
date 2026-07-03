@@ -142,6 +142,13 @@ def find_non_directory_parent(path: Path) -> Path | None:
     )
 
 
+def find_non_directory_path_or_parent(path: Path) -> Path | None:
+    """Return a non-directory path or the first non-directory parent."""
+    if path.exists() and not path.is_dir():
+        return path
+    return find_non_directory_parent(path)
+
+
 def get_read_path_identity(path: Path) -> PathIdentity | None:
     """Return file identity for a safe input path."""
     read_path = validate_read_path(path)

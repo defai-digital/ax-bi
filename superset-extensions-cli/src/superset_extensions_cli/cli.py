@@ -46,6 +46,7 @@ from superset_extensions_cli.utils import (
     NodeIdentity,
     PathIdentity,
     find_non_directory_parent,
+    find_non_directory_path_or_parent,
     find_symlinked_parent,
     find_symlinked_path_or_parent,
     generate_extension_names,
@@ -510,15 +511,7 @@ def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
             f"Refusing to write {label}: parent directory is a symlink: "
             f"{symlinked_root}."
         )
-    invalid_root_parent = next(
-        (
-            parent
-            for parent in (root, *root.parents)
-            if parent.exists() and not parent.is_dir()
-        ),
-        None,
-    )
-    if invalid_root_parent is not None:
+    if (invalid_root_parent := find_non_directory_path_or_parent(root)) is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent exists but is not a directory: "
             f"{invalid_root_parent}."
