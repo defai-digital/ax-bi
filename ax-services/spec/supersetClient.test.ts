@@ -650,6 +650,30 @@ test('probeMetadata returns sanitized Superset metadata summary', async () => {
   });
 });
 
+test('probeMetadata bounds and sanitizes metadata keys', async () => {
+  const payload: Record<string, unknown> = {
+    ' aaa\nscope ': true,
+    ' ': true,
+    clean: true,
+    [`long-${'x'.repeat(200)}`]: true,
+  };
+  for (let index = 0; index < 120; index += 1) {
+    payload[`key-${index.toString().padStart(3, '0')}`] = true;
+  }
+  global.fetch = async () => Response.json(payload, { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.probeMetadata();
+
+  expect(result.ok).toBe(true);
+  expect(result.keyCount).toBe(100);
+  expect(result.keys).toHaveLength(100);
+  expect(result.keys).toContain('aaa scope');
+  expect(result.keys).not.toContain('');
+  expect(result.keys?.every(key => !key.includes('\n'))).toBe(true);
+  expect(result.keys?.every(key => key.length <= 128)).toBe(true);
+});
+
 test('probeMetadata reports non-success Superset responses without parsing body', async () => {
   global.fetch = async () =>
     new Response('<h1>service unavailable</h1>', {

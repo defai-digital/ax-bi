@@ -233,7 +233,21 @@ test('metadata response schema is registered in runtime contracts', () => {
       .properties.keys,
   ).toEqual({
     type: 'array',
-    items: { type: 'string' },
+    maxItems: 100,
+    items: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+    },
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.keyCount,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+    maximum: 100,
   });
   expect(
     metadataResponseSchema.properties.dependencies.properties.supersetMetadata

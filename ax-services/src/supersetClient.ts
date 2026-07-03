@@ -253,6 +253,8 @@ const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
 const MAX_ASSET_TEXT_LENGTH = 256;
 const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
 const MAX_ASSET_LIST_VALUE_LENGTH = 128;
+const MAX_METADATA_KEYS = 100;
+const MAX_METADATA_KEY_LENGTH = 128;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
 
 export class SupersetClient
@@ -1681,7 +1683,15 @@ function extractObjectKeys(payload: unknown): string[] {
     return [];
   }
 
-  return Object.keys(payload).sort();
+  return [
+    ...new Set(
+      Object.keys(payload)
+        .map(key => cleanMetadataKey(key))
+        .filter((key): key is string => key !== undefined),
+    ),
+  ]
+    .sort()
+    .slice(0, MAX_METADATA_KEYS);
 }
 
 type SearchableAssetType = Exclude<AssetType, 'metric'>;
@@ -3873,6 +3883,16 @@ function cleanAssetText(value: unknown, maxLength: number): string {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, maxLength);
+}
+
+function cleanMetadataKey(value: string): string | undefined {
+  const key = value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_METADATA_KEY_LENGTH);
+
+  return key.length === 0 ? undefined : key;
 }
 
 function isListColumnArray(value: unknown): value is string[] {

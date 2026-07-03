@@ -23,6 +23,12 @@ const externalMessageSchema = {
   maxLength: 256,
   pattern: '^[^\\u0000-\\u001F\\u007F]+$',
 } as const;
+const metadataKeySchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 128,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -106,10 +112,11 @@ const dependencyMetadataSchema = {
     ok: { type: 'boolean' },
     url: { type: 'string' },
     statusCode: { type: 'number' },
-    keyCount: { type: 'number' },
+    keyCount: { type: 'integer', minimum: 0, maximum: 100 },
     keys: {
       type: 'array',
-      items: { type: 'string' },
+      maxItems: 100,
+      items: metadataKeySchema,
     },
     error: externalMessageSchema,
   },
