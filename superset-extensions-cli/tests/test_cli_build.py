@@ -4687,6 +4687,53 @@ def test_copy_frontend_dist_rejects_source_root_changed_before_copy(
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_rejects_source_parent_changed_before_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend staging refuses a replaced frontend parent before copying."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dist = frontend_dir / "dist"
+    frontend_dist.mkdir(parents=True)
+    main_file = frontend_dist / "main.js"
+    main_file.write_text("main content")
+    remote_entry = frontend_dist / "remoteEntry.abc123.js"
+    remote_entry.write_text("remote entry content")
+    saved_frontend_dir = isolated_filesystem / "saved-frontend"
+    replacement_frontend_dir = isolated_filesystem / "replacement-frontend"
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def replace_frontend_parent_after_planning(parent, prefix, label):
+        temp_dir = original_create_temporary_output_directory(parent, prefix, label)
+        if prefix == ".frontend.":
+            frontend_dir.rename(saved_frontend_dir)
+            replacement_frontend_dir.mkdir()
+            (saved_frontend_dir / "dist").rename(replacement_frontend_dir / "dist")
+            replacement_frontend_dir.rename(frontend_dir)
+        return temp_dir
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        replace_frontend_parent_after_planning,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend/dist path changed before copy",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (saved_frontend_dir / "dist").exists()
+    assert main_file.read_text() == "main content"
+    assert not (isolated_filesystem / "dist" / "frontend" / "dist" / "main.js").exists()
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_rejects_changed_staged_cleanup_root(
     isolated_filesystem,
     monkeypatch,

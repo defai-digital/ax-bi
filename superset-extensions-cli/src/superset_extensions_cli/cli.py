@@ -1391,14 +1391,24 @@ def ensure_directory_identity_unchanged(
     operation: str = "metadata update",
     *,
     allow_content_changes: bool = True,
+    expected_parent_identity: tuple[int, int] | None = None,
 ) -> None:
     """Fail if an optional project directory changed after validation."""
     if identity is None:
         return
+    current_parent_identity = get_read_parent_identity(path)
     current_identity = get_directory_path_identity(path)
-    if current_identity is None or (
-        current_identity != identity
-        and not (allow_content_changes and current_identity[:2] == identity[:2])
+    if (
+        current_parent_identity is None
+        or (
+            expected_parent_identity is not None
+            and current_parent_identity != expected_parent_identity
+        )
+        or current_identity is None
+        or (
+            current_identity != identity
+            and not (allow_content_changes and current_identity[:2] == identity[:2])
+        )
     ):
         raise click.ClickException(f"{label} path changed before {operation}.")
 
@@ -1712,6 +1722,9 @@ def copy_frontend_dist(cwd: Path) -> str:
     frontend_dist_identity = get_directory_path_identity(frontend_dist_path)
     if frontend_dist_identity is None:
         raise click.ClickException("frontend/dist path is no longer safe.")
+    frontend_dist_parent_identity = get_read_parent_identity(frontend_dist_path)
+    if frontend_dist_parent_identity is None:
+        raise click.ClickException("frontend/dist path is no longer safe.")
     frontend_dist = frontend_dist_path.resolve()
     frontend_files: list[tuple[Path, tuple[int, int, int, int]]] = []
     remote_entries: list[str] = []
@@ -1773,6 +1786,7 @@ def copy_frontend_dist(cwd: Path) -> str:
                 "frontend/dist",
                 frontend_dist_identity,
                 "copy",
+                expected_parent_identity=frontend_dist_parent_identity,
             )
             ensure_copy_source_unchanged(
                 f,
