@@ -23,6 +23,8 @@ from pathlib import Path
 import pytest
 import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
+    find_symlinked_parent,
+    find_symlinked_path_or_parent,
     get_directory_node_identity,
     get_directory_path_identity,
     read_json,
@@ -31,6 +33,29 @@ from superset_extensions_cli.utils import (
     write_text_atomic,
     write_toml,
 )
+
+
+@pytest.mark.unit
+def test_find_symlinked_parent_returns_nearest_symlinked_parent(isolated_filesystem):
+    """Test symlink parent discovery returns the direct symlink boundary."""
+    outside_dir = isolated_filesystem / "outside"
+    nested_outside_dir = outside_dir / "nested"
+    nested_outside_dir.mkdir(parents=True)
+    linked_dir = isolated_filesystem / "linked"
+    linked_dir.symlink_to(outside_dir)
+
+    assert find_symlinked_parent(linked_dir / "nested" / "metadata.json") == linked_dir
+
+
+@pytest.mark.unit
+def test_find_symlinked_path_or_parent_returns_symlinked_path(isolated_filesystem):
+    """Test symlink path discovery returns the path before checking parents."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text("{}")
+    linked_file = isolated_filesystem / "metadata.json"
+    linked_file.symlink_to(outside_file)
+
+    assert find_symlinked_path_or_parent(linked_file) == linked_file
 
 
 @pytest.mark.unit

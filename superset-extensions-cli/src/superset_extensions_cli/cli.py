@@ -45,6 +45,8 @@ from superset_extensions_cli.types import ExtensionNames
 from superset_extensions_cli.utils import (
     NodeIdentity,
     PathIdentity,
+    find_symlinked_parent,
+    find_symlinked_path_or_parent,
     generate_extension_names,
     get_directory_node_identity,
     get_directory_path_identity,
@@ -1320,25 +1322,6 @@ def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
         raise click.ClickException(f"Invalid extension.json: {ex}") from ex
 
     return extension_data, extension
-
-
-def find_symlinked_parent(path: Path) -> Path | None:
-    """Return the first symlinked parent directory in a path."""
-    return next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.is_symlink()
-        ),
-        None,
-    )
-
-
-def find_symlinked_path_or_parent(path: Path) -> Path | None:
-    """Return a symlinked path or the first symlinked parent directory."""
-    if path.is_symlink():
-        return path
-    return find_symlinked_parent(path)
 
 
 def require_optional_directory(path: Path, label: str) -> None:

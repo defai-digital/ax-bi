@@ -106,11 +106,28 @@ DISPLAY_NAME_REGEX = re.compile(DISPLAY_NAME_PATTERN)
 def validate_read_path(path: Path) -> Path | None:
     """Return a normalized input path unless it crosses a symlink boundary."""
     path = Path(path)
-    if path.is_symlink() or not path.is_file():
-        return None
-    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
+    if not path.is_file() or find_symlinked_path_or_parent(path) is not None:
         return None
     return path
+
+
+def find_symlinked_parent(path: Path) -> Path | None:
+    """Return the first symlinked parent directory in a path."""
+    return next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.is_symlink()
+        ),
+        None,
+    )
+
+
+def find_symlinked_path_or_parent(path: Path) -> Path | None:
+    """Return a symlinked path or the first symlinked parent directory."""
+    if path.is_symlink():
+        return path
+    return find_symlinked_parent(path)
 
 
 def get_read_path_identity(path: Path) -> PathIdentity | None:
@@ -127,9 +144,7 @@ def get_read_path_identity(path: Path) -> PathIdentity | None:
 
 def get_directory_path_identity(path: Path) -> PathIdentity | None:
     """Return directory identity unless the path crosses a symlink boundary."""
-    if path.is_symlink() or not path.is_dir():
-        return None
-    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
+    if not path.is_dir() or find_symlinked_path_or_parent(path) is not None:
         return None
     try:
         stat = path.stat()
@@ -217,15 +232,7 @@ def validate_write_path(path: Path) -> Path:
         raise OSError(f"Refusing to write through symlink: {path}")
     if path.exists() and not path.is_file():
         raise OSError(f"Refusing to write non-file path: {path}")
-    symlinked_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.is_symlink()
-        ),
-        None,
-    )
-    if symlinked_parent is not None:
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
         raise OSError(
             f"Refusing to write through symlinked directory: {symlinked_parent}"
         )
