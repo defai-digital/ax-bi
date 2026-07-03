@@ -171,7 +171,7 @@ def get_bundle_files_from_path(base_path: str) -> Generator[BundleFile, None, No
     dist_path = os.path.join(base_path, "dist")
 
     if not os.path.isdir(dist_path):
-        raise Exception("Expected directory %s does not exist." % dist_path)
+        raise Exception(f"Expected directory {dist_path} does not exist.")
 
     for root, _, files in os.walk(dist_path):
         for file in files:
