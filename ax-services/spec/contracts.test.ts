@@ -59,7 +59,15 @@ import {
   RUNTIME_CONTRACT_VERSION,
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
-import { listColumnSchema, warningSchema } from '../src/contracts/listColumn';
+import {
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from '../src/contracts/listColumn';
 import {
   queryListContractSchemas,
   QUERY_LIST_CONTRACT_VERSION,
@@ -233,6 +241,52 @@ test('list response column schemas are token constrained and shared', () => {
   for (const schema of responseSchemas) {
     expect(schema.properties.columnsRequested).toBe(listColumnSchema);
     expect(schema.properties.columnsLoaded).toBe(listColumnSchema);
+  }
+});
+
+test('list pagination and filter schemas are shared', () => {
+  const requestSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListRequestSchema,
+    annotationListContractSchemas.annotationListRequestSchema,
+    chartListContractSchemas.chartListRequestSchema,
+    dashboardListContractSchemas.dashboardListRequestSchema,
+    databaseListContractSchemas.databaseListRequestSchema,
+    datasetListContractSchemas.datasetListRequestSchema,
+    queryListContractSchemas.queryListRequestSchema,
+    reportListContractSchemas.reportListRequestSchema,
+    roleListContractSchemas.roleListRequestSchema,
+    rlsListContractSchemas.rlsListRequestSchema,
+    savedQueryListContractSchemas.savedQueryListRequestSchema,
+    tagListContractSchemas.tagListRequestSchema,
+    taskListContractSchemas.taskListRequestSchema,
+  ];
+  const responseSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema,
+    annotationListContractSchemas.annotationListResponseSchema,
+    chartListContractSchemas.chartListResponseSchema,
+    dashboardListContractSchemas.dashboardListResponseSchema,
+    databaseListContractSchemas.databaseListResponseSchema,
+    datasetListContractSchemas.datasetListResponseSchema,
+    queryListContractSchemas.queryListResponseSchema,
+    reportListContractSchemas.reportListResponseSchema,
+    roleListContractSchemas.roleListResponseSchema,
+    rlsListContractSchemas.rlsListResponseSchema,
+    savedQueryListContractSchemas.savedQueryListResponseSchema,
+    tagListContractSchemas.tagListResponseSchema,
+    taskListContractSchemas.taskListResponseSchema,
+  ];
+
+  for (const schema of requestSchemas) {
+    expect(schema.properties.filters.items).toBe(listFilterSchema);
+    expect(schema.properties.page).toBe(listPageSchema);
+    expect(schema.properties.pageSize).toBe(listPageSizeSchema);
+  }
+  for (const schema of responseSchemas) {
+    expect(schema.properties.count).toBe(listCountSchema);
+    expect(schema.properties.totalCount).toBe(listCountSchema);
+    expect(schema.properties.page).toBe(listPageSchema);
+    expect(schema.properties.pageSize).toBe(listPageSizeSchema);
+    expect(schema.properties.totalPages).toBe(listTotalPagesSchema);
   }
 });
 
@@ -525,10 +579,22 @@ test('asset search request schema is registered in asset search contracts', () =
     maximum: 100,
   });
   expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets
+      .maxItems,
+  ).toBe(100);
+  expect(
     assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.relevanceScore,
+  ).toEqual({
+    type: 'number',
+    minimum: 0,
+    maximum: 2,
   });
   expect(
     assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items

@@ -18,10 +18,13 @@
  */
 import {
   listColumnSchema,
-  listFilterStringArraySchema,
-  listFilterStringSchema,
+  listCountSchema,
+  listFilterSchema,
   listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
   listSearchSchema,
+  listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
 
@@ -87,26 +90,6 @@ export interface QueryListResponse {
   warnings: string[];
 }
 
-const queryFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
-    opr: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
-    value: {
-      anyOf: [
-        listFilterStringSchema,
-        { type: 'number' },
-        { type: 'boolean' },
-        listFilterStringArraySchema,
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const queryListItemSchema = {
   type: 'object',
   required: ['id'],
@@ -148,14 +131,14 @@ export const queryListRequestSchema = {
     contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
     filters: {
       type: 'array',
-      items: queryFilterSchema,
+      items: listFilterSchema,
     },
     selectColumns: listColumnSchema,
     search: listSearchSchema,
     orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'integer', minimum: 1 },
-    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
   },
 } as const;
 
@@ -183,11 +166,11 @@ export const queryListResponseSchema = {
       type: 'array',
       items: queryListItemSchema,
     },
-    count: { type: 'integer', minimum: 0 },
-    totalCount: { type: 'integer', minimum: 0 },
-    page: { type: 'integer', minimum: 1 },
-    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
-    totalPages: { type: 'integer', minimum: 0 },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
     columnsRequested: listColumnSchema,

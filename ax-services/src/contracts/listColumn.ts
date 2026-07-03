@@ -17,16 +17,18 @@
  * under the License.
  */
 
+export const listIdentifierSchema = {
+  type: 'string',
+  pattern: '^[A-Za-z0-9_]+$',
+} as const;
+
 export const listColumnSchema = {
   type: 'array',
-  items: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+  items: listIdentifierSchema,
 } as const;
 
 export const listOrderColumnSchema = {
-  anyOf: [
-    { const: '' },
-    { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
-  ],
+  anyOf: [{ const: '' }, listIdentifierSchema],
 } as const;
 
 export const listSearchSchema = {
@@ -43,6 +45,44 @@ export const listFilterStringArraySchema = {
   type: 'array',
   items: listFilterStringSchema,
 } as const;
+
+export const listFilterSchema = {
+  type: 'object',
+  required: ['col', 'opr', 'value'],
+  additionalProperties: false,
+  properties: {
+    col: listIdentifierSchema,
+    opr: listIdentifierSchema,
+    value: {
+      anyOf: [
+        listFilterStringSchema,
+        { type: 'number' },
+        { type: 'boolean' },
+        listFilterStringArraySchema,
+        { type: 'array', items: { type: 'number' } },
+        { type: 'array', items: { type: 'boolean' } },
+      ],
+    },
+  },
+} as const;
+
+export const listPageSchema = {
+  type: 'integer',
+  minimum: 1,
+} as const;
+
+export const listPageSizeSchema = {
+  type: 'integer',
+  minimum: 1,
+  maximum: 100,
+} as const;
+
+export const listCountSchema = {
+  type: 'integer',
+  minimum: 0,
+} as const;
+
+export const listTotalPagesSchema = listCountSchema;
 
 export const warningSchema = {
   type: 'array',

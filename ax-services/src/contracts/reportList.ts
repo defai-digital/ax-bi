@@ -18,10 +18,13 @@
  */
 import {
   listColumnSchema,
-  listFilterStringArraySchema,
-  listFilterStringSchema,
+  listCountSchema,
+  listFilterSchema,
   listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
   listSearchSchema,
+  listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
 
@@ -86,26 +89,6 @@ export interface ReportListResponse {
   warnings: string[];
 }
 
-const reportFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
-    opr: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
-    value: {
-      anyOf: [
-        listFilterStringSchema,
-        { type: 'number' },
-        { type: 'boolean' },
-        listFilterStringArraySchema,
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const reportListItemSchema = {
   type: 'object',
   required: ['id'],
@@ -146,14 +129,14 @@ export const reportListRequestSchema = {
     contractVersion: { const: REPORT_LIST_CONTRACT_VERSION },
     filters: {
       type: 'array',
-      items: reportFilterSchema,
+      items: listFilterSchema,
     },
     selectColumns: listColumnSchema,
     search: listSearchSchema,
     orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'integer', minimum: 1 },
-    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
   },
 } as const;
 
@@ -181,11 +164,11 @@ export const reportListResponseSchema = {
       type: 'array',
       items: reportListItemSchema,
     },
-    count: { type: 'integer', minimum: 0 },
-    totalCount: { type: 'integer', minimum: 0 },
-    page: { type: 'integer', minimum: 1 },
-    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
-    totalPages: { type: 'integer', minimum: 0 },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
     columnsRequested: listColumnSchema,

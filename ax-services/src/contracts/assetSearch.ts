@@ -88,7 +88,7 @@ const assetSearchResultSchema = {
     name: cleanAssetStringSchema,
     description: cleanAssetDescriptionSchema,
     certified: { type: 'boolean' },
-    relevanceScore: { type: 'number' },
+    relevanceScore: { type: 'number', minimum: 0, maximum: 2 },
     relevanceReason: cleanAssetStringSchema,
     owners: {
       type: 'array',
@@ -137,6 +137,7 @@ export const assetSearchResponseSchema = {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
     assets: {
       type: 'array',
+      maxItems: 100,
       items: assetSearchResultSchema,
     },
     warnings: warningSchema,
