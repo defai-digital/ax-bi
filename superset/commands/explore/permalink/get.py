@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -40,13 +39,13 @@ class GetExplorePermalinkCommand(BaseExplorePermalinkCommand):
     def __init__(self, key: str):
         self.key = key
 
-    def run(self) -> Optional[ExplorePermalinkValue]:
+    def run(self) -> ExplorePermalinkValue | None:
         self.validate()
         try:
             key = decode_permalink_id(self.key, salt=self.salt)
             value = KeyValueDAO.get_value(self.resource, key, self.codec)
             if value:
-                chart_id: Optional[int] = value.get("chartId")
+                chart_id: int | None = value.get("chartId")
                 # keep this backward compatible for old permalinks
                 datasource_id: int = (
                     value.get("datasourceId") or value.get("datasetId") or 0
