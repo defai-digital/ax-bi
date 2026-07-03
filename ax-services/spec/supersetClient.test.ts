@@ -844,6 +844,36 @@ test('listAnnotations rejects invalid layer IDs before querying Superset', async
   expect(fetchCalled).toBe(false);
 });
 
+test('listAnnotations rejects malformed requests before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listAnnotations(
+    null as unknown as Parameters<SupersetClient['listAnnotations']>[0],
+  );
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 100,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    layerId: 0,
+    columnsRequested: ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'],
+    columnsLoaded: [],
+    warnings: ['annotation list request contains invalid layer id'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('listDashboards maps Superset dashboard list responses', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
@@ -990,6 +1020,45 @@ test('listDashboards rejects invalid pagination before querying Superset', async
     createdByMe: false,
     ownedByMe: false,
   });
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 100,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['dashboard list request contains invalid pagination'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
+test('listDashboards rejects malformed requests before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards(
+    null as unknown as Parameters<SupersetClient['listDashboards']>[0],
+  );
 
   expect(result).toEqual({
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,

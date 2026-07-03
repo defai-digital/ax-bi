@@ -427,7 +427,7 @@ export class SupersetClient
     request: AnnotationListRequest,
     correlationId?: string,
   ): Promise<AnnotationListResponse> {
-    if (!isPositiveInteger(request.layerId)) {
+    if (!hasValidAnnotationLayerId(request)) {
       return emptyAnnotationListResponse(
         withFallbackAnnotationLayerId(request),
         ['annotation list request contains invalid layer id'],
@@ -1490,6 +1490,10 @@ interface ListOrderingRequest {
 
 interface ListFilterRequest {
   filters: unknown;
+}
+
+interface ListColumnRequest {
+  selectColumns?: unknown;
 }
 
 interface SupersetListItem {
@@ -2603,33 +2607,33 @@ function extractDatabaseName(item: SupersetListItem): string | undefined {
 }
 
 function requestedDashboardColumns(request: DashboardListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'dashboard_title',
-        'slug',
-        'description',
-        'certified_by',
-        'certification_details',
-        'url',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'dashboard_title',
+    'slug',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedAnnotationLayerColumns(
   request: AnnotationLayerListRequest,
 ): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'descr'];
+  return requestedColumnsOrDefault(request, ['id', 'name', 'descr']);
 }
 
 function requestedAnnotationColumns(request: AnnotationListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'short_descr',
+    'start_dttm',
+    'end_dttm',
+    'layer_id',
+  ]);
 }
 
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
@@ -2654,19 +2658,17 @@ function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
 }
 
 function requestedChartColumns(request: ChartListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'slice_name',
-        'viz_type',
-        'description',
-        'certified_by',
-        'certification_details',
-        'url',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'slice_name',
+    'viz_type',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function chartColumnsLoaded(charts: ChartListItem[]): string[] {
@@ -2690,75 +2692,97 @@ function chartColumnsLoaded(charts: ChartListItem[]): string[] {
 }
 
 function requestedDatasetColumns(request: DatasetListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'table_name',
-        'schema',
-        'database_name',
-        'database',
-        'description',
-        'certified_by',
-        'certification_details',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'table_name',
+    'schema',
+    'database_name',
+    'database',
+    'description',
+    'certified_by',
+    'certification_details',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedDatabaseColumns(request: DatabaseListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'uuid',
-        'database_name',
-        'backend',
-        'expose_in_sqllab',
-        'allow_file_upload',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'uuid',
+    'database_name',
+    'backend',
+    'expose_in_sqllab',
+    'allow_file_upload',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedQueryColumns(request: QueryListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'status', 'start_time', 'database_id', 'schema'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'status',
+    'start_time',
+    'database_id',
+    'schema',
+  ]);
 }
 
 function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'label', 'db_id', 'schema', 'uuid'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'label',
+    'db_id',
+    'schema',
+    'uuid',
+  ]);
 }
 
 function requestedReportColumns(request: ReportListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'type', 'active', 'crontab'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'name',
+    'type',
+    'active',
+    'crontab',
+  ]);
 }
 
 function requestedRoleColumns(request: RoleListRequest): string[] {
-  return request.selectColumns.length > 0 ? request.selectColumns : ['id', 'name'];
+  return requestedColumnsOrDefault(request, ['id', 'name']);
 }
 
 function requestedRlsColumns(request: RlsListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'filter_type', 'clause'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'name',
+    'filter_type',
+    'clause',
+  ]);
 }
 
 function requestedTagColumns(request: TagListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'type'];
+  return requestedColumnsOrDefault(request, ['id', 'name', 'type']);
 }
 
 function requestedTaskColumns(request: TaskListRequest): string[] {
-  return request.selectColumns.length > 0
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'uuid',
+    'task_type',
+    'status',
+    'changed_on',
+  ]);
+}
+
+function requestedColumnsOrDefault(
+  request: ListColumnRequest,
+  defaultColumns: string[],
+): string[] {
+  return isStringArray(request.selectColumns) && request.selectColumns.length > 0
     ? request.selectColumns
-    : ['id', 'uuid', 'task_type', 'status', 'changed_on'];
+    : defaultColumns;
 }
 
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
@@ -3346,27 +3370,42 @@ function isOptionalSupersetId(value: unknown): boolean {
   return value === undefined || isSupersetId(value);
 }
 
-function hasValidListPagination(request: ListPaginationRequest): boolean {
-  return isPositiveInteger(request.page) && isListPageSize(request.pageSize);
+function hasValidListPagination(
+  request: unknown,
+): request is ListPaginationRequest {
+  return (
+    isRecord(request) &&
+    isPositiveInteger(request.page) &&
+    isListPageSize(request.pageSize)
+  );
 }
 
 function withFallbackListPagination<T extends ListPaginationRequest>(
-  request: T,
+  request: unknown,
 ): T {
+  const record = isRecord(request) ? request : {};
   return {
-    ...request,
-    page: isPositiveInteger(request.page) ? request.page : 1,
-    pageSize: isListPageSize(request.pageSize) ? request.pageSize : 100,
-  } as T;
+    ...record,
+    page: isPositiveInteger(record.page) ? record.page : 1,
+    pageSize: isListPageSize(record.pageSize) ? record.pageSize : 100,
+    selectColumns: isStringArray(record.selectColumns)
+      ? record.selectColumns
+      : [],
+  } as unknown as T;
 }
 
-function withFallbackAnnotationLayerId(
-  request: AnnotationListRequest,
-): AnnotationListRequest {
+function hasValidAnnotationLayerId(
+  request: unknown,
+): request is AnnotationListRequest {
+  return isRecord(request) && isPositiveInteger(request.layerId);
+}
+
+function withFallbackAnnotationLayerId(request: unknown): AnnotationListRequest {
+  const record = isRecord(request) ? request : {};
   return {
-    ...request,
-    layerId: isNonNegativeInteger(request.layerId) ? request.layerId : 0,
-  };
+    ...withFallbackListPagination<AnnotationListRequest>(record),
+    layerId: isNonNegativeInteger(record.layerId) ? record.layerId : 0,
+  } as AnnotationListRequest;
 }
 
 function isPositiveInteger(value: unknown): value is number {
@@ -3377,8 +3416,9 @@ function isListPageSize(value: unknown): value is number {
   return isInteger(value) && value >= 1 && value <= 100;
 }
 
-function hasValidListOrdering(request: ListOrderingRequest): boolean {
+function hasValidListOrdering(request: unknown): request is ListOrderingRequest {
   return (
+    isRecord(request) &&
     isListOrderDirection(request.orderDirection) &&
     isOptionalListOrderColumn(request.orderColumn)
   );
@@ -3396,8 +3436,12 @@ function isOptionalListOrderColumn(value: unknown): boolean {
   );
 }
 
-function hasValidListFilters(request: ListFilterRequest): boolean {
-  return Array.isArray(request.filters) && request.filters.every(isListFilter);
+function hasValidListFilters(request: unknown): request is ListFilterRequest {
+  return (
+    isRecord(request) &&
+    Array.isArray(request.filters) &&
+    request.filters.every(isListFilter)
+  );
 }
 
 function isListFilter(value: unknown): boolean {
@@ -3426,6 +3470,10 @@ function isListFilterScalar(value: unknown): boolean {
     typeof value === 'boolean' ||
     (typeof value === 'number' && Number.isFinite(value))
   );
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
 }
 
 function isAssetSearchLimit(value: unknown): value is number {
