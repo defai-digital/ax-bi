@@ -1791,7 +1791,7 @@ def test_remove_output_file_rejects_changed_parent_before_unlink(
     from superset_extensions_cli import cli
 
     expected_identity = cli.get_read_path_identity(output_path)
-    expected_parent_identity = cli.get_directory_path_identity(output_dir)
+    expected_parent_identity = cli.get_read_parent_identity(output_path)
     assert expected_identity is not None
     assert expected_parent_identity is not None
     original_get_read_path_identity = cli.get_read_path_identity

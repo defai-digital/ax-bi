@@ -793,21 +793,21 @@ def remove_output_file(
     expected_identity: tuple[int, int, int, int],
     *,
     allow_content_changes: bool = False,
-    expected_parent_identity: tuple[int, int, int, int] | None = None,
+    expected_parent_identity: tuple[int, int] | None = None,
 ) -> None:
     """Remove an output file only if it still matches the expected identity."""
-    current_parent_identity = get_directory_path_identity(path.parent)
+    current_parent_identity = get_read_parent_identity(path)
     if current_parent_identity is None or (
         expected_parent_identity is not None
-        and current_parent_identity[:2] != expected_parent_identity[:2]
+        and current_parent_identity != expected_parent_identity
     ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
 
     def ensure_parent_unchanged() -> None:
-        latest_parent_identity = get_directory_path_identity(path.parent)
+        latest_parent_identity = get_read_parent_identity(path)
         if (
             latest_parent_identity is None
-            or latest_parent_identity[:2] != current_parent_identity[:2]
+            or latest_parent_identity != current_parent_identity
         ):
             raise click.ClickException(f"Refusing to clean {label}: path changed.")
 
@@ -1234,7 +1234,7 @@ def publish_output_file(
                 target_path,
                 label,
                 published_target_identity,
-                expected_parent_identity=target_parent_identity,
+                expected_parent_identity=target_parent_identity[:2],
             )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(
@@ -2870,6 +2870,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
 
     temp_path: Path | None = None
     temp_identity: tuple[int, int, int, int] | None = None
+    output_parent_cleanup_identity: tuple[int, int] | None = None
     try:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
@@ -2888,6 +2889,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 f"Refusing to write bundle: parent directory is unsafe: "
                 f"{zip_path.parent}."
             )
+        output_parent_cleanup_identity = output_parent_identity[:2]
 
         bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]] = []
         for file in dist_dir.rglob("*"):
@@ -2961,14 +2963,18 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         publish_output_file(temp_path, zip_path, "bundle", temp_identity)
         temp_path = None
     except Exception as ex:
-        if temp_path is not None and temp_identity is not None:
+        if (
+            temp_path is not None
+            and temp_identity is not None
+            and output_parent_cleanup_identity is not None
+        ):
             try:
                 remove_output_file(
                     temp_path,
                     "temporary bundle",
                     temp_identity,
                     allow_content_changes=True,
-                    expected_parent_identity=output_parent_identity,
+                    expected_parent_identity=output_parent_cleanup_identity,
                 )
             except click.ClickException:
                 pass
