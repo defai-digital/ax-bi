@@ -589,8 +589,11 @@ export class SupersetClient
         };
       }
 
-      const payload = (await response.json()) as Partial<PermissionCheckResult>;
-      if (payload.contractVersion !== AUTHORIZATION_CONTRACT_VERSION) {
+      const payload = (await response.json()) as unknown;
+      if (
+        !isRecord(payload) ||
+        payload['contractVersion'] !== AUTHORIZATION_CONTRACT_VERSION
+      ) {
         return {
           contractVersion: AUTHORIZATION_CONTRACT_VERSION,
           allowed: false,
@@ -601,11 +604,11 @@ export class SupersetClient
 
       const result: PermissionCheckResult = {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
-        allowed: payload.allowed === true,
+        allowed: payload['allowed'] === true,
         statusCode: response.status,
       };
-      if (typeof payload.reason === 'string') {
-        result.reason = payload.reason;
+      if (typeof payload['reason'] === 'string') {
+        result.reason = payload['reason'];
       }
       return result;
     } catch (error) {

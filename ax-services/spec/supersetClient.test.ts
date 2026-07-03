@@ -312,6 +312,30 @@ test('checkPermission fails closed for wrong authorization contract version', as
   });
 });
 
+test('checkPermission fails closed for non-object authorization responses', async () => {
+  global.fetch = async () => Response.json(null, { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization response contract version mismatch',
+    statusCode: 200,
+  });
+});
+
 test('probeMetadata returns sanitized Superset metadata summary', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
