@@ -39,10 +39,11 @@ export interface ServiceConfig {
   };
   supersetTimeoutMs: number;
   supersetInternalToken?: string;
-  logLevel: string;
+  logLevel: LogLevel;
 }
 
 type Environment = Partial<Record<string, string>>;
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 5010;
@@ -63,8 +64,20 @@ const DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
 const DEFAULT_SUPERSET_TAG_LIST_PATH = '/api/v1/tag/';
 const DEFAULT_SUPERSET_TASK_LIST_PATH = '/api/v1/task/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
-const DEFAULT_LOG_LEVEL = 'info';
+const DEFAULT_LOG_LEVEL: LogLevel = 'info';
 const MAX_PORT = 65535;
+const LOG_LEVELS = new Set<LogLevel>([
+  'debug',
+  'info',
+  'warn',
+  'error',
+  'silent',
+]);
+
+function normalizeHost(value: string | undefined): string {
+  const host = value?.trim();
+  return host === '' || host === undefined ? DEFAULT_HOST : host;
+}
 
 function parsePositiveInteger(
   value: string | undefined,
@@ -121,9 +134,23 @@ function normalizeOptionalSecret(value: string | undefined): string | undefined 
   return trimmed === '' ? undefined : trimmed;
 }
 
+function normalizeLogLevel(value: string | undefined): LogLevel {
+  const logLevel = value?.trim().toLowerCase();
+  if (logLevel === '' || logLevel === undefined) {
+    return DEFAULT_LOG_LEVEL;
+  }
+  if (!LOG_LEVELS.has(logLevel as LogLevel)) {
+    throw new Error(
+      `AX_SERVICES_LOG_LEVEL must be one of: ${[...LOG_LEVELS].join(', ')}`,
+    );
+  }
+
+  return logLevel as LogLevel;
+}
+
 export function buildConfig(env: Environment = process.env): ServiceConfig {
   return {
-    host: env.AX_SERVICES_HOST || DEFAULT_HOST,
+    host: normalizeHost(env.AX_SERVICES_HOST),
     port: parsePort(env.AX_SERVICES_PORT),
     supersetBaseUrl: normalizeSupersetBaseUrl(
       env.AX_SUPERSET_BASE_URL || DEFAULT_SUPERSET_BASE_URL,
@@ -202,6 +229,6 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
     supersetInternalToken: normalizeOptionalSecret(
       env.AX_SUPERSET_INTERNAL_TOKEN,
     ),
-    logLevel: env.AX_SERVICES_LOG_LEVEL || DEFAULT_LOG_LEVEL,
+    logLevel: normalizeLogLevel(env.AX_SERVICES_LOG_LEVEL),
   };
 }

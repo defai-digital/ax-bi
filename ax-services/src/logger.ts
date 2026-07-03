@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import type { LogLevel } from './config';
+
 type LogContext = Record<string, unknown>;
 
 export interface ServiceLogger {
@@ -40,10 +42,30 @@ function normalizeContext(context: LogContext = {}): LogContext {
   );
 }
 
-export function createLogger(logLevel: string): ServiceLogger {
+const LOG_LEVEL_PRIORITY: Record<Exclude<LogLevel, 'silent'>, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
+
+function shouldLog(
+  configuredLevel: LogLevel,
+  messageLevel: 'info' | 'error',
+): boolean {
+  if (configuredLevel === 'silent') {
+    return false;
+  }
+
+  return (
+    LOG_LEVEL_PRIORITY[messageLevel] >= LOG_LEVEL_PRIORITY[configuredLevel]
+  );
+}
+
+export function createLogger(logLevel: LogLevel): ServiceLogger {
   return {
     info(message: string, context: LogContext = {}) {
-      if (logLevel === 'silent') {
+      if (!shouldLog(logLevel, 'info')) {
         return;
       }
       console.log(
@@ -55,7 +77,7 @@ export function createLogger(logLevel: string): ServiceLogger {
       );
     },
     error(message: string, context: LogContext = {}) {
-      if (logLevel === 'silent') {
+      if (!shouldLog(logLevel, 'error')) {
         return;
       }
       console.error(

@@ -52,7 +52,7 @@ test('buildConfig returns service defaults', () => {
 
 test('buildConfig reads environment overrides', () => {
   const config = buildConfig({
-    AX_SERVICES_HOST: '0.0.0.0',
+    AX_SERVICES_HOST: '  0.0.0.0  ',
     AX_SERVICES_PORT: '6010',
     AX_SUPERSET_BASE_URL: 'https://superset.example.test/',
     AX_SUPERSET_HEALTH_PATH: 'healthz',
@@ -72,7 +72,7 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_TASK_LIST_PATH: 'tasks',
     AX_SUPERSET_TIMEOUT_MS: '1500',
     AX_SUPERSET_INTERNAL_TOKEN: '  token-123  ',
-    AX_SERVICES_LOG_LEVEL: 'debug',
+    AX_SERVICES_LOG_LEVEL: ' DEBUG ',
   });
 
   expect(config.host).toBe('0.0.0.0');
@@ -110,6 +110,16 @@ test('buildConfig canonicalizes configured Superset paths', () => {
   expect(config.supersetAssetSearchPaths.chart).toBe('/charts');
 });
 
+test('buildConfig defaults blank host and log level values', () => {
+  const config = buildConfig({
+    AX_SERVICES_HOST: '   ',
+    AX_SERVICES_LOG_LEVEL: '   ',
+  });
+
+  expect(config.host).toBe('127.0.0.1');
+  expect(config.logLevel).toBe('info');
+});
+
 test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SERVICES_PORT: 'abc' })).toThrow(
     'AX_SERVICES_PORT must be a positive integer',
@@ -145,5 +155,11 @@ test('buildConfig rejects unsupported Superset URL protocols', () => {
 test('buildConfig rejects blank Superset path overrides', () => {
   expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
     'AX_SUPERSET_HEALTH_PATH must not be empty',
+  );
+});
+
+test('buildConfig rejects unsupported log levels', () => {
+  expect(() => buildConfig({ AX_SERVICES_LOG_LEVEL: 'verbose' })).toThrow(
+    'AX_SERVICES_LOG_LEVEL must be one of: debug, info, warn, error, silent',
   );
 });
