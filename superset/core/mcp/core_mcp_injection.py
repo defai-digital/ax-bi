@@ -23,7 +23,8 @@ that replaces the abstract functions in superset-core during initialization.
 """
 
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, Optional, TypeVar
 
 try:
     from mcp.types import ToolAnnotations

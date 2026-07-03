@@ -17,8 +17,9 @@
 """Auto-discover and load example datasets from Parquet files."""
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Optional
 
 import yaml
 
@@ -34,9 +35,9 @@ from .utils import load_examples_from_configs
 logger = logging.getLogger(__name__)
 
 
-def get_dataset_config_from_yaml(example_dir: Path) -> Dict[str, Optional[str]]:
+def get_dataset_config_from_yaml(example_dir: Path) -> dict[str, Optional[str]]:
     """Read table_name, schema, and data_file from dataset.yaml if it exists."""
-    result: Dict[str, Optional[str]] = {
+    result: dict[str, Optional[str]] = {
         "table_name": None,
         "schema": None,
         "data_file": None,
@@ -67,10 +68,10 @@ def get_examples_directory() -> Path:
 
 def _get_multi_dataset_config(
     example_dir: Path, dataset_name: str, data_file: Path
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Read config for a multi-dataset example from datasets/{name}.yaml."""
     datasets_yaml = example_dir / "datasets" / f"{dataset_name}.yaml"
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "table_name": dataset_name,
         "schema": None,
         "data_file": data_file,
@@ -104,7 +105,7 @@ def _get_multi_dataset_config(
     return result
 
 
-def discover_datasets() -> Dict[str, Callable[..., None]]:
+def discover_datasets() -> dict[str, Callable[..., None]]:
     """Auto-discover all example datasets and create loaders for them.
 
     Examples are organized as:
@@ -114,7 +115,7 @@ def discover_datasets() -> Dict[str, Callable[..., None]]:
     Table names and data file references are read from dataset.yaml/datasets/*.yaml
     if present, otherwise derived from the folder/file name.
     """
-    loaders: Dict[str, Callable[..., None]] = {}
+    loaders: dict[str, Callable[..., None]] = {}
     examples_dir = get_examples_directory()
 
     if not examples_dir.exists():

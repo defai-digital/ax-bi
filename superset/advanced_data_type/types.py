@@ -14,8 +14,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, TypedDict, Union
+from typing import Any, Optional, TypedDict, Union
 
 from sqlalchemy import Column
 from sqlalchemy.sql.expression import BinaryExpression

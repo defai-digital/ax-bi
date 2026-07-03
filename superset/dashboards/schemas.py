@@ -15,7 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 import re
-from typing import Any, Mapping, Union
+from collections.abc import Mapping
+from typing import Any, Union
 
 from marshmallow import fields, post_dump, post_load, pre_load, Schema
 from marshmallow.validate import Length, ValidationError

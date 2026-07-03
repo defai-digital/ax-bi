@@ -16,7 +16,8 @@
 # under the License.
 import functools
 import logging
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 from flask import g
 from flask_babel import lazy_gettext as _

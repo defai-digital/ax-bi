@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask import current_app as app, g, make_response, request, Response
 from flask_appbuilder.api import expose, protect

@@ -17,9 +17,10 @@
 # pylint: disable=too-many-lines
 import functools
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from io import BytesIO
-from typing import Any, Callable, cast
+from typing import Any, cast
 from zipfile import is_zipfile, ZipFile
 
 import rison
@@ -2231,9 +2232,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseSupersetModelRestApi):
             200,
             result={
                 "id": dash.id,
-                "last_modified_time": dash.changed_on.replace(
-                    microsecond=0
-                ).timestamp()
+                "last_modified_time": dash.changed_on.replace(microsecond=0).timestamp()
                 if dash.changed_on
                 else None,
             },

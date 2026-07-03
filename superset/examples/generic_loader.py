@@ -18,8 +18,9 @@
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import numpy as np
 from sqlalchemy import inspect
