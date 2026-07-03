@@ -232,7 +232,7 @@ def read_json(path: Path) -> object | None:
         return None
 
     try:
-        content = read_path.read_text()
+        content = read_path.read_text(encoding="utf-8")
     except OSError as ex:
         raise OSError(f"Failed to read JSON file {read_path}: {ex}") from ex
 

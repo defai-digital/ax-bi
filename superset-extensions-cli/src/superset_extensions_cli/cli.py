@@ -1469,7 +1469,7 @@ def read_input_text(path: Path, label: str) -> str | None:
         raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
 
     try:
-        content = path.read_text()
+        content = path.read_text(encoding="utf-8")
     except OSError as ex:
         raise click.ClickException(f"Failed to read {label}: {ex}") from ex
 

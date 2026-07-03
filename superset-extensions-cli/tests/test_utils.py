@@ -146,6 +146,26 @@ def test_read_json_with_valid_file(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_json_uses_utf8_encoding(isolated_filesystem, monkeypatch):
+    """Test read_json decodes content with the repository text encoding."""
+    json_file = isolated_filesystem / "test.json"
+    json_file.write_text('{"name": "caf\\u00e9"}', encoding="utf-8")
+    original_read_text = Path.read_text
+    observed_encoding = None
+
+    def capture_read_text(path, *args, **kwargs):
+        nonlocal observed_encoding
+        if path == json_file:
+            observed_encoding = kwargs.get("encoding")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", capture_read_text)
+
+    assert read_json(json_file) == {"name": "caf\u00e9"}
+    assert observed_encoding == "utf-8"
+
+
+@pytest.mark.unit
 def test_read_json_with_nonexistent_file(isolated_filesystem):
     """Test read_json returns None when file doesn't exist."""
     nonexistent_file = isolated_filesystem / "nonexistent.json"

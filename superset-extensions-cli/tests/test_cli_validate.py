@@ -31,6 +31,7 @@ from superset_extensions_cli.cli import (
     load_toml_object,
     optional_directory_exists,
     optional_file_exists,
+    read_input_text,
     require_optional_directory,
     validate_npm,
 )
@@ -509,6 +510,26 @@ def test_input_file_exists_rejects_non_directory_parent(isolated_filesystem):
         input_file_exists(file_parent / "extension.json", "extension.json")
 
     assert file_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_read_input_text_uses_utf8_encoding(isolated_filesystem, monkeypatch):
+    """Test input text reads use the repository text encoding."""
+    metadata_file = isolated_filesystem / "metadata.json"
+    metadata_file.write_text('{"name": "caf\\u00e9"}', encoding="utf-8")
+    original_read_text = Path.read_text
+    observed_encoding = None
+
+    def capture_read_text(path, *args, **kwargs):
+        nonlocal observed_encoding
+        if path == metadata_file:
+            observed_encoding = kwargs.get("encoding")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", capture_read_text)
+
+    assert read_input_text(metadata_file, "metadata.json") == '{"name": "caf\\u00e9"}'
+    assert observed_encoding == "utf-8"
 
 
 @pytest.mark.unit
