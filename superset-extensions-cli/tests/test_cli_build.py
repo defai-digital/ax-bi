@@ -33,6 +33,7 @@ from superset_extensions_cli.cli import (
     ensure_output_directory,
     init_frontend_deps,
     validate_output_file,
+    validate_output_file_parent,
     write_manifest,
 )
 
@@ -341,6 +342,20 @@ def test_validate_output_file_rejects_non_directory_ancestor(isolated_filesystem
         )
 
     assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_validate_output_file_parent_does_not_create_missing_parent(
+    isolated_filesystem,
+):
+    """Test output parent validation does not create missing directories."""
+    root = isolated_filesystem / "dist" / "backend"
+    target = root / "src" / "test_org" / "module.py"
+
+    validate_output_file_parent(target, root, "backend file src/test_org/module.py")
+
+    assert not root.exists()
+    assert not target.parent.exists()
 
 
 # Frontend Dependencies Tests

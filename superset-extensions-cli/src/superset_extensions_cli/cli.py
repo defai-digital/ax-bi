@@ -212,8 +212,8 @@ def ensure_output_directory(path: Path, label: str) -> None:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
-def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
-    """Create an output file parent after validating existing ancestors."""
+def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
+    """Validate an output file parent without creating missing directories."""
     if not path.is_relative_to(root):
         raise click.ClickException(
             f"Refusing to write {label}: path is outside {root}."
@@ -239,6 +239,11 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
             )
         current = current.parent
 
+
+def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
+    """Create an output file parent after validating existing ancestors."""
+    validate_output_file_parent(path, root, label)
+    parent = path.parent
     try:
         parent.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
@@ -767,6 +772,13 @@ def copy_backend_files(cwd: Path) -> None:
                 continue
 
             copy_targets.append((f, backend_output_dir / relative_path))
+
+    for _, tgt in copy_targets:
+        validate_output_file_parent(
+            tgt,
+            backend_output_dir,
+            f"backend file {tgt.relative_to(backend_output_dir)}",
+        )
 
     ensure_output_directory(dist_dir, "dist directory")
     ensure_output_directory(backend_output_dir, "dist/backend directory")
