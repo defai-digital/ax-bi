@@ -122,6 +122,7 @@ import {
   TaskListResponse,
 } from './contracts/taskList';
 import { ServiceConfig } from './config';
+import { normalizeRequestId } from './requestId';
 
 export interface DependencyHealth {
   ok: boolean;
@@ -248,23 +249,6 @@ export interface SupersetTaskListClient {
   ): Promise<TaskListResponse>;
 }
 
-const MAX_CORRELATION_ID_LENGTH = 128;
-const UNSAFE_CORRELATION_ID_PATTERN = /[\s\u0000-\u001f\u007f]/;
-
-function normalizeCorrelationId(value: string | undefined): string | undefined {
-  const correlationId = value?.trim();
-  if (
-    correlationId === undefined ||
-    correlationId === '' ||
-    correlationId.length > MAX_CORRELATION_ID_LENGTH ||
-    UNSAFE_CORRELATION_ID_PATTERN.test(correlationId)
-  ) {
-    return undefined;
-  }
-
-  return correlationId;
-}
-
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -300,7 +284,7 @@ export class SupersetClient
     contentType?: string,
   ): HeadersInit {
     const headers: Record<string, string> = {};
-    const safeCorrelationId = normalizeCorrelationId(correlationId);
+    const safeCorrelationId = normalizeRequestId(correlationId);
 
     if (safeCorrelationId !== undefined) {
       headers['x-request-id'] = safeCorrelationId;

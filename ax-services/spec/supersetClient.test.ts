@@ -75,11 +75,13 @@ test('checkHealth normalizes direct caller request IDs before forwarding', async
 
   await client.checkHealth('  request-abc  ');
   await client.checkHealth('request abc');
+  await client.checkHealth('request,abc');
 
   expect(seenInits[0]?.headers).toEqual({
     'x-request-id': 'request-abc',
   });
   expect(seenInits[1]?.headers).toEqual({});
+  expect(seenInits[2]?.headers).toEqual({});
 });
 
 test('checkPermission posts authorization request to Superset', async () => {

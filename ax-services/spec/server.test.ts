@@ -517,14 +517,19 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
 
 test('request ID normalization trims valid IDs and rejects unsafe IDs', () => {
   expect(normalizeRequestIdHeader('  request-123  ')).toBe('request-123');
-  expect(normalizeRequestIdHeader(['request-abc', 'request-def'])).toBe(
-    'request-abc',
-  );
+  expect(normalizeRequestIdHeader('request_abc.~123')).toBe('request_abc.~123');
+  expect(normalizeRequestIdHeader(['request-abc'])).toBe('request-abc');
   expect(normalizeRequestIdHeader(undefined)).toBeUndefined();
+  expect(
+    normalizeRequestIdHeader(['request-abc', 'request-def']),
+  ).toBeUndefined();
   expect(normalizeRequestIdHeader('   ')).toBeUndefined();
   expect(normalizeRequestIdHeader('x'.repeat(129))).toBeUndefined();
   expect(normalizeRequestIdHeader('request\n123')).toBeUndefined();
   expect(normalizeRequestIdHeader('request 123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request,123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request:123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request/123')).toBeUndefined();
 });
 
 test('server applies configured Fastify log level', async () => {

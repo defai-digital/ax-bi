@@ -21,6 +21,7 @@ import { randomUUID } from 'crypto';
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
+import { normalizeRequestIdHeader } from './requestId';
 import {
   AnnotationListRequest,
   AnnotationListResponse,
@@ -143,28 +144,7 @@ import {
   SupersetTaskListClient,
 } from './supersetClient';
 
-const MAX_REQUEST_ID_LENGTH = 128;
-const UNSAFE_REQUEST_ID_PATTERN = /[\s\u0000-\u001f\u007f]/;
-
-export function normalizeRequestIdHeader(
-  value: string | string[] | undefined,
-): string | undefined {
-  const candidate = Array.isArray(value) ? value[0] : value;
-  if (candidate === undefined) {
-    return undefined;
-  }
-
-  const requestId = candidate.trim();
-  if (
-    requestId === '' ||
-    requestId.length > MAX_REQUEST_ID_LENGTH ||
-    UNSAFE_REQUEST_ID_PATTERN.test(requestId)
-  ) {
-    return undefined;
-  }
-
-  return requestId;
-}
+export { normalizeRequestIdHeader } from './requestId';
 
 export function buildServer(
   config: ServiceConfig,
