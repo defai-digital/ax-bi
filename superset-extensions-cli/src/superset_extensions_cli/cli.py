@@ -674,6 +674,11 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
     backup_root: Path | None = None
     backup_path: Path | None = None
     if target_path.exists():
+        target_identity = get_read_path_identity(target_path)
+        if target_identity is None:
+            raise click.ClickException(
+                f"Refusing to back up {label}: target path is unsafe."
+            )
         backup_root = create_temporary_output_directory(
             target_path.parent,
             f".{target_path.name}-backup.",
@@ -690,6 +695,12 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
             raise click.ClickException(
                 f"Failed to back up {label}: {ex.message}"
             ) from ex
+        if get_read_path_identity(target_path) != target_identity:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: path changed.")
 
     target_replaced = False
     try:

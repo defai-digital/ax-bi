@@ -820,6 +820,42 @@ def test_publish_output_file_restores_existing_target_when_staged_file_changes(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_target_during_backup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged file publishing refuses a changed backup source."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    replacement_file = isolated_filesystem / "replacement.supx"
+    replacement_file.write_text("replacement bundle")
+
+    from superset_extensions_cli import cli
+
+    original_copy_output_file = cli.copy_output_file
+
+    def swap_target_before_copy(source, target, label):
+        if source == output_path:
+            output_path.unlink()
+            replacement_file.replace(output_path)
+        original_copy_output_file(source, target, label)
+
+    monkeypatch.setattr(cli, "copy_output_file", swap_target_before_copy)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to back up bundle: path changed",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert staged_file.read_text() == "new bundle"
+    assert output_path.read_text() == "replacement bundle"
+    assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):
