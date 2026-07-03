@@ -538,11 +538,93 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
         raise click.ClickException(
             f"Refusing to publish {label}: staged path is not a file."
         )
+    staged_identity = get_read_path_identity(staged_path)
+    if staged_identity is None:
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is not safe to read."
+        )
     validate_output_file(target_path, label)
+
+    backup_root: Path | None = None
+    backup_path: Path | None = None
+    if target_path.exists():
+        backup_root = create_temporary_output_directory(
+            target_path.parent,
+            f".{target_path.name}-backup.",
+            f"temporary {label} backup directory",
+        )
+        backup_path = backup_root / target_path.name
+        try:
+            copy_output_file(target_path, backup_path, f"temporary {label} backup")
+        except click.ClickException as ex:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+            raise click.ClickException(
+                f"Failed to back up {label}: {ex.message}"
+            ) from ex
+
+    target_replaced = False
     try:
         staged_path.replace(target_path)
+        target_replaced = True
+        validate_output_file(target_path, label)
+        if get_read_path_identity(target_path) != staged_identity:
+            raise click.ClickException(
+                f"Failed to publish {label}: staged path changed during publish."
+            )
     except OSError as ex:
-        raise click.ClickException(f"Failed to publish {label}: {ex}") from ex
+        publish_error = click.ClickException(f"Failed to publish {label}: {ex}")
+    except click.ClickException as ex:
+        publish_error = ex
+    else:
+        if backup_root is not None:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+        return
+
+    if not target_replaced:
+        if backup_root is not None:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+        raise publish_error
+
+    if target_path.is_symlink() or target_path.is_file():
+        try:
+            target_path.unlink()
+        except OSError as cleanup_ex:
+            raise click.ClickException(
+                f"{publish_error.message}; also failed to clean failed {label}: "
+                f"{cleanup_ex}"
+            ) from cleanup_ex
+    elif target_path.exists():
+        try:
+            remove_output_directory(target_path, label)
+        except click.ClickException as cleanup_ex:
+            raise click.ClickException(
+                f"{publish_error.message}; also failed to clean failed {label}: "
+                f"{cleanup_ex.message}"
+            ) from cleanup_ex
+
+    if backup_root is not None and backup_path is not None:
+        try:
+            backup_path.replace(target_path)
+        except OSError as restore_ex:
+            raise click.ClickException(
+                f"{publish_error.message}; also failed to restore previous "
+                f"{label}: {restore_ex}"
+            ) from restore_ex
+        try:
+            remove_output_directory(backup_root, f"temporary {label} backup")
+        except click.ClickException:
+            pass
+
+    raise publish_error
 
 
 def load_json_object(path: Path, label: str) -> dict[str, Any] | None:

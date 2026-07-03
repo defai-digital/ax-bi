@@ -690,6 +690,39 @@ def test_publish_output_file_rejects_non_file_staged_path(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_publish_output_file_restores_existing_target_when_staged_file_changes(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged file publishing restores an old target after a staged-file swap."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    replacement_file = isolated_filesystem / "replacement.supx"
+    replacement_file.write_text("replacement bundle")
+    original_replace = Path.replace
+
+    def replace_staged_with_replacement(path, target):
+        if path == staged_file and target == output_path:
+            staged_file.unlink()
+            replacement_file.replace(staged_file)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", replace_staged_with_replacement)
+
+    with pytest.raises(
+        click.ClickException,
+        match="staged path changed during publish",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert output_path.read_text() == "original bundle"
+    assert not replacement_file.exists()
+    assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):
