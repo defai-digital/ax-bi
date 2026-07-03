@@ -500,6 +500,14 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as Partial<PermissionCheckResult>;
+      if (payload.contractVersion !== AUTHORIZATION_CONTRACT_VERSION) {
+        return {
+          contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+          allowed: false,
+          error: 'authorization response contract version mismatch',
+          statusCode: response.status,
+        };
+      }
 
       return {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,

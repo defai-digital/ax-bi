@@ -191,6 +191,69 @@ test('checkPermission fails closed for non-success Superset responses', async ()
   });
 });
 
+test('checkPermission fails closed for missing authorization contract version', async () => {
+  global.fetch = async () =>
+    Response.json(
+      {
+        allowed: true,
+        reason: 'missing contract version',
+      },
+      { status: 200 },
+    );
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization response contract version mismatch',
+    statusCode: 200,
+  });
+});
+
+test('checkPermission fails closed for wrong authorization contract version', async () => {
+  global.fetch = async () =>
+    Response.json(
+      {
+        contractVersion: 'authorization.v0',
+        allowed: true,
+        reason: 'old contract version',
+      },
+      { status: 200 },
+    );
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization response contract version mismatch',
+    statusCode: 200,
+  });
+});
+
 test('probeMetadata returns sanitized Superset metadata summary', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
