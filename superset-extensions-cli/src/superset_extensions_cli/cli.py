@@ -244,6 +244,14 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
         raise click.ClickException(f"Failed to create parent for {label}: {ex}") from ex
 
 
+def copy_output_file(source: Path, target: Path, label: str) -> None:
+    """Copy a validated output file while preserving command-level error context."""
+    try:
+        shutil.copy2(source, target)
+    except (OSError, shutil.Error) as ex:
+        raise click.ClickException(f"Failed to copy {label}: {ex}") from ex
+
+
 def validate_output_file(path: Path, label: str) -> None:
     """Validate that an output file path is safe to write."""
     if path.is_symlink():
@@ -630,7 +638,11 @@ def copy_frontend_dist(cwd: Path) -> str:
         )
 
     for f, tgt in copy_targets:
-        shutil.copy2(f, tgt)
+        copy_output_file(
+            f,
+            tgt,
+            f"frontend asset {tgt.relative_to(frontend_dist_output_dir)}",
+        )
 
     return remote_entries[0]
 
@@ -744,7 +756,11 @@ def copy_backend_files(cwd: Path) -> None:
         )
 
     for f, tgt in copy_targets:
-        shutil.copy2(f, tgt)
+        copy_output_file(
+            f,
+            tgt,
+            f"backend file {tgt.relative_to(backend_output_dir)}",
+        )
 
 
 def rebuild_frontend(cwd: Path, frontend_dir: Path) -> str | None:

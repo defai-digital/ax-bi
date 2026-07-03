@@ -983,6 +983,40 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_reports_copy_failures(isolated_filesystem):
+    """Test copy_backend_files reports copy failures with backend file context."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/__init__.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    clean_dist(isolated_filesystem)
+
+    with patch(
+        "superset_extensions_cli.cli.shutil.copy2",
+        side_effect=OSError("disk full"),
+    ):
+        with pytest.raises(
+            click.ClickException,
+            match="Failed to copy backend file .*__init__\\.py: disk full",
+        ):
+            copy_backend_files(isolated_filesystem)
+
+
+@pytest.mark.unit
 def test_copy_backend_files_handles_various_glob_patterns(isolated_filesystem):
     """Test copy_backend_files correctly handles different glob pattern formats."""
     # Create backend structure with files in different locations
@@ -1517,6 +1551,26 @@ def test_copy_frontend_dist_copies_files_correctly(isolated_filesystem):
     assert_file_exists(dist_dir / "frontend" / "dist" / "remoteEntry.abc123.js")
     assert_file_exists(dist_dir / "frontend" / "dist" / "main.js")
     assert_file_exists(dist_dir / "frontend" / "dist" / "assets" / "style.css")
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_reports_copy_failures(isolated_filesystem):
+    """Test copy_frontend_dist reports copy failures with frontend asset context."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+
+    clean_dist(isolated_filesystem)
+
+    with patch(
+        "superset_extensions_cli.cli.shutil.copy2",
+        side_effect=OSError("disk full"),
+    ):
+        with pytest.raises(
+            click.ClickException,
+            match="Failed to copy frontend asset remoteEntry\\.abc123\\.js: disk full",
+        ):
+            copy_frontend_dist(isolated_filesystem)
 
 
 @pytest.mark.unit
