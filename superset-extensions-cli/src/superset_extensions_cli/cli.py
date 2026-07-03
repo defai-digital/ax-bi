@@ -194,6 +194,27 @@ def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 
 
+def get_pyproject_project_table(
+    pyproject: dict[str, Any],
+    label: str,
+    *,
+    create: bool = False,
+) -> dict[str, Any]:
+    """Return the optional [project] table from a pyproject mapping."""
+    if "project" not in pyproject:
+        if create:
+            project: dict[str, Any] = {}
+            pyproject["project"] = project
+            return project
+        return {}
+
+    project = pyproject["project"]
+    if not isinstance(project, dict):
+        raise click.ClickException(f"Invalid {label}: [project] must be a table.")
+
+    return project
+
+
 def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     """Load and validate an extension.json file for CLI commands."""
     extension_data = load_json_object(path, "extension.json")
@@ -559,7 +580,13 @@ def validate() -> None:
             click.secho(f"❌ {ex.message}", err=True, fg="red")
             sys.exit(1)
         if backend_pyproject:
-            project = backend_pyproject.get("project", {})
+            try:
+                project = get_pyproject_project_table(
+                    backend_pyproject, "backend/pyproject.toml"
+                )
+            except click.ClickException as ex:
+                click.secho(f"❌ {ex.message}", err=True, fg="red")
+                sys.exit(1)
             if project.get("version") != extension.version:
                 mismatches.append(
                     f"  backend/pyproject.toml version: {project.get('version')} "
@@ -641,11 +668,18 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
     backend_pyproject_path = cwd / "backend" / "pyproject.toml"
     backend_pyproject = None
+    backend_project = None
     if backend_pyproject_path.is_file():
         try:
             backend_pyproject = load_toml_object(
                 backend_pyproject_path, "backend/pyproject.toml"
             )
+            if backend_pyproject:
+                backend_project = get_pyproject_project_table(
+                    backend_pyproject,
+                    "backend/pyproject.toml",
+                    create=True,
+                )
         except click.ClickException as ex:
             click.secho(f"❌ {ex.message}", err=True, fg="red")
             sys.exit(1)
@@ -686,12 +720,16 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     # Update backend/pyproject.toml
     if backend_pyproject is not None:
         if backend_pyproject:
-            project = backend_pyproject.setdefault("project", {})
+            project = backend_project
             toml_changed = False
-            if project.get("version") != target_version:
+            if project is not None and project.get("version") != target_version:
                 project["version"] = target_version
                 toml_changed = True
-            if target_license and project.get("license") != target_license:
+            if (
+                project is not None
+                and target_license
+                and project.get("license") != target_license
+            ):
                 project["license"] = target_license
                 toml_changed = True
             if toml_changed:

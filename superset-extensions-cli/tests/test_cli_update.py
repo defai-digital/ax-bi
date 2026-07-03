@@ -130,6 +130,34 @@ def test_update_fails_with_malformed_backend_pyproject_toml(
 
 
 @pytest.mark.cli
+def test_update_fails_with_non_table_backend_project_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update rejects invalid backend [project] shape before writes."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    (isolated_filesystem / "backend" / "pyproject.toml").write_text(
+        """
+project = "invalid"
+
+[tool.apache_superset_extensions.build]
+include = ["src/**/*.py"]
+exclude = []
+"""
+    )
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Invalid backend/pyproject.toml: [project] must be a table" in result.output
+    ext = read_json(isolated_filesystem / "extension.json")
+    assert ext["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
