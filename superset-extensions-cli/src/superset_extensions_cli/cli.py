@@ -513,6 +513,7 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
     source_identity = get_output_copy_source_identity(source)
     if source_identity is None:
         raise click.ClickException(f"Refusing to copy {label}: source path is unsafe.")
+    validate_output_file(target, label)
     try:
         shutil.copy2(source, target)
     except (OSError, shutil.Error) as ex:

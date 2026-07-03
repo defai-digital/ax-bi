@@ -1880,6 +1880,48 @@ def test_copy_output_file_rejects_source_changed_during_copy(
     assert target_file.read_text() == "# original"
 
 
+@pytest.mark.unit
+def test_copy_output_file_rejects_symlinked_target(isolated_filesystem):
+    """Test output file copy refuses a symlinked target path."""
+    source_file = isolated_filesystem / "source.py"
+    source_file.write_text("# source")
+    outside_file = isolated_filesystem / "outside.py"
+    outside_file.write_text("# outside")
+    target_link = isolated_filesystem / "target.py"
+    target_link.symlink_to(outside_file)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file target.py: path is a symlink",
+    ):
+        copy_output_file(source_file, target_link, "backend file target.py")
+
+    assert outside_file.read_text() == "# outside"
+
+
+@pytest.mark.unit
+def test_copy_output_file_rejects_symlinked_target_parent(isolated_filesystem):
+    """Test output file copy refuses a target below a symlinked parent."""
+    source_file = isolated_filesystem / "source.py"
+    source_file.write_text("# source")
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    target_parent_link = isolated_filesystem / "linked"
+    target_parent_link.symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file linked/target.py: parent directory is a symlink",
+    ):
+        copy_output_file(
+            source_file,
+            target_parent_link / "target.py",
+            "backend file linked/target.py",
+        )
+
+    assert list(outside_dir.iterdir()) == []
+
+
 # Frontend Dependencies Tests
 @pytest.mark.unit
 @patch("subprocess.run")
