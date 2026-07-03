@@ -3418,7 +3418,7 @@ function toAssetSearchResult(
 
   const name = extractAssetName(assetType, item);
   const description = typeof item.description === 'string' ? item.description : '';
-  const certified = Boolean(item.certified_by);
+  const certified = hasCertification(item.certified_by);
 
   return {
     assetType,
@@ -3448,6 +3448,10 @@ function extractAssetName(
     return item.table_name;
   }
   return typeof item.name === 'string' ? item.name : '';
+}
+
+function hasCertification(value: unknown): boolean {
+  return typeof value === 'string' && value.trim() !== '';
 }
 
 function scoreAsset(name: string, description: string, query: string): number {
