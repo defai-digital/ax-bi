@@ -1799,6 +1799,35 @@ test('listDashboards ignores fractional Superset counts', async () => {
   expect(result.hasNext).toBe(false);
 });
 
+test('listDashboards ignores unsafe Superset counts', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: Number.MAX_SAFE_INTEGER + 1,
+      result: [
+        {
+          id: 7,
+          dashboard_title: 'Sales dashboard',
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.totalCount).toBe(1);
+  expect(result.totalPages).toBe(1);
+  expect(result.hasNext).toBe(false);
+});
+
 test('listDashboards rejects invalid pagination before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {
