@@ -788,6 +788,8 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             sys.exit(1)
 
     updated: list[str] = []
+    pending_json_writes: list[tuple[Path, str, dict[str, Any]]] = []
+    pending_toml_writes: list[tuple[Path, str, dict[str, Any]]] = []
 
     # Update extension.json if version or license changed
     ext_changed = False
@@ -803,8 +805,9 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         except Exception as e:
             click.secho(f"❌ Invalid value: {e}", err=True, fg="red")
             sys.exit(1)
-        write_json(extension_json_path, extension_data)
-        updated.append("extension.json")
+        pending_json_writes.append(
+            (extension_json_path, "extension.json", extension_data)
+        )
 
     # Update frontend/package.json
     if frontend_pkg is not None:
@@ -817,8 +820,9 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                 frontend_pkg["license"] = target_license
                 pkg_changed = True
             if pkg_changed:
-                write_json(frontend_pkg_path, frontend_pkg)
-                updated.append("frontend/package.json")
+                pending_json_writes.append(
+                    (frontend_pkg_path, "frontend/package.json", frontend_pkg)
+                )
 
     # Update backend/pyproject.toml
     if backend_pyproject is not None:
@@ -836,12 +840,32 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                 project["license"] = target_license
                 toml_changed = True
             if toml_changed:
-                write_toml(backend_pyproject_path, backend_pyproject)
-                updated.append("backend/pyproject.toml")
+                pending_toml_writes.append(
+                    (
+                        backend_pyproject_path,
+                        "backend/pyproject.toml",
+                        backend_pyproject,
+                    )
+                )
+
+    try:
+        for path, label, _ in [*pending_json_writes, *pending_toml_writes]:
+            validate_output_file(path, label)
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+
+    for path, label, data in pending_json_writes:
+        write_json(path, data)
+        updated.append(label)
+
+    for path, label, data in pending_toml_writes:
+        write_toml(path, data)
+        updated.append(label)
 
     if updated:
-        for path in updated:
-            click.secho(f"✅ Updated {path}", fg="green")
+        for updated_path in updated:
+            click.secho(f"✅ Updated {updated_path}", fg="green")
     else:
         click.secho("✅ All files already up to date.", fg="green")
 

@@ -158,6 +158,76 @@ exclude = []
 
 
 @pytest.mark.cli
+def test_update_rejects_symlinked_extension_json(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses to overwrite symlinked extension metadata."""
+    extension_with_versions(isolated_filesystem, ext_version="1.0.0")
+    extension_json_path = isolated_filesystem / "extension.json"
+    outside_extension_json = isolated_filesystem / "outside-extension.json"
+    outside_extension_json.write_text(extension_json_path.read_text())
+    extension_json_path.unlink()
+    extension_json_path.symlink_to(outside_extension_json)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "extension.json" in result.output
+    assert "path is a symlink" in result.output
+    assert read_json(outside_extension_json)["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_rejects_symlinked_frontend_package_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update validates all output paths before writing extension metadata."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    package_json_path = isolated_filesystem / "frontend" / "package.json"
+    outside_package_json = isolated_filesystem / "outside-package.json"
+    outside_package_json.write_text(package_json_path.read_text())
+    package_json_path.unlink()
+    package_json_path.symlink_to(outside_package_json)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "frontend/package.json" in result.output
+    assert "path is a symlink" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert read_json(outside_package_json)["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_rejects_symlinked_backend_pyproject_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses symlinked TOML outputs before writing JSON outputs."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    outside_pyproject = isolated_filesystem / "outside-pyproject.toml"
+    outside_pyproject.write_text(pyproject_path.read_text())
+    pyproject_path.unlink()
+    pyproject_path.symlink_to(outside_pyproject)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "backend/pyproject.toml" in result.output
+    assert "path is a symlink" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert read_toml(outside_pyproject)["project"]["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
