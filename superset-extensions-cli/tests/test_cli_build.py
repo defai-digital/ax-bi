@@ -1798,6 +1798,57 @@ def test_publish_staged_output_directory_rejects_changed_backup_during_rollback(
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_restored_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged directory publishing verifies the target after backup restore."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    replacement_staged = isolated_filesystem / "replacement-staged"
+    replacement_staged.mkdir()
+    (replacement_staged / "replacement.js").write_text("replacement staged")
+    replacement_output = isolated_filesystem / "replacement-output"
+    replacement_output.mkdir()
+    (replacement_output / "replacement.js").write_text("replacement output")
+    saved_restored = isolated_filesystem / "saved-restored"
+    original_replace = Path.replace
+
+    def swap_staged_and_restored_target(path, target):
+        if path == staged_dir and target == output_path:
+            shutil.rmtree(staged_dir)
+            replacement_staged.rename(staged_dir)
+        result = original_replace(path, target)
+        if target == output_path and path.parent.name.startswith(".frontend-backup."):
+            output_path.rename(saved_restored)
+            replacement_output.rename(output_path)
+        return result
+
+    monkeypatch.setattr(Path, "replace", swap_staged_and_restored_target)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to restore previous dist/frontend directory: "
+            "restored backup path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(saved_restored / "old.js")
+    assert_file_exists(output_path / "replacement.js")
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_changed_target_during_cleanup(
     isolated_filesystem,
     monkeypatch,
