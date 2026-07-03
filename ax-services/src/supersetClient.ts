@@ -515,6 +515,14 @@ export class SupersetClient
       };
     }
 
+    if (!hasValidAssetSearchQuery(request.query)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid query'],
+      };
+    }
+
     if (!isAssetSearchLimit(request.limit)) {
       return {
         contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -3561,6 +3569,10 @@ function isOptionalStringArray(value: unknown): boolean {
 
 function isAssetSearchLimit(value: unknown): value is number {
   return isInteger(value) && value >= 1 && value <= 100;
+}
+
+function hasValidAssetSearchQuery(value: string): boolean {
+  return value.trim() !== '';
 }
 
 function hasValidAssetSearchRequestShape(

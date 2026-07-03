@@ -589,6 +589,30 @@ test('searchAssets rejects invalid limits before querying Superset', async () =>
   expect(fetchCalled).toBe(false);
 });
 
+test('searchAssets rejects blank queries before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: '   ',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['asset search request contains invalid query'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('searchAssets rejects invalid request shapes before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {

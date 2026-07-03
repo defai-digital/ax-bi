@@ -93,7 +93,7 @@ export const assetSearchRequestSchema = {
   additionalProperties: false,
   properties: {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
-    query: { type: 'string' },
+    query: { type: 'string', minLength: 1 },
     assetTypes: {
       type: 'array',
       items: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },

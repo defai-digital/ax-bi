@@ -15,7 +15,8 @@
         "const": "asset-search.v1"
       },
       "query": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1
       },
       "assetTypes": {
         "type": "array",

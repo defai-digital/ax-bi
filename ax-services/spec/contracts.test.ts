@@ -266,6 +266,7 @@ test('asset search request schema is registered in asset search contracts', () =
   expect(assetSearchContractSchemas.assetSearchRequestSchema.properties.query).toEqual(
     {
       type: 'string',
+      minLength: 1,
     },
   );
   expect(
