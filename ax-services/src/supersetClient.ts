@@ -1678,6 +1678,10 @@ interface ListColumnRequest {
   selectColumns?: unknown;
 }
 
+type LoadedColumnName = string | readonly string[];
+
+type LoadedColumnSpec<T> = readonly [keyof T, LoadedColumnName];
+
 interface SupersetListItem {
   id?: number;
   uuid?: string;
@@ -2397,24 +2401,18 @@ function requestedAnnotationColumns(request: AnnotationListRequest): string[] {
 }
 
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const dashboard of dashboards) {
-    if (dashboard.dashboardTitle !== undefined) loaded.add('dashboard_title');
-    if (dashboard.slug !== undefined) loaded.add('slug');
-    if (dashboard.description !== undefined) loaded.add('description');
-    if (dashboard.certifiedBy !== undefined) loaded.add('certified_by');
-    if (dashboard.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (dashboard.published !== undefined) loaded.add('published');
-    if (dashboard.uuid !== undefined) loaded.add('uuid');
-    if (dashboard.url !== undefined) loaded.add('url');
-    if (dashboard.changedOn !== undefined) loaded.add('changed_on');
-    if (dashboard.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(dashboards, [
+    ['dashboardTitle', 'dashboard_title'],
+    ['slug', 'slug'],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['published', 'published'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+  ]);
 }
 
 function requestedChartColumns(request: ChartListRequest): string[] {
@@ -2432,23 +2430,17 @@ function requestedChartColumns(request: ChartListRequest): string[] {
 }
 
 function chartColumnsLoaded(charts: ChartListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const chart of charts) {
-    if (chart.sliceName !== undefined) loaded.add('slice_name');
-    if (chart.vizType !== undefined) loaded.add('viz_type');
-    if (chart.description !== undefined) loaded.add('description');
-    if (chart.certifiedBy !== undefined) loaded.add('certified_by');
-    if (chart.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (chart.uuid !== undefined) loaded.add('uuid');
-    if (chart.url !== undefined) loaded.add('url');
-    if (chart.changedOn !== undefined) loaded.add('changed_on');
-    if (chart.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(charts, [
+    ['sliceName', 'slice_name'],
+    ['vizType', 'viz_type'],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+  ]);
 }
 
 function requestedDatasetColumns(request: DatasetListRequest): string[] {
@@ -2546,210 +2538,186 @@ function requestedColumnsOrDefault(
     : defaultColumns;
 }
 
-function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
+function loadedColumns<T extends object>(
+  items: T[],
+  specs: readonly LoadedColumnSpec<T>[],
+): string[] {
   const loaded = new Set<string>(['id']);
-  for (const dataset of datasets) {
-    if (dataset.tableName !== undefined) loaded.add('table_name');
-    if (dataset.schema !== undefined) loaded.add('schema');
-    if (dataset.databaseName !== undefined) {
-      loaded.add('database_name');
-      loaded.add('database');
+  for (const item of items) {
+    for (const [field, columnNames] of specs) {
+      if (item[field] !== undefined) {
+        for (const columnName of arrayColumnNames(columnNames)) {
+          loaded.add(columnName);
+        }
+      }
     }
-    if (dataset.description !== undefined) loaded.add('description');
-    if (dataset.certifiedBy !== undefined) loaded.add('certified_by');
-    if (dataset.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (dataset.changedOn !== undefined) loaded.add('changed_on');
-    if (dataset.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (dataset.isVirtual !== undefined) loaded.add('is_virtual');
-    if (dataset.databaseId !== undefined) loaded.add('database_id');
-    if (dataset.uuid !== undefined) loaded.add('uuid');
-    if (dataset.url !== undefined) loaded.add('url');
   }
   return [...loaded];
+}
+
+function arrayColumnNames(columnNames: LoadedColumnName): readonly string[] {
+  return typeof columnNames === 'string' ? [columnNames] : columnNames;
+}
+
+function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
+  return loadedColumns(datasets, [
+    ['tableName', 'table_name'],
+    ['schema', 'schema'],
+    ['databaseName', ['database_name', 'database']],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['isVirtual', 'is_virtual'],
+    ['databaseId', 'database_id'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+  ]);
 }
 
 function databaseColumnsLoaded(databases: DatabaseListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const database of databases) {
-    if (database.uuid !== undefined) loaded.add('uuid');
-    if (database.databaseName !== undefined) loaded.add('database_name');
-    if (database.backend !== undefined) loaded.add('backend');
-    if (database.exposeInSqllab !== undefined) loaded.add('expose_in_sqllab');
-    if (database.allowCtas !== undefined) loaded.add('allow_ctas');
-    if (database.allowCvas !== undefined) loaded.add('allow_cvas');
-    if (database.allowDml !== undefined) loaded.add('allow_dml');
-    if (database.allowFileUpload !== undefined) loaded.add('allow_file_upload');
-    if (database.allowRunAsync !== undefined) loaded.add('allow_run_async');
-    if (database.cacheTimeout !== undefined) loaded.add('cache_timeout');
-    if (database.configurationMethod !== undefined) {
-      loaded.add('configuration_method');
-    }
-    if (database.forceCtasSchema !== undefined) loaded.add('force_ctas_schema');
-    if (database.impersonateUser !== undefined) loaded.add('impersonate_user');
-    if (database.isManagedExternally !== undefined) {
-      loaded.add('is_managed_externally');
-    }
-    if (database.externalUrl !== undefined) loaded.add('external_url');
-    if (database.extra !== undefined) loaded.add('extra');
-    if (database.changedOn !== undefined) loaded.add('changed_on');
-    if (database.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (database.createdOn !== undefined) loaded.add('created_on');
-    if (database.createdOnHumanized !== undefined) {
-      loaded.add('created_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(databases, [
+    ['uuid', 'uuid'],
+    ['databaseName', 'database_name'],
+    ['backend', 'backend'],
+    ['exposeInSqllab', 'expose_in_sqllab'],
+    ['allowCtas', 'allow_ctas'],
+    ['allowCvas', 'allow_cvas'],
+    ['allowDml', 'allow_dml'],
+    ['allowFileUpload', 'allow_file_upload'],
+    ['allowRunAsync', 'allow_run_async'],
+    ['cacheTimeout', 'cache_timeout'],
+    ['configurationMethod', 'configuration_method'],
+    ['forceCtasSchema', 'force_ctas_schema'],
+    ['impersonateUser', 'impersonate_user'],
+    ['isManagedExternally', 'is_managed_externally'],
+    ['externalUrl', 'external_url'],
+    ['extra', 'extra'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function queryColumnsLoaded(queries: QueryListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const query of queries) {
-    if (query.sql !== undefined) loaded.add('sql');
-    if (query.executedSql !== undefined) loaded.add('executed_sql');
-    if (query.status !== undefined) loaded.add('status');
-    if (query.startTime !== undefined) loaded.add('start_time');
-    if (query.endTime !== undefined) loaded.add('end_time');
-    if (query.rows !== undefined) loaded.add('rows');
-    if (query.databaseId !== undefined) loaded.add('database_id');
-    if (query.schema !== undefined) loaded.add('schema');
-    if (query.catalog !== undefined) loaded.add('catalog');
-    if (query.tabName !== undefined) loaded.add('tab_name');
-    if (query.errorMessage !== undefined) loaded.add('error_message');
-    if (query.clientId !== undefined) loaded.add('client_id');
-    if (query.limit !== undefined) loaded.add('limit');
-    if (query.progress !== undefined) loaded.add('progress');
-    if (query.changedOn !== undefined) loaded.add('changed_on');
-    if (query.userId !== undefined) loaded.add('user_id');
-  }
-  return [...loaded];
+  return loadedColumns(queries, [
+    ['sql', 'sql'],
+    ['executedSql', 'executed_sql'],
+    ['status', 'status'],
+    ['startTime', 'start_time'],
+    ['endTime', 'end_time'],
+    ['rows', 'rows'],
+    ['databaseId', 'database_id'],
+    ['schema', 'schema'],
+    ['catalog', 'catalog'],
+    ['tabName', 'tab_name'],
+    ['errorMessage', 'error_message'],
+    ['clientId', 'client_id'],
+    ['limit', 'limit'],
+    ['progress', 'progress'],
+    ['changedOn', 'changed_on'],
+    ['userId', 'user_id'],
+  ]);
 }
 
 function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const savedQuery of savedQueries) {
-    if (savedQuery.uuid !== undefined) loaded.add('uuid');
-    if (savedQuery.label !== undefined) loaded.add('label');
-    if (savedQuery.sql !== undefined) loaded.add('sql');
-    if (savedQuery.dbId !== undefined) loaded.add('db_id');
-    if (savedQuery.schema !== undefined) loaded.add('schema');
-    if (savedQuery.catalog !== undefined) loaded.add('catalog');
-    if (savedQuery.description !== undefined) loaded.add('description');
-    if (savedQuery.changedOn !== undefined) loaded.add('changed_on');
-    if (savedQuery.createdOn !== undefined) loaded.add('created_on');
-    if (savedQuery.lastRun !== undefined) loaded.add('last_run');
-  }
-  return [...loaded];
+  return loadedColumns(savedQueries, [
+    ['uuid', 'uuid'],
+    ['label', 'label'],
+    ['sql', 'sql'],
+    ['dbId', 'db_id'],
+    ['schema', 'schema'],
+    ['catalog', 'catalog'],
+    ['description', 'description'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+    ['lastRun', 'last_run'],
+  ]);
 }
 
 function annotationLayerColumnsLoaded(
   annotationLayers: AnnotationLayerListItem[],
 ): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const annotationLayer of annotationLayers) {
-    if (annotationLayer.name !== undefined) loaded.add('name');
-    if (annotationLayer.descr !== undefined) loaded.add('descr');
-    if (annotationLayer.changedOn !== undefined) loaded.add('changed_on');
-    if (annotationLayer.createdOn !== undefined) loaded.add('created_on');
-  }
-  return [...loaded];
+  return loadedColumns(annotationLayers, [
+    ['name', 'name'],
+    ['descr', 'descr'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+  ]);
 }
 
 function annotationColumnsLoaded(annotations: AnnotationListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const annotation of annotations) {
-    if (annotation.shortDescr !== undefined) loaded.add('short_descr');
-    if (annotation.longDescr !== undefined) loaded.add('long_descr');
-    if (annotation.startDttm !== undefined) loaded.add('start_dttm');
-    if (annotation.endDttm !== undefined) loaded.add('end_dttm');
-    if (annotation.jsonMetadata !== undefined) loaded.add('json_metadata');
-    if (annotation.layerId !== undefined) loaded.add('layer_id');
-  }
-  return [...loaded];
+  return loadedColumns(annotations, [
+    ['shortDescr', 'short_descr'],
+    ['longDescr', 'long_descr'],
+    ['startDttm', 'start_dttm'],
+    ['endDttm', 'end_dttm'],
+    ['jsonMetadata', 'json_metadata'],
+    ['layerId', 'layer_id'],
+  ]);
 }
 
 function reportColumnsLoaded(reports: ReportListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const report of reports) {
-    if (report.name !== undefined) loaded.add('name');
-    if (report.description !== undefined) loaded.add('description');
-    if (report.type !== undefined) loaded.add('type');
-    if (report.active !== undefined) loaded.add('active');
-    if (report.crontab !== undefined) loaded.add('crontab');
-    if (report.dashboardId !== undefined) loaded.add('dashboard_id');
-    if (report.chartId !== undefined) loaded.add('chart_id');
-    if (report.lastEvalDttm !== undefined) loaded.add('last_eval_dttm');
-    if (report.lastEvalDttmHumanized !== undefined) {
-      loaded.add('last_eval_dttm_humanized');
-    }
-    if (report.lastState !== undefined) loaded.add('last_state');
-    if (report.creationMethod !== undefined) loaded.add('creation_method');
-    if (report.changedOn !== undefined) loaded.add('changed_on');
-    if (report.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (report.createdOn !== undefined) loaded.add('created_on');
-    if (report.createdOnHumanized !== undefined) {
-      loaded.add('created_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(reports, [
+    ['name', 'name'],
+    ['description', 'description'],
+    ['type', 'type'],
+    ['active', 'active'],
+    ['crontab', 'crontab'],
+    ['dashboardId', 'dashboard_id'],
+    ['chartId', 'chart_id'],
+    ['lastEvalDttm', 'last_eval_dttm'],
+    ['lastEvalDttmHumanized', 'last_eval_dttm_humanized'],
+    ['lastState', 'last_state'],
+    ['creationMethod', 'creation_method'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function roleColumnsLoaded(roles: RoleListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const role of roles) {
-    if (role.name !== undefined) loaded.add('name');
-  }
-  return [...loaded];
+  return loadedColumns(roles, [['name', 'name']]);
 }
 
 function rlsColumnsLoaded(rlsFilters: RlsListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const rlsFilter of rlsFilters) {
-    if (rlsFilter.name !== undefined) loaded.add('name');
-    if (rlsFilter.filterType !== undefined) loaded.add('filter_type');
-    if (rlsFilter.tables !== undefined) loaded.add('tables');
-    if (rlsFilter.roles !== undefined) loaded.add('roles');
-    if (rlsFilter.clause !== undefined) loaded.add('clause');
-    if (rlsFilter.groupKey !== undefined) loaded.add('group_key');
-    if (rlsFilter.changedOn !== undefined) loaded.add('changed_on');
-  }
-  return [...loaded];
+  return loadedColumns(rlsFilters, [
+    ['name', 'name'],
+    ['filterType', 'filter_type'],
+    ['tables', 'tables'],
+    ['roles', 'roles'],
+    ['clause', 'clause'],
+    ['groupKey', 'group_key'],
+    ['changedOn', 'changed_on'],
+  ]);
 }
 
 function tagColumnsLoaded(tags: TagListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const tag of tags) {
-    if (tag.name !== undefined) loaded.add('name');
-    if (tag.type !== undefined) loaded.add('type');
-    if (tag.description !== undefined) loaded.add('description');
-    if (tag.changedOn !== undefined) loaded.add('changed_on');
-    if (tag.changedOnHumanized !== undefined) loaded.add('changed_on_humanized');
-    if (tag.createdOn !== undefined) loaded.add('created_on');
-    if (tag.createdOnHumanized !== undefined) loaded.add('created_on_humanized');
-  }
-  return [...loaded];
+  return loadedColumns(tags, [
+    ['name', 'name'],
+    ['type', 'type'],
+    ['description', 'description'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function taskColumnsLoaded(tasks: TaskListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const task of tasks) {
-    if (task.uuid !== undefined) loaded.add('uuid');
-    if (task.taskType !== undefined) loaded.add('task_type');
-    if (task.taskKey !== undefined) loaded.add('task_key');
-    if (task.taskName !== undefined) loaded.add('task_name');
-    if (task.status !== undefined) loaded.add('status');
-    if (task.scope !== undefined) loaded.add('scope');
-    if (task.changedOn !== undefined) loaded.add('changed_on');
-    if (task.createdOn !== undefined) loaded.add('created_on');
-  }
-  return [...loaded];
+  return loadedColumns(tasks, [
+    ['uuid', 'uuid'],
+    ['taskType', 'task_type'],
+    ['taskKey', 'task_key'],
+    ['taskName', 'task_name'],
+    ['status', 'status'],
+    ['scope', 'scope'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+  ]);
 }
 
 function emptyDashboardListResponse(
