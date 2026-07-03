@@ -597,6 +597,7 @@ def test_rollback_dist_replacement_rejects_changed_dist_during_cleanup(
             None,
             None,
             None,
+            None,
             replacement_identity,
         )
 
@@ -879,7 +880,9 @@ def test_cleanup_dist_replacement_backup_rejects_changed_backup_root(
     (backup_root / "dist").mkdir()
     (backup_root / "dist" / "manifest.json").write_text("previous")
     backup_root_identity = get_directory_path_identity(backup_root)
+    backup_root_parent_identity = cli.get_read_parent_identity(backup_root)
     assert backup_root_identity is not None
+    assert backup_root_parent_identity is not None
     saved_backup_root = isolated_filesystem / "saved-dist-backup"
     replacement_backup_root = isolated_filesystem / "replacement-dist-backup"
     replacement_backup_root.mkdir()
@@ -888,10 +891,49 @@ def test_cleanup_dist_replacement_backup_rejects_changed_backup_root(
     backup_root.rename(saved_backup_root)
     replacement_backup_root.rename(backup_root)
 
-    cleanup_dist_replacement_backup(backup_root, backup_root_identity)
+    cleanup_dist_replacement_backup(
+        backup_root,
+        backup_root_identity,
+        backup_root_parent_identity,
+    )
 
     assert_file_exists(backup_root / "replacement.txt")
     assert_file_exists(saved_backup_root / "dist" / "manifest.json")
+
+
+@pytest.mark.unit
+def test_cleanup_dist_replacement_backup_rejects_changed_backup_parent(
+    isolated_filesystem,
+):
+    """Test full-build backup cleanup refuses a backup root under a new parent."""
+    workspace = isolated_filesystem / "workspace"
+    workspace.mkdir()
+    backup_root = workspace / ".dist-backup.test.tmp"
+    backup_root.mkdir()
+    (backup_root / "dist").mkdir()
+    (backup_root / "dist" / "manifest.json").write_text("previous")
+    backup_root_identity = get_directory_path_identity(backup_root)
+    backup_root_parent_identity = cli.get_read_parent_identity(backup_root)
+    assert backup_root_identity is not None
+    assert backup_root_parent_identity is not None
+    saved_workspace = isolated_filesystem / "saved-workspace"
+    replacement_workspace = isolated_filesystem / "replacement-workspace"
+
+    workspace.rename(saved_workspace)
+    replacement_workspace.mkdir()
+    backup_root = replacement_workspace / ".dist-backup.test.tmp"
+    (saved_workspace / ".dist-backup.test.tmp").rename(backup_root)
+    replacement_workspace.rename(workspace)
+    backup_root = workspace / ".dist-backup.test.tmp"
+
+    cleanup_dist_replacement_backup(
+        backup_root,
+        backup_root_identity,
+        backup_root_parent_identity,
+    )
+
+    assert not (saved_workspace / ".dist-backup.test.tmp").exists()
+    assert_file_exists(backup_root / "dist" / "manifest.json")
 
 
 @pytest.mark.unit

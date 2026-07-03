@@ -271,6 +271,7 @@ def start_dist_replacement(
     Path | None,
     tuple[int, int, int, int] | None,
     tuple[int, int, int, int] | None,
+    tuple[int, int] | None,
     tuple[int, int, int, int],
 ]:
     """Move existing dist aside before a full build writes replacement output."""
@@ -280,7 +281,7 @@ def start_dist_replacement(
         replacement_identity = get_directory_path_identity(dist_dir)
         if replacement_identity is None:
             raise click.ClickException("Refusing to build dist directory: unsafe path.")
-        return None, None, None, None, replacement_identity
+        return None, None, None, None, None, replacement_identity
 
     validate_output_directory(dist_dir, "dist directory")
     dist_identity = get_directory_path_identity(dist_dir)
@@ -297,12 +298,18 @@ def start_dist_replacement(
         raise click.ClickException(
             "Refusing to back up dist directory: backup root path is unsafe."
         )
+    backup_root_parent_identity = get_read_parent_identity(backup_root)
+    if backup_root_parent_identity is None:
+        raise click.ClickException(
+            "Refusing to back up dist directory: backup root parent is unsafe."
+        )
     if get_directory_path_identity(dist_dir) != dist_identity:
         try:
             remove_output_directory(
                 backup_root,
                 "temporary dist backup directory",
                 backup_root_identity,
+                expected_parent_identity=backup_root_parent_identity,
             )
         except click.ClickException:
             pass
@@ -315,6 +322,7 @@ def start_dist_replacement(
                 backup_root,
                 "temporary dist backup directory",
                 backup_root_identity,
+                expected_parent_identity=backup_root_parent_identity,
             )
         except click.ClickException:
             pass
@@ -327,6 +335,7 @@ def start_dist_replacement(
                 backup_root,
                 "temporary dist backup directory",
                 backup_root_identity,
+                expected_parent_identity=backup_root_parent_identity,
             )
         except click.ClickException:
             pass
@@ -351,6 +360,7 @@ def start_dist_replacement(
                 backup_root,
                 "temporary dist backup directory",
                 backup_root_identity,
+                expected_parent_identity=backup_root_parent_identity,
             )
         except click.ClickException:
             pass
@@ -363,6 +373,7 @@ def start_dist_replacement(
         backup_path,
         backup_identity,
         backup_root_identity,
+        backup_root_parent_identity,
         replacement_identity,
     )
 
@@ -373,6 +384,7 @@ def rollback_dist_replacement(
     backup_path: Path | None,
     backup_identity: tuple[int, int, int, int] | None,
     backup_root_identity: tuple[int, int, int, int] | None,
+    backup_root_parent_identity: tuple[int, int] | None,
     replacement_identity: tuple[int, int, int, int],
 ) -> None:
     """Restore the previous dist directory after a failed full build."""
@@ -408,6 +420,7 @@ def rollback_dist_replacement(
             backup_root,
             "temporary dist backup directory",
             backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
         )
     except click.ClickException:
         pass
@@ -416,6 +429,7 @@ def rollback_dist_replacement(
 def cleanup_dist_replacement_backup(
     backup_root: Path | None,
     backup_root_identity: tuple[int, int, int, int] | None,
+    backup_root_parent_identity: tuple[int, int] | None,
 ) -> None:
     """Remove a full-build dist backup after a successful publish."""
     if backup_root is None:
@@ -425,6 +439,7 @@ def cleanup_dist_replacement_backup(
             backup_root,
             "temporary dist backup directory",
             backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
         )
     except click.ClickException:
         pass
@@ -2730,6 +2745,7 @@ def build(ctx: click.Context) -> None:
         dist_backup_path,
         dist_backup_identity,
         dist_backup_root_identity,
+        dist_backup_root_parent_identity,
         dist_replacement_identity,
     ) = start_dist_replacement(cwd)
     try:
@@ -2774,6 +2790,7 @@ def build(ctx: click.Context) -> None:
                 dist_backup_path,
                 dist_backup_identity,
                 dist_backup_root_identity,
+                dist_backup_root_parent_identity,
                 dist_replacement_identity,
             )
         except click.ClickException as rollback_ex:
@@ -2784,7 +2801,11 @@ def build(ctx: click.Context) -> None:
             raise click.ClickException(f"{ex}; {rollback_ex.message}") from ex
         raise
 
-    cleanup_dist_replacement_backup(dist_backup_root, dist_backup_root_identity)
+    cleanup_dist_replacement_backup(
+        dist_backup_root,
+        dist_backup_root_identity,
+        dist_backup_root_parent_identity,
+    )
 
     click.secho("✅ Full build completed in dist/", fg="green")
 
