@@ -418,6 +418,36 @@ def test_bundle_rejects_dist_symlink_outside_dist(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_dist_symlink_to_external_output(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle refuses dist symlinks even when they point at the output file."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir(parents=True)
+    manifest = {
+        "id": "test-org.test-extension",
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (dist_dir / "manifest.json").write_text(json.dumps(manifest))
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("existing bundle")
+    (dist_dir / "bundle-link.supx").symlink_to(output_path)
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 1
+    assert "resolved path is outside the dist directory" in result.output
+    assert output_path.read_text() == "existing bundle"
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_skips_output_file_inside_dist(
     mock_build, cli_runner, isolated_filesystem
 ):

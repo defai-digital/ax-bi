@@ -1369,13 +1369,13 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             if not file.is_file():
                 continue
             resolved_file = file.resolve()
-            if resolved_file == resolved_zip_path:
-                continue
             if not resolved_file.is_relative_to(resolved_dist_dir):
                 raise click.ClickException(
                     f"Refusing to bundle {file}: resolved path is outside "
                     f"the dist directory {resolved_dist_dir}."
                 )
+            if resolved_file == resolved_zip_path:
+                continue
             bundle_entries.append((file, file.relative_to(dist_dir)))
 
         with tempfile.NamedTemporaryFile(
