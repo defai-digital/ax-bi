@@ -792,6 +792,37 @@ def test_write_text_atomic_rejects_changed_promoted_target(
     assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
 
 
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_parent_after_promote(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes verify the output parent after promotion."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    original_replace = Path.replace
+
+    def move_temp_under_replaced_parent(path, target):
+        if target == output_path:
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / path.name).rename(replacement_output_dir / path.name)
+            replacement_output_dir.rename(output_dir)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", move_temp_under_replaced_parent)
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert (saved_output_dir / "metadata.txt").read_text() == "old"
+    assert output_path.read_text() == "new"
+
+
 # Write JSON Tests
 @pytest.mark.unit
 def test_write_json_round_trip(isolated_filesystem):

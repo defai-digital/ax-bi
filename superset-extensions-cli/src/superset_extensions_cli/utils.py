@@ -248,6 +248,8 @@ def write_text_atomic(
         if get_read_path_identity(temp_path) != temp_identity:
             raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
         temp_path.replace(path)
+        if get_write_parent_identity(path) != parent_identity:
+            raise OSError(f"Refusing to promote through changed parent: {path.parent}")
         if get_read_path_identity(path) != temp_identity:
             raise OSError(f"Failed to verify promoted temporary file: {path}")
         temp_path = None
