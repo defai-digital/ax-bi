@@ -824,11 +824,19 @@ def publish_staged_output_directory(
     if target_replaced:
         if target_path.is_symlink() or target_path.is_file():
             try:
+                if (
+                    published_target_identity is not None
+                    and get_directory_path_identity(target_path)
+                    != published_target_identity
+                ):
+                    raise click.ClickException(
+                        f"Refusing to clean {label}: path changed."
+                    )
                 target_path.unlink()
-            except OSError as cleanup_ex:
+            except click.ClickException as cleanup_ex:
                 raise click.ClickException(
                     f"{publish_error.message}; also failed to clean failed "
-                    f"{label}: {cleanup_ex}"
+                    f"{label}: {cleanup_ex.message}"
                 ) from cleanup_ex
         elif target_path.exists():
             try:

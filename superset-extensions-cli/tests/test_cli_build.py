@@ -1598,6 +1598,56 @@ def test_publish_staged_output_directory_rejects_changed_target_during_cleanup(
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_rejects_file_target_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed directory publishing does not unlink a swapped file target."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    failed_publish = isolated_filesystem / "failed-frontend"
+
+    from superset_extensions_cli import cli
+
+    original_validate_output_directory = cli.validate_output_directory
+
+    def swap_target_to_file_after_publish(path, label):
+        if (
+            path == output_path
+            and not staged_dir.exists()
+            and not failed_publish.exists()
+        ):
+            output_path.rename(failed_publish)
+            output_path.write_text("replacement file")
+        original_validate_output_directory(path, label)
+
+    monkeypatch.setattr(
+        cli, "validate_output_directory", swap_target_to_file_after_publish
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to clean failed dist/frontend directory: "
+            "Refusing to clean dist/frontend directory: path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert output_path.read_text() == "replacement file"
+    assert_file_exists(failed_publish / "new.js")
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
     isolated_filesystem, monkeypatch
 ):
