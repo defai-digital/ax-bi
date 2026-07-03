@@ -145,8 +145,18 @@ def validate_write_path(path: Path) -> Path:
         raise OSError(
             f"Refusing to write through symlinked directory: {symlinked_parent}"
         )
-    if path.parent.exists() and not path.parent.is_dir():
-        raise OSError(f"Refusing to write through non-directory parent: {path.parent}")
+    invalid_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.exists() and not parent.is_dir()
+        ),
+        None,
+    )
+    if invalid_parent is not None:
+        raise OSError(
+            f"Refusing to write through non-directory parent: {invalid_parent}"
+        )
     return path
 
 

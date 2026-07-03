@@ -264,10 +264,18 @@ def validate_output_file(path: Path, label: str) -> None:
             f"Refusing to write {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
         )
-    if path.parent.exists() and not path.parent.is_dir():
+    invalid_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.exists() and not parent.is_dir()
+        ),
+        None,
+    )
+    if invalid_parent is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent exists but is not a directory: "
-            f"{path.parent}."
+            f"{invalid_parent}."
         )
 
 

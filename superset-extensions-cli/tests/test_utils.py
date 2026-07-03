@@ -433,6 +433,18 @@ def test_write_json_rejects_non_directory_parent(isolated_filesystem):
     assert output_parent.read_text() == "not a directory"
 
 
+@pytest.mark.unit
+def test_write_json_rejects_non_directory_ancestor(isolated_filesystem):
+    """Test write_json refuses nested output paths below a file ancestor."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_json(output_parent / "nested" / "metadata.json", {"name": "updated"})
+
+    assert output_parent.read_text() == "not a directory"
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -513,5 +525,20 @@ def test_write_toml_rejects_non_directory_parent(isolated_filesystem):
 
     with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
         write_toml(output_parent / "pyproject.toml", {"project": {"name": "updated"}})
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_non_directory_ancestor(isolated_filesystem):
+    """Test write_toml refuses nested output paths below a file ancestor."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_toml(
+            output_parent / "nested" / "pyproject.toml",
+            {"project": {"name": "updated"}},
+        )
 
     assert output_parent.read_text() == "not a directory"

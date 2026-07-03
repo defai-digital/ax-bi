@@ -321,6 +321,24 @@ def test_validate_output_file_rejects_non_directory_parent(isolated_filesystem):
     assert output_parent.read_text() == "not a directory"
 
 
+@pytest.mark.unit
+def test_validate_output_file_rejects_non_directory_ancestor(isolated_filesystem):
+    """Test output file validation refuses nested paths below file ancestors."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write nested manifest: parent exists but is not a directory",
+    ):
+        validate_output_file(
+            output_parent / "nested" / "manifest.json",
+            "nested manifest",
+        )
+
+    assert output_parent.read_text() == "not a directory"
+
+
 # Frontend Dependencies Tests
 @pytest.mark.unit
 @patch("subprocess.run")
