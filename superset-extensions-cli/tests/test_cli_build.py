@@ -1662,6 +1662,57 @@ def test_remove_output_file_rejects_changed_path_before_unlink(
 
 
 @pytest.mark.unit
+def test_remove_output_file_rejects_changed_parent_before_unlink(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test file cleanup refuses the same file moved under a new parent."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "bundle.supx"
+    output_path.write_text("failed bundle")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+
+    from superset_extensions_cli import cli
+
+    expected_identity = cli.get_read_path_identity(output_path)
+    expected_parent_identity = cli.get_directory_path_identity(output_dir)
+    assert expected_identity is not None
+    assert expected_parent_identity is not None
+    original_get_read_path_identity = cli.get_read_path_identity
+    calls = 0
+
+    def move_file_under_replaced_parent(path):
+        nonlocal calls
+        calls += 1
+        if path == output_path and calls == 2:
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / "bundle.supx").rename(
+                replacement_output_dir / "bundle.supx"
+            )
+            replacement_output_dir.rename(output_dir)
+        return original_get_read_path_identity(path)
+
+    monkeypatch.setattr(cli, "get_read_path_identity", move_file_under_replaced_parent)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean bundle: path changed",
+    ):
+        remove_output_file(
+            output_path,
+            "bundle",
+            expected_identity,
+            expected_parent_identity=expected_parent_identity,
+        )
+
+    assert not (saved_output_dir / "bundle.supx").exists()
+    assert output_path.read_text() == "failed bundle"
+
+
+@pytest.mark.unit
 def test_remove_output_file_rejects_changed_content_before_unlink(
     isolated_filesystem,
 ):

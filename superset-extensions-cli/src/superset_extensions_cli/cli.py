@@ -761,8 +761,24 @@ def remove_output_file(
     expected_identity: tuple[int, int, int, int],
     *,
     allow_content_changes: bool = False,
+    expected_parent_identity: tuple[int, int, int, int] | None = None,
 ) -> None:
     """Remove an output file only if it still matches the expected identity."""
+    current_parent_identity = get_directory_path_identity(path.parent)
+    if current_parent_identity is None or (
+        expected_parent_identity is not None
+        and current_parent_identity[:2] != expected_parent_identity[:2]
+    ):
+        raise click.ClickException(f"Refusing to clean {label}: path changed.")
+
+    def ensure_parent_unchanged() -> None:
+        latest_parent_identity = get_directory_path_identity(path.parent)
+        if (
+            latest_parent_identity is None
+            or latest_parent_identity[:2] != current_parent_identity[:2]
+        ):
+            raise click.ClickException(f"Refusing to clean {label}: path changed.")
+
     current_identity = get_read_path_identity(path)
     if current_identity is None or (
         current_identity != expected_identity
@@ -772,7 +788,10 @@ def remove_output_file(
     ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
-        if get_read_path_identity(path) != current_identity:
+        ensure_parent_unchanged()
+        latest_identity = get_read_path_identity(path)
+        ensure_parent_unchanged()
+        if latest_identity != current_identity:
             raise click.ClickException(f"Refusing to clean {label}: path changed.")
         path.unlink()
     except click.ClickException:
@@ -1167,7 +1186,12 @@ def publish_output_file(
         try:
             if published_target_identity is None:
                 raise click.ClickException(f"Refusing to clean {label}: path changed.")
-            remove_output_file(target_path, label, published_target_identity)
+            remove_output_file(
+                target_path,
+                label,
+                published_target_identity,
+                expected_parent_identity=target_parent_identity,
+            )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(
                 f"{publish_error.message}; also failed to clean failed {label}: "
@@ -2813,6 +2837,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                     "temporary bundle",
                     temp_identity,
                     allow_content_changes=True,
+                    expected_parent_identity=output_parent_identity,
                 )
             except click.ClickException:
                 pass
