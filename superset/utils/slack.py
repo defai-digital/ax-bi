@@ -18,7 +18,6 @@
 
 import logging
 from collections.abc import Callable
-from typing import Optional
 
 from flask import current_app as app
 from marshmallow import ValidationError
@@ -183,7 +182,7 @@ def get_channels() -> list[SlackChannelSchema]:
 
 def get_channels_with_search(
     search_string: str = "",
-    types: Optional[list[SlackChannelTypes]] = None,
+    types: list[SlackChannelTypes] | None = None,
     exact_match: bool = False,
     force: bool = False,
 ) -> list[SlackChannelSchema]:

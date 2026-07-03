@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from collections.abc import Callable
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from flask import current_app
 
@@ -46,7 +46,7 @@ def get_hash_algorithm() -> HashAlgorithm:
     return current_app.config["HASH_ALGORITHM"]
 
 
-def hash_from_str(val: str, algorithm: Optional[HashAlgorithm] = None) -> str:
+def hash_from_str(val: str, algorithm: HashAlgorithm | None = None) -> str:
     """
     Generate a hash from a string using the configured or specified algorithm.
 
@@ -76,8 +76,8 @@ def hash_from_str(val: str, algorithm: Optional[HashAlgorithm] = None) -> str:
 def hash_from_dict(
     obj: dict[Any, Any],
     ignore_nan: bool = False,
-    default: Optional[Callable[[Any], Any]] = None,
-    algorithm: Optional[HashAlgorithm] = None,
+    default: Callable[[Any], Any] | None = None,
+    algorithm: HashAlgorithm | None = None,
 ) -> str:
     """
     Generate a hash from a dictionary using the configured or specified algorithm.

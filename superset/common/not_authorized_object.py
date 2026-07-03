@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional
+from typing import Any
 
 from superset.exceptions import SupersetException
 
@@ -32,7 +32,7 @@ class NotAuthorizedObject:
 
 class NotAuthorizedException(SupersetException):
     def __init__(
-        self, what_not_authorized: str = "", exception: Optional[Exception] = None
+        self, what_not_authorized: str = "", exception: Exception | None = None
     ) -> None:
         super().__init__(
             "The user is not authorized to " + what_not_authorized, exception
