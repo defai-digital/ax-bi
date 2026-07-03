@@ -143,6 +143,34 @@ def test_read_json_returns_none_when_path_becomes_symlink_during_read(
 
 
 @pytest.mark.unit
+def test_read_json_returns_none_when_path_is_replaced_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_json refuses content if the file identity changes during read."""
+    json_file = isolated_filesystem / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    replacement_file = isolated_filesystem / "replacement.json"
+    replacement_file.write_text('{"name": "replacement"}')
+    original_read_text = Path.read_text
+
+    def replace_json_during_read(path, *args, **kwargs):
+        if path == json_file:
+            content = original_read_text(replacement_file, *args, **kwargs)
+            json_file.unlink()
+            json_file.write_text(content)
+            return content
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_json_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert not json_file.is_symlink()
+    assert json.loads(original_read_text(json_file)) == {"name": "replacement"}
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
@@ -284,6 +312,34 @@ def test_read_toml_returns_none_when_path_becomes_symlink_during_read(
 
     assert result is None
     assert toml_file.is_symlink()
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_path_is_replaced_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_toml refuses content if the file identity changes during read."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    replacement_file = isolated_filesystem / "replacement.toml"
+    replacement_file.write_text('[project]\nname = "replacement"')
+    original_open = Path.open
+
+    def replace_toml_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            content = replacement_file.read_text()
+            toml_file.unlink()
+            with original_open(toml_file, "w", encoding="utf-8") as replacement:
+                replacement.write(content)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_toml_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert not toml_file.is_symlink()
+    assert 'name = "replacement"' in toml_file.read_text()
 
 
 @pytest.mark.unit

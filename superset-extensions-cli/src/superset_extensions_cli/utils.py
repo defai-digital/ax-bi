@@ -110,9 +110,24 @@ def validate_read_path(path: Path) -> Path | None:
     return path
 
 
+def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
+    """Return file identity for a safe input path."""
+    read_path = validate_read_path(path)
+    if read_path is None:
+        return None
+    try:
+        stat = read_path.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
 def read_toml(path: Path) -> dict[str, Any] | None:
     read_path = validate_read_path(path)
     if read_path is None:
+        return None
+    initial_identity = get_read_path_identity(path)
+    if initial_identity is None:
         return None
 
     try:
@@ -121,7 +136,7 @@ def read_toml(path: Path) -> dict[str, Any] | None:
     except OSError as ex:
         raise OSError(f"Failed to read TOML file {read_path}: {ex}") from ex
 
-    if validate_read_path(path) is None:
+    if get_read_path_identity(path) != initial_identity:
         return None
     return tomllib.loads(content.decode("utf-8"))
 
@@ -130,13 +145,16 @@ def read_json(path: Path) -> dict[str, Any] | None:
     read_path = validate_read_path(path)
     if read_path is None:
         return None
+    initial_identity = get_read_path_identity(path)
+    if initial_identity is None:
+        return None
 
     try:
         content = read_path.read_text()
     except OSError as ex:
         raise OSError(f"Failed to read JSON file {read_path}: {ex}") from ex
 
-    if validate_read_path(path) is None:
+    if get_read_path_identity(path) != initial_identity:
         return None
     return json.loads(content)
 
