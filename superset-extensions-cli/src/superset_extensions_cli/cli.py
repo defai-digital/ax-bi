@@ -1910,7 +1910,21 @@ def verify_bundle_archive_contents(
                     identity,
                     f"bundle entry {arcname}",
                 )
-                if zipf.read(arcname.as_posix()) != file.read_bytes():
+                archived_bytes = zipf.read(arcname.as_posix())
+                ensure_copy_source_unchanged(
+                    file,
+                    resolved_dist_dir,
+                    identity,
+                    f"bundle entry {arcname}",
+                )
+                source_bytes = file.read_bytes()
+                ensure_copy_source_unchanged(
+                    file,
+                    resolved_dist_dir,
+                    identity,
+                    f"bundle entry {arcname}",
+                )
+                if archived_bytes != source_bytes:
                     raise click.ClickException(
                         "Refusing to publish bundle: temporary archive content "
                         f"changed for {arcname}."

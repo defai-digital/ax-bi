@@ -616,6 +616,42 @@ def test_bundle_rejects_invalid_temp_archive_before_publish(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_source_changed_during_archive_verification(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses source content changed during archive verification."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    source_file = isolated_filesystem / "dist" / "frontend" / "dist" / "main.js"
+    original_read_bytes = Path.read_bytes
+    changed = False
+
+    def change_source_during_read(path):
+        nonlocal changed
+        if path == source_file and not changed:
+            content = original_read_bytes(path)
+            path.write_bytes(content + b"\nchanged")
+            changed = True
+            return content
+        return original_read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", change_source_during_read)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "source path changed before copy" in result.output
+    assert changed
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_temp_archive_content_changed_before_publish(
     mock_build,
     cli_runner,
