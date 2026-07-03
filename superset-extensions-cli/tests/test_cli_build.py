@@ -31,6 +31,7 @@ from superset_extensions_cli.cli import (
     clean_dist,
     copy_backend_files,
     copy_frontend_dist,
+    create_temporary_output_directory,
     ensure_output_directory,
     init_frontend_deps,
     publish_output_file,
@@ -465,6 +466,50 @@ def test_clean_dist_rejects_dist_file(isolated_filesystem):
 
     with pytest.raises(click.ClickException, match="not a directory"):
         clean_dist(isolated_filesystem)
+
+
+@pytest.mark.unit
+def test_create_temporary_output_directory_rejects_symlinked_parent(
+    isolated_filesystem,
+):
+    """Test temporary output creation refuses symlinked parent directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_link = isolated_filesystem / "dist"
+    output_link.symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write parent for temporary frontend output directory: path is a symlink",
+    ):
+        create_temporary_output_directory(
+            output_link,
+            ".frontend.",
+            "temporary frontend output directory",
+        )
+
+    assert list(outside_dir.iterdir()) == []
+
+
+@pytest.mark.unit
+def test_create_temporary_output_directory_rejects_non_directory_parent(
+    isolated_filesystem,
+):
+    """Test temporary output creation refuses file parent paths."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write parent for temporary frontend output directory: path exists but is not a directory",
+    ):
+        create_temporary_output_directory(
+            output_parent,
+            ".frontend.",
+            "temporary frontend output directory",
+        )
+
+    assert output_parent.read_text() == "not a directory"
 
 
 @pytest.mark.unit

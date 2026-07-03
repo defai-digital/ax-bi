@@ -461,6 +461,7 @@ def remove_output_directory(path: Path, label: str) -> None:
 
 def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> Path:
     """Create a temporary output directory inside an already-validated parent."""
+    validate_output_directory(parent, f"parent for {label}")
     try:
         return Path(tempfile.mkdtemp(prefix=prefix, suffix=".tmp", dir=parent))
     except OSError as ex:
