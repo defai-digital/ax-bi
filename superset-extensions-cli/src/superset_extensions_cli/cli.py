@@ -1199,9 +1199,20 @@ def write_manifest(cwd: Path, manifest: Manifest) -> None:
 
 
 def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
+    require_optional_directory(frontend_dir, "frontend")
+    frontend_identity = get_directory_path_identity(frontend_dir)
+    if frontend_identity is None:
+        raise click.ClickException("frontend path is no longer safe.")
+
     click.echo()
     click.secho("⚙️  Building frontend assets…", fg="cyan")
     command = ["npm", "run", "build"]
+    current_frontend_identity = get_directory_path_identity(frontend_dir)
+    if (
+        current_frontend_identity is None
+        or current_frontend_identity[:2] != frontend_identity[:2]
+    ):
+        raise click.ClickException("frontend path changed before frontend build.")
     try:
         return subprocess.run(  # noqa: S603
             command,  # noqa: S607
