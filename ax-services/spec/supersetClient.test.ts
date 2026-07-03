@@ -746,6 +746,49 @@ test('searchAssets ignores malformed certification metadata', async () => {
   });
 });
 
+test('searchAssets normalizes malformed owner and tag metadata', async () => {
+  global.fetch = async () =>
+    Response.json({
+      result: [
+        {
+          id: 2,
+          uuid: 'chart-uuid',
+          slice_name: 'Sales by region',
+          owners: { username: 'owner1' },
+          tags: ['   ', { name: ' finance ' }, { name: 'gold\n' }],
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['chart'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [
+      {
+        assetType: 'chart',
+        id: 2,
+        uuid: 'chart-uuid',
+        name: 'Sales by region',
+        description: '',
+        certified: false,
+        relevanceScore: 1,
+        relevanceReason: "name matches 'sales'",
+        owners: [],
+        tags: ['finance'],
+      },
+    ],
+    warnings: [],
+  });
+});
+
 test('searchAssets records status warnings for non-json error responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {

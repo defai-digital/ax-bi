@@ -3484,21 +3484,34 @@ function buildRelevanceReason(
   return reasons.length > 0 ? reasons.join(', ') : 'metadata match';
 }
 
-function extractNameList(values: unknown[] | undefined): string[] {
-  if (!values) {
+function extractNameList(values: unknown): string[] {
+  if (!Array.isArray(values)) {
     return [];
   }
 
   return values.flatMap(value => {
-    if (typeof value === 'string') {
-      return [value];
-    }
-    if (isRecord(value)) {
-      const name = value['name'] ?? value['username'] ?? value['first_name'];
-      return typeof name === 'string' ? [name] : [];
-    }
-    return [];
+    const name = extractCleanName(value);
+    return name === undefined ? [] : [name];
   });
+}
+
+function extractCleanName(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return normalizeName(value);
+  }
+  if (isRecord(value)) {
+    return normalizeName(
+      value['name'] ?? value['username'] ?? value['first_name'],
+    );
+  }
+  return undefined;
+}
+
+function normalizeName(value: unknown): string | undefined {
+  if (!isCleanString(value)) {
+    return undefined;
+  }
+  return value.trim();
 }
 
 function isDefined<T>(value: T | undefined): value is T {
