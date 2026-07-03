@@ -238,6 +238,20 @@ test('readiness response schema is registered in runtime contracts', () => {
 
 test('metrics response schema is registered in runtime contracts', () => {
   expect(runtimeContractSchemas.metricsResponseSchema).toBe(metricsResponseSchema);
+  expect(metricsResponseSchema.properties.uptimeSeconds).toEqual({
+    type: 'number',
+    minimum: 0,
+  });
+  expect(metricsResponseSchema.properties.requests.properties.total).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    metricsResponseSchema.properties.requests.properties.averageDurationMs,
+  ).toEqual({
+    type: 'number',
+    minimum: 0,
+  });
   expect(metricsResponseSchema.properties.requests.properties.routes).toEqual({
     type: 'object',
     additionalProperties: {
@@ -245,10 +259,10 @@ test('metrics response schema is registered in runtime contracts', () => {
       required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
       additionalProperties: false,
       properties: {
-        count: { type: 'number' },
-        errorCount: { type: 'number' },
-        averageDurationMs: { type: 'number' },
-        maxDurationMs: { type: 'number' },
+        count: { type: 'integer', minimum: 0 },
+        errorCount: { type: 'integer', minimum: 0 },
+        averageDurationMs: { type: 'number', minimum: 0 },
+        maxDurationMs: { type: 'number', minimum: 0 },
       },
     },
   });

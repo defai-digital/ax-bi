@@ -157,7 +157,8 @@
         "const": "ok"
       },
       "uptimeSeconds": {
-        "type": "number"
+        "type": "number",
+        "minimum": 0
       },
       "requests": {
         "type": "object",
@@ -171,16 +172,20 @@
         "additionalProperties": false,
         "properties": {
           "total": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "errorCount": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "averageDurationMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "maxDurationMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "routes": {
             "type": "object",
@@ -195,16 +200,20 @@
               "additionalProperties": false,
               "properties": {
                 "count": {
-                  "type": "number"
+                  "type": "integer",
+                  "minimum": 0
                 },
                 "errorCount": {
-                  "type": "number"
+                  "type": "integer",
+                  "minimum": 0
                 },
                 "averageDurationMs": {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 },
                 "maxDurationMs": {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 }
               }
             }

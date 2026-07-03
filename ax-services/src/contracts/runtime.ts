@@ -59,6 +59,14 @@ const nodePlatformSchema = {
     'netbsd',
   ],
 } as const;
+const nonNegativeIntegerSchema = {
+  type: 'integer',
+  minimum: 0,
+} as const;
+const nonNegativeNumberSchema = {
+  type: 'number',
+  minimum: 0,
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -157,10 +165,10 @@ const routeMetricsSchema = {
   required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
   additionalProperties: false,
   properties: {
-    count: { type: 'number' },
-    errorCount: { type: 'number' },
-    averageDurationMs: { type: 'number' },
-    maxDurationMs: { type: 'number' },
+    count: nonNegativeIntegerSchema,
+    errorCount: nonNegativeIntegerSchema,
+    averageDurationMs: nonNegativeNumberSchema,
+    maxDurationMs: nonNegativeNumberSchema,
   },
 } as const;
 
@@ -224,7 +232,7 @@ export const metricsResponseSchema = {
     contractVersion: { const: RUNTIME_CONTRACT_VERSION },
     service: { const: 'ax-services' },
     status: { const: 'ok' },
-    uptimeSeconds: { type: 'number' },
+    uptimeSeconds: nonNegativeNumberSchema,
     requests: {
       type: 'object',
       required: [
@@ -236,10 +244,10 @@ export const metricsResponseSchema = {
       ],
       additionalProperties: false,
       properties: {
-        total: { type: 'number' },
-        errorCount: { type: 'number' },
-        averageDurationMs: { type: 'number' },
-        maxDurationMs: { type: 'number' },
+        total: nonNegativeIntegerSchema,
+        errorCount: nonNegativeIntegerSchema,
+        averageDurationMs: nonNegativeNumberSchema,
+        maxDurationMs: nonNegativeNumberSchema,
         routes: {
           type: 'object',
           additionalProperties: routeMetricsSchema,
