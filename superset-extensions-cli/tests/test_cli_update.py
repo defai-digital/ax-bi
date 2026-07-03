@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from superset_extensions_cli.cli import app
 from superset_extensions_cli.utils import read_json, read_toml
@@ -315,6 +317,35 @@ def test_update_rejects_backend_pyproject_directory_before_writing(
     assert result.exit_code == 1
     assert "backend/pyproject.toml path exists but is not a file" in result.output
     assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_reports_json_write_failures(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update reports write failures after output validation."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    extension_json_path = isolated_filesystem / "extension.json"
+    original_write_text = Path.write_text
+
+    def fail_extension_json_write(path, *args, **kwargs):
+        if path == extension_json_path:
+            raise OSError("disk full")
+        return original_write_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_extension_json_write)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Failed to write JSON file" in result.output
+    assert "disk full" in result.output
+    assert "Updated extension.json" not in result.output
+    assert read_json(extension_json_path)["version"] == "1.0.0"
 
 
 @pytest.mark.cli

@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from superset_extensions_cli.utils import read_json, read_toml, write_json, write_toml
@@ -445,6 +446,23 @@ def test_write_json_rejects_non_directory_ancestor(isolated_filesystem):
     assert output_parent.read_text() == "not a directory"
 
 
+@pytest.mark.unit
+def test_write_json_reports_write_errors(isolated_filesystem, monkeypatch):
+    """Test write_json reports filesystem write failures with path context."""
+    output_path = isolated_filesystem / "output.json"
+    original_write_text = Path.write_text
+
+    def fail_json_write(path, *args, **kwargs):
+        if path == output_path:
+            raise OSError("disk full")
+        return original_write_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_json_write)
+
+    with pytest.raises(OSError, match="Failed to write JSON file .*disk full"):
+        write_json(output_path, {"name": "updated"})
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -527,6 +545,23 @@ def test_write_toml_rejects_non_directory_parent(isolated_filesystem):
         write_toml(output_parent / "pyproject.toml", {"project": {"name": "updated"}})
 
     assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_write_toml_reports_write_errors(isolated_filesystem, monkeypatch):
+    """Test write_toml reports filesystem write failures with path context."""
+    output_path = isolated_filesystem / "pyproject.toml"
+    original_write_text = Path.write_text
+
+    def fail_toml_write(path, *args, **kwargs):
+        if path == output_path:
+            raise OSError("disk full")
+        return original_write_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_toml_write)
+
+    with pytest.raises(OSError, match="Failed to write TOML file .*disk full"):
+        write_toml(output_path, {"project": {"name": "updated"}})
 
 
 @pytest.mark.unit

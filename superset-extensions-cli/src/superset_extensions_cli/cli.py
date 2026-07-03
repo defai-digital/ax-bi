@@ -1197,13 +1197,17 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
-    for path, label, data in pending_json_writes:
-        write_json(path, data)
-        updated.append(label)
+    try:
+        for path, label, data in pending_json_writes:
+            write_json(path, data)
+            updated.append(label)
 
-    for path, label, data in pending_toml_writes:
-        write_toml(path, data)
-        updated.append(label)
+        for path, label, data in pending_toml_writes:
+            write_toml(path, data)
+            updated.append(label)
+    except OSError as ex:
+        click.secho(f"❌ {ex}", err=True, fg="red")
+        sys.exit(1)
 
     if updated:
         for updated_path in updated:

@@ -162,12 +162,18 @@ def validate_write_path(path: Path) -> Path:
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path = validate_write_path(path)
-    path.write_text(json.dumps(data, indent=2) + "\n")
+    try:
+        path.write_text(json.dumps(data, indent=2) + "\n")
+    except OSError as ex:
+        raise OSError(f"Failed to write JSON file {path}: {ex}") from ex
 
 
 def write_toml(path: Path, data: dict[str, Any]) -> None:
     path = validate_write_path(path)
-    path.write_text(tomli_w.dumps(data))
+    try:
+        path.write_text(tomli_w.dumps(data))
+    except OSError as ex:
+        raise OSError(f"Failed to write TOML file {path}: {ex}") from ex
 
 
 def _normalize_for_identifiers(name: str) -> str:
