@@ -19,7 +19,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from collections.abc import Callable
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 from flask import current_app, Flask
 from flask_caching import Cache
@@ -165,7 +165,7 @@ class SupersetCache(Cache):
 
 
 class ExploreFormDataCache(SupersetCache):
-    def get(self, *args: Any, **kwargs: Any) -> Optional[Union[str, Markup]]:
+    def get(self, *args: Any, **kwargs: Any) -> str | Markup | None:
         cache = self.cache.get(*args, **kwargs)
 
         if not cache:

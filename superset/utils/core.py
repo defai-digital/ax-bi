@@ -53,7 +53,6 @@ from typing import (
     Any,
     cast,
     NamedTuple,
-    Optional,
     TYPE_CHECKING,
     TypedDict,
     TypeGuard,
@@ -1824,7 +1823,7 @@ def get_column_names_from_metrics(metrics: list[Metric]) -> list[str]:
     return [col for col in map(get_column_name_from_metric, metrics) if col]
 
 
-def map_sql_type_to_inferred_type(sql_type: Optional[str]) -> str:
+def map_sql_type_to_inferred_type(sql_type: str | None) -> str:
     """
     Map a SQL type to a type string recognized by pandas' `infer_objects` method.
 
