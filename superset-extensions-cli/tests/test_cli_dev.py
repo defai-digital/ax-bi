@@ -141,6 +141,42 @@ def test_dev_command_initial_build(
 
 
 @pytest.mark.cli
+@patch("superset_extensions_cli.cli.Observer")
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.build_manifest")
+@patch("superset_extensions_cli.cli.write_manifest")
+def test_dev_command_aborts_when_initial_frontend_build_fails(
+    mock_write_manifest,
+    mock_build_manifest,
+    mock_rebuild_backend,
+    mock_rebuild_frontend,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    mock_observer_class,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_dev,
+):
+    """Test dev exits before watching when the initial frontend build fails."""
+    mock_rebuild_frontend.return_value = None
+    extension_setup_for_dev(isolated_filesystem)
+
+    result = cli_runner.invoke(app, ["dev"])
+
+    assert result.exit_code == 1
+    assert "Frontend build failed; aborting watch mode" in result.output
+    mock_validate_npm.assert_called_once()
+    mock_init_frontend_deps.assert_called_once_with(isolated_filesystem / "frontend")
+    mock_rebuild_backend.assert_not_called()
+    mock_build_manifest.assert_not_called()
+    mock_write_manifest.assert_not_called()
+    mock_observer_class.assert_not_called()
+
+
+@pytest.mark.cli
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_dev_command_validates_before_building(
     mock_validate_npm, cli_runner, isolated_filesystem
