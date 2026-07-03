@@ -1037,6 +1037,39 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_removes_stale_output_files(isolated_filesystem):
+    """Test copy_backend_files replaces stale backend output with current files."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "current.py").write_text("# current")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    stale_output = (
+        isolated_filesystem / "dist" / "backend" / "src" / "test_org" / "test_ext"
+    )
+    stale_output.mkdir(parents=True)
+    (stale_output / "stale.py").write_text("# stale")
+
+    copy_backend_files(isolated_filesystem)
+
+    assert_file_exists(stale_output / "current.py")
+    assert not (stale_output / "stale.py").exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_reports_copy_failures(isolated_filesystem):
     """Test copy_backend_files reports copy failures with backend file context."""
     backend_dir = isolated_filesystem / "backend"

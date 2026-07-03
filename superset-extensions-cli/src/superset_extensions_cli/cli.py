@@ -813,6 +813,7 @@ def copy_backend_files(cwd: Path) -> None:
             f"backend file {tgt.relative_to(backend_output_dir)}",
         )
 
+    remove_output_directory(backend_output_dir, "dist/backend directory")
     ensure_output_directory(dist_dir, "dist directory")
     ensure_output_directory(backend_output_dir, "dist/backend directory")
 
