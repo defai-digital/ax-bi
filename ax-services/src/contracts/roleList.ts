@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const ROLE_LIST_CONTRACT_VERSION = 'role-list.v1';
 
-export type RoleFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type RoleFilterValue = SharedListFilterValue;
 
-export interface RoleListFilter {
-  col: string;
-  opr: string;
-  value: RoleFilterValue;
-}
+export type RoleListFilter = SharedListFilter;
 
 export interface RoleListRequest {
   contractVersion: typeof ROLE_LIST_CONTRACT_VERSION;

@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const QUERY_LIST_CONTRACT_VERSION = 'query-list.v1';
 
-export type QueryFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type QueryFilterValue = SharedListFilterValue;
 
-export interface QueryListFilter {
-  col: string;
-  opr: string;
-  value: QueryFilterValue;
-}
+export type QueryListFilter = SharedListFilter;
 
 export interface QueryListRequest {
   contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;

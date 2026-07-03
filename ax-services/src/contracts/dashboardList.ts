@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const DASHBOARD_LIST_CONTRACT_VERSION = 'dashboard-list.v1';
 
-export type DashboardFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DashboardFilterValue = SharedListFilterValue;
 
-export interface DashboardListFilter {
-  col: string;
-  opr: string;
-  value: DashboardFilterValue;
-}
+export type DashboardListFilter = SharedListFilter;
 
 export interface DashboardListRequest {
   contractVersion: typeof DASHBOARD_LIST_CONTRACT_VERSION;

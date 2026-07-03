@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const REPORT_LIST_CONTRACT_VERSION = 'report-list.v1';
 
-export type ReportFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type ReportFilterValue = SharedListFilterValue;
 
-export interface ReportListFilter {
-  col: string;
-  opr: string;
-  value: ReportFilterValue;
-}
+export type ReportListFilter = SharedListFilter;
 
 export interface ReportListRequest {
   contractVersion: typeof REPORT_LIST_CONTRACT_VERSION;

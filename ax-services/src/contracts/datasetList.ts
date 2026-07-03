@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const DATASET_LIST_CONTRACT_VERSION = 'dataset-list.v1';
 
-export type DatasetFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DatasetFilterValue = SharedListFilterValue;
 
-export interface DatasetListFilter {
-  col: string;
-  opr: string;
-  value: DatasetFilterValue;
-}
+export type DatasetListFilter = SharedListFilter;
 
 export interface DatasetListRequest {
   contractVersion: typeof DATASET_LIST_CONTRACT_VERSION;

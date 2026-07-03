@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const TASK_LIST_CONTRACT_VERSION = 'task-list.v1';
 
-export type TaskFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type TaskFilterValue = SharedListFilterValue;
 
-export interface TaskListFilter {
-  col: string;
-  opr: string;
-  value: TaskFilterValue;
-}
+export type TaskListFilter = SharedListFilter;
 
 export interface TaskListRequest {
   contractVersion: typeof TASK_LIST_CONTRACT_VERSION;

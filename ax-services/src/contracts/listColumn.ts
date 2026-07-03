@@ -17,6 +17,20 @@
  * under the License.
  */
 
+export type ListFilterValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | number[]
+  | boolean[];
+
+export interface ListFilter {
+  col: string;
+  opr: string;
+  value: ListFilterValue;
+}
+
 export const listIdentifierSchema = {
   type: 'string',
   pattern: '^[A-Za-z0-9_]+$',

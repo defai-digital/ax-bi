@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const SAVED_QUERY_LIST_CONTRACT_VERSION = 'saved-query-list.v1';
 
-export type SavedQueryFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type SavedQueryFilterValue = SharedListFilterValue;
 
-export interface SavedQueryListFilter {
-  col: string;
-  opr: string;
-  value: SavedQueryFilterValue;
-}
+export type SavedQueryListFilter = SharedListFilter;
 
 export interface SavedQueryListRequest {
   contractVersion: typeof SAVED_QUERY_LIST_CONTRACT_VERSION;

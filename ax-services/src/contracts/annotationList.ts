@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const ANNOTATION_LIST_CONTRACT_VERSION = 'annotation-list.v1';
 
-export type AnnotationFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type AnnotationFilterValue = SharedListFilterValue;
 
-export interface AnnotationListFilter {
-  col: string;
-  opr: string;
-  value: AnnotationFilterValue;
-}
+export type AnnotationListFilter = SharedListFilter;
 
 export interface AnnotationListRequest {
   contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;

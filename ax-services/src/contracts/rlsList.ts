@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const RLS_LIST_CONTRACT_VERSION = 'rls-list.v1';
 
-export type RlsFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type RlsFilterValue = SharedListFilterValue;
 
-export interface RlsListFilter {
-  col: string;
-  opr: string;
-  value: RlsFilterValue;
-}
+export type RlsListFilter = SharedListFilter;
 
 export interface RlsListRequest {
   contractVersion: typeof RLS_LIST_CONTRACT_VERSION;

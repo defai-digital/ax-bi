@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const CHART_LIST_CONTRACT_VERSION = 'chart-list.v1';
 
-export type ChartFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type ChartFilterValue = SharedListFilterValue;
 
-export interface ChartListFilter {
-  col: string;
-  opr: string;
-  value: ChartFilterValue;
-}
+export type ChartListFilter = SharedListFilter;
 
 export interface ChartListRequest {
   contractVersion: typeof CHART_LIST_CONTRACT_VERSION;

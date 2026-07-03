@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const TAG_LIST_CONTRACT_VERSION = 'tag-list.v1';
 
-export type TagFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type TagFilterValue = SharedListFilterValue;
 
-export interface TagListFilter {
-  col: string;
-  opr: string;
-  value: TagFilterValue;
-}
+export type TagListFilter = SharedListFilter;
 
 export interface TagListRequest {
   contractVersion: typeof TAG_LIST_CONTRACT_VERSION;

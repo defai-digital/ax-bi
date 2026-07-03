@@ -17,6 +17,8 @@
  * under the License.
  */
 import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
   listColumnSchema,
   listCountSchema,
   listFilterSchema,
@@ -30,19 +32,9 @@ import {
 
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
 
-export type DatabaseFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DatabaseFilterValue = SharedListFilterValue;
 
-export interface DatabaseListFilter {
-  col: string;
-  opr: string;
-  value: DatabaseFilterValue;
-}
+export type DatabaseListFilter = SharedListFilter;
 
 export interface DatabaseListRequest {
   contractVersion: typeof DATABASE_LIST_CONTRACT_VERSION;
