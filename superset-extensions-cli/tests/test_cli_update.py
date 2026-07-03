@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import pytest
+import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import app
 from superset_extensions_cli.utils import read_json, read_toml
 
@@ -347,6 +348,55 @@ def test_update_reports_json_write_failures(
     assert "disk full" in result.output
     assert "Updated extension.json" not in result.output
     assert read_json(extension_json_path)["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_rejects_changed_frontend_directory_before_metadata_write(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update refuses metadata writes after a source directory swap."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_pkg_path = frontend_dir / "package.json"
+    saved_frontend_dir = isolated_filesystem / "saved-frontend"
+    replacement_frontend_dir = isolated_filesystem / "replacement-frontend"
+    replacement_frontend_dir.mkdir()
+    (replacement_frontend_dir / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "@replacement/replacement",
+                "version": "9.9.9",
+                "license": "Apache-2.0",
+            }
+        )
+    )
+    original_validate_output_file = cli.validate_output_file
+    swapped = False
+
+    def replace_frontend_after_package_validation(path, label):
+        nonlocal swapped
+        original_validate_output_file(path, label)
+        if path == frontend_pkg_path and not swapped:
+            frontend_dir.rename(saved_frontend_dir)
+            replacement_frontend_dir.rename(frontend_dir)
+            swapped = True
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.validate_output_file",
+        replace_frontend_after_package_validation,
+    )
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "frontend path changed before metadata update" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert read_json(saved_frontend_dir / "package.json")["version"] == "1.0.0"
+    assert read_json(frontend_dir / "package.json")["version"] == "9.9.9"
 
 
 @pytest.mark.cli

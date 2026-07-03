@@ -983,6 +983,32 @@ def optional_directory_exists(path: Path, label: str) -> bool:
     return True
 
 
+def get_optional_directory_identity(
+    path: Path,
+    label: str,
+) -> tuple[int, int, int, int] | None:
+    """Return the identity of an optional project directory when present."""
+    if not optional_directory_exists(path, label):
+        return None
+    directory_identity = get_directory_path_identity(path)
+    if directory_identity is None:
+        raise click.ClickException(f"{label} path is no longer safe.")
+    return directory_identity
+
+
+def ensure_directory_identity_unchanged(
+    path: Path,
+    label: str,
+    identity: tuple[int, int, int, int] | None,
+) -> None:
+    """Fail if an optional project directory changed after validation."""
+    if identity is None:
+        return
+    current_identity = get_directory_path_identity(path)
+    if current_identity is None or current_identity[:2] != identity[:2]:
+        raise click.ClickException(f"{label} path changed before metadata update.")
+
+
 def optional_file_exists(path: Path, label: str) -> bool:
     """Return whether an optional project file exists after validation."""
     if path.is_symlink():
@@ -1821,7 +1847,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
     frontend_dir = cwd / "frontend"
     try:
-        require_optional_directory(frontend_dir, "frontend")
+        frontend_identity = get_optional_directory_identity(frontend_dir, "frontend")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
@@ -1844,7 +1870,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
     backend_dir = cwd / "backend"
     try:
-        require_optional_directory(backend_dir, "backend")
+        backend_identity = get_optional_directory_identity(backend_dir, "backend")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
@@ -1942,10 +1968,15 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
+    def ensure_metadata_directories_unchanged() -> None:
+        ensure_directory_identity_unchanged(frontend_dir, "frontend", frontend_identity)
+        ensure_directory_identity_unchanged(backend_dir, "backend", backend_identity)
+
     pending_writes = [*pending_json_writes, *pending_toml_writes]
     try:
         original_contents: dict[Path, str] = {}
         for path, label, _ in pending_writes:
+            ensure_metadata_directories_unchanged()
             original_content = read_input_text(path, label)
             if original_content is None:
                 raise click.ClickException(f"Failed to read {label}: file not found.")
@@ -1961,6 +1992,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     written_paths: list[tuple[Path, str, tuple[int, int, int, int]]] = []
     try:
         for path, label, data in pending_json_writes:
+            ensure_metadata_directories_unchanged()
             write_json(path, data)
             written_identity = get_read_path_identity(path)
             if written_identity is None:
@@ -1969,13 +2001,14 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             updated.append(label)
 
         for path, label, data in pending_toml_writes:
+            ensure_metadata_directories_unchanged()
             write_toml(path, data)
             written_identity = get_read_path_identity(path)
             if written_identity is None:
                 raise OSError(f"Failed to verify written {label}: unsafe path.")
             written_paths.append((path, label, written_identity))
             updated.append(label)
-    except OSError as ex:
+    except (OSError, click.ClickException) as ex:
         for path, label, written_identity in reversed(written_paths):
             try:
                 if get_read_path_identity(path) != written_identity:
@@ -1987,7 +2020,8 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                     err=True,
                     fg="red",
                 )
-        click.secho(f"❌ {ex}", err=True, fg="red")
+        message = ex.message if isinstance(ex, click.ClickException) else str(ex)
+        click.secho(f"❌ {message}", err=True, fg="red")
         sys.exit(1)
 
     if updated:
