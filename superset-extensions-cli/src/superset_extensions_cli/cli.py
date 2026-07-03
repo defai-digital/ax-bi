@@ -968,11 +968,15 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
 
     target_replaced = False
     published_target_identity: tuple[int, int, int, int] | None = None
+    published_target_directory_identity: tuple[int, int, int, int] | None = None
     try:
         staged_path.replace(target_path)
         target_replaced = True
         published_target_identity = get_read_path_identity(target_path)
         if published_target_identity is None:
+            published_target_directory_identity = get_directory_path_identity(
+                target_path
+            )
             raise click.ClickException(
                 f"Failed to publish {label}: target path changed during publish."
             )
@@ -1021,7 +1025,13 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
             ) from cleanup_ex
     elif target_path.exists():
         try:
-            remove_output_directory(target_path, label)
+            if published_target_directory_identity is None:
+                raise click.ClickException(f"Refusing to clean {label}: path changed.")
+            remove_output_directory(
+                target_path,
+                label,
+                published_target_directory_identity,
+            )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(
                 f"{publish_error.message}; also failed to clean failed {label}: "

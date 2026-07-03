@@ -1296,6 +1296,74 @@ def test_publish_output_file_rejects_changed_target_during_cleanup(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_directory_target_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed file publishing does not clean a swapped directory target."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    failed_publish = isolated_filesystem / "failed-bundle.supx"
+    failed_directory = isolated_filesystem / "failed-bundle-dir"
+    failed_directory.mkdir()
+    (failed_directory / "failed.txt").write_text("failed directory")
+    replacement_directory = isolated_filesystem / "replacement-bundle-dir"
+    replacement_directory.mkdir()
+    (replacement_directory / "replacement.txt").write_text("replacement directory")
+    saved_failed_directory = isolated_filesystem / "saved-failed-bundle-dir"
+
+    from superset_extensions_cli import cli
+
+    original_get_read_path_identity = cli.get_read_path_identity
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    directory_swapped = False
+
+    def replace_published_file_with_directory(path):
+        if (
+            path == output_path
+            and not staged_file.exists()
+            and not failed_publish.exists()
+            and output_path.is_file()
+        ):
+            output_path.rename(failed_publish)
+            failed_directory.rename(output_path)
+        return original_get_read_path_identity(path)
+
+    def swap_directory_after_failure_identity(path):
+        nonlocal directory_swapped
+        identity = original_get_directory_path_identity(path)
+        if path == output_path and identity is not None and not directory_swapped:
+            directory_swapped = True
+            output_path.rename(saved_failed_directory)
+            replacement_directory.rename(output_path)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_read_path_identity",
+        replace_published_file_with_directory,
+    )
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_directory_after_failure_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to clean failed bundle: Refusing to clean bundle: path changed"
+        ),
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert failed_publish.read_text() == "new bundle"
+    assert (saved_failed_directory / "failed.txt").read_text() == "failed directory"
+    assert (output_path / "replacement.txt").read_text() == "replacement directory"
+
+
+@pytest.mark.unit
 def test_remove_output_file_rejects_changed_path_before_unlink(
     isolated_filesystem,
     monkeypatch,
