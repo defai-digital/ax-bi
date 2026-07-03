@@ -110,6 +110,14 @@ test('buildConfig canonicalizes configured Superset paths', () => {
   expect(config.supersetAssetSearchPaths.chart).toBe('/charts');
 });
 
+test('buildConfig supports path-prefixed Superset base URLs', () => {
+  const config = buildConfig({
+    AX_SUPERSET_BASE_URL: 'https://example.test/superset/',
+  });
+
+  expect(config.supersetBaseUrl).toBe('https://example.test/superset');
+});
+
 test('buildConfig defaults blank host and log level values', () => {
   const config = buildConfig({
     AX_SERVICES_HOST: '   ',
@@ -150,6 +158,15 @@ test('buildConfig rejects unsupported Superset URL protocols', () => {
   ).toThrow(
     'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
   );
+});
+
+test('buildConfig rejects Superset base URLs with query or fragment', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https://example.test?tenant=ax' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https://example.test#dashboard' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
 });
 
 test('buildConfig rejects blank Superset path overrides', () => {

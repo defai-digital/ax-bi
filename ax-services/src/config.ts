@@ -111,6 +111,9 @@ function normalizeSupersetBaseUrl(value: string): string {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('unsupported protocol');
     }
+    if (url.search !== '' || url.hash !== '') {
+      throw new Error('query or fragment not allowed');
+    }
     return url.toString().replace(/\/$/, '');
   } catch (error) {
     throw new Error('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL', {
