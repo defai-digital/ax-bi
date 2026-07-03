@@ -623,6 +623,21 @@ def remove_output_directory(
         raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
 
 
+def remove_output_file(
+    path: Path,
+    label: str,
+    expected_identity: tuple[int, int, int, int],
+) -> None:
+    """Remove an output file only if it still matches the expected identity."""
+    current_identity = get_read_path_identity(path)
+    if current_identity is None or current_identity[:2] != expected_identity[:2]:
+        raise click.ClickException(f"Refusing to clean {label}: path changed.")
+    try:
+        path.unlink()
+    except OSError as ex:
+        raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
+
+
 def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> Path:
     """Create a temporary output directory inside an already-validated parent."""
     validate_output_directory(parent, f"parent for {label}")
@@ -847,9 +862,15 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
             raise click.ClickException(f"Failed to back up {label}: backup is unsafe.")
 
     target_replaced = False
+    published_target_identity: tuple[int, int, int, int] | None = None
     try:
         staged_path.replace(target_path)
         target_replaced = True
+        published_target_identity = get_read_path_identity(target_path)
+        if published_target_identity is None:
+            raise click.ClickException(
+                f"Failed to publish {label}: target path changed during publish."
+            )
         validate_output_file(target_path, label)
         if get_read_path_identity(target_path) != staged_identity:
             raise click.ClickException(
@@ -877,11 +898,13 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
 
     if target_path.is_symlink() or target_path.is_file():
         try:
-            target_path.unlink()
-        except OSError as cleanup_ex:
+            if published_target_identity is None:
+                raise click.ClickException(f"Refusing to clean {label}: path changed.")
+            remove_output_file(target_path, label, published_target_identity)
+        except click.ClickException as cleanup_ex:
             raise click.ClickException(
                 f"{publish_error.message}; also failed to clean failed {label}: "
-                f"{cleanup_ex}"
+                f"{cleanup_ex.message}"
             ) from cleanup_ex
     elif target_path.exists():
         try:

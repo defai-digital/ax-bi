@@ -1168,6 +1168,49 @@ def test_publish_output_file_rejects_changed_backup_during_rollback(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_target_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed file publishing does not clean a swapped target."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    failed_publish = isolated_filesystem / "failed-bundle.supx"
+    replacement_output = isolated_filesystem / "replacement-bundle.supx"
+    replacement_output.write_text("replacement bundle")
+
+    from superset_extensions_cli import cli
+
+    original_validate_output_file = cli.validate_output_file
+
+    def swap_target_after_publish(path, label):
+        if (
+            path == output_path
+            and not staged_file.exists()
+            and not failed_publish.exists()
+        ):
+            output_path.rename(failed_publish)
+            replacement_output.replace(output_path)
+        original_validate_output_file(path, label)
+
+    monkeypatch.setattr(cli, "validate_output_file", swap_target_after_publish)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to clean failed bundle: Refusing to clean bundle: path changed"
+        ),
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert output_path.read_text() == "replacement bundle"
+    assert failed_publish.read_text() == "new bundle"
+    assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):
