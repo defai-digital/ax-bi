@@ -1004,6 +1004,7 @@ def publish_staged_output_directory(
                     label,
                     published_target_identity,
                     allow_content_changes=False,
+                    expected_parent_identity=target_parent_identity[:2],
                 )
             except click.ClickException as cleanup_ex:
                 raise click.ClickException(
@@ -1222,6 +1223,7 @@ def publish_output_file(
                 target_path,
                 label,
                 published_target_directory_identity,
+                expected_parent_identity=target_parent_identity[:2],
             )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(

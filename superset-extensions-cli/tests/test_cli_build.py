@@ -1623,6 +1623,78 @@ def test_publish_output_file_rejects_changed_directory_target_during_cleanup(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_directory_parent_change_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed file publishing does not clean a directory under a new parent."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = output_dir / "bundle.supx"
+    failed_publish = isolated_filesystem / "failed-bundle.supx"
+    failed_directory = isolated_filesystem / "failed-bundle-dir"
+    failed_directory.mkdir()
+    (failed_directory / "failed.txt").write_text("failed directory")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+
+    from superset_extensions_cli import cli
+
+    original_get_read_path_identity = cli.get_read_path_identity
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    parent_swapped = False
+
+    def replace_published_file_with_directory(path):
+        if (
+            path == output_path
+            and not staged_file.exists()
+            and not failed_publish.exists()
+            and output_path.is_file()
+        ):
+            output_path.rename(failed_publish)
+            failed_directory.rename(output_path)
+        return original_get_read_path_identity(path)
+
+    def move_directory_under_replaced_parent(path):
+        nonlocal parent_swapped
+        identity = original_get_directory_path_identity(path)
+        if path == output_path and identity is not None and not parent_swapped:
+            parent_swapped = True
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / "bundle.supx").rename(
+                replacement_output_dir / "bundle.supx"
+            )
+            replacement_output_dir.rename(output_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_read_path_identity",
+        replace_published_file_with_directory,
+    )
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        move_directory_under_replaced_parent,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to clean failed bundle: Refusing to clean bundle: path changed"
+        ),
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert failed_publish.read_text() == "new bundle"
+    assert not (saved_output_dir / "bundle.supx").exists()
+    assert (output_path / "failed.txt").read_text() == "failed directory"
+
+
+@pytest.mark.unit
 def test_remove_output_file_rejects_changed_path_before_unlink(
     isolated_filesystem,
     monkeypatch,
@@ -2156,6 +2228,57 @@ def test_publish_staged_output_directory_rejects_changed_target_during_cleanup(
     assert_file_exists(output_path / "replacement.js")
     assert_file_exists(failed_publish / "new.js")
     assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_target_parent_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed directory publishing does not clean a target under a new parent."""
+    output_dir = isolated_filesystem / "dist"
+    output_dir.mkdir()
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = output_dir / "frontend"
+    saved_output_dir = isolated_filesystem / "saved-dist"
+    replacement_output_dir = isolated_filesystem / "replacement-dist"
+    parent_swapped = False
+
+    from superset_extensions_cli import cli
+
+    original_validate_output_directory = cli.validate_output_directory
+
+    def fail_after_parent_swap(path, label):
+        nonlocal parent_swapped
+        if path == output_path and not staged_dir.exists() and not parent_swapped:
+            parent_swapped = True
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / "frontend").rename(replacement_output_dir / "frontend")
+            replacement_output_dir.rename(output_dir)
+            raise click.ClickException("post-publish validation failed")
+        original_validate_output_directory(path, label)
+
+    monkeypatch.setattr(cli, "validate_output_directory", fail_after_parent_swap)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "post-publish validation failed; also failed to clean failed "
+            "dist/frontend directory: Refusing to clean dist/frontend directory: "
+            "path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert not (saved_output_dir / "frontend").exists()
+    assert_file_exists(output_path / "new.js")
 
 
 @pytest.mark.unit
