@@ -56,9 +56,7 @@ export class ServiceMetrics {
       startedAt === undefined
         ? 0
         : Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-    const routeKey = `${request.method} ${
-      request.routeOptions.url ?? request.url
-    }`;
+    const routeKey = `${request.method} ${routeMetricsPath(request)}`;
     const routeMetrics = this.getRouteMetrics(routeKey);
     const isError = reply.statusCode >= 500;
 
@@ -112,6 +110,16 @@ export class ServiceMetrics {
     this.routes.set(route, created);
     return created;
   }
+}
+
+function routeMetricsPath(request: FastifyRequest): string {
+  return request.routeOptions.url ?? stripQueryString(request.url);
+}
+
+function stripQueryString(url: string): string {
+  const queryIndex = url.indexOf('?');
+
+  return queryIndex === -1 ? url : url.slice(0, queryIndex);
 }
 
 function toRouteContract(metrics: MutableRouteMetrics): RouteMetricsContract {

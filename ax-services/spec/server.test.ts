@@ -721,6 +721,35 @@ test('metrics endpoint returns request counters by route', async () => {
   ).toBeGreaterThanOrEqual(0);
 });
 
+test('metrics endpoint strips query strings from fallback route keys', async () => {
+  const server = buildServer(config, makeSupersetClient());
+
+  await server.inject({
+    method: 'GET',
+    url: '/missing?token=first',
+  });
+  await server.inject({
+    method: 'GET',
+    url: '/missing?token=second',
+  });
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+  });
+  const routes = response.json().requests.routes;
+
+  expect(response.statusCode).toBe(200);
+  expect(routes).toMatchObject({
+    'GET /missing': {
+      count: 2,
+      errorCount: 0,
+    },
+  });
+  expect(Object.keys(routes)).not.toContain('GET /missing?token=first');
+  expect(Object.keys(routes)).not.toContain('GET /missing?token=second');
+});
+
 test('asset search endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
