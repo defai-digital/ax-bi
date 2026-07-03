@@ -249,6 +249,9 @@ export interface SupersetTaskListClient {
   ): Promise<TaskListResponse>;
 }
 
+const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
+
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -316,7 +319,7 @@ export class SupersetClient
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
         url: this.healthUrl,
       };
     }
@@ -362,7 +365,7 @@ export class SupersetClient
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
         url: this.metadataUrl,
       };
     }
@@ -442,7 +445,7 @@ export class SupersetClient
     } catch (error) {
       return emptyAnnotationLayerListResponse(request, [
         `annotation layer list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -526,7 +529,7 @@ export class SupersetClient
     } catch (error) {
       return emptyAnnotationListResponse(request, [
         `annotation list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -654,15 +657,16 @@ export class SupersetClient
         allowed: payload['allowed'],
         statusCode: response.status,
       };
-      if (typeof payload['reason'] === 'string') {
-        result.reason = payload['reason'];
+      const reason = optionalExternalMessage(payload['reason']);
+      if (reason !== undefined) {
+        result.reason = reason;
       }
       return result;
     } catch (error) {
       return {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
         allowed: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
       };
     }
   }
@@ -740,7 +744,7 @@ export class SupersetClient
     } catch (error) {
       return emptyDashboardListResponse(request, [
         `dashboard list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -819,7 +823,7 @@ export class SupersetClient
     } catch (error) {
       return emptyChartListResponse(request, [
         `chart list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -898,7 +902,7 @@ export class SupersetClient
     } catch (error) {
       return emptyDatasetListResponse(request, [
         `dataset list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -977,7 +981,7 @@ export class SupersetClient
     } catch (error) {
       return emptyDatabaseListResponse(request, [
         `database list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1051,7 +1055,7 @@ export class SupersetClient
     } catch (error) {
       return emptyQueryListResponse(request, [
         `query list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1127,7 +1131,7 @@ export class SupersetClient
     } catch (error) {
       return emptySavedQueryListResponse(request, [
         `saved query list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1201,7 +1205,7 @@ export class SupersetClient
     } catch (error) {
       return emptyReportListResponse(request, [
         `report list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1273,7 +1277,7 @@ export class SupersetClient
     } catch (error) {
       return emptyRoleListResponse(request, [
         `role list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1347,7 +1351,7 @@ export class SupersetClient
     } catch (error) {
       return emptyRlsListResponse(request, [
         `RLS filter list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1419,7 +1423,7 @@ export class SupersetClient
     } catch (error) {
       return emptyTagListResponse(request, [
         `tag list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1493,7 +1497,7 @@ export class SupersetClient
     } catch (error) {
       return emptyTaskListResponse(request, [
         `task list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1534,7 +1538,7 @@ export class SupersetClient
         assets: [],
         warnings: [
           `${assetType} search failed: ${
-            error instanceof Error ? error.message : String(error)
+            externalErrorMessage(error)
           }`,
         ],
       };
@@ -3819,6 +3823,35 @@ function isListFilterScalar(value: unknown): boolean {
 
 function isRisonScalarString(value: unknown): value is string {
   return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function externalErrorMessage(error: unknown): string {
+  return externalMessage(
+    error instanceof Error ? error.message : String(error),
+    'dependency request failed',
+  );
+}
+
+function optionalExternalMessage(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const message = externalMessage(value, '');
+  return message === '' ? undefined : message;
+}
+
+function externalMessage(value: string, fallback: string): string {
+  const message = value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (message.length === 0) {
+    return fallback;
+  }
+
+  return message.slice(0, MAX_EXTERNAL_MESSAGE_LENGTH);
 }
 
 function isListColumnArray(value: unknown): value is string[] {

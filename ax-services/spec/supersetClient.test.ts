@@ -65,6 +65,21 @@ test('checkHealth returns Superset status and forwards request ID', async () => 
   });
 });
 
+test('checkHealth bounds and sanitizes dependency errors', async () => {
+  global.fetch = async () => {
+    throw new Error(`  connect\n${'x'.repeat(300)}  `);
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkHealth();
+
+  expect(result.ok).toBe(false);
+  expect(result.error).toBeDefined();
+  expect(result.error).not.toContain('\n');
+  expect(result.error?.startsWith('connect ')).toBe(true);
+  expect(result.error?.length).toBeLessThanOrEqual(256);
+});
+
 test('checkHealth normalizes direct caller request IDs before forwarding', async () => {
   const seenInits: RequestInit[] = [];
   global.fetch = async (_input, init) => {
@@ -152,6 +167,38 @@ test('checkPermission posts authorization request to Superset', async () => {
     },
     action: 'read',
   });
+});
+
+test('checkPermission sanitizes upstream denial reasons', async () => {
+  global.fetch = async () =>
+    Response.json(
+      {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        reason: ` denied\n${'x'.repeat(300)} `,
+      },
+      { status: 200 },
+    );
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'user',
+      userId: 7,
+    },
+    resource: {
+      type: 'dataset',
+      id: 42,
+    },
+    action: 'read',
+  });
+
+  expect(result.allowed).toBe(false);
+  expect(result.reason).toBeDefined();
+  expect(result.reason).not.toContain('\n');
+  expect(result.reason?.startsWith('denied ')).toBe(true);
+  expect(result.reason?.length).toBeLessThanOrEqual(256);
 });
 
 test('checkPermission fails closed when Superset cannot be reached', async () => {

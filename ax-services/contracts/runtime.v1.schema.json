@@ -100,7 +100,10 @@
                 }
               },
               "error": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             }
           }
@@ -234,7 +237,10 @@
                 "type": "number"
               },
               "error": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             }
           }

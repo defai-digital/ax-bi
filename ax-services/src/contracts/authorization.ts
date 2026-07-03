@@ -63,6 +63,13 @@ const cleanAuthorizationStringSchema = {
   pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
 } as const;
 
+const externalMessageSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
 export const permissionCheckRequestSchema = {
   $id: 'ax-services.permission-check.v1.request',
   type: 'object',
@@ -106,9 +113,9 @@ export const permissionCheckResponseSchema = {
   properties: {
     contractVersion: { const: AUTHORIZATION_CONTRACT_VERSION },
     allowed: { type: 'boolean' },
-    reason: { type: 'string' },
+    reason: externalMessageSchema,
     statusCode: { type: 'integer', minimum: 100, maximum: 599 },
-    error: { type: 'string' },
+    error: externalMessageSchema,
   },
 } as const;
 

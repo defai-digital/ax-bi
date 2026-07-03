@@ -195,6 +195,15 @@ test('readiness response schema is registered in runtime contracts', () => {
   expect(readinessResponseSchema.properties.status).toEqual({
     enum: ['ready', 'not_ready'],
   });
+  expect(
+    readinessResponseSchema.properties.dependencies.properties.superset
+      .properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
 });
 
 test('metrics response schema is registered in runtime contracts', () => {
@@ -225,6 +234,15 @@ test('metadata response schema is registered in runtime contracts', () => {
   ).toEqual({
     type: 'array',
     items: { type: 'string' },
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 
@@ -270,6 +288,22 @@ test('permission check request schema is registered in authorization contracts',
     type: 'integer',
     minimum: 100,
     maximum: 599,
+  });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties.reason,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 

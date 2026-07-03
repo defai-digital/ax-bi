@@ -17,6 +17,12 @@
  * under the License.
  */
 export const RUNTIME_CONTRACT_VERSION = 'runtime.v1';
+const externalMessageSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -88,7 +94,7 @@ const dependencyHealthSchema = {
     ok: { type: 'boolean' },
     url: { type: 'string' },
     statusCode: { type: 'number' },
-    error: { type: 'string' },
+    error: externalMessageSchema,
   },
 } as const;
 
@@ -105,7 +111,7 @@ const dependencyMetadataSchema = {
       type: 'array',
       items: { type: 'string' },
     },
-    error: { type: 'string' },
+    error: externalMessageSchema,
   },
 } as const;
 
