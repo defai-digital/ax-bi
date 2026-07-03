@@ -76,10 +76,24 @@ const copyTextToClipboard = (getText: () => Promise<string>) =>
 
               try {
                 if (!document.execCommand('copy')) {
+                  document.body.removeChild(span);
+                  if (selection.removeRange) {
+                    selection.removeRange(range);
+                  } else {
+                    selection.removeAllRanges();
+                  }
                   reject();
+                  return;
                 }
               } catch (err) {
+                document.body.removeChild(span);
+                if (selection.removeRange) {
+                  selection.removeRange(range);
+                } else {
+                  selection.removeAllRanges();
+                }
                 reject();
+                return;
               }
 
               document.body.removeChild(span);

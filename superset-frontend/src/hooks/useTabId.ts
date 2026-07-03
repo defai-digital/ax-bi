@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { nanoid } from 'nanoid';
 import {
   StrictBroadcastChannel,
@@ -25,11 +25,9 @@ import {
 
 const TAB_ID_CHANNEL_NAME = 'tab_id_channel';
 
-const channel: StrictBroadcastChannel<TabIdChannelMessage> =
-  new BroadcastChannel(TAB_ID_CHANNEL_NAME);
-
 export function useTabId() {
   const [tabId, setTabId] = useState<string>();
+  const tabIdRef = useRef<string>();
 
   function isStorageAvailable() {
     try {
@@ -38,7 +36,18 @@ export function useTabId() {
       return false;
     }
   }
+
   useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') {
+      if (!tabId) {
+        setTabId(nanoid());
+      }
+      return;
+    }
+
+    const channel: StrictBroadcastChannel<TabIdChannelMessage> =
+      new BroadcastChannel(TAB_ID_CHANNEL_NAME);
+
     if (!isStorageAvailable()) {
       if (!tabId) {
         setTabId(nanoid());
@@ -63,6 +72,7 @@ export function useTabId() {
         // continue regardless of error
       }
       setTabId(newTabId);
+      tabIdRef.current = newTabId;
     };
     let storedTabId;
     try {
@@ -76,12 +86,14 @@ export function useTabId() {
         tabId: storedTabId,
       });
       setTabId(storedTabId);
+      tabIdRef.current = storedTabId;
     } else {
       updateTabId();
     }
 
     channel.onmessage = messageEvent => {
-      if (messageEvent.data.tabId === tabId) {
+      const currentTabId = tabIdRef.current;
+      if (messageEvent.data.tabId === currentTabId) {
         if (messageEvent.data.type === 'REQUESTING_TAB_ID') {
           const message: TabIdChannelMessage = {
             type: 'TAB_ID_DENIED',
@@ -93,7 +105,11 @@ export function useTabId() {
         }
       }
     };
-  }, [tabId]);
+
+    return () => {
+      channel.close();
+    };
+  }, []);
 
   return tabId;
 }

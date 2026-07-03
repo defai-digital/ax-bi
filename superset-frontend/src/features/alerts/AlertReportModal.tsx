@@ -1378,8 +1378,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
 
   const handleRemoveFilterField = (filterIdx: number) => {
     const filters = nativeFilterData || [];
-    filters.splice(filterIdx, 1);
-    setNativeFilterData(filters);
+    setNativeFilterData(filters.filter((_, i) => i !== filterIdx));
   };
 
   const onCustomWidthChange = (value: number | string | null | undefined) => {

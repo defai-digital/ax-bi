@@ -299,13 +299,12 @@ export default function DrillByModal({
           ...formData,
           ...overrideFormData,
         };
-        overriddenAdhocFilterFields.forEach((adhocFilterField: string) => ({
-          ...newFormData,
-          [adhocFilterField]: [
-            ...formData[adhocFilterField],
-            ...overrideFormData[adhocFilterField],
-          ],
-        }));
+        overriddenAdhocFilterFields.forEach((adhocFilterField: string) => {
+          newFormData[adhocFilterField] = [
+            ...(formData[adhocFilterField] || []),
+            ...(overrideFormData[adhocFilterField] || []),
+          ];
+        });
         return newFormData;
       });
     },

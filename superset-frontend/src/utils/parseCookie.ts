@@ -24,6 +24,9 @@ export default function parseCookie(cookie = document.cookie): CookieMap {
     cookie
       .split('; ')
       .filter(x => x)
-      .map(x => x.split('=')),
+      .map(x => {
+        const eqIndex = x.indexOf('=');
+        return eqIndex === -1 ? [x, ''] : [x.slice(0, eqIndex), x.slice(eqIndex + 1)];
+      }),
   );
 }
