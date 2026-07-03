@@ -2642,16 +2642,16 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             try:
                 if get_read_path_identity(path) != written_identity:
                     raise OSError(f"Refusing to roll back {label}: path changed.")
-                rollback_directory_identity: tuple[int, int, int, int] | None = None
+                rollback_directory_identity: tuple[int, int] | None = None
                 rollback_directory: Path | None = None
                 if frontend_identity is not None and path.is_relative_to(frontend_dir):
                     rollback_directory = frontend_dir
-                    rollback_directory_identity = get_directory_path_identity(
+                    rollback_directory_identity = get_directory_node_identity(
                         frontend_dir
                     )
                 if backend_identity is not None and path.is_relative_to(backend_dir):
                     rollback_directory = backend_dir
-                    rollback_directory_identity = get_directory_path_identity(
+                    rollback_directory_identity = get_directory_node_identity(
                         backend_dir
                     )
                 if (
@@ -2670,13 +2670,12 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                     rollback_directory is not None
                     and rollback_directory_identity is not None
                 ):
-                    current_directory_identity = get_directory_path_identity(
+                    current_directory_identity = get_directory_node_identity(
                         rollback_directory
                     )
                     if (
                         current_directory_identity is None
-                        or current_directory_identity[:2]
-                        != rollback_directory_identity[:2]
+                        or current_directory_identity != rollback_directory_identity
                     ):
                         raise OSError(
                             f"Refusing to roll back {label}: directory path changed."
