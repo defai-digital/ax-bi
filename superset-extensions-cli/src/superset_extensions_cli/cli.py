@@ -1082,6 +1082,8 @@ def publish_output_file(
             if get_output_copy_source_identity(backup_path) != backup_identity:
                 raise OSError("backup path changed")
             backup_path.replace(target_path)
+            if get_read_path_identity(target_path) != backup_identity:
+                raise OSError("restored backup path changed")
         except OSError as restore_ex:
             raise click.ClickException(
                 f"{publish_error.message}; also failed to restore previous "
