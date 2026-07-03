@@ -73,7 +73,7 @@ class DatabricksStringType(types.TypeDecorator):
             else:
                 _step2 = _step1
 
-            return "%s" % _step2
+            return _step2
 
         return process
 
