@@ -85,9 +85,12 @@ function parsePositiveInteger(
 function normalizeSupersetBaseUrl(value: string): string {
   try {
     const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      throw new Error('unsupported protocol');
+    }
     return url.toString().replace(/\/$/, '');
   } catch (error) {
-    throw new Error('AX_SUPERSET_BASE_URL must be a valid URL', {
+    throw new Error('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL', {
       cause: error,
     });
   }

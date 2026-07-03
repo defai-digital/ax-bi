@@ -121,7 +121,15 @@ test('buildConfig rejects invalid numeric settings', () => {
 
 test('buildConfig rejects invalid Superset URL', () => {
   expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'not a url' })).toThrow(
-    'AX_SUPERSET_BASE_URL must be a valid URL',
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+  );
+});
+
+test('buildConfig rejects unsupported Superset URL protocols', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'ftp://superset.example.test' }),
+  ).toThrow(
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
   );
 });
 
