@@ -19,7 +19,7 @@
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -35,9 +35,9 @@ from .utils import load_examples_from_configs
 logger = logging.getLogger(__name__)
 
 
-def get_dataset_config_from_yaml(example_dir: Path) -> dict[str, Optional[str]]:
+def get_dataset_config_from_yaml(example_dir: Path) -> dict[str, str | None]:
     """Read table_name, schema, and data_file from dataset.yaml if it exists."""
-    result: dict[str, Optional[str]] = {
+    result: dict[str, str | None] = {
         "table_name": None,
         "schema": None,
         "data_file": None,
