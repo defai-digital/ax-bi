@@ -150,10 +150,21 @@ def init_frontend_deps(frontend_dir: Path) -> None:
 def clean_dist(cwd: Path) -> None:
     dist_dir = cwd / "dist"
     remove_output_directory(dist_dir, "dist directory")
+    ensure_output_directory(dist_dir, "dist directory")
+
+
+def ensure_output_directory(path: Path, label: str) -> None:
+    """Create an output directory after validating the path is safe to write."""
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to write {label}: path is a symlink.")
+    if path.exists() and not path.is_dir():
+        raise click.ClickException(
+            f"Refusing to write {label}: path exists but is not a directory."
+        )
     try:
-        dist_dir.mkdir(parents=True)
+        path.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
-        raise click.ClickException(f"Failed to create dist directory: {ex}") from ex
+        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
 def clean_dist_frontend(cwd: Path) -> None:
@@ -305,6 +316,7 @@ def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
 
 def write_manifest(cwd: Path, manifest: Manifest) -> None:
     dist_dir = cwd / "dist"
+    ensure_output_directory(dist_dir, "dist directory")
     (dist_dir / "manifest.json").write_text(
         manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True)
     )

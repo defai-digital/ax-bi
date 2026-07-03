@@ -22,6 +22,7 @@ from unittest.mock import Mock, patch
 
 import click
 import pytest
+from superset_core.extensions.types import Manifest
 from superset_extensions_cli.cli import (
     app,
     build_manifest,
@@ -29,6 +30,7 @@ from superset_extensions_cli.cli import (
     copy_backend_files,
     copy_frontend_dist,
     init_frontend_deps,
+    write_manifest,
 )
 
 from tests.utils import (
@@ -395,6 +397,58 @@ def test_build_manifest_rejects_invalid_extension_json(
 
     with pytest.raises(click.ClickException, match="Invalid extension.json"):
         build_manifest(isolated_filesystem, "remoteEntry.js")
+
+
+@pytest.mark.unit
+def test_write_manifest_creates_missing_dist_directory(isolated_filesystem):
+    """Test write_manifest creates dist when it is missing."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+
+    write_manifest(isolated_filesystem, manifest)
+
+    assert_file_exists(isolated_filesystem / "dist" / "manifest.json")
+
+
+@pytest.mark.unit
+def test_write_manifest_rejects_invalid_dist_path(isolated_filesystem):
+    """Test write_manifest refuses unsafe dist paths."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    (isolated_filesystem / "dist").write_text("not a directory")
+
+    with pytest.raises(click.ClickException, match="not a directory"):
+        write_manifest(isolated_filesystem, manifest)
+
+
+@pytest.mark.unit
+def test_write_manifest_rejects_symlinked_dist_path(isolated_filesystem):
+    """Test write_manifest refuses symlinked dist paths."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (isolated_filesystem / "dist").symlink_to(outside_dir)
+
+    with pytest.raises(click.ClickException, match="path is a symlink"):
+        write_manifest(isolated_filesystem, manifest)
+
+    assert not (outside_dir / "manifest.json").exists()
 
 
 # Frontend Build Tests
