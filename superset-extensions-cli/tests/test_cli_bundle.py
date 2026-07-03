@@ -421,6 +421,54 @@ def test_bundle_includes_all_files_recursively(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_skips_cli_temporary_dist_artifacts(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle excludes stale CLI temporary artifacts from dist."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir(parents=True)
+    manifest = {
+        "id": "test-org.test-extension",
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (dist_dir / "manifest.json").write_text(json.dumps(manifest))
+    frontend_dir = dist_dir / "frontend" / "dist"
+    frontend_dir.mkdir(parents=True)
+    (frontend_dir / "remoteEntry.abc123.js").write_text("// entry")
+    backend_dir = dist_dir / "backend"
+    backend_dir.mkdir()
+    (backend_dir / "module.py").write_text("# module")
+
+    frontend_backup = dist_dir / ".frontend-backup.abcd.tmp" / "frontend"
+    frontend_backup.mkdir(parents=True)
+    (frontend_backup / "old.js").write_text("old")
+    backend_staging = dist_dir / ".backend.abcd.tmp" / "backend"
+    backend_staging.mkdir(parents=True)
+    (backend_staging / "old.py").write_text("old")
+    (dist_dir / ".test-extension-1.0.0.supx.abcd.tmp").write_text("partial")
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 0
+    with zipfile.ZipFile(isolated_filesystem / "test-extension-1.0.0.supx") as zipf:
+        file_list = set(zipf.namelist())
+
+    assert "manifest.json" in file_list
+    assert "frontend/dist/remoteEntry.abc123.js" in file_list
+    assert "backend/module.py" in file_list
+    assert not any(name.startswith(".frontend-backup.") for name in file_list)
+    assert not any(name.startswith(".backend.") for name in file_list)
+    assert ".test-extension-1.0.0.supx.abcd.tmp" not in file_list
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_dist_symlink_outside_dist(
     mock_build, cli_runner, isolated_filesystem
 ):

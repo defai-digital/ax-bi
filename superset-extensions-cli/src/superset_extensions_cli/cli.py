@@ -56,6 +56,12 @@ from superset_extensions_cli.utils import (
 )
 
 REMOTE_ENTRY_REGEX = re.compile(r"^remoteEntry\..+\.js$")
+CLI_TEMPORARY_DIST_DIRECTORY_PREFIXES = (
+    ".backend.",
+    ".backend-backup.",
+    ".frontend.",
+    ".frontend-backup.",
+)
 
 
 def split_path_parts(path: str) -> list[str]:
@@ -76,6 +82,24 @@ def validate_backend_build_pattern(pattern: str, pattern_type: str) -> None:
             f"Invalid {pattern_type} pattern {pattern!r}: patterns must be "
             "relative to the backend directory and may not contain '..'."
         )
+
+
+def is_cli_temporary_dist_artifact(relative_path: Path) -> bool:
+    """Return whether a dist-relative path belongs to CLI temporary state."""
+    if not relative_path.parts:
+        return False
+
+    root_name = relative_path.parts[0]
+    if root_name.startswith(
+        CLI_TEMPORARY_DIST_DIRECTORY_PREFIXES
+    ) and root_name.endswith(".tmp"):
+        return True
+
+    return (
+        len(relative_path.parts) == 1
+        and root_name.startswith(".")
+        and root_name.endswith(".tmp")
+    )
 
 
 def validate_npm() -> None:
@@ -1566,6 +1590,9 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         for file in dist_dir.rglob("*"):
             if not file.is_file():
                 continue
+            relative_file = file.relative_to(dist_dir)
+            if is_cli_temporary_dist_artifact(relative_file):
+                continue
             resolved_file = file.resolve()
             if not resolved_file.is_relative_to(resolved_dist_dir):
                 raise click.ClickException(
@@ -1574,7 +1601,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 )
             if resolved_file == resolved_zip_path:
                 continue
-            bundle_entries.append((file, file.relative_to(dist_dir)))
+            bundle_entries.append((file, relative_file))
 
         with tempfile.NamedTemporaryFile(
             delete=False,
