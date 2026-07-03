@@ -1586,6 +1586,42 @@ test('listQueries maps Superset query list responses', async () => {
   });
 });
 
+test('listQueries ignores invalid numeric metrics', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 1,
+      result: [
+        {
+          id: 11,
+          status: 'success',
+          start_time: -1,
+          end_time: Number.POSITIVE_INFINITY,
+          rows: 10.5,
+          limit: -100,
+          progress: Number.NaN,
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listQueries({
+    contractVersion: QUERY_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result.queries).toEqual([
+    {
+      id: 11,
+      status: 'success',
+    },
+  ]);
+  expect(result.columnsLoaded).toEqual(['id', 'status']);
+});
+
 test('listQueries records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {

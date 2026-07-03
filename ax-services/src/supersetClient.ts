@@ -2159,9 +2159,13 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
     executedSql:
       typeof item.executed_sql === 'string' ? item.executed_sql : undefined,
     status: typeof item.status === 'string' ? item.status : undefined,
-    startTime: typeof item.start_time === 'number' ? item.start_time : undefined,
-    endTime: typeof item.end_time === 'number' ? item.end_time : undefined,
-    rows: typeof item.rows === 'number' ? item.rows : undefined,
+    startTime: isNonNegativeFiniteNumber(item.start_time)
+      ? item.start_time
+      : undefined,
+    endTime: isNonNegativeFiniteNumber(item.end_time)
+      ? item.end_time
+      : undefined,
+    rows: isNonNegativeInteger(item.rows) ? item.rows : undefined,
     databaseId:
       isSupersetId(item.database_id)
         ? item.database_id
@@ -2174,8 +2178,10 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
     errorMessage:
       typeof item.error_message === 'string' ? item.error_message : undefined,
     clientId: typeof item.client_id === 'string' ? item.client_id : undefined,
-    limit: typeof item.limit === 'number' ? item.limit : undefined,
-    progress: typeof item.progress === 'number' ? item.progress : undefined,
+    limit: isNonNegativeInteger(item.limit) ? item.limit : undefined,
+    progress: isNonNegativeFiniteNumber(item.progress)
+      ? item.progress
+      : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     userId: isSupersetId(item.user_id)
       ? item.user_id
@@ -3062,7 +3068,15 @@ function isDefined<T>(value: T | undefined): value is T {
 }
 
 function isSupersetId(value: unknown): value is number {
+  return isNonNegativeInteger(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+}
+
+function isNonNegativeFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
