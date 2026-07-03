@@ -1219,12 +1219,17 @@ def ensure_directory_identity_unchanged(
     label: str,
     identity: tuple[int, int, int, int] | None,
     operation: str = "metadata update",
+    *,
+    allow_content_changes: bool = True,
 ) -> None:
     """Fail if an optional project directory changed after validation."""
     if identity is None:
         return
     current_identity = get_directory_path_identity(path)
-    if current_identity is None or current_identity[:2] != identity[:2]:
+    if current_identity is None or (
+        current_identity != identity
+        and not (allow_content_changes and current_identity[:2] == identity[:2])
+    ):
         raise click.ClickException(f"{label} path changed before {operation}.")
 
 
@@ -2202,8 +2207,29 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         sys.exit(1)
 
     def ensure_metadata_directories_unchanged() -> None:
-        ensure_directory_identity_unchanged(frontend_dir, "frontend", frontend_identity)
-        ensure_directory_identity_unchanged(backend_dir, "backend", backend_identity)
+        ensure_directory_identity_unchanged(
+            frontend_dir,
+            "frontend",
+            frontend_identity,
+            allow_content_changes=False,
+        )
+        ensure_directory_identity_unchanged(
+            backend_dir,
+            "backend",
+            backend_identity,
+            allow_content_changes=False,
+        )
+
+    def refresh_metadata_directory_identity(path: Path) -> None:
+        nonlocal backend_identity, frontend_identity
+        if frontend_identity is not None and path.is_relative_to(frontend_dir):
+            frontend_identity = get_directory_path_identity(frontend_dir)
+            if frontend_identity is None:
+                raise OSError("Failed to verify frontend directory: unsafe path.")
+        if backend_identity is not None and path.is_relative_to(backend_dir):
+            backend_identity = get_directory_path_identity(backend_dir)
+            if backend_identity is None:
+                raise OSError("Failed to verify backend directory: unsafe path.")
 
     pending_writes = [*pending_json_writes, *pending_toml_writes]
     try:
@@ -2239,6 +2265,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             written_identity = get_read_path_identity(path)
             if written_identity is None:
                 raise OSError(f"Failed to verify written {label}: unsafe path.")
+            refresh_metadata_directory_identity(path)
             written_paths.append((path, label, written_identity))
             updated.append(label)
 
@@ -2252,6 +2279,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             written_identity = get_read_path_identity(path)
             if written_identity is None:
                 raise OSError(f"Failed to verify written {label}: unsafe path.")
+            refresh_metadata_directory_identity(path)
             written_paths.append((path, label, written_identity))
             updated.append(label)
     except (OSError, click.ClickException) as ex:
