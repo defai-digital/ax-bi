@@ -131,6 +131,8 @@ def validate_write_path(path: Path) -> Path:
     path = Path(path)
     if path.is_symlink():
         raise OSError(f"Refusing to write through symlink: {path}")
+    if path.exists() and not path.is_file():
+        raise OSError(f"Refusing to write non-file path: {path}")
     symlinked_parent = next(
         (
             parent
@@ -143,6 +145,8 @@ def validate_write_path(path: Path) -> Path:
         raise OSError(
             f"Refusing to write through symlinked directory: {symlinked_parent}"
         )
+    if path.parent.exists() and not path.parent.is_dir():
+        raise OSError(f"Refusing to write through non-directory parent: {path.parent}")
     return path
 
 

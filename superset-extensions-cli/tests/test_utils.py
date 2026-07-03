@@ -411,6 +411,28 @@ def test_write_json_rejects_symlinked_ancestor(isolated_filesystem):
     assert not (outside_nested / "metadata.json").exists()
 
 
+@pytest.mark.unit
+def test_write_json_rejects_directory_output(isolated_filesystem):
+    """Test write_json refuses output paths that are directories."""
+    output_dir = isolated_filesystem / "metadata.json"
+    output_dir.mkdir()
+
+    with pytest.raises(OSError, match="Refusing to write non-file path"):
+        write_json(output_dir, {"name": "updated"})
+
+
+@pytest.mark.unit
+def test_write_json_rejects_non_directory_parent(isolated_filesystem):
+    """Test write_json refuses output paths below a file parent."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_json(output_parent / "metadata.json", {"name": "updated"})
+
+    assert output_parent.read_text() == "not a directory"
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -471,3 +493,25 @@ def test_write_toml_rejects_symlinked_ancestor(isolated_filesystem):
         )
 
     assert not (outside_nested / "pyproject.toml").exists()
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_directory_output(isolated_filesystem):
+    """Test write_toml refuses output paths that are directories."""
+    output_dir = isolated_filesystem / "pyproject.toml"
+    output_dir.mkdir()
+
+    with pytest.raises(OSError, match="Refusing to write non-file path"):
+        write_toml(output_dir, {"project": {"name": "updated"}})
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_non_directory_parent(isolated_filesystem):
+    """Test write_toml refuses output paths below a file parent."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_toml(output_parent / "pyproject.toml", {"project": {"name": "updated"}})
+
+    assert output_parent.read_text() == "not a directory"
