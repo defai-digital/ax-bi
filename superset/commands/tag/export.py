@@ -17,7 +17,7 @@
 # isort:skip_file
 
 
-from typing import Any, Optional, Union
+from typing import Any
 from collections.abc import Callable
 from collections.abc import Iterator
 
@@ -55,8 +55,8 @@ class ExportTagsCommand:
 
     @staticmethod
     def _file_content(
-        dashboard_ids: Optional[Union[int, list[Union[int, str]]]] = None,
-        chart_ids: Optional[Union[int, list[Union[int, str]]]] = None,
+        dashboard_ids: int | list[int | str] | None = None,
+        chart_ids: int | list[int | str] | None = None,
     ) -> str:
         payload: dict[str, list[dict[str, Any]]] = {"tags": []}
 
@@ -120,8 +120,8 @@ class ExportTagsCommand:
 
     @staticmethod
     def export(
-        dashboard_ids: Optional[Union[int, list[Union[int, str]]]] = None,
-        chart_ids: Optional[Union[int, list[Union[int, str]]]] = None,
+        dashboard_ids: int | list[int | str] | None = None,
+        chart_ids: int | list[int | str] | None = None,
     ) -> Iterator[tuple[str, Callable[[], str]]]:
         if not feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
             return
