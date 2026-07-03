@@ -2189,12 +2189,17 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     pending_writes = [*pending_json_writes, *pending_toml_writes]
     try:
         original_contents: dict[Path, str] = {}
+        original_identities: dict[Path, tuple[int, int, int, int]] = {}
         for path, label, _ in pending_writes:
             ensure_metadata_directories_unchanged()
             original_content = read_input_text(path, label)
             if original_content is None:
                 raise click.ClickException(f"Failed to read {label}: file not found.")
+            original_identity = get_read_path_identity(path)
+            if original_identity is None:
+                raise click.ClickException(f"Failed to read {label}: unsafe path.")
             original_contents[path] = original_content
+            original_identities[path] = original_identity
     except click.ClickException as ex:
         click.secho(
             f"❌ Failed to read original metadata before update: {ex.message}",
@@ -2207,6 +2212,10 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     try:
         for path, label, data in pending_json_writes:
             ensure_metadata_directories_unchanged()
+            if get_read_path_identity(path) != original_identities[path]:
+                raise click.ClickException(
+                    f"Refusing to update {label}: path changed after snapshot."
+                )
             write_json(path, data)
             written_identity = get_read_path_identity(path)
             if written_identity is None:
@@ -2216,6 +2225,10 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
         for path, label, data in pending_toml_writes:
             ensure_metadata_directories_unchanged()
+            if get_read_path_identity(path) != original_identities[path]:
+                raise click.ClickException(
+                    f"Refusing to update {label}: path changed after snapshot."
+                )
             write_toml(path, data)
             written_identity = get_read_path_identity(path)
             if written_identity is None:

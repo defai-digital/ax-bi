@@ -446,6 +446,66 @@ def test_update_fails_when_original_metadata_becomes_unsafe_before_write(
 
 
 @pytest.mark.cli
+def test_update_rejects_metadata_changed_after_snapshot(
+    cli_runner,
+    isolated_filesystem,
+    extension_with_versions,
+    monkeypatch,
+):
+    """Test update refuses to overwrite metadata changed after snapshot."""
+    extension_with_versions(isolated_filesystem, ext_version="1.0.0")
+    extension_json_path = isolated_filesystem / "extension.json"
+    saved_extension_json = isolated_filesystem / "saved-extension.json"
+    replacement_extension_json = isolated_filesystem / "replacement-extension.json"
+    replacement_extension_json.write_text(
+        json.dumps(
+            {
+                "publisher": "replacement-org",
+                "name": "replacement-extension",
+                "displayName": "Replacement Extension",
+                "version": "9.9.9",
+                "license": "Apache-2.0",
+                "permissions": [],
+            }
+        )
+    )
+    original_read_input_text = cli.read_input_text
+    original_get_read_path_identity = cli.get_read_path_identity
+    snapshot_read = False
+    swapped = False
+
+    def read_snapshot(path, label):
+        nonlocal snapshot_read
+        content = original_read_input_text(path, label)
+        if path == extension_json_path:
+            snapshot_read = True
+        return content
+
+    def swap_after_snapshot_identity(path):
+        nonlocal swapped
+        identity = original_get_read_path_identity(path)
+        if path == extension_json_path and snapshot_read and not swapped:
+            extension_json_path.rename(saved_extension_json)
+            replacement_extension_json.rename(extension_json_path)
+            swapped = True
+        return identity
+
+    monkeypatch.setattr(cli, "read_input_text", read_snapshot)
+    monkeypatch.setattr(cli, "get_read_path_identity", swap_after_snapshot_identity)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert (
+        "Refusing to update extension.json: path changed after snapshot"
+        in result.output
+    )
+    assert "Updated extension.json" not in result.output
+    assert read_json(saved_extension_json)["version"] == "1.0.0"
+    assert read_json(extension_json_path)["version"] == "9.9.9"
+
+
+@pytest.mark.cli
 def test_update_rolls_back_completed_writes_on_later_failure(
     cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
 ):
