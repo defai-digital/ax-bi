@@ -524,6 +524,7 @@ test('request ID normalization trims valid IDs and rejects unsafe IDs', () => {
   expect(normalizeRequestIdHeader('   ')).toBeUndefined();
   expect(normalizeRequestIdHeader('x'.repeat(129))).toBeUndefined();
   expect(normalizeRequestIdHeader('request\n123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request 123')).toBeUndefined();
 });
 
 test('ready endpoint replaces unsafe request IDs before echoing or forwarding', async () => {

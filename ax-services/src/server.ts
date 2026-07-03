@@ -144,7 +144,7 @@ import {
 } from './supersetClient';
 
 const MAX_REQUEST_ID_LENGTH = 128;
-const UNSAFE_REQUEST_ID_PATTERN = /[\u0000-\u001f\u007f]/;
+const UNSAFE_REQUEST_ID_PATTERN = /[\s\u0000-\u001f\u007f]/;
 
 export function normalizeRequestIdHeader(
   value: string | string[] | undefined,
