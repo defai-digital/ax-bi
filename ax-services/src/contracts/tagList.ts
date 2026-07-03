@@ -130,8 +130,8 @@ export const tagListRequestSchema = {
     search: { type: 'string' },
     orderColumn: { type: 'string' },
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+    page: { type: 'integer', minimum: 1 },
+    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
   },
 } as const;
 
@@ -159,11 +159,11 @@ export const tagListResponseSchema = {
       type: 'array',
       items: tagListItemSchema,
     },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
+    count: { type: 'integer', minimum: 0 },
+    totalCount: { type: 'integer', minimum: 0 },
+    page: { type: 'integer', minimum: 1 },
+    pageSize: { type: 'integer', minimum: 1, maximum: 100 },
+    totalPages: { type: 'integer', minimum: 0 },
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
     columnsRequested: {

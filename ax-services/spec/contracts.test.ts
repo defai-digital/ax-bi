@@ -243,7 +243,7 @@ test('permission check request schema is registered in authorization contracts',
 
 test('RLS list request schema is registered in RLS list contracts', () => {
   expect(rlsListContractSchemas.rlsListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -272,7 +272,7 @@ test('annotation list request schema is registered in annotation list contracts'
   expect(
     annotationListContractSchemas.annotationListRequestSchema.properties.layerId,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -291,7 +291,7 @@ test('annotation list request schema is registered in annotation list contracts'
 
 test('role list request schema is registered in role list contracts', () => {
   expect(roleListContractSchemas.roleListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -307,7 +307,7 @@ test('annotation layer list request schema is registered in annotation layer lis
     annotationLayerListContractSchemas.annotationLayerListRequestSchema.properties
       .page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -322,8 +322,20 @@ test('dashboard list request schema is registered in dashboard list contracts', 
   expect(
     dashboardListContractSchemas.dashboardListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.count,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.totalPages,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
   });
   expect(
     dashboardListContractSchemas.dashboardListResponseSchema.properties
@@ -335,7 +347,7 @@ test('dashboard list request schema is registered in dashboard list contracts', 
 
 test('chart list request schema is registered in chart list contracts', () => {
   expect(chartListContractSchemas.chartListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -350,7 +362,7 @@ test('dataset list request schema is registered in dataset list contracts', () =
   expect(
     datasetListContractSchemas.datasetListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -365,7 +377,7 @@ test('database list request schema is registered in database list contracts', ()
   expect(
     databaseListContractSchemas.databaseListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -378,7 +390,7 @@ test('database list request schema is registered in database list contracts', ()
 
 test('query list request schema is registered in query list contracts', () => {
   expect(queryListContractSchemas.queryListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -393,7 +405,7 @@ test('saved query list request schema is registered in saved query list contract
   expect(
     savedQueryListContractSchemas.savedQueryListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -406,7 +418,7 @@ test('saved query list request schema is registered in saved query list contract
 
 test('report list request schema is registered in report list contracts', () => {
   expect(reportListContractSchemas.reportListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -419,7 +431,7 @@ test('report list request schema is registered in report list contracts', () => 
 
 test('tag list request schema is registered in tag list contracts', () => {
   expect(tagListContractSchemas.tagListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -431,7 +443,7 @@ test('tag list request schema is registered in tag list contracts', () => {
 
 test('task list request schema is registered in task list contracts', () => {
   expect(taskListContractSchemas.taskListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(

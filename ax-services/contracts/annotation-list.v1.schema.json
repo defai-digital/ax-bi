@@ -17,7 +17,7 @@
         "const": "annotation-list.v1"
       },
       "layerId": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1
       },
       "filters": {
@@ -90,11 +90,11 @@
         ]
       },
       "page": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1
       },
       "pageSize": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1,
         "maximum": 100
       }
@@ -159,19 +159,25 @@
         }
       },
       "count": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "totalCount": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "page": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 1
       },
       "pageSize": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100
       },
       "totalPages": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "hasNext": {
         "type": "boolean"
