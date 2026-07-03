@@ -61,6 +61,21 @@ def split_path_parts(path: str) -> list[str]:
     return [part for part in re.split(r"[\\/]+", path) if part]
 
 
+def validate_backend_build_pattern(pattern: str, pattern_type: str) -> None:
+    """Require backend build globs to stay relative to the backend directory."""
+    windows_pattern = PureWindowsPath(pattern)
+    if (
+        Path(pattern).is_absolute()
+        or bool(windows_pattern.drive)
+        or bool(windows_pattern.root)
+        or ".." in split_path_parts(pattern)
+    ):
+        raise click.ClickException(
+            f"Invalid {pattern_type} pattern {pattern!r}: patterns must be "
+            "relative to the backend directory and may not contain '..'."
+        )
+
+
 def validate_npm() -> None:
     """Abort if `npm` is not on PATH."""
     if shutil.which("npm") is None:
@@ -517,6 +532,11 @@ def get_backend_build_patterns(
             "string patterns when provided."
         )
 
+    for pattern in include_patterns:
+        validate_backend_build_pattern(pattern, "include")
+    for pattern in exclude_patterns:
+        validate_backend_build_pattern(pattern, "exclude")
+
     return include_patterns, exclude_patterns
 
 
@@ -544,20 +564,6 @@ def copy_backend_files(cwd: Path) -> None:
 
     # Process include patterns
     for pattern in include_patterns:
-        # Include patterns are only meant to select files within the backend
-        # directory. Reject absolute patterns or ones that walk outside it via
-        # parent ("..") components before handing them to glob().
-        windows_pattern = PureWindowsPath(pattern)
-        if (
-            Path(pattern).is_absolute()
-            or bool(windows_pattern.drive)
-            or bool(windows_pattern.root)
-            or ".." in split_path_parts(pattern)
-        ):
-            raise click.ClickException(
-                f"Invalid include pattern {pattern!r}: patterns must be "
-                "relative to the backend directory and may not contain '..'."
-            )
         for f in backend_dir.glob(pattern):
             if not f.is_file():
                 continue

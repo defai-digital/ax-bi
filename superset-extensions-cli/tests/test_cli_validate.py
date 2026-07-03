@@ -262,6 +262,56 @@ include = "src/**/*.py"
 
 
 @pytest.mark.cli
+@pytest.mark.parametrize(
+    ("build_config", "expected_message"),
+    [
+        (
+            """include = ["../secret.py"]
+exclude = []
+""",
+            "Invalid include pattern",
+        ),
+        (
+            """include = ["src/**/*.py"]
+exclude = ["/tmp/*.py"]
+""",
+            "Invalid exclude pattern",
+        ),
+    ],
+)
+def test_validate_rejects_backend_build_patterns_outside_backend(
+    cli_runner, isolated_filesystem, build_config, expected_message
+):
+    """Test validate refuses backend build patterns that escape backend."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+
+    backend_dir = isolated_filesystem / "backend"
+    backend_dir.mkdir()
+    (backend_dir / "pyproject.toml").write_text(
+        f"""[project]
+name = "test-org-test-extension"
+version = "1.0.0"
+
+[tool.apache_superset_extensions.build]
+{build_config}
+"""
+    )
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert expected_message in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_when_backend_entrypoint_is_directory(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
