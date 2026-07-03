@@ -34,6 +34,7 @@ from superset_extensions_cli.cli import (
     init_frontend_deps,
     publish_output_file,
     publish_staged_output_directory,
+    start_dist_replacement,
     validate_output_file,
     validate_output_file_parent,
     write_manifest,
@@ -273,6 +274,35 @@ def test_clean_dist_creates_dist_directory_if_missing(isolated_filesystem):
     clean_dist(isolated_filesystem)
 
     assert_directory_exists(dist_dir)
+
+
+@pytest.mark.unit
+def test_start_dist_replacement_restores_dist_when_replacement_create_fails(
+    isolated_filesystem, monkeypatch
+):
+    """Test dist replacement setup restores old dist if new dist creation fails."""
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("previous")
+
+    def fail_replacement_dist(path, label):
+        if path == dist_dir and not path.exists():
+            raise click.ClickException("cannot create replacement dist")
+        ensure_output_directory(path, label)
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.ensure_output_directory",
+        fail_replacement_dist,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="cannot create replacement dist",
+    ):
+        start_dist_replacement(isolated_filesystem)
+
+    assert (dist_dir / "manifest.json").read_text() == "previous"
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
 
 
 @pytest.mark.unit

@@ -221,7 +221,21 @@ def start_dist_replacement(cwd: Path) -> tuple[Path | None, Path | None]:
             pass
         raise click.ClickException(f"Failed to back up dist directory: {ex}") from ex
 
-    ensure_output_directory(dist_dir, "dist directory")
+    try:
+        ensure_output_directory(dist_dir, "dist directory")
+    except click.ClickException as ex:
+        try:
+            backup_path.replace(dist_dir)
+        except OSError as restore_ex:
+            raise click.ClickException(
+                f"{ex.message}; also failed to restore previous dist directory: "
+                f"{restore_ex}"
+            ) from ex
+        try:
+            remove_output_directory(backup_root, "temporary dist backup directory")
+        except click.ClickException:
+            pass
+        raise
     return backup_root, backup_path
 
 
