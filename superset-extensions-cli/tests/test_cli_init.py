@@ -195,6 +195,21 @@ def test_init_fails_when_directory_already_exists(
 
 
 @pytest.mark.cli
+def test_init_fails_when_target_is_broken_symlink(
+    cli_runner, isolated_filesystem, cli_input_both
+):
+    """Test that init fails gracefully when target path is a broken symlink."""
+    existing_link = isolated_filesystem / "test-extension"
+    existing_link.symlink_to(isolated_filesystem / "missing-target")
+
+    result = cli_runner.invoke(app, ["init"], input=cli_input_both)
+
+    assert result.exit_code == 1
+    assert "already exists" in result.output
+    assert existing_link.is_symlink()
+
+
+@pytest.mark.cli
 def test_extension_json_content_is_correct(
     cli_runner, isolated_filesystem, cli_input_both
 ):

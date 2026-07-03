@@ -1105,7 +1105,7 @@ def init(
         sys.exit(1)
 
     target_dir = Path.cwd() / names["name"]
-    if target_dir.exists():
+    if target_dir.exists() or target_dir.is_symlink():
         click.secho(f"❌ Directory {target_dir} already exists.", fg="red")
         sys.exit(1)
 
