@@ -26,7 +26,6 @@ from typing import (
     ClassVar,
     Generic,
     get_args,
-    Optional,
     TypeVar,
 )
 
@@ -555,7 +554,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
 
     @classmethod
     def apply_column_operators(
-        cls, query: Any, column_operators: Optional[list[ColumnOperator]] = None
+        cls, query: Any, column_operators: list[ColumnOperator] | None = None
     ) -> Any:
         """
         Apply column operators (list of ColumnOperator) to the query using
@@ -649,12 +648,12 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def _build_query(
         cls,
-        column_operators: Optional[list[ColumnOperator]] = None,
-        search: Optional[str] = None,
-        search_columns: Optional[list[str]] = None,
-        custom_filters: Optional[dict[str, BaseFilter]] = None,
+        column_operators: list[ColumnOperator] | None = None,
+        search: str | None = None,
+        search_columns: list[str] | None = None,
+        custom_filters: dict[str, BaseFilter] | None = None,
         skip_base_filter: bool = False,
-        data_model: Optional[SQLAInterface] = None,
+        data_model: SQLAInterface | None = None,
     ) -> Any:
         """
         Build a SQLAlchemy query with base filter, column operators, search, and
@@ -688,15 +687,15 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def list(  # noqa: C901
         cls,
-        column_operators: Optional[list[ColumnOperator]] = None,
+        column_operators: list[ColumnOperator] | None = None,
         order_column: str = "changed_on",
         order_direction: str = "desc",
         page: int = 0,
         page_size: int = 100,
-        search: Optional[str] = None,
-        search_columns: Optional[list[str]] = None,
-        custom_filters: Optional[dict[str, BaseFilter]] = None,
-        columns: Optional[list[str]] = None,
+        search: str | None = None,
+        search_columns: list[str] | None = None,
+        custom_filters: dict[str, BaseFilter] | None = None,
+        columns: list[str] | None = None,
     ) -> tuple[list[Any], int]:
         """
         Generic list method for filtered, sorted, and paginated results.
@@ -793,7 +792,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def count(
         cls,
-        column_operators: Optional[builtins.list[ColumnOperator]] = None,
+        column_operators: builtins.list[ColumnOperator] | None = None,
         skip_base_filter: bool = False,
     ) -> int:
         """
