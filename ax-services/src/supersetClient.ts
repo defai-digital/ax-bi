@@ -293,7 +293,7 @@ export class SupersetClient
     }
 
     if (this.config.supersetInternalToken !== undefined) {
-      headers.authorization = `Bearer ${this.config.supersetInternalToken}`;
+      headers['authorization'] = `Bearer ${this.config.supersetInternalToken}`;
     }
 
     return headers;
@@ -2188,23 +2188,25 @@ function escapeRisonString(value: string): string {
 }
 
 function extractSupersetResults(payload: unknown): SupersetListItem[] {
-  if (!isRecord(payload) || !Array.isArray(payload.result)) {
+  if (!isRecord(payload) || !Array.isArray(payload['result'])) {
     return [];
   }
 
-  return payload.result.filter(isRecord).map(item => item as SupersetListItem);
+  return payload['result']
+    .filter(isRecord)
+    .map(item => item as SupersetListItem);
 }
 
 function extractSupersetCount(payload: unknown, fallback: number): number {
   if (
     !isRecord(payload) ||
-    typeof payload.count !== 'number' ||
-    !Number.isFinite(payload.count) ||
-    payload.count < fallback
+    typeof payload['count'] !== 'number' ||
+    !Number.isFinite(payload['count']) ||
+    payload['count'] < fallback
   ) {
     return fallback;
   }
-  return payload.count;
+  return payload['count'];
 }
 
 function toDashboardListItem(
@@ -2550,11 +2552,11 @@ function toRlsTableRef(value: unknown): RlsTableRef | undefined {
   }
 
   const ref: RlsTableRef = {};
-  if (isSupersetId(value.id)) {
-    ref.id = value.id;
+  if (isSupersetId(value['id'])) {
+    ref.id = value['id'];
   }
-  if (typeof value.table_name === 'string') {
-    ref.tableName = value.table_name;
+  if (typeof value['table_name'] === 'string') {
+    ref.tableName = value['table_name'];
   }
   return Object.keys(ref).length > 0 ? ref : undefined;
 }
@@ -2565,11 +2567,11 @@ function toRlsRoleRef(value: unknown): RlsRoleRef | undefined {
   }
 
   const ref: RlsRoleRef = {};
-  if (isSupersetId(value.id)) {
-    ref.id = value.id;
+  if (isSupersetId(value['id'])) {
+    ref.id = value['id'];
   }
-  if (typeof value.name === 'string') {
-    ref.name = value.name;
+  if (typeof value['name'] === 'string') {
+    ref.name = value['name'];
   }
   return Object.keys(ref).length > 0 ? ref : undefined;
 }
@@ -3362,7 +3364,7 @@ function extractNameList(values: unknown[] | undefined): string[] {
       return [value];
     }
     if (isRecord(value)) {
-      const name = value.name ?? value.username ?? value.first_name;
+      const name = value['name'] ?? value['username'] ?? value['first_name'];
       return typeof name === 'string' ? [name] : [];
     }
     return [];
@@ -3388,8 +3390,8 @@ function hasValidAuthorizationIds(request: unknown): boolean {
   }
 
   return (
-    isOptionalSupersetId(principal.userId) &&
-    isOptionalSupersetId(resource.id)
+    isOptionalSupersetId(principal['userId']) &&
+    isOptionalSupersetId(resource['id'])
   );
 }
 
@@ -3404,12 +3406,12 @@ function hasValidAuthorizationRequestShape(
   return (
     isRecord(principal) &&
     isRecord(resource) &&
-    isPrincipalType(principal.type) &&
-    isOptionalString(principal.username) &&
-    isOptionalStringArray(principal.roles) &&
-    isResourceType(resource.type) &&
-    isOptionalString(resource.uuid) &&
-    isPermissionAction(request.action)
+    isPrincipalType(principal['type']) &&
+    isOptionalString(principal['username']) &&
+    isOptionalStringArray(principal['roles']) &&
+    isResourceType(resource['type']) &&
+    isOptionalString(resource['uuid']) &&
+    isPermissionAction(request['action'])
   );
 }
 
@@ -3445,8 +3447,8 @@ function hasValidListPagination(
 ): request is ListPaginationRequest {
   return (
     isRecord(request) &&
-    isPositiveInteger(request.page) &&
-    isListPageSize(request.pageSize)
+    isPositiveInteger(request['page']) &&
+    isListPageSize(request['pageSize'])
   );
 }
 
@@ -3456,10 +3458,10 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
   const record = isRecord(request) ? request : {};
   return {
     ...record,
-    page: isPositiveInteger(record.page) ? record.page : 1,
-    pageSize: isListPageSize(record.pageSize) ? record.pageSize : 100,
-    selectColumns: isStringArray(record.selectColumns)
-      ? record.selectColumns
+    page: isPositiveInteger(record['page']) ? record['page'] : 1,
+    pageSize: isListPageSize(record['pageSize']) ? record['pageSize'] : 100,
+    selectColumns: isStringArray(record['selectColumns'])
+      ? record['selectColumns']
       : [],
   } as unknown as T;
 }
@@ -3467,14 +3469,14 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
 function hasValidAnnotationLayerId(
   request: unknown,
 ): request is AnnotationListRequest {
-  return isRecord(request) && isPositiveInteger(request.layerId);
+  return isRecord(request) && isPositiveInteger(request['layerId']);
 }
 
 function withFallbackAnnotationLayerId(request: unknown): AnnotationListRequest {
   const record = isRecord(request) ? request : {};
   return {
     ...withFallbackListPagination<AnnotationListRequest>(record),
-    layerId: isNonNegativeInteger(record.layerId) ? record.layerId : 0,
+    layerId: isNonNegativeInteger(record['layerId']) ? record['layerId'] : 0,
   } as AnnotationListRequest;
 }
 
@@ -3489,8 +3491,8 @@ function isListPageSize(value: unknown): value is number {
 function hasValidListOrdering(request: unknown): request is ListOrderingRequest {
   return (
     isRecord(request) &&
-    isListOrderDirection(request.orderDirection) &&
-    isOptionalListOrderColumn(request.orderColumn)
+    isListOrderDirection(request['orderDirection']) &&
+    isOptionalListOrderColumn(request['orderColumn'])
   );
 }
 
@@ -3509,17 +3511,17 @@ function isOptionalListOrderColumn(value: unknown): boolean {
 function hasValidListFilters(request: unknown): request is ListFilterRequest {
   return (
     isRecord(request) &&
-    Array.isArray(request.filters) &&
-    request.filters.every(isListFilter)
+    Array.isArray(request['filters']) &&
+    request['filters'].every(isListFilter)
   );
 }
 
 function isListFilter(value: unknown): boolean {
   return (
     isRecord(value) &&
-    isRisonToken(value.col) &&
-    isRisonToken(value.opr) &&
-    isListFilterValue(value.value)
+    isRisonToken(value['col']) &&
+    isRisonToken(value['opr']) &&
+    isListFilterValue(value['value'])
   );
 }
 
@@ -3563,10 +3565,10 @@ function hasValidAssetSearchRequestShape(
 ): request is AssetSearchRequest {
   return (
     isRecord(request) &&
-    typeof request.query === 'string' &&
-    Array.isArray(request.assetTypes) &&
-    request.assetTypes.every(isAssetType) &&
-    typeof request.includeCertifiedOnly === 'boolean'
+    typeof request['query'] === 'string' &&
+    Array.isArray(request['assetTypes']) &&
+    request['assetTypes'].every(isAssetType) &&
+    typeof request['includeCertifiedOnly'] === 'boolean'
   );
 }
 

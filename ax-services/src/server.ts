@@ -221,7 +221,7 @@ export function buildServer(
       service: 'ax-services',
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '0.0.1',
+      version: process.env['npm_package_version'] || '0.0.1',
       nodeVersion: process.version,
       platform: process.platform,
       uptimeSeconds: Number(process.hrtime.bigint() - serviceStartTime) / 1e9,

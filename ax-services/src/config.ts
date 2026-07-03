@@ -42,7 +42,30 @@ export interface ServiceConfig {
   logLevel: LogLevel;
 }
 
-type Environment = Partial<Record<string, string>>;
+type EnvironmentVariable =
+  | 'AX_SERVICES_HOST'
+  | 'AX_SERVICES_PORT'
+  | 'AX_SUPERSET_BASE_URL'
+  | 'AX_SUPERSET_HEALTH_PATH'
+  | 'AX_SUPERSET_METADATA_PATH'
+  | 'AX_SUPERSET_PERMISSION_PATH'
+  | 'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH'
+  | 'AX_SUPERSET_CHART_LIST_PATH'
+  | 'AX_SUPERSET_DASHBOARD_LIST_PATH'
+  | 'AX_SUPERSET_DATABASE_LIST_PATH'
+  | 'AX_SUPERSET_DATASET_LIST_PATH'
+  | 'AX_SUPERSET_QUERY_LIST_PATH'
+  | 'AX_SUPERSET_REPORT_LIST_PATH'
+  | 'AX_SUPERSET_ROLE_LIST_PATH'
+  | 'AX_SUPERSET_RLS_LIST_PATH'
+  | 'AX_SUPERSET_SAVED_QUERY_LIST_PATH'
+  | 'AX_SUPERSET_TAG_LIST_PATH'
+  | 'AX_SUPERSET_TASK_LIST_PATH'
+  | 'AX_SUPERSET_TIMEOUT_MS'
+  | 'AX_SUPERSET_INTERNAL_TOKEN'
+  | 'AX_SERVICES_LOG_LEVEL';
+
+type Environment = Partial<Record<EnvironmentVariable, string | undefined>>;
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 const DEFAULT_HOST = '127.0.0.1';
