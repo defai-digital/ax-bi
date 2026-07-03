@@ -813,23 +813,46 @@ def copy_backend_files(cwd: Path) -> None:
             f"backend file {tgt.relative_to(backend_output_dir)}",
         )
 
-    remove_output_directory(backend_output_dir, "dist/backend directory")
     ensure_output_directory(dist_dir, "dist directory")
-    ensure_output_directory(backend_output_dir, "dist/backend directory")
-
-    for _, tgt in copy_targets:
-        ensure_output_file_parent(
-            tgt,
-            backend_output_dir,
-            f"backend file {tgt.relative_to(backend_output_dir)}",
+    try:
+        staged_backend_output_dir = Path(
+            tempfile.mkdtemp(prefix=".backend.", suffix=".tmp", dir=dist_dir)
         )
+    except OSError as ex:
+        raise click.ClickException(
+            f"Failed to create temporary backend output directory: {ex}"
+        ) from ex
 
-    for f, tgt in copy_targets:
-        copy_output_file(
-            f,
-            tgt,
-            f"backend file {tgt.relative_to(backend_output_dir)}",
-        )
+    try:
+        for f, tgt in copy_targets:
+            relative_target = tgt.relative_to(backend_output_dir)
+            staged_target = staged_backend_output_dir / relative_target
+            ensure_output_file_parent(
+                staged_target,
+                staged_backend_output_dir,
+                f"backend file {relative_target}",
+            )
+            copy_output_file(
+                f,
+                staged_target,
+                f"backend file {relative_target}",
+            )
+
+        remove_output_directory(backend_output_dir, "dist/backend directory")
+        try:
+            staged_backend_output_dir.replace(backend_output_dir)
+        except OSError as ex:
+            raise click.ClickException(
+                f"Failed to publish dist/backend directory: {ex}"
+            ) from ex
+    except click.ClickException:
+        try:
+            remove_output_directory(
+                staged_backend_output_dir, "temporary backend output directory"
+            )
+        except click.ClickException:
+            pass
+        raise
 
 
 def rebuild_frontend(cwd: Path, frontend_dir: Path) -> str | None:

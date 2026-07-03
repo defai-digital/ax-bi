@@ -1091,6 +1091,9 @@ exclude = []
     (backend_dir / "pyproject.toml").write_text(pyproject_content)
 
     clean_dist(isolated_filesystem)
+    existing_output = isolated_filesystem / "dist" / "backend" / "existing.py"
+    existing_output.parent.mkdir(parents=True)
+    existing_output.write_text("# existing")
 
     with patch(
         "superset_extensions_cli.cli.shutil.copy2",
@@ -1101,6 +1104,9 @@ exclude = []
             match="Failed to copy backend file .*__init__\\.py: disk full",
         ):
             copy_backend_files(isolated_filesystem)
+
+    assert existing_output.read_text() == "# existing"
+    assert list((isolated_filesystem / "dist").glob(".backend.*.tmp")) == []
 
 
 @pytest.mark.unit
