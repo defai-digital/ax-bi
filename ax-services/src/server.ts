@@ -136,6 +136,29 @@ import {
   SupersetTaskListClient,
 } from './supersetClient';
 
+const MAX_REQUEST_ID_LENGTH = 128;
+const UNSAFE_REQUEST_ID_PATTERN = /[\u0000-\u001f\u007f]/;
+
+export function normalizeRequestIdHeader(
+  value: string | string[] | undefined,
+): string | undefined {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (candidate === undefined) {
+    return undefined;
+  }
+
+  const requestId = candidate.trim();
+  if (
+    requestId === '' ||
+    requestId.length > MAX_REQUEST_ID_LENGTH ||
+    UNSAFE_REQUEST_ID_PATTERN.test(requestId)
+  ) {
+    return undefined;
+  }
+
+  return requestId;
+}
+
 export function buildServer(
   config: ServiceConfig,
   supersetClient: SupersetHealthClient &
@@ -160,11 +183,10 @@ export function buildServer(
   const server = Fastify({
     logger: config.logLevel !== 'silent',
     genReqId(request) {
-      const requestId = request.headers['x-request-id'];
-      if (Array.isArray(requestId)) {
-        return requestId[0] || randomUUID();
-      }
-      return requestId || randomUUID();
+      return (
+        normalizeRequestIdHeader(request.headers['x-request-id']) ||
+        randomUUID()
+      );
     },
   });
 

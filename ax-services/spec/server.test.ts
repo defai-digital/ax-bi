@@ -19,7 +19,7 @@
 import { expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
-import { buildServer } from '../src/server';
+import { buildServer, normalizeRequestIdHeader } from '../src/server';
 import {
   ANNOTATION_LIST_CONTRACT_VERSION,
   AnnotationListResponse,
@@ -96,6 +96,9 @@ import {
   SupersetTagListClient,
   SupersetTaskListClient,
 } from '../src/supersetClient';
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const config = {
   ...buildConfig({}),
@@ -494,6 +497,47 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
       },
     },
   });
+});
+
+test('request ID normalization trims valid IDs and rejects unsafe IDs', () => {
+  expect(normalizeRequestIdHeader('  request-123  ')).toBe('request-123');
+  expect(normalizeRequestIdHeader(['request-abc', 'request-def'])).toBe(
+    'request-abc',
+  );
+  expect(normalizeRequestIdHeader(undefined)).toBeUndefined();
+  expect(normalizeRequestIdHeader('   ')).toBeUndefined();
+  expect(normalizeRequestIdHeader('x'.repeat(129))).toBeUndefined();
+  expect(normalizeRequestIdHeader('request\n123')).toBeUndefined();
+});
+
+test('ready endpoint replaces unsafe request IDs before echoing or forwarding', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onHealth(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+  const unsafeRequestId = 'x'.repeat(129);
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/ready',
+    headers: {
+      'x-request-id': unsafeRequestId,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toEqual(
+    expect.stringMatching(uuidPattern),
+  );
+  expect(response.headers['x-request-id']).not.toBe(unsafeRequestId);
+  expect(seenRequestIds).toEqual([response.headers['x-request-id']]);
 });
 
 test('ready endpoint returns unavailable when Superset is unreachable', async () => {
