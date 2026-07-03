@@ -1881,6 +1881,40 @@ def test_copy_output_file_rejects_source_changed_during_copy(
 
 
 @pytest.mark.unit
+def test_copy_output_file_rejects_target_changed_during_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test output file copy refuses a target changed during copy."""
+    source_file = isolated_filesystem / "source.py"
+    source_file.write_text("# source")
+    outside_file = isolated_filesystem / "outside.py"
+    outside_file.write_text("# outside")
+    target_file = isolated_filesystem / "target.py"
+    original_copy2 = shutil.copy2
+
+    def swap_target_after_copy(source, target, *args, **kwargs):
+        result = original_copy2(source, target, *args, **kwargs)
+        if target == target_file:
+            target_file.unlink()
+            target_file.symlink_to(outside_file)
+        return result
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.shutil.copy2", swap_target_after_copy
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to copy backend file target.py: target path changed during copy",
+    ):
+        copy_output_file(source_file, target_file, "backend file target.py")
+
+    assert target_file.is_symlink()
+    assert outside_file.read_text() == "# outside"
+
+
+@pytest.mark.unit
 def test_copy_output_file_rejects_symlinked_target(isolated_filesystem):
     """Test output file copy refuses a symlinked target path."""
     source_file = isolated_filesystem / "source.py"

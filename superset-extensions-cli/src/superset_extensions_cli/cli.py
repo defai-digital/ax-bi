@@ -522,6 +522,15 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to copy {label}: source path changed during copy."
         )
+    target_identity = get_read_path_identity(target)
+    if target_identity is None:
+        raise click.ClickException(
+            f"Refusing to copy {label}: target path changed during copy."
+        )
+    if get_read_path_identity(target) != target_identity:
+        raise click.ClickException(
+            f"Refusing to copy {label}: target path changed during copy."
+        )
 
 
 def get_output_copy_source_identity(
