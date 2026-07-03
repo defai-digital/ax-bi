@@ -21,7 +21,7 @@ MCP tool: get_chart_data
 
 import logging
 import time
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -933,7 +933,7 @@ async def get_chart_data(  # noqa: C901
 
 
 async def _query_from_form_data(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     request: GetChartDataRequest,
     ctx: Context,
 ) -> ChartData | ChartError:
@@ -1061,8 +1061,8 @@ async def _query_from_form_data(
 
 def _export_data_as_csv(
     chart: "Slice",
-    data: List[Dict[str, Any]],
-    columns: List[str],
+    data: list[dict[str, Any]],
+    columns: list[str],
     cache_status: Any,
     performance: Any,
 ) -> "ChartData":
@@ -1122,8 +1122,8 @@ def _export_data_as_csv(
 
 def _export_data_as_excel(
     chart: "Slice",
-    data: List[Dict[str, Any]],
-    columns: List[str],
+    data: list[dict[str, Any]],
+    columns: list[str],
     cache_status: Any,
     performance: Any,
 ) -> "ChartData | ChartError":
@@ -1138,7 +1138,7 @@ def _export_data_as_excel(
 
 
 def _create_excel_with_openpyxl(
-    chart: "Slice", data: List[Dict[str, Any]], columns: List[str]
+    chart: "Slice", data: list[dict[str, Any]], columns: list[str]
 ) -> str:
     """Create Excel file using openpyxl."""
     import base64
@@ -1160,13 +1160,13 @@ def _create_excel_with_openpyxl(
     return base64.b64encode(output.read()).decode()
 
 
-def _write_excel_headers(ws: Any, columns: List[str]) -> None:
+def _write_excel_headers(ws: Any, columns: list[str]) -> None:
     """Write headers to Excel worksheet."""
     for idx, col in enumerate(columns, 1):
         ws.cell(row=1, column=idx, value=col)
 
 
-def _write_excel_data(ws: Any, data: List[Dict[str, Any]], columns: List[str]) -> None:
+def _write_excel_data(ws: Any, data: list[dict[str, Any]], columns: list[str]) -> None:
     """Write data to Excel worksheet."""
     for row_idx, row in enumerate(data, 2):
         for col_idx, col in enumerate(columns, 1):
@@ -1180,8 +1180,8 @@ def _write_excel_data(ws: Any, data: List[Dict[str, Any]], columns: List[str]) -
 
 def _try_xlsxwriter_fallback(
     chart: "Slice",
-    data: List[Dict[str, Any]],
-    columns: List[str],
+    data: list[dict[str, Any]],
+    columns: list[str],
     cache_status: Any,
     performance: Any,
 ) -> "ChartData | ChartError":
@@ -1201,7 +1201,7 @@ def _try_xlsxwriter_fallback(
 
 
 def _create_excel_with_xlsxwriter(
-    chart: "Slice", data: List[Dict[str, Any]], columns: List[str]
+    chart: "Slice", data: list[dict[str, Any]], columns: list[str]
 ) -> str:
     """Create Excel file using xlsxwriter."""
     import base64
@@ -1223,7 +1223,7 @@ def _create_excel_with_xlsxwriter(
 
 
 def _write_xlsxwriter_data(
-    worksheet: Any, data: List[Dict[str, Any]], columns: List[str]
+    worksheet: Any, data: list[dict[str, Any]], columns: list[str]
 ) -> None:
     """Write data to xlsxwriter worksheet."""
     # Write headers
@@ -1243,7 +1243,7 @@ def _write_xlsxwriter_data(
 
 def _create_excel_chart_data(
     chart: "Slice",
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     excel_b64: str,
     performance: Any,
     cache_status: Any,
@@ -1278,7 +1278,7 @@ def _create_excel_chart_data(
 
 def _create_excel_chart_data_xlsxwriter(
     chart: "Slice",
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     excel_b64: str,
     performance: Any,
     cache_status: Any,

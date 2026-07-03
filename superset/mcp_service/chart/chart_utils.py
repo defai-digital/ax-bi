@@ -25,7 +25,7 @@ generation that can be used by both generate_chart and generate_explore_link too
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from superset.constants import NO_TIME_RANGE
 from superset.mcp_service.chart.schemas import (
@@ -159,7 +159,7 @@ def validate_chart_dataset(
 
 def generate_explore_link(
     dataset_id: int | str,
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     prefer_permalink: bool = True,
 ) -> str:
     """Generate an explore link for the given dataset and form data.
@@ -352,7 +352,7 @@ def map_config_to_form_data(
     | HandlebarsChartConfig
     | BigNumberChartConfig,
     dataset_id: int | str | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Map chart config to Superset form_data."""
     if isinstance(config, TableChartConfig):
         return map_table_config(config)
@@ -379,7 +379,7 @@ def map_config_to_form_data(
 
 
 def _add_adhoc_filters(
-    form_data: Dict[str, Any], filters: list[FilterConfig] | None
+    form_data: dict[str, Any], filters: list[FilterConfig] | None
 ) -> None:
     """Add adhoc filters to form_data if any are specified."""
     if filters:
@@ -396,7 +396,7 @@ def _add_adhoc_filters(
         ]
 
 
-def adhoc_filters_to_query_filters(adhoc_filters: Any) -> list[Dict[str, Any]]:
+def adhoc_filters_to_query_filters(adhoc_filters: Any) -> list[dict[str, Any]]:
     """Convert adhoc filter format to QueryObject filter format.
 
     Adhoc filters use ``{subject, operator, comparator}`` keys while
@@ -405,7 +405,7 @@ def adhoc_filters_to_query_filters(adhoc_filters: Any) -> list[Dict[str, Any]]:
     if not isinstance(adhoc_filters, list):
         return []
 
-    result: list[Dict[str, Any]] = []
+    result: list[dict[str, Any]] = []
     for f in adhoc_filters:
         if not isinstance(f, dict):
             continue
@@ -420,14 +420,14 @@ def adhoc_filters_to_query_filters(adhoc_filters: Any) -> list[Dict[str, Any]]:
     return result
 
 
-def map_table_config(config: TableChartConfig) -> Dict[str, Any]:
+def map_table_config(config: TableChartConfig) -> dict[str, Any]:
     """Map table chart config to form_data with defensive validation."""
     # Early validation to prevent empty charts
     if not config.columns:
         raise ValueError("Table chart must have at least one column")
 
     # Use the viz_type from config (defaults to "table", can be "ag-grid-table")
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": config.viz_type,
     }
 
@@ -519,7 +519,7 @@ def map_table_config(config: TableChartConfig) -> Dict[str, Any]:
     return form_data
 
 
-def create_metric_object(col: ColumnRef) -> Dict[str, Any] | str:
+def create_metric_object(col: ColumnRef) -> dict[str, Any] | str:
     """Create a metric object for a column with enhanced validation.
 
     For saved metrics, returns the metric name as a plain string which
@@ -580,7 +580,7 @@ def create_metric_object(col: ColumnRef) -> Dict[str, Any] | str:
     }
 
 
-def add_axis_config(form_data: Dict[str, Any], config: XYChartConfig) -> None:
+def add_axis_config(form_data: dict[str, Any], config: XYChartConfig) -> None:
     """Add axis configurations to form_data."""
     if config.x_axis:
         if config.x_axis.title:
@@ -597,7 +597,7 @@ def add_axis_config(form_data: Dict[str, Any], config: XYChartConfig) -> None:
             form_data["y_axis_scale"] = "log"
 
 
-def add_legend_config(form_data: Dict[str, Any], config: XYChartConfig) -> None:
+def add_legend_config(form_data: dict[str, Any], config: XYChartConfig) -> None:
     """Add legend configuration to form_data."""
     if config.legend:
         if not config.legend.show:
@@ -608,14 +608,14 @@ def add_legend_config(form_data: Dict[str, Any], config: XYChartConfig) -> None:
             form_data["legendOrientation"] = config.legend.position
 
 
-def add_color_scheme(form_data: Dict[str, Any], color_scheme: str | None) -> None:
+def add_color_scheme(form_data: dict[str, Any], color_scheme: str | None) -> None:
     """Add color scheme to form_data when set."""
     if color_scheme:
         form_data["color_scheme"] = color_scheme
 
 
 def add_currency_format(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     currency_format: CurrencyFormat | None,
     key: str = "currency_format",
 ) -> None:
@@ -625,7 +625,7 @@ def add_currency_format(
 
 
 def add_xy_data_label_options(
-    form_data: Dict[str, Any], config: XYChartConfig, x_is_temporal: bool
+    form_data: dict[str, Any], config: XYChartConfig, x_is_temporal: bool
 ) -> None:
     """Apply XY-specific data-label and time-format options when set."""
     if config.x_axis_time_format and x_is_temporal:
@@ -634,7 +634,7 @@ def add_xy_data_label_options(
         form_data["show_value"] = True
 
 
-def add_orientation_config(form_data: Dict[str, Any], config: XYChartConfig) -> None:
+def add_orientation_config(form_data: dict[str, Any], config: XYChartConfig) -> None:
     """Add orientation configuration to form_data for bar charts.
 
     Only applies when kind='bar' and an explicit orientation is set.
@@ -646,7 +646,7 @@ def add_orientation_config(form_data: Dict[str, Any], config: XYChartConfig) -> 
 
 
 def configure_temporal_handling(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     x_is_temporal: bool,
     time_grain: str | None,
 ) -> None:
@@ -676,7 +676,7 @@ def configure_temporal_handling(
             )
 
 
-def _ensure_temporal_adhoc_filter(form_data: Dict[str, Any], column: str) -> None:
+def _ensure_temporal_adhoc_filter(form_data: dict[str, Any], column: str) -> None:
     """Ensure a TEMPORAL_RANGE adhoc filter exists for the given column.
 
     Mirrors the Explore UI behavior: when a temporal column is set as
@@ -735,7 +735,7 @@ def _resolve_default_x_axis(
     return config.model_copy(update={"x": ColumnRef(name=dataset.main_dttm_col)})
 
 
-def _add_xy_limits(form_data: Dict[str, Any], config: XYChartConfig) -> None:
+def _add_xy_limits(form_data: dict[str, Any], config: XYChartConfig) -> None:
     form_data["row_limit"] = config.row_limit
     if config.series_limit is not None:
         form_data["series_limit"] = config.series_limit
@@ -743,7 +743,7 @@ def _add_xy_limits(form_data: Dict[str, Any], config: XYChartConfig) -> None:
 
 def map_xy_config(  # noqa: C901
     config: XYChartConfig, dataset_id: int | str | None = None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Map XY chart config to form_data with defensive validation."""
     # Early validation to prevent empty charts
     if not config.y:
@@ -788,7 +788,7 @@ def map_xy_config(  # noqa: C901
     if not metrics:
         raise ValueError("XY chart configuration resulted in no displayable metrics")
 
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": viz_type_map.get(config.kind, "echarts_timeseries_line"),
         "metrics": metrics,
         "x_axis": config.x.name,
@@ -826,11 +826,11 @@ def map_xy_config(  # noqa: C901
     return form_data
 
 
-def map_pie_config(config: PieChartConfig) -> Dict[str, Any]:
+def map_pie_config(config: PieChartConfig) -> dict[str, Any]:
     """Map pie chart config to Superset form_data."""
     metric = create_metric_object(config.metric)
 
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": "pie",
         "groupby": [config.dimension.name],
         "metric": metric,
@@ -856,7 +856,7 @@ def map_pie_config(config: PieChartConfig) -> Dict[str, Any]:
     return form_data
 
 
-def map_big_number_config(config: BigNumberChartConfig) -> Dict[str, Any]:
+def map_big_number_config(config: BigNumberChartConfig) -> dict[str, Any]:
     """Map big number chart config to Superset form_data."""
     # Determine viz_type: big_number (with trendline) or big_number_total
     if config.show_trendline and config.temporal_column:
@@ -865,7 +865,7 @@ def map_big_number_config(config: BigNumberChartConfig) -> Dict[str, Any]:
         viz_type = "big_number_total"
 
     metric = create_metric_object(config.metric)
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": viz_type,
         "metric": metric,
     }
@@ -905,9 +905,9 @@ def map_big_number_config(config: BigNumberChartConfig) -> Dict[str, Any]:
     return form_data
 
 
-def map_handlebars_config(config: HandlebarsChartConfig) -> Dict[str, Any]:
+def map_handlebars_config(config: HandlebarsChartConfig) -> dict[str, Any]:
     """Map handlebars chart config to Superset form_data."""
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": "handlebars",
         "handlebars_template": config.handlebars_template,
         "row_limit": config.row_limit,
@@ -943,7 +943,7 @@ def map_handlebars_config(config: HandlebarsChartConfig) -> Dict[str, Any]:
     return form_data
 
 
-def map_pivot_table_config(config: PivotTableChartConfig) -> Dict[str, Any]:
+def map_pivot_table_config(config: PivotTableChartConfig) -> dict[str, Any]:
     """Map pivot table config to Superset form_data."""
     if not config.rows:
         raise ValueError("Pivot table must have at least one row grouping column")
@@ -952,7 +952,7 @@ def map_pivot_table_config(config: PivotTableChartConfig) -> Dict[str, Any]:
 
     metrics = [create_metric_object(col) for col in config.metrics]
 
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": "pivot_table_v2",
         "groupbyRows": [col.name for col in config.rows],
         "groupbyColumns": [col.name for col in config.columns]
@@ -989,7 +989,7 @@ _MIXED_SERIES_TYPE_MAP = {
 
 
 def _apply_axis_to_form_data(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     axis_config: Any,
     title_key: str,
     format_key: str,
@@ -1007,7 +1007,7 @@ def _apply_axis_to_form_data(
 
 
 def _add_mixed_axis_config(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     config: MixedTimeseriesChartConfig,
 ) -> None:
     """Add axis configurations to mixed timeseries form_data."""
@@ -1029,7 +1029,7 @@ def _add_mixed_axis_config(
 def map_mixed_timeseries_config(
     config: MixedTimeseriesChartConfig,
     dataset_id: int | str | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Map mixed timeseries chart config to Superset form_data."""
     if not config.y:
         raise ValueError("Mixed timeseries must have at least one primary metric")
@@ -1041,7 +1041,7 @@ def map_mixed_timeseries_config(
         raise ValueError("Mixed timeseries chart requires an x-axis column name")
     x_is_temporal = is_column_truly_temporal(config.x.name, dataset_id)
 
-    form_data: Dict[str, Any] = {
+    form_data: dict[str, Any] = {
         "viz_type": "mixed_timeseries",
         "x_axis": config.x.name,
         # Query A

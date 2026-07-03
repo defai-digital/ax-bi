@@ -20,7 +20,7 @@ MCP tool: get_chart_preview
 """
 
 import logging
-from typing import Any, Dict, List, Protocol
+from typing import Any, Protocol
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -174,7 +174,7 @@ class ChartLike(Protocol):
     uuid: Any
 
 
-def _build_query_columns(form_data: Dict[str, Any]) -> list[Column]:
+def _build_query_columns(form_data: dict[str, Any]) -> list[Column]:
     """Build query columns list from form_data, including both x_axis and groupby.
 
     Handles chart-type-specific keys:
@@ -220,7 +220,7 @@ def _build_query_columns(form_data: Dict[str, Any]) -> list[Column]:
     return columns
 
 
-def _build_query_metrics(form_data: Dict[str, Any]) -> list[Metric]:
+def _build_query_metrics(form_data: dict[str, Any]) -> list[Metric]:
     """Extract metrics from form_data, handling chart-type variations.
 
     Handles:
@@ -506,7 +506,7 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
                 error_type="VegaLiteGenerationError",
             )
 
-    def _create_vega_lite_spec(self, data: List[Any]) -> Dict[str, Any]:
+    def _create_vega_lite_spec(self, data: list[Any]) -> dict[str, Any]:
         """Create Vega-Lite specification from chart data."""
         if not data:
             return {"data": {"values": []}, "mark": "point"}
@@ -538,8 +538,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return spec
 
     def _get_chart_spec_for_type(
-        self, viz_type: str, fields: List[str], field_types: Dict[str, str]
-    ) -> Dict[str, Any]:
+        self, viz_type: str, fields: list[str], field_types: dict[str, str]
+    ) -> dict[str, Any]:
         """Get chart specification based on visualization type."""
         chart_type_mapping = {
             "line": [
@@ -580,10 +580,10 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return self._scatter_chart_spec(fields, field_types)
 
     def _analyze_field_types(
-        self, data: List[Any], fields: List[str]
-    ) -> Dict[str, str]:
+        self, data: list[Any], fields: list[str]
+    ) -> dict[str, str]:
         """Analyze data fields to determine appropriate Vega-Lite types."""
-        field_types: Dict[str, str] = {}
+        field_types: dict[str, str] = {}
 
         if not data or not fields:
             return field_types
@@ -619,8 +619,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return field_types
 
     def _get_sample_values(
-        self, data: List[Any], field: str, sample_size: int
-    ) -> List[Any]:
+        self, data: list[Any], field: str, sample_size: int
+    ) -> list[Any]:
         """Get sample values for a field from the data."""
         sample_values = []
         for row in data[:sample_size]:
@@ -630,7 +630,7 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
                     sample_values.append(val)
         return sample_values
 
-    def _determine_field_type(self, sample_values: List[Any]) -> str:
+    def _determine_field_type(self, sample_values: list[Any]) -> str:
         """Determine the field type based on sample values."""
         # Check for temporal fields (dates)
         if any(
@@ -686,8 +686,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return any(indicator in value_lower for indicator in date_indicators)
 
     def _line_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create line chart specification."""
         field_types = field_types or {}
 
@@ -727,8 +727,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _bar_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create bar chart specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -750,8 +750,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _area_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create area chart specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -778,8 +778,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _scatter_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create scatter plot specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -801,8 +801,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _table_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create table-like visualization (using text marks)."""
         field_types = field_types or {}
         # For table data, create a simple dot plot
@@ -824,8 +824,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _pie_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create pie chart specification using arc marks."""
         field_types = field_types or {}
         category_field = fields[0] if fields else "category"
@@ -851,8 +851,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _big_number_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create big number visualization using text mark."""
         field_types = field_types or {}
         value_field = fields[0] if fields else "value"
@@ -880,8 +880,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _histogram_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create histogram using bar marks with binned data."""
         x_field = fields[0] if fields else "value"
 
@@ -900,8 +900,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _box_plot_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create box plot approximation using error bars."""
         x_field = fields[0] if fields else "category"
         y_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -916,8 +916,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _heatmap_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create heatmap using rect marks."""
         x_field = fields[0] if fields else "x"
         y_field = fields[1] if len(fields) > 1 else "y"
@@ -941,8 +941,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _funnel_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create funnel chart using horizontal bars."""
         stage_field = fields[0] if fields else "stage"
         value_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -971,8 +971,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _gauge_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create gauge chart using arc marks."""
         value_field = fields[0] if fields else "value"
 
@@ -999,8 +999,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _mixed_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create mixed timeseries using layered marks."""
         x_field = fields[0] if fields else "date"
         y_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -1116,7 +1116,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                             form_data = utils_json.loads(form_data_json)
 
                             class TransientChartFromKey:
-                                def __init__(self, fd: Dict[str, Any]):
+                                def __init__(self, fd: dict[str, Any]):
                                     self.id = 0
                                     self.slice_name = "Unsaved Chart Preview"
                                     self.viz_type = fd.get("viz_type", "table")
@@ -1200,7 +1200,7 @@ async def _get_chart_preview_internal(  # noqa: C901
 
                             # Create a transient chart object from form data
                             class TransientChart:
-                                def __init__(self, form_data: Dict[str, Any]):
+                                def __init__(self, form_data: dict[str, Any]):
                                     self.id = 0
                                     self.slice_name = "Unsaved Chart Preview"
                                     self.viz_type = form_data.get("viz_type", "table")

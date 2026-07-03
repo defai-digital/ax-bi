@@ -21,7 +21,7 @@ Chart type suggestions based on data characteristics and user intent.
 
 import logging
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from superset.mcp_service.chart.schemas import (
     ChartConfig,
@@ -43,7 +43,7 @@ class ChartTypeSuggester:
     def analyze_and_suggest(
         config: ChartConfig,
         dataset_id: int | str,  # noqa: ARG002
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """
         Analyze chart configuration and suggest better chart types if needed.
 
@@ -64,7 +64,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _analyze_xy_chart(
         config: XYChartConfig,
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """Analyze XY chart appropriateness."""
         issues = []
         suggestions = []
@@ -103,7 +103,7 @@ class ChartTypeSuggester:
         return True, None
 
     @staticmethod
-    def _analyze_x_axis(x_name: str) -> Dict[str, Any]:
+    def _analyze_x_axis(x_name: str) -> dict[str, Any]:
         """Analyze X-axis characteristics."""
         x_name_lower = x_name.lower()
         return {
@@ -137,7 +137,7 @@ class ChartTypeSuggester:
         }
 
     @staticmethod
-    def _analyze_y_axis(y_columns: List[ColumnRef]) -> Dict[str, Any]:
+    def _analyze_y_axis(y_columns: list[ColumnRef]) -> dict[str, Any]:
         """Analyze Y-axis characteristics."""
 
         def _is_count(col: ColumnRef) -> bool:
@@ -153,8 +153,8 @@ class ChartTypeSuggester:
 
     @staticmethod
     def _check_chart_type_issues(
-        config: XYChartConfig, x_analysis: Dict[str, Any], y_analysis: Dict[str, Any]
-    ) -> Tuple[List[str], List[str]]:
+        config: XYChartConfig, x_analysis: dict[str, Any], y_analysis: dict[str, Any]
+    ) -> tuple[list[str], list[str]]:
         """Check for chart type specific issues."""
         assert config.x is not None  # caller guards for None
         issues = []
@@ -203,7 +203,7 @@ class ChartTypeSuggester:
         x_is_temporal: bool,
         x_is_categorical: bool,
         x_is_id: bool,
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Check line chart specific issues."""
         assert config.x is not None
         issues = []
@@ -237,7 +237,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _check_scatter_chart_issues(
         config: XYChartConfig, x_is_categorical: bool, num_metrics: int
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Check scatter chart specific issues."""
         assert config.x is not None
         issues = []
@@ -268,7 +268,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _check_area_chart_issues(
         config: XYChartConfig, x_is_temporal: bool
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Check area chart specific issues."""
         assert config.x is not None
         issues = []
@@ -308,7 +308,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _check_bar_chart_issues(
         config: XYChartConfig, x_is_id: bool
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Check bar chart specific issues."""
         assert config.x is not None
         issues = []
@@ -329,8 +329,8 @@ class ChartTypeSuggester:
 
     @staticmethod
     def _get_general_suggestions(
-        x_analysis: Dict[str, Any], y_analysis: Dict[str, Any]
-    ) -> List[str]:
+        x_analysis: dict[str, Any], y_analysis: dict[str, Any]
+    ) -> list[str]:
         """Get general suggestions based on data patterns."""
         suggestions = []
         x_is_temporal = x_analysis["is_temporal"]
@@ -358,7 +358,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _analyze_table_chart(
         config: TableChartConfig,
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """Analyze table chart appropriateness."""
         issues = []
         suggestions = []
@@ -415,7 +415,7 @@ class ChartTypeSuggester:
     @staticmethod
     def _get_recommended_types(
         x_is_temporal: bool, x_is_categorical: bool, has_count: bool, num_metrics: int
-    ) -> List[str]:
+    ) -> list[str]:
         """Get recommended chart types based on data characteristics."""
         recommendations = []
 

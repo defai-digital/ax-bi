@@ -21,7 +21,7 @@ Consolidates pre-validation, schema validation, and error enhancement.
 """
 
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -38,8 +38,8 @@ class SchemaValidator:
 
     @staticmethod
     def validate_request(
-        request_data: Dict[str, Any],
-    ) -> Tuple[bool, GenerateChartRequest | None, ChartGenerationError | None]:
+        request_data: dict[str, Any],
+    ) -> tuple[bool, GenerateChartRequest | None, ChartGenerationError | None]:
         """
         Validate request data with pre-validation and enhanced error handling.
 
@@ -62,8 +62,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate(
-        data: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        data: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate request data before Pydantic processing."""
         if not isinstance(data, dict):
             return False, ChartGenerationError(
@@ -145,8 +145,8 @@ class SchemaValidator:
     @staticmethod
     def _pre_validate_chart_type(
         chart_type: str,
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Validate chart type and dispatch to type-specific pre-validation."""
         chart_type_validators = {
             "xy": SchemaValidator._pre_validate_xy_config,
@@ -182,8 +182,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_xy_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate XY chart configuration."""
         # x is optional — defaults to dataset's main_dttm_col in map_xy_config
         if "y" not in config:
@@ -220,8 +220,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_table_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate table chart configuration."""
         if "columns" not in config:
             return False, ChartGenerationError(
@@ -254,8 +254,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_pie_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate pie chart configuration."""
         missing_fields = []
 
@@ -284,8 +284,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_handlebars_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate handlebars chart configuration."""
         if "handlebars_template" not in config:
             return False, ChartGenerationError(
@@ -360,8 +360,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_big_number_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate big number chart configuration."""
         if "metric" not in config:
             return False, ChartGenerationError(
@@ -454,8 +454,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_pivot_table_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate pivot table configuration."""
         missing_fields = []
 
@@ -505,8 +505,8 @@ class SchemaValidator:
 
     @staticmethod
     def _pre_validate_mixed_timeseries_config(
-        config: Dict[str, Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        config: dict[str, Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Pre-validate mixed timeseries configuration."""
         missing_fields = []
 
@@ -552,7 +552,7 @@ class SchemaValidator:
 
     @staticmethod
     def _enhance_validation_error(
-        error: PydanticValidationError, request_data: Dict[str, Any]
+        error: PydanticValidationError, request_data: dict[str, Any]
     ) -> ChartGenerationError:
         """Convert Pydantic validation errors to user-friendly messages."""
         errors = error.errors()
