@@ -1067,6 +1067,7 @@ exclude = []
 
     assert_file_exists(stale_output / "current.py")
     assert not (stale_output / "stale.py").exists()
+    assert list((isolated_filesystem / "dist").glob(".backend*.tmp")) == []
 
 
 @pytest.mark.unit
@@ -1107,6 +1108,52 @@ exclude = []
 
     assert existing_output.read_text() == "# existing"
     assert list((isolated_filesystem / "dist").glob(".backend.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_backend_files_restores_existing_output_on_publish_failure(
+    isolated_filesystem, monkeypatch
+):
+    """Test copy_backend_files restores old output when publishing staged output fails."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/__init__.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    existing_output = isolated_filesystem / "dist" / "backend" / "existing.py"
+    existing_output.parent.mkdir(parents=True)
+    existing_output.write_text("# existing")
+    backend_output_dir = isolated_filesystem / "dist" / "backend"
+    original_replace = Path.replace
+
+    def fail_staged_publish(path, target):
+        if path.name.startswith(".backend.") and target == backend_output_dir:
+            raise OSError("permission denied")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_staged_publish)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to publish dist/backend directory: permission denied",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert existing_output.read_text() == "# existing"
+    assert list((isolated_filesystem / "dist").glob(".backend*.tmp")) == []
 
 
 @pytest.mark.unit

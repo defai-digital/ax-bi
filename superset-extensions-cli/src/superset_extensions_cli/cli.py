@@ -179,6 +179,16 @@ def clean_dist(cwd: Path) -> None:
 
 def ensure_output_directory(path: Path, label: str) -> None:
     """Create an output directory after validating the path is safe to write."""
+    validate_output_directory(path, label)
+
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+
+
+def validate_output_directory(path: Path, label: str) -> None:
+    """Validate that an output directory path is safe to write."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to write {label}: path is a symlink.")
     if path.exists() and not path.is_dir():
@@ -205,11 +215,6 @@ def ensure_output_directory(path: Path, label: str) -> None:
             f"Refusing to write {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
         )
-
-    try:
-        path.mkdir(parents=True, exist_ok=True)
-    except OSError as ex:
-        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
 def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
@@ -361,6 +366,62 @@ def remove_output_directory(path: Path, label: str) -> None:
         shutil.rmtree(path)
     except OSError as ex:
         raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
+
+
+def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> Path:
+    """Create a temporary output directory inside an already-validated parent."""
+    try:
+        return Path(tempfile.mkdtemp(prefix=prefix, suffix=".tmp", dir=parent))
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+
+
+def publish_staged_output_directory(
+    staged_path: Path, target_path: Path, label: str
+) -> None:
+    """Replace an output directory with a staged directory, restoring on failure."""
+    validate_output_directory(target_path, label)
+
+    backup_root: Path | None = None
+    backup_path: Path | None = None
+    if target_path.exists():
+        backup_root = create_temporary_output_directory(
+            target_path.parent,
+            f".{target_path.name}-backup.",
+            f"temporary {label} backup directory",
+        )
+        backup_path = backup_root / target_path.name
+        try:
+            target_path.replace(backup_path)
+        except OSError as ex:
+            try:
+                remove_output_directory(
+                    backup_root, f"temporary {label} backup directory"
+                )
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: {ex}") from ex
+
+    try:
+        staged_path.replace(target_path)
+    except OSError as ex:
+        if backup_root is not None and backup_path is not None:
+            try:
+                backup_path.replace(target_path)
+                remove_output_directory(
+                    backup_root, f"temporary {label} backup directory"
+                )
+            except OSError as restore_ex:
+                raise click.ClickException(
+                    f"Failed to publish {label}: {ex}; also failed to restore "
+                    f"previous {label}: {restore_ex}"
+                ) from ex
+            except click.ClickException:
+                pass
+        raise click.ClickException(f"Failed to publish {label}: {ex}") from ex
+
+    if backup_root is not None:
+        remove_output_directory(backup_root, f"temporary {label} backup directory")
 
 
 def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
@@ -814,14 +875,11 @@ def copy_backend_files(cwd: Path) -> None:
         )
 
     ensure_output_directory(dist_dir, "dist directory")
-    try:
-        staged_backend_output_dir = Path(
-            tempfile.mkdtemp(prefix=".backend.", suffix=".tmp", dir=dist_dir)
-        )
-    except OSError as ex:
-        raise click.ClickException(
-            f"Failed to create temporary backend output directory: {ex}"
-        ) from ex
+    staged_backend_output_dir = create_temporary_output_directory(
+        dist_dir,
+        ".backend.",
+        "temporary backend output directory",
+    )
 
     try:
         for f, tgt in copy_targets:
@@ -838,13 +896,11 @@ def copy_backend_files(cwd: Path) -> None:
                 f"backend file {relative_target}",
             )
 
-        remove_output_directory(backend_output_dir, "dist/backend directory")
-        try:
-            staged_backend_output_dir.replace(backend_output_dir)
-        except OSError as ex:
-            raise click.ClickException(
-                f"Failed to publish dist/backend directory: {ex}"
-            ) from ex
+        publish_staged_output_directory(
+            staged_backend_output_dir,
+            backend_output_dir,
+            "dist/backend directory",
+        )
     except click.ClickException:
         try:
             remove_output_directory(
