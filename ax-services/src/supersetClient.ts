@@ -250,6 +250,9 @@ export interface SupersetTaskListClient {
 }
 
 const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
+const MAX_ASSET_TEXT_LENGTH = 256;
+const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
+const MAX_ASSET_LIST_VALUE_LENGTH = 128;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
 
 export class SupersetClient
@@ -3489,18 +3492,24 @@ function toAssetSearchResult(
   }
 
   const name = extractAssetName(assetType, item);
-  const description = typeof item.description === 'string' ? item.description : '';
+  const description = cleanAssetText(
+    item.description,
+    MAX_ASSET_DESCRIPTION_LENGTH,
+  );
   const certified = hasCertification(item.certified_by);
 
   return {
     assetType,
     id: item.id,
-    uuid: typeof item.uuid === 'string' ? item.uuid : '',
+    uuid: cleanAssetText(item.uuid, MAX_ASSET_TEXT_LENGTH),
     name,
     description,
     certified,
     relevanceScore: scoreAsset(name, description, query) + (certified ? 0.2 : 0),
-    relevanceReason: buildRelevanceReason(name, description, query),
+    relevanceReason: cleanAssetText(
+      buildRelevanceReason(name, description, query),
+      MAX_ASSET_TEXT_LENGTH,
+    ),
     owners: extractNameList(item.owners),
     tags: extractNameList(item.tags),
   };
@@ -3511,15 +3520,15 @@ function extractAssetName(
   item: SupersetListItem,
 ): string {
   if (assetType === 'chart' && typeof item.slice_name === 'string') {
-    return item.slice_name;
+    return cleanAssetText(item.slice_name, MAX_ASSET_TEXT_LENGTH);
   }
   if (assetType === 'dashboard' && typeof item.dashboard_title === 'string') {
-    return item.dashboard_title;
+    return cleanAssetText(item.dashboard_title, MAX_ASSET_TEXT_LENGTH);
   }
   if (assetType === 'dataset' && typeof item.table_name === 'string') {
-    return item.table_name;
+    return cleanAssetText(item.table_name, MAX_ASSET_TEXT_LENGTH);
   }
-  return typeof item.name === 'string' ? item.name : '';
+  return cleanAssetText(item.name, MAX_ASSET_TEXT_LENGTH);
 }
 
 function hasCertification(value: unknown): boolean {
@@ -3583,7 +3592,7 @@ function normalizeName(value: unknown): string | undefined {
   if (!isCleanString(value)) {
     return undefined;
   }
-  return value.trim();
+  return cleanAssetText(value, MAX_ASSET_LIST_VALUE_LENGTH);
 }
 
 function isDefined<T>(value: T | undefined): value is T {
@@ -3854,6 +3863,18 @@ function externalMessage(value: string, fallback: string): string {
   return message.slice(0, MAX_EXTERNAL_MESSAGE_LENGTH);
 }
 
+function cleanAssetText(value: unknown, maxLength: number): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
 function isListColumnArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(isRisonToken);
 }
@@ -3882,7 +3903,11 @@ function isAssetSearchLimit(value: unknown): value is number {
 }
 
 function hasValidAssetSearchQuery(value: string): boolean {
-  return value.trim() !== '' && isRisonScalarString(value);
+  return (
+    value.length <= MAX_ASSET_TEXT_LENGTH &&
+    value.trim() !== '' &&
+    isRisonScalarString(value)
+  );
 }
 
 function hasValidAssetSearchRequestShape(

@@ -47,6 +47,25 @@ export interface AssetSearchResponse {
   warnings: string[];
 }
 
+const cleanAssetStringSchema = {
+  type: 'string',
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+} as const;
+
+const cleanAssetDescriptionSchema = {
+  type: 'string',
+  maxLength: 1024,
+  pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+} as const;
+
+const cleanAssetListStringSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 128,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
 const assetSearchResultSchema = {
   type: 'object',
   required: [
@@ -63,19 +82,19 @@ const assetSearchResultSchema = {
   properties: {
     assetType: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
     id: { type: 'integer', minimum: 0 },
-    uuid: { type: 'string' },
-    name: { type: 'string' },
-    description: { type: 'string' },
+    uuid: cleanAssetStringSchema,
+    name: cleanAssetStringSchema,
+    description: cleanAssetDescriptionSchema,
     certified: { type: 'boolean' },
     relevanceScore: { type: 'number' },
-    relevanceReason: { type: 'string' },
+    relevanceReason: cleanAssetStringSchema,
     owners: {
       type: 'array',
-      items: { type: 'string' },
+      items: cleanAssetListStringSchema,
     },
     tags: {
       type: 'array',
-      items: { type: 'string' },
+      items: cleanAssetListStringSchema,
     },
   },
 } as const;
@@ -95,6 +114,7 @@ export const assetSearchRequestSchema = {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
     query: {
       type: 'string',
+      maxLength: 256,
       pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
     },
     assetTypes: {

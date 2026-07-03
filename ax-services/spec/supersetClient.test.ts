@@ -899,6 +899,46 @@ test('searchAssets normalizes malformed owner and tag metadata', async () => {
   });
 });
 
+test('searchAssets sanitizes bounded result metadata', async () => {
+  global.fetch = async () =>
+    Response.json({
+      result: [
+        {
+          id: 2,
+          uuid: ` chart\n${'u'.repeat(300)} `,
+          slice_name: ` Sales\n${'x'.repeat(300)} `,
+          description: ` Regional\n${'d'.repeat(1100)} `,
+          owners: [` owner-${'o'.repeat(200)} `],
+          tags: [` tag-${'t'.repeat(200)} `],
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['chart'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result.assets).toHaveLength(1);
+  const [asset] = result.assets;
+  expect(asset?.uuid).not.toContain('\n');
+  expect(asset?.uuid.startsWith('chart ')).toBe(true);
+  expect(asset?.uuid.length).toBeLessThanOrEqual(256);
+  expect(asset?.name).not.toContain('\n');
+  expect(asset?.name.startsWith('Sales ')).toBe(true);
+  expect(asset?.name.length).toBeLessThanOrEqual(256);
+  expect(asset?.description).not.toContain('\n');
+  expect(asset?.description?.startsWith('Regional ')).toBe(true);
+  expect(asset?.description?.length).toBeLessThanOrEqual(1024);
+  expect(asset?.owners).toEqual([`owner-${'o'.repeat(122)}`]);
+  expect(asset?.tags).toEqual([`tag-${'t'.repeat(124)}`]);
+  expect(result.warnings).toEqual([]);
+});
+
 test('searchAssets records status warnings for non-json error responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {
@@ -1035,6 +1075,30 @@ test('searchAssets rejects control characters before querying Superset', async (
   const result = await client.searchAssets({
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
     query: 'sales\nregion',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['asset search request contains invalid query'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
+test('searchAssets rejects overlong queries before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 's'.repeat(257),
     assetTypes: ['dashboard'],
     includeCertifiedOnly: false,
     limit: 10,

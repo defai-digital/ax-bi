@@ -16,6 +16,7 @@
       },
       "query": {
         "type": "string",
+        "maxLength": 256,
         "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$"
       },
       "assetTypes": {
@@ -81,13 +82,19 @@
               "minimum": 0
             },
             "uuid": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
             },
             "name": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
             },
             "description": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 1024,
+              "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
             },
             "certified": {
               "type": "boolean"
@@ -96,18 +103,26 @@
               "type": "number"
             },
             "relevanceReason": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
             },
             "owners": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             },
             "tags": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             }
           }

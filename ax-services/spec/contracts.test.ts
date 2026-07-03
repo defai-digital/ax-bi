@@ -366,6 +366,7 @@ test('asset search request schema is registered in asset search contracts', () =
   expect(assetSearchContractSchemas.assetSearchRequestSchema.properties.query).toEqual(
     {
       type: 'string',
+      maxLength: 256,
       pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
     },
   );
@@ -381,6 +382,56 @@ test('asset search request schema is registered in asset search contracts', () =
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.name,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.uuid,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.description,
+  ).toEqual({
+    type: 'string',
+    maxLength: 1024,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.relevanceReason,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.owners.items,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 128,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.tags.items,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 128,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 
