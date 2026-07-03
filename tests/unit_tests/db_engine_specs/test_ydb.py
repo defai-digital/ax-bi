@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -47,7 +47,7 @@ def test_epoch_to_dttm() -> None:
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.ydb import YDBEngineSpec as spec  # noqa: N813
