@@ -1667,6 +1667,13 @@ interface ListFilterRequest {
   filters: unknown;
 }
 
+interface SupersetListQueryRequest extends ListPaginationRequest {
+  filters: ListFilter[];
+  search?: string;
+  orderColumn?: string;
+  orderDirection: string;
+}
+
 interface ListColumnRequest {
   selectColumns?: unknown;
 }
@@ -1798,298 +1805,65 @@ function buildSupersetListQuery(
 function buildAnnotationLayerListQuery(
   request: AnnotationLayerListRequest,
 ): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildAnnotationListQuery(request: AnnotationListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'short_descr',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'short_descr');
 }
 
 function buildDashboardListQuery(request: DashboardListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'dashboard_title',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'dashboard_title');
 }
 
 function buildChartListQuery(request: ChartListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'slice_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'slice_name');
 }
 
 function buildDatasetListQuery(request: DatasetListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'table_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'table_name');
 }
 
 function buildDatabaseListQuery(request: DatabaseListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'database_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'database_name');
 }
 
 function buildQueryListQuery(request: QueryListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'sql',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'sql');
 }
 
 function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'label',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'label');
 }
 
 function buildReportListQuery(request: ReportListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildRoleListQuery(request: RoleListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildRlsListQuery(request: RlsListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildTagListQuery(request: TagListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatListFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildTaskListQuery(request: TaskListRequest): string {
+  return buildSupersetPagedListQuery(request, 'task_name');
+}
+
+function buildSupersetPagedListQuery(
+  request: SupersetListQueryRequest,
+  searchColumn: string,
+): string {
   const filters = [...request.filters];
   if (request.search !== undefined && request.search !== '') {
     filters.push({
-      col: 'task_name',
+      col: searchColumn,
       opr: 'ct',
       value: request.search,
     });
