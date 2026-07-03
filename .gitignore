@@ -145,6 +145,7 @@ PROJECT.md
 models/
 
 # Local/internal planning artifacts.
+.internal/
 ax-internal/
 AGENTS.md
 CLAUDE.md
