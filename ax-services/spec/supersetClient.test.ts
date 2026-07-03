@@ -912,6 +912,52 @@ test('listDashboards ignores Superset counts lower than mapped results', async (
   expect(result.hasNext).toBe(false);
 });
 
+test('listDashboards rejects invalid pagination before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10.5,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 100,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['dashboard list request contains invalid pagination'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('listDashboards skips invalid Superset item IDs', async () => {
   global.fetch = async () =>
     Response.json({

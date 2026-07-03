@@ -362,6 +362,13 @@ export class SupersetClient
     request: AnnotationLayerListRequest,
     correlationId?: string,
   ): Promise<AnnotationLayerListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyAnnotationLayerListResponse(
+        withFallbackListPagination(request),
+        ['annotation layer list request contains invalid pagination'],
+      );
+    }
+
     const url = this.buildAnnotationLayerListUrl(request);
 
     try {
@@ -410,6 +417,12 @@ export class SupersetClient
     request: AnnotationListRequest,
     correlationId?: string,
   ): Promise<AnnotationListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyAnnotationListResponse(withFallbackListPagination(request), [
+        'annotation list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildAnnotationListUrl(request);
 
     try {
@@ -554,6 +567,12 @@ export class SupersetClient
     request: DashboardListRequest,
     correlationId?: string,
   ): Promise<DashboardListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyDashboardListResponse(withFallbackListPagination(request), [
+        'dashboard list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildDashboardListUrl(request);
 
     try {
@@ -602,6 +621,12 @@ export class SupersetClient
     request: ChartListRequest,
     correlationId?: string,
   ): Promise<ChartListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyChartListResponse(withFallbackListPagination(request), [
+        'chart list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildChartListUrl(request);
 
     try {
@@ -650,6 +675,12 @@ export class SupersetClient
     request: DatasetListRequest,
     correlationId?: string,
   ): Promise<DatasetListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyDatasetListResponse(withFallbackListPagination(request), [
+        'dataset list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildDatasetListUrl(request);
 
     try {
@@ -698,6 +729,12 @@ export class SupersetClient
     request: DatabaseListRequest,
     correlationId?: string,
   ): Promise<DatabaseListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyDatabaseListResponse(withFallbackListPagination(request), [
+        'database list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildDatabaseListUrl(request);
 
     try {
@@ -746,6 +783,12 @@ export class SupersetClient
     request: QueryListRequest,
     correlationId?: string,
   ): Promise<QueryListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyQueryListResponse(withFallbackListPagination(request), [
+        'query list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildQueryListUrl(request);
 
     try {
@@ -794,6 +837,12 @@ export class SupersetClient
     request: SavedQueryListRequest,
     correlationId?: string,
   ): Promise<SavedQueryListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptySavedQueryListResponse(withFallbackListPagination(request), [
+        'saved query list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildSavedQueryListUrl(request);
 
     try {
@@ -842,6 +891,12 @@ export class SupersetClient
     request: ReportListRequest,
     correlationId?: string,
   ): Promise<ReportListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyReportListResponse(withFallbackListPagination(request), [
+        'report list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildReportListUrl(request);
 
     try {
@@ -890,6 +945,12 @@ export class SupersetClient
     request: RoleListRequest,
     correlationId?: string,
   ): Promise<RoleListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyRoleListResponse(withFallbackListPagination(request), [
+        'role list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildRoleListUrl(request);
 
     try {
@@ -936,6 +997,12 @@ export class SupersetClient
     request: RlsListRequest,
     correlationId?: string,
   ): Promise<RlsListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyRlsListResponse(withFallbackListPagination(request), [
+        'RLS filter list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildRlsListUrl(request);
 
     try {
@@ -984,6 +1051,12 @@ export class SupersetClient
     request: TagListRequest,
     correlationId?: string,
   ): Promise<TagListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyTagListResponse(withFallbackListPagination(request), [
+        'tag list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildTagListUrl(request);
 
     try {
@@ -1030,6 +1103,12 @@ export class SupersetClient
     request: TaskListRequest,
     correlationId?: string,
   ): Promise<TaskListResponse> {
+    if (!hasValidListPagination(request)) {
+      return emptyTaskListResponse(withFallbackListPagination(request), [
+        'task list request contains invalid pagination',
+      ]);
+    }
+
     const url = this.buildTaskListUrl(request);
 
     try {
@@ -1253,6 +1332,11 @@ function extractObjectKeys(payload: unknown): string[] {
 }
 
 type SearchableAssetType = Exclude<AssetType, 'metric'>;
+
+interface ListPaginationRequest {
+  page: number;
+  pageSize: number;
+}
 
 interface SupersetListItem {
   id?: number;
@@ -3106,6 +3190,28 @@ function hasValidAuthorizationIds(request: unknown): boolean {
 
 function isOptionalSupersetId(value: unknown): boolean {
   return value === undefined || isSupersetId(value);
+}
+
+function hasValidListPagination(request: ListPaginationRequest): boolean {
+  return isPositiveInteger(request.page) && isListPageSize(request.pageSize);
+}
+
+function withFallbackListPagination<T extends ListPaginationRequest>(
+  request: T,
+): T {
+  return {
+    ...request,
+    page: isPositiveInteger(request.page) ? request.page : 1,
+    pageSize: isListPageSize(request.pageSize) ? request.pageSize : 100,
+  } as T;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return isInteger(value) && value >= 1;
+}
+
+function isListPageSize(value: unknown): value is number {
+  return isInteger(value) && value >= 1 && value <= 100;
 }
 
 function isAssetSearchLimit(value: unknown): value is number {
