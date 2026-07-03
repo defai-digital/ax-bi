@@ -46,6 +46,9 @@ fn normalize_server_url(value: &str) -> Result<String, String> {
     if url.query().is_some() || url.fragment().is_some() {
         return Err("AXBI_SERVER_URL must not include query or fragment".to_string());
     }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err("AXBI_SERVER_URL must not include credentials".to_string());
+    }
 
     Ok(url.as_str().trim_end_matches('/').to_string())
 }
@@ -132,6 +135,10 @@ mod tests {
         assert_eq!(
             normalize_server_url("https://superset.example.test#dashboard").unwrap_err(),
             "AXBI_SERVER_URL must not include query or fragment"
+        );
+        assert_eq!(
+            normalize_server_url("https://user:s3cr3t@superset.example.test").unwrap_err(),
+            "AXBI_SERVER_URL must not include credentials"
         );
     }
 }
