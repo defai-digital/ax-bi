@@ -21,3 +21,10 @@ export const listColumnSchema = {
   type: 'array',
   items: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
 } as const;
+
+export const listOrderColumnSchema = {
+  anyOf: [
+    { const: '' },
+    { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+  ],
+} as const;

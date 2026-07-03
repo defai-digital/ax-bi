@@ -266,13 +266,22 @@ test('RLS list request schema is registered in RLS list contracts', () => {
   });
 });
 
-test('dashboard list request schema restricts requested columns to tokens', () => {
+test('dashboard list request schema restricts requested columns and ordering to tokens', () => {
   expect(
     dashboardListContractSchemas.dashboardListRequestSchema.properties
       .selectColumns,
   ).toEqual({
     type: 'array',
     items: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties
+      .orderColumn,
+  ).toEqual({
+    anyOf: [
+      { const: '' },
+      { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+    ],
   });
 });
 

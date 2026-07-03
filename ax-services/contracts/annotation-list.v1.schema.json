@@ -84,7 +84,15 @@
         "type": "string"
       },
       "orderColumn": {
-        "type": "string"
+        "anyOf": [
+          {
+            "const": ""
+          },
+          {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          }
+        ]
       },
       "orderDirection": {
         "enum": [

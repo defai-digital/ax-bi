@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { listColumnSchema } from './listColumn';
+import { listColumnSchema, listOrderColumnSchema } from './listColumn';
 
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
 
@@ -158,7 +158,7 @@ export const databaseListRequestSchema = {
     },
     selectColumns: listColumnSchema,
     search: { type: 'string' },
-    orderColumn: { type: 'string' },
+    orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
     page: { type: 'integer', minimum: 1 },
     pageSize: { type: 'integer', minimum: 1, maximum: 100 },

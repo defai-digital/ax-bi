@@ -1185,6 +1185,39 @@ test('dashboard list endpoint rejects unsafe requested columns', async () => {
   expect(seenRequestIds).toEqual([]);
 });
 
+test('dashboard list endpoint rejects unsafe ordering columns', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/dashboards/list',
+    payload: {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'dashboard_title'],
+      orderColumn: 'dashboard_title),page_size:100',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(400);
+  expect(seenRequestIds).toEqual([]);
+});
+
 test('chart list endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
