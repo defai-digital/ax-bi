@@ -31,6 +31,7 @@ from superset_extensions_cli.cli import (
     copy_frontend_dist,
     ensure_output_directory,
     init_frontend_deps,
+    validate_output_file,
     write_manifest,
 )
 
@@ -250,6 +251,59 @@ def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
         ensure_output_directory(output_link / "frontend", "dist/frontend directory")
 
     assert not (outside_dir / "frontend").exists()
+
+
+@pytest.mark.unit
+def test_validate_output_file_rejects_symlinked_parent(isolated_filesystem):
+    """Test output file validation refuses symlinked parent directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "dist"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/manifest.json: parent directory is a symlink",
+    ):
+        validate_output_file(output_dir / "manifest.json", "dist/manifest.json")
+
+    assert not (outside_dir / "manifest.json").exists()
+
+
+@pytest.mark.unit
+def test_validate_output_file_rejects_symlinked_ancestor(isolated_filesystem):
+    """Test output file validation refuses symlinked ancestor directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    output_dir = isolated_filesystem / "dist"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write nested manifest: parent directory is a symlink",
+    ):
+        validate_output_file(
+            output_dir / "nested" / "manifest.json",
+            "nested manifest",
+        )
+
+    assert not (outside_nested / "manifest.json").exists()
+
+
+@pytest.mark.unit
+def test_validate_output_file_rejects_non_directory_parent(isolated_filesystem):
+    """Test output file validation refuses file parent paths."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/manifest.json: parent exists but is not a directory",
+    ):
+        validate_output_file(output_parent / "manifest.json", "dist/manifest.json")
+
+    assert output_parent.read_text() == "not a directory"
 
 
 # Frontend Dependencies Tests

@@ -235,6 +235,24 @@ def validate_output_file(path: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path exists but is not a file."
         )
+    symlinked_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.is_symlink()
+        ),
+        None,
+    )
+    if symlinked_parent is not None:
+        raise click.ClickException(
+            f"Refusing to write {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
+    if path.parent.exists() and not path.parent.is_dir():
+        raise click.ClickException(
+            f"Refusing to write {label}: parent exists but is not a directory: "
+            f"{path.parent}."
+        )
 
 
 def clean_dist_frontend(cwd: Path) -> None:
