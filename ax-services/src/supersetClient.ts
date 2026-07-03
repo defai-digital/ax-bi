@@ -493,6 +493,14 @@ export class SupersetClient
     request: PermissionCheckRequest,
     correlationId?: string,
   ): Promise<PermissionCheckResult> {
+    if (!hasValidAuthorizationIds(request)) {
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        error: 'authorization request contains invalid numeric identifier',
+      };
+    }
+
     try {
       const response = await fetch(this.permissionUrl, {
         method: 'POST',
@@ -3070,6 +3078,26 @@ function isDefined<T>(value: T | undefined): value is T {
 
 function isSupersetId(value: unknown): value is number {
   return isNonNegativeInteger(value);
+}
+
+function hasValidAuthorizationIds(request: unknown): boolean {
+  if (!isRecord(request)) {
+    return false;
+  }
+
+  const { principal, resource } = request;
+  if (!isRecord(principal) || !isRecord(resource)) {
+    return false;
+  }
+
+  return (
+    isOptionalSupersetId(principal.userId) &&
+    isOptionalSupersetId(resource.id)
+  );
+}
+
+function isOptionalSupersetId(value: unknown): boolean {
+  return value === undefined || isSupersetId(value);
 }
 
 function isCacheTimeout(value: unknown): value is number {

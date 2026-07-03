@@ -71,7 +71,7 @@ export const permissionCheckRequestSchema = {
       additionalProperties: false,
       properties: {
         type: { enum: ['user', 'guest', 'service'] },
-        userId: { type: 'number' },
+        userId: { type: 'integer', minimum: 0 },
         username: { type: 'string' },
         roles: {
           type: 'array',
@@ -85,7 +85,7 @@ export const permissionCheckRequestSchema = {
       additionalProperties: false,
       properties: {
         type: { enum: ['chart', 'dashboard', 'database', 'dataset', 'query'] },
-        id: { type: 'number' },
+        id: { type: 'integer', minimum: 0 },
         uuid: { type: 'string' },
       },
     },

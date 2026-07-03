@@ -160,6 +160,35 @@ test('checkPermission fails closed when Superset cannot be reached', async () =>
   });
 });
 
+test('checkPermission fails closed for invalid numeric identifiers', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'user',
+      userId: -1,
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5.5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization request contains invalid numeric identifier',
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('checkPermission fails closed for non-success Superset responses', async () => {
   global.fetch = async () =>
     Response.json(

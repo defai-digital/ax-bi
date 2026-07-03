@@ -28,7 +28,8 @@
             ]
           },
           "userId": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "username": {
             "type": "string"
@@ -58,7 +59,8 @@
             ]
           },
           "id": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "uuid": {
             "type": "string"

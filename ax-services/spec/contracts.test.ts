@@ -226,6 +226,16 @@ test('permission check request schema is registered in authorization contracts',
   expect(authorizationContractSchemas.permissionCheckRequestSchema).toBe(
     permissionCheckRequestSchema,
   );
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.userId,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(permissionCheckRequestSchema.properties.resource.properties.id).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],
   });
