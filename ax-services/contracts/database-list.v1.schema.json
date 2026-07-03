@@ -38,7 +38,8 @@
             "value": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
                 },
                 {
                   "type": "number"
@@ -49,7 +50,8 @@
                 {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
                   }
                 },
                 {

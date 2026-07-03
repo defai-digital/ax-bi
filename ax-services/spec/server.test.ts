@@ -1253,6 +1253,40 @@ test('dashboard list endpoint rejects unsafe search values', async () => {
   expect(seenRequestIds).toEqual([]);
 });
 
+test('dashboard list endpoint rejects unsafe filter values', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const value of ['sales\nregion', ['sales', 'north\rregion']]) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/dashboards/list',
+      payload: {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        filters: [{ col: 'dashboard_title', opr: 'ct', value }],
+        selectColumns: ['id', 'dashboard_title'],
+        orderDirection: 'asc',
+        page: 1,
+        pageSize: 10,
+        createdByMe: false,
+        ownedByMe: false,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
 test('chart list endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(

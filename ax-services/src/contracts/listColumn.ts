@@ -33,3 +33,13 @@ export const listSearchSchema = {
   type: 'string',
   pattern: '^(?:$|(?=.*\\S)[^\\u0000-\\u001F\\u007F]+)$',
 } as const;
+
+export const listFilterStringSchema = {
+  type: 'string',
+  pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+} as const;
+
+export const listFilterStringArraySchema = {
+  type: 'array',
+  items: listFilterStringSchema,
+} as const;

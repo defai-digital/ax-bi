@@ -18,6 +18,8 @@
  */
 import {
   listColumnSchema,
+  listFilterStringArraySchema,
+  listFilterStringSchema,
   listOrderColumnSchema,
   listSearchSchema,
 } from './listColumn';
@@ -88,10 +90,10 @@ const chartFilterSchema = {
     opr: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
     value: {
       anyOf: [
-        { type: 'string' },
+        listFilterStringSchema,
         { type: 'number' },
         { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
+        listFilterStringArraySchema,
         { type: 'array', items: { type: 'number' } },
         { type: 'array', items: { type: 'boolean' } },
       ],

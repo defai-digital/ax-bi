@@ -268,6 +268,20 @@ test('RLS list request schema is registered in RLS list contracts', () => {
 
 test('dashboard list request schema restricts requested columns, search, and ordering', () => {
   expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.value.anyOf,
+  ).toEqual([
+    { type: 'string', pattern: '^[^\\u0000-\\u001F\\u007F]*$' },
+    { type: 'number' },
+    { type: 'boolean' },
+    {
+      type: 'array',
+      items: { type: 'string', pattern: '^[^\\u0000-\\u001F\\u007F]*$' },
+    },
+    { type: 'array', items: { type: 'number' } },
+    { type: 'array', items: { type: 'boolean' } },
+  ]);
+  expect(
     dashboardListContractSchemas.dashboardListRequestSchema.properties
       .selectColumns,
   ).toEqual({
