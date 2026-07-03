@@ -31,7 +31,6 @@
   - any-glob-to-any-file:
     - 'superset/requirements/**'
     - 'superset/translations/requirements.txt'
-    - 'RELEASING/requirements.txt'
 
 "dependencies:npm":
 - changed-files:

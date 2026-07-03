@@ -127,7 +127,7 @@ repos:
         entry: bash
         language: system
         types: [python]
-        exclude: ^(tests/|superset/migrations/|scripts/|RELEASING/|docker/)
+        exclude: ^(tests/|superset/migrations/|scripts/|docker/)
         args:
           - -c
           - |
