@@ -276,6 +276,68 @@ def test_dev_command_rejects_watch_directory_content_change_before_schedule(
 
 
 @pytest.mark.cli
+@patch("superset_extensions_cli.cli.Observer")
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.build_manifest")
+@patch("superset_extensions_cli.cli.write_manifest")
+def test_dev_command_rejects_watch_parent_change_before_schedule(
+    mock_write_manifest,
+    mock_build_manifest,
+    mock_rebuild_backend,
+    mock_rebuild_frontend,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    mock_observer_class,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_dev,
+    monkeypatch,
+):
+    """Test dev refuses a watch directory moved under a replaced parent."""
+    project_dir = isolated_filesystem / "project"
+    project_dir.mkdir()
+    extension_setup_for_dev(project_dir)
+    monkeypatch.chdir(project_dir)
+    mock_rebuild_frontend.return_value = "remoteEntry.abc123.js"
+    mock_build_manifest.return_value = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    mock_observer = Mock()
+    frontend_dir = project_dir / "frontend"
+    saved_project_dir = isolated_filesystem / "saved-project"
+    replacement_project_dir = isolated_filesystem / "replacement-project"
+
+    def replace_frontend_parent_before_observer_schedule():
+        project_dir.rename(saved_project_dir)
+        replacement_project_dir.mkdir()
+        (saved_project_dir / "frontend").rename(replacement_project_dir / "frontend")
+        (saved_project_dir / "backend").rename(replacement_project_dir / "backend")
+        (saved_project_dir / "extension.json").rename(
+            replacement_project_dir / "extension.json"
+        )
+        replacement_project_dir.rename(project_dir)
+        return mock_observer
+
+    mock_observer_class.side_effect = replace_frontend_parent_before_observer_schedule
+
+    result = cli_runner.invoke(app, ["dev"])
+
+    assert result.exit_code == 1
+    assert "frontend path changed before watch setup" in result.output
+    mock_observer.schedule.assert_not_called()
+    mock_observer.start.assert_not_called()
+    assert not (saved_project_dir / "frontend").exists()
+    assert frontend_dir.is_dir()
+
+
+@pytest.mark.cli
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_dev_command_validates_before_building(
     mock_validate_npm, cli_runner, isolated_filesystem

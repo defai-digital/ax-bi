@@ -2976,14 +2976,21 @@ def dev(ctx: click.Context) -> None:
             rebuild_backend(cwd)
 
     # Build watch message based on existing directories
-    watch_targets: list[tuple[str, Path, tuple[int, int, int, int]]] = []
+    watch_targets: list[
+        tuple[str, Path, tuple[int, int, int, int], tuple[int, int]]
+    ] = []
     for label, directory in (("frontend", frontend_dir), ("backend", backend_dir)):
         if optional_directory_exists(directory, label):
             directory_identity = get_directory_path_identity(directory)
             if directory_identity is None:
                 raise click.ClickException(f"{label} path is no longer safe.")
-            watch_targets.append((label, directory, directory_identity))
-    watch_dirs = [str(directory) for _, directory, _ in watch_targets]
+            directory_parent_identity = get_read_parent_identity(directory)
+            if directory_parent_identity is None:
+                raise click.ClickException(f"{label} path is no longer safe.")
+            watch_targets.append(
+                (label, directory, directory_identity, directory_parent_identity)
+            )
+    watch_dirs = [str(directory) for _, directory, _, _ in watch_targets]
 
     if watch_dirs:
         click.secho(f"👀 Watching for changes in: {', '.join(watch_dirs)}", fg="green")
@@ -2993,10 +3000,20 @@ def dev(ctx: click.Context) -> None:
     observer = Observer()
 
     # Only set up watchers for directories that exist
-    for label, directory, directory_identity in watch_targets:
-        current_identity = get_directory_path_identity(directory)
-        if current_identity != directory_identity:
-            raise click.ClickException(f"{label} path changed before watch setup.")
+    for (
+        label,
+        directory,
+        directory_identity,
+        directory_parent_identity,
+    ) in watch_targets:
+        ensure_directory_identity_unchanged(
+            directory,
+            label,
+            directory_identity,
+            "watch setup",
+            allow_content_changes=False,
+            expected_parent_identity=directory_parent_identity,
+        )
         if label == "frontend":
             frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
             observer.schedule(frontend_handler, str(directory), recursive=True)
