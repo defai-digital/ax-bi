@@ -419,21 +419,18 @@ export class SupersetClient
         .map(toAnnotationLayerListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, annotationLayers.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
         annotationLayers,
-        count: annotationLayers.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedAnnotationLayerColumns(request),
-        columnsLoaded: annotationLayerColumnsLoaded(annotationLayers),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          annotationLayers.length,
+          totalCount,
+          requestedAnnotationLayerColumns(request),
+          annotationLayerColumnsLoaded(annotationLayers),
+          [],
+        ),
       };
     } catch (error) {
       return emptyAnnotationLayerListResponse(request, [
@@ -502,22 +499,19 @@ export class SupersetClient
         .map(item => toAnnotationListItem(item, request.layerId))
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, annotations.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
         annotations,
-        count: annotations.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
         layerId: request.layerId,
-        columnsRequested: requestedAnnotationColumns(request),
-        columnsLoaded: annotationColumnsLoaded(annotations),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          annotations.length,
+          totalCount,
+          requestedAnnotationColumns(request),
+          annotationColumnsLoaded(annotations),
+          [],
+        ),
       };
     } catch (error) {
       return emptyAnnotationListResponse(request, [
@@ -718,21 +712,18 @@ export class SupersetClient
         .map(toDashboardListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, dashboards.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
         dashboards,
-        count: dashboards.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDashboardColumns(request),
-        columnsLoaded: dashboardColumnsLoaded(dashboards),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          dashboards.length,
+          totalCount,
+          requestedDashboardColumns(request),
+          dashboardColumnsLoaded(dashboards),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDashboardListResponse(request, [
@@ -797,21 +788,18 @@ export class SupersetClient
         .map(toChartListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, charts.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: CHART_LIST_CONTRACT_VERSION,
         charts,
-        count: charts.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedChartColumns(request),
-        columnsLoaded: chartColumnsLoaded(charts),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          charts.length,
+          totalCount,
+          requestedChartColumns(request),
+          chartColumnsLoaded(charts),
+          [],
+        ),
       };
     } catch (error) {
       return emptyChartListResponse(request, [
@@ -876,21 +864,18 @@ export class SupersetClient
         .map(toDatasetListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, datasets.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DATASET_LIST_CONTRACT_VERSION,
         datasets,
-        count: datasets.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDatasetColumns(request),
-        columnsLoaded: datasetColumnsLoaded(datasets),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          datasets.length,
+          totalCount,
+          requestedDatasetColumns(request),
+          datasetColumnsLoaded(datasets),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDatasetListResponse(request, [
@@ -955,21 +940,18 @@ export class SupersetClient
         .map(toDatabaseListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, databases.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DATABASE_LIST_CONTRACT_VERSION,
         databases,
-        count: databases.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDatabaseColumns(request),
-        columnsLoaded: databaseColumnsLoaded(databases),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          databases.length,
+          totalCount,
+          requestedDatabaseColumns(request),
+          databaseColumnsLoaded(databases),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDatabaseListResponse(request, [
@@ -1029,21 +1011,18 @@ export class SupersetClient
         .map(toQueryListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, queries.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: QUERY_LIST_CONTRACT_VERSION,
         queries,
-        count: queries.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedQueryColumns(request),
-        columnsLoaded: queryColumnsLoaded(queries),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          queries.length,
+          totalCount,
+          requestedQueryColumns(request),
+          queryColumnsLoaded(queries),
+          [],
+        ),
       };
     } catch (error) {
       return emptyQueryListResponse(request, [
@@ -1105,21 +1084,18 @@ export class SupersetClient
         .map(toSavedQueryListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, savedQueries.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
         savedQueries,
-        count: savedQueries.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedSavedQueryColumns(request),
-        columnsLoaded: savedQueryColumnsLoaded(savedQueries),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          savedQueries.length,
+          totalCount,
+          requestedSavedQueryColumns(request),
+          savedQueryColumnsLoaded(savedQueries),
+          [],
+        ),
       };
     } catch (error) {
       return emptySavedQueryListResponse(request, [
@@ -1179,21 +1155,18 @@ export class SupersetClient
         .map(toReportListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, reports.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: REPORT_LIST_CONTRACT_VERSION,
         reports,
-        count: reports.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedReportColumns(request),
-        columnsLoaded: reportColumnsLoaded(reports),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          reports.length,
+          totalCount,
+          requestedReportColumns(request),
+          reportColumnsLoaded(reports),
+          [],
+        ),
       };
     } catch (error) {
       return emptyReportListResponse(request, [
@@ -1249,23 +1222,22 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
-      const roles = extractSupersetResults(payload).map(toRoleListItem).filter(isDefined);
+      const roles = extractSupersetResults(payload)
+        .map(toRoleListItem)
+        .filter(isDefined);
       const totalCount = extractSupersetCount(payload, roles.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ROLE_LIST_CONTRACT_VERSION,
         roles,
-        count: roles.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedRoleColumns(request),
-        columnsLoaded: roleColumnsLoaded(roles),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          roles.length,
+          totalCount,
+          requestedRoleColumns(request),
+          roleColumnsLoaded(roles),
+          [],
+        ),
       };
     } catch (error) {
       return emptyRoleListResponse(request, [
@@ -1325,21 +1297,18 @@ export class SupersetClient
         .map(toRlsListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, rlsFilters.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: RLS_LIST_CONTRACT_VERSION,
         rlsFilters,
-        count: rlsFilters.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedRlsColumns(request),
-        columnsLoaded: rlsColumnsLoaded(rlsFilters),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          rlsFilters.length,
+          totalCount,
+          requestedRlsColumns(request),
+          rlsColumnsLoaded(rlsFilters),
+          [],
+        ),
       };
     } catch (error) {
       return emptyRlsListResponse(request, [
@@ -1395,23 +1364,22 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
-      const tags = extractSupersetResults(payload).map(toTagListItem).filter(isDefined);
+      const tags = extractSupersetResults(payload)
+        .map(toTagListItem)
+        .filter(isDefined);
       const totalCount = extractSupersetCount(payload, tags.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: TAG_LIST_CONTRACT_VERSION,
         tags,
-        count: tags.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedTagColumns(request),
-        columnsLoaded: tagColumnsLoaded(tags),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          tags.length,
+          totalCount,
+          requestedTagColumns(request),
+          tagColumnsLoaded(tags),
+          [],
+        ),
       };
     } catch (error) {
       return emptyTagListResponse(request, [
@@ -1471,21 +1439,18 @@ export class SupersetClient
         .map(toTaskListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, tasks.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: TASK_LIST_CONTRACT_VERSION,
         tasks,
-        count: tasks.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedTaskColumns(request),
-        columnsLoaded: taskColumnsLoaded(tasks),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          tasks.length,
+          totalCount,
+          requestedTaskColumns(request),
+          taskColumnsLoaded(tasks),
+          [],
+        ),
       };
     } catch (error) {
       return emptyTaskListResponse(request, [
@@ -1689,7 +1654,7 @@ interface ListPaginationRequest {
   pageSize: number;
 }
 
-interface EmptyListResponseMetadata {
+interface ListResponseMetadata {
   count: number;
   totalCount: number;
   page: number;
@@ -3222,17 +3187,30 @@ function emptyListResponseMetadata(
   request: ListPaginationRequest,
   columnsRequested: string[],
   warnings: string[],
-): EmptyListResponseMetadata {
+): ListResponseMetadata {
+  return listResponseMetadata(request, 0, 0, columnsRequested, [], warnings);
+}
+
+function listResponseMetadata(
+  request: ListPaginationRequest,
+  count: number,
+  totalCount: number,
+  columnsRequested: string[],
+  columnsLoaded: string[],
+  warnings: string[],
+): ListResponseMetadata {
+  const totalPages = Math.ceil(totalCount / request.pageSize);
+
   return {
-    count: 0,
-    totalCount: 0,
+    count,
+    totalCount,
     page: request.page,
     pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
+    totalPages,
+    hasNext: request.page < totalPages,
     hasPrevious: request.page > 1,
     columnsRequested,
-    columnsLoaded: [],
+    columnsLoaded,
     warnings,
   };
 }
