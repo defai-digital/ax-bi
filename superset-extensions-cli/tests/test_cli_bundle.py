@@ -688,6 +688,46 @@ def test_bundle_rejects_dist_symlink_outside_dist(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_dist_entry_changed_before_zip_write(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses a dist file changed after entry planning."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    source_file = isolated_filesystem / "dist" / "frontend" / "dist" / "main.js"
+    outside_file = isolated_filesystem / "outside.js"
+    outside_file.write_text("outside")
+    original_enter = zipfile.ZipFile.__enter__
+
+    def replace_source_with_symlink_on_zip_open(self):
+        result = original_enter(self)
+        if source_file.exists() and not source_file.is_symlink():
+            source_file.unlink()
+            source_file.symlink_to(outside_file)
+        return result
+
+    monkeypatch.setattr(
+        zipfile.ZipFile, "__enter__", replace_source_with_symlink_on_zip_open
+    )
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "Refusing to copy bundle entry frontend/dist/main.js" in result.output
+    assert "source path changed before copy" in result.output
+    assert source_file.is_symlink()
+    assert outside_file.read_text() == "outside"
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+    assert list(isolated_filesystem.glob(".test-extension-1.0.0.supx.*.tmp")) == []
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_dist_symlink_to_external_output(
     mock_build, cli_runner, isolated_filesystem
 ):

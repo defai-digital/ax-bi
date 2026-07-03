@@ -1904,13 +1904,19 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         resolved_zip_path = zip_path.resolve()
         validate_bundle_output_path(zip_path)
 
-        bundle_entries: list[tuple[Path, Path]] = []
+        bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]] = []
         for file in dist_dir.rglob("*"):
             if not file.is_file():
                 continue
             relative_file = file.relative_to(dist_dir)
             if is_cli_temporary_dist_artifact(relative_file):
                 continue
+            identity = get_copy_source_identity(file, resolved_dist_dir)
+            if identity is None:
+                raise click.ClickException(
+                    f"Refusing to bundle {file}: resolved path is outside "
+                    f"the dist directory {resolved_dist_dir}."
+                )
             resolved_file = file.resolve()
             if not resolved_file.is_relative_to(resolved_dist_dir):
                 raise click.ClickException(
@@ -1919,7 +1925,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 )
             if resolved_file == resolved_zip_path:
                 continue
-            bundle_entries.append((file, relative_file))
+            bundle_entries.append((file, relative_file, identity))
 
         with tempfile.NamedTemporaryFile(
             delete=False,
@@ -1930,7 +1936,13 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             temp_path = Path(temp_file.name)
 
         with zipfile.ZipFile(temp_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for file, arcname in bundle_entries:
+            for file, arcname, identity in bundle_entries:
+                ensure_copy_source_unchanged(
+                    file,
+                    resolved_dist_dir,
+                    identity,
+                    f"bundle entry {arcname}",
+                )
                 zipf.write(file, arcname)
 
         validate_bundle_output_path(zip_path)
