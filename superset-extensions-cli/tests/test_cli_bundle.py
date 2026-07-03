@@ -318,6 +318,38 @@ def test_bundle_preserves_existing_output_on_zip_write_error(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_preserves_existing_output_on_publish_error(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle keeps old output when publishing the staged archive fails."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_path = isolated_filesystem / "existing.supx"
+    output_path.write_text("original bundle")
+    original_replace = Path.replace
+
+    def fail_bundle_publish(path, target):
+        if target == output_path:
+            raise OSError("permission denied")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_bundle_publish)
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "Failed to publish bundle: permission denied" in result.output
+    assert output_path.read_text() == "original bundle"
+    assert list(isolated_filesystem.glob(".existing.supx.*.tmp")) == []
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_includes_all_files_recursively(
     mock_build, cli_runner, isolated_filesystem
 ):

@@ -424,6 +424,14 @@ def publish_staged_output_directory(
         remove_output_directory(backup_root, f"temporary {label} backup directory")
 
 
+def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:
+    """Replace an output file with a staged file."""
+    try:
+        staged_path.replace(target_path)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to publish {label}: {ex}") from ex
+
+
 def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
     """Load an optional JSON metadata file and require an object when present."""
     try:
@@ -1560,7 +1568,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             for file, arcname in bundle_entries:
                 zipf.write(file, arcname)
 
-        temp_path.replace(zip_path)
+        publish_output_file(temp_path, zip_path, "bundle")
         temp_path = None
     except Exception as ex:
         if temp_path is not None:
