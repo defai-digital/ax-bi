@@ -37,9 +37,18 @@ function serializeError(value: unknown): unknown {
 }
 
 function normalizeContext(context: LogContext = {}): LogContext {
-  return Object.fromEntries(
-    Object.entries(context).map(([key, value]) => [key, serializeError(value)]),
-  );
+  try {
+    return Object.fromEntries(
+      Object.entries(context).map(([key, value]) => [
+        key,
+        serializeError(value),
+      ]),
+    );
+  } catch (error) {
+    return {
+      serializationError: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 function createSafeLogReplacer(): (key: string, value: unknown) => unknown {
@@ -77,6 +86,23 @@ function stringifyLogEntry(entry: LogContext): string {
   }
 }
 
+function buildLogEntry(
+  level: 'info' | 'error',
+  message: string,
+  context: LogContext,
+): LogContext {
+  const normalizedContext = normalizeContext(context);
+
+  delete normalizedContext['level'];
+  delete normalizedContext['message'];
+
+  return {
+    level,
+    message,
+    ...normalizedContext,
+  };
+}
+
 const LOG_LEVEL_PRIORITY: Record<Exclude<LogLevel, 'silent'>, number> = {
   debug: 10,
   info: 20,
@@ -104,11 +130,7 @@ export function createLogger(logLevel: LogLevel): ServiceLogger {
         return;
       }
       console.log(
-        stringifyLogEntry({
-          level: 'info',
-          message,
-          ...normalizeContext(context),
-        }),
+        stringifyLogEntry(buildLogEntry('info', message, context)),
       );
     },
     error(message: string, context: LogContext = {}) {
@@ -116,11 +138,7 @@ export function createLogger(logLevel: LogLevel): ServiceLogger {
         return;
       }
       console.error(
-        stringifyLogEntry({
-          level: 'error',
-          message,
-          ...normalizeContext(context),
-        }),
+        stringifyLogEntry(buildLogEntry('error', message, context)),
       );
     },
   };

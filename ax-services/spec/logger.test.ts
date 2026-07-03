@@ -131,3 +131,47 @@ test('logger falls back when context JSON serialization fails', () => {
     }),
   );
 });
+
+test('logger falls back when context normalization fails', () => {
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const logger = createLogger('info');
+  const context = {};
+
+  Object.defineProperty(context, 'broken', {
+    enumerable: true,
+    get() {
+      throw new Error('cannot read context');
+    },
+  });
+
+  expect(() =>
+    logger.info('request completed', context as Record<string, unknown>),
+  ).not.toThrow();
+
+  expect(log).toHaveBeenCalledWith(
+    JSON.stringify({
+      level: 'info',
+      message: 'request completed',
+      serializationError: 'cannot read context',
+    }),
+  );
+});
+
+test('logger preserves fixed metadata when context includes reserved fields', () => {
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const logger = createLogger('info');
+
+  logger.info('service started', {
+    level: 'error',
+    message: 'spoofed message',
+    requestId: 'request-abc',
+  });
+
+  expect(log).toHaveBeenCalledWith(
+    JSON.stringify({
+      level: 'info',
+      message: 'service started',
+      requestId: 'request-abc',
+    }),
+  );
+});
