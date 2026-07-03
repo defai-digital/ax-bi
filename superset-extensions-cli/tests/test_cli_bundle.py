@@ -125,6 +125,37 @@ def test_bundle_command_fails_without_manifest(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_symlinked_dist_root(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle refuses a symlinked dist root."""
+    mock_build.return_value = None
+
+    outside_dist = isolated_filesystem / "outside-dist"
+    outside_dist.mkdir()
+    (outside_dist / "manifest.json").write_text(
+        json.dumps(
+            {
+                "id": "test-org.test-extension",
+                "publisher": "test-org",
+                "name": "test-extension",
+                "displayName": "Test Extension",
+                "version": "1.0.0",
+                "permissions": [],
+            }
+        )
+    )
+    (isolated_filesystem / "dist").symlink_to(outside_dist)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "dist path is a symlink" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_fails_with_malformed_manifest_json(
     mock_build, cli_runner, isolated_filesystem
 ):

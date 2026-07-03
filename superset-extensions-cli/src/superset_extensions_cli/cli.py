@@ -972,6 +972,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
 
     cwd = Path.cwd()
     dist_dir = cwd / "dist"
+    try:
+        require_optional_directory(dist_dir, "dist")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+
     manifest_path = dist_dir / "manifest.json"
 
     try:
