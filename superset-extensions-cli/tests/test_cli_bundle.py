@@ -20,10 +20,12 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
+import click
 import pytest
-from superset_extensions_cli.cli import app
+from superset_extensions_cli.cli import app, get_bundle_default_filename
 
 from tests.utils import assert_file_exists
 
@@ -57,6 +59,36 @@ def test_bundle_command_creates_zip_with_default_name(
         assert "frontend/dist/remoteEntry.abc123.js" in file_list
         assert "frontend/dist/main.js" in file_list
         assert "backend/src/test_org/test_extension/__init__.py" in file_list
+
+
+@pytest.mark.cli
+def test_bundle_default_filename_uses_manifest_metadata():
+    """Test default bundle filenames are derived as a single safe filename."""
+    assert (
+        get_bundle_default_filename("test-extension", "1.0.0")
+        == "test-extension-1.0.0.supx"
+    )
+
+
+@pytest.mark.cli
+@pytest.mark.parametrize(
+    "extension_name, extension_version",
+    [
+        ("test-extension", "../1.0.0"),
+        ("test-extension", r"..\1.0.0"),
+        ("test/extension", "1.0.0"),
+        (r"test\extension", "1.0.0"),
+    ],
+)
+def test_bundle_default_filename_rejects_path_metadata(
+    extension_name, extension_version
+):
+    """Test manifest metadata cannot produce a nested bundle path."""
+    with pytest.raises(
+        click.ClickException,
+        match="Invalid bundle default filename from manifest metadata",
+    ):
+        get_bundle_default_filename(extension_name, extension_version)
 
 
 @pytest.mark.cli
@@ -218,6 +250,30 @@ def test_bundle_command_fails_with_invalid_manifest_schema(
 
     assert result.exit_code == 1
     assert "Invalid dist/manifest.json" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_manifest_metadata_that_builds_nested_default_filename(
+    mock_build, cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test bundle fails before writing when metadata builds a nested filename."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("{}")
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.Manifest.model_validate_json",
+        lambda _: SimpleNamespace(name="test/extension", version="1.0.0"),
+    )
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Invalid bundle default filename from manifest metadata" in result.output
+    assert not (isolated_filesystem / "test").exists()
 
 
 @pytest.mark.cli

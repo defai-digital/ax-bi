@@ -1114,6 +1114,23 @@ def validate_bundle_output_path(path: Path) -> None:
         )
 
 
+def get_bundle_default_filename(extension_name: str, extension_version: str) -> str:
+    """Return the default bundle filename from manifest metadata."""
+    filename = f"{extension_name}-{extension_version}.supx"
+    windows_filename = PureWindowsPath(filename)
+    if (
+        split_path_parts(filename) != [filename]
+        or Path(filename).name != filename
+        or bool(windows_filename.drive)
+        or bool(windows_filename.root)
+        or windows_filename.name != filename
+    ):
+        raise click.ClickException(
+            "Invalid bundle default filename from manifest metadata."
+        )
+    return filename
+
+
 class FrontendChangeHandler(FileSystemEventHandler):
     def __init__(self, trigger_build: Callable[[], None]):
         self.trigger_build = trigger_build
@@ -1657,7 +1674,11 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         click.secho(f"❌ Invalid dist/manifest.json: {ex}", err=True, fg="red")
         sys.exit(1)
 
-    default_filename = f"{manifest.name}-{manifest.version}.supx"
+    try:
+        default_filename = get_bundle_default_filename(manifest.name, manifest.version)
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
 
     if output is None:
         zip_path = Path(default_filename)
