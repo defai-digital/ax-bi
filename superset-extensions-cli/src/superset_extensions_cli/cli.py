@@ -558,6 +558,8 @@ def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
 
     if data is not None and not isinstance(data, dict):
         raise click.ClickException(f"Invalid {label}: expected a JSON object.")
+    if data is None:
+        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
 
     return data
 
@@ -567,13 +569,17 @@ def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
     try:
         if not input_file_exists(path, label):
             return None
-        return read_toml(path)
+        data = read_toml(path)
     except click.ClickException:
         raise
     except OSError as ex:
         raise click.ClickException(f"Failed to read {label}: {ex}") from ex
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
+
+    if data is None:
+        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+    return data
 
 
 def get_pyproject_project_table(

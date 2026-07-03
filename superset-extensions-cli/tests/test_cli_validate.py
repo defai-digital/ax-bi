@@ -161,6 +161,30 @@ def test_metadata_loaders_refuse_symlinked_input_parents(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
+    ("loader", "reader_name", "filename", "content"),
+    [
+        (load_json_object, "read_json", "metadata.json", "{}"),
+        (load_toml_object, "read_toml", "pyproject.toml", "[project]\n"),
+    ],
+)
+def test_metadata_loaders_fail_when_read_boundary_changes_after_validation(
+    isolated_filesystem, monkeypatch, loader, reader_name, filename, content
+):
+    """Test metadata loaders fail when reads become unsafe after validation."""
+    metadata_file = isolated_filesystem / filename
+    metadata_file.write_text(content)
+
+    monkeypatch.setattr(f"superset_extensions_cli.cli.{reader_name}", lambda _: None)
+
+    with pytest.raises(
+        click.ClickException,
+        match=f"Failed to read {filename}: path is no longer safe",
+    ):
+        loader(metadata_file, filename)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
     ("loader", "filename", "content"),
     [
         (load_json_object, "metadata.json", "{}"),
