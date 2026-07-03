@@ -208,7 +208,12 @@ def write_text_atomic(path: Path, content: str) -> None:
         ) as temp_file:
             temp_path = Path(temp_file.name)
             temp_file.write(content)
+        temp_identity = get_read_path_identity(temp_path)
+        if temp_identity is None:
+            raise OSError(f"Refusing to promote unsafe temporary file: {temp_path}")
         validate_write_path(path)
+        if get_read_path_identity(temp_path) != temp_identity:
+            raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
         temp_path.replace(path)
         temp_path = None
     except OSError:

@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import pytest
+import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
     read_json,
     read_toml,
@@ -545,6 +546,38 @@ def test_write_text_atomic_rejects_symlinked_parent(isolated_filesystem):
         write_text_atomic(output_dir / "metadata.txt", "updated")
 
     assert not (outside_dir / "metadata.txt").exists()
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_swapped_temporary_file(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a temporary file changed before publish."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    outside_file = isolated_filesystem / "outside.txt"
+    outside_file.write_text("outside")
+    original_validate_write_path = utils.validate_write_path
+
+    def swap_temp_during_final_validation(path):
+        result = original_validate_write_path(path)
+        temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+        if path == output_path and temp_files:
+            temp_path = temp_files[0]
+            if temp_path.exists() and not temp_path.is_symlink():
+                temp_path.unlink()
+                temp_path.symlink_to(outside_file)
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", swap_temp_during_final_validation)
+
+    with pytest.raises(OSError, match="Refusing to promote changed temporary file"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "old"
+    assert outside_file.read_text() == "outside"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
 
 
 # Write JSON Tests
