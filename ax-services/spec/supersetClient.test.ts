@@ -784,6 +784,42 @@ test('listAnnotations records warnings for failed Superset responses', async () 
   });
 });
 
+test('listAnnotations rejects invalid layer IDs before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listAnnotations({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    layerId: 5.5,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+    annotations: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    layerId: 0,
+    columnsRequested: ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'],
+    columnsLoaded: [],
+    warnings: ['annotation list request contains invalid layer id'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('listDashboards maps Superset dashboard list responses', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;

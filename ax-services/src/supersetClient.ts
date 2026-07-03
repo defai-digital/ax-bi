@@ -417,6 +417,13 @@ export class SupersetClient
     request: AnnotationListRequest,
     correlationId?: string,
   ): Promise<AnnotationListResponse> {
+    if (!isPositiveInteger(request.layerId)) {
+      return emptyAnnotationListResponse(
+        withFallbackAnnotationLayerId(request),
+        ['annotation list request contains invalid layer id'],
+      );
+    }
+
     if (!hasValidListPagination(request)) {
       return emptyAnnotationListResponse(withFallbackListPagination(request), [
         'annotation list request contains invalid pagination',
@@ -3204,6 +3211,15 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
     page: isPositiveInteger(request.page) ? request.page : 1,
     pageSize: isListPageSize(request.pageSize) ? request.pageSize : 100,
   } as T;
+}
+
+function withFallbackAnnotationLayerId(
+  request: AnnotationListRequest,
+): AnnotationListRequest {
+  return {
+    ...request,
+    layerId: isNonNegativeInteger(request.layerId) ? request.layerId : 0,
+  };
 }
 
 function isPositiveInteger(value: unknown): value is number {
