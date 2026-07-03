@@ -56,6 +56,21 @@ def test_validate_command_calls_npm_validation(cli_runner):
 
 
 @pytest.mark.cli
+@pytest.mark.parametrize("extension_json", ["{ invalid json", "[]"])
+def test_validate_fails_with_invalid_extension_json(
+    cli_runner, isolated_filesystem, extension_json
+):
+    """Test validate reports malformed extension.json cleanly."""
+    (isolated_filesystem / "extension.json").write_text(extension_json)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Invalid extension.json" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_with_invalid_backend_build_config(
     cli_runner, isolated_filesystem
 ):

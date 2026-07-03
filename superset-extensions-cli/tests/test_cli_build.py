@@ -337,11 +337,21 @@ def test_build_manifest_handles_minimal_extension(isolated_filesystem):
 
 @pytest.mark.unit
 def test_build_manifest_exits_when_extension_json_missing(isolated_filesystem):
-    """Test build_manifest exits when extension.json is missing."""
-    with pytest.raises(SystemExit) as exc_info:
+    """Test build_manifest fails when extension.json is missing."""
+    with pytest.raises(click.ClickException, match="extension.json not found"):
         build_manifest(isolated_filesystem, "remoteEntry.js")
 
-    assert exc_info.value.code == 1
+
+@pytest.mark.unit
+@pytest.mark.parametrize("extension_json", ["{ invalid json", "[]"])
+def test_build_manifest_rejects_invalid_extension_json(
+    isolated_filesystem, extension_json
+):
+    """Test build_manifest fails when extension.json is malformed."""
+    (isolated_filesystem / "extension.json").write_text(extension_json)
+
+    with pytest.raises(click.ClickException, match="Invalid extension.json"):
+        build_manifest(isolated_filesystem, "remoteEntry.js")
 
 
 # Frontend Build Tests

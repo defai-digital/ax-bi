@@ -75,6 +75,20 @@ def test_update_fails_without_extension_json(cli_runner, isolated_filesystem):
 
 
 @pytest.mark.cli
+@pytest.mark.parametrize("extension_json", ["{ invalid json", "[]"])
+def test_update_fails_with_invalid_extension_json(
+    cli_runner, isolated_filesystem, extension_json
+):
+    """Test update reports malformed extension.json cleanly."""
+    (isolated_filesystem / "extension.json").write_text(extension_json)
+
+    result = cli_runner.invoke(app, ["update"])
+
+    assert result.exit_code == 1
+    assert "Invalid extension.json" in result.output
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):

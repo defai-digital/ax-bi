@@ -142,13 +142,28 @@ def clean_dist_frontend(cwd: Path) -> None:
         shutil.rmtree(frontend_dist)
 
 
-def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
-    extension_data = read_json(cwd / "extension.json")
-    if not extension_data:
-        click.secho("❌ extension.json not found.", err=True, fg="red")
-        sys.exit(1)
+def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
+    """Load and validate an extension.json file for CLI commands."""
+    try:
+        extension_data = read_json(path)
+    except Exception as ex:
+        raise click.ClickException(f"Invalid extension.json: {ex}") from ex
 
-    extension = ExtensionConfig.model_validate(extension_data)
+    if extension_data is None:
+        raise click.ClickException("extension.json not found.")
+    if not isinstance(extension_data, dict):
+        raise click.ClickException("Invalid extension.json: expected a JSON object.")
+
+    try:
+        extension = ExtensionConfig.model_validate(extension_data)
+    except Exception as ex:
+        raise click.ClickException(f"Invalid extension.json: {ex}") from ex
+
+    return extension_data, extension
+
+
+def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
+    _, extension = load_extension_config(cwd / "extension.json")
 
     # Generate composite ID from publisher and name
     composite_id = f"{extension.publisher}.{extension.name}"
@@ -368,15 +383,10 @@ def validate() -> None:
     cwd = Path.cwd()
 
     # Validate extension.json exists and is valid
-    extension_data = read_json(cwd / "extension.json")
-    if not extension_data:
-        click.secho("❌ extension.json not found.", err=True, fg="red")
-        sys.exit(1)
-
     try:
-        extension = ExtensionConfig.model_validate(extension_data)
-    except Exception as e:
-        click.secho(f"❌ Invalid extension.json: {e}", err=True, fg="red")
+        extension_data, extension = load_extension_config(cwd / "extension.json")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
     # Validate conventional backend structure if backend directory exists
@@ -509,15 +519,10 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     cwd = Path.cwd()
 
     extension_json_path = cwd / "extension.json"
-    extension_data = read_json(extension_json_path)
-    if not extension_data:
-        click.secho("❌ extension.json not found.", err=True, fg="red")
-        sys.exit(1)
-
     try:
-        extension = ExtensionConfig.model_validate(extension_data)
-    except Exception as e:
-        click.secho(f"❌ Invalid extension.json: {e}", err=True, fg="red")
+        extension_data, extension = load_extension_config(extension_json_path)
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
     # Resolve version: prompt if flag used without value
