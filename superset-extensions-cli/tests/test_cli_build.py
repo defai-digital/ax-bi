@@ -994,6 +994,35 @@ def test_copy_backend_files_rejects_missing_pyproject_toml(
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_symlinked_backend_root(isolated_filesystem):
+    """Test copy_backend_files refuses a symlinked backend root."""
+    outside_backend = isolated_filesystem / "outside-backend"
+    backend_src = outside_backend / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (outside_backend / "pyproject.toml").write_text(pyproject_content)
+    (isolated_filesystem / "backend").symlink_to(outside_backend)
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="backend path is a symlink"):
+        copy_backend_files(isolated_filesystem)
+
+    assert not (isolated_filesystem / "dist" / "backend").exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"

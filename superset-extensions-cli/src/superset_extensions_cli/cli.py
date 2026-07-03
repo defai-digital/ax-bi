@@ -450,7 +450,9 @@ def get_backend_build_patterns(
 def copy_backend_files(cwd: Path) -> None:
     """Copy backend files based on pyproject.toml build configuration (validation already passed)."""
     dist_dir = cwd / "dist"
-    backend_dir = (cwd / "backend").resolve()
+    backend_dir_path = cwd / "backend"
+    require_optional_directory(backend_dir_path, "backend")
+    backend_dir = backend_dir_path.resolve()
 
     # Read build config from pyproject.toml
     pyproject = load_toml_object(
