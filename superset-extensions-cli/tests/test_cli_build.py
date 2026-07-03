@@ -699,6 +699,41 @@ def test_ensure_output_directory_rejects_non_directory_parent(isolated_filesyste
 
 
 @pytest.mark.unit
+def test_ensure_output_directory_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test output directory creation refuses a changed parent directory."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.mkdir()
+    output_path = output_parent / "frontend"
+    saved_parent = isolated_filesystem / "saved-dist"
+    replacement_parent = isolated_filesystem / "replacement-dist"
+    replacement_parent.mkdir()
+    original_mkdir = Path.mkdir
+    swapped = False
+
+    def swap_parent_before_mkdir(path, *args, **kwargs):
+        nonlocal swapped
+        if path == output_path and not swapped:
+            output_parent.rename(saved_parent)
+            replacement_parent.rename(output_parent)
+            swapped = True
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", swap_parent_before_mkdir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create dist/frontend directory: parent path changed",
+    ):
+        ensure_output_directory(output_path, "dist/frontend directory")
+
+    assert saved_parent.is_dir()
+    assert output_path.is_dir()
+
+
+@pytest.mark.unit
 def test_validate_output_file_rejects_symlinked_parent(isolated_filesystem):
     """Test output file validation refuses symlinked parent directories."""
     outside_dir = isolated_filesystem / "outside"

@@ -300,11 +300,24 @@ def cleanup_dist_replacement_backup(backup_root: Path | None) -> None:
 def ensure_output_directory(path: Path, label: str) -> None:
     """Create an output directory after validating the path is safe to write."""
     validate_output_directory(path, label)
+    anchor = get_existing_output_directory_anchor(path)
+    anchor_identity = get_directory_path_identity(anchor)
+    if anchor_identity is None:
+        raise click.ClickException(
+            f"Refusing to create {label}: parent path is unsafe."
+        )
 
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+    current_anchor_identity = get_directory_path_identity(anchor)
+    if (
+        current_anchor_identity is None
+        or current_anchor_identity[:2] != anchor_identity[:2]
+    ):
+        raise click.ClickException(f"Refusing to create {label}: parent path changed.")
+    validate_output_directory(path, label)
 
 
 def validate_output_directory(path: Path, label: str) -> None:
@@ -331,6 +344,11 @@ def validate_output_directory(path: Path, label: str) -> None:
             f"Refusing to write {label}: parent exists but is not a directory: "
             f"{invalid_parent}."
         )
+
+
+def get_existing_output_directory_anchor(path: Path) -> Path:
+    """Return the nearest existing directory boundary for output creation."""
+    return next(parent for parent in (path, *path.parents) if parent.exists())
 
 
 def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
