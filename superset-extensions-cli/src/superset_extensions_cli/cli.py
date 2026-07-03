@@ -44,6 +44,8 @@ from superset_extensions_cli.exceptions import ExtensionNameError
 from superset_extensions_cli.types import ExtensionNames
 from superset_extensions_cli.utils import (
     generate_extension_names,
+    get_directory_node_identity,
+    get_directory_path_identity,
     get_module_federation_name,
     get_read_parent_identity,
     get_read_path_identity,
@@ -849,27 +851,6 @@ def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> 
             pass
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
     return temp_path
-
-
-def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
-    """Return directory identity unless the path crosses a symlink boundary."""
-    if path.is_symlink() or not path.is_dir():
-        return None
-    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
-        return None
-    try:
-        stat = path.stat()
-    except OSError:
-        return None
-    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
-
-
-def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
-    """Return stable directory node identity without content metadata."""
-    identity = get_directory_path_identity(path)
-    if identity is None:
-        return None
-    return identity[:2]
 
 
 def publish_staged_output_directory(
@@ -2879,12 +2860,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 f"Refusing to write bundle: output directory changed: {output}."
             )
         output_parent_identity = get_directory_path_identity(zip_path.parent)
-        if output_parent_identity is None:
+        output_parent_cleanup_identity = get_directory_node_identity(zip_path.parent)
+        if output_parent_identity is None or output_parent_cleanup_identity is None:
             raise click.ClickException(
                 f"Refusing to write bundle: parent directory is unsafe: "
                 f"{zip_path.parent}."
             )
-        output_parent_cleanup_identity = output_parent_identity[:2]
 
         bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]] = []
         for file in dist_dir.rglob("*"):

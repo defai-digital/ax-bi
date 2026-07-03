@@ -122,6 +122,27 @@ def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
+def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
+    """Return directory identity unless the path crosses a symlink boundary."""
+    if path.is_symlink() or not path.is_dir():
+        return None
+    if any(parent.is_symlink() for parent in (path.parent, *path.parent.parents)):
+        return None
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
+    """Return stable directory node identity without content metadata."""
+    identity = get_directory_path_identity(path)
+    if identity is None:
+        return None
+    return identity[:2]
+
+
 def _get_parent_directory_identity(path: Path) -> tuple[int, int] | None:
     """Return parent identity unless it crosses a symlink boundary."""
     parent = Path(path).parent
