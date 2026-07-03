@@ -16,7 +16,7 @@
 # under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -177,7 +177,7 @@ def test_is_test():
         (None, False),
     ],
 )
-def test_parse_boolean_string(test_input: Optional[str], expected: bool):
+def test_parse_boolean_string(test_input: str | None, expected: bool):
     assert parse_boolean_string(test_input) == expected
 
 
@@ -2107,5 +2107,5 @@ def test_sanitize_cookie_token_accepts_valid(token: str) -> None:
         "unicode✓",
     ],
 )
-def test_sanitize_cookie_token_rejects_invalid(token: Optional[str]) -> None:
+def test_sanitize_cookie_token_rejects_invalid(token: str | None) -> None:
     assert sanitize_cookie_token(token) is None

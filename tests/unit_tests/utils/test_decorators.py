@@ -20,7 +20,7 @@ import logging
 import uuid
 from contextlib import nullcontext
 from inspect import isclass
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import call, Mock, patch
 
 import pytest
@@ -67,7 +67,7 @@ def test_debounce() -> None:
     ],
 )
 def test_statsd_gauge(
-    response_value: str, expected_exception: Optional[Exception], expected_result: str
+    response_value: str, expected_exception: Exception | None, expected_result: str
 ) -> None:
     @decorators.statsd_gauge("custom.prefix")
     def my_func(response: ResponseValues, *args: Any, **kwargs: Any) -> str:

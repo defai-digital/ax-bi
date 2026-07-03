@@ -20,7 +20,7 @@ import importlib
 import os
 import unittest.mock
 from collections.abc import Callable, Iterator
-from typing import Any, Union
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -141,7 +141,7 @@ def app_context(app: SupersetApp) -> Iterator[None]:
 
 
 @pytest.fixture
-def full_api_access(mocker: MockerFixture) -> Union[Iterator[None], None]:
+def full_api_access(mocker: MockerFixture) -> Iterator[None] | None:
     """
     Allow full access to the API.
 
