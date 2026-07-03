@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from importlib import util
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from flask import current_app
@@ -63,7 +63,7 @@ class CSVReaderOptions(ReaderOptions, total=False):
 class CSVReader(BaseDataReader):
     def __init__(
         self,
-        options: Optional[CSVReaderOptions] = None,
+        options: CSVReaderOptions | None = None,
     ) -> None:
         options = options or {}
         super().__init__(
