@@ -562,7 +562,13 @@ def publish_staged_output_directory(
 
     backup_root: Path | None = None
     backup_path: Path | None = None
+    backup_identity: tuple[int, int, int, int] | None = None
     if target_path.exists():
+        target_identity = get_directory_path_identity(target_path)
+        if target_identity is None:
+            raise click.ClickException(
+                f"Refusing to back up {label}: target path is unsafe."
+            )
         backup_root = create_temporary_output_directory(
             target_path.parent,
             f".{target_path.name}-backup.",
@@ -579,6 +585,15 @@ def publish_staged_output_directory(
             except click.ClickException:
                 pass
             raise click.ClickException(f"Failed to back up {label}: {ex}") from ex
+        backup_identity = get_directory_path_identity(backup_path)
+        if backup_identity != target_identity:
+            try:
+                remove_output_directory(
+                    backup_root, f"temporary {label} backup directory"
+                )
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: path changed.")
 
     target_replaced = False
     try:
@@ -623,6 +638,8 @@ def publish_staged_output_directory(
 
     if backup_root is not None and backup_path is not None:
         try:
+            if get_directory_path_identity(backup_path) != backup_identity:
+                raise OSError("backup path changed")
             backup_path.replace(target_path)
         except OSError as restore_ex:
             raise click.ClickException(

@@ -951,6 +951,57 @@ def test_publish_staged_output_directory_restores_existing_target_when_staged_di
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_backup_during_rollback(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged directory publishing refuses to restore a changed backup."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    replacement_backup = isolated_filesystem / "replacement-backup"
+    replacement_backup.mkdir()
+    (replacement_backup / "replacement.js").write_text("replacement")
+    saved_backup = isolated_filesystem / "saved-backup"
+    original_replace = Path.replace
+
+    def replace_staged_and_swap_backup(path, target):
+        result = original_replace(path, target)
+        if path == staged_dir and target == output_path:
+            backup_path = next(
+                isolated_filesystem.glob(".frontend-backup.*.tmp/frontend")
+            )
+            backup_path.rename(saved_backup)
+            replacement_backup.rename(backup_path)
+            shutil.rmtree(output_path)
+            output_path.mkdir()
+            (output_path / "changed.js").write_text("changed")
+        return result
+
+    monkeypatch.setattr(Path, "replace", replace_staged_and_swap_backup)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to restore previous dist/frontend directory: "
+            "backup path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(saved_backup / "old.js")
+    assert not output_path.exists()
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
     isolated_filesystem, monkeypatch
 ):
