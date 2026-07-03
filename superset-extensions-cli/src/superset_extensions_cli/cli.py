@@ -335,7 +335,7 @@ def rollback_dist_replacement(
             replacement_identity,
             "rollback cleanup",
         )
-        remove_output_directory(dist_dir, "dist directory")
+        remove_output_directory(dist_dir, "dist directory", replacement_identity)
     except click.ClickException as ex:
         raise click.ClickException(
             f"Failed to clean failed dist directory before restore: {ex.message}"

@@ -41,6 +41,7 @@ from superset_extensions_cli.cli import (
     publish_output_file,
     publish_staged_output_directory,
     remove_output_file,
+    rollback_dist_replacement,
     start_dist_replacement,
     validate_output_file,
     validate_output_file_parent,
@@ -406,10 +407,10 @@ def test_build_command_reports_failed_dist_cleanup_during_rollback(
 
     original_remove_output_directory = cli.remove_output_directory
 
-    def fail_partial_dist_cleanup(path, label):
+    def fail_partial_dist_cleanup(path, label, expected_identity=None):
         if path == previous_dist and label == "dist directory":
             raise click.ClickException("cleanup denied")
-        original_remove_output_directory(path, label)
+        original_remove_output_directory(path, label, expected_identity)
 
     monkeypatch.setattr(cli, "remove_output_directory", fail_partial_dist_cleanup)
 
@@ -478,6 +479,65 @@ def test_build_command_rejects_changed_dist_during_rollback_cleanup(
         "replacement"
     )
     assert failed_dist.exists()
+
+
+@pytest.mark.unit
+def test_rollback_dist_replacement_rejects_changed_dist_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test rollback cleanup refuses a dist path changed after preflight."""
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("failed")
+    replacement_dist = isolated_filesystem / "replacement-dist"
+    replacement_dist.mkdir()
+    (replacement_dist / "manifest.json").write_text("replacement")
+    saved_failed_dist = isolated_filesystem / "saved-failed-dist"
+
+    from superset_extensions_cli import cli
+
+    replacement_identity = get_directory_path_identity(dist_dir)
+    assert replacement_identity is not None
+    original_ensure_directory_identity_unchanged = (
+        cli.ensure_directory_identity_unchanged
+    )
+
+    def swap_dist_after_preflight(path, label, identity, operation="metadata update"):
+        original_ensure_directory_identity_unchanged(
+            path,
+            label,
+            identity,
+            operation,
+        )
+        if path == dist_dir and label == "dist directory":
+            dist_dir.rename(saved_failed_dist)
+            replacement_dist.rename(dist_dir)
+
+    monkeypatch.setattr(
+        cli,
+        "ensure_directory_identity_unchanged",
+        swap_dist_after_preflight,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "Failed to clean failed dist directory before restore: "
+            "Refusing to clean dist directory: path changed"
+        ),
+    ):
+        rollback_dist_replacement(
+            isolated_filesystem,
+            None,
+            None,
+            None,
+            None,
+            replacement_identity,
+        )
+
+    assert (saved_failed_dist / "manifest.json").read_text() == "failed"
+    assert (dist_dir / "manifest.json").read_text() == "replacement"
 
 
 @pytest.mark.cli
