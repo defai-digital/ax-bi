@@ -506,11 +506,7 @@ def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path is outside {root}."
         )
-    symlinked_root = next(
-        (parent for parent in (root, *root.parents) if parent.is_symlink()),
-        None,
-    )
-    if symlinked_root is not None:
+    if (symlinked_root := find_symlinked_path_or_parent(root)) is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent directory is a symlink: "
             f"{symlinked_root}."
@@ -1336,6 +1332,13 @@ def find_symlinked_parent(path: Path) -> Path | None:
         ),
         None,
     )
+
+
+def find_symlinked_path_or_parent(path: Path) -> Path | None:
+    """Return a symlinked path or the first symlinked parent directory."""
+    if path.is_symlink():
+        return path
+    return find_symlinked_parent(path)
 
 
 def require_optional_directory(path: Path, label: str) -> None:

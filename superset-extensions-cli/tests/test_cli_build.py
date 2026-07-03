@@ -2611,6 +2611,27 @@ def test_validate_output_file_parent_rejects_broken_symlinked_root(
 
 
 @pytest.mark.unit
+def test_validate_output_file_parent_rejects_symlinked_root_parent(
+    isolated_filesystem,
+):
+    """Test output file parent validation refuses a symlinked root parent."""
+    outside_dist = isolated_filesystem / "outside-dist"
+    outside_dist.mkdir()
+    dist_link = isolated_filesystem / "dist"
+    dist_link.symlink_to(outside_dist)
+    root = dist_link / "backend"
+    target = root / "src" / "test_org" / "module.py"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file .*parent directory is a symlink",
+    ):
+        validate_output_file_parent(target, root, "backend file src/test_org/module.py")
+
+    assert not (outside_dist / "backend").exists()
+
+
+@pytest.mark.unit
 def test_ensure_output_file_parent_rejects_changed_root(
     isolated_filesystem,
     monkeypatch,
