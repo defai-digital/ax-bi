@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import zipfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -170,6 +171,35 @@ def test_bundle_command_fails_with_malformed_manifest_json(
 
     assert result.exit_code == 1
     assert "Invalid dist/manifest.json" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_reports_manifest_read_errors(
+    mock_build, cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test bundle reports filesystem failures while reading manifest."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    manifest_path = dist_dir / "manifest.json"
+    manifest_path.write_text("{}")
+    original_read_text = Path.read_text
+
+    def fail_manifest_read(path, *args, **kwargs):
+        if path == manifest_path:
+            raise OSError("permission denied")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fail_manifest_read)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to read dist/manifest.json: permission denied" in result.output
+    assert "Invalid dist/manifest.json" not in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
 
 
 @pytest.mark.cli

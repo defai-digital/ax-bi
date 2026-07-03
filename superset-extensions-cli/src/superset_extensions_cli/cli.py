@@ -1291,7 +1291,13 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         sys.exit(1)
 
     try:
-        manifest = Manifest.model_validate_json(manifest_path.read_text())
+        manifest_json = manifest_path.read_text()
+    except OSError as ex:
+        click.secho(f"❌ Failed to read dist/manifest.json: {ex}", err=True, fg="red")
+        sys.exit(1)
+
+    try:
+        manifest = Manifest.model_validate_json(manifest_json)
     except Exception as ex:
         click.secho(f"❌ Invalid dist/manifest.json: {ex}", err=True, fg="red")
         sys.exit(1)
