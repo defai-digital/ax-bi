@@ -43,6 +43,14 @@ fn parse_deep_link(url: &str) -> Option<String> {
         warn!("Unknown deep link scheme: {}", parsed.scheme());
         return None;
     }
+    if parsed.query().is_some() || parsed.fragment().is_some() {
+        warn!("Rejected deep link with query or fragment: {}", url);
+        return None;
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        warn!("Rejected deep link with credentials: {}", url);
+        return None;
+    }
     let host = parsed.host_str()?;
     let path = parsed.path().trim_start_matches('/');
     let route = match host {
@@ -146,5 +154,8 @@ mod tests {
         assert_eq!(parse_deep_link("axbi://chart/1abc"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/../admin"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/.."), None);
+        assert_eq!(parse_deep_link("axbi://dashboard/1?next=/admin"), None);
+        assert_eq!(parse_deep_link("axbi://chart/42#settings"), None);
+        assert_eq!(parse_deep_link("axbi://user@dashboard/1"), None);
     }
 }
