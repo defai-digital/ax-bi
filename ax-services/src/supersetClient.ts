@@ -3749,10 +3749,14 @@ function isHomogeneousListFilterArray(value: unknown[]): boolean {
 
 function isListFilterScalar(value: unknown): boolean {
   return (
-    typeof value === 'string' ||
+    isRisonScalarString(value) ||
     typeof value === 'boolean' ||
     (typeof value === 'number' && Number.isFinite(value))
   );
+}
+
+function isRisonScalarString(value: unknown): value is string {
+  return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value);
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -3783,7 +3787,7 @@ function isAssetSearchLimit(value: unknown): value is number {
 }
 
 function hasValidAssetSearchQuery(value: string): boolean {
-  return value.trim() !== '';
+  return value.trim() !== '' && isRisonScalarString(value);
 }
 
 function hasValidAssetSearchRequestShape(
