@@ -369,6 +369,8 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
 
 def copy_frontend_dist(cwd: Path) -> str:
     dist_dir = cwd / "dist"
+    frontend_output_dir = dist_dir / "frontend"
+    frontend_dist_output_dir = frontend_output_dir / "dist"
     frontend_dist_path = cwd / "frontend" / "dist"
     require_optional_directory(frontend_dist_path, "frontend/dist")
     frontend_dist = frontend_dist_path.resolve()
@@ -401,8 +403,12 @@ def copy_frontend_dist(cwd: Path) -> str:
             f"Multiple remote entry files found: {', '.join(sorted(remote_entries))}."
         )
 
+    ensure_output_directory(dist_dir, "dist directory")
+    ensure_output_directory(frontend_output_dir, "dist/frontend directory")
+    ensure_output_directory(frontend_dist_output_dir, "dist/frontend/dist directory")
+
     for f in frontend_files:
-        tgt = dist_dir / "frontend" / "dist" / f.relative_to(frontend_dist)
+        tgt = frontend_dist_output_dir / f.relative_to(frontend_dist)
         tgt.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, tgt)
 

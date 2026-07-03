@@ -1208,6 +1208,56 @@ def test_copy_frontend_dist_rejects_symlinked_dist_root(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_rejects_symlinked_frontend_output_root(
+    isolated_filesystem,
+):
+    """Test copy_frontend_dist refuses a symlinked dist/frontend output root."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (frontend_dist / "main.js").write_text("main content")
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    outside_output = isolated_filesystem / "outside-frontend-output"
+    outside_output.mkdir()
+    (dist_dir / "frontend").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/frontend directory: path is a symlink",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (outside_output / "dist" / "remoteEntry.abc123.js").exists()
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_symlinked_frontend_dist_output_root(
+    isolated_filesystem,
+):
+    """Test copy_frontend_dist refuses a symlinked dist/frontend/dist output root."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (frontend_dist / "main.js").write_text("main content")
+
+    output_frontend = isolated_filesystem / "dist" / "frontend"
+    output_frontend.mkdir(parents=True)
+    outside_output = isolated_filesystem / "outside-frontend-dist-output"
+    outside_output.mkdir()
+    (output_frontend / "dist").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/frontend/dist directory: path is a symlink",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (outside_output / "remoteEntry.abc123.js").exists()
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_rejects_multiple_remote_entries(isolated_filesystem):
     """Test copy_frontend_dist rejects ambiguous remote entry outputs."""
     frontend_dist = isolated_filesystem / "frontend" / "dist"
