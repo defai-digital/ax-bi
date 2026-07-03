@@ -333,6 +333,20 @@ test('dashboard list request schema is registered in dashboard list contracts', 
     minimum: 1,
   });
   expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.col,
+  ).toEqual({
+    type: 'string',
+    pattern: '^[A-Za-z0-9_]+$',
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.opr,
+  ).toEqual({
+    type: 'string',
+    pattern: '^[A-Za-z0-9_]+$',
+  });
+  expect(
     dashboardListContractSchemas.dashboardListResponseSchema.properties.count,
   ).toEqual({
     type: 'integer',

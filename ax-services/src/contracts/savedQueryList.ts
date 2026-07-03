@@ -77,8 +77,8 @@ const savedQueryFilterSchema = {
   required: ['col', 'opr', 'value'],
   additionalProperties: false,
   properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
+    col: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+    opr: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
     value: {
       anyOf: [
         { type: 'string' },

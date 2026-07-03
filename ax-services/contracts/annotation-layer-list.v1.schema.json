@@ -27,10 +27,12 @@
           "additionalProperties": false,
           "properties": {
             "col": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]+$"
             },
             "opr": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]+$"
             },
             "value": {
               "anyOf": [
