@@ -429,7 +429,10 @@ def publish_staged_output_directory(
         raise click.ClickException(f"Failed to publish {label}: {ex}") from ex
 
     if backup_root is not None:
-        remove_output_directory(backup_root, f"temporary {label} backup directory")
+        try:
+            remove_output_directory(backup_root, f"temporary {label} backup directory")
+        except click.ClickException:
+            pass
 
 
 def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:

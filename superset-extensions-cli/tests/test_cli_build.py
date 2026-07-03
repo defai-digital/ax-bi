@@ -463,6 +463,36 @@ def test_publish_staged_output_directory_rejects_non_directory_staged_path(
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
+    isolated_filesystem, monkeypatch
+):
+    """Test successful staged directory publishing is not undone by backup cleanup."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+
+    from superset_extensions_cli import cli
+
+    original_remove_output_directory = cli.remove_output_directory
+
+    def fail_backup_cleanup(path, label):
+        if path.name.startswith(".frontend-backup."):
+            raise click.ClickException("backup cleanup failed")
+        original_remove_output_directory(path, label)
+
+    monkeypatch.setattr(cli, "remove_output_directory", fail_backup_cleanup)
+
+    publish_staged_output_directory(staged_dir, output_path, "dist/frontend directory")
+
+    assert_file_exists(output_path / "new.js")
+    assert not (output_path / "old.js").exists()
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_validate_output_file_parent_does_not_create_missing_parent(
     isolated_filesystem,
 ):
