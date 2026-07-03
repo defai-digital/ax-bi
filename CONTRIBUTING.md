@@ -16,23 +16,39 @@
  specific language governing permissions and limitations
  under the License.
 -->
-# Contributing to Apache Superset
+# Contributing to AX-BI
 
-Contributions are welcome and are greatly appreciated! Every
-little bit helps, and credit will always be given.
+AX-BI is developed and maintained by DEFAI Private Limited.
 
-## Developer Portal
+At this time, AX-BI is not accepting unsolicited public code contributions or
+pull requests.
 
-All developer and contribution documentation has moved to the Apache Superset Developer Portal:
+## What We Welcome
 
-**[📚 View the Developer Portal →](https://superset.apache.org/developer_portal/)**
+- Bug reports
+- Feature requests and wishlist items
+- Product feedback
+- Reproducible issue reports with logs, screenshots, configuration details, or
+  environment details
 
-The Developer Portal includes comprehensive guides for:
-- [Contributing Overview](https://superset.apache.org/developer_portal/contributing/overview)
-- [Development Setup](https://superset.apache.org/developer_portal/contributing/development-setup)
-- [Submitting Pull Requests](https://superset.apache.org/developer_portal/contributing/submitting-pr)
-- [Contribution Guidelines](https://superset.apache.org/developer_portal/contributing/guidelines)
-- [Code Review Process](https://superset.apache.org/developer_portal/contributing/code-review)
-- [Development How-tos](https://superset.apache.org/developer_portal/contributing/howtos)
+## Code Contributions
 
-Source for the Developer Portal documentation is [located here](https://github.com/apache/superset/tree/master/docs/developer_portal).
+Please do not open unsolicited pull requests against this repository. Public PRs
+may be closed without review if they are not part of a DEFAI-maintained work
+stream or a previously agreed contribution path.
+
+If you want to propose a change, open an issue first with:
+
+- The problem or use case
+- The expected behavior
+- Relevant screenshots, logs, or configuration
+- A minimal reproduction when possible
+
+## Apache Superset Upstream
+
+AX-BI is derived from Apache Superset. If your change applies to upstream
+Superset rather than AX-BI-specific MCP, GenAI BI, desktop, sidecar, or product
+work, consider contributing it to the Apache Superset project through the
+upstream developer portal:
+
+https://superset.apache.org/developer_portal/
