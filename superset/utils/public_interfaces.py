@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from base64 import b85encode
+from collections.abc import Callable
 from hashlib import md5
 from inspect import (
     getmembers,
@@ -26,7 +27,7 @@ from inspect import (
     signature,
 )
 from textwrap import indent
-from typing import Any, Callable
+from typing import Any
 
 
 def compute_hash(obj: Callable[..., Any]) -> str:

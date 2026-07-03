@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Any, Callable, Optional, TYPE_CHECKING, Union
+from collections.abc import Callable
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 from flask import current_app, Flask
 from flask_caching import Cache

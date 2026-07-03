@@ -16,8 +16,8 @@
 # under the License.
 
 import logging
-from collections.abc import Generator
-from typing import Any, Callable, Optional
+from collections.abc import Callable, Generator
+from typing import Any, Optional
 
 import backoff
 

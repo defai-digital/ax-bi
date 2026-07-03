@@ -18,8 +18,9 @@ import copy
 import decimal
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -211,7 +212,7 @@ def dumps(  # pylint: disable=too-many-arguments
     """
 
     results_string = ""
-    dumps_kwargs: Dict[str, Any] = {
+    dumps_kwargs: dict[str, Any] = {
         "default": default,
         "allow_nan": allow_nan,
         "ignore_nan": ignore_nan,

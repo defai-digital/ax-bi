@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Any, Callable, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal, Optional
 
 from flask import current_app
 

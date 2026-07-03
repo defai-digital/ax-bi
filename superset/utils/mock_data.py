@@ -20,9 +20,9 @@ import os
 import random
 import string
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import date, datetime, time, timedelta
-from typing import Any, Callable, cast, Optional, TypedDict
+from typing import Any, cast, Optional, TypedDict
 from uuid import uuid4
 
 import sqlalchemy.sql.sqltypes

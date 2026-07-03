@@ -17,7 +17,8 @@
 
 
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Optional
 
 from flask import current_app as app
 from marshmallow import ValidationError

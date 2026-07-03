@@ -36,7 +36,7 @@ import traceback
 import uuid
 import warnings
 import zlib
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import timedelta
@@ -51,12 +51,12 @@ from timeit import default_timer
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
     cast,
     NamedTuple,
     Optional,
     TYPE_CHECKING,
     TypedDict,
+    TypeGuard,
     TypeVar,
 )
 from urllib.parse import unquote_plus
@@ -81,7 +81,6 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.sql.type_api import Variant
 from sqlalchemy.types import TypeEngine
-from typing_extensions import TypeGuard
 
 from superset.constants import (
     DEFAULT_USER_AGENT,
