@@ -24,7 +24,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from math import ceil
 from types import SimpleNamespace
-from typing import Any, cast, NamedTuple, Optional, TYPE_CHECKING, Union
+from typing import Any, cast, NamedTuple, Optional, TYPE_CHECKING
 
 from flask import current_app, Flask, g, Request
 from flask_appbuilder import Model
@@ -120,13 +120,13 @@ DATABASE_PERM_REGEX = re.compile(r"^\[.+\]\.\(id\:(?P<id>\d+)\)$")
 
 class DatabaseCatalogSchema(NamedTuple):
     database: str
-    catalog: Optional[str]
+    catalog: str | None
     schema: str
 
 
 class _RLSFilterRow(NamedTuple):
     id: int
-    group_key: Optional[str]
+    group_key: str | None
     clause: str
 
 
@@ -409,7 +409,7 @@ def _get_native_filter_targets(filter_config: dict[str, Any]) -> list[dict[str, 
 
 def _native_filter_allowed_targets(
     query_context: "QueryContext", form_data: dict[str, Any]
-) -> Optional[tuple[set[str], set[str]]]:
+) -> tuple[set[str], set[str]] | None:
     """
     Return ``(allowed_columns, allowed_metrics)`` a native-filter data request
     may read, or ``None`` when the request cannot be tied to a native filter on
@@ -561,7 +561,7 @@ def _native_filter_request_modified(query_context: "QueryContext") -> bool:
 
 def _collect_sortable_identifiers(
     stored_chart: "Slice",
-    stored_query_context: Optional[dict[str, Any]],
+    stored_query_context: dict[str, Any] | None,
 ) -> set[str]:
     """
     Frozen column names and metric labels/definitions a guest may legitimately
@@ -604,7 +604,7 @@ def _collect_sortable_identifiers(
 def _orderby_modified(
     query_context: "QueryContext",
     stored_chart: "Slice",
-    stored_query_context: Optional[dict[str, Any]],
+    stored_query_context: dict[str, Any] | None,
 ) -> bool:
     """
     Whether any order-by clause sorts by a term the stored chart does not already
@@ -644,7 +644,7 @@ def _columns_metrics_modified(
     query_context: "QueryContext",
     form_data: dict[str, Any],
     stored_chart: "Slice",
-    stored_query_context: Optional[dict[str, Any]],
+    stored_query_context: dict[str, Any] | None,
 ) -> bool:
     """
     Whether the requested columns/metrics/group-by read beyond what the stored
@@ -1002,7 +1002,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         lm.request_loader(self.request_loader)
         return lm
 
-    def reset_password(self, userid: Union[int, str], password: str) -> None:
+    def reset_password(self, userid: int | str, password: str) -> None:
         """Reset a user's password, clearing the forced-change flag only on a
         self-service reset.
 
@@ -1088,7 +1088,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             },
         )
 
-    def request_loader(self, request: Request) -> Optional[User]:
+    def request_loader(self, request: Request) -> User | None:
         # pylint: disable=import-outside-toplevel
         from superset.extensions import feature_flag_manager
 
@@ -1099,8 +1099,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     def get_catalog_perm(
         self,
         database: str,
-        catalog: Optional[str] = None,
-    ) -> Optional[str]:
+        catalog: str | None = None,
+    ) -> str | None:
         """
         Return the database specific catalog permission.
 
@@ -1116,9 +1116,9 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     def get_schema_perm(
         self,
         database: str,
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
-    ) -> Optional[str]:
+        catalog: str | None = None,
+        schema: str | None = None,
+    ) -> str | None:
         """
         Return the database specific schema permission.
 
@@ -1143,7 +1143,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         return f"[{database}].[{schema}]"
 
     @staticmethod
-    def get_database_perm(database_id: int, database_name: str) -> Optional[str]:
+    def get_database_perm(database_id: int, database_name: str) -> str | None:
         return f"[{database_name}].(id:{database_id})"
 
     @staticmethod
@@ -1151,7 +1151,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         dataset_id: int,
         dataset_name: str,
         database_name: str,
-    ) -> Optional[str]:
+    ) -> str | None:
         return f"[{database_name}].[{dataset_name}](id:{dataset_id})"
 
     def can_access(self, permission_name: str, view_name: str) -> bool:
@@ -1456,7 +1456,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     @staticmethod
     def get_datasource_access_link(  # pylint: disable=unused-argument
         datasource: "BaseDatasource | Explorable",
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the link for the denied Superset datasource.
 
@@ -1521,7 +1521,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
     def get_table_access_link(  # pylint: disable=unused-argument
         self, tables: set["Table"]
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the access link for the denied SQL tables.
 
@@ -1652,7 +1652,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     def get_schemas_accessible_by_user(
         self,
         database: "Database",
-        catalog: Optional[str],
+        catalog: str | None,
         schemas: set[str],
         hierarchical: bool = True,
     ) -> set[str]:
@@ -1784,8 +1784,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         self,
         database: "Database",
         datasource_names: list[DatasourceName],
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> list[DatasourceName]:
         """
         Filter list of SQL tables to the ones accessible by the user.
@@ -1907,7 +1907,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             if pv.permission and pv.view_menu
         }
 
-        def merge_pv(view_menu: str, perm: Optional[str]) -> None:
+        def merge_pv(view_menu: str, perm: str | None) -> None:
             """Create permission view menu only if it doesn't exist"""
             if view_menu and perm and (view_menu, perm) not in all_pvs:
                 self.add_permission_view_menu(view_menu, perm)
@@ -2362,7 +2362,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         connection: Connection,
         old_database_name: str,
         target: "Database",
-    ) -> Optional[ViewMenu]:
+    ) -> ViewMenu | None:
         """
         Helper method that Updates all database access permission
         when a database name changes.
@@ -2513,7 +2513,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         )
 
         try:
-            dataset_perm: Optional[str] = target.get_perm()
+            dataset_perm: str | None = target.get_perm()
             database = target.database
         except DatasetInvalidPermissionEvaluationException:
             logger.warning(
@@ -2537,7 +2537,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             )
 
         # update catalog and schema perms
-        values: dict[str, Optional[str]] = {}
+        values: dict[str, str | None] = {}
 
         if target.schema:
             dataset_schema_perm = self.get_schema_perm(
@@ -2696,8 +2696,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         self,
         mapper: Mapper,
         connection: Connection,
-        catalog_permission_name: Optional[str],
-        schema_permission_name: Optional[str],
+        catalog_permission_name: str | None,
+        schema_permission_name: str | None,
         target: "SqlaTable",
     ) -> None:
         """
@@ -2767,8 +2767,8 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         self,
         mapper: Mapper,
         connection: Connection,
-        old_permission_name: Optional[str],
-        new_permission_name: Optional[str],
+        old_permission_name: str | None,
+        new_permission_name: str | None,
         target: "SqlaTable",
     ) -> None:
         """
@@ -3056,9 +3056,9 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         self,
         mapper: Mapper,
         connection: Connection,
-        permission_name: Optional[str] = None,
-        view_menu_name: Optional[str] = None,
-        pvm: Optional[PermissionView] = None,
+        permission_name: str | None = None,
+        view_menu_name: str | None = None,
+        pvm: PermissionView | None = None,
     ) -> None:
         """
         Helper method that is called by SQLAlchemy events.
@@ -3152,7 +3152,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         mapper: Mapper,
         connection: Connection,
         permission_name: str,
-        view_menu_name: Optional[str],
+        view_menu_name: str | None,
     ) -> None:
         """
         Helper method that is called by SQLAlchemy events.
@@ -3331,10 +3331,10 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         query_context: Optional["QueryContext"] = None,
         table: Optional["Table"] = None,
         viz: Optional["BaseViz"] = None,
-        sql: Optional[str] = None,
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
-        template_params: Optional[dict[str, Any]] = None,
+        sql: str | None = None,
+        catalog: str | None = None,
+        schema: str | None = None,
+        template_params: dict[str, Any] | None = None,
         force_dataset_match: bool = False,
     ) -> None:
         """
@@ -3678,7 +3678,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             # would otherwise grant it.  Tokens without the ``datasets`` claim
             # retain the existing behaviour (all dashboard datasets accessible).
             if guest_user := self.get_current_guest_user_if_guest():
-                allowed_datasets: Optional[list[int]] = guest_user.guest_token.get(
+                allowed_datasets: list[int] | None = guest_user.guest_token.get(
                     "datasets"
                 )
                 if allowed_datasets is not None and (
@@ -3741,7 +3741,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
             raise SupersetSecurityException(self.get_chart_access_error_object(chart))
 
-    def get_user_by_username(self, username: str) -> Optional[User]:
+    def get_user_by_username(self, username: str) -> User | None:
         """
         Retrieves a user by it's username case sensitive. Optional session parameter
         utility method normally useful for celery tasks where the session
@@ -3755,9 +3755,9 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
     def find_user_with_relationships(
         self,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-    ) -> Optional[User]:
+        username: str | None = None,
+        email: str | None = None,
+    ) -> User | None:
         """Find a user with roles and group roles eagerly loaded.
 
         Mirrors FAB's ``SecurityManager.find_user``
@@ -3816,7 +3816,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
     def get_anonymous_user(self) -> User:
         return AnonymousUserMixin()
 
-    def get_user_roles(self, user: Optional[User] = None) -> list[Role]:
+    def get_user_roles(self, user: User | None = None) -> list[Role]:
         if not user:
             user = g.user
         if user.is_anonymous:
@@ -4079,7 +4079,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         user: GuestTokenUser,
         resources: GuestTokenResources,
         rls: list[GuestTokenRlsRule],
-        datasets: Optional[list[int]] = None,
+        datasets: list[int] | None = None,
     ) -> bytes:
         secret = get_conf()["GUEST_TOKEN_JWT_SECRET"]
         algo = get_conf()["GUEST_TOKEN_JWT_ALGO"]
@@ -4118,7 +4118,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
             return DEFAULT_GUEST_TOKEN_REVOCATION_VERSION
         return get_current_guest_token_revocation_version()
 
-    def get_guest_user_from_request(self, req: Request) -> Optional[GuestUser]:
+    def get_guest_user_from_request(self, req: Request) -> GuestUser | None:
         """
         If there is a guest token in the request (used for embedded),
         parses the token and returns the guest user.
@@ -4233,7 +4233,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
     @transaction()
     def revoke_guest_token_access(
-        self, embedded_uuid: str, before: Optional[int] = None
+        self, embedded_uuid: str, before: int | None = None
     ) -> None:
         """Revoke all guest tokens issued for an embedded dashboard before
         ``before`` (epoch seconds, default: now). Subsequent tokens are
@@ -4272,7 +4272,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         )
 
     @staticmethod
-    def is_guest_user(user: Optional[Any] = None) -> bool:
+    def is_guest_user(user: Any | None = None) -> bool:
         # pylint: disable=import-outside-toplevel
         from superset import is_feature_enabled
 
@@ -4286,7 +4286,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
         return hasattr(user, "is_guest_user") and user.is_guest_user
 
-    def get_current_guest_user_if_guest(self) -> Optional[GuestUser]:
+    def get_current_guest_user_if_guest(self) -> GuestUser | None:
         user = getattr(g, "user", None)
         if isinstance(user, GuestUser):
             return user
