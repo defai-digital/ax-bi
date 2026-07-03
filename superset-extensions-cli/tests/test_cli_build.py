@@ -1251,6 +1251,43 @@ def test_remove_output_file_rejects_changed_path_before_unlink(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_backup_cleanup_root(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backup cleanup refuses a changed temporary file backup root."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    replacement_backup_root = isolated_filesystem / "replacement-backup-root"
+    replacement_backup_root.mkdir()
+    (replacement_backup_root / "replacement.txt").write_text("replacement")
+    saved_backup_root = isolated_filesystem / "saved-backup-root"
+    swapped_backup_root: Path | None = None
+    original_replace = Path.replace
+
+    def swap_backup_root_after_publish(path, target):
+        nonlocal swapped_backup_root
+        result = original_replace(path, target)
+        if path == staged_file and target == output_path:
+            backup_root = next(isolated_filesystem.glob(".bundle.supx-backup.*.tmp"))
+            backup_root.rename(saved_backup_root)
+            replacement_backup_root.rename(backup_root)
+            swapped_backup_root = backup_root
+        return result
+
+    monkeypatch.setattr(Path, "replace", swap_backup_root_after_publish)
+
+    publish_output_file(staged_file, output_path, "bundle")
+
+    assert swapped_backup_root is not None
+    assert output_path.read_text() == "new bundle"
+    assert (swapped_backup_root / "replacement.txt").read_text() == "replacement"
+    assert (saved_backup_root / "bundle.supx").read_text() == "original bundle"
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):
