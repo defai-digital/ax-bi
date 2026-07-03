@@ -19,7 +19,7 @@ pub fn is_internal_route(path: &str) -> bool {
     path.starts_with('/')
         && !path.starts_with("//")
         && !path.contains('\\')
-        && !path.chars().any(char::is_control)
+        && !path.chars().any(char::is_whitespace)
 }
 
 pub fn build_navigation_script(path: &str) -> Result<String, String> {
@@ -45,6 +45,7 @@ mod tests {
         assert!(!is_internal_route("javascript:alert(1)"));
         assert!(!is_internal_route("/\\example.com"));
         assert!(!is_internal_route("/superset\\welcome"));
+        assert!(!is_internal_route("/bad route"));
         assert!(!is_internal_route("/bad\nroute"));
     }
 
