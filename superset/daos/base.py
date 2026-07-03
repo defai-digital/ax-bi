@@ -74,7 +74,7 @@ class ColumnOperatorEnum(str, Enum):
     def apply(self, column: Any, value: Any) -> Any:
         op_func = operator_map.get(self)
         if not op_func:
-            raise ValueError("Unsupported operator: %s" % self)
+            raise ValueError(f"Unsupported operator: {self}")
         return op_func(column, value)
 
 
@@ -404,7 +404,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         except SQLAlchemyError as ex:
             model_name = cls.model_cls.__name__ if cls.model_cls else "Unknown"
             raise DAOFindFailedError(
-                "Failed to find %s with ids: %s" % (model_name, model_ids)
+                f"Failed to find {model_name} with ids: {model_ids}"
             ) from ex
 
         return results
@@ -573,8 +573,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
                     "Invalid filter: column '%s' does not exist on %s", col, model_name
                 )
                 raise ValueError(
-                    "Invalid filter: column '%s' does not exist on %s"
-                    % (col, model_name)
+                    f"Invalid filter: column '{col}' does not exist on {model_name}"
                 )
             column = getattr(cls.model_cls, col)
             try:
