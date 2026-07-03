@@ -469,10 +469,14 @@ test('health endpoint returns service metadata', async () => {
     contractVersion: 'runtime.v1',
     service: 'ax-services',
     status: 'ok',
-    timestamp: expect.any(String),
+    timestamp: expect.stringMatching(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    ),
     version: expect.any(String),
-    nodeVersion: expect.stringMatching(/^v\d+\./),
-    platform: expect.any(String),
+    nodeVersion: expect.stringMatching(/^v\d+\.\d+\.\d+/),
+    platform: expect.stringMatching(
+      /^(aix|android|darwin|freebsd|haiku|linux|openbsd|sunos|win32|cygwin|netbsd)$/,
+    ),
     uptimeSeconds: expect.any(Number),
   });
 });

@@ -24,7 +24,9 @@
         "const": "ok"
       },
       "timestamp": {
-        "type": "string"
+        "type": "string",
+        "format": "date-time",
+        "maxLength": 32
       },
       "version": {
         "type": "string",
@@ -33,10 +35,24 @@
         "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
       },
       "nodeVersion": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^v\\d+\\.\\d+\\.\\d+"
       },
       "platform": {
-        "type": "string"
+        "enum": [
+          "aix",
+          "android",
+          "darwin",
+          "freebsd",
+          "haiku",
+          "linux",
+          "openbsd",
+          "sunos",
+          "win32",
+          "cygwin",
+          "netbsd"
+        ]
       },
       "uptimeSeconds": {
         "type": "number"

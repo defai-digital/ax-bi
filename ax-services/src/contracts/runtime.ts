@@ -34,6 +34,31 @@ const httpStatusCodeSchema = {
   minimum: 100,
   maximum: 599,
 } as const;
+const isoTimestampSchema = {
+  type: 'string',
+  format: 'date-time',
+  maxLength: 32,
+} as const;
+const nodeVersionSchema = {
+  type: 'string',
+  maxLength: 64,
+  pattern: '^v\\d+\\.\\d+\\.\\d+',
+} as const;
+const nodePlatformSchema = {
+  enum: [
+    'aix',
+    'android',
+    'darwin',
+    'freebsd',
+    'haiku',
+    'linux',
+    'openbsd',
+    'sunos',
+    'win32',
+    'cygwin',
+    'netbsd',
+  ],
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -157,15 +182,15 @@ export const healthResponseSchema = {
     contractVersion: { const: RUNTIME_CONTRACT_VERSION },
     service: { const: 'ax-services' },
     status: { const: 'ok' },
-    timestamp: { type: 'string' },
+    timestamp: isoTimestampSchema,
     version: {
       type: 'string',
       minLength: 1,
       maxLength: 128,
       pattern: '^[^\\u0000-\\u001f\\u007f]+$',
     },
-    nodeVersion: { type: 'string' },
-    platform: { type: 'string' },
+    nodeVersion: nodeVersionSchema,
+    platform: nodePlatformSchema,
     uptimeSeconds: { type: 'number' },
   },
 } as const;
