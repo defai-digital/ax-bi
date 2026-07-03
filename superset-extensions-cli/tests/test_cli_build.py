@@ -1549,10 +1549,10 @@ def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
 
     original_remove_output_directory = cli.remove_output_directory
 
-    def fail_backup_cleanup(path, label):
+    def fail_backup_cleanup(path, label, expected_identity=None):
         if path.name.startswith(".frontend-backup."):
             raise click.ClickException("backup cleanup failed")
-        original_remove_output_directory(path, label)
+        original_remove_output_directory(path, label, expected_identity)
 
     monkeypatch.setattr(cli, "remove_output_directory", fail_backup_cleanup)
 
@@ -1561,6 +1561,45 @@ def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
     assert_file_exists(output_path / "new.js")
     assert not (output_path / "old.js").exists()
     assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_backup_cleanup_root(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backup cleanup refuses a changed temporary backup root."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    replacement_backup_root = isolated_filesystem / "replacement-backup-root"
+    replacement_backup_root.mkdir()
+    (replacement_backup_root / "replacement.txt").write_text("replacement")
+    saved_backup_root = isolated_filesystem / "saved-backup-root"
+    swapped_backup_root: Path | None = None
+    original_replace = Path.replace
+
+    def swap_backup_root_after_publish(path, target):
+        nonlocal swapped_backup_root
+        result = original_replace(path, target)
+        if path == staged_dir and target == output_path:
+            backup_root = next(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+            backup_root.rename(saved_backup_root)
+            replacement_backup_root.rename(backup_root)
+            swapped_backup_root = backup_root
+        return result
+
+    monkeypatch.setattr(Path, "replace", swap_backup_root_after_publish)
+
+    publish_staged_output_directory(staged_dir, output_path, "dist/frontend directory")
+
+    assert swapped_backup_root is not None
+    assert_file_exists(output_path / "new.js")
+    assert_file_exists(swapped_backup_root / "replacement.txt")
+    assert_file_exists(saved_backup_root / "frontend" / "old.js")
 
 
 @pytest.mark.unit

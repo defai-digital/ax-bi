@@ -702,6 +702,7 @@ def publish_staged_output_directory(
     backup_root: Path | None = None
     backup_path: Path | None = None
     backup_identity: tuple[int, int, int, int] | None = None
+    backup_root_identity: tuple[int, int, int, int] | None = None
     if target_path.exists():
         target_identity = get_directory_path_identity(target_path)
         if target_identity is None:
@@ -714,10 +715,17 @@ def publish_staged_output_directory(
             f"temporary {label} backup directory",
         )
         backup_path = backup_root / target_path.name
+        backup_root_identity = get_directory_path_identity(backup_root)
+        if backup_root_identity is None:
+            raise click.ClickException(
+                f"Refusing to back up {label}: backup root path is unsafe."
+            )
         if get_directory_path_identity(target_path) != target_identity:
             try:
                 remove_output_directory(
-                    backup_root, f"temporary {label} backup directory"
+                    backup_root,
+                    f"temporary {label} backup directory",
+                    backup_root_identity,
                 )
             except click.ClickException:
                 pass
@@ -727,7 +735,9 @@ def publish_staged_output_directory(
         except OSError as ex:
             try:
                 remove_output_directory(
-                    backup_root, f"temporary {label} backup directory"
+                    backup_root,
+                    f"temporary {label} backup directory",
+                    backup_root_identity,
                 )
             except click.ClickException:
                 pass
@@ -736,7 +746,9 @@ def publish_staged_output_directory(
         if backup_identity != target_identity:
             try:
                 remove_output_directory(
-                    backup_root, f"temporary {label} backup directory"
+                    backup_root,
+                    f"temporary {label} backup directory",
+                    backup_root_identity,
                 )
             except click.ClickException:
                 pass
@@ -761,7 +773,9 @@ def publish_staged_output_directory(
         if backup_root is not None:
             try:
                 remove_output_directory(
-                    backup_root, f"temporary {label} backup directory"
+                    backup_root,
+                    f"temporary {label} backup directory",
+                    backup_root_identity,
                 )
             except click.ClickException:
                 pass
@@ -796,7 +810,11 @@ def publish_staged_output_directory(
                 f"{label}: {restore_ex}"
             ) from restore_ex
         try:
-            remove_output_directory(backup_root, f"temporary {label} backup directory")
+            remove_output_directory(
+                backup_root,
+                f"temporary {label} backup directory",
+                backup_root_identity,
+            )
         except click.ClickException:
             pass
 
