@@ -882,7 +882,12 @@ def publish_staged_output_directory(
     raise publish_error
 
 
-def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:
+def publish_output_file(
+    staged_path: Path,
+    target_path: Path,
+    label: str,
+    expected_staged_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     """Replace an output file with a staged file."""
     if staged_path.is_symlink():
         raise click.ClickException(
@@ -896,6 +901,13 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
     if staged_identity is None:
         raise click.ClickException(
             f"Refusing to publish {label}: staged path is not safe to read."
+        )
+    if (
+        expected_staged_identity is not None
+        and staged_identity != expected_staged_identity
+    ):
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path changed before publish."
         )
     validate_output_file(target_path, label)
 
@@ -2495,8 +2507,9 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             raise click.ClickException(
                 "Refusing to publish bundle: temporary archive path changed."
             )
+        temp_identity = current_temp_identity
         validate_bundle_output_path(zip_path)
-        publish_output_file(temp_path, zip_path, "bundle")
+        publish_output_file(temp_path, zip_path, "bundle", temp_identity)
         temp_path = None
     except Exception as ex:
         if temp_path is not None and temp_identity is not None:

@@ -577,6 +577,48 @@ def test_bundle_rejects_changed_temp_archive_before_publish(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_temp_archive_content_changed_before_publish(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses a temporary archive rewritten before publish."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+
+    from superset_extensions_cli import cli
+
+    original_validate_bundle_output_path = cli.validate_bundle_output_path
+    validation_calls = 0
+
+    def rewrite_temp_archive_before_publish(path):
+        nonlocal validation_calls
+        original_validate_bundle_output_path(path)
+        validation_calls += 1
+        if validation_calls == 2:
+            temp_archive = next(
+                isolated_filesystem.glob(".test-extension-*.supx.*.tmp")
+            )
+            temp_archive.write_text("rewritten temporary archive")
+
+    monkeypatch.setattr(
+        cli,
+        "validate_bundle_output_path",
+        rewrite_temp_archive_before_publish,
+    )
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "staged path changed before publish" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_output_parent_changed_before_temp_creation(
     mock_build,
     cli_runner,
