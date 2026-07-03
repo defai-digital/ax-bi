@@ -2054,8 +2054,9 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
       typeof item.allow_run_async === 'boolean'
         ? item.allow_run_async
         : undefined,
-    cacheTimeout:
-      typeof item.cache_timeout === 'number' ? item.cache_timeout : undefined,
+    cacheTimeout: isCacheTimeout(item.cache_timeout)
+      ? item.cache_timeout
+      : undefined,
     configurationMethod:
       typeof item.configuration_method === 'string'
         ? item.configuration_method
@@ -3071,8 +3072,16 @@ function isSupersetId(value: unknown): value is number {
   return isNonNegativeInteger(value);
 }
 
+function isCacheTimeout(value: unknown): value is number {
+  return isInteger(value) && value >= -1;
+}
+
+function isInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value);
+}
+
 function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+  return isInteger(value) && value >= 0;
 }
 
 function isNonNegativeFiniteNumber(value: unknown): value is number {

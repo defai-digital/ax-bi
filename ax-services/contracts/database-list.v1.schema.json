@@ -161,7 +161,8 @@
               "type": "boolean"
             },
             "cacheTimeout": {
-              "type": "number"
+              "type": "integer",
+              "minimum": -1
             },
             "configurationMethod": {
               "type": "string"

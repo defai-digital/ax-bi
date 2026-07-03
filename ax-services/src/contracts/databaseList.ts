@@ -118,7 +118,7 @@ const databaseListItemSchema = {
     allowDml: { type: 'boolean' },
     allowFileUpload: { type: 'boolean' },
     allowRunAsync: { type: 'boolean' },
-    cacheTimeout: { type: 'number' },
+    cacheTimeout: { type: 'integer', minimum: -1 },
     configurationMethod: { type: 'string' },
     forceCtasSchema: { type: 'string' },
     impersonateUser: { type: 'boolean' },

@@ -1423,6 +1423,68 @@ test('listDatabases maps Superset database list responses', async () => {
   });
 });
 
+test('listDatabases validates cache timeout values', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 4,
+      result: [
+        {
+          id: 13,
+          database_name: 'disabled-cache',
+          cache_timeout: -1,
+        },
+        {
+          id: 14,
+          database_name: 'fractional-cache',
+          cache_timeout: 10.5,
+        },
+        {
+          id: 15,
+          database_name: 'invalid-negative-cache',
+          cache_timeout: -2,
+        },
+        {
+          id: 16,
+          database_name: 'normal-cache',
+          cache_timeout: 300,
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDatabases({
+    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+  });
+
+  expect(result.databases).toEqual([
+    {
+      id: 13,
+      databaseName: 'disabled-cache',
+      cacheTimeout: -1,
+    },
+    {
+      id: 14,
+      databaseName: 'fractional-cache',
+    },
+    {
+      id: 15,
+      databaseName: 'invalid-negative-cache',
+    },
+    {
+      id: 16,
+      databaseName: 'normal-cache',
+      cacheTimeout: 300,
+    },
+  ]);
+  expect(result.columnsLoaded).toContain('cache_timeout');
+});
+
 test('listDatabases records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {
