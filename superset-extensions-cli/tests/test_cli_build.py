@@ -24,6 +24,7 @@ from unittest.mock import Mock, patch
 
 import click
 import pytest
+import superset_extensions_cli.cli as cli
 from superset_core.extensions.types import Manifest
 from superset_extensions_cli.cli import (
     app,
@@ -2595,6 +2596,74 @@ def test_write_manifest_reports_write_errors(isolated_filesystem, monkeypatch):
         write_manifest(isolated_filesystem, manifest)
 
     assert manifest_path.read_text() == "original manifest"
+    assert list(manifest_path.parent.glob(".manifest.json.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_manifest_rejects_changed_existing_manifest_before_write(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test manifest writes bind the final write to the validated file."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    manifest_path = isolated_filesystem / "dist" / "manifest.json"
+    manifest_path.parent.mkdir()
+    manifest_path.write_text("original manifest")
+    original_write_text_atomic = cli.write_text_atomic
+
+    def change_manifest_before_write(path, content, **kwargs):
+        if path == manifest_path:
+            manifest_path.write_text("changed manifest")
+        return original_write_text_atomic(path, content, **kwargs)
+
+    monkeypatch.setattr(cli, "write_text_atomic", change_manifest_before_write)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to write dist/manifest.json: Refusing to promote through changed target",
+    ):
+        write_manifest(isolated_filesystem, manifest)
+
+    assert manifest_path.read_text() == "changed manifest"
+    assert list(manifest_path.parent.glob(".manifest.json.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_manifest_rejects_created_manifest_before_write(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test manifest writes refuse a target created after missing preflight."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    manifest_path = isolated_filesystem / "dist" / "manifest.json"
+    original_write_text_atomic = cli.write_text_atomic
+
+    def create_manifest_before_write(path, content, **kwargs):
+        if path == manifest_path:
+            manifest_path.write_text("created manifest")
+        return original_write_text_atomic(path, content, **kwargs)
+
+    monkeypatch.setattr(cli, "write_text_atomic", create_manifest_before_write)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to write dist/manifest.json: Refusing to promote over existing target",
+    ):
+        write_manifest(isolated_filesystem, manifest)
+
+    assert manifest_path.read_text() == "created manifest"
     assert list(manifest_path.parent.glob(".manifest.json.*.tmp")) == []
 
 

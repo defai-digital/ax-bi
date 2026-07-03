@@ -1465,10 +1465,19 @@ def write_manifest(cwd: Path, manifest: Manifest) -> None:
     ensure_output_directory(dist_dir, "dist directory")
     manifest_path = dist_dir / "manifest.json"
     validate_output_file(manifest_path, "dist/manifest.json")
+    manifest_identity = get_read_path_identity(manifest_path)
+    if manifest_identity is None and (
+        manifest_path.exists() or manifest_path.is_symlink()
+    ):
+        raise click.ClickException(
+            "Refusing to write dist/manifest.json: path changed."
+        )
     try:
         write_text_atomic(
             manifest_path,
             manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True),
+            expected_existing_identity=manifest_identity,
+            require_missing=manifest_identity is None,
         )
     except OSError as ex:
         raise click.ClickException(f"Failed to write dist/manifest.json: {ex}") from ex
