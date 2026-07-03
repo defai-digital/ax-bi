@@ -277,27 +277,35 @@ def test_validate_npm_does_not_catch_other_subprocess_exceptions(
 @pytest.mark.unit
 @patch("shutil.which")
 @patch("subprocess.run")
-def test_validate_npm_with_malformed_version_output_raises_error(mock_run, mock_which):
-    """Test validate_npm raises ValueError with malformed version output."""
+def test_validate_npm_with_malformed_version_output_exits_cleanly(
+    mock_run, mock_which, capsys
+):
+    """Test validate_npm exits cleanly with malformed version output."""
     mock_which.return_value = "/usr/bin/npm"
     mock_run.return_value = Mock(returncode=0, stdout="not-a-version\n", stderr="")
 
-    # semver.Version.parse will raise ValueError for malformed version
-    with pytest.raises(ValueError):
+    with pytest.raises(SystemExit) as exc_info:
         validate_npm()
+
+    assert exc_info.value.code == 1
+    assert "Failed to parse npm version" in capsys.readouterr().err
 
 
 @pytest.mark.unit
 @patch("shutil.which")
 @patch("subprocess.run")
-def test_validate_npm_with_empty_version_output_raises_error(mock_run, mock_which):
-    """Test validate_npm raises ValueError with empty version output."""
+def test_validate_npm_with_empty_version_output_exits_cleanly(
+    mock_run, mock_which, capsys
+):
+    """Test validate_npm exits cleanly with empty version output."""
     mock_which.return_value = "/usr/bin/npm"
     mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-    # semver.Version.parse will raise ValueError for empty version
-    with pytest.raises(ValueError):
+    with pytest.raises(SystemExit) as exc_info:
         validate_npm()
+
+    assert exc_info.value.code == 1
+    assert "Failed to parse npm version" in capsys.readouterr().err
 
 
 # Version Consistency Tests
