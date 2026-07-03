@@ -368,36 +368,14 @@ export class SupersetClient
     request: AnnotationLayerListRequest,
     correlationId?: string,
   ): Promise<AnnotationLayerListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyAnnotationLayerListResponse(
-        withFallbackListPagination(request),
-        ['annotation layer list request contains invalid pagination'],
-      );
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyAnnotationLayerListResponse(request, [
-        'annotation layer list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyAnnotationLayerListResponse(request, [
-        'annotation layer list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyAnnotationLayerListResponse(request, [
-        'annotation layer list request contains invalid filters',
-      ]);
-    }
-    if (
-      !hasExpectedContractVersion(
-        request,
-        ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
-      )
-    ) {
-      return emptyAnnotationLayerListResponse(request, [
-        'annotation layer list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'annotation layer',
+      ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+      emptyAnnotationLayerListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildAnnotationLayerListUrl(request);
@@ -452,32 +430,14 @@ export class SupersetClient
       );
     }
 
-    if (!hasValidListPagination(request)) {
-      return emptyAnnotationListResponse(withFallbackListPagination(request), [
-        'annotation list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyAnnotationListResponse(request, [
-        'annotation list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyAnnotationListResponse(request, [
-        'annotation list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyAnnotationListResponse(request, [
-        'annotation list request contains invalid filters',
-      ]);
-    }
-    if (
-      !hasExpectedContractVersion(request, ANNOTATION_LIST_CONTRACT_VERSION)
-    ) {
-      return emptyAnnotationListResponse(request, [
-        'annotation list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'annotation',
+      ANNOTATION_LIST_CONTRACT_VERSION,
+      emptyAnnotationListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildAnnotationListUrl(request);
@@ -662,35 +622,15 @@ export class SupersetClient
     request: DashboardListRequest,
     correlationId?: string,
   ): Promise<DashboardListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyDashboardListResponse(withFallbackListPagination(request), [
-        'dashboard list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyDashboardListResponse(request, [
-        'dashboard list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyDashboardListResponse(request, [
-        'dashboard list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyDashboardListResponse(request, [
-        'dashboard list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, DASHBOARD_LIST_CONTRACT_VERSION)) {
-      return emptyDashboardListResponse(request, [
-        'dashboard list request contains invalid contract version',
-      ]);
-    }
-    if (!hasValidOwnershipFlags(request, true)) {
-      return emptyDashboardListResponse(request, [
-        'dashboard list request contains invalid ownership flags',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'dashboard',
+      DASHBOARD_LIST_CONTRACT_VERSION,
+      emptyDashboardListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildDashboardListUrl(request);
@@ -738,35 +678,15 @@ export class SupersetClient
     request: ChartListRequest,
     correlationId?: string,
   ): Promise<ChartListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyChartListResponse(withFallbackListPagination(request), [
-        'chart list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyChartListResponse(request, [
-        'chart list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyChartListResponse(request, [
-        'chart list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyChartListResponse(request, [
-        'chart list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, CHART_LIST_CONTRACT_VERSION)) {
-      return emptyChartListResponse(request, [
-        'chart list request contains invalid contract version',
-      ]);
-    }
-    if (!hasValidOwnershipFlags(request, true)) {
-      return emptyChartListResponse(request, [
-        'chart list request contains invalid ownership flags',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'chart',
+      CHART_LIST_CONTRACT_VERSION,
+      emptyChartListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildChartListUrl(request);
@@ -814,35 +734,15 @@ export class SupersetClient
     request: DatasetListRequest,
     correlationId?: string,
   ): Promise<DatasetListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyDatasetListResponse(withFallbackListPagination(request), [
-        'dataset list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyDatasetListResponse(request, [
-        'dataset list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyDatasetListResponse(request, [
-        'dataset list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyDatasetListResponse(request, [
-        'dataset list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, DATASET_LIST_CONTRACT_VERSION)) {
-      return emptyDatasetListResponse(request, [
-        'dataset list request contains invalid contract version',
-      ]);
-    }
-    if (!hasValidOwnershipFlags(request, true)) {
-      return emptyDatasetListResponse(request, [
-        'dataset list request contains invalid ownership flags',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'dataset',
+      DATASET_LIST_CONTRACT_VERSION,
+      emptyDatasetListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildDatasetListUrl(request);
@@ -890,35 +790,15 @@ export class SupersetClient
     request: DatabaseListRequest,
     correlationId?: string,
   ): Promise<DatabaseListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyDatabaseListResponse(withFallbackListPagination(request), [
-        'database list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyDatabaseListResponse(request, [
-        'database list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyDatabaseListResponse(request, [
-        'database list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyDatabaseListResponse(request, [
-        'database list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, DATABASE_LIST_CONTRACT_VERSION)) {
-      return emptyDatabaseListResponse(request, [
-        'database list request contains invalid contract version',
-      ]);
-    }
-    if (!hasValidOwnershipFlags(request, false)) {
-      return emptyDatabaseListResponse(request, [
-        'database list request contains invalid ownership flags',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'database',
+      DATABASE_LIST_CONTRACT_VERSION,
+      emptyDatabaseListResponse,
+      { requiresOwnedByMeFlag: false },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildDatabaseListUrl(request);
@@ -966,30 +846,14 @@ export class SupersetClient
     request: QueryListRequest,
     correlationId?: string,
   ): Promise<QueryListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyQueryListResponse(withFallbackListPagination(request), [
-        'query list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyQueryListResponse(request, [
-        'query list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyQueryListResponse(request, [
-        'query list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyQueryListResponse(request, [
-        'query list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, QUERY_LIST_CONTRACT_VERSION)) {
-      return emptyQueryListResponse(request, [
-        'query list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'query',
+      QUERY_LIST_CONTRACT_VERSION,
+      emptyQueryListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildQueryListUrl(request);
@@ -1037,32 +901,14 @@ export class SupersetClient
     request: SavedQueryListRequest,
     correlationId?: string,
   ): Promise<SavedQueryListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptySavedQueryListResponse(withFallbackListPagination(request), [
-        'saved query list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptySavedQueryListResponse(request, [
-        'saved query list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptySavedQueryListResponse(request, [
-        'saved query list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptySavedQueryListResponse(request, [
-        'saved query list request contains invalid filters',
-      ]);
-    }
-    if (
-      !hasExpectedContractVersion(request, SAVED_QUERY_LIST_CONTRACT_VERSION)
-    ) {
-      return emptySavedQueryListResponse(request, [
-        'saved query list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'saved query',
+      SAVED_QUERY_LIST_CONTRACT_VERSION,
+      emptySavedQueryListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildSavedQueryListUrl(request);
@@ -1110,30 +956,14 @@ export class SupersetClient
     request: ReportListRequest,
     correlationId?: string,
   ): Promise<ReportListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyReportListResponse(withFallbackListPagination(request), [
-        'report list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyReportListResponse(request, [
-        'report list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyReportListResponse(request, [
-        'report list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyReportListResponse(request, [
-        'report list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, REPORT_LIST_CONTRACT_VERSION)) {
-      return emptyReportListResponse(request, [
-        'report list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'report',
+      REPORT_LIST_CONTRACT_VERSION,
+      emptyReportListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildReportListUrl(request);
@@ -1181,30 +1011,14 @@ export class SupersetClient
     request: RoleListRequest,
     correlationId?: string,
   ): Promise<RoleListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyRoleListResponse(withFallbackListPagination(request), [
-        'role list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyRoleListResponse(request, [
-        'role list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyRoleListResponse(request, [
-        'role list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyRoleListResponse(request, [
-        'role list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, ROLE_LIST_CONTRACT_VERSION)) {
-      return emptyRoleListResponse(request, [
-        'role list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'role',
+      ROLE_LIST_CONTRACT_VERSION,
+      emptyRoleListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildRoleListUrl(request);
@@ -1252,30 +1066,14 @@ export class SupersetClient
     request: RlsListRequest,
     correlationId?: string,
   ): Promise<RlsListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyRlsListResponse(withFallbackListPagination(request), [
-        'RLS filter list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyRlsListResponse(request, [
-        'RLS filter list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyRlsListResponse(request, [
-        'RLS filter list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyRlsListResponse(request, [
-        'RLS filter list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, RLS_LIST_CONTRACT_VERSION)) {
-      return emptyRlsListResponse(request, [
-        'RLS filter list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'RLS filter',
+      RLS_LIST_CONTRACT_VERSION,
+      emptyRlsListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildRlsListUrl(request);
@@ -1323,30 +1121,14 @@ export class SupersetClient
     request: TagListRequest,
     correlationId?: string,
   ): Promise<TagListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyTagListResponse(withFallbackListPagination(request), [
-        'tag list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyTagListResponse(request, [
-        'tag list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyTagListResponse(request, [
-        'tag list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyTagListResponse(request, [
-        'tag list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, TAG_LIST_CONTRACT_VERSION)) {
-      return emptyTagListResponse(request, [
-        'tag list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'tag',
+      TAG_LIST_CONTRACT_VERSION,
+      emptyTagListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildTagListUrl(request);
@@ -1394,30 +1176,14 @@ export class SupersetClient
     request: TaskListRequest,
     correlationId?: string,
   ): Promise<TaskListResponse> {
-    if (!hasValidListPagination(request)) {
-      return emptyTaskListResponse(withFallbackListPagination(request), [
-        'task list request contains invalid pagination',
-      ]);
-    }
-    if (!hasValidListColumns(request)) {
-      return emptyTaskListResponse(request, [
-        'task list request contains invalid columns',
-      ]);
-    }
-    if (!hasValidListOrdering(request)) {
-      return emptyTaskListResponse(request, [
-        'task list request contains invalid ordering',
-      ]);
-    }
-    if (!hasValidListFilters(request)) {
-      return emptyTaskListResponse(request, [
-        'task list request contains invalid filters',
-      ]);
-    }
-    if (!hasExpectedContractVersion(request, TASK_LIST_CONTRACT_VERSION)) {
-      return emptyTaskListResponse(request, [
-        'task list request contains invalid contract version',
-      ]);
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'task',
+      TASK_LIST_CONTRACT_VERSION,
+      emptyTaskListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
     }
 
     const url = this.buildTaskListUrl(request);
@@ -1681,6 +1447,15 @@ interface ListColumnRequest {
 type LoadedColumnName = string | readonly string[];
 
 type LoadedColumnSpec<T> = readonly [keyof T, LoadedColumnName];
+
+type EmptyListResponseFactory<
+  TRequest extends ListPaginationRequest,
+  TResponse,
+> = (request: TRequest, warnings: string[]) => TResponse;
+
+interface ListRequestValidationOptions {
+  requiresOwnedByMeFlag?: boolean;
+}
 
 interface SupersetListItem {
   id?: number;
@@ -3170,6 +2945,52 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
       ? record['selectColumns']
       : [],
   } as unknown as T;
+}
+
+function invalidListRequestResponse<
+  TRequest extends ListPaginationRequest,
+  TResponse,
+>(
+  request: TRequest,
+  resourceName: string,
+  contractVersion: string,
+  emptyResponse: EmptyListResponseFactory<TRequest, TResponse>,
+  options: ListRequestValidationOptions = {},
+): TResponse | undefined {
+  if (!hasValidListPagination(request)) {
+    return emptyResponse(withFallbackListPagination<TRequest>(request), [
+      `${resourceName} list request contains invalid pagination`,
+    ]);
+  }
+  if (!hasValidListColumns(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid columns`,
+    ]);
+  }
+  if (!hasValidListOrdering(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid ordering`,
+    ]);
+  }
+  if (!hasValidListFilters(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid filters`,
+    ]);
+  }
+  if (!hasExpectedContractVersion(request, contractVersion)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid contract version`,
+    ]);
+  }
+  if (
+    options.requiresOwnedByMeFlag !== undefined &&
+    !hasValidOwnershipFlags(request, options.requiresOwnedByMeFlag)
+  ) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid ownership flags`,
+    ]);
+  }
+  return undefined;
 }
 
 function hasValidListColumns(request: unknown): request is ListColumnRequest {
