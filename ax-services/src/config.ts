@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { isIP } from 'net';
+
 export interface ServiceConfig {
   host: string;
   port: number;
@@ -90,6 +92,8 @@ const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL: LogLevel = 'info';
 const MAX_PORT = 65535;
 const MAX_SUPERSET_TIMEOUT_MS = 2_147_483_647;
+const HOSTNAME_PATTERN =
+  /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const LOG_LEVELS = new Set<LogLevel>([
   'debug',
   'info',
@@ -108,8 +112,20 @@ function normalizeHost(value: string | undefined): string {
       'AX_SERVICES_HOST must not contain whitespace or control characters',
     );
   }
+  if (!isListenHost(host)) {
+    throw new Error(
+      'AX_SERVICES_HOST must be a hostname or IP address without scheme, path, or port',
+    );
+  }
 
   return host;
+}
+
+function isListenHost(value: string): boolean {
+  if (isIP(value) !== 0) {
+    return true;
+  }
+  return HOSTNAME_PATTERN.test(value);
 }
 
 function parsePositiveInteger(

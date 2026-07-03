@@ -128,6 +128,13 @@ test('buildConfig defaults blank host and log level values', () => {
   expect(config.logLevel).toBe('info');
 });
 
+test('buildConfig accepts hostnames and IP listener addresses', () => {
+  expect(buildConfig({ AX_SERVICES_HOST: ' service.internal ' }).host).toBe(
+    'service.internal',
+  );
+  expect(buildConfig({ AX_SERVICES_HOST: '::1' }).host).toBe('::1');
+});
+
 test('buildConfig rejects host values with whitespace or control characters', () => {
   expect(() => buildConfig({ AX_SERVICES_HOST: '127.0.0.1 localhost' })).toThrow(
     'AX_SERVICES_HOST must not contain whitespace or control characters',
@@ -135,6 +142,21 @@ test('buildConfig rejects host values with whitespace or control characters', ()
   expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost\nready' })).toThrow(
     'AX_SERVICES_HOST must not contain whitespace or control characters',
   );
+});
+
+test('buildConfig rejects ambiguous host listener values', () => {
+  const message =
+    'AX_SERVICES_HOST must be a hostname or IP address without scheme, path, or port';
+
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'http://localhost' })).toThrow(
+    message,
+  );
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost:5010' })).toThrow(
+    message,
+  );
+  expect(() =>
+    buildConfig({ AX_SERVICES_HOST: '/tmp/ax-services.sock' }),
+  ).toThrow(message);
 });
 
 test('buildConfig defaults blank numeric settings', () => {
