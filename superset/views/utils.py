@@ -18,7 +18,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, Optional, Union
+from typing import Any
 from urllib import parse
 
 import msgpack
@@ -213,10 +213,10 @@ def _normalize_global_form_data(global_form_data: Any) -> dict[str, Any]:
 
 
 def get_form_data(
-    slice_id: Optional[int] = None,
+    slice_id: int | None = None,
     use_slice_data: bool = False,
-    initial_form_data: Optional[dict[str, Any]] = None,
-) -> tuple[dict[str, Any], Optional[Slice]]:
+    initial_form_data: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], Slice | None]:
     form_data: dict[str, Any] = initial_form_data or {}
 
     if has_request_context():
@@ -305,8 +305,8 @@ def add_sqllab_custom_filters(form_data: dict[Any, Any]) -> Any:
 
 
 def get_datasource_info(
-    datasource_id: Optional[int], datasource_type: Optional[str], form_data: FormData
-) -> tuple[int, Optional[str]]:
+    datasource_id: int | None, datasource_type: str | None, form_data: FormData
+) -> tuple[int, str | None]:
     """
     Compatibility layer for handling of datasource info
 
@@ -345,7 +345,7 @@ def get_datasource_info(
     return datasource_id, datasource_type
 
 
-def _deserialize_json_results_payload(payload: Union[bytes, str]) -> dict[str, Any]:
+def _deserialize_json_results_payload(payload: bytes | str) -> dict[str, Any]:
     with stats_timing("sqllab.query.results_backend_json_deserialize", stats_logger):
         try:
             ds_payload = json.loads(payload)
@@ -359,7 +359,7 @@ def _deserialize_json_results_payload(payload: Union[bytes, str]) -> dict[str, A
 
 
 def apply_display_max_row_limit(
-    sql_results: dict[str, Any], rows: Optional[int] = None
+    sql_results: dict[str, Any], rows: int | None = None
 ) -> dict[str, Any]:
     """
     Given a `sql_results` nested structure, applies a limit to the number of rows
@@ -567,8 +567,8 @@ def check_explore_cache_perms(_self: Any, cache_key: str) -> None:
 
 def check_datasource_perms(
     _self: Any,
-    datasource_type: Optional[str] = None,
-    datasource_id: Optional[int] = None,
+    datasource_type: str | None = None,
+    datasource_id: int | None = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -626,7 +626,7 @@ def check_datasource_perms(
 
 
 def _deserialize_results_payload(
-    payload: Union[bytes, str], query: Query, use_msgpack: Optional[bool] = False
+    payload: bytes | str, query: Query, use_msgpack: bool | None = False
 ) -> dict[str, Any]:
     logger.debug("Deserializing from msgpack: %r", use_msgpack)
     if use_msgpack:
@@ -683,8 +683,8 @@ def _deserialize_results_payload(
 
 def get_cta_schema_name(
     database: Database, user: ab_models.User, schema: str, sql: str
-) -> Optional[str]:
-    func: Optional[Callable[[Database, ab_models.User, str, str], str]] = app.config[
+) -> str | None:
+    func: Callable[[Database, ab_models.User, str, str], str] | None = app.config[
         "SQLLAB_CTAS_SCHEMA_NAME_FUNC"
     ]
     if not func:

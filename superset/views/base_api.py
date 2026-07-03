@@ -19,7 +19,7 @@ from __future__ import annotations
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any, cast, Optional
+from typing import Any, cast
 
 from flask import request, Response
 from flask_appbuilder import Model, ModelRestApi
@@ -586,7 +586,7 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
         self.send_stats_metrics(response, self.delete.__name__, duration)
         return response
 
-    def ensure_owners_write_access(self, column_name: str) -> Optional[Response]:
+    def ensure_owners_write_access(self, column_name: str) -> Response | None:
         """Restrict the owners related field to users with write access."""
         if column_name == "owners" and not security_manager.can_access(
             "can_write", self.class_permission_name

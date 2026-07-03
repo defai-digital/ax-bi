@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from datetime import datetime
-from typing import Any, cast, Optional
+from typing import Any, cast
 from urllib import parse
 
 from flask import current_app as app, request, Response
@@ -581,7 +581,7 @@ class SqlLabRestApi(BaseSupersetApi):
 
         try:
             log_params = {
-                "user_agent": cast(Optional[str], request.headers.get("USER_AGENT"))
+                "user_agent": cast(str | None, request.headers.get("USER_AGENT"))
             }
             execution_context = SqlJsonExecutionContext(raw_payload)
             command = self._create_sql_json_command(execution_context, log_params)
@@ -604,7 +604,7 @@ class SqlLabRestApi(BaseSupersetApi):
 
     @staticmethod
     def _create_sql_json_command(
-        execution_context: SqlJsonExecutionContext, log_params: Optional[dict[str, Any]]
+        execution_context: SqlJsonExecutionContext, log_params: dict[str, Any] | None
     ) -> ExecuteSqlCommand:
         query_dao = QueryDAO()
         sql_json_executor = SqlLabRestApi._create_sql_json_executor(

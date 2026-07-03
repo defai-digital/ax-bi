@@ -17,7 +17,7 @@
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 from flask import g
 from flask_babel import lazy_gettext as _
@@ -40,7 +40,7 @@ def check_table_access(f: Callable[..., Any]) -> Callable[..., Any]:
         self: BaseSupersetModelRestApi,
         pk: int,
         table_name: str,
-        schema_name: Optional[str] = None,
+        schema_name: str | None = None,
     ) -> Any:
         schema_name_parsed = parse_js_uri_path_item(schema_name, eval_undefined=True)
         table_name_parsed = parse_js_uri_path_item(table_name)
