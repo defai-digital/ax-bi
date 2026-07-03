@@ -43,6 +43,7 @@ from superset_extensions_cli.types import ExtensionNames
 from superset_extensions_cli.utils import (
     generate_extension_names,
     get_module_federation_name,
+    get_read_path_identity,
     kebab_to_snake_case,
     read_json,
     read_toml,
@@ -682,6 +683,9 @@ def read_input_text(path: Path, label: str) -> str | None:
     """Read an optional input file after validating the input boundary."""
     if not input_file_exists(path, label):
         return None
+    initial_identity = get_read_path_identity(path)
+    if initial_identity is None:
+        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
 
     try:
         content = path.read_text()
@@ -694,6 +698,8 @@ def read_input_text(path: Path, label: str) -> str | None:
         raise click.ClickException(f"Failed to read {label}: {ex.message}") from ex
     if not still_exists:
         raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+    if get_read_path_identity(path) != initial_identity:
+        raise click.ClickException(f"Failed to read {label}: path changed during read.")
 
     return content
 

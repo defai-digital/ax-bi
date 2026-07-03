@@ -280,6 +280,51 @@ def test_bundle_fails_when_manifest_becomes_unsafe_during_read(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_fails_when_manifest_is_replaced_during_read(
+    mock_build, cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test bundle refuses manifest content when file identity changes."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    manifest_path = dist_dir / "manifest.json"
+    manifest_path.write_text("{}")
+    replacement_manifest = isolated_filesystem / "replacement-manifest.json"
+    replacement_manifest.write_text(
+        json.dumps(
+            {
+                "id": "test-org.test-extension",
+                "publisher": "test-org",
+                "name": "test-extension",
+                "displayName": "Test Extension",
+                "version": "1.0.0",
+                "permissions": [],
+            }
+        )
+    )
+    original_read_text = Path.read_text
+
+    def replace_manifest_during_read(path, *args, **kwargs):
+        if path == manifest_path:
+            content = original_read_text(replacement_manifest, *args, **kwargs)
+            manifest_path.unlink()
+            manifest_path.write_text(content)
+            return content
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_manifest_during_read)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to read dist/manifest.json" in result.output
+    assert "path changed during read" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_fails_with_invalid_manifest_schema(
     mock_build, cli_runner, isolated_filesystem
 ):
