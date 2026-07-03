@@ -1403,6 +1403,35 @@ test('listDashboards ignores Superset counts lower than mapped results', async (
   expect(result.hasNext).toBe(false);
 });
 
+test('listDashboards ignores fractional Superset counts', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 1.5,
+      result: [
+        {
+          id: 7,
+          dashboard_title: 'Sales dashboard',
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.totalCount).toBe(1);
+  expect(result.totalPages).toBe(1);
+  expect(result.hasNext).toBe(false);
+});
+
 test('listDashboards rejects invalid pagination before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {

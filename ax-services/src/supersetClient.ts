@@ -2307,6 +2307,7 @@ function extractSupersetCount(payload: unknown, fallback: number): number {
     !isRecord(payload) ||
     typeof payload['count'] !== 'number' ||
     !Number.isFinite(payload['count']) ||
+    !Number.isInteger(payload['count']) ||
     payload['count'] < fallback
   ) {
     return fallback;
