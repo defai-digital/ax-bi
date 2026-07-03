@@ -557,6 +557,14 @@ export class SupersetClient
     request: PermissionCheckRequest,
     correlationId?: string,
   ): Promise<PermissionCheckResult> {
+    if (!hasValidAuthorizationRequestShape(request)) {
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        error: 'authorization request contains invalid request shape',
+      };
+    }
+
     if (!hasValidAuthorizationIds(request)) {
       return {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
@@ -3374,6 +3382,49 @@ function hasValidAuthorizationIds(request: unknown): boolean {
   );
 }
 
+function hasValidAuthorizationRequestShape(
+  request: unknown,
+): request is PermissionCheckRequest {
+  if (!isRecord(request)) {
+    return false;
+  }
+
+  const { principal, resource } = request;
+  return (
+    isRecord(principal) &&
+    isRecord(resource) &&
+    isPrincipalType(principal.type) &&
+    isOptionalString(principal.username) &&
+    isOptionalStringArray(principal.roles) &&
+    isResourceType(resource.type) &&
+    isOptionalString(resource.uuid) &&
+    isPermissionAction(request.action)
+  );
+}
+
+function isPrincipalType(value: unknown): boolean {
+  return value === 'user' || value === 'guest' || value === 'service';
+}
+
+function isResourceType(value: unknown): boolean {
+  return (
+    value === 'chart' ||
+    value === 'dashboard' ||
+    value === 'database' ||
+    value === 'dataset' ||
+    value === 'query'
+  );
+}
+
+function isPermissionAction(value: unknown): boolean {
+  return (
+    value === 'create' ||
+    value === 'delete' ||
+    value === 'read' ||
+    value === 'write'
+  );
+}
+
 function isOptionalSupersetId(value: unknown): boolean {
   return value === undefined || isSupersetId(value);
 }
@@ -3482,6 +3533,14 @@ function isListFilterScalar(value: unknown): boolean {
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string';
+}
+
+function isOptionalStringArray(value: unknown): boolean {
+  return value === undefined || isStringArray(value);
 }
 
 function isAssetSearchLimit(value: unknown): value is number {

@@ -189,6 +189,35 @@ test('checkPermission fails closed for invalid numeric identifiers', async () =>
   expect(fetchCalled).toBe(false);
 });
 
+test('checkPermission fails closed for invalid request shapes', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'service',
+      roles: ['Admin', 7],
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  } as unknown as Parameters<SupersetClient['checkPermission']>[0]);
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization request contains invalid request shape',
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('checkPermission fails closed for non-success Superset responses', async () => {
   global.fetch = async () =>
     Response.json(
