@@ -206,6 +206,12 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path is outside {root}."
         )
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to write {label}: path is a symlink.")
+    if path.exists() and not path.is_file():
+        raise click.ClickException(
+            f"Refusing to write {label}: path exists but is not a file."
+        )
 
     parent = path.parent
     current = parent

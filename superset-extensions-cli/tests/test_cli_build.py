@@ -1299,6 +1299,45 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_symlinked_backend_output_file(
+    isolated_filesystem,
+):
+    """Test copy_backend_files refuses symlinked output file targets."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    output_pkg = (
+        isolated_filesystem / "dist" / "backend" / "src" / "test_org" / "test_ext"
+    )
+    output_pkg.mkdir(parents=True)
+    outside_file = isolated_filesystem / "outside-init.py"
+    outside_file.write_text("# keep")
+    (output_pkg / "__init__.py").symlink_to(outside_file)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file .*path is a symlink",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert outside_file.read_text() == "# keep"
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"
@@ -1540,6 +1579,29 @@ def test_copy_frontend_dist_rejects_nested_symlinked_output_parent(
 
     assert not (output_dist / "remoteEntry.abc123.js").exists()
     assert not (outside_output / "style.css").exists()
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_symlinked_output_file(isolated_filesystem):
+    """Test copy_frontend_dist refuses symlinked output file targets."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (frontend_dist / "main.js").write_text("main content")
+
+    output_dist = isolated_filesystem / "dist" / "frontend" / "dist"
+    output_dist.mkdir(parents=True)
+    outside_file = isolated_filesystem / "outside-main.js"
+    outside_file.write_text("keep")
+    (output_dist / "main.js").symlink_to(outside_file)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write frontend asset .*path is a symlink",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert outside_file.read_text() == "keep"
 
 
 @pytest.mark.unit
