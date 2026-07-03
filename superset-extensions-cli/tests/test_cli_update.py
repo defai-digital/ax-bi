@@ -330,14 +330,14 @@ def test_update_reports_json_write_failures(
         frontend_version="1.0.0",
     )
     extension_json_path = isolated_filesystem / "extension.json"
-    original_write_text = Path.write_text
+    original_replace = Path.replace
 
-    def fail_extension_json_write(path, *args, **kwargs):
-        if path == extension_json_path:
+    def fail_extension_json_replace(path, target):
+        if target == extension_json_path:
             raise OSError("disk full")
-        return original_write_text(path, *args, **kwargs)
+        return original_replace(path, target)
 
-    monkeypatch.setattr(Path, "write_text", fail_extension_json_write)
+    monkeypatch.setattr(Path, "replace", fail_extension_json_replace)
 
     result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
 

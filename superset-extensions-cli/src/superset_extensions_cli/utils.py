@@ -18,6 +18,7 @@
 import json  # noqa: TID251
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -166,20 +167,39 @@ def validate_write_path(path: Path) -> Path:
     return path
 
 
+def write_text_atomic(path: Path, content: str, label: str) -> None:
+    """Write text via a same-directory temporary file before replacing the target."""
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            delete=False,
+            dir=path.parent,
+            encoding="utf-8",
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            temp_file.write(content)
+        temp_path.replace(path)
+        temp_path = None
+    except OSError as ex:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise OSError(f"Failed to write {label} {path}: {ex}") from ex
+
+
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path = validate_write_path(path)
-    try:
-        path.write_text(json.dumps(data, indent=2) + "\n")
-    except OSError as ex:
-        raise OSError(f"Failed to write JSON file {path}: {ex}") from ex
+    write_text_atomic(path, json.dumps(data, indent=2) + "\n", "JSON file")
 
 
 def write_toml(path: Path, data: dict[str, Any]) -> None:
     path = validate_write_path(path)
-    try:
-        path.write_text(tomli_w.dumps(data))
-    except OSError as ex:
-        raise OSError(f"Failed to write TOML file {path}: {ex}") from ex
+    write_text_atomic(path, tomli_w.dumps(data), "TOML file")
 
 
 def _normalize_for_identifiers(name: str) -> str:

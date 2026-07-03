@@ -486,17 +486,21 @@ def test_write_json_rejects_non_directory_ancestor(isolated_filesystem):
 def test_write_json_reports_write_errors(isolated_filesystem, monkeypatch):
     """Test write_json reports filesystem write failures with path context."""
     output_path = isolated_filesystem / "output.json"
-    original_write_text = Path.write_text
+    output_path.write_text('{"name": "original"}')
+    original_replace = Path.replace
 
-    def fail_json_write(path, *args, **kwargs):
-        if path == output_path:
+    def fail_json_replace(path, target):
+        if target == output_path:
             raise OSError("disk full")
-        return original_write_text(path, *args, **kwargs)
+        return original_replace(path, target)
 
-    monkeypatch.setattr(Path, "write_text", fail_json_write)
+    monkeypatch.setattr(Path, "replace", fail_json_replace)
 
     with pytest.raises(OSError, match="Failed to write JSON file .*disk full"):
         write_json(output_path, {"name": "updated"})
+
+    assert output_path.read_text() == '{"name": "original"}'
+    assert list(isolated_filesystem.glob(".output.json.*.tmp")) == []
 
 
 # Write TOML Tests
@@ -587,17 +591,21 @@ def test_write_toml_rejects_non_directory_parent(isolated_filesystem):
 def test_write_toml_reports_write_errors(isolated_filesystem, monkeypatch):
     """Test write_toml reports filesystem write failures with path context."""
     output_path = isolated_filesystem / "pyproject.toml"
-    original_write_text = Path.write_text
+    output_path.write_text('[project]\nname = "original"\n')
+    original_replace = Path.replace
 
-    def fail_toml_write(path, *args, **kwargs):
-        if path == output_path:
+    def fail_toml_replace(path, target):
+        if target == output_path:
             raise OSError("disk full")
-        return original_write_text(path, *args, **kwargs)
+        return original_replace(path, target)
 
-    monkeypatch.setattr(Path, "write_text", fail_toml_write)
+    monkeypatch.setattr(Path, "replace", fail_toml_replace)
 
     with pytest.raises(OSError, match="Failed to write TOML file .*disk full"):
         write_toml(output_path, {"project": {"name": "updated"}})
+
+    assert output_path.read_text() == '[project]\nname = "original"\n'
+    assert list(isolated_filesystem.glob(".pyproject.toml.*.tmp")) == []
 
 
 @pytest.mark.unit
