@@ -228,6 +228,54 @@ def test_dev_command_rejects_changed_watch_directory_before_schedule(
 
 
 @pytest.mark.cli
+@patch("superset_extensions_cli.cli.Observer")
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.build_manifest")
+@patch("superset_extensions_cli.cli.write_manifest")
+def test_dev_command_rejects_watch_directory_content_change_before_schedule(
+    mock_write_manifest,
+    mock_build_manifest,
+    mock_rebuild_backend,
+    mock_rebuild_frontend,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    mock_observer_class,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_dev,
+):
+    """Test dev refuses watch directory content changes before observer setup."""
+    mock_rebuild_frontend.return_value = "remoteEntry.abc123.js"
+    mock_build_manifest.return_value = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    mock_observer = Mock()
+    frontend_dir = isolated_filesystem / "frontend"
+
+    def change_frontend_before_observer_schedule():
+        (frontend_dir / "unexpected.txt").write_text("unexpected")
+        return mock_observer
+
+    mock_observer_class.side_effect = change_frontend_before_observer_schedule
+    extension_setup_for_dev(isolated_filesystem)
+
+    result = cli_runner.invoke(app, ["dev"])
+
+    assert result.exit_code == 1
+    assert "frontend path changed before watch setup" in result.output
+    mock_observer.schedule.assert_not_called()
+    mock_observer.start.assert_not_called()
+    assert (frontend_dir / "unexpected.txt").read_text() == "unexpected"
+
+
+@pytest.mark.cli
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_dev_command_validates_before_building(
     mock_validate_npm, cli_runner, isolated_filesystem

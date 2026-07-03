@@ -2634,7 +2634,7 @@ def dev(ctx: click.Context) -> None:
     # Only set up watchers for directories that exist
     for label, directory, directory_identity in watch_targets:
         current_identity = get_directory_path_identity(directory)
-        if current_identity is None or current_identity[:2] != directory_identity[:2]:
+        if current_identity != directory_identity:
             raise click.ClickException(f"{label} path changed before watch setup.")
         if label == "frontend":
             frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
