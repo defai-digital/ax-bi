@@ -22,6 +22,7 @@ Analyze an existing chart's configuration and data, then suggest
 improvements for better visualization or readability.
 """
 
+import asyncio
 import logging
 from typing import Any
 
@@ -237,16 +238,25 @@ async def _llm_analysis(
     user_msg = "\n".join(user_msg_parts)
 
     try:
-        result = await provider.complete_json(
+        result = await asyncio.to_thread(
+            provider.complete_json,
             system_prompt=_SYSTEM_PROMPT,
             user_prompt=user_msg,
             response_schema=SuggestChartImprovementsResponse,
             metadata={"tool": "suggest_chart_improvements"},
         )
+        if hasattr(result, "current_analysis"):
+            return result
+        if isinstance(result, dict):
+            return SuggestChartImprovementsResponse(
+                current_analysis=result.get("current_analysis", ""),
+                suggestions=result.get("suggestions", []),
+                warnings=[],
+            )
         return SuggestChartImprovementsResponse(
-            current_analysis=result.get("current_analysis", ""),
-            suggestions=result.get("suggestions", []),
-            warnings=[],
+            current_analysis="",
+            suggestions=[],
+            warnings=["Unexpected LLM response format."],
         )
     except NotImplementedError:
         return None

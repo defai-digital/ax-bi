@@ -23,6 +23,7 @@ from .explain_dashboard import explain_dashboard
 from .plan_dashboard import plan_dashboard
 from .search_business_assets import search_business_assets
 from .suggest_chart_improvements import suggest_chart_improvements
+from .validate_chart import validate_chart
 
 __all__ = [
     "describe_dataset_for_ai",
@@ -32,4 +33,5 @@ __all__ = [
     "compose_dashboard",
     "explain_dashboard",
     "suggest_chart_improvements",
+    "validate_chart",
 ]

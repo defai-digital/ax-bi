@@ -23,6 +23,7 @@ and documentation for the tool interfaces.
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, cast, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -221,12 +222,41 @@ class DashboardPlanSection(BaseModel):
 
 
 class DashboardPlan(BaseModel):
-    """Structured dashboard plan from the planner."""
+    """Structured dashboard plan from the planner.
 
+    Carries the full planning context including chart intents, datasets,
+    confidence, assumptions, and clarifying questions so downstream tools
+    (compose_dashboard, validate_chart) can reason about the plan.
+    """
+
+    plan_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique plan session ID for lineage tracking",
+    )
     title: str
-    business_goal: str | None = None
-    global_filters: list[dict[str, Any]] = Field(default_factory=list)
+    description: str = Field(
+        default="", description="Dashboard description / business goal"
+    )
+    datasets: list[dict[str, Any]] = Field(
+        default_factory=list, description="Datasets discovered"
+    )
     sections: list[DashboardPlanSection] = Field(default_factory=list)
+    chart_intents: list[ChartIntentDetail] = Field(
+        default_factory=list, description="Chart specifications"
+    )
+    global_filters: list[dict[str, Any]] = Field(
+        default_factory=list, description="Global filter specs"
+    )
+    layout_hints: dict[str, Any] = Field(
+        default_factory=dict, description="Layout suggestions"
+    )
+    assumptions: list[str] = Field(default_factory=list, description="Assumptions made")
+    clarifying_questions: list[str] = Field(
+        default_factory=list, description="Questions for the user"
+    )
+    confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Overall confidence score"
+    )
 
 
 class ChartIntentDetail(BaseModel):
@@ -252,8 +282,12 @@ class ChartIntentDetail(BaseModel):
 
 
 class DashboardPlanFull(BaseModel):
-    """Full dashboard plan from the planner."""
+    """Full dashboard plan from the planner (internal LLM working model)."""
 
+    plan_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique plan session ID for lineage tracking",
+    )
     title: str = Field(description="Dashboard title")
     description: str = Field(
         default="", description="Dashboard description / business goal"
@@ -406,6 +440,12 @@ class ComposeDashboardResponse(BaseModel):
         default="",
         description="Human-readable summary of the dashboard layout",
     )
+    lineage: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "AI lineage metadata (plan_id, tool_chain, source_datasets, confidence)"
+        ),
+    )
     warnings: list[str] = Field(default_factory=list)
     error: str | None = Field(default=None)
 
@@ -506,3 +546,35 @@ class SuggestChartImprovementsResponse(BaseModel):
         description="Improvement suggestions ranked by impact",
     )
     warnings: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# validate_chart
+# ---------------------------------------------------------------------------
+
+
+class ValidateChartRequest(BaseModel):
+    """Request schema for validate_chart."""
+
+    dataset_id: int = Field(description="Dataset ID to validate the config against")
+    config: dict[str, Any] = Field(
+        description=(
+            "Chart configuration dict (same shape as GenerateChartRequest.config)"
+        ),
+    )
+
+
+class ValidateChartResponse(BaseModel):
+    """Response schema for validate_chart."""
+
+    is_valid: bool = Field(description="Whether the chart config is valid")
+    errors: list[str] = Field(
+        default_factory=list, description="Validation error messages"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="Non-blocking warnings"
+    )
+    normalized_config: dict[str, Any] | None = Field(
+        default=None,
+        description="Normalized config after column name correction (if valid)",
+    )

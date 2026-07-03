@@ -220,6 +220,8 @@ AI-Powered Tools (GenAI):
 - compose_dashboard: Create a dashboard from a plan + chart IDs (from create_chart_from_intent).
 - explain_dashboard: Summarize an existing dashboard or answer questions about it.
 - suggest_chart_improvements: Analyze a chart and suggest better visualizations.
+- validate_chart: Validate a chart configuration against a dataset before creating it.
+  Use to pre-flight chart intents from plan_dashboard.
 - search_business_assets: Semantic search across datasets, charts, dashboards, and metrics.
 - describe_dataset_for_ai: Get AI-ready dataset metadata (columns, metrics, types).
 
@@ -300,8 +302,9 @@ To create a dashboard from a prompt:
      "prompt": "Create an executive sales dashboard with revenue trends and top products"
    }}) -> returns a plan (no artifacts created)
 2. Review the plan's chart_intents and clarifying_questions
-3. For each chart_intent, call create_chart_from_intent to create the charts
-4. compose_dashboard(request={{
+3. (Optional) validate_chart for each chart_intent to pre-flight before creating
+4. For each chart_intent, call create_chart_from_intent to create the charts
+5. compose_dashboard(request={{
      "plan": <plan from step 1>,
      "chart_ids": [<ids from step 3>]
    }}) -> creates the dashboard
@@ -746,6 +749,7 @@ from superset.mcp_service.ai.tool import (  # noqa: F401, E402
     plan_dashboard,
     search_business_assets,
     suggest_chart_improvements,
+    validate_chart,
 )
 from superset.mcp_service.annotation_layer.tool import (  # noqa: F401, E402
     get_annotation_layer_info,

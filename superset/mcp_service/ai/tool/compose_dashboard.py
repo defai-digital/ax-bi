@@ -24,6 +24,7 @@ layout, draft mode, and lineage metadata.
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -52,6 +53,49 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 _CHART_HEIGHT = 50
+
+
+def _build_native_filters(
+    global_filters: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Convert plan global_filters into Superset native filter configuration.
+
+    Each filter dict in ``global_filters`` may contain:
+    - name (str)
+    - filter_type (str): e.g. 'filter_select', 'filter_time', 'filter_range'
+    - targets (list[dict]): dataset/column scoping
+    - default_value (str | list | None)
+    - multi_select (bool)
+    - search_all_filters (bool)
+    """
+    filters: list[dict[str, Any]] = []
+    for gf in global_filters:
+        if not isinstance(gf, dict):
+            continue
+        filter_id = str(uuid.uuid4())
+        filter_config: dict[str, Any] = {
+            "id": filter_id,
+            "name": gf.get("name", "Filter"),
+            "filterType": gf.get("filter_type", "filter_select"),
+            "targets": gf.get("targets", []),
+            "defaultDataMask": {},
+            "cascadeParentIds": [],
+            "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
+            "isInstant": True,
+        }
+        if gf.get("default_value") is not None:
+            filter_config["defaultDataMask"] = {
+                "filterState": {"value": gf["default_value"]},
+            }
+        # Optional control values for select filters
+        control_values: dict[str, Any] = {"enableEmptyFilter": False}
+        if gf.get("multi_select") is not None:
+            control_values["multiSelect"] = gf["multi_select"]
+        if gf.get("search_all_filters") is not None:
+            control_values["searchAllFilters"] = gf["search_all_filters"]
+        filter_config["controlValues"] = control_values
+        filters.append(filter_config)
+    return filters
 
 
 def _create_smart_layout(
@@ -225,6 +269,27 @@ async def compose_dashboard(
         with mcp_event_log_context(action="mcp.compose_dashboard.layout"):
             layout = _create_smart_layout(chart_objects, request.plan)
 
+        # Build native filter configuration from plan global_filters
+        native_filters: list[dict[str, Any]] = []
+        if request.plan.global_filters:
+            with mcp_event_log_context(action="mcp.compose_dashboard.build_filters"):
+                native_filters = _build_native_filters(request.plan.global_filters)
+
+        # Build AI lineage metadata for audit trail
+        ai_lineage: dict[str, Any] = {
+            "plan_id": request.plan.plan_id,
+            "source_prompt": request.plan.description or "",
+            "tool_chain": [
+                "plan_dashboard",
+                "create_chart_from_intent",
+                "compose_dashboard",
+            ],
+            "source_datasets": [ds.get("id") for ds in request.plan.datasets],
+            "chart_ids": request.chart_ids,
+            "confidence": request.plan.confidence,
+            "created_by": "mcp_genai",
+        }
+
         # Create dashboard
         from superset.models.dashboard import Dashboard
 
@@ -240,11 +305,12 @@ async def compose_dashboard(
                     "shared_label_colors": {},
                     "color_scheme_domain": [],
                     "cross_filters_enabled": False,
-                    "native_filter_configuration": [],
+                    "native_filter_configuration": native_filters,
                     "global_chart_configuration": {
                         "scope": {"rootPath": ["ROOT_ID"], "excluded": []}
                     },
                     "chart_configuration": {},
+                    "ai_lineage": ai_lineage,
                 }
             )
 
@@ -314,6 +380,7 @@ async def compose_dashboard(
             },
             dashboard_url=dashboard_url,
             layout_summary=layout_summary,
+            lineage=ai_lineage,
             warnings=[],
         ).model_dump()
 

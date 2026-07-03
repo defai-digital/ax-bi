@@ -26,6 +26,7 @@ to assemble the dashboard.
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -38,6 +39,7 @@ except ModuleNotFoundError:
 from superset.mcp_service.ai.asset_search import search_assets
 from superset.mcp_service.ai.schemas import (
     ChartIntentDetail,
+    DashboardPlan,
     DashboardPlanFull,
     DashboardPlanRequest,
     DashboardPlanResponse,
@@ -314,10 +316,13 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
         % (request.prompt[:80], request.dataset_candidates)
     )
 
+    # Generate a unique plan session ID for lineage tracking
+    plan_id = str(uuid.uuid4())
+
     if not user_can_view_data_model_metadata():
         await ctx.warning("Dashboard planning blocked by privacy controls")
         return DashboardPlanResponse(
-            plan=_empty_plan(),
+            plan=_empty_plan(plan_id),
             warnings=["You don't have permission to access dataset metadata."],
         ).model_dump()
 
@@ -337,7 +342,7 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
             "No datasets found. Specify dataset_candidates or rephrase the prompt."
         )
         return DashboardPlanResponse(
-            plan=_empty_plan(),
+            plan=_empty_plan(plan_id),
             warnings=all_warnings,
         ).model_dump()
 
@@ -348,6 +353,8 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
 
     if llm_result is not None:
         plan, plan_warnings = llm_result
+        # Ensure the LLM-returned plan uses our session plan_id
+        plan.plan_id = plan_id
         all_warnings.extend(plan_warnings)
     else:
         # Heuristic fallback
@@ -359,6 +366,7 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
             "Configure GENAI_LLM_PROVIDER_CONFIG for better results."
         )
         plan = DashboardPlanFull(
+            plan_id=plan_id,
             title=_derive_title(request.prompt),
             description=request.prompt[:200],
             datasets=datasets,
@@ -373,10 +381,13 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
 
     # Step 3: Build response
     await ctx.report_progress(3, 3, "Building response")
-    # Convert to the response schema format
+    # Build the response plan with full planning context
     response_plan = DashboardPlan(
+        plan_id=plan_id,
         title=plan.title,
-        business_goal=plan.description,
+        description=plan.description,
+        datasets=plan.datasets,
+        chart_intents=plan.chart_intents,
         global_filters=plan.global_filters,
         sections=[
             DashboardPlanSection(
@@ -384,6 +395,10 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
                 chart_intents=[ci.model_dump() for ci in plan.chart_intents],
             )
         ],
+        layout_hints=plan.layout_hints,
+        assumptions=plan.assumptions,
+        clarifying_questions=plan.clarifying_questions,
+        confidence=plan.confidence,
     )
 
     await ctx.info(
@@ -397,11 +412,11 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
     ).model_dump()
 
 
-def _empty_plan() -> DashboardPlan:
+def _empty_plan(plan_id: str | None = None) -> DashboardPlan:
     """Return an empty dashboard plan."""
     return DashboardPlan(
+        plan_id=plan_id or str(uuid.uuid4()),
         title="Untitled Dashboard",
-        business_goal="",
         sections=[],
     )
 
@@ -430,7 +445,3 @@ def _derive_title(prompt: str) -> str:
     if meaningful:
         return " ".join(meaningful).title() + " Dashboard"
     return "Dashboard"
-
-
-# Re-import for the response conversion
-from superset.mcp_service.ai.schemas import DashboardPlan  # noqa: E402
