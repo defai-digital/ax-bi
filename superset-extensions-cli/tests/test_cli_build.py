@@ -111,13 +111,15 @@ exclude = []
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
-@patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
 @patch("superset_extensions_cli.cli.rebuild_backend")
 @patch("superset_extensions_cli.cli.read_toml")
 def test_build_command_success_flow(
     mock_read_toml,
     mock_rebuild_backend,
-    mock_rebuild_frontend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
     mock_init_frontend_deps,
     mock_validate_npm,
     cli_runner,
@@ -126,7 +128,8 @@ def test_build_command_success_flow(
 ):
     """Test build command success flow."""
     # Setup mocks
-    mock_rebuild_frontend.return_value = "remoteEntry.abc123.js"
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    mock_copy_frontend_dist.return_value = "remoteEntry.abc123.js"
     mock_read_toml.return_value = {
         "project": {"name": "test", "version": "1.0.0"},
         "tool": {
@@ -147,20 +150,23 @@ def test_build_command_success_flow(
     # Verify function calls
     mock_validate_npm.assert_called_once()
     mock_init_frontend_deps.assert_called_once_with(dirs["frontend_dir"])
-    mock_rebuild_frontend.assert_called_once()
+    mock_run_frontend_build.assert_called_once_with(dirs["frontend_dir"])
+    mock_copy_frontend_dist.assert_called_once_with(isolated_filesystem)
     mock_rebuild_backend.assert_called_once()
 
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
-@patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
 @patch("superset_extensions_cli.cli.rebuild_backend")
 @patch("superset_extensions_cli.cli.read_toml")
 def test_build_command_handles_frontend_build_failure(
     mock_read_toml,
     mock_rebuild_backend,
-    mock_rebuild_frontend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
     mock_init_frontend_deps,
     mock_validate_npm,
     cli_runner,
@@ -169,7 +175,7 @@ def test_build_command_handles_frontend_build_failure(
 ):
     """Test build command handles frontend build failure."""
     # Setup mocks
-    mock_rebuild_frontend.return_value = None  # Indicates failure
+    mock_run_frontend_build.return_value = Mock(returncode=1)
     mock_read_toml.return_value = {
         "project": {"name": "test", "version": "1.0.0"},
         "tool": {
@@ -181,12 +187,17 @@ def test_build_command_handles_frontend_build_failure(
 
     # Create extension structure
     extension_with_build_structure(isolated_filesystem)
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
 
     result = cli_runner.invoke(app, ["build"])
 
     assert result.exit_code == 1
     assert "Frontend build failed; aborting full build" in result.output
     assert "✅ Full build completed in dist/" not in result.output
+    assert (previous_dist / "manifest.json").read_text() == "previous"
+    mock_copy_frontend_dist.assert_not_called()
     mock_rebuild_backend.assert_not_called()
 
 

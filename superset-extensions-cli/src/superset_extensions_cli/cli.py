@@ -1317,14 +1317,13 @@ def build(ctx: click.Context) -> None:
     frontend_dir = cwd / "frontend"
     backend_dir = cwd / "backend"
 
-    clean_dist(cwd)
-
-    # Build frontend if it exists
+    has_frontend = optional_directory_exists(frontend_dir, "frontend")
+    has_backend = optional_directory_exists(backend_dir, "backend")
     remote_entry = None
-    if optional_directory_exists(frontend_dir, "frontend"):
+    if has_frontend:
         init_frontend_deps(frontend_dir)
-        remote_entry = rebuild_frontend(cwd, frontend_dir)
-        if remote_entry is None:
+        frontend_result = run_frontend_build(frontend_dir)
+        if frontend_result.returncode != 0:
             click.secho(
                 "❌ Frontend build failed; aborting full build.",
                 err=True,
@@ -1332,8 +1331,14 @@ def build(ctx: click.Context) -> None:
             )
             sys.exit(1)
 
+    clean_dist(cwd)
+
+    if has_frontend:
+        remote_entry = copy_frontend_dist(cwd)
+        click.secho("✅ Frontend rebuilt", fg="green")
+
     # Build backend independently if it exists
-    if optional_directory_exists(backend_dir, "backend"):
+    if has_backend:
         pyproject = load_toml_object(
             backend_dir / "pyproject.toml", "backend pyproject.toml"
         )
