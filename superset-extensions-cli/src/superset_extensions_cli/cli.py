@@ -503,29 +503,57 @@ def publish_staged_output_directory(
                 pass
             raise click.ClickException(f"Failed to back up {label}: {ex}") from ex
 
+    target_replaced = False
     try:
         staged_path.replace(target_path)
+        target_replaced = True
+        validate_output_directory(target_path, label)
     except OSError as ex:
-        if backup_root is not None and backup_path is not None:
+        publish_error = click.ClickException(f"Failed to publish {label}: {ex}")
+    except click.ClickException as ex:
+        publish_error = ex
+    else:
+        if backup_root is not None:
             try:
-                backup_path.replace(target_path)
                 remove_output_directory(
                     backup_root, f"temporary {label} backup directory"
                 )
-            except OSError as restore_ex:
-                raise click.ClickException(
-                    f"Failed to publish {label}: {ex}; also failed to restore "
-                    f"previous {label}: {restore_ex}"
-                ) from ex
             except click.ClickException:
                 pass
-        raise click.ClickException(f"Failed to publish {label}: {ex}") from ex
+        return
 
-    if backup_root is not None:
+    if target_replaced:
+        if target_path.is_symlink() or target_path.is_file():
+            try:
+                target_path.unlink()
+            except OSError as cleanup_ex:
+                raise click.ClickException(
+                    f"{publish_error.message}; also failed to clean failed "
+                    f"{label}: {cleanup_ex}"
+                ) from cleanup_ex
+        elif target_path.exists():
+            try:
+                remove_output_directory(target_path, label)
+            except click.ClickException as cleanup_ex:
+                raise click.ClickException(
+                    f"{publish_error.message}; also failed to clean failed "
+                    f"{label}: {cleanup_ex.message}"
+                ) from cleanup_ex
+
+    if backup_root is not None and backup_path is not None:
+        try:
+            backup_path.replace(target_path)
+        except OSError as restore_ex:
+            raise click.ClickException(
+                f"{publish_error.message}; also failed to restore previous "
+                f"{label}: {restore_ex}"
+            ) from restore_ex
         try:
             remove_output_directory(backup_root, f"temporary {label} backup directory")
         except click.ClickException:
             pass
+
+    raise publish_error
 
 
 def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:
