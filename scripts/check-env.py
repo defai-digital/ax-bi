@@ -19,7 +19,8 @@
 import platform
 import subprocess
 import sys
-from typing import Callable, Optional, Set, Tuple
+from collections.abc import Callable
+from typing import Optional
 
 import click
 import psutil
@@ -30,8 +31,8 @@ class Requirement:
     def __init__(
         self,
         name: str,
-        ideal_range: Tuple[Version, Version],
-        supported_range: Tuple[Version, Version],
+        ideal_range: tuple[Version, Version],
+        supported_range: tuple[Version, Version],
         req_type: str,
         command: str,
         version_post_process: Optional[Callable[[str], str]] = None,
@@ -185,7 +186,7 @@ def main(docker: bool, frontend: bool, backend: bool) -> None:  # noqa: C901
     print(get_docker_platform())
     print("\n")
 
-    check_req_types: Set[str] = set()
+    check_req_types: set[str] = set()
     if docker:
         check_req_types.add("docker")
     if frontend:

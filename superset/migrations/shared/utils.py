@@ -17,8 +17,8 @@
 import logging
 import os
 import time
-from collections.abc import Iterator
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable, Iterator
+from typing import Any, Optional, Union
 from uuid import uuid4
 
 from alembic import op

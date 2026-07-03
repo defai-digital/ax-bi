@@ -17,7 +17,7 @@
 import json  # noqa: TID251
 import math
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 
 class RollingType(Enum):
@@ -118,7 +118,7 @@ EXTRA_FORM_DATA_OVERRIDE_KEYS = (
 )
 
 
-def ensure_is_array(value: Optional[Union[List[Any], Any]] = None) -> List[Any]:
+def ensure_is_array(value: Optional[Union[list[Any], Any]] = None) -> list[Any]:
     """
     Ensure a nullable value input is a list. Useful when consolidating
     input format from a select control.
@@ -194,15 +194,15 @@ def get_metric_label(metric: Any | dict[str, Any]) -> Any | dict[str, Any]:
     return metric["sqlExpression"]
 
 
-def extract_extra_metrics(form_data: Dict[str, Any]) -> List[Any]:
+def extract_extra_metrics(form_data: dict[str, Any]) -> list[Any]:
     """
     Extract extra metrics from the form data.
 
     Args:
-        form_data (Dict[str, Any]): The query form data.
+        form_data (dict[str, Any]): The query form data.
 
     Returns:
-        List[Any]: A list of extra metrics.
+        list[Any]: A list of extra metrics.
     """
     groupby = form_data.get("groupby", [])
     timeseries_limit_metric = form_data.get("timeseries_limit_metric")
@@ -226,17 +226,17 @@ def extract_extra_metrics(form_data: Dict[str, Any]) -> List[Any]:
 
 
 def get_metric_offsets_map(
-    form_data: dict[str, List[str]], query_object: dict[str, List[str]]
+    form_data: dict[str, list[str]], query_object: dict[str, list[str]]
 ) -> dict[str, Any]:
     """
     Return a dictionary mapping metric offset-labels to metric-labels.
 
     Args:
-        form_data (Dict[str, List[str]]): The form data containing time comparisons.
-        query_object (Dict[str, List[str]]): The query object containing metrics.
+        form_data (dict[str, list[str]]): The form data containing time comparisons.
+        query_object (dict[str, list[str]]): The query object containing metrics.
 
     Returns:
-        Dict[str, str]: A dictionary with offset-labels as keys and metric-labels
+        dict[str, str]: A dictionary with offset-labels as keys and metric-labels
         as values.
     """
     query_metrics = ensure_is_array(query_object.get("metrics", []))
@@ -1144,8 +1144,8 @@ def rolling_window_operator(
 
 
 def time_compare_operator(
-    form_data: Dict[str, Any], query_object: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    form_data: dict[str, Any], query_object: dict[str, Any]
+) -> Optional[dict[str, Any]]:
     """
     Returns a post-processing configuration for time comparison if applicable.
 
@@ -1285,8 +1285,8 @@ def contribution_operator(
 
 
 def sort_operator(
-    form_data: Dict[str, Any], query_object: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    form_data: dict[str, Any], query_object: dict[str, Any]
+) -> Optional[dict[str, Any]]:
     """
     Build a sort post-processing configuration if the conditions are met.
 
