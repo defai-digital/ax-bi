@@ -59,6 +59,12 @@ fn validate_notification_input(title: &str, body: &str) -> Result<(), String> {
     if title.trim().is_empty() {
         return Err("Notification title must not be empty".to_string());
     }
+    if title.chars().any(char::is_control) {
+        return Err("Notification title must not contain control characters".to_string());
+    }
+    if body.chars().any(char::is_control) {
+        return Err("Notification body must not contain control characters".to_string());
+    }
     if title.chars().count() > MAX_NOTIFICATION_TITLE_CHARS {
         return Err(format!(
             "Notification title must be at most {MAX_NOTIFICATION_TITLE_CHARS} characters"
@@ -169,6 +175,14 @@ mod tests {
         assert_eq!(
             validate_notification_input("   ", "body").unwrap_err(),
             "Notification title must not be empty"
+        );
+        assert_eq!(
+            validate_notification_input("Bad\nTitle", "body").unwrap_err(),
+            "Notification title must not contain control characters"
+        );
+        assert_eq!(
+            validate_notification_input("Title", "Bad\u{0000}body").unwrap_err(),
+            "Notification body must not contain control characters"
         );
         assert_eq!(
             validate_notification_input(&"a".repeat(129), "body").unwrap_err(),
