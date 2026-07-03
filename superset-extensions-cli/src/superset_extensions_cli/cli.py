@@ -360,7 +360,9 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
 
 def copy_frontend_dist(cwd: Path) -> str:
     dist_dir = cwd / "dist"
-    frontend_dist = (cwd / "frontend" / "dist").resolve()
+    frontend_dist_path = cwd / "frontend" / "dist"
+    require_optional_directory(frontend_dist_path, "frontend/dist")
+    frontend_dist = frontend_dist_path.resolve()
     frontend_files: list[Path] = []
     remote_entries: list[str] = []
 

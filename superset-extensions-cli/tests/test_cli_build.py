@@ -1118,6 +1118,28 @@ def test_copy_frontend_dist_rejects_symlink_outside_dist(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_rejects_symlinked_dist_root(isolated_filesystem):
+    """Test copy_frontend_dist refuses a symlinked frontend/dist root."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    outside_dist = isolated_filesystem / "outside-dist"
+    outside_dist.mkdir()
+    (outside_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (outside_dist / "main.js").write_text("main content")
+    (frontend_dir / "dist").symlink_to(outside_dist)
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="frontend/dist path is a symlink"):
+        copy_frontend_dist(isolated_filesystem)
+
+    copied_entry = (
+        isolated_filesystem / "dist" / "frontend" / "dist" / "remoteEntry.abc123.js"
+    )
+    assert not copied_entry.exists()
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_rejects_multiple_remote_entries(isolated_filesystem):
     """Test copy_frontend_dist rejects ambiguous remote entry outputs."""
     frontend_dist = isolated_filesystem / "frontend" / "dist"
