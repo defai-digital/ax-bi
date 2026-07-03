@@ -310,6 +310,20 @@ def test_write_json_round_trip(isolated_filesystem):
     assert result == data
 
 
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_output(isolated_filesystem):
+    """Test write_json refuses to write through a symlink."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "original"}')
+    json_link = isolated_filesystem / "output.json"
+    json_link.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_json(json_link, {"name": "updated"})
+
+    assert outside_file.read_text() == '{"name": "original"}'
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -324,3 +338,17 @@ def test_write_toml_round_trip(isolated_filesystem):
     result = read_toml(toml_file)
 
     assert result == data
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_output(isolated_filesystem):
+    """Test write_toml refuses to write through a symlink."""
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "original"\n')
+    toml_link = isolated_filesystem / "output.toml"
+    toml_link.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_toml(toml_link, {"project": {"name": "updated"}})
+
+    assert outside_file.read_text() == '[project]\nname = "original"\n'

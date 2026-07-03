@@ -117,10 +117,16 @@ def read_json(path: Path) -> dict[str, Any] | None:
 
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
+    path = Path(path)
+    if path.is_symlink():
+        raise OSError(f"Refusing to write through symlink: {path}")
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
 def write_toml(path: Path, data: dict[str, Any]) -> None:
+    path = Path(path)
+    if path.is_symlink():
+        raise OSError(f"Refusing to write through symlink: {path}")
     path.write_text(tomli_w.dumps(data))
 
 
