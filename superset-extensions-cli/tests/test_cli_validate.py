@@ -22,7 +22,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from superset_extensions_cli.cli import app, validate_npm
+import click
+from superset_extensions_cli.cli import app, optional_directory_exists, validate_npm
 
 
 def create_file_path(path: Path) -> None:
@@ -40,6 +41,29 @@ def create_directory_symlink(path: Path) -> None:
     target = path.parent / f"outside-{path.name}"
     target.mkdir()
     path.symlink_to(target)
+
+
+@pytest.mark.unit
+def test_optional_directory_exists_validates_project_paths(isolated_filesystem):
+    """Test optional source directory helper accepts only safe directories."""
+    missing_path = isolated_filesystem / "missing"
+    assert optional_directory_exists(missing_path, "missing") is False
+
+    source_dir = isolated_filesystem / "frontend"
+    source_dir.mkdir()
+    assert optional_directory_exists(source_dir, "frontend") is True
+
+    source_file = isolated_filesystem / "backend"
+    source_file.write_text("not a directory")
+    with pytest.raises(click.ClickException, match="not a directory"):
+        optional_directory_exists(source_file, "backend")
+
+    target_dir = isolated_filesystem / "outside"
+    target_dir.mkdir()
+    source_link = isolated_filesystem / "linked"
+    source_link.symlink_to(target_dir)
+    with pytest.raises(click.ClickException, match="path is a symlink"):
+        optional_directory_exists(source_link, "linked")
 
 
 # Validate Command Tests

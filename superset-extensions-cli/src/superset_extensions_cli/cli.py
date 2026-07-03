@@ -241,6 +241,12 @@ def require_optional_directory(path: Path, label: str) -> None:
         raise click.ClickException(f"{label} path exists but is not a directory.")
 
 
+def optional_directory_exists(path: Path, label: str) -> bool:
+    """Return whether an optional project directory exists after validation."""
+    require_optional_directory(path, label)
+    return path.exists()
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
@@ -829,12 +835,12 @@ def build(ctx: click.Context) -> None:
 
     # Build frontend if it exists
     remote_entry = None
-    if frontend_dir.exists():
+    if optional_directory_exists(frontend_dir, "frontend"):
         init_frontend_deps(frontend_dir)
         remote_entry = rebuild_frontend(cwd, frontend_dir)
 
     # Build backend independently if it exists
-    if backend_dir.exists():
+    if optional_directory_exists(backend_dir, "backend"):
         pyproject = load_toml_object(
             backend_dir / "pyproject.toml", "backend pyproject.toml"
         )
@@ -924,32 +930,32 @@ def dev(ctx: click.Context) -> None:
 
     # Build frontend if it exists
     remote_entry = None
-    if frontend_dir.exists():
+    if optional_directory_exists(frontend_dir, "frontend"):
         init_frontend_deps(frontend_dir)
         remote_entry = rebuild_frontend(cwd, frontend_dir)
 
     # Build backend if it exists
-    if backend_dir.exists():
+    if optional_directory_exists(backend_dir, "backend"):
         rebuild_backend(cwd)
 
     manifest = build_manifest(cwd, remote_entry)
     write_manifest(cwd, manifest)
 
     def frontend_watcher() -> None:
-        if frontend_dir.exists():
+        if optional_directory_exists(frontend_dir, "frontend"):
             if (remote_entry := rebuild_frontend(cwd, frontend_dir)) is not None:
                 manifest = build_manifest(cwd, remote_entry)
                 write_manifest(cwd, manifest)
 
     def backend_watcher() -> None:
-        if backend_dir.exists():
+        if optional_directory_exists(backend_dir, "backend"):
             rebuild_backend(cwd)
 
     # Build watch message based on existing directories
     watch_dirs = []
-    if frontend_dir.exists():
+    if optional_directory_exists(frontend_dir, "frontend"):
         watch_dirs.append(str(frontend_dir))
-    if backend_dir.exists():
+    if optional_directory_exists(backend_dir, "backend"):
         watch_dirs.append(str(backend_dir))
 
     if watch_dirs:
@@ -960,11 +966,11 @@ def dev(ctx: click.Context) -> None:
     observer = Observer()
 
     # Only set up watchers for directories that exist
-    if frontend_dir.exists():
+    if optional_directory_exists(frontend_dir, "frontend"):
         frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
         observer.schedule(frontend_handler, str(frontend_dir), recursive=True)
 
-    if backend_dir.exists():
+    if optional_directory_exists(backend_dir, "backend"):
         backend_handler = FileSystemEventHandler()
         backend_handler.on_any_event = lambda event: backend_watcher()
         observer.schedule(backend_handler, str(backend_dir), recursive=True)
