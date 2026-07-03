@@ -263,6 +263,21 @@ test('buildConfig rejects Superset path overrides with dot segments', () => {
   expect(() =>
     buildConfig({ AX_SUPERSET_CHART_LIST_PATH: 'api/./v1/chart' }),
   ).toThrow('AX_SUPERSET_CHART_LIST_PATH must not contain dot path segments');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_METADATA_PATH: 'api/%2e%2e/dashboard/_info' }),
+  ).toThrow('AX_SUPERSET_METADATA_PATH must not contain dot path segments');
+});
+
+test('buildConfig rejects ambiguous percent-encoded Superset path overrides', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%2fhealth' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain encoded path separators');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%5chealth' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain encoded path separators');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api/%zz/health' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must contain valid percent-encoding');
 });
 
 test('buildConfig rejects unsupported log levels', () => {

@@ -193,8 +193,21 @@ function normalizePath(value: string, name: string): string {
       `${name} must be a URL path without query, fragment, backslash, whitespace, or control characters`,
     );
   }
-  if (trimmed.split('/').some(segment => segment === '.' || segment === '..')) {
-    throw new Error(`${name} must not contain dot path segments`);
+  for (const segment of trimmed.split('/')) {
+    let decodedSegment: string;
+    try {
+      decodedSegment = decodeURIComponent(segment);
+    } catch (error) {
+      throw new Error(`${name} must contain valid percent-encoding`, {
+        cause: error,
+      });
+    }
+    if (decodedSegment === '.' || decodedSegment === '..') {
+      throw new Error(`${name} must not contain dot path segments`);
+    }
+    if (/[\\/]/.test(decodedSegment)) {
+      throw new Error(`${name} must not contain encoded path separators`);
+    }
   }
 
   return `/${trimmed.replace(/^\/+/, '')}`;
