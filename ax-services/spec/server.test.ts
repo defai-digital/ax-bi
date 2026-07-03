@@ -527,6 +527,19 @@ test('request ID normalization trims valid IDs and rejects unsafe IDs', () => {
   expect(normalizeRequestIdHeader('request 123')).toBeUndefined();
 });
 
+test('server applies configured Fastify log level', async () => {
+  const server = buildServer(
+    buildConfig({
+      AX_SERVICES_LOG_LEVEL: 'warn',
+    }),
+    makeSupersetClient(),
+  );
+
+  expect(server.log.level).toBe('warn');
+
+  await server.close();
+});
+
 test('ready endpoint replaces unsafe request IDs before echoing or forwarding', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(

@@ -189,7 +189,7 @@ export function buildServer(
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
   const server = Fastify({
-    logger: config.logLevel !== 'silent',
+    logger: config.logLevel === 'silent' ? false : { level: config.logLevel },
     genReqId(request) {
       return (
         normalizeRequestIdHeader(request.headers['x-request-id']) ||
