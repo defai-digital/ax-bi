@@ -812,6 +812,48 @@ def test_copy_frontend_dist_copies_files_correctly(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_stages_symlink_at_matched_path(isolated_filesystem):
+    """Test frontend symlinks inside dist are staged at the matched path."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    target_dir = frontend_dist / "assets"
+    target_dir.mkdir()
+    (target_dir / "style.css").write_text("css content")
+    link_dir = frontend_dist / "linked"
+    link_dir.mkdir()
+    link = link_dir / "style.css"
+    link.symlink_to(target_dir / "style.css")
+
+    clean_dist(isolated_filesystem)
+    remote_entry = copy_frontend_dist(isolated_filesystem)
+
+    assert remote_entry == "remoteEntry.abc123.js"
+    dist_dir = isolated_filesystem / "dist"
+    assert_file_exists(dist_dir / "frontend" / "dist" / "linked" / "style.css")
+    assert_file_exists(dist_dir / "frontend" / "dist" / "assets" / "style.css")
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_symlink_outside_dist(isolated_filesystem):
+    """Test copy_frontend_dist refuses symlinks that escape frontend/dist."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (isolated_filesystem / "secret.txt").write_text("SECRET")
+    link = frontend_dist / "leaked.txt"
+    link.symlink_to(isolated_filesystem / "secret.txt")
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException):
+        copy_frontend_dist(isolated_filesystem)
+
+    leaked_file = isolated_filesystem / "dist" / "frontend" / "dist" / "leaked.txt"
+    assert not leaked_file.exists()
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_exits_when_no_remote_entry(isolated_filesystem):
     """Test copy_frontend_dist exits when no remoteEntry file found."""
     # Create frontend/dist without remoteEntry file

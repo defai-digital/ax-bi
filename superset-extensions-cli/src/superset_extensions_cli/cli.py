@@ -205,15 +205,21 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
 
 def copy_frontend_dist(cwd: Path) -> str:
     dist_dir = cwd / "dist"
-    frontend_dist = cwd / "frontend" / "dist"
+    frontend_dist = (cwd / "frontend" / "dist").resolve()
     remote_entry: str | None = None
 
     for f in frontend_dist.rglob("*"):
         if not f.is_file():
             continue
+        resolved = f.resolve()
+        if not resolved.is_relative_to(frontend_dist):
+            raise click.ClickException(
+                f"Refusing to copy {f}: resolved path is outside the "
+                f"frontend dist directory {frontend_dist}."
+            )
         if REMOTE_ENTRY_REGEX.match(f.name):
             remote_entry = f.name
-        tgt = dist_dir / f.relative_to(cwd)
+        tgt = dist_dir / "frontend" / "dist" / f.relative_to(frontend_dist)
         tgt.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, tgt)
 
