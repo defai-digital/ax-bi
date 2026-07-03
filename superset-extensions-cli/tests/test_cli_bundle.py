@@ -984,6 +984,52 @@ def test_bundle_rejects_dist_entry_changed_before_zip_write(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_dist_root_changed_before_zip_write(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses a replaced dist root before writing entries."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    dist_dir = isolated_filesystem / "dist"
+    saved_dist = isolated_filesystem / "saved-dist"
+    replacement_dist = isolated_filesystem / "replacement-dist"
+    original_enter = zipfile.ZipFile.__enter__
+
+    def replace_dist_root_on_zip_open(self):
+        result = original_enter(self)
+        if dist_dir.exists() and not saved_dist.exists():
+            dist_dir.rename(saved_dist)
+            replacement_dist.mkdir()
+            for item in sorted(saved_dist.rglob("*"), key=lambda path: len(path.parts)):
+                relative_item = item.relative_to(saved_dist)
+                replacement_item = replacement_dist / relative_item
+                if item.is_dir():
+                    replacement_item.mkdir()
+                elif item.is_file():
+                    replacement_item.parent.mkdir(parents=True, exist_ok=True)
+                    item.rename(replacement_item)
+            replacement_dist.rename(dist_dir)
+        return result
+
+    monkeypatch.setattr(zipfile.ZipFile, "__enter__", replace_dist_root_on_zip_open)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "dist path changed before bundle copy" in result.output
+    assert (dist_dir / "manifest.json").exists()
+    assert not (saved_dist / "manifest.json").exists()
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+    assert list(isolated_filesystem.glob(".test-extension-1.0.0.supx.*.tmp")) == []
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_rejects_dist_symlink_to_external_output(
     mock_build, cli_runner, isolated_filesystem
 ):

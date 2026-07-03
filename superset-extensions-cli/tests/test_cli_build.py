@@ -3853,6 +3853,79 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_source_root_changed_before_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backend staging refuses a replaced backend root before copying."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    source_file = backend_src / "__init__.py"
+    source_file.write_text("# init")
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/__init__.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+    saved_backend_dir = isolated_filesystem / "saved-backend"
+    replacement_backend_dir = isolated_filesystem / "replacement-backend"
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def replace_backend_root_after_planning(parent, prefix, label):
+        temp_dir = original_create_temporary_output_directory(parent, prefix, label)
+        if prefix == ".backend.":
+            backend_dir.rename(saved_backend_dir)
+            replacement_source_dir = (
+                replacement_backend_dir / "src" / "test_org" / "test_ext"
+            )
+            replacement_source_dir.mkdir(parents=True)
+            saved_source_file = (
+                saved_backend_dir / "src" / "test_org" / "test_ext" / "__init__.py"
+            )
+            saved_source_file.rename(replacement_source_dir / "__init__.py")
+            replacement_backend_dir.rename(backend_dir)
+        return temp_dir
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        replace_backend_root_after_planning,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="backend path changed before copy",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert not (
+        saved_backend_dir / "src" / "test_org" / "test_ext" / "__init__.py"
+    ).exists()
+    assert source_file.read_text() == "# init"
+    assert not (
+        isolated_filesystem
+        / "dist"
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_ext"
+        / "__init__.py"
+    ).exists()
+    assert list((isolated_filesystem / "dist").glob(".backend.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_copy_backend_files_rejects_changed_staged_cleanup_root(
     isolated_filesystem,
     monkeypatch,
@@ -4558,6 +4631,57 @@ def test_copy_frontend_dist_rejects_source_changed_before_copy(
 
     assert source_file.is_symlink()
     assert outside_file.read_text() == "outside"
+    assert not (isolated_filesystem / "dist" / "frontend" / "dist" / "main.js").exists()
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_source_root_changed_before_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend staging refuses a replaced frontend/dist root before copying."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    main_file = frontend_dist / "main.js"
+    main_file.write_text("main content")
+    remote_entry = frontend_dist / "remoteEntry.abc123.js"
+    remote_entry.write_text("remote entry content")
+    saved_frontend_dist = isolated_filesystem / "saved-frontend-dist"
+    replacement_frontend_dist = isolated_filesystem / "replacement-frontend-dist"
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def replace_frontend_dist_after_planning(parent, prefix, label):
+        temp_dir = original_create_temporary_output_directory(parent, prefix, label)
+        if prefix == ".frontend.":
+            frontend_dist.rename(saved_frontend_dist)
+            replacement_frontend_dist.mkdir()
+            (saved_frontend_dist / "main.js").rename(
+                replacement_frontend_dist / "main.js"
+            )
+            (saved_frontend_dist / "remoteEntry.abc123.js").rename(
+                replacement_frontend_dist / "remoteEntry.abc123.js"
+            )
+            replacement_frontend_dist.rename(frontend_dist)
+        return temp_dir
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        replace_frontend_dist_after_planning,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend/dist path changed before copy",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (saved_frontend_dist / "main.js").exists()
+    assert main_file.read_text() == "main content"
     assert not (isolated_filesystem / "dist" / "frontend" / "dist" / "main.js").exists()
     assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
 

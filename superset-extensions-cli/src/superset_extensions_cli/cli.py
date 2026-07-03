@@ -1678,6 +1678,9 @@ def copy_frontend_dist(cwd: Path) -> str:
     require_optional_directory(frontend_dir_path, "frontend")
     frontend_dist_path = frontend_dir_path / "dist"
     require_optional_directory(frontend_dist_path, "frontend/dist")
+    frontend_dist_identity = get_directory_path_identity(frontend_dist_path)
+    if frontend_dist_identity is None:
+        raise click.ClickException("frontend/dist path is no longer safe.")
     frontend_dist = frontend_dist_path.resolve()
     frontend_files: list[tuple[Path, tuple[int, int, int, int]]] = []
     remote_entries: list[str] = []
@@ -1734,6 +1737,12 @@ def copy_frontend_dist(cwd: Path) -> str:
     try:
         for f, identity, tgt in copy_targets:
             relative_target = tgt.relative_to(frontend_dist_output_dir)
+            ensure_directory_identity_unchanged(
+                frontend_dist_path,
+                "frontend/dist",
+                frontend_dist_identity,
+                "copy",
+            )
             ensure_copy_source_unchanged(
                 f,
                 frontend_dist,
@@ -1829,6 +1838,9 @@ def copy_backend_files(cwd: Path) -> None:
     backend_output_dir = dist_dir / "backend"
     backend_dir_path = cwd / "backend"
     require_optional_directory(backend_dir_path, "backend")
+    backend_dir_identity = get_directory_path_identity(backend_dir_path)
+    if backend_dir_identity is None:
+        raise click.ClickException("backend path is no longer safe.")
     backend_dir = backend_dir_path.resolve()
 
     # Read build config from pyproject.toml
@@ -1892,6 +1904,12 @@ def copy_backend_files(cwd: Path) -> None:
     try:
         for f, tgt, identity in copy_targets.values():
             relative_target = tgt.relative_to(backend_output_dir)
+            ensure_directory_identity_unchanged(
+                backend_dir_path,
+                "backend",
+                backend_dir_identity,
+                "copy",
+            )
             ensure_copy_source_unchanged(
                 f,
                 backend_dir,
@@ -2704,6 +2722,9 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     dist_dir = cwd / "dist"
     try:
         require_optional_directory(dist_dir, "dist")
+        dist_identity = get_directory_path_identity(dist_dir)
+        if dist_identity is None:
+            raise click.ClickException("dist path is no longer safe.")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
@@ -2808,6 +2829,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
 
         with zipfile.ZipFile(temp_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file, arcname, identity in bundle_entries:
+                ensure_directory_identity_unchanged(
+                    dist_dir,
+                    "dist",
+                    dist_identity,
+                    "bundle copy",
+                )
                 ensure_copy_source_unchanged(
                     file,
                     resolved_dist_dir,
