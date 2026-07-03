@@ -236,6 +236,50 @@ def test_bundle_reports_manifest_read_errors(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_fails_when_manifest_becomes_unsafe_during_read(
+    mock_build, cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test bundle refuses manifest content when the read boundary changes."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    manifest_path = dist_dir / "manifest.json"
+    manifest_path.write_text("{}")
+    outside_manifest = isolated_filesystem / "outside-manifest.json"
+    outside_manifest.write_text(
+        json.dumps(
+            {
+                "id": "test-org.test-extension",
+                "publisher": "test-org",
+                "name": "test-extension",
+                "displayName": "Test Extension",
+                "version": "1.0.0",
+                "permissions": [],
+            }
+        )
+    )
+    original_read_text = Path.read_text
+
+    def replace_manifest_during_read(path, *args, **kwargs):
+        if path == manifest_path:
+            manifest_path.unlink()
+            manifest_path.symlink_to(outside_manifest)
+            return original_read_text(outside_manifest, *args, **kwargs)
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_manifest_during_read)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Failed to read dist/manifest.json" in result.output
+    assert "path is a symlink" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_fails_with_invalid_manifest_schema(
     mock_build, cli_runner, isolated_filesystem
 ):

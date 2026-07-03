@@ -678,6 +678,26 @@ def input_file_exists(path: Path, label: str) -> bool:
     return path.exists()
 
 
+def read_input_text(path: Path, label: str) -> str | None:
+    """Read an optional input file after validating the input boundary."""
+    if not input_file_exists(path, label):
+        return None
+
+    try:
+        content = path.read_text()
+    except OSError as ex:
+        raise click.ClickException(f"Failed to read {label}: {ex}") from ex
+
+    try:
+        still_exists = input_file_exists(path, label)
+    except click.ClickException as ex:
+        raise click.ClickException(f"Failed to read {label}: {ex.message}") from ex
+    if not still_exists:
+        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+
+    return content
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
@@ -1651,21 +1671,15 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     manifest_path = dist_dir / "manifest.json"
 
     try:
-        has_manifest = input_file_exists(manifest_path, "dist/manifest.json")
+        manifest_json = read_input_text(manifest_path, "dist/manifest.json")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
-    if not has_manifest:
+    if manifest_json is None:
         click.secho(
             "❌ dist/manifest.json not found. Run `build` first.", err=True, fg="red"
         )
-        sys.exit(1)
-
-    try:
-        manifest_json = manifest_path.read_text()
-    except OSError as ex:
-        click.secho(f"❌ Failed to read dist/manifest.json: {ex}", err=True, fg="red")
         sys.exit(1)
 
     try:
