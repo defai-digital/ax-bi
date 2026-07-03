@@ -1689,6 +1689,19 @@ interface ListPaginationRequest {
   pageSize: number;
 }
 
+interface EmptyListResponseMetadata {
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+}
+
 interface ListOrderingRequest {
   orderColumn?: unknown;
   orderDirection: unknown;
@@ -3016,16 +3029,11 @@ function emptyDashboardListResponse(
   return {
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
     dashboards: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDashboardColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDashboardColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3036,16 +3044,11 @@ function emptyAnnotationLayerListResponse(
   return {
     contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
     annotationLayers: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedAnnotationLayerColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedAnnotationLayerColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3056,17 +3059,12 @@ function emptyAnnotationListResponse(
   return {
     contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
     annotations: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
     layerId: request.layerId,
-    columnsRequested: requestedAnnotationColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedAnnotationColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3077,16 +3075,11 @@ function emptyChartListResponse(
   return {
     contractVersion: CHART_LIST_CONTRACT_VERSION,
     charts: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedChartColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedChartColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3097,16 +3090,11 @@ function emptyDatasetListResponse(
   return {
     contractVersion: DATASET_LIST_CONTRACT_VERSION,
     datasets: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDatasetColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDatasetColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3117,16 +3105,11 @@ function emptyDatabaseListResponse(
   return {
     contractVersion: DATABASE_LIST_CONTRACT_VERSION,
     databases: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDatabaseColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDatabaseColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3137,16 +3120,11 @@ function emptyQueryListResponse(
   return {
     contractVersion: QUERY_LIST_CONTRACT_VERSION,
     queries: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedQueryColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedQueryColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3157,16 +3135,11 @@ function emptySavedQueryListResponse(
   return {
     contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
     savedQueries: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedSavedQueryColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedSavedQueryColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3177,16 +3150,11 @@ function emptyReportListResponse(
   return {
     contractVersion: REPORT_LIST_CONTRACT_VERSION,
     reports: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedReportColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedReportColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3197,16 +3165,11 @@ function emptyRoleListResponse(
   return {
     contractVersion: ROLE_LIST_CONTRACT_VERSION,
     roles: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedRoleColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedRoleColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3217,16 +3180,11 @@ function emptyRlsListResponse(
   return {
     contractVersion: RLS_LIST_CONTRACT_VERSION,
     rlsFilters: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedRlsColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedRlsColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3237,16 +3195,11 @@ function emptyTagListResponse(
   return {
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedTagColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedTagColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -3257,6 +3210,20 @@ function emptyTaskListResponse(
   return {
     contractVersion: TASK_LIST_CONTRACT_VERSION,
     tasks: [],
+    ...emptyListResponseMetadata(
+      request,
+      requestedTaskColumns(request),
+      warnings,
+    ),
+  };
+}
+
+function emptyListResponseMetadata(
+  request: ListPaginationRequest,
+  columnsRequested: string[],
+  warnings: string[],
+): EmptyListResponseMetadata {
+  return {
     count: 0,
     totalCount: 0,
     page: request.page,
@@ -3264,7 +3231,7 @@ function emptyTaskListResponse(
     totalPages: 0,
     hasNext: false,
     hasPrevious: request.page > 1,
-    columnsRequested: requestedTaskColumns(request),
+    columnsRequested,
     columnsLoaded: [],
     warnings,
   };
