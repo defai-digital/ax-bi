@@ -280,6 +280,19 @@ def remove_output_directory(path: Path, label: str) -> None:
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
+    symlinked_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.is_symlink()
+        ),
+        None,
+    )
+    if symlinked_parent is not None:
+        raise click.ClickException(
+            f"Refusing to clean {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
     if not path.exists():
         return
     if not path.is_dir():

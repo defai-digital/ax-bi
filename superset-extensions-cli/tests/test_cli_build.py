@@ -697,6 +697,26 @@ def test_clean_dist_frontend_rejects_symlinked_directory(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_clean_dist_frontend_rejects_symlinked_parent(isolated_filesystem):
+    """Test clean_dist_frontend refuses a symlinked dist parent."""
+    from superset_extensions_cli.cli import clean_dist_frontend
+
+    outside_dir = isolated_filesystem / "outside-dist"
+    outside_frontend = outside_dir / "frontend"
+    outside_frontend.mkdir(parents=True)
+    (outside_frontend / "artifact.js").write_text("keep")
+    (isolated_filesystem / "dist").symlink_to(outside_dir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean dist/frontend directory: parent directory is a symlink",
+    ):
+        clean_dist_frontend(isolated_filesystem)
+
+    assert_file_exists(outside_frontend / "artifact.js")
+
+
+@pytest.mark.unit
 def test_run_frontend_build_with_output_messages(isolated_filesystem):
     """Test run_frontend_build produces expected output messages."""
     from superset_extensions_cli.cli import run_frontend_build
