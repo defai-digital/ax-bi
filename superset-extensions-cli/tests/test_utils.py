@@ -117,6 +117,32 @@ def test_read_json_with_symlinked_ancestor(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_json_returns_none_when_path_becomes_symlink_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_json refuses content if the path becomes unsafe during read."""
+    json_file = isolated_filesystem / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "outside"}')
+    original_read_text = Path.read_text
+
+    def replace_json_during_read(path, *args, **kwargs):
+        if path == json_file:
+            json_file.unlink()
+            json_file.symlink_to(outside_file)
+            return original_read_text(outside_file, *args, **kwargs)
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_json_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert json_file.is_symlink()
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
@@ -232,6 +258,32 @@ def test_read_toml_with_symlinked_ancestor(isolated_filesystem):
     result = read_toml(output_dir / "nested" / "pyproject.toml")
 
     assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_path_becomes_symlink_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_toml refuses content if the path becomes unsafe during read."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "outside"')
+    original_open = Path.open
+
+    def replace_toml_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            toml_file.unlink()
+            toml_file.symlink_to(outside_file)
+            return original_open(outside_file, *args, **kwargs)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_toml_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert toml_file.is_symlink()
 
 
 @pytest.mark.unit
