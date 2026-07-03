@@ -128,11 +128,15 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             error_msg = "❌ `npm i` failed. Aborting."
 
         validate_npm()
-        res = subprocess.run(  # noqa: S603
-            npm_command,  # noqa: S607
-            cwd=frontend_dir,
-            text=True,
-        )
+        try:
+            res = subprocess.run(  # noqa: S603
+                npm_command,  # noqa: S607
+                cwd=frontend_dir,
+                text=True,
+            )
+        except OSError as ex:
+            click.secho(f"{error_msg} {ex}", err=True, fg="red")
+            sys.exit(1)
         if res.returncode != 0:
             click.secho(error_msg, err=True, fg="red")
             sys.exit(1)
@@ -254,11 +258,16 @@ def write_manifest(cwd: Path, manifest: Manifest) -> None:
 def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
     click.echo()
     click.secho("⚙️  Building frontend assets…", fg="cyan")
-    return subprocess.run(  # noqa: S603
-        ["npm", "run", "build"],  # noqa: S607
-        cwd=frontend_dir,
-        text=True,
-    )
+    command = ["npm", "run", "build"]
+    try:
+        return subprocess.run(  # noqa: S603
+            command,  # noqa: S607
+            cwd=frontend_dir,
+            text=True,
+        )
+    except OSError as ex:
+        click.secho(f"❌ Failed to run `npm run build`: {ex}", err=True, fg="red")
+        return subprocess.CompletedProcess(command, returncode=1)
 
 
 def copy_frontend_dist(cwd: Path) -> str:

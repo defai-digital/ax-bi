@@ -265,6 +265,26 @@ def test_init_frontend_deps_exits_on_npm_ci_failure(
     assert exc_info.value.code == 1
 
 
+@pytest.mark.unit
+@patch("subprocess.run")
+@patch("superset_extensions_cli.cli.validate_npm")
+def test_init_frontend_deps_exits_on_npm_launch_error(
+    mock_validate_npm, mock_run, isolated_filesystem, capsys
+):
+    """Test init_frontend_deps exits cleanly when npm cannot launch."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+
+    mock_run.side_effect = PermissionError("Permission denied")
+
+    with pytest.raises(SystemExit) as exc_info:
+        init_frontend_deps(frontend_dir)
+
+    assert exc_info.value.code == 1
+    mock_validate_npm.assert_called_once()
+    assert "`npm i` failed. Aborting. Permission denied" in capsys.readouterr().err
+
+
 # Build Manifest Tests
 @pytest.mark.unit
 def test_build_manifest_creates_correct_manifest_structure(
@@ -403,6 +423,25 @@ def test_run_frontend_build_with_output_messages(isolated_filesystem):
         mock_run.assert_called_once_with(
             ["npm", "run", "build"], cwd=frontend_dir, text=True
         )
+
+
+@pytest.mark.unit
+def test_run_frontend_build_returns_failure_on_launch_error(
+    isolated_filesystem, capsys
+):
+    """Test run_frontend_build handles npm launch errors without a traceback."""
+    from superset_extensions_cli.cli import run_frontend_build
+
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.side_effect = PermissionError("Permission denied")
+
+        result = run_frontend_build(frontend_dir)
+
+    assert result.returncode == 1
+    assert "Failed to run `npm run build`: Permission denied" in capsys.readouterr().err
 
 
 @pytest.mark.unit
