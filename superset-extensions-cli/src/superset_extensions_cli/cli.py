@@ -187,15 +187,12 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             error_msg = "❌ `npm i` failed. Aborting."
 
         validate_npm()
+        validate_node_modules_path(node_modules)
         current_frontend_identity = get_directory_path_identity(frontend_dir)
-        if (
-            current_frontend_identity is None
-            or current_frontend_identity[:2] != frontend_identity[:2]
-        ):
+        if current_frontend_identity != frontend_identity:
             raise click.ClickException(
                 "frontend path changed before dependency install."
             )
-        validate_node_modules_path(node_modules)
         try:
             res = subprocess.run(  # noqa: S603
                 npm_command,  # noqa: S607

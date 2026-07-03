@@ -2290,6 +2290,35 @@ def test_init_frontend_deps_rejects_changed_frontend_before_install(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_frontend_content_change_before_install(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dependency install refuses frontend content changes before launch."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+
+    def add_frontend_entry_during_npm_validation():
+        (frontend_dir / "unexpected.txt").write_text("unexpected")
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.validate_npm",
+        add_frontend_entry_during_npm_validation,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed before dependency install",
+    ):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert (frontend_dir / "unexpected.txt").read_text() == "unexpected"
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 def test_init_frontend_deps_rejects_node_modules_symlink_before_install(
     mock_run,
     isolated_filesystem,
