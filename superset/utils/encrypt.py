@@ -150,7 +150,7 @@ class SQLAlchemyUtilsAdapter(  # pylint: disable=too-few-public-methods
                     "SQLALCHEMY_ENCRYPTED_FIELD_ENGINE",
                     DEFAULT_ENCRYPTION_ENGINE_NAME,
                 )
-                # ``**kwargs`` is loosely annotated as ``Optional[dict]`` here, so
+                # ``**kwargs`` is loosely typed because callers pass engine options, so
                 # route the resolved engine class through an ``Any`` local.
                 engine_cls: Any = resolve_encryption_engine(engine_name)
                 kwargs["engine"] = engine_cls
