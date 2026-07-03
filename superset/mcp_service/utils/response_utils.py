@@ -57,7 +57,7 @@ Usage example::
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 import humanize
 
@@ -188,7 +188,7 @@ def _byte_size_label(value: str | None) -> str:
 class OmittedFieldsBuilder:
     """Builder for constructing omission metadata dicts.
 
-    Produces a ``Dict[str, str]`` mapping field names to human-readable
+    Produces a ``dict[str, str]`` mapping field names to human-readable
     descriptions of what was omitted, including approximate sizes.
 
     Two field types are supported:
@@ -206,14 +206,14 @@ class OmittedFieldsBuilder:
     """
 
     def __init__(self) -> None:
-        self._fields: Dict[str, str] = {}
+        self._fields: dict[str, str] = {}
 
     def add_raw_field(
         self,
         field_name: str,
         raw_value: str | None,
         reason: str,
-    ) -> "OmittedFieldsBuilder":
+    ) -> OmittedFieldsBuilder:
         """Record a field that was stripped with no replacement.
 
         Parameters
@@ -239,7 +239,7 @@ class OmittedFieldsBuilder:
         field_name: str,
         raw_value: str | None,
         reason: str,
-    ) -> "OmittedFieldsBuilder":
+    ) -> OmittedFieldsBuilder:
         """Record a field whose useful parts were extracted into other fields.
 
         Parameters
@@ -263,6 +263,6 @@ class OmittedFieldsBuilder:
             )
         return self
 
-    def build(self) -> Dict[str, str]:
+    def build(self) -> dict[str, str]:
         """Return the omission metadata dict."""
         return dict(self._fields)

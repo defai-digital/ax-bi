@@ -21,7 +21,7 @@ Provides functionality to filter sensitive data based on user permissions.
 """
 
 import logging
-from typing import Any, List, Optional, Set
+from typing import Any, Optional
 
 from flask_appbuilder.security.sqla.models import User
 from pydantic import BaseModel
@@ -144,8 +144,8 @@ def user_has_permission(
 def get_allowed_fields(
     object_type: str,
     user: Optional[User] = None,
-    requested_fields: Optional[List[str]] = None,
-) -> Set[str]:
+    requested_fields: Optional[list[str]] = None,
+) -> set[str]:
     """
     Get the set of fields that the user is allowed to access for a given object type.
 
@@ -205,7 +205,7 @@ def filter_sensitive_data(
     data: Any,
     object_type: str,
     user: Optional[User] = None,
-    allowed_fields: Optional[Set[str]] = None,
+    allowed_fields: Optional[set[str]] = None,
 ) -> Any:
     """
     Filter sensitive data from an object based on user permissions.
@@ -267,8 +267,8 @@ def filter_sensitive_data(
 
 
 def apply_field_permissions_to_columns(
-    columns: List[str], object_type: str, user: Optional[User] = None
-) -> List[str]:
+    columns: list[str], object_type: str, user: Optional[User] = None
+) -> list[str]:
     """
     Filter a list of column names based on field-level permissions.
 
@@ -294,7 +294,7 @@ class PermissionAwareSerializer:
         self.base_serializer = base_serializer
 
     def serialize(
-        self, obj: Any, columns: List[str], user: Optional[User] = None
+        self, obj: Any, columns: list[str], user: Optional[User] = None
     ) -> Any:
         """
         Serialize object with field-level permissions applied.

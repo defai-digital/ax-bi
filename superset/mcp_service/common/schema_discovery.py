@@ -23,7 +23,7 @@ filters, and sorting options for each model type (chart, dataset, dashboard).
 Column metadata is extracted dynamically from SQLAlchemy models.
 """
 
-from typing import Any, Literal, Type
+from typing import Any, Literal
 
 import sqlalchemy as sa
 from pydantic import BaseModel, Field
@@ -177,7 +177,7 @@ _COLUMN_DESCRIPTIONS: dict[str, str] = {
 
 
 def get_columns_from_model(
-    model_cls: Type[Any],
+    model_cls: type[Any],
     default_columns: list[str],
     extra_columns: dict[str, ColumnMetadata] | None = None,
     exclude_columns: set[str] | None = None,

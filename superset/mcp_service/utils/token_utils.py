@@ -48,15 +48,14 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from math import ceil
-from typing import Any, Dict, List, Union
+from typing import Any, TypeAlias, Union
 
 from pydantic import BaseModel
-from typing_extensions import TypeAlias
 
 logger = logging.getLogger(__name__)
 
 # Type alias for MCP tool responses (Pydantic models, dicts, lists, strings, bytes)
-ToolResponse: TypeAlias = Union[BaseModel, Dict[str, Any], List[Any], str, bytes]
+ToolResponse: TypeAlias = Union[BaseModel, dict[str, Any], list[Any], str, bytes]
 
 # Fallback character-to-token ratio used when tiktoken is unavailable.
 # 3.0 is conservative for JSON content (the previous 3.5 under-counted
@@ -208,7 +207,7 @@ def get_response_size_bytes(response: ToolResponse) -> int:
         return 1_000_000  # 1MB fallback
 
 
-def extract_query_params(params: Dict[str, Any] | None) -> Dict[str, Any]:
+def extract_query_params(params: dict[str, Any] | None) -> dict[str, Any]:
     """
     Extract relevant query parameters from tool params for suggestions.
 
@@ -243,11 +242,11 @@ def extract_query_params(params: Dict[str, Any] | None) -> Dict[str, Any]:
 
 def generate_size_reduction_suggestions(
     tool_name: str,
-    params: Dict[str, Any] | None,
+    params: dict[str, Any] | None,
     estimated_tokens: int,
     token_limit: int,
     response: ToolResponse | None = None,
-) -> List[str]:
+) -> list[str]:
     """
     Generate smart suggestions for reducing response size.
 
@@ -348,7 +347,7 @@ def generate_size_reduction_suggestions(
     return suggestions
 
 
-def _identify_large_fields(response: ToolResponse) -> List[str]:
+def _identify_large_fields(response: ToolResponse) -> list[str]:
     """
     Identify fields that contribute most to response size.
 
@@ -358,7 +357,7 @@ def _identify_large_fields(response: ToolResponse) -> List[str]:
     Returns:
         List of field names that are particularly large
     """
-    large_fields: List[str] = []
+    large_fields: list[str] = []
 
     try:
         from superset.utils import json
@@ -404,9 +403,9 @@ def _identify_large_fields(response: ToolResponse) -> List[str]:
 
 def _get_tool_specific_suggestions(
     tool_name: str,
-    query_params: Dict[str, Any],
+    query_params: dict[str, Any],
     response: ToolResponse,
-) -> List[str]:
+) -> list[str]:
     """
     Generate tool-specific suggestions based on the tool being called.
 
@@ -478,7 +477,7 @@ _MAX_DICT_KEYS = 20
 
 
 def _truncate_strings(
-    data: Dict[str, Any], notes: List[str], max_chars: int = _MAX_STRING_CHARS
+    data: dict[str, Any], notes: list[str], max_chars: int = _MAX_STRING_CHARS
 ) -> bool:
     """Truncate string fields exceeding max_chars at the top level only."""
     changed = False
@@ -493,7 +492,7 @@ def _truncate_strings(
 
 def _truncate_strings_recursive(
     data: Any,
-    notes: List[str],
+    notes: list[str],
     max_chars: int = _MAX_STRING_CHARS,
     path: str = "",
     _depth: int = 0,
@@ -532,11 +531,11 @@ def _truncate_strings_recursive(
     return changed
 
 
-def _truncate_lists(data: Dict[str, Any], notes: List[str], max_items: int) -> bool:
+def _truncate_lists(data: dict[str, Any], notes: list[str], max_items: int) -> bool:
     """Truncate list fields exceeding max_items. Returns True if any truncated.
 
     Does NOT append marker objects into the list to preserve the element type
-    contract (e.g. ``List[TableColumnInfo]`` stays homogeneous).  Truncation
+    contract (e.g. ``list[TableColumnInfo]`` stays homogeneous).  Truncation
     metadata is communicated through the *notes* list and top-level response
     fields ``_response_truncated`` / ``_truncation_notes``.
     """
@@ -553,7 +552,7 @@ def _truncate_lists(data: Dict[str, Any], notes: List[str], max_items: int) -> b
 
 
 def _summarize_large_dicts(
-    data: Dict[str, Any], notes: List[str], max_keys: int = _MAX_DICT_KEYS
+    data: dict[str, Any], notes: list[str], max_keys: int = _MAX_DICT_KEYS
 ) -> bool:
     """Replace large dict fields with key summaries. Returns True if any changed."""
     changed = False
@@ -572,7 +571,7 @@ def _summarize_large_dicts(
     return changed
 
 
-def _replace_collections_with_summaries(data: Dict[str, Any], notes: List[str]) -> bool:
+def _replace_collections_with_summaries(data: dict[str, Any], notes: list[str]) -> bool:
     """Replace all non-empty list/dict fields with empty/minimal values.
 
     Lists are emptied (preserving the list type) rather than replaced with
@@ -593,7 +592,7 @@ def _replace_collections_with_summaries(data: Dict[str, Any], notes: List[str]) 
     return changed
 
 
-def _is_under_limit(data: Dict[str, Any], token_limit: int) -> bool:
+def _is_under_limit(data: dict[str, Any], token_limit: int) -> bool:
     """Check if the serialized data fits within the token limit."""
     from superset.utils import json as utils_json
 
@@ -663,7 +662,7 @@ def truncate_oversized_response(
 
 def format_size_limit_error(
     tool_name: str,
-    params: Dict[str, Any] | None,
+    params: dict[str, Any] | None,
     estimated_tokens: int,
     token_limit: int,
     response: ToolResponse | None = None,

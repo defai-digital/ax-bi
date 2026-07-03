@@ -23,7 +23,7 @@ and implementing cache control in MCP tools.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from superset.mcp_service.common.cache_schemas import CacheStatus
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_cache_status_from_result(
-    result: Dict[str, Any], force_refresh: bool = False
+    result: dict[str, Any], force_refresh: bool = False
 ) -> CacheStatus:
     """
     Extract cache status information from a Superset query result.
@@ -78,11 +78,11 @@ def get_cache_status_from_result(
 
 
 def apply_cache_control_to_query_context(
-    query_context: Dict[str, Any],
+    query_context: dict[str, Any],
     use_cache: bool = True,
     force_refresh: bool = False,
     cache_timeout: int | None = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Apply cache control parameters to a query context.
 

@@ -20,7 +20,7 @@ MCP response caching using FastMCP's native ResponseCachingMiddleware.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from superset.mcp_service.storage import get_mcp_store
 from superset.mcp_service.utils.config_utils import (
@@ -31,7 +31,7 @@ from superset.mcp_service.utils.config_utils import (
 logger = logging.getLogger(__name__)
 
 
-def _build_caching_settings(cache_config: Dict[str, Any]) -> Dict[str, Any]:
+def _build_caching_settings(cache_config: dict[str, Any]) -> dict[str, Any]:
     """
     Build FastMCP caching settings from MCP_CACHE_CONFIG.
 
@@ -51,7 +51,7 @@ def _build_caching_settings(cache_config: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dict of settings kwargs for ResponseCachingMiddleware
     """
-    settings: Dict[str, Any] = {}
+    settings: dict[str, Any] = {}
 
     # List operations (default 5 min)
     if "list_tools_ttl" in cache_config:
@@ -70,7 +70,7 @@ def _build_caching_settings(cache_config: Dict[str, Any]) -> Dict[str, Any]:
         settings["get_prompt_settings"] = {"ttl": cache_config["get_prompt_ttl"]}
 
     # Tool calls with exclusions
-    call_tool_settings: Dict[str, Any] = {}
+    call_tool_settings: dict[str, Any] = {}
     if "call_tool_ttl" in cache_config:
         call_tool_settings["ttl"] = cache_config["call_tool_ttl"]
     if "excluded_tools" in cache_config:
