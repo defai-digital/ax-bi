@@ -713,6 +713,206 @@ test('searchAssets records warnings for unsupported and failed search paths', as
   });
 });
 
+type ListContractCase = {
+  name: string;
+  request: Record<string, unknown>;
+  warning: string;
+  call: (
+    client: SupersetClient,
+    request: Record<string, unknown>,
+  ) => Promise<{ warnings: string[] }>;
+};
+
+const validListRequest = {
+  filters: [],
+  selectColumns: [],
+  orderDirection: 'asc',
+  page: 1,
+  pageSize: 10,
+} satisfies Record<string, unknown>;
+
+const listContractVersionCases: ListContractCase[] = [
+  {
+    name: 'annotation layer list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'annotation-layer-list.v0',
+    },
+    warning: 'annotation layer list request contains invalid contract version',
+    call: (client, request) =>
+      client.listAnnotationLayers(
+        request as unknown as Parameters<
+          SupersetClient['listAnnotationLayers']
+        >[0],
+      ),
+  },
+  {
+    name: 'annotation list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'annotation-list.v0',
+      layerId: 5,
+    },
+    warning: 'annotation list request contains invalid contract version',
+    call: (client, request) =>
+      client.listAnnotations(
+        request as unknown as Parameters<SupersetClient['listAnnotations']>[0],
+      ),
+  },
+  {
+    name: 'dashboard list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'dashboard-list.v0',
+      createdByMe: false,
+      ownedByMe: false,
+    },
+    warning: 'dashboard list request contains invalid contract version',
+    call: (client, request) =>
+      client.listDashboards(
+        request as unknown as Parameters<SupersetClient['listDashboards']>[0],
+      ),
+  },
+  {
+    name: 'chart list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'chart-list.v0',
+    },
+    warning: 'chart list request contains invalid contract version',
+    call: (client, request) =>
+      client.listCharts(
+        request as unknown as Parameters<SupersetClient['listCharts']>[0],
+      ),
+  },
+  {
+    name: 'dataset list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'dataset-list.v0',
+    },
+    warning: 'dataset list request contains invalid contract version',
+    call: (client, request) =>
+      client.listDatasets(
+        request as unknown as Parameters<SupersetClient['listDatasets']>[0],
+      ),
+  },
+  {
+    name: 'database list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'database-list.v0',
+    },
+    warning: 'database list request contains invalid contract version',
+    call: (client, request) =>
+      client.listDatabases(
+        request as unknown as Parameters<SupersetClient['listDatabases']>[0],
+      ),
+  },
+  {
+    name: 'query list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'query-list.v0',
+    },
+    warning: 'query list request contains invalid contract version',
+    call: (client, request) =>
+      client.listQueries(
+        request as unknown as Parameters<SupersetClient['listQueries']>[0],
+      ),
+  },
+  {
+    name: 'saved query list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'saved-query-list.v0',
+    },
+    warning: 'saved query list request contains invalid contract version',
+    call: (client, request) =>
+      client.listSavedQueries(
+        request as unknown as Parameters<
+          SupersetClient['listSavedQueries']
+        >[0],
+      ),
+  },
+  {
+    name: 'report list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'report-list.v0',
+    },
+    warning: 'report list request contains invalid contract version',
+    call: (client, request) =>
+      client.listReports(
+        request as unknown as Parameters<SupersetClient['listReports']>[0],
+      ),
+  },
+  {
+    name: 'role list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'role-list.v0',
+    },
+    warning: 'role list request contains invalid contract version',
+    call: (client, request) =>
+      client.listRoles(
+        request as unknown as Parameters<SupersetClient['listRoles']>[0],
+      ),
+  },
+  {
+    name: 'RLS filter list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'rls-list.v0',
+    },
+    warning: 'RLS filter list request contains invalid contract version',
+    call: (client, request) =>
+      client.listRlsFilters(
+        request as unknown as Parameters<SupersetClient['listRlsFilters']>[0],
+      ),
+  },
+  {
+    name: 'tag list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'tag-list.v0',
+    },
+    warning: 'tag list request contains invalid contract version',
+    call: (client, request) =>
+      client.listTags(
+        request as unknown as Parameters<SupersetClient['listTags']>[0],
+      ),
+  },
+  {
+    name: 'task list',
+    request: {
+      ...validListRequest,
+      contractVersion: 'task-list.v0',
+    },
+    warning: 'task list request contains invalid contract version',
+    call: (client, request) =>
+      client.listTasks(
+        request as unknown as Parameters<SupersetClient['listTasks']>[0],
+      ),
+  },
+];
+
+for (const { name, request, warning, call } of listContractVersionCases) {
+  test(`${name} rejects wrong request contract versions before querying Superset`, async () => {
+    let fetchCalled = false;
+    global.fetch = async () => {
+      fetchCalled = true;
+      throw new Error('unexpected fetch');
+    };
+    const client = new SupersetClient(buildConfig({}));
+
+    const result = await call(client, request);
+
+    expect(result.warnings).toContain(warning);
+    expect(fetchCalled).toBe(false);
+  });
+}
+
 test('listAnnotationLayers maps Superset annotation layer list responses', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;

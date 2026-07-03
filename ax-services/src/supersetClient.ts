@@ -386,6 +386,16 @@ export class SupersetClient
         'annotation layer list request contains invalid filters',
       ]);
     }
+    if (
+      !hasExpectedContractVersion(
+        request,
+        ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+      )
+    ) {
+      return emptyAnnotationLayerListResponse(request, [
+        'annotation layer list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildAnnotationLayerListUrl(request);
 
@@ -455,6 +465,13 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptyAnnotationListResponse(request, [
         'annotation list request contains invalid filters',
+      ]);
+    }
+    if (
+      !hasExpectedContractVersion(request, ANNOTATION_LIST_CONTRACT_VERSION)
+    ) {
+      return emptyAnnotationListResponse(request, [
+        'annotation list request contains invalid contract version',
       ]);
     }
 
@@ -647,6 +664,11 @@ export class SupersetClient
         'dashboard list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, DASHBOARD_LIST_CONTRACT_VERSION)) {
+      return emptyDashboardListResponse(request, [
+        'dashboard list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildDashboardListUrl(request);
 
@@ -709,6 +731,11 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptyChartListResponse(request, [
         'chart list request contains invalid filters',
+      ]);
+    }
+    if (!hasExpectedContractVersion(request, CHART_LIST_CONTRACT_VERSION)) {
+      return emptyChartListResponse(request, [
+        'chart list request contains invalid contract version',
       ]);
     }
 
@@ -775,6 +802,11 @@ export class SupersetClient
         'dataset list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, DATASET_LIST_CONTRACT_VERSION)) {
+      return emptyDatasetListResponse(request, [
+        'dataset list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildDatasetListUrl(request);
 
@@ -837,6 +869,11 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptyDatabaseListResponse(request, [
         'database list request contains invalid filters',
+      ]);
+    }
+    if (!hasExpectedContractVersion(request, DATABASE_LIST_CONTRACT_VERSION)) {
+      return emptyDatabaseListResponse(request, [
+        'database list request contains invalid contract version',
       ]);
     }
 
@@ -903,6 +940,11 @@ export class SupersetClient
         'query list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, QUERY_LIST_CONTRACT_VERSION)) {
+      return emptyQueryListResponse(request, [
+        'query list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildQueryListUrl(request);
 
@@ -965,6 +1007,13 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptySavedQueryListResponse(request, [
         'saved query list request contains invalid filters',
+      ]);
+    }
+    if (
+      !hasExpectedContractVersion(request, SAVED_QUERY_LIST_CONTRACT_VERSION)
+    ) {
+      return emptySavedQueryListResponse(request, [
+        'saved query list request contains invalid contract version',
       ]);
     }
 
@@ -1031,6 +1080,11 @@ export class SupersetClient
         'report list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, REPORT_LIST_CONTRACT_VERSION)) {
+      return emptyReportListResponse(request, [
+        'report list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildReportListUrl(request);
 
@@ -1095,6 +1149,11 @@ export class SupersetClient
         'role list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, ROLE_LIST_CONTRACT_VERSION)) {
+      return emptyRoleListResponse(request, [
+        'role list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildRoleListUrl(request);
 
@@ -1155,6 +1214,11 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptyRlsListResponse(request, [
         'RLS filter list request contains invalid filters',
+      ]);
+    }
+    if (!hasExpectedContractVersion(request, RLS_LIST_CONTRACT_VERSION)) {
+      return emptyRlsListResponse(request, [
+        'RLS filter list request contains invalid contract version',
       ]);
     }
 
@@ -1221,6 +1285,11 @@ export class SupersetClient
         'tag list request contains invalid filters',
       ]);
     }
+    if (!hasExpectedContractVersion(request, TAG_LIST_CONTRACT_VERSION)) {
+      return emptyTagListResponse(request, [
+        'tag list request contains invalid contract version',
+      ]);
+    }
 
     const url = this.buildTagListUrl(request);
 
@@ -1281,6 +1350,11 @@ export class SupersetClient
     if (!hasValidListFilters(request)) {
       return emptyTaskListResponse(request, [
         'task list request contains invalid filters',
+      ]);
+    }
+    if (!hasExpectedContractVersion(request, TASK_LIST_CONTRACT_VERSION)) {
+      return emptyTaskListResponse(request, [
+        'task list request contains invalid contract version',
       ]);
     }
 
@@ -3526,6 +3600,13 @@ function hasValidListFilters(request: unknown): request is ListFilterRequest {
     Array.isArray(request['filters']) &&
     request['filters'].every(isListFilter)
   );
+}
+
+function hasExpectedContractVersion(
+  request: unknown,
+  contractVersion: string,
+): boolean {
+  return isRecord(request) && request['contractVersion'] === contractVersion;
 }
 
 function isListFilter(value: unknown): boolean {
