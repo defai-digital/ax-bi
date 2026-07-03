@@ -25,8 +25,8 @@ from unittest.mock import patch
 
 import click
 import pytest
-from superset_extensions_cli.cli import app, get_bundle_default_filename
 
+from superset_extensions_cli.cli import app, get_bundle_default_filename
 from tests.utils import assert_file_exists
 
 

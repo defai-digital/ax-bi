@@ -21,13 +21,13 @@ from pathlib import Path
 
 import click
 import pytest
+
 import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import (
     app,
     cleanup_scaffold_directory,
     create_scaffold_directory,
 )
-
 from tests.utils import (
     assert_directory_exists,
     assert_directory_structure,

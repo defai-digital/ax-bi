@@ -24,8 +24,9 @@ from unittest.mock import Mock, patch
 
 import click
 import pytest
-import superset_extensions_cli.cli as cli
 from superset_core.extensions.types import Manifest
+
+import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import (
     app,
     build_manifest,
@@ -48,7 +49,6 @@ from superset_extensions_cli.cli import (
     validate_output_file_parent,
     write_manifest,
 )
-
 from tests.utils import (
     assert_directory_exists,
     assert_file_exists,

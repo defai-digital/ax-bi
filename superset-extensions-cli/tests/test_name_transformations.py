@@ -32,7 +32,6 @@ from superset_extensions_cli.utils import (
     validate_technical_name,
 )
 
-
 # Name transformation tests
 
 

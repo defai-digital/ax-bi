@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import app
 from superset_extensions_cli.utils import read_json, read_toml

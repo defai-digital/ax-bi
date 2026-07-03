@@ -24,7 +24,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 from superset_core.extensions.types import Manifest
-from superset_extensions_cli.cli import app, FrontendChangeHandler
+
+from superset_extensions_cli.cli import FrontendChangeHandler, app
 
 
 # Dev Command Tests

@@ -21,6 +21,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 import superset_extensions_cli.utils as utils
 from superset_extensions_cli.utils import (
     find_non_directory_parent,
