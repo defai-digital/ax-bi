@@ -504,10 +504,13 @@ test('searchAssets queries Superset list APIs and ranks normalized results', asy
     warnings: [],
   });
   expect(seenInputs).toHaveLength(2);
+  expect(seenInits).toHaveLength(2);
   expect(seenInputs[0]).toContain('/api/v1/dataset/');
   expect(seenInputs[0]).toContain('q=');
   expect(seenInputs[1]).toContain('/api/v1/chart/');
-  expect(seenInits[0].headers).toEqual({
+  const firstInit = seenInits[0];
+  expect(firstInit).toBeDefined();
+  expect(firstInit?.headers).toEqual({
     authorization: 'Bearer token-123',
     'x-request-id': 'request-search',
   });
