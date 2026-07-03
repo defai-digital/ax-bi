@@ -18,10 +18,28 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 from superset_extensions_cli.cli import app, validate_npm
+
+
+def create_file_path(path: Path) -> None:
+    """Create a regular file at the project source path."""
+    path.write_text("not a directory")
+
+
+def create_broken_symlink(path: Path) -> None:
+    """Create a broken symlink at the project source path."""
+    path.symlink_to(path.parent / f"missing-{path.name}")
+
+
+def create_directory_symlink(path: Path) -> None:
+    """Create a symlink to a real directory at the project source path."""
+    target = path.parent / f"outside-{path.name}"
+    target.mkdir()
+    path.symlink_to(target)
 
 
 # Validate Command Tests
@@ -109,11 +127,25 @@ include = "src/**/*.py"
 @pytest.mark.parametrize(
     ("path_name", "path_factory", "expected_message"),
     [
-        ("frontend", lambda path: path.write_text("not a directory"), "frontend path"),
+        (
+            "frontend",
+            create_file_path,
+            "frontend path exists but is not a directory",
+        ),
         (
             "backend",
-            lambda path: path.symlink_to(path.parent / "missing-backend"),
-            "backend path",
+            create_broken_symlink,
+            "backend path is a symlink",
+        ),
+        (
+            "frontend",
+            create_directory_symlink,
+            "frontend path is a symlink",
+        ),
+        (
+            "backend",
+            create_directory_symlink,
+            "backend path is a symlink",
         ),
     ],
 )
@@ -139,7 +171,7 @@ def test_validate_fails_when_source_path_is_not_directory(
         result = cli_runner.invoke(app, ["validate"])
 
     assert result.exit_code == 1
-    assert f"{expected_message} exists but is not a directory" in result.output
+    assert expected_message in result.output
 
 
 @pytest.mark.cli

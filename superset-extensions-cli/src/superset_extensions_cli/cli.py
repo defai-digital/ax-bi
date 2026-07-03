@@ -235,6 +235,8 @@ def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
 
 def require_optional_directory(path: Path, label: str) -> None:
     """Require an optional project path to be a directory when present."""
+    if path.is_symlink():
+        raise click.ClickException(f"{label} path is a symlink.")
     if (path.exists() or path.is_symlink()) and not path.is_dir():
         raise click.ClickException(f"{label} path exists but is not a directory.")
 
