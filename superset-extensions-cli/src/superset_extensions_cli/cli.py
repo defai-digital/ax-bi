@@ -207,6 +207,9 @@ def start_dist_replacement(cwd: Path) -> tuple[Path | None, Path | None]:
         return None, None
 
     validate_output_directory(dist_dir, "dist directory")
+    dist_identity = get_directory_path_identity(dist_dir)
+    if dist_identity is None:
+        raise click.ClickException("Refusing to back up dist directory: unsafe path.")
     backup_root = create_temporary_output_directory(
         cwd,
         ".dist-backup.",
@@ -221,6 +224,13 @@ def start_dist_replacement(cwd: Path) -> tuple[Path | None, Path | None]:
         except click.ClickException:
             pass
         raise click.ClickException(f"Failed to back up dist directory: {ex}") from ex
+
+    if get_directory_path_identity(backup_path) != dist_identity:
+        try:
+            remove_output_directory(backup_root, "temporary dist backup directory")
+        except click.ClickException:
+            pass
+        raise click.ClickException("Failed to back up dist directory: path changed.")
 
     try:
         ensure_output_directory(dist_dir, "dist directory")

@@ -446,6 +446,45 @@ def test_start_dist_replacement_restores_dist_when_replacement_create_fails(
 
 
 @pytest.mark.unit
+def test_start_dist_replacement_rejects_swapped_dist_backup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dist replacement setup aborts if the backed-up dist path changes."""
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("previous")
+    replacement_dir = isolated_filesystem / "replacement-dist"
+    replacement_dir.mkdir()
+    (replacement_dir / "manifest.json").write_text("replacement")
+    saved_original = isolated_filesystem / "saved-original-dist"
+    original_replace = Path.replace
+
+    def replace_dist_with_replacement(path, target):
+        if (
+            path == dist_dir
+            and target.name == "dist"
+            and target.parent.name.startswith(".dist-backup.")
+        ):
+            original_replace(dist_dir, saved_original)
+            original_replace(replacement_dir, dist_dir)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", replace_dist_with_replacement)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to back up dist directory: path changed",
+    ):
+        start_dist_replacement(isolated_filesystem)
+
+    assert (saved_original / "manifest.json").read_text() == "previous"
+    assert not dist_dir.exists()
+    assert not replacement_dir.exists()
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_clean_dist_rejects_symlinked_dist_directory(isolated_filesystem):
     """Test clean_dist refuses a symlinked dist path."""
     outside_dir = isolated_filesystem / "outside"
