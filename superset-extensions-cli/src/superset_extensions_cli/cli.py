@@ -707,10 +707,18 @@ def validate_bundle_output_path(path: Path) -> None:
         raise click.ClickException(
             f"Refusing to write bundle: {path} exists but is not a file."
         )
-    if path.parent.exists() and not path.parent.is_dir():
+    invalid_parent = next(
+        (
+            parent
+            for parent in (path.parent, *path.parent.parents)
+            if parent.exists() and not parent.is_dir()
+        ),
+        None,
+    )
+    if invalid_parent is not None:
         raise click.ClickException(
             f"Refusing to write bundle: parent exists but is not a directory: "
-            f"{path.parent}."
+            f"{invalid_parent}."
         )
 
 

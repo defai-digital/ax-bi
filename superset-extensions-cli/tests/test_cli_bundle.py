@@ -489,6 +489,27 @@ def test_bundle_rejects_non_directory_output_parent(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_non_directory_output_ancestor(
+    mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
+):
+    """Test bundle refuses nested output paths below a file ancestor."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    result = cli_runner.invoke(
+        app,
+        ["bundle", "--output", str(output_parent / "nested" / "bundle.supx")],
+    )
+
+    assert result.exit_code == 1
+    assert "parent exists but is not a directory" in result.output
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_short_option(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):
