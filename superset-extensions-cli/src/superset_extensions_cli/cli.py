@@ -380,6 +380,14 @@ def publish_staged_output_directory(
     staged_path: Path, target_path: Path, label: str
 ) -> None:
     """Replace an output directory with a staged directory, restoring on failure."""
+    if staged_path.is_symlink():
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is a symlink."
+        )
+    if not staged_path.is_dir():
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is not a directory."
+        )
     validate_output_directory(target_path, label)
 
     backup_root: Path | None = None
@@ -426,6 +434,14 @@ def publish_staged_output_directory(
 
 def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:
     """Replace an output file with a staged file."""
+    if staged_path.is_symlink():
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is a symlink."
+        )
+    if not staged_path.is_file():
+        raise click.ClickException(
+            f"Refusing to publish {label}: staged path is not a file."
+        )
     validate_output_file(target_path, label)
     try:
         staged_path.replace(target_path)

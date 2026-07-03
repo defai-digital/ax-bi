@@ -33,6 +33,7 @@ from superset_extensions_cli.cli import (
     ensure_output_directory,
     init_frontend_deps,
     publish_output_file,
+    publish_staged_output_directory,
     validate_output_file,
     validate_output_file_parent,
     write_manifest,
@@ -374,6 +375,91 @@ def test_publish_output_file_revalidates_target(isolated_filesystem):
 
     assert outside_file.read_text() == "outside bundle"
     assert staged_file.read_text() == "new bundle"
+
+
+@pytest.mark.unit
+def test_publish_output_file_rejects_symlinked_staged_file(isolated_filesystem):
+    """Test staged file publishing refuses a symlinked staged file."""
+    staged_target = isolated_filesystem / "outside.tmp"
+    staged_target.write_text("outside")
+    staged_link = isolated_filesystem / ".bundle.tmp"
+    staged_link.symlink_to(staged_target)
+    output_path = isolated_filesystem / "bundle.supx"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to publish bundle: staged path is a symlink",
+    ):
+        publish_output_file(staged_link, output_path, "bundle")
+
+    assert not output_path.exists()
+    assert staged_target.read_text() == "outside"
+
+
+@pytest.mark.unit
+def test_publish_output_file_rejects_non_file_staged_path(isolated_filesystem):
+    """Test staged file publishing refuses a staged directory."""
+    staged_dir = isolated_filesystem / ".bundle.tmp"
+    staged_dir.mkdir()
+    output_path = isolated_filesystem / "bundle.supx"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to publish bundle: staged path is not a file",
+    ):
+        publish_output_file(staged_dir, output_path, "bundle")
+
+    assert not output_path.exists()
+    assert staged_dir.is_dir()
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
+    isolated_filesystem,
+):
+    """Test staged directory publishing refuses a symlinked staged directory."""
+    staged_target = isolated_filesystem / "outside-frontend"
+    staged_target.mkdir()
+    (staged_target / "asset.js").write_text("outside")
+    staged_link = isolated_filesystem / ".frontend.tmp"
+    staged_link.symlink_to(staged_target)
+    output_path = isolated_filesystem / "frontend"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to publish dist/frontend directory: staged path is a symlink",
+    ):
+        publish_staged_output_directory(
+            staged_link,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert not output_path.exists()
+    assert_file_exists(staged_target / "asset.js")
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_rejects_non_directory_staged_path(
+    isolated_filesystem,
+):
+    """Test staged directory publishing refuses a staged file."""
+    staged_file = isolated_filesystem / ".frontend.tmp"
+    staged_file.write_text("not a directory")
+    output_path = isolated_filesystem / "frontend"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to publish dist/frontend directory: staged path is not a directory",
+    ):
+        publish_staged_output_directory(
+            staged_file,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert not output_path.exists()
+    assert staged_file.read_text() == "not a directory"
 
 
 @pytest.mark.unit
