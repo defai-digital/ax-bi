@@ -99,7 +99,7 @@ export const assetSearchRequestSchema = {
       items: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
     },
     includeCertifiedOnly: { type: 'boolean' },
-    limit: { type: 'number', minimum: 1, maximum: 100 },
+    limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
 } as const;
 

@@ -261,6 +261,13 @@ test('asset search request schema is registered in asset search contracts', () =
     },
   );
   expect(
+    assetSearchContractSchemas.assetSearchRequestSchema.properties.limit,
+  ).toEqual({
+    type: 'integer',
+    minimum: 1,
+    maximum: 100,
+  });
+  expect(
     assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
       .properties.assetType,
   ).toEqual({

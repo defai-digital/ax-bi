@@ -509,6 +509,30 @@ test('searchAssets records status warnings for non-json error responses', async 
   });
 });
 
+test('searchAssets rejects invalid limits before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10.5,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['asset search request contains invalid limit'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('searchAssets records warnings for unsupported and failed search paths', async () => {
   global.fetch = async () => {
     throw new Error('search failed');

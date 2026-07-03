@@ -459,6 +459,14 @@ export class SupersetClient
     request: AssetSearchRequest,
     correlationId?: string,
   ): Promise<AssetSearchResponse> {
+    if (!isAssetSearchLimit(request.limit)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid limit'],
+      };
+    }
+
     const warnings: string[] = [];
     const requestedTypes =
       request.assetTypes.length > 0
@@ -3098,6 +3106,10 @@ function hasValidAuthorizationIds(request: unknown): boolean {
 
 function isOptionalSupersetId(value: unknown): boolean {
   return value === undefined || isSupersetId(value);
+}
+
+function isAssetSearchLimit(value: unknown): value is number {
+  return isInteger(value) && value >= 1 && value <= 100;
 }
 
 function isCacheTimeout(value: unknown): value is number {
