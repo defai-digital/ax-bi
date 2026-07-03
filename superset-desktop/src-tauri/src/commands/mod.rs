@@ -19,6 +19,7 @@
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, Runtime};
+use url::Url;
 
 use crate::navigation::build_navigation_script;
 
@@ -31,11 +32,30 @@ pub struct AppConfig {
 
 const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
 
+fn normalize_server_url(value: &str) -> Result<String, String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return Err("AXBI_SERVER_URL must not be empty".to_string());
+    }
+
+    let mut url = Url::parse(trimmed)
+        .map_err(|_| "AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string())?;
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return Err("AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string());
+    }
+
+    url.set_fragment(None);
+    Ok(url.as_str().trim_end_matches('/').to_string())
+}
+
 #[tauri::command]
 pub async fn get_app_config<R: Runtime>(_app: AppHandle<R>) -> Result<AppConfig, String> {
+    let server_url = std::env::var("AXBI_SERVER_URL")
+        .map(|value| normalize_server_url(&value))
+        .unwrap_or_else(|_| normalize_server_url(DEFAULT_SERVER_URL))?;
+
     Ok(AppConfig {
-        server_url: std::env::var("AXBI_SERVER_URL")
-            .unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string()),
+        server_url,
         sso_enabled: true,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
@@ -71,4 +91,37 @@ pub async fn show_notification<R: Runtime>(
 #[tauri::command]
 pub async fn get_version() -> Result<String, String> {
     Ok(env!("CARGO_PKG_VERSION").to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_server_url, DEFAULT_SERVER_URL};
+
+    #[test]
+    fn normalizes_valid_server_urls() {
+        assert_eq!(
+            normalize_server_url("  https://superset.example.test/  ").unwrap(),
+            "https://superset.example.test"
+        );
+        assert_eq!(
+            normalize_server_url(DEFAULT_SERVER_URL).unwrap(),
+            DEFAULT_SERVER_URL
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_server_urls() {
+        assert_eq!(
+            normalize_server_url("   ").unwrap_err(),
+            "AXBI_SERVER_URL must not be empty"
+        );
+        assert_eq!(
+            normalize_server_url("not a url").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("file:///tmp/superset").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+    }
 }
