@@ -156,6 +156,50 @@ def test_optional_directory_exists_rejects_changed_content(
 
 
 @pytest.mark.unit
+def test_optional_directory_exists_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional directory helper refuses a replaced parent."""
+    project_dir = isolated_filesystem / "project"
+    source_dir = project_dir / "frontend"
+    source_dir.mkdir(parents=True)
+    saved_project_dir = isolated_filesystem / "saved-project"
+    replacement_project_dir = isolated_filesystem / "replacement-project"
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def move_directory_under_replaced_parent(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 2:
+                project_dir.rename(saved_project_dir)
+                replacement_project_dir.mkdir()
+                (saved_project_dir / "frontend").rename(
+                    replacement_project_dir / "frontend"
+                )
+                replacement_project_dir.rename(project_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        move_directory_under_replaced_parent,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed during validation",
+    ):
+        optional_directory_exists(source_dir, "frontend")
+
+    assert not (saved_project_dir / "frontend").exists()
+    assert source_dir.is_dir()
+
+
+@pytest.mark.unit
 def test_require_optional_directory_rejects_changed_path(
     isolated_filesystem,
     monkeypatch,
@@ -225,6 +269,50 @@ def test_require_optional_directory_rejects_changed_content(
         require_optional_directory(source_dir, "backend")
 
     assert (source_dir / "added.txt").read_text() == "new entry"
+
+
+@pytest.mark.unit
+def test_require_optional_directory_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test required directory validation refuses a replaced parent."""
+    project_dir = isolated_filesystem / "project"
+    source_dir = project_dir / "backend"
+    source_dir.mkdir(parents=True)
+    saved_project_dir = isolated_filesystem / "saved-project"
+    replacement_project_dir = isolated_filesystem / "replacement-project"
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def move_directory_under_replaced_parent(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 2:
+                project_dir.rename(saved_project_dir)
+                replacement_project_dir.mkdir()
+                (saved_project_dir / "backend").rename(
+                    replacement_project_dir / "backend"
+                )
+                replacement_project_dir.rename(project_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        move_directory_under_replaced_parent,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="backend path changed during validation",
+    ):
+        require_optional_directory(source_dir, "backend")
+
+    assert not (saved_project_dir / "backend").exists()
+    assert source_dir.is_dir()
 
 
 @pytest.mark.unit
