@@ -55,5 +55,5 @@ class CustomPrestoTemplateProcessor(PrestoTemplateProcessor):
             return f(*args)
 
         macro_names = ["$" + name for name in macros.keys()]
-        pattern = r"(%s)\s*\(([^()]*)\)" % "|".join(map(re.escape, macro_names))
+        pattern = rf"({'|'.join(map(re.escape, macro_names))})\s*\(([^()]*)\)"
         return re.sub(pattern, replacer, sql)
