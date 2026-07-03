@@ -93,8 +93,14 @@ function normalizeSupersetBaseUrl(value: string): string {
   }
 }
 
-function normalizePath(value: string): string {
-  return value.startsWith('/') ? value : `/${value}`;
+function normalizePath(value: string, name: string): string {
+  const trimmed = value.trim();
+
+  if (trimmed === '') {
+    throw new Error(`${name} must not be empty`);
+  }
+
+  return `/${trimmed.replace(/^\/+/, '')}`;
 }
 
 export function buildConfig(env: Environment = process.env): ServiceConfig {
@@ -110,53 +116,68 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
     ),
     supersetHealthPath: normalizePath(
       env.AX_SUPERSET_HEALTH_PATH || DEFAULT_SUPERSET_HEALTH_PATH,
+      'AX_SUPERSET_HEALTH_PATH',
     ),
     supersetMetadataPath: normalizePath(
       env.AX_SUPERSET_METADATA_PATH || DEFAULT_SUPERSET_METADATA_PATH,
+      'AX_SUPERSET_METADATA_PATH',
     ),
     supersetPermissionPath: normalizePath(
       env.AX_SUPERSET_PERMISSION_PATH || DEFAULT_SUPERSET_PERMISSION_PATH,
+      'AX_SUPERSET_PERMISSION_PATH',
     ),
     supersetAssetSearchPaths: {
       annotationLayer: normalizePath(
         env.AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH ||
           DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
+        'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH',
       ),
       chart: normalizePath(
         env.AX_SUPERSET_CHART_LIST_PATH || DEFAULT_SUPERSET_CHART_LIST_PATH,
+        'AX_SUPERSET_CHART_LIST_PATH',
       ),
       dashboard: normalizePath(
         env.AX_SUPERSET_DASHBOARD_LIST_PATH ||
           DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+        'AX_SUPERSET_DASHBOARD_LIST_PATH',
       ),
       database: normalizePath(
         env.AX_SUPERSET_DATABASE_LIST_PATH ||
           DEFAULT_SUPERSET_DATABASE_LIST_PATH,
+        'AX_SUPERSET_DATABASE_LIST_PATH',
       ),
       dataset: normalizePath(
         env.AX_SUPERSET_DATASET_LIST_PATH || DEFAULT_SUPERSET_DATASET_LIST_PATH,
+        'AX_SUPERSET_DATASET_LIST_PATH',
       ),
       query: normalizePath(
         env.AX_SUPERSET_QUERY_LIST_PATH || DEFAULT_SUPERSET_QUERY_LIST_PATH,
+        'AX_SUPERSET_QUERY_LIST_PATH',
       ),
       report: normalizePath(
         env.AX_SUPERSET_REPORT_LIST_PATH || DEFAULT_SUPERSET_REPORT_LIST_PATH,
+        'AX_SUPERSET_REPORT_LIST_PATH',
       ),
       role: normalizePath(
         env.AX_SUPERSET_ROLE_LIST_PATH || DEFAULT_SUPERSET_ROLE_LIST_PATH,
+        'AX_SUPERSET_ROLE_LIST_PATH',
       ),
       rls: normalizePath(
         env.AX_SUPERSET_RLS_LIST_PATH || DEFAULT_SUPERSET_RLS_LIST_PATH,
+        'AX_SUPERSET_RLS_LIST_PATH',
       ),
       savedQuery: normalizePath(
         env.AX_SUPERSET_SAVED_QUERY_LIST_PATH ||
           DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
+        'AX_SUPERSET_SAVED_QUERY_LIST_PATH',
       ),
       tag: normalizePath(
         env.AX_SUPERSET_TAG_LIST_PATH || DEFAULT_SUPERSET_TAG_LIST_PATH,
+        'AX_SUPERSET_TAG_LIST_PATH',
       ),
       task: normalizePath(
         env.AX_SUPERSET_TASK_LIST_PATH || DEFAULT_SUPERSET_TASK_LIST_PATH,
+        'AX_SUPERSET_TASK_LIST_PATH',
       ),
     },
     supersetTimeoutMs: parsePositiveInteger(

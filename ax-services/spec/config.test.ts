@@ -100,6 +100,16 @@ test('buildConfig reads environment overrides', () => {
   expect(config.logLevel).toBe('debug');
 });
 
+test('buildConfig canonicalizes configured Superset paths', () => {
+  const config = buildConfig({
+    AX_SUPERSET_HEALTH_PATH: '  ///healthz  ',
+    AX_SUPERSET_CHART_LIST_PATH: '  charts  ',
+  });
+
+  expect(config.supersetHealthPath).toBe('/healthz');
+  expect(config.supersetAssetSearchPaths.chart).toBe('/charts');
+});
+
 test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SERVICES_PORT: 'abc' })).toThrow(
     'AX_SERVICES_PORT must be a positive integer',
@@ -112,5 +122,11 @@ test('buildConfig rejects invalid numeric settings', () => {
 test('buildConfig rejects invalid Superset URL', () => {
   expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'not a url' })).toThrow(
     'AX_SUPERSET_BASE_URL must be a valid URL',
+  );
+});
+
+test('buildConfig rejects blank Superset path overrides', () => {
+  expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
+    'AX_SUPERSET_HEALTH_PATH must not be empty',
   );
 });
