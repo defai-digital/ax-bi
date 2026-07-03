@@ -33,7 +33,7 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     defaultLineColor: theme.colorTextTertiary,
     includeSeries,
     isDarkMode: isThemeDark(theme),

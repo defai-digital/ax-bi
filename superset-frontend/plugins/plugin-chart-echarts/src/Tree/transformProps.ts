@@ -59,7 +59,7 @@ export default function transformProps(
   const { width, height, formData, queriesData, theme, isRefreshing } =
     chartProps;
   const refs: Refs = {};
-  const data: TreeDataRecord[] = queriesData[0].data || [];
+  const data: TreeDataRecord[] = queriesData[0]?.data || [];
 
   const {
     id,

@@ -760,7 +760,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     };
 
     const data = await getChartDataRequest(filterValues).then(response => {
-      const rawData = response.json.result[0].data;
+      const rawData = response.json.result?.[0]?.data || [];
       let filteredData = rawData;
 
       if (vizType === 'filter_timecolumn') {
@@ -1618,7 +1618,8 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     }
 
     getChartDataRequest(filterValues).then(response => {
-      const newFilterValues = response.json.result[0].data.map((item: any) => ({
+      const newFilterValues = (response.json.result?.[0]?.data || []).map(
+        (item: any) => ({
         value: item[columnName],
         label: item[columnName],
       }));

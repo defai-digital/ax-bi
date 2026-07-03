@@ -96,6 +96,8 @@ class HorizonRow extends PureComponent<HorizonRowProps> {
         mode,
       } = this.props;
 
+      if (!rawData.length) return;
+
       const data =
         colorScale === 'change'
           ? rawData.map(d => ({ ...d, y: d.y - rawData[0].y }))

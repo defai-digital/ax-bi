@@ -103,6 +103,7 @@ export default function sqlLabReducer(
     [actions.QUERY_EDITOR_SAVED]() {
       const { query, result, clientId } = action;
       const existing = state.queryEditors.find(qe => qe.id === clientId);
+      if (existing == null) return state;
       return alterInArr(
         state,
         'queryEditors',

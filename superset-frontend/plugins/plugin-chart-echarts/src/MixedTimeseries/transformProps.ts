@@ -147,11 +147,11 @@ export default function transformProps(
     currencyCodeColumn,
   } = datasource;
   const { label_map: labelMap, detected_currency: backendDetectedCurrency } =
-    queriesData[0] as TimeseriesChartDataResponseResult;
+    (queriesData[0] as TimeseriesChartDataResponseResult) || {};
   const { label_map: labelMapB, detected_currency: backendDetectedCurrencyB } =
-    queriesData[1] as TimeseriesChartDataResponseResult;
-  const data1 = (queriesData[0].data || []) as TimeseriesDataRecord[];
-  const data2 = (queriesData[1].data || []) as TimeseriesDataRecord[];
+    (queriesData[1] as TimeseriesChartDataResponseResult) || {};
+  const data1 = (queriesData[0]?.data || []) as TimeseriesDataRecord[];
+  const data2 = (queriesData[1]?.data || []) as TimeseriesDataRecord[];
   const annotationData = getAnnotationData(chartProps);
   const coltypeMapping = {
     ...getColtypesMapping(queriesData[0]),

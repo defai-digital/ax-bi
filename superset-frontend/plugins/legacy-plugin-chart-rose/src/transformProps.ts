@@ -32,7 +32,7 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     colorScheme,
     dateTimeFormat,
     numberFormat,

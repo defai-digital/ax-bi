@@ -44,7 +44,7 @@ interface ColumnData {
 export function transformProps(chartProps: TableChartProps) {
   const { height, datasource, formData, queriesData } = chartProps;
   const { columnCollection = [], groupby, metrics, url } = formData;
-  const { records, columns } = queriesData[0].data;
+  const { records, columns } = queriesData[0]?.data || { records: [], columns: [] };
   const isGroupBy = groupby?.length > 0;
 
   let rows;

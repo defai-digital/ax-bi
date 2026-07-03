@@ -211,7 +211,7 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
     if (filterBarOrientation) {
       orientationMap.set(formData.nativeFilterId, filterBarOrientation);
     }
-  }, [filterBarOrientation]);
+  }, [filterBarOrientation, formData.nativeFilterId]);
 
   const updateDataMask = useCallback(
     (values: SelectValue) => {

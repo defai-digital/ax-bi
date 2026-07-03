@@ -44,7 +44,7 @@ export default function transformProps(chartProps: ChartProps) {
 
   return {
     height,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     cellPadding,
     cellRadius,
     cellSize,

@@ -120,6 +120,7 @@ export default function transformProps(
   }
 
   const tooltipFormatter = (params: CallbackDataParams[]) => {
+    if (!params.length) return '';
     const title = params[0].name;
     const rows = params.map(param => {
       const { marker, seriesName, value } = param;

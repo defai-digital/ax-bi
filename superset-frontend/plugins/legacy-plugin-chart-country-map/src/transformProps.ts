@@ -64,7 +64,7 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     country: selectCountry ? String(selectCountry).toLowerCase() : null,
     linearColorScheme,
     numberFormat, // left for backward compatibility

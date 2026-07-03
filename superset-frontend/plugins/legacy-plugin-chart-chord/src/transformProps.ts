@@ -24,7 +24,7 @@ export default function transformProps(chartProps: ChartProps) {
 
   return {
     colorScheme,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     height,
     numberFormat: yAxisFormat,
     width,

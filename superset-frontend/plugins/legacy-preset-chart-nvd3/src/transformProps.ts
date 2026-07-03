@@ -121,7 +121,7 @@ export default function transformProps(chartProps: ChartProps) {
     ranges,
   } = formData;
 
-  const rawData = queriesData[0].data || [];
+  const rawData = queriesData[0]?.data || [];
   const data = Array.isArray(rawData)
     ? rawData.map(row => ({
         ...row,

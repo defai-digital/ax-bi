@@ -35,8 +35,8 @@ export const TextCellRenderer = (params: CellRendererProps) => {
 
   if (node?.rowPinned === 'bottom') {
     const cols = api.getAllGridColumns().filter(col => col.isVisible());
-    const colAggCheck = !cols[0].getAggFunc();
-    if (cols.length > 1 && colAggCheck && columns[0].key === colDef?.field) {
+    const colAggCheck = !cols[0]?.getAggFunc();
+    if (cols.length > 1 && colAggCheck && columns[0]?.key === colDef?.field) {
       return (
         <SummaryContainer>
           <SummaryText>{t('Summary')}</SummaryText>

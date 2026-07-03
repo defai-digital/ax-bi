@@ -99,7 +99,7 @@ export default function transformProps(
     emitCrossFilters,
     datasource,
   } = chartProps;
-  const data: DataRecord[] = queriesData[0].data || [];
+  const data: DataRecord[] = queriesData[0]?.data || [];
   const detectedCurrency = queriesData[0]?.detected_currency;
   const coltypeMapping = getColtypesMapping(queriesData[0]);
   const {

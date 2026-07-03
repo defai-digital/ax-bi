@@ -30,7 +30,7 @@ export default function transformProps(chartProps: ChartProps) {
     ...(horizonColorScale !== undefined && {
       colorScale: horizonColorScale as string,
     }),
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     height,
     seriesHeight: parseInt(String(seriesHeight ?? 20), 10),
     width,

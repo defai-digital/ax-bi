@@ -33,9 +33,10 @@ export default function parseLength(
     input.length > 0 &&
     input[input.length - 1] === '%'
   ) {
-    return { isDynamic: true, multiplier: parseFloat(input) / 100 };
+    const multiplier = parseFloat(input) / 100;
+    return { isDynamic: true, multiplier: Number.isNaN(multiplier) ? 1 : multiplier };
   }
   const value = typeof input === 'number' ? input : parseFloat(input);
 
-  return { isDynamic: false, value };
+  return { isDynamic: false, value: Number.isNaN(value) ? 0 : value };
 }

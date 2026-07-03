@@ -30,7 +30,7 @@ export default function transformProps(chartProps: ChartProps) {
 
   return {
     alpha: significanceLevel,
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     groups: groupby,
     liftValPrec: parseInt(liftvaluePrecision, 10),
     metrics: (metrics as (string | { label: string })[]).map(

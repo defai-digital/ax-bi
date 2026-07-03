@@ -74,7 +74,7 @@ export default function transformProps(chartProps: ChartProps): WordCloudProps {
   };
 
   return {
-    data: queriesData[0].data,
+    data: queriesData[0]?.data || [],
     encoding,
     height,
     rotation,

@@ -168,7 +168,7 @@ export default function transformProps(
     emitCrossFilters,
     theme,
   } = chartProps;
-  const data: DataRecord[] = queriesData[0].data || [];
+  const data: DataRecord[] = queriesData[0]?.data || [];
   const coltypeMapping = getColtypesMapping(queriesData[0]);
   const {
     source,
