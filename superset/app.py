@@ -19,7 +19,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import cast, Iterable, Optional
+from collections.abc import Iterable
+from typing import cast, Optional
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext

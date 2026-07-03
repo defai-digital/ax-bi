@@ -32,11 +32,12 @@ import os
 import re
 import sys
 from collections import OrderedDict
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from importlib.resources import files
-from typing import Any, Callable, Iterator, Literal, Optional, TYPE_CHECKING, TypedDict
+from typing import Any, Literal, Optional, TYPE_CHECKING, TypedDict
 
 import click
 from celery.schedules import crontab

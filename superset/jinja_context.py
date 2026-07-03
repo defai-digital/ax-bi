@@ -20,10 +20,11 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache, partial
-from typing import Any, Callable, cast, TYPE_CHECKING, TypedDict, Union
+from typing import Any, cast, TYPE_CHECKING, TypedDict, Union
 
 import dateutil
 from flask import current_app, g, has_request_context, request
@@ -770,9 +771,9 @@ class BaseTemplateProcessor:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        database: "Database",
-        query: "Query" | None = None,
-        table: "SqlaTable" | None = None,
+        database: Database,
+        query: Query | None = None,
+        table: SqlaTable | None = None,
         extra_cache_keys: list[Any] | None = None,
         removed_filters: list[str] | None = None,
         applied_filters: list[str] | None = None,
@@ -1095,9 +1096,9 @@ def get_template_processors() -> dict[str, Any]:
 
 
 def get_template_processor(
-    database: "Database",
-    table: "SqlaTable" | None = None,
-    query: "Query" | None = None,
+    database: Database,
+    table: SqlaTable | None = None,
+    query: Query | None = None,
     **kwargs: Any,
 ) -> BaseTemplateProcessor:
     if feature_flag_manager.is_feature_enabled("ENABLE_TEMPLATE_PROCESSING"):

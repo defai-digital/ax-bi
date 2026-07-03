@@ -21,9 +21,10 @@ import logging
 import re
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from math import ceil
 from types import SimpleNamespace
-from typing import Any, Callable, cast, NamedTuple, Optional, TYPE_CHECKING, Union
+from typing import Any, cast, NamedTuple, Optional, TYPE_CHECKING, Union
 
 from flask import current_app, Flask, g, Request
 from flask_appbuilder import Model
@@ -1550,7 +1551,7 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
 
         # group all datasources by database
         all_datasources = SqlaTable.get_all_datasources()
-        datasources_by_database: dict["Database", set["SqlaTable"]] = defaultdict(set)
+        datasources_by_database: dict[Database, set[SqlaTable]] = defaultdict(set)
         for datasource in all_datasources:
             datasources_by_database[datasource.database].add(datasource)
 
