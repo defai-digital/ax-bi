@@ -2815,6 +2815,47 @@ def test_run_frontend_build_rejects_changed_frontend_before_launch(
 
 
 @pytest.mark.unit
+@patch("subprocess.run")
+def test_run_frontend_build_rejects_frontend_content_change_before_launch(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend build refuses content changes after the build snapshot."""
+    from superset_extensions_cli import cli
+    from superset_extensions_cli.cli import run_frontend_build
+
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def change_frontend_after_build_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == frontend_dir:
+            identity_reads += 1
+            if identity_reads == 3:
+                (frontend_dir / "unexpected.txt").write_text("unexpected")
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        change_frontend_after_build_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed before frontend build",
+    ):
+        run_frontend_build(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert (frontend_dir / "unexpected.txt").read_text() == "unexpected"
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "return_code,expected_result",
     [

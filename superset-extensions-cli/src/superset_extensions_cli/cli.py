@@ -1485,10 +1485,7 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
     click.secho("⚙️  Building frontend assets…", fg="cyan")
     command = ["npm", "run", "build"]
     current_frontend_identity = get_directory_path_identity(frontend_dir)
-    if (
-        current_frontend_identity is None
-        or current_frontend_identity[:2] != frontend_identity[:2]
-    ):
+    if current_frontend_identity != frontend_identity:
         raise click.ClickException("frontend path changed before frontend build.")
     try:
         return subprocess.run(  # noqa: S603
