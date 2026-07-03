@@ -16,19 +16,17 @@
 # under the License.
 from __future__ import annotations
 
+import builtins
 import logging
 import uuid as uuid_lib
+from collections.abc import Sequence
 from enum import Enum
 from typing import (
     Any,
     ClassVar,
-    Dict,
     Generic,
     get_args,
-    List,
     Optional,
-    Sequence,
-    Tuple,
     TypeVar,
 )
 
@@ -87,7 +85,7 @@ def _escape_like(value: str) -> str:
 
 
 # Define operator_map as a module-level dict after the enum is defined
-operator_map: Dict[ColumnOperatorEnum, Any] = {
+operator_map: dict[ColumnOperatorEnum, Any] = {
     ColumnOperatorEnum.eq: lambda col, val: col == val,
     ColumnOperatorEnum.ne: lambda col, val: col != val,
     ColumnOperatorEnum.sw: lambda col, val: col.like(
@@ -557,7 +555,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
 
     @classmethod
     def apply_column_operators(
-        cls, query: Any, column_operators: Optional[List[ColumnOperator]] = None
+        cls, query: Any, column_operators: Optional[list[ColumnOperator]] = None
     ) -> Any:
         """
         Apply column operators (list of ColumnOperator) to the query using
@@ -590,7 +588,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         return query
 
     @classmethod
-    def get_filterable_columns_and_operators(cls) -> Dict[str, List[str]]:
+    def get_filterable_columns_and_operators(cls) -> dict[str, list[str]]:
         """
         Returns a dict mapping filterable columns (including hybrid/computed fields if
         present) to their supported operators. Used by MCP tools to dynamically expose
@@ -608,9 +606,9 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         }
         # You may add custom fields here, e.g.:
         # custom_fields = {"tags": ["eq", "in_", "like"], ...}
-        custom_fields: Dict[str, List[str]] = {}
+        custom_fields: dict[str, list[str]] = {}
 
-        filterable: Dict[str, Any] = {}
+        filterable: dict[str, Any] = {}
         for name, col in columns.items():
             if isinstance(col.type, (sa.String, sa.Text)):
                 filterable[name] = TYPE_OPERATOR_MAP["string"]
@@ -635,7 +633,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         filterable.update(custom_fields)
 
         # Convert enum values to strings for the return type
-        result: Dict[str, List[str]] = {}
+        result: dict[str, list[str]] = {}
         for key, operators in filterable.items():
             if isinstance(operators, list):
                 # Convert enums to strings
@@ -651,10 +649,10 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def _build_query(
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
+        column_operators: Optional[list[ColumnOperator]] = None,
         search: Optional[str] = None,
-        search_columns: Optional[List[str]] = None,
-        custom_filters: Optional[Dict[str, BaseFilter]] = None,
+        search_columns: Optional[list[str]] = None,
+        custom_filters: Optional[dict[str, BaseFilter]] = None,
         skip_base_filter: bool = False,
         data_model: Optional[SQLAInterface] = None,
     ) -> Any:
@@ -690,16 +688,16 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def list(  # noqa: C901
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
+        column_operators: Optional[list[ColumnOperator]] = None,
         order_column: str = "changed_on",
         order_direction: str = "desc",
         page: int = 0,
         page_size: int = 100,
         search: Optional[str] = None,
-        search_columns: Optional[List[str]] = None,
-        custom_filters: Optional[Dict[str, BaseFilter]] = None,
-        columns: Optional[List[str]] = None,
-    ) -> Tuple[List[Any], int]:
+        search_columns: Optional[list[str]] = None,
+        custom_filters: Optional[dict[str, BaseFilter]] = None,
+        columns: Optional[list[str]] = None,
+    ) -> tuple[list[Any], int]:
         """
         Generic list method for filtered, sorted, and paginated results.
         If columns is specified, returns a list of tuples (one per row),
@@ -795,7 +793,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def count(
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
+        column_operators: Optional[builtins.list[ColumnOperator]] = None,
         skip_base_filter: bool = False,
     ) -> int:
         """
