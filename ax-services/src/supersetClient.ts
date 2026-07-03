@@ -499,6 +499,14 @@ export class SupersetClient
     request: AssetSearchRequest,
     correlationId?: string,
   ): Promise<AssetSearchResponse> {
+    if (!hasValidAssetSearchRequestShape(request)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid request shape'],
+      };
+    }
+
     if (!isAssetSearchLimit(request.limit)) {
       return {
         contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -3422,6 +3430,27 @@ function isListFilterScalar(value: unknown): boolean {
 
 function isAssetSearchLimit(value: unknown): value is number {
   return isInteger(value) && value >= 1 && value <= 100;
+}
+
+function hasValidAssetSearchRequestShape(
+  request: unknown,
+): request is AssetSearchRequest {
+  return (
+    isRecord(request) &&
+    typeof request.query === 'string' &&
+    Array.isArray(request.assetTypes) &&
+    request.assetTypes.every(isAssetType) &&
+    typeof request.includeCertifiedOnly === 'boolean'
+  );
+}
+
+function isAssetType(value: unknown): value is AssetType {
+  return (
+    value === 'chart' ||
+    value === 'dashboard' ||
+    value === 'dataset' ||
+    value === 'metric'
+  );
 }
 
 function isCacheTimeout(value: unknown): value is number {
