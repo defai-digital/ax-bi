@@ -2599,17 +2599,52 @@ def test_init_frontend_deps_uses_validated_npm_path(
     """Test dependency install uses the npm executable that validation resolved."""
     frontend_dir = isolated_filesystem / "frontend"
     frontend_dir.mkdir()
-    mock_validate_npm.return_value = "/usr/local/bin/npm"
+    npm_path = isolated_filesystem / "npm"
+    npm_path.write_text("npm")
+    npm_identity = cli.get_output_copy_source_identity(npm_path)
+    assert npm_identity is not None
+    mock_validate_npm.return_value = cli.ValidatedNpmExecutable(
+        str(npm_path),
+        npm_identity,
+    )
     mock_run.return_value = Mock(returncode=0)
 
     init_frontend_deps(frontend_dir)
 
     mock_validate_npm.assert_called_once()
     mock_run.assert_called_once_with(
-        ["/usr/local/bin/npm", "i"],
+        [str(npm_path), "i"],
         cwd=frontend_dir,
         text=True,
     )
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
+@patch("superset_extensions_cli.cli.validate_npm")
+def test_init_frontend_deps_rejects_changed_validated_npm_path(
+    mock_validate_npm, mock_run, isolated_filesystem
+):
+    """Test dependency install refuses a changed validated npm executable."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    npm_path = isolated_filesystem / "npm"
+    npm_path.write_text("npm")
+    npm_identity = cli.get_output_copy_source_identity(npm_path)
+    assert npm_identity is not None
+    npm_path.write_text("changed npm")
+    mock_validate_npm.return_value = cli.ValidatedNpmExecutable(
+        str(npm_path),
+        npm_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="npm executable changed before launch",
+    ):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
 
 
 @pytest.mark.unit
@@ -3185,12 +3220,16 @@ def test_run_frontend_build_uses_validated_npm_path(isolated_filesystem):
 
     frontend_dir = isolated_filesystem / "frontend"
     frontend_dir.mkdir()
+    npm_path = isolated_filesystem / "npm"
+    npm_path.write_text("npm")
+    npm_identity = cli.get_output_copy_source_identity(npm_path)
+    assert npm_identity is not None
 
     with (
         patch("subprocess.run") as mock_run,
         patch(
             "superset_extensions_cli.cli.validate_npm",
-            return_value="/usr/local/bin/npm",
+            return_value=cli.ValidatedNpmExecutable(str(npm_path), npm_identity),
         ),
     ):
         mock_result = Mock(returncode=0)
@@ -3200,10 +3239,41 @@ def test_run_frontend_build_uses_validated_npm_path(isolated_filesystem):
 
         assert result.returncode == 0
         mock_run.assert_called_once_with(
-            ["/usr/local/bin/npm", "run", "build"],
+            [str(npm_path), "run", "build"],
             cwd=frontend_dir,
             text=True,
         )
+
+
+@pytest.mark.unit
+def test_run_frontend_build_rejects_changed_validated_npm_path(
+    isolated_filesystem,
+):
+    """Test frontend builds refuse a changed validated npm executable."""
+    from superset_extensions_cli.cli import run_frontend_build
+
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    npm_path = isolated_filesystem / "npm"
+    npm_path.write_text("npm")
+    npm_identity = cli.get_output_copy_source_identity(npm_path)
+    assert npm_identity is not None
+    npm_path.write_text("changed npm")
+
+    with (
+        patch("subprocess.run") as mock_run,
+        patch(
+            "superset_extensions_cli.cli.validate_npm",
+            return_value=cli.ValidatedNpmExecutable(str(npm_path), npm_identity),
+        ),
+        pytest.raises(
+            click.ClickException,
+            match="npm executable changed before launch",
+        ),
+    ):
+        run_frontend_build(frontend_dir)
+
+    mock_run.assert_not_called()
 
 
 @pytest.mark.unit

@@ -23,6 +23,7 @@ import sys
 import tempfile
 import time
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any, Callable
 
@@ -66,6 +67,14 @@ CLI_TEMPORARY_DIST_DIRECTORY_PREFIXES = (
 )
 
 
+@dataclass(frozen=True)
+class ValidatedNpmExecutable:
+    """Npm executable path and identity validated before command launch."""
+
+    path: str
+    identity: tuple[int, int, int, int]
+
+
 def split_path_parts(path: str) -> list[str]:
     """Split path components regardless of platform path separators."""
     return [part for part in re.split(r"[\\/]+", path) if part]
@@ -101,7 +110,7 @@ def is_cli_temporary_dist_artifact(relative_path: Path) -> bool:
     return file_name.startswith(".") and file_name.endswith(".tmp")
 
 
-def validate_npm() -> str:
+def validate_npm() -> ValidatedNpmExecutable:
     """Return the resolved npm executable path after validating it."""
     npm_path = shutil.which("npm")
     if npm_path is None:
@@ -112,6 +121,14 @@ def validate_npm() -> str:
         )
         sys.exit(1)
     npm_command = str(Path(npm_path).resolve())
+    npm_identity = get_output_copy_source_identity(Path(npm_command))
+    if npm_identity is None:
+        click.secho(
+            f"❌ npm executable path is unsafe: {npm_command}",
+            err=True,
+            fg="red",
+        )
+        sys.exit(1)
 
     try:
         result = subprocess.run(  # noqa: S603
@@ -146,7 +163,14 @@ def validate_npm() -> str:
                 fg="red",
             )
             sys.exit(1)
-        return npm_command
+        if get_output_copy_source_identity(Path(npm_command)) != npm_identity:
+            click.secho(
+                "❌ npm executable changed during validation.",
+                err=True,
+                fg="red",
+            )
+            sys.exit(1)
+        return ValidatedNpmExecutable(npm_command, npm_identity)
 
     except OSError as ex:
         click.secho(
@@ -155,6 +179,20 @@ def validate_npm() -> str:
             fg="red",
         )
         sys.exit(1)
+
+
+def get_npm_executable_path(npm_executable: Any) -> str:
+    """Return a launchable npm path after checking validated identity."""
+    if isinstance(npm_executable, ValidatedNpmExecutable):
+        if (
+            get_output_copy_source_identity(Path(npm_executable.path))
+            != npm_executable.identity
+        ):
+            raise click.ClickException("npm executable changed before launch.")
+        return npm_executable.path
+    if isinstance(npm_executable, str):
+        return npm_executable
+    return "npm"
 
 
 def validate_node_modules_path(node_modules: Path) -> None:
@@ -191,14 +229,13 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             error_msg = "❌ `npm i` failed. Aborting."
 
         npm_executable = validate_npm()
-        if isinstance(npm_executable, str):
-            npm_command = [npm_executable, *npm_command[1:]]
         validate_node_modules_path(node_modules)
         current_frontend_identity = get_directory_path_identity(frontend_dir)
         if current_frontend_identity != frontend_identity:
             raise click.ClickException(
                 "frontend path changed before dependency install."
             )
+        npm_command = [get_npm_executable_path(npm_executable), *npm_command[1:]]
         try:
             res = subprocess.run(  # noqa: S603
                 npm_command,  # noqa: S607
@@ -1561,12 +1598,10 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
     click.echo()
     click.secho("⚙️  Building frontend assets…", fg="cyan")
     npm_executable = validate_npm()
-    if not isinstance(npm_executable, str):
-        npm_executable = "npm"
-    command = [npm_executable, "run", "build"]
     current_frontend_identity = get_directory_path_identity(frontend_dir)
     if current_frontend_identity != frontend_identity:
         raise click.ClickException("frontend path changed before frontend build.")
+    command = [get_npm_executable_path(npm_executable), "run", "build"]
     try:
         return subprocess.run(  # noqa: S603
             command,  # noqa: S607

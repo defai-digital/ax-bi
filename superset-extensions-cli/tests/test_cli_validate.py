@@ -1127,7 +1127,7 @@ def test_validate_npm_fails_when_npm_not_on_path(mock_which):
 @patch("subprocess.run")
 def test_validate_npm_fails_when_npm_command_fails(mock_run, mock_which):
     """Test validate_npm fails when npm -v command fails."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=1, stderr="Command failed")
 
     with pytest.raises(SystemExit) as exc_info:
@@ -1141,7 +1141,7 @@ def test_validate_npm_fails_when_npm_command_fails(mock_run, mock_which):
 @patch("subprocess.run")
 def test_validate_npm_fails_when_version_too_low(mock_run, mock_which):
     """Test validate_npm fails when npm version is below minimum."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=0, stdout="9.0.0\n", stderr="")
 
     with pytest.raises(SystemExit) as exc_info:
@@ -1163,12 +1163,17 @@ def test_validate_npm_fails_when_version_too_low(mock_run, mock_which):
 @patch("subprocess.run")
 def test_validate_npm_succeeds_with_valid_versions(mock_run, mock_which, npm_version):
     """Test validate_npm succeeds when npm version is valid."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=0, stdout=f"{npm_version}\n", stderr="")
 
-    assert validate_npm() == str(Path("/usr/bin/npm").resolve())
+    result = validate_npm()
+
+    assert result.path == str(Path("/bin/sh").resolve())
+    assert result.identity == cli.get_output_copy_source_identity(
+        Path("/bin/sh").resolve()
+    )
     mock_run.assert_called_once_with(
-        [str(Path("/usr/bin/npm").resolve()), "-v"],
+        [str(Path("/bin/sh").resolve()), "-v"],
         stdout=cli.subprocess.PIPE,
         stderr=cli.subprocess.PIPE,
         text=True,
@@ -1192,7 +1197,7 @@ def test_validate_npm_version_comparison_edge_cases(
     mock_run, mock_which, npm_version, should_pass
 ):
     """Test npm version comparison with edge cases."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=0, stdout=f"{npm_version}\n", stderr="")
 
     if should_pass:
@@ -1218,7 +1223,7 @@ def test_validate_npm_handles_subprocess_launch_errors(
     mock_run, mock_which, capsys, exception_type
 ):
     """Test validate_npm handles npm launch errors gracefully."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.side_effect = exception_type("Test error")
 
     with pytest.raises(SystemExit) as exc_info:
@@ -1231,11 +1236,35 @@ def test_validate_npm_handles_subprocess_launch_errors(
 @pytest.mark.unit
 @patch("shutil.which")
 @patch("subprocess.run")
+def test_validate_npm_rejects_executable_changed_during_validation(
+    mock_run, mock_which, isolated_filesystem, capsys
+):
+    """Test validate_npm refuses an executable changed during version check."""
+    npm_path = isolated_filesystem / "npm"
+    npm_path.write_text("npm")
+    mock_which.return_value = str(npm_path)
+
+    def change_npm_during_version_check(*args, **kwargs):
+        npm_path.write_text("changed npm")
+        return Mock(returncode=0, stdout="10.8.2\n", stderr="")
+
+    mock_run.side_effect = change_npm_during_version_check
+
+    with pytest.raises(SystemExit) as exc_info:
+        validate_npm()
+
+    assert exc_info.value.code == 1
+    assert "npm executable changed during validation" in capsys.readouterr().err
+
+
+@pytest.mark.unit
+@patch("shutil.which")
+@patch("subprocess.run")
 def test_validate_npm_with_malformed_version_output_exits_cleanly(
     mock_run, mock_which, capsys
 ):
     """Test validate_npm exits cleanly with malformed version output."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=0, stdout="not-a-version\n", stderr="")
 
     with pytest.raises(SystemExit) as exc_info:
@@ -1252,7 +1281,7 @@ def test_validate_npm_with_empty_version_output_exits_cleanly(
     mock_run, mock_which, capsys
 ):
     """Test validate_npm exits cleanly with empty version output."""
-    mock_which.return_value = "/usr/bin/npm"
+    mock_which.return_value = "/bin/sh"
     mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
     with pytest.raises(SystemExit) as exc_info:
