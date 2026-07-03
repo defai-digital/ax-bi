@@ -689,6 +689,11 @@ export class SupersetClient
         'dashboard list request contains invalid contract version',
       ]);
     }
+    if (!hasValidOwnershipFlags(request, true)) {
+      return emptyDashboardListResponse(request, [
+        'dashboard list request contains invalid ownership flags',
+      ]);
+    }
 
     const url = this.buildDashboardListUrl(request);
 
@@ -756,6 +761,11 @@ export class SupersetClient
     if (!hasExpectedContractVersion(request, CHART_LIST_CONTRACT_VERSION)) {
       return emptyChartListResponse(request, [
         'chart list request contains invalid contract version',
+      ]);
+    }
+    if (!hasValidOwnershipFlags(request, true)) {
+      return emptyChartListResponse(request, [
+        'chart list request contains invalid ownership flags',
       ]);
     }
 
@@ -827,6 +837,11 @@ export class SupersetClient
         'dataset list request contains invalid contract version',
       ]);
     }
+    if (!hasValidOwnershipFlags(request, true)) {
+      return emptyDatasetListResponse(request, [
+        'dataset list request contains invalid ownership flags',
+      ]);
+    }
 
     const url = this.buildDatasetListUrl(request);
 
@@ -894,6 +909,11 @@ export class SupersetClient
     if (!hasExpectedContractVersion(request, DATABASE_LIST_CONTRACT_VERSION)) {
       return emptyDatabaseListResponse(request, [
         'database list request contains invalid contract version',
+      ]);
+    }
+    if (!hasValidOwnershipFlags(request, false)) {
+      return emptyDatabaseListResponse(request, [
+        'database list request contains invalid ownership flags',
       ]);
     }
 
@@ -3635,6 +3655,18 @@ function hasValidListFilters(request: unknown): request is ListFilterRequest {
     isRecord(request) &&
     Array.isArray(request['filters']) &&
     request['filters'].every(isListFilter)
+  );
+}
+
+function hasValidOwnershipFlags(
+  request: unknown,
+  requiresOwnedByMe: boolean,
+): boolean {
+  if (!isRecord(request) || typeof request['createdByMe'] !== 'boolean') {
+    return false;
+  }
+  return (
+    !requiresOwnedByMe || typeof request['ownedByMe'] === 'boolean'
   );
 }
 

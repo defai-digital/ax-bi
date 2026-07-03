@@ -1126,6 +1126,88 @@ for (const { name, request, warning, call } of listContractVersionCases) {
   });
 }
 
+type OwnershipFlagCase = {
+  name: string;
+  request: Record<string, unknown>;
+  warning: string;
+  call: (
+    client: SupersetClient,
+    request: Record<string, unknown>,
+  ) => Promise<{ warnings: string[] }>;
+};
+
+const ownershipFlagCases: OwnershipFlagCase[] = [
+  {
+    name: 'dashboard list',
+    request: {
+      ...validListRequest,
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      createdByMe: 'false',
+      ownedByMe: false,
+    },
+    warning: 'dashboard list request contains invalid ownership flags',
+    call: (client, request) =>
+      client.listDashboards(
+        request as unknown as Parameters<SupersetClient['listDashboards']>[0],
+      ),
+  },
+  {
+    name: 'chart list',
+    request: {
+      ...validListRequest,
+      contractVersion: CHART_LIST_CONTRACT_VERSION,
+      createdByMe: false,
+    },
+    warning: 'chart list request contains invalid ownership flags',
+    call: (client, request) =>
+      client.listCharts(
+        request as unknown as Parameters<SupersetClient['listCharts']>[0],
+      ),
+  },
+  {
+    name: 'dataset list',
+    request: {
+      ...validListRequest,
+      contractVersion: DATASET_LIST_CONTRACT_VERSION,
+      createdByMe: false,
+      ownedByMe: 'false',
+    },
+    warning: 'dataset list request contains invalid ownership flags',
+    call: (client, request) =>
+      client.listDatasets(
+        request as unknown as Parameters<SupersetClient['listDatasets']>[0],
+      ),
+  },
+  {
+    name: 'database list',
+    request: {
+      ...validListRequest,
+      contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+    },
+    warning: 'database list request contains invalid ownership flags',
+    call: (client, request) =>
+      client.listDatabases(
+        request as unknown as Parameters<SupersetClient['listDatabases']>[0],
+      ),
+  },
+];
+
+for (const { name, request, warning, call } of ownershipFlagCases) {
+  test(`${name} rejects invalid ownership flags before querying Superset`, async () => {
+    let fetchCalled = false;
+    global.fetch = async () => {
+      fetchCalled = true;
+      throw new Error('unexpected fetch');
+    };
+    const client = new SupersetClient(buildConfig({}));
+
+    const result = await call(client, request);
+
+    expect(result.warnings).toContain(warning);
+    expect(fetchCalled).toBe(false);
+  });
+}
+
 test('listAnnotationLayers maps Superset annotation layer list responses', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
