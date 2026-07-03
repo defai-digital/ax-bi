@@ -16,13 +16,17 @@
 # under the License.
 """GenAI BI MCP tools subpackage."""
 
+from .ask_dashboard_question import ask_dashboard_question
 from .compose_dashboard import compose_dashboard
 from .create_chart_from_intent import create_chart_from_intent
 from .describe_dataset_for_ai import describe_dataset_for_ai
+from .evaluate_ai_answer import evaluate_ai_answer
 from .explain_dashboard import explain_dashboard
 from .plan_dashboard import plan_dashboard
+from .prompt_to_dashboard import prompt_to_dashboard
 from .search_business_assets import search_business_assets
 from .suggest_chart_improvements import suggest_chart_improvements
+from .upload_and_plan import upload_and_plan
 from .validate_chart import validate_chart
 
 __all__ = [
@@ -31,7 +35,11 @@ __all__ = [
     "plan_dashboard",
     "create_chart_from_intent",
     "compose_dashboard",
+    "prompt_to_dashboard",
+    "upload_and_plan",
+    "ask_dashboard_question",
     "explain_dashboard",
     "suggest_chart_improvements",
     "validate_chart",
+    "evaluate_ai_answer",
 ]

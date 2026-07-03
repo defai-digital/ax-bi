@@ -101,6 +101,7 @@ async def upload_files(
             file_content=file_item.file_content,
             filename=file_item.filename,
             table_name=file_item.table_name,
+            sheet_name=file_item.sheet_name,
         )
 
         if isinstance(result, DatasetError):

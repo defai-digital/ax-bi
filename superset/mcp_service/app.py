@@ -742,13 +742,17 @@ warnings.filterwarnings(
 # Prompts use @mcp.prompt decorators and resources use @mcp.resource decorators.
 # They register automatically on import, similar to tools.
 from superset.mcp_service.ai.tool import (  # noqa: F401, E402
+    ask_dashboard_question,
     compose_dashboard,
     create_chart_from_intent,
     describe_dataset_for_ai,
+    evaluate_ai_answer,
     explain_dashboard,
     plan_dashboard,
+    prompt_to_dashboard,
     search_business_assets,
     suggest_chart_improvements,
+    upload_and_plan,
     validate_chart,
 )
 from superset.mcp_service.annotation_layer.tool import (  # noqa: F401, E402

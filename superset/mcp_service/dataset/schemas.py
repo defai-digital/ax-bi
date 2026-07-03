@@ -185,6 +185,12 @@ class DatasetInfo(BaseModel):
     is_favorite: bool | None = Field(
         None, description="Whether this dataset is favorited by the current user"
     )
+    sheet_names: list[str] | None = Field(
+        None,
+        description="Sheet names available in the source file (Excel only). "
+        "Populated by upload_file/upload_files when the source is a "
+        "multi-sheet Excel workbook.",
+    )
     model_config = ConfigDict(
         from_attributes=True,
         ser_json_timedelta="iso8601",
@@ -509,6 +515,13 @@ class UploadFileRequest(BaseModel):
         description="Optional custom table name. If omitted, a name is derived "
         "from the filename with a random suffix to avoid collisions.",
     )
+    sheet_name: str | None = Field(
+        default=None,
+        description="Excel only: name of the sheet to upload. If omitted, the "
+        "first sheet is used. Use list_datasets or get_dataset_info after an "
+        "initial upload to discover available sheet names, then re-upload "
+        "with sheet_name to select a specific sheet.",
+    )
 
 
 class FileItem(BaseModel):
@@ -530,6 +543,11 @@ class FileItem(BaseModel):
         default=None,
         max_length=250,
         description="Optional custom table name for this file.",
+    )
+    sheet_name: str | None = Field(
+        default=None,
+        description="Excel only: name of the sheet to upload. "
+        "If omitted, the first sheet is used.",
     )
 
 

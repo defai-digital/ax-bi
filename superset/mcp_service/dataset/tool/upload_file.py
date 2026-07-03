@@ -32,6 +32,7 @@ import logging
 import os
 import re
 import uuid
+from typing import Any
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -178,6 +179,7 @@ def upload_single_file(  # noqa: C901
     file_content: str,
     filename: str,
     table_name: str | None = None,
+    sheet_name: str | None = None,
 ) -> DatasetInfo | DatasetError:
     """Upload a single file and return DatasetInfo or DatasetError.
 
@@ -239,6 +241,7 @@ def upload_single_file(  # noqa: C901
         local_db = get_or_create_local_db()
 
         reader: BaseDataReader
+        excel_metadata: dict[str, Any] | None = None
         if file_type == UploadFileType.CSV:
             csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
             csv_metadata = CSVReader(csv_reader_options).file_metadata(file_storage)
@@ -248,6 +251,8 @@ def upload_single_file(  # noqa: C901
             reader = CSVReader(csv_reader_options)
         elif file_type == UploadFileType.EXCEL:
             excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+            if sheet_name:
+                excel_reader_options["sheet_name"] = sheet_name
             excel_metadata = ExcelReader(excel_reader_options).file_metadata(
                 file_storage
             )
@@ -299,6 +304,19 @@ def upload_single_file(  # noqa: C901
                 error="Dataset was created but could not be serialized",
                 error_type="SerializationError",
             )
+
+        # For Excel files, include sheet names from metadata in the response
+        if file_type == UploadFileType.EXCEL and excel_metadata:
+            sheet_names = [
+                item.get("name", "")
+                for item in excel_metadata.get("items", [])
+                if item.get("name")
+            ]
+            if sheet_names and hasattr(result, "model_dump"):
+                result.sheet_names = sheet_names
+            elif sheet_names and isinstance(result, dict):
+                result["sheet_names"] = sheet_names
+
         return result
 
     except Exception as exc:
@@ -357,6 +375,7 @@ async def upload_file(
         file_content=request.file_content,
         filename=request.filename,
         table_name=request.table_name,
+        sheet_name=request.sheet_name,
     )
 
     if isinstance(result, DatasetError):

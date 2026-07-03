@@ -98,20 +98,28 @@ def _build_native_filters(
     return filters
 
 
-def _create_smart_layout(
+def _create_smart_layout(  # noqa: C901
     chart_objects: list[Any],
     plan: Any,
+    narrative_blocks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Create a dashboard layout with charts arranged by the plan's hints.
 
     Places charts in a 2-column grid by default. The first chart in the
     plan gets a full-width row if it's a big_number (KPI header pattern).
+    Narrative blocks are rendered as MARKDOWN components between chart rows.
     """
     layout: dict[str, Any] = {}
     row_ids: list[str] = []
 
     charts_per_row = 2
     idx = 0
+
+    # Insert "before" narrative blocks at the top
+    if narrative_blocks:
+        for nb in narrative_blocks:
+            if nb.get("position") == "before":
+                _add_markdown_row(layout, row_ids, nb.get("content", ""))
 
     while idx < len(chart_objects):
         row_id = generate_id("ROW")
@@ -193,6 +201,18 @@ def _create_smart_layout(
             "type": "ROW",
         }
 
+        # Insert "between" narrative blocks after each row of charts
+        if narrative_blocks:
+            for nb in narrative_blocks:
+                if nb.get("position") == "between":
+                    _add_markdown_row(layout, row_ids, nb.get("content", ""))
+
+    # Insert "after" narrative blocks at the bottom
+    if narrative_blocks:
+        for nb in narrative_blocks:
+            if nb.get("position") == "after":
+                _add_markdown_row(layout, row_ids, nb.get("content", ""))
+
     layout["GRID_ID"] = {
         "children": row_ids,
         "id": "GRID_ID",
@@ -209,6 +229,51 @@ def _create_smart_layout(
     return layout
 
 
+def _add_markdown_row(
+    layout: dict[str, Any],
+    row_ids: list[str],
+    content: str,
+) -> str:
+    """Add a full-width MARKDOWN row to the layout.
+
+    Returns the row_id that was added.
+    """
+    md_id = generate_id("MARKDOWN")
+    col_key = generate_id("COLUMN")
+    row_id = generate_id("ROW")
+    row_ids.append(row_id)
+
+    layout[md_id] = {
+        "children": [],
+        "id": md_id,
+        "meta": {
+            "code": content,
+            "height": 20,
+            "width": GRID_DEFAULT_CHART_WIDTH,
+        },
+        "parents": ["ROOT_ID", "GRID_ID", row_id, col_key],
+        "type": "MARKDOWN",
+    }
+    layout[col_key] = {
+        "children": [md_id],
+        "id": col_key,
+        "meta": {
+            "background": "BACKGROUND_TRANSPARENT",
+            "width": GRID_COLUMN_COUNT,
+        },
+        "parents": ["ROOT_ID", "GRID_ID", row_id],
+        "type": "COLUMN",
+    }
+    layout[row_id] = {
+        "children": [col_key],
+        "id": row_id,
+        "meta": {"background": "BACKGROUND_TRANSPARENT"},
+        "parents": ["ROOT_ID", "GRID_ID"],
+        "type": "ROW",
+    }
+    return row_id
+
+
 @tool(
     tags=["mutate", "ai"],
     class_permission_name="Dashboard",
@@ -218,7 +283,7 @@ def _create_smart_layout(
         destructiveHint=False,
     ),
 )
-async def compose_dashboard(
+async def compose_dashboard(  # noqa: C901
     request: ComposeDashboardRequest, ctx: Context
 ) -> dict[str, Any]:
     """Create a dashboard from a plan and pre-created charts.
@@ -267,7 +332,19 @@ async def compose_dashboard(
 
         # Create layout
         with mcp_event_log_context(action="mcp.compose_dashboard.layout"):
-            layout = _create_smart_layout(chart_objects, request.plan)
+            # Convert narrative_blocks to dicts for the layout builder
+            nb_dicts: list[dict[str, Any]] | None = None
+            if request.narrative_blocks:
+                nb_dicts = [
+                    {
+                        "content": nb.content,
+                        "position": nb.position,
+                    }
+                    for nb in request.narrative_blocks
+                ]
+            layout = _create_smart_layout(
+                chart_objects, request.plan, narrative_blocks=nb_dicts
+            )
 
         # Build native filter configuration from plan global_filters
         native_filters: list[dict[str, Any]] = []
