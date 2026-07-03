@@ -300,6 +300,36 @@ def test_build_command_reports_original_and_rollback_failures(
     assert "Failed to restore previous dist directory: restore denied" in result.output
 
 
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.run_frontend_build")
+def test_build_command_restores_existing_dist_when_remote_entry_missing(
+    mock_run_frontend_build,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+):
+    """Test full build restores previous dist when frontend dist lacks remoteEntry."""
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    extension_with_build_structure(isolated_filesystem, include_backend=False)
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir()
+    (frontend_dist / "main.js").write_text("main content")
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "No remote entry file found" in result.output
+    assert (previous_dist / "manifest.json").read_text() == "previous"
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
+
+
 # Clean Dist Tests
 @pytest.mark.unit
 def test_clean_dist_removes_existing_dist_directory(isolated_filesystem):
@@ -2288,8 +2318,8 @@ def test_copy_frontend_dist_rejects_nested_remote_entry(isolated_filesystem):
 
 
 @pytest.mark.unit
-def test_copy_frontend_dist_exits_when_no_remote_entry(isolated_filesystem):
-    """Test copy_frontend_dist exits when no remoteEntry file found."""
+def test_copy_frontend_dist_rejects_missing_remote_entry(isolated_filesystem):
+    """Test copy_frontend_dist rejects frontend output without a remoteEntry."""
     # Create frontend/dist without remoteEntry file
     frontend_dist = isolated_filesystem / "frontend" / "dist"
     frontend_dist.mkdir(parents=True)
@@ -2297,7 +2327,5 @@ def test_copy_frontend_dist_exits_when_no_remote_entry(isolated_filesystem):
 
     clean_dist(isolated_filesystem)
 
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(click.ClickException, match="No remote entry file found"):
         copy_frontend_dist(isolated_filesystem)
-
-    assert exc_info.value.code == 1

@@ -855,8 +855,7 @@ def copy_frontend_dist(cwd: Path) -> str:
         frontend_files.append(f)
 
     if not remote_entries:
-        click.secho("❌ No remote entry file found.", err=True, fg="red")
-        sys.exit(1)
+        raise click.ClickException("No remote entry file found.")
     if len(remote_entries) > 1:
         raise click.ClickException(
             f"Multiple remote entry files found: {', '.join(sorted(remote_entries))}."
