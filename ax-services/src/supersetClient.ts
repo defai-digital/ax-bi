@@ -3514,10 +3514,10 @@ function hasValidAuthorizationRequestShape(
     isRecord(principal) &&
     isRecord(resource) &&
     isPrincipalType(principal['type']) &&
-    isOptionalString(principal['username']) &&
-    isOptionalStringArray(principal['roles']) &&
+    isOptionalCleanString(principal['username']) &&
+    isOptionalCleanStringArray(principal['roles']) &&
     isResourceType(resource['type']) &&
-    isOptionalString(resource['uuid']) &&
+    isOptionalCleanString(resource['uuid']) &&
     isPermissionAction(request['action'])
   );
 }
@@ -3662,12 +3662,23 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every(item => typeof item === 'string');
 }
 
-function isOptionalString(value: unknown): boolean {
-  return value === undefined || typeof value === 'string';
+function isCleanString(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.trim() !== '' &&
+    !/[\u0000-\u001f\u007f]/.test(value)
+  );
 }
 
-function isOptionalStringArray(value: unknown): boolean {
-  return value === undefined || isStringArray(value);
+function isOptionalCleanString(value: unknown): boolean {
+  return value === undefined || isCleanString(value);
+}
+
+function isOptionalCleanStringArray(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (Array.isArray(value) && value.every(isCleanString))
+  );
 }
 
 function isAssetSearchLimit(value: unknown): value is number {
