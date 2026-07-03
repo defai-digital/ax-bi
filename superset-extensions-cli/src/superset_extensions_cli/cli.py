@@ -684,15 +684,7 @@ def validate_output_file(path: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path exists but is not a file."
         )
-    symlinked_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.is_symlink()
-        ),
-        None,
-    )
-    if symlinked_parent is not None:
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to write {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
@@ -728,15 +720,7 @@ def remove_output_directory(
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
-    symlinked_parent = next(
-        (
-            parent
-            for parent in (path.parent, *path.parent.parents)
-            if parent.is_symlink()
-        ),
-        None,
-    )
-    if symlinked_parent is not None:
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
         raise click.ClickException(
             f"Refusing to clean {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
