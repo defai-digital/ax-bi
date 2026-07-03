@@ -1185,6 +1185,13 @@ def build(ctx: click.Context) -> None:
     if optional_directory_exists(frontend_dir, "frontend"):
         init_frontend_deps(frontend_dir)
         remote_entry = rebuild_frontend(cwd, frontend_dir)
+        if remote_entry is None:
+            click.secho(
+                "❌ Frontend build failed; aborting full build.",
+                err=True,
+                fg="red",
+            )
+            sys.exit(1)
 
     # Build backend independently if it exists
     if optional_directory_exists(backend_dir, "backend"):

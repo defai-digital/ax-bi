@@ -153,9 +153,11 @@ def test_build_command_success_flow(
 @patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
 @patch("superset_extensions_cli.cli.rebuild_frontend")
+@patch("superset_extensions_cli.cli.rebuild_backend")
 @patch("superset_extensions_cli.cli.read_toml")
 def test_build_command_handles_frontend_build_failure(
     mock_read_toml,
+    mock_rebuild_backend,
     mock_rebuild_frontend,
     mock_init_frontend_deps,
     mock_validate_npm,
@@ -180,9 +182,10 @@ def test_build_command_handles_frontend_build_failure(
 
     result = cli_runner.invoke(app, ["build"])
 
-    # Command should complete and create manifest even with frontend failure
-    assert result.exit_code == 0
-    assert "✅ Full build completed in dist/" in result.output
+    assert result.exit_code == 1
+    assert "Frontend build failed; aborting full build" in result.output
+    assert "✅ Full build completed in dist/" not in result.output
+    mock_rebuild_backend.assert_not_called()
 
 
 # Clean Dist Tests
