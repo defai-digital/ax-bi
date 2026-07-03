@@ -3056,6 +3056,7 @@ def init(
     created_target_dir = False
     target_dir_identity: tuple[int, int, int, int] | None = None
     expected_scaffold_entries: dict[Path, set[str]] = {}
+    expected_scaffold_identities: dict[Path, tuple[int, int, int, int]] = {}
 
     def refresh_target_dir_identity() -> None:
         nonlocal target_dir_identity
@@ -3067,6 +3068,12 @@ def init(
 
     def track_scaffold_directory(path: Path) -> None:
         expected_scaffold_entries.setdefault(path, set())
+        directory_identity = get_directory_path_identity(path)
+        if directory_identity is None:
+            raise click.ClickException(
+                "Refusing to create extension directory: path changed."
+            )
+        expected_scaffold_identities[path] = directory_identity
         if path != target_dir:
             expected_scaffold_entries.setdefault(path.parent, set()).add(path.name)
 
@@ -3082,6 +3089,16 @@ def init(
             return
         for directory, expected_entries in expected_scaffold_entries.items():
             if not directory.is_dir() or directory.is_symlink():
+                raise click.ClickException(
+                    "Refusing to clean extension directory: path changed."
+                )
+            directory_identity = get_directory_path_identity(directory)
+            expected_identity = expected_scaffold_identities.get(directory)
+            if (
+                directory_identity is None
+                or expected_identity is None
+                or directory_identity[:2] != expected_identity[:2]
+            ):
                 raise click.ClickException(
                     "Refusing to clean extension directory: path changed."
                 )
