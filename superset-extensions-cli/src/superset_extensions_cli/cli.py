@@ -1225,7 +1225,7 @@ def optional_file_exists(path: Path, label: str) -> bool:
     if file_identity is None:
         raise click.ClickException(f"{label} path is no longer safe.")
     current_identity = get_read_path_identity(path)
-    if current_identity is None or current_identity[:2] != file_identity[:2]:
+    if current_identity != file_identity:
         raise click.ClickException(f"{label} path changed during validation.")
     return True
 
@@ -1247,7 +1247,7 @@ def input_file_exists(path: Path, label: str) -> bool:
     if file_identity is None:
         raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
     current_identity = get_read_path_identity(path)
-    if current_identity is None or current_identity[:2] != file_identity[:2]:
+    if current_identity != file_identity:
         raise click.ClickException(f"Failed to read {label}: path changed.")
     return True
 

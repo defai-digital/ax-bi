@@ -26,6 +26,7 @@ import click
 import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import (
     app,
+    input_file_exists,
     load_json_object,
     load_toml_object,
     optional_directory_exists,
@@ -222,6 +223,68 @@ def test_optional_file_exists_rejects_changed_path(
         optional_file_exists(metadata_file, "extension.json")
 
     assert saved_file.read_text() == "{}"
+    assert metadata_file.read_text() == '{"version": "9.9.9"}'
+
+
+@pytest.mark.unit
+def test_optional_file_exists_rejects_changed_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional file helper refuses content changes during validation."""
+    metadata_file = isolated_filesystem / "extension.json"
+    metadata_file.write_text("{}")
+    original_get_read_path_identity = cli.get_read_path_identity
+    identity_reads = 0
+
+    def update_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_read_path_identity(path)
+        if path == metadata_file:
+            identity_reads += 1
+            if identity_reads == 1:
+                metadata_file.write_text('{"version": "9.9.9"}')
+        return identity
+
+    monkeypatch.setattr(cli, "get_read_path_identity", update_file_after_first_identity)
+
+    with pytest.raises(
+        click.ClickException,
+        match="extension.json path changed during validation",
+    ):
+        optional_file_exists(metadata_file, "extension.json")
+
+    assert metadata_file.read_text() == '{"version": "9.9.9"}'
+
+
+@pytest.mark.unit
+def test_input_file_exists_rejects_changed_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test input file helper refuses content changes during validation."""
+    metadata_file = isolated_filesystem / "extension.json"
+    metadata_file.write_text("{}")
+    original_get_read_path_identity = cli.get_read_path_identity
+    identity_reads = 0
+
+    def update_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_read_path_identity(path)
+        if path == metadata_file:
+            identity_reads += 1
+            if identity_reads == 1:
+                metadata_file.write_text('{"version": "9.9.9"}')
+        return identity
+
+    monkeypatch.setattr(cli, "get_read_path_identity", update_file_after_first_identity)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to read extension.json: path changed",
+    ):
+        input_file_exists(metadata_file, "extension.json")
+
     assert metadata_file.read_text() == '{"version": "9.9.9"}'
 
 
