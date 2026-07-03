@@ -428,10 +428,30 @@ def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
 
 def copy_output_file(source: Path, target: Path, label: str) -> None:
     """Copy a validated output file while preserving command-level error context."""
+    source_identity = get_output_copy_source_identity(source)
+    if source_identity is None:
+        raise click.ClickException(f"Refusing to copy {label}: source path is unsafe.")
     try:
         shutil.copy2(source, target)
     except (OSError, shutil.Error) as ex:
         raise click.ClickException(f"Failed to copy {label}: {ex}") from ex
+    if get_output_copy_source_identity(source) != source_identity:
+        raise click.ClickException(
+            f"Refusing to copy {label}: source path changed during copy."
+        )
+
+
+def get_output_copy_source_identity(
+    source: Path,
+) -> tuple[int, int, int, int] | None:
+    """Return source identity for output copy, following file symlinks."""
+    if not source.is_file():
+        return None
+    try:
+        stat = source.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
 def get_copy_source_identity(

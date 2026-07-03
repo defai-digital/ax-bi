@@ -31,6 +31,7 @@ from superset_extensions_cli.cli import (
     clean_dist,
     copy_backend_files,
     copy_frontend_dist,
+    copy_output_file,
     create_temporary_output_directory,
     ensure_output_directory,
     ensure_output_file_parent,
@@ -1213,6 +1214,40 @@ def test_ensure_output_file_parent_rejects_changed_root(
 
     assert saved_root.is_dir()
     assert target.parent.is_dir()
+
+
+@pytest.mark.unit
+def test_copy_output_file_rejects_source_changed_during_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test output file copy refuses a source changed during copy."""
+    source_file = isolated_filesystem / "source.py"
+    source_file.write_text("# original")
+    replacement_file = isolated_filesystem / "replacement.py"
+    replacement_file.write_text("# replacement")
+    target_file = isolated_filesystem / "target.py"
+    original_copy2 = shutil.copy2
+
+    def swap_source_after_copy(source, target, *args, **kwargs):
+        result = original_copy2(source, target, *args, **kwargs)
+        if source == source_file:
+            source_file.unlink()
+            replacement_file.replace(source_file)
+        return result
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.shutil.copy2", swap_source_after_copy
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to copy backend file module.py: source path changed during copy",
+    ):
+        copy_output_file(source_file, target_file, "backend file module.py")
+
+    assert source_file.read_text() == "# replacement"
+    assert target_file.read_text() == "# original"
 
 
 # Frontend Dependencies Tests
