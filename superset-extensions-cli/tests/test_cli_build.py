@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -1421,6 +1422,56 @@ exclude = []
     assert_file_exists(
         dist_dir / "backend" / "src" / "test_org" / "test_ext" / "main.py"
     )
+
+
+@pytest.mark.unit
+def test_copy_backend_files_deduplicates_overlapping_include_patterns(
+    isolated_filesystem, monkeypatch
+):
+    """Test overlapping backend include patterns copy each target once."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    source_file = backend_src / "__init__.py"
+    source_file.write_text("# init")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/**/*.py",
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    original_copy2 = shutil.copy2
+    copied_sources: list[Path] = []
+
+    def track_copy(source, target, *args, **kwargs):
+        copied_sources.append(source)
+        return original_copy2(source, target, *args, **kwargs)
+
+    monkeypatch.setattr("superset_extensions_cli.cli.shutil.copy2", track_copy)
+
+    clean_dist(isolated_filesystem)
+    copy_backend_files(isolated_filesystem)
+
+    dist_file = (
+        isolated_filesystem
+        / "dist"
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_ext"
+        / "__init__.py"
+    )
+    assert_file_exists(dist_file)
+    assert copied_sources == [source_file]
 
 
 @pytest.mark.unit

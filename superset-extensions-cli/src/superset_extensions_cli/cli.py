@@ -981,11 +981,11 @@ def copy_backend_files(cwd: Path) -> None:
         raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
-    copy_targets: list[tuple[Path, Path]] = []
+    copy_targets: dict[Path, tuple[Path, Path]] = {}
 
     # Process include patterns
     for pattern in include_patterns:
-        for f in backend_dir.glob(pattern):
+        for f in sorted(backend_dir.glob(pattern)):
             if not f.is_file():
                 continue
 
@@ -1008,9 +1008,10 @@ def copy_backend_files(cwd: Path) -> None:
             if should_exclude:
                 continue
 
-            copy_targets.append((f, backend_output_dir / relative_path))
+            target_path = backend_output_dir / relative_path
+            copy_targets.setdefault(target_path, (f, target_path))
 
-    for _, tgt in copy_targets:
+    for _, tgt in copy_targets.values():
         validate_output_file_parent(
             tgt,
             backend_output_dir,
@@ -1025,7 +1026,7 @@ def copy_backend_files(cwd: Path) -> None:
     )
 
     try:
-        for f, tgt in copy_targets:
+        for f, tgt in copy_targets.values():
             relative_target = tgt.relative_to(backend_output_dir)
             staged_target = staged_backend_output_dir / relative_target
             ensure_output_file_parent(
