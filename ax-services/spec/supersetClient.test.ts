@@ -830,6 +830,35 @@ test('listDashboards maps Superset dashboard list responses', async () => {
   });
 });
 
+test('listDashboards ignores negative Superset counts', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: -20,
+      result: [
+        {
+          id: 7,
+          dashboard_title: 'Sales dashboard',
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.totalCount).toBe(1);
+  expect(result.totalPages).toBe(1);
+  expect(result.hasNext).toBe(false);
+});
+
 test('listDashboards records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {

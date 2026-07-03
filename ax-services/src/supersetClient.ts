@@ -1919,7 +1919,12 @@ function extractSupersetResults(payload: unknown): SupersetListItem[] {
 }
 
 function extractSupersetCount(payload: unknown, fallback: number): number {
-  if (!isRecord(payload) || typeof payload.count !== 'number') {
+  if (
+    !isRecord(payload) ||
+    typeof payload.count !== 'number' ||
+    !Number.isFinite(payload.count) ||
+    payload.count < 0
+  ) {
     return fallback;
   }
   return payload.count;
