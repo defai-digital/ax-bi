@@ -220,7 +220,7 @@ def cache_warmup(
         if class_.name == strategy_name:  # type: ignore
             break
     else:
-        message = "No strategy %s found!" % strategy_name
+        message = f"No strategy {strategy_name} found!"
         logger.error(message, exc_info=True)
         return message
 
