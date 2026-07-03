@@ -1310,6 +1310,10 @@ def require_optional_directory(path: Path, label: str) -> None:
         raise click.ClickException(
             f"{label} parent directory is a symlink: {symlinked_parent}."
         )
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
+        raise click.ClickException(
+            f"{label} parent exists but is not a directory: {invalid_parent}."
+        )
     if (path.exists() or path.is_symlink()) and not path.is_dir():
         raise click.ClickException(f"{label} path exists but is not a directory.")
     if path.exists():
@@ -1397,6 +1401,10 @@ def optional_file_exists(path: Path, label: str) -> bool:
         raise click.ClickException(
             f"{label} parent directory is a symlink: {symlinked_parent}."
         )
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
+        raise click.ClickException(
+            f"{label} parent exists but is not a directory: {invalid_parent}."
+        )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"{label} path exists but is not a file.")
     if not path.exists():
@@ -1424,6 +1432,11 @@ def input_file_exists(path: Path, label: str) -> bool:
         raise click.ClickException(
             f"Refusing to read {label}: parent directory is a symlink: "
             f"{symlinked_parent}."
+        )
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to read {label}: parent exists but is not a directory: "
+            f"{invalid_parent}."
         )
     if path.exists() and not path.is_file():
         raise click.ClickException(f"Invalid {label}: path exists but is not a file.")

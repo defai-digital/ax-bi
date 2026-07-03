@@ -82,6 +82,11 @@ def test_optional_directory_exists_validates_project_paths(isolated_filesystem):
     with pytest.raises(click.ClickException, match="parent directory is a symlink"):
         optional_directory_exists(parent_link / "frontend", "linked/frontend")
 
+    file_parent = isolated_filesystem / "file-parent"
+    file_parent.write_text("not a directory")
+    with pytest.raises(click.ClickException, match="parent exists but is not"):
+        optional_directory_exists(file_parent / "frontend", "file-parent/frontend")
+
 
 @pytest.mark.unit
 def test_optional_directory_exists_rejects_changed_path(
@@ -350,6 +355,11 @@ def test_optional_file_exists_validates_project_paths(isolated_filesystem):
     with pytest.raises(click.ClickException, match="parent directory is a symlink"):
         optional_file_exists(parent_link / "package.json", "frontend/package.json")
 
+    file_parent = isolated_filesystem / "file-parent"
+    file_parent.write_text("not a directory")
+    with pytest.raises(click.ClickException, match="parent exists but is not"):
+        optional_file_exists(file_parent / "package.json", "frontend/package.json")
+
 
 @pytest.mark.unit
 def test_optional_file_exists_rejects_changed_path(
@@ -484,6 +494,21 @@ def test_input_file_exists_rejects_changed_content(
         input_file_exists(metadata_file, "extension.json")
 
     assert metadata_file.read_text() == '{"version": "9.9.9"}'
+
+
+@pytest.mark.unit
+def test_input_file_exists_rejects_non_directory_parent(isolated_filesystem):
+    """Test input file helper refuses paths below file parents."""
+    file_parent = isolated_filesystem / "metadata"
+    file_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to read extension.json: parent exists but is not",
+    ):
+        input_file_exists(file_parent / "extension.json", "extension.json")
+
+    assert file_parent.read_text() == "not a directory"
 
 
 @pytest.mark.unit
