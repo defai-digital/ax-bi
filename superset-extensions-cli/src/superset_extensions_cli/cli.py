@@ -633,7 +633,11 @@ def remove_output_file(
     if current_identity is None or current_identity[:2] != expected_identity[:2]:
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
+        if get_read_path_identity(path) != current_identity:
+            raise click.ClickException(f"Refusing to clean {label}: path changed.")
         path.unlink()
+    except click.ClickException:
+        raise
     except OSError as ex:
         raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
 

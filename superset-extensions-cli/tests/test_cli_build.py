@@ -38,6 +38,7 @@ from superset_extensions_cli.cli import (
     init_frontend_deps,
     publish_output_file,
     publish_staged_output_directory,
+    remove_output_file,
     start_dist_replacement,
     validate_output_file,
     validate_output_file_parent,
@@ -1208,6 +1209,45 @@ def test_publish_output_file_rejects_changed_target_during_cleanup(
     assert output_path.read_text() == "replacement bundle"
     assert failed_publish.read_text() == "new bundle"
     assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp"))
+
+
+@pytest.mark.unit
+def test_remove_output_file_rejects_changed_path_before_unlink(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test file cleanup refuses a path changed after initial validation."""
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("failed bundle")
+    saved_output = isolated_filesystem / "saved-bundle.supx"
+    replacement_output = isolated_filesystem / "replacement-bundle.supx"
+    replacement_output.write_text("replacement bundle")
+
+    from superset_extensions_cli import cli
+
+    expected_identity = cli.get_read_path_identity(output_path)
+    assert expected_identity is not None
+    original_get_read_path_identity = cli.get_read_path_identity
+    calls = 0
+
+    def swap_target_after_initial_check(path):
+        nonlocal calls
+        calls += 1
+        if path == output_path and calls == 2:
+            output_path.rename(saved_output)
+            replacement_output.replace(output_path)
+        return original_get_read_path_identity(path)
+
+    monkeypatch.setattr(cli, "get_read_path_identity", swap_target_after_initial_check)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean bundle: path changed",
+    ):
+        remove_output_file(output_path, "bundle", expected_identity)
+
+    assert saved_output.read_text() == "failed bundle"
+    assert output_path.read_text() == "replacement bundle"
 
 
 @pytest.mark.unit
