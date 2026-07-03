@@ -394,6 +394,11 @@ export class SupersetClient
         ['annotation layer list request contains invalid pagination'],
       );
     }
+    if (!hasValidListColumns(request)) {
+      return emptyAnnotationLayerListResponse(request, [
+        'annotation layer list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyAnnotationLayerListResponse(request, [
         'annotation layer list request contains invalid ordering',
@@ -473,6 +478,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyAnnotationListResponse(withFallbackListPagination(request), [
         'annotation list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptyAnnotationListResponse(request, [
+        'annotation list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -682,6 +692,11 @@ export class SupersetClient
         'dashboard list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyDashboardListResponse(request, [
+        'dashboard list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyDashboardListResponse(request, [
         'dashboard list request contains invalid ordering',
@@ -754,6 +769,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyChartListResponse(withFallbackListPagination(request), [
         'chart list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptyChartListResponse(request, [
+        'chart list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -830,6 +850,11 @@ export class SupersetClient
         'dataset list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyDatasetListResponse(request, [
+        'dataset list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyDatasetListResponse(request, [
         'dataset list request contains invalid ordering',
@@ -902,6 +927,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyDatabaseListResponse(withFallbackListPagination(request), [
         'database list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptyDatabaseListResponse(request, [
+        'database list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -978,6 +1008,11 @@ export class SupersetClient
         'query list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyQueryListResponse(request, [
+        'query list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyQueryListResponse(request, [
         'query list request contains invalid ordering',
@@ -1045,6 +1080,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptySavedQueryListResponse(withFallbackListPagination(request), [
         'saved query list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptySavedQueryListResponse(request, [
+        'saved query list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -1118,6 +1158,11 @@ export class SupersetClient
         'report list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyReportListResponse(request, [
+        'report list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyReportListResponse(request, [
         'report list request contains invalid ordering',
@@ -1187,6 +1232,11 @@ export class SupersetClient
         'role list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyRoleListResponse(request, [
+        'role list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyRoleListResponse(request, [
         'role list request contains invalid ordering',
@@ -1252,6 +1302,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyRlsListResponse(withFallbackListPagination(request), [
         'RLS filter list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptyRlsListResponse(request, [
+        'RLS filter list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -1323,6 +1378,11 @@ export class SupersetClient
         'tag list request contains invalid pagination',
       ]);
     }
+    if (!hasValidListColumns(request)) {
+      return emptyTagListResponse(request, [
+        'tag list request contains invalid columns',
+      ]);
+    }
     if (!hasValidListOrdering(request)) {
       return emptyTagListResponse(request, [
         'tag list request contains invalid ordering',
@@ -1388,6 +1448,11 @@ export class SupersetClient
     if (!hasValidListPagination(request)) {
       return emptyTaskListResponse(withFallbackListPagination(request), [
         'task list request contains invalid pagination',
+      ]);
+    }
+    if (!hasValidListColumns(request)) {
+      return emptyTaskListResponse(request, [
+        'task list request contains invalid columns',
       ]);
     }
     if (!hasValidListOrdering(request)) {
@@ -2953,7 +3018,8 @@ function requestedColumnsOrDefault(
   request: ListColumnRequest,
   defaultColumns: string[],
 ): string[] {
-  return isStringArray(request.selectColumns) && request.selectColumns.length > 0
+  return isListColumnArray(request.selectColumns) &&
+    request.selectColumns.length > 0
     ? request.selectColumns
     : defaultColumns;
 }
@@ -3637,10 +3703,14 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
     ...record,
     page: isPositiveInteger(record['page']) ? record['page'] : 1,
     pageSize: isListPageSize(record['pageSize']) ? record['pageSize'] : 100,
-    selectColumns: isStringArray(record['selectColumns'])
+    selectColumns: isListColumnArray(record['selectColumns'])
       ? record['selectColumns']
       : [],
   } as unknown as T;
+}
+
+function hasValidListColumns(request: unknown): request is ListColumnRequest {
+  return isRecord(request) && isListColumnArray(request['selectColumns']);
 }
 
 function hasValidAnnotationLayerId(
@@ -3767,8 +3837,8 @@ function isRisonScalarString(value: unknown): value is string {
   return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value);
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(item => typeof item === 'string');
+function isListColumnArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isRisonToken);
 }
 
 function isCleanString(value: unknown): value is string {
