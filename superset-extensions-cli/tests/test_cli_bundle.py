@@ -452,6 +452,9 @@ def test_bundle_skips_cli_temporary_dist_artifacts(
     backend_staging.mkdir(parents=True)
     (backend_staging / "old.py").write_text("old")
     (dist_dir / ".test-extension-1.0.0.supx.abcd.tmp").write_text("partial")
+    releases_dir = dist_dir / "releases"
+    releases_dir.mkdir()
+    (releases_dir / ".test-extension-1.0.0.supx.abcd.tmp").write_text("partial")
 
     result = cli_runner.invoke(app, ["bundle"])
 
@@ -465,6 +468,7 @@ def test_bundle_skips_cli_temporary_dist_artifacts(
     assert not any(name.startswith(".frontend-backup.") for name in file_list)
     assert not any(name.startswith(".backend.") for name in file_list)
     assert ".test-extension-1.0.0.supx.abcd.tmp" not in file_list
+    assert "releases/.test-extension-1.0.0.supx.abcd.tmp" not in file_list
 
 
 @pytest.mark.cli

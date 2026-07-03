@@ -95,11 +95,8 @@ def is_cli_temporary_dist_artifact(relative_path: Path) -> bool:
     ) and root_name.endswith(".tmp"):
         return True
 
-    return (
-        len(relative_path.parts) == 1
-        and root_name.startswith(".")
-        and root_name.endswith(".tmp")
-    )
+    file_name = relative_path.name
+    return file_name.startswith(".") and file_name.endswith(".tmp")
 
 
 def validate_npm() -> None:
