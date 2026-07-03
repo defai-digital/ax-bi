@@ -623,6 +623,8 @@ def remove_output_directory(
     path: Path,
     label: str,
     expected_identity: tuple[int, int, int, int] | None = None,
+    *,
+    allow_content_changes: bool = True,
 ) -> None:
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
@@ -660,7 +662,10 @@ def remove_output_directory(
         raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
     if (
         expected_identity is not None
-        and directory_identity[:2] != expected_identity[:2]
+        and directory_identity != expected_identity
+        and not (
+            allow_content_changes and directory_identity[:2] == expected_identity[:2]
+        )
     ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
@@ -860,7 +865,12 @@ def publish_staged_output_directory(
                 ) from cleanup_ex
         elif target_path.exists():
             try:
-                remove_output_directory(target_path, label, published_target_identity)
+                remove_output_directory(
+                    target_path,
+                    label,
+                    published_target_identity,
+                    allow_content_changes=False,
+                )
             except click.ClickException as cleanup_ex:
                 raise click.ClickException(
                     f"{publish_error.message}; also failed to clean failed "
