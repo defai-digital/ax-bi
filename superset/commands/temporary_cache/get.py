@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -31,7 +30,7 @@ class GetTemporaryCacheCommand(BaseCommand, ABC):
     def __init__(self, cmd_params: CommandParameters):
         self._cmd_params = cmd_params
 
-    def run(self) -> Optional[str]:
+    def run(self) -> str | None:
         try:
             return self.get(self._cmd_params)
         except SQLAlchemyError as ex:
@@ -42,4 +41,4 @@ class GetTemporaryCacheCommand(BaseCommand, ABC):
         pass
 
     @abstractmethod
-    def get(self, cmd_params: CommandParameters) -> Optional[str]: ...
+    def get(self, cmd_params: CommandParameters) -> str | None: ...
