@@ -1748,6 +1748,70 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_source_changed_before_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backend staging refuses a source path changed after planning."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    source_file = backend_src / "__init__.py"
+    source_file.write_text("# init")
+    outside_file = isolated_filesystem / "outside.py"
+    outside_file.write_text("# outside")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/__init__.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def swap_source_after_planning(parent, prefix, label):
+        temp_dir = original_create_temporary_output_directory(parent, prefix, label)
+        if prefix == ".backend.":
+            source_file.unlink()
+            source_file.symlink_to(outside_file)
+        return temp_dir
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        swap_source_after_planning,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to copy backend file .*source path changed before copy",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert source_file.is_symlink()
+    assert outside_file.read_text() == "# outside"
+    assert not (
+        isolated_filesystem
+        / "dist"
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_ext"
+        / "__init__.py"
+    ).exists()
+    assert list((isolated_filesystem / "dist").glob(".backend.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_copy_backend_files_restores_existing_output_on_publish_failure(
     isolated_filesystem, monkeypatch
 ):
@@ -2360,6 +2424,49 @@ def test_copy_frontend_dist_reports_copy_failures(isolated_filesystem):
             copy_frontend_dist(isolated_filesystem)
 
     assert existing_output.read_text() == "old content"
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_source_changed_before_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend staging refuses a source path changed after planning."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    source_file = frontend_dist / "main.js"
+    source_file.write_text("main content")
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    outside_file = isolated_filesystem / "outside.js"
+    outside_file.write_text("outside")
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def swap_source_after_planning(parent, prefix, label):
+        temp_dir = original_create_temporary_output_directory(parent, prefix, label)
+        if prefix == ".frontend.":
+            source_file.unlink()
+            source_file.symlink_to(outside_file)
+        return temp_dir
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        swap_source_after_planning,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to copy frontend asset .*source path changed before copy",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert source_file.is_symlink()
+    assert outside_file.read_text() == "outside"
+    assert not (isolated_filesystem / "dist" / "frontend" / "dist" / "main.js").exists()
     assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
 
 

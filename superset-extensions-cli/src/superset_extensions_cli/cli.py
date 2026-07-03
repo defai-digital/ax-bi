@@ -391,6 +391,38 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
         raise click.ClickException(f"Failed to copy {label}: {ex}") from ex
 
 
+def get_copy_source_identity(
+    source: Path, root: Path
+) -> tuple[int, int, int, int] | None:
+    """Return source file identity after confirming it resolves inside root."""
+    try:
+        resolved = source.resolve()
+    except OSError:
+        return None
+    if not resolved.is_relative_to(root):
+        return None
+    if not source.is_file():
+        return None
+    try:
+        stat = source.stat()
+    except OSError:
+        return None
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+def ensure_copy_source_unchanged(
+    source: Path,
+    root: Path,
+    identity: tuple[int, int, int, int],
+    label: str,
+) -> None:
+    """Fail if a source file changes after copy target planning."""
+    if get_copy_source_identity(source, root) != identity:
+        raise click.ClickException(
+            f"Refusing to copy {label}: source path changed before copy."
+        )
+
+
 def validate_output_file(path: Path, label: str) -> None:
     """Validate that an output file path is safe to write."""
     if path.is_symlink():
@@ -1002,14 +1034,14 @@ def copy_frontend_dist(cwd: Path) -> str:
     frontend_dist_path = frontend_dir_path / "dist"
     require_optional_directory(frontend_dist_path, "frontend/dist")
     frontend_dist = frontend_dist_path.resolve()
-    frontend_files: list[Path] = []
+    frontend_files: list[tuple[Path, tuple[int, int, int, int]]] = []
     remote_entries: list[str] = []
 
     for f in sorted(frontend_dist.rglob("*")):
         if not f.is_file():
             continue
-        resolved = f.resolve()
-        if not resolved.is_relative_to(frontend_dist):
+        identity = get_copy_source_identity(f, frontend_dist)
+        if identity is None:
             raise click.ClickException(
                 f"Refusing to copy {f}: resolved path is outside the "
                 f"frontend dist directory {frontend_dist}."
@@ -1021,7 +1053,7 @@ def copy_frontend_dist(cwd: Path) -> str:
                     f"{f.relative_to(frontend_dist)}."
                 )
             remote_entries.append(f.name)
-        frontend_files.append(f)
+        frontend_files.append((f, identity))
 
     if not remote_entries:
         raise click.ClickException("No remote entry file found.")
@@ -1031,10 +1063,10 @@ def copy_frontend_dist(cwd: Path) -> str:
         )
 
     copy_targets = [
-        (f, frontend_dist_output_dir / f.relative_to(frontend_dist))
-        for f in frontend_files
+        (f, identity, frontend_dist_output_dir / f.relative_to(frontend_dist))
+        for f, identity in frontend_files
     ]
-    for _, tgt in copy_targets:
+    for _, _, tgt in copy_targets:
         validate_output_file_parent(
             tgt,
             frontend_dist_output_dir,
@@ -1050,8 +1082,14 @@ def copy_frontend_dist(cwd: Path) -> str:
     staged_frontend_dist_output_dir = staged_frontend_output_dir / "dist"
 
     try:
-        for f, tgt in copy_targets:
+        for f, identity, tgt in copy_targets:
             relative_target = tgt.relative_to(frontend_dist_output_dir)
+            ensure_copy_source_unchanged(
+                f,
+                frontend_dist,
+                identity,
+                f"frontend asset {relative_target}",
+            )
             staged_target = staged_frontend_dist_output_dir / relative_target
             ensure_output_file_parent(
                 staged_target,
@@ -1150,7 +1188,7 @@ def copy_backend_files(cwd: Path) -> None:
         raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
-    copy_targets: dict[Path, tuple[Path, Path]] = {}
+    copy_targets: dict[Path, tuple[Path, Path, tuple[int, int, int, int]]] = {}
 
     # Process include patterns
     for pattern in include_patterns:
@@ -1160,8 +1198,8 @@ def copy_backend_files(cwd: Path) -> None:
 
             # Defense in depth: confirm the matched file resolves to a location
             # inside the backend directory before copying it into the bundle.
-            resolved = f.resolve()
-            if not resolved.is_relative_to(backend_dir):
+            identity = get_copy_source_identity(f, backend_dir)
+            if identity is None:
                 raise click.ClickException(
                     f"Refusing to copy {f}: resolved path is outside the "
                     f"backend directory {backend_dir}."
@@ -1178,9 +1216,9 @@ def copy_backend_files(cwd: Path) -> None:
                 continue
 
             target_path = backend_output_dir / relative_path
-            copy_targets.setdefault(target_path, (f, target_path))
+            copy_targets.setdefault(target_path, (f, target_path, identity))
 
-    for _, tgt in copy_targets.values():
+    for _, tgt, _ in copy_targets.values():
         validate_output_file_parent(
             tgt,
             backend_output_dir,
@@ -1195,8 +1233,14 @@ def copy_backend_files(cwd: Path) -> None:
     )
 
     try:
-        for f, tgt in copy_targets.values():
+        for f, tgt, identity in copy_targets.values():
             relative_target = tgt.relative_to(backend_output_dir)
+            ensure_copy_source_unchanged(
+                f,
+                backend_dir,
+                identity,
+                f"backend file {relative_target}",
+            )
             staged_target = staged_backend_output_dir / relative_target
             ensure_output_file_parent(
                 staged_target,
