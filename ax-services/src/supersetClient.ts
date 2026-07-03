@@ -18,14 +18,12 @@
  */
 import {
   ANNOTATION_LIST_CONTRACT_VERSION,
-  AnnotationFilterValue,
   AnnotationListItem,
   AnnotationListRequest,
   AnnotationListResponse,
 } from './contracts/annotationList';
 import {
   ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
-  AnnotationLayerFilterValue,
   AnnotationLayerListItem,
   AnnotationLayerListRequest,
   AnnotationLayerListResponse,
@@ -39,7 +37,6 @@ import {
 } from './contracts/assetSearch';
 import {
   CHART_LIST_CONTRACT_VERSION,
-  ChartFilterValue,
   ChartListItem,
   ChartListRequest,
   ChartListResponse,
@@ -49,25 +46,21 @@ import {
   DashboardListItem,
   DashboardListRequest,
   DashboardListResponse,
-  DashboardFilterValue,
 } from './contracts/dashboardList';
 import {
   DATABASE_LIST_CONTRACT_VERSION,
-  DatabaseFilterValue,
   DatabaseListItem,
   DatabaseListRequest,
   DatabaseListResponse,
 } from './contracts/databaseList';
 import {
   DATASET_LIST_CONTRACT_VERSION,
-  DatasetFilterValue,
   DatasetListItem,
   DatasetListRequest,
   DatasetListResponse,
 } from './contracts/datasetList';
 import {
   QUERY_LIST_CONTRACT_VERSION,
-  QueryFilterValue,
   QueryListItem,
   QueryListRequest,
   QueryListResponse,
@@ -79,21 +72,18 @@ import {
 } from './contracts/authorization';
 import {
   REPORT_LIST_CONTRACT_VERSION,
-  ReportFilterValue,
   ReportListItem,
   ReportListRequest,
   ReportListResponse,
 } from './contracts/reportList';
 import {
   ROLE_LIST_CONTRACT_VERSION,
-  RoleFilterValue,
   RoleListItem,
   RoleListRequest,
   RoleListResponse,
 } from './contracts/roleList';
 import {
   RLS_LIST_CONTRACT_VERSION,
-  RlsFilterValue,
   RlsListItem,
   RlsListRequest,
   RlsListResponse,
@@ -102,25 +92,23 @@ import {
 } from './contracts/rlsList';
 import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
-  SavedQueryFilterValue,
   SavedQueryListItem,
   SavedQueryListRequest,
   SavedQueryListResponse,
 } from './contracts/savedQueryList';
 import {
   TAG_LIST_CONTRACT_VERSION,
-  TagFilterValue,
   TagListItem,
   TagListRequest,
   TagListResponse,
 } from './contracts/tagList';
 import {
   TASK_LIST_CONTRACT_VERSION,
-  TaskFilterValue,
   TaskListItem,
   TaskListRequest,
   TaskListResponse,
 } from './contracts/taskList';
+import { type ListFilter, type ListFilterValue } from './contracts/listColumn';
 import { ServiceConfig } from './config';
 import { normalizeRequestId } from './requestId';
 
@@ -1853,7 +1841,7 @@ function buildAnnotationLayerListQuery(
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatAnnotationLayerFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1877,7 +1865,7 @@ function buildAnnotationListQuery(request: AnnotationListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatAnnotationFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1901,7 +1889,7 @@ function buildDashboardListQuery(request: DashboardListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDashboardFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1925,7 +1913,7 @@ function buildChartListQuery(request: ChartListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatChartFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1949,7 +1937,7 @@ function buildDatasetListQuery(request: DatasetListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDatasetFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1973,7 +1961,7 @@ function buildDatabaseListQuery(request: DatabaseListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDatabaseFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1997,7 +1985,7 @@ function buildQueryListQuery(request: QueryListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatQueryFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2021,7 +2009,7 @@ function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatSavedQueryFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2045,7 +2033,7 @@ function buildReportListQuery(request: ReportListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatReportFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2069,7 +2057,7 @@ function buildRoleListQuery(request: RoleListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatRoleFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2093,7 +2081,7 @@ function buildRlsListQuery(request: RlsListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatRlsFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2117,7 +2105,7 @@ function buildTagListQuery(request: TagListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatTagFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2141,7 +2129,7 @@ function buildTaskListQuery(request: TaskListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatTaskFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -2152,223 +2140,13 @@ function buildTaskListQuery(request: TaskListRequest): string {
   return `(${parts.join(',')})`;
 }
 
-function formatDashboardFilter(filter: {
-  col: string;
-  opr: string;
-  value: DashboardFilterValue;
-}): string {
+function formatListFilter(filter: ListFilter): string {
   return `(col:${filter.col},opr:${filter.opr},value:${formatRisonValue(
     filter.value,
   )})`;
 }
 
-function formatAnnotationLayerFilter(filter: {
-  col: string;
-  opr: string;
-  value: AnnotationLayerFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationLayerRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatAnnotationFilter(filter: {
-  col: string;
-  opr: string;
-  value: AnnotationFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatChartFilter(filter: {
-  col: string;
-  opr: string;
-  value: ChartFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatChartRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatDatasetFilter(filter: {
-  col: string;
-  opr: string;
-  value: DatasetFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatDatasetRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatDatabaseFilter(filter: {
-  col: string;
-  opr: string;
-  value: DatabaseFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatDatabaseRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatQueryFilter(filter: {
-  col: string;
-  opr: string;
-  value: QueryFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatQueryRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatSavedQueryFilter(filter: {
-  col: string;
-  opr: string;
-  value: SavedQueryFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatSavedQueryRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatReportFilter(filter: {
-  col: string;
-  opr: string;
-  value: ReportFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatReportRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRoleFilter(filter: {
-  col: string;
-  opr: string;
-  value: RoleFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatRoleRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRlsFilter(filter: {
-  col: string;
-  opr: string;
-  value: RlsFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatRlsRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatTagFilter(filter: {
-  col: string;
-  opr: string;
-  value: TagFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatTagRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatTaskFilter(filter: {
-  col: string;
-  opr: string;
-  value: TaskFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatTaskRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRisonValue(value: DashboardFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatAnnotationLayerRisonValue(
-  value: AnnotationLayerFilterValue,
-): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatAnnotationRisonValue(value: AnnotationFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatChartRisonValue(value: ChartFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatDatasetRisonValue(value: DatasetFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatQueryRisonValue(value: QueryFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatReportRisonValue(value: ReportFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatRoleRisonValue(value: RoleFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatRlsRisonValue(value: RlsFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatTagRisonValue(value: TagFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatTaskRisonValue(value: TaskFilterValue): string {
+function formatRisonValue(value: ListFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
