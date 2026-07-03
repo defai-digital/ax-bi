@@ -24,7 +24,7 @@ import re
 import urllib.parse
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar
+from typing import Any, Generic, TYPE_CHECKING, TypeVar
 
 import sqlglot
 from jinja2 import nodes, Template
@@ -1808,7 +1808,7 @@ def remove_quotes(val: T) -> T:
 
 
 def process_jinja_sql(
-    sql: str, database: Database, template_params: Optional[dict[str, Any]] = None
+    sql: str, database: Database, template_params: dict[str, Any] | None = None
 ) -> JinjaSQLResult:
     """
     Process Jinja-templated SQL and extract table references.

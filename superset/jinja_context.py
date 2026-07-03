@@ -24,7 +24,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache, partial
-from typing import Any, cast, TYPE_CHECKING, TypedDict, Union
+from typing import Any, cast, TYPE_CHECKING, TypedDict
 
 import dateutil
 from flask import current_app, g, has_request_context, request
@@ -106,8 +106,8 @@ def context_addons() -> dict[str, Any]:
 class Filter(TypedDict, total=False):
     op: str  # pylint: disable=C0103
     col: str
-    val: Union[None, Any, list[Any]]
-    escaped_val: Union[None, Any, list[Any]]
+    val: Any
+    escaped_val: Any
 
 
 @dataclass
@@ -467,7 +467,7 @@ class ExtraCache:
         filters: list[Filter] = []
 
         for flt in _get_adhoc_filters(form_data):
-            val: Union[Any, list[Any]] = flt.get("comparator")
+            val: Any = flt.get("comparator")
             op: str = flt["operator"].upper() if flt.get("operator") else None  # type: ignore
             if (
                 flt.get("expressionType") == "SIMPLE"
