@@ -319,11 +319,7 @@ def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
             f"Refusing to write {label}: path is outside {root}."
         )
     symlinked_root = next(
-        (
-            parent
-            for parent in (root, *root.parents)
-            if parent.exists() and parent.is_symlink()
-        ),
+        (parent for parent in (root, *root.parents) if parent.is_symlink()),
         None,
     )
     if symlinked_root is not None:

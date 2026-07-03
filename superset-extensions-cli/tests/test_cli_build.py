@@ -736,6 +736,26 @@ def test_validate_output_file_parent_does_not_create_missing_parent(
     assert not target.parent.exists()
 
 
+@pytest.mark.unit
+def test_validate_output_file_parent_rejects_broken_symlinked_root(
+    isolated_filesystem,
+):
+    """Test output file parent validation refuses a broken symlinked root."""
+    root = isolated_filesystem / "dist" / "backend"
+    root.parent.mkdir()
+    root.symlink_to(isolated_filesystem / "missing-backend-output")
+    target = root / "src" / "test_org" / "module.py"
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file .*parent directory is a symlink",
+    ):
+        validate_output_file_parent(target, root, "backend file src/test_org/module.py")
+
+    assert root.is_symlink()
+    assert not (isolated_filesystem / "missing-backend-output").exists()
+
+
 # Frontend Dependencies Tests
 @pytest.mark.unit
 @patch("subprocess.run")
