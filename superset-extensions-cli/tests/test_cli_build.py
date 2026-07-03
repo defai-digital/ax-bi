@@ -1400,6 +1400,57 @@ def test_publish_staged_output_directory_rejects_changed_backup_during_rollback(
 
 
 @pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_target_during_cleanup(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test failed directory publishing does not clean a swapped target."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_path = isolated_filesystem / "frontend"
+    output_path.mkdir()
+    (output_path / "old.js").write_text("old")
+    failed_publish = isolated_filesystem / "failed-frontend"
+    replacement_output = isolated_filesystem / "replacement-frontend"
+    replacement_output.mkdir()
+    (replacement_output / "replacement.js").write_text("replacement")
+
+    from superset_extensions_cli import cli
+
+    original_validate_output_directory = cli.validate_output_directory
+
+    def swap_target_after_publish(path, label):
+        if (
+            path == output_path
+            and not staged_dir.exists()
+            and not failed_publish.exists()
+        ):
+            output_path.rename(failed_publish)
+            replacement_output.rename(output_path)
+        original_validate_output_directory(path, label)
+
+    monkeypatch.setattr(cli, "validate_output_directory", swap_target_after_publish)
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "also failed to clean failed dist/frontend directory: "
+            "Refusing to clean dist/frontend directory: path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(output_path / "replacement.js")
+    assert_file_exists(failed_publish / "new.js")
+    assert list(isolated_filesystem.glob(".frontend-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_ignores_backup_cleanup_failure(
     isolated_filesystem, monkeypatch
 ):

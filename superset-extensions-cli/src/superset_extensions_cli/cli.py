@@ -569,7 +569,11 @@ def clean_dist_frontend(cwd: Path) -> None:
     remove_output_directory(frontend_dist, "dist/frontend directory")
 
 
-def remove_output_directory(path: Path, label: str) -> None:
+def remove_output_directory(
+    path: Path,
+    label: str,
+    expected_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
@@ -604,6 +608,11 @@ def remove_output_directory(path: Path, label: str) -> None:
     directory_identity = get_directory_path_identity(path)
     if directory_identity is None:
         raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
+    if (
+        expected_identity is not None
+        and directory_identity[:2] != expected_identity[:2]
+    ):
+        raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
         if get_directory_path_identity(path) != directory_identity:
             raise click.ClickException(f"Refusing to clean {label}: path changed.")
@@ -715,9 +724,11 @@ def publish_staged_output_directory(
             raise click.ClickException(f"Failed to back up {label}: path changed.")
 
     target_replaced = False
+    published_target_identity: tuple[int, int, int, int] | None = None
     try:
         staged_path.replace(target_path)
         target_replaced = True
+        published_target_identity = get_directory_path_identity(target_path)
         validate_output_directory(target_path, label)
         if get_directory_path_identity(target_path) != staged_identity:
             raise click.ClickException(
@@ -748,7 +759,7 @@ def publish_staged_output_directory(
                 ) from cleanup_ex
         elif target_path.exists():
             try:
-                remove_output_directory(target_path, label)
+                remove_output_directory(target_path, label, published_target_identity)
             except click.ClickException as cleanup_ex:
                 raise click.ClickException(
                     f"{publish_error.message}; also failed to clean failed "
