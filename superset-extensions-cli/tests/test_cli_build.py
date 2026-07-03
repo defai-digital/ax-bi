@@ -717,6 +717,23 @@ def test_clean_dist_frontend_rejects_symlinked_parent(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_clean_dist_frontend_rejects_non_directory_parent(isolated_filesystem):
+    """Test clean_dist_frontend refuses file parent paths."""
+    from superset_extensions_cli.cli import clean_dist_frontend
+
+    output_parent = isolated_filesystem / "dist"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean dist/frontend directory: parent exists but is not a directory",
+    ):
+        clean_dist_frontend(isolated_filesystem)
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
 def test_run_frontend_build_with_output_messages(isolated_filesystem):
     """Test run_frontend_build produces expected output messages."""
     from superset_extensions_cli.cli import run_frontend_build
