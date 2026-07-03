@@ -253,6 +253,64 @@ def test_bundle_includes_all_files_recursively(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_dist_symlink_outside_dist(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle command refuses files that resolve outside dist."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir(parents=True)
+    manifest = {
+        "id": "test-org.test-extension",
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (dist_dir / "manifest.json").write_text(json.dumps(manifest))
+    (isolated_filesystem / "secret.txt").write_text("SECRET")
+    (dist_dir / "leaked.txt").symlink_to(isolated_filesystem / "secret.txt")
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "resolved path is outside the dist directory" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_skips_output_file_inside_dist(
+    mock_build, cli_runner, isolated_filesystem
+):
+    """Test bundle command does not include the archive when output is in dist."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir(parents=True)
+    manifest = {
+        "id": "test-org.test-extension",
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (dist_dir / "manifest.json").write_text(json.dumps(manifest))
+    output_path = dist_dir / "bundle.supx"
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 0
+    with zipfile.ZipFile(output_path, "r") as zipf:
+        file_list = set(zipf.namelist())
+    assert "manifest.json" in file_list
+    assert "bundle.supx" not in file_list
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_short_option(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):

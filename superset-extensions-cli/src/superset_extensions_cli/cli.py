@@ -625,11 +625,22 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         zip_path = output
 
     try:
+        resolved_dist_dir = dist_dir.resolve()
+        resolved_zip_path = zip_path.resolve()
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in dist_dir.rglob("*"):
-                if file.is_file():
-                    arcname = file.relative_to(dist_dir)
-                    zipf.write(file, arcname)
+                if not file.is_file():
+                    continue
+                resolved_file = file.resolve()
+                if resolved_file == resolved_zip_path:
+                    continue
+                if not resolved_file.is_relative_to(resolved_dist_dir):
+                    raise click.ClickException(
+                        f"Refusing to bundle {file}: resolved path is outside "
+                        f"the dist directory {resolved_dist_dir}."
+                    )
+                arcname = file.relative_to(dist_dir)
+                zipf.write(file, arcname)
     except Exception as ex:
         click.secho(f"❌ Failed to create bundle: {ex}", err=True, fg="red")
         sys.exit(1)
