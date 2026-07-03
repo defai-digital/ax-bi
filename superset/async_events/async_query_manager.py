@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import jwt
 from flask import Flask, Request, request, Response, session
@@ -52,7 +52,7 @@ class AsyncQueryJobException(Exception):  # noqa: N818
 
 
 def build_job_metadata(
-    channel_id: str, job_id: str, user_id: Optional[int], **kwargs: Any
+    channel_id: str, job_id: str, user_id: int | None, **kwargs: Any
 ) -> dict[str, Any]:
     return {
         "channel_id": channel_id,
@@ -110,14 +110,14 @@ class AsyncQueryManager:
 
     def __init__(self) -> None:
         super().__init__()
-        self._cache: Optional[BaseCache] = None
+        self._cache: BaseCache | None = None
         self._stream_prefix: str = ""
-        self._stream_limit: Optional[int]
-        self._stream_limit_firehose: Optional[int]
+        self._stream_limit: int | None
+        self._stream_limit_firehose: int | None
         self._jwt_cookie_name: str = ""
         self._jwt_cookie_secure: bool = False
-        self._jwt_cookie_domain: Optional[str]
-        self._jwt_cookie_samesite: Optional[Literal["None", "Lax", "Strict"]] = None
+        self._jwt_cookie_domain: str | None
+        self._jwt_cookie_samesite: Literal["None", "Lax", "Strict"] | None = None
         self._jwt_secret: str
         self._jwt_expiration_seconds: int = 0
         self._load_chart_data_into_cache_job: Any = None
@@ -223,7 +223,7 @@ class AsyncQueryManager:
             logger.warning("Parse jwt failed", exc_info=True)
             raise AsyncQueryTokenException("Failed to parse token") from ex
 
-    def init_job(self, channel_id: str, user_id: Optional[int]) -> dict[str, Any]:
+    def init_job(self, channel_id: str, user_id: int | None) -> dict[str, Any]:
         job_id = str(uuid.uuid4())
         return build_job_metadata(
             channel_id, job_id, user_id, status=self.STATUS_PENDING
@@ -235,8 +235,8 @@ class AsyncQueryManager:
         channel_id: str,
         form_data: dict[str, Any],
         response_type: str,
-        force: Optional[bool] = False,
-        user_id: Optional[int] = None,
+        force: bool | None = False,
+        user_id: int | None = None,
     ) -> dict[str, Any]:
         # pylint: disable=import-outside-toplevel
         from superset import security_manager
@@ -256,7 +256,7 @@ class AsyncQueryManager:
         self,
         channel_id: str,
         form_data: dict[str, Any],
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
     ) -> dict[str, Any]:
         # pylint: disable=import-outside-toplevel
         from superset import security_manager
@@ -275,8 +275,8 @@ class AsyncQueryManager:
         return job_metadata
 
     def read_events(
-        self, channel: str, last_id: Optional[str]
-    ) -> list[Optional[dict[str, Any]]]:
+        self, channel: str, last_id: str | None
+    ) -> list[dict[str, Any] | None]:
         if not self._cache:
             raise CacheBackendNotInitialized("Cache backend not initialized")
 
