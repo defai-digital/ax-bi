@@ -17,7 +17,7 @@
 import logging
 import re
 from re import Pattern
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as __
 from sqlalchemy import Numeric, TEXT, types
@@ -59,7 +59,7 @@ class ARRAY(TypeEngine):
     __visit_name__ = "ARRAY"
 
     @property
-    def python_type(self) -> Optional[type[list[Any]]]:
+    def python_type(self) -> type[list[Any]] | None:
         return list
 
 
@@ -67,7 +67,7 @@ class MAP(TypeEngine):
     __visit_name__ = "MAP"
 
     @property
-    def python_type(self) -> Optional[type[dict[Any, Any]]]:
+    def python_type(self) -> type[dict[Any, Any]] | None:
         return dict
 
 

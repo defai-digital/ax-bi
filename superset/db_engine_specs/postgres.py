@@ -22,7 +22,7 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 from re import Pattern
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask_babel import gettext as __
 from sqlalchemy import text, types
@@ -137,7 +137,7 @@ def parse_options(connect_args: dict[str, Any]) -> dict[str, str]:
     return {token[0]: token[1] for token in tokens}
 
 
-def _normalize_interval(v: Any) -> Optional[float]:
+def _normalize_interval(v: Any) -> float | None:
     """Convert PostgreSQL INTERVAL values to milliseconds.
 
     psycopg2 and psycopg3 always return INTERVAL values as datetime.timedelta
@@ -607,7 +607,7 @@ class PostgresEngineSpec(BasicParametersMixin, PostgresBaseEngineSpec):
         cls,
         database: Database,
         query: Query,
-        template_params: Optional[dict[str, Any]] = None,
+        template_params: dict[str, Any] | None = None,
     ) -> str | None:
         """
         Return the default schema for a given query.

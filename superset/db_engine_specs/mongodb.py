@@ -23,7 +23,7 @@ to enable SQL queries on MongoDB collections.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import types
 
@@ -111,8 +111,8 @@ class MongoDBEngineSpec(BaseEngineSpec):
         cls,
         target_type: str,
         dttm: datetime,
-        db_extra: Optional[dict[str, Any]] = None,
-    ) -> Optional[str]:
+        db_extra: dict[str, Any] | None = None,
+    ) -> str | None:
         """Convert Python datetime to MongoDB/SQL datetime string."""
         sqla_type = cls.get_sqla_column_type(target_type)
 

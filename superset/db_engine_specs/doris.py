@@ -17,7 +17,7 @@
 import logging
 import re
 from re import Pattern
-from typing import Any, Optional
+from typing import Any
 from urllib import parse
 
 from flask_babel import gettext as __
@@ -86,7 +86,7 @@ class ARRAY(TypeEngine):
     __visit_name__ = "ARRAY"
 
     @property
-    def python_type(self) -> Optional[type[list[Any]]]:
+    def python_type(self) -> type[list[Any]] | None:
         return list
 
 
@@ -94,7 +94,7 @@ class MAP(TypeEngine):
     __visit_name__ = "MAP"
 
     @property
-    def python_type(self) -> Optional[type[dict[Any, Any]]]:
+    def python_type(self) -> type[dict[Any, Any]] | None:
         return dict
 
 
@@ -102,7 +102,7 @@ class STRUCT(TypeEngine):
     __visit_name__ = "STRUCT"
 
     @property
-    def python_type(self) -> Optional[type[Any]]:
+    def python_type(self) -> type[Any] | None:
         return None
 
 
@@ -277,8 +277,8 @@ class DorisEngineSpec(MySQLEngineSpec):
         cls,
         uri: URL,
         connect_args: dict[str, Any],
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> tuple[URL, dict[str, Any]]:
         if not uri.database:
             raise ValueError("Doris requires a database to be specified in the URI.")
@@ -335,7 +335,7 @@ class DorisEngineSpec(MySQLEngineSpec):
         cls,
         sqlalchemy_uri: URL,
         connect_args: dict[str, Any],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the configured schema.
 
@@ -348,7 +348,7 @@ class DorisEngineSpec(MySQLEngineSpec):
             return None
 
         database = sqlalchemy_uri.database.strip("/")
-        if not database or "." not in database:
+        if not database:
             return None
 
         schema = database.split(".")[-1]

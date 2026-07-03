@@ -26,7 +26,7 @@ from collections import defaultdict, deque
 from datetime import datetime
 from re import Pattern
 from textwrap import dedent
-from typing import Any, cast, Optional, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 from urllib import parse
 
 import pandas as pd
@@ -1308,7 +1308,7 @@ class PrestoEngineSpec(PrestoBaseEngineSpec):
                 for row in data:
                     values = row.get(name) or []
                     if isinstance(values, str):
-                        values = cast(Optional[list[Any]], destringify(values))
+                        values = cast(list[Any] | None, destringify(values))
                         row[name] = values
                     for value, col in zip(values or [], expanded, strict=False):
                         row[col["column_name"]] = value
