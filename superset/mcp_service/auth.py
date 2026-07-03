@@ -45,8 +45,9 @@ Configuration:
 """
 
 import logging
+from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
-from typing import Any, Callable, TYPE_CHECKING, TypeVar
+from typing import Any, TYPE_CHECKING, TypeVar
 
 from flask import current_app, g, has_app_context, has_request_context
 from flask_appbuilder.security.sqla.models import User

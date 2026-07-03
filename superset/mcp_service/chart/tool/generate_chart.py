@@ -773,6 +773,7 @@ async def generate_chart(  # noqa: C901
         response_form_data = (
             form_data_with_datasource if request.save_chart and chart else form_data
         )
+        combined_warnings = sanitization_warnings + runtime_warnings + response_warnings
         result = {
             "chart": chart_data,
             "chart_id": chart.id if chart else None,
@@ -803,7 +804,7 @@ async def generate_chart(  # noqa: C901
             "performance": performance.model_dump() if performance else None,
             "accessibility": accessibility.model_dump() if accessibility else None,
             # Combined runtime, response, and sanitization warnings
-            "warnings": sanitization_warnings + runtime_warnings + response_warnings,
+            "warnings": combined_warnings,
             "success": True,
             "schema_version": "2.0",
             "api_version": "v1",
@@ -824,7 +825,7 @@ async def generate_chart(  # noqa: C901
                 chart_name,
                 explore_url,
                 form_data_key,
-                len(result["warnings"]),
+                len(combined_warnings),
             )
         )
         return GenerateChartResponse.model_validate(result)

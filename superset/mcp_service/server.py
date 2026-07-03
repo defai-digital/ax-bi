@@ -24,8 +24,8 @@ For multi-pod deployments, configure MCP_EVENT_STORE_CONFIG with Redis URL.
 
 import logging
 import os
-from collections.abc import Sequence
-from typing import Annotated, Any, Callable
+from collections.abc import Callable, Sequence
+from typing import Annotated, Any
 
 import uvicorn
 from fastmcp.exceptions import ToolError

@@ -893,11 +893,14 @@ class Superset(BaseSupersetView):
         )
         extra_params: list[tuple[str, str]] = []
         if url_params := state.get("urlParams"):
-            extra_params.extend(url_params)
+            extra_params.extend((param[0], param[1]) for param in url_params)
         if original_params := request.query_string.decode():
-            extra_params.extend(parse.parse_qsl(original_params, keep_blank_values=True))
+            extra_params.extend(
+                parse.parse_qsl(original_params, keep_blank_values=True)
+            )
         if extra_params:
-            url = f"{url}?{parse.urlencode(extra_params)}"
+            delimiter = "&" if "?" in url else "?"
+            url = f"{url}{delimiter}{parse.urlencode(extra_params)}"
         if hash_ := state.get("anchor", state.get("hash")):
             url = f"{url}#{hash_}"
 

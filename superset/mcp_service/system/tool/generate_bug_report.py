@@ -30,7 +30,8 @@ import datetime
 import logging
 import platform
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import flask
 from superset_core.mcp.decorators import tool, ToolAnnotations

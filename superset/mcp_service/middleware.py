@@ -19,8 +19,9 @@ import logging
 import secrets
 import time
 from collections import defaultdict
+from collections.abc import Awaitable, Callable, Sequence
 from contextvars import ContextVar
-from typing import Any, Awaitable, Callable, Dict, Protocol, Sequence
+from typing import Any, Protocol
 
 import mcp.types as mt
 from fastmcp.exceptions import ToolError
@@ -757,7 +758,7 @@ class InMemoryRateLimiter:
 
     def __init__(self) -> None:
         # Structure: {key: [(timestamp, count), ...]}
-        self._requests: Dict[str, list[tuple[float, int]]] = defaultdict(list)
+        self._requests: dict[str, list[tuple[float, int]]] = defaultdict(list)
         self._cleanup_interval = 300  # Clean up every 5 minutes
         self._last_cleanup = time.time()
 

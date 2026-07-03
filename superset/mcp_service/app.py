@@ -23,7 +23,8 @@ mcp from here and use @mcp.tool decorators.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Sequence, Set
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
@@ -570,14 +571,14 @@ def _build_mcp_kwargs(
     instructions: str,
     auth: Any | None,
     lifespan: Callable[..., Any] | None,
-    tools: List[Any] | None,
-    include_tags: Set[str] | None,
-    exclude_tags: Set[str] | None,
+    tools: list[Any] | None,
+    include_tags: set[str] | None,
+    exclude_tags: set[str] | None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build FastMCP constructor arguments."""
-    mcp_kwargs: Dict[str, Any] = {
+    mcp_kwargs: dict[str, Any] = {
         "name": name,
         "instructions": instructions,
     }
@@ -601,7 +602,7 @@ def _build_mcp_kwargs(
     return mcp_kwargs
 
 
-def _apply_config(mcp_instance: FastMCP, config: Dict[str, Any] | None) -> None:
+def _apply_config(mcp_instance: FastMCP, config: dict[str, Any] | None) -> None:
     """Apply additional configuration to FastMCP instance."""
     if config:
         for key, value in config.items():
@@ -611,8 +612,8 @@ def _apply_config(mcp_instance: FastMCP, config: Dict[str, Any] | None) -> None:
 def _log_instance_creation(
     name: str,
     auth: Any | None,
-    include_tags: Set[str] | None,
-    exclude_tags: Set[str] | None,
+    include_tags: set[str] | None,
+    exclude_tags: set[str] | None,
 ) -> None:
     """Log FastMCP instance creation details."""
     logger.info("Created FastMCP instance: %s", name)
@@ -632,10 +633,10 @@ def create_mcp_app(
     branding: str | None = None,
     auth: Any | None = None,
     lifespan: Callable[..., Any] | None = None,
-    tools: List[Any] | None = None,
-    include_tags: Set[str] | None = None,
-    exclude_tags: Set[str] | None = None,
-    config: Dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
+    include_tags: set[str] | None = None,
+    exclude_tags: set[str] | None = None,
+    config: dict[str, Any] | None = None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
 ) -> FastMCP:
@@ -962,10 +963,10 @@ def init_fastmcp_server(
     instructions: str | None = None,
     auth: Any | None = None,
     lifespan: Callable[..., Any] | None = None,
-    tools: List[Any] | None = None,
-    include_tags: Set[str] | None = None,
-    exclude_tags: Set[str] | None = None,
-    config: Dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
+    include_tags: set[str] | None = None,
+    exclude_tags: set[str] | None = None,
+    config: dict[str, Any] | None = None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
 ) -> FastMCP:
