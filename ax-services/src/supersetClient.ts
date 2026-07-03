@@ -2659,8 +2659,8 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
     name: typeof item.name === 'string' ? item.name : undefined,
     filterType:
       typeof item.filter_type === 'string' ? item.filter_type : undefined,
-    tables: item.tables?.map(toRlsTableRef).filter(isDefined),
-    roles: item.roles?.map(toRlsRoleRef).filter(isDefined),
+    tables: mapRlsRefs(item.tables, toRlsTableRef),
+    roles: mapRlsRefs(item.roles, toRlsRoleRef),
     clause: typeof item.clause === 'string' ? item.clause : undefined,
     groupKey: typeof item.group_key === 'string' ? item.group_key : undefined,
     changedOn:
@@ -2670,6 +2670,17 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
           ? item.changed_on_delta_humanized
           : undefined,
   });
+}
+
+function mapRlsRefs<T>(
+  value: unknown,
+  mapper: (value: unknown) => T | undefined,
+): T[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value.map(mapper).filter(isDefined);
 }
 
 function toRlsTableRef(value: unknown): RlsTableRef | undefined {

@@ -3343,6 +3343,55 @@ test('listRlsFilters maps Superset RLS filter list responses', async () => {
   });
 });
 
+test('listRlsFilters ignores malformed relation metadata', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 1,
+      result: [
+        {
+          id: 42,
+          name: 'regional_sales',
+          filter_type: 'Regular',
+          tables: { id: 7, table_name: 'sales' },
+          roles: { id: 3, name: 'Alpha' },
+          clause: 'region = "EMEA"',
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listRlsFilters({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: RLS_LIST_CONTRACT_VERSION,
+    rlsFilters: [
+      {
+        id: 42,
+        name: 'regional_sales',
+        filterType: 'Regular',
+        clause: 'region = "EMEA"',
+      },
+    ],
+    count: 1,
+    totalCount: 1,
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: ['id', 'name', 'filter_type', 'clause'],
+    columnsLoaded: ['id', 'name', 'filter_type', 'clause'],
+    warnings: [],
+  });
+});
+
 test('listRlsFilters records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {
