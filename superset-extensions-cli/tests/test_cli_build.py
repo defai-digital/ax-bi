@@ -932,6 +932,49 @@ def test_publish_output_file_rejects_changed_target_during_backup(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_backup_during_rollback(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged file publishing refuses to restore a changed backup."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    replacement_staged = isolated_filesystem / "replacement-staged.supx"
+    replacement_staged.write_text("replacement staged")
+    replacement_backup = isolated_filesystem / "replacement-backup.supx"
+    replacement_backup.write_text("replacement backup")
+    saved_backup = isolated_filesystem / "saved-backup.supx"
+    original_replace = Path.replace
+
+    def replace_staged_and_swap_backup(path, target):
+        if path == staged_file and target == output_path:
+            staged_file.unlink()
+            replacement_staged.replace(staged_file)
+        result = original_replace(path, target)
+        if path == staged_file and target == output_path:
+            backup_path = next(
+                isolated_filesystem.glob(".bundle.supx-backup.*.tmp/bundle.supx")
+            )
+            backup_path.rename(saved_backup)
+            replacement_backup.replace(backup_path)
+        return result
+
+    monkeypatch.setattr(Path, "replace", replace_staged_and_swap_backup)
+
+    with pytest.raises(
+        click.ClickException,
+        match="also failed to restore previous bundle: backup path changed",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert saved_backup.read_text() == "original bundle"
+    assert not output_path.exists()
+    assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp"))
+
+
+@pytest.mark.unit
 def test_publish_staged_output_directory_rejects_symlinked_staged_dir(
     isolated_filesystem,
 ):

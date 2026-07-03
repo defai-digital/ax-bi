@@ -742,6 +742,7 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
 
     backup_root: Path | None = None
     backup_path: Path | None = None
+    backup_identity: tuple[int, int, int, int] | None = None
     if target_path.exists():
         target_identity = get_read_path_identity(target_path)
         if target_identity is None:
@@ -770,6 +771,13 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
             except click.ClickException:
                 pass
             raise click.ClickException(f"Failed to back up {label}: path changed.")
+        backup_identity = get_output_copy_source_identity(backup_path)
+        if backup_identity is None:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: backup is unsafe.")
 
     target_replaced = False
     try:
@@ -819,6 +827,8 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
 
     if backup_root is not None and backup_path is not None:
         try:
+            if get_output_copy_source_identity(backup_path) != backup_identity:
+                raise OSError("backup path changed")
             backup_path.replace(target_path)
         except OSError as restore_ex:
             raise click.ClickException(
