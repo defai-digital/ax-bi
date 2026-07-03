@@ -781,6 +781,12 @@ def publish_output_file(staged_path: Path, target_path: Path, label: str) -> Non
             f"temporary {label} backup directory",
         )
         backup_path = backup_root / target_path.name
+        if get_read_path_identity(target_path) != target_identity:
+            try:
+                remove_output_directory(backup_root, f"temporary {label} backup")
+            except click.ClickException:
+                pass
+            raise click.ClickException(f"Failed to back up {label}: path changed.")
         try:
             copy_output_file(target_path, backup_path, f"temporary {label} backup")
         except click.ClickException as ex:

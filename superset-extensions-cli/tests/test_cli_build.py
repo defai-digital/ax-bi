@@ -981,6 +981,49 @@ def test_publish_output_file_rejects_changed_target_during_backup(
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_target_before_backup_copy(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged file publishing refuses a changed target before backup copy."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("original bundle")
+    replacement_file = isolated_filesystem / "replacement.supx"
+    replacement_file.write_text("replacement bundle")
+    saved_output = isolated_filesystem / "saved-bundle.supx"
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def swap_target_after_backup_root_creation(parent, prefix, label):
+        backup_root = original_create_temporary_output_directory(parent, prefix, label)
+        if parent == output_path.parent and prefix.startswith(".bundle.supx-backup."):
+            output_path.rename(saved_output)
+            replacement_file.replace(output_path)
+        return backup_root
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        swap_target_after_backup_root_creation,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to back up bundle: path changed",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert staged_file.read_text() == "new bundle"
+    assert saved_output.read_text() == "original bundle"
+    assert output_path.read_text() == "replacement bundle"
+    assert list(isolated_filesystem.glob(".bundle.supx-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_publish_output_file_rejects_changed_backup_during_rollback(
     isolated_filesystem,
     monkeypatch,
