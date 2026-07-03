@@ -32,6 +32,7 @@ from superset_extensions_cli.cli import (
     copy_frontend_dist,
     ensure_output_directory,
     init_frontend_deps,
+    publish_output_file,
     validate_output_file,
     validate_output_file_parent,
     write_manifest,
@@ -353,6 +354,26 @@ def test_validate_output_file_rejects_non_directory_ancestor(isolated_filesystem
         )
 
     assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_publish_output_file_revalidates_target(isolated_filesystem):
+    """Test staged file publishing refuses a symlinked final target."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    outside_file = isolated_filesystem / "outside.supx"
+    outside_file.write_text("outside bundle")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.symlink_to(outside_file)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write bundle: path is a symlink",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert outside_file.read_text() == "outside bundle"
+    assert staged_file.read_text() == "new bundle"
 
 
 @pytest.mark.unit

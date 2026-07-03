@@ -426,6 +426,7 @@ def publish_staged_output_directory(
 
 def publish_output_file(staged_path: Path, target_path: Path, label: str) -> None:
     """Replace an output file with a staged file."""
+    validate_output_file(target_path, label)
     try:
         staged_path.replace(target_path)
     except OSError as ex:
