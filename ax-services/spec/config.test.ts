@@ -200,6 +200,14 @@ test('buildConfig rejects Superset base URLs with query or fragment', () => {
   ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
 });
 
+test('buildConfig rejects Superset base URLs with credentials', () => {
+  expect(() =>
+    buildConfig({
+      AX_SUPERSET_BASE_URL: 'https://user:pass@example.test/superset',
+    }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+});
+
 test('buildConfig rejects blank Superset path overrides', () => {
   expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
     'AX_SUPERSET_HEALTH_PATH must not be empty',

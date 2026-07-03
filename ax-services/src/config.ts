@@ -151,6 +151,9 @@ function normalizeSupersetBaseUrl(value: string): string {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('unsupported protocol');
     }
+    if (url.username !== '' || url.password !== '') {
+      throw new Error('credentials not allowed');
+    }
     if (url.search !== '' || url.hash !== '') {
       throw new Error('query or fragment not allowed');
     }
