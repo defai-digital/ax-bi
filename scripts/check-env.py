@@ -20,7 +20,6 @@ import platform
 import subprocess
 import sys
 from collections.abc import Callable
-from typing import Optional
 
 import click
 import psutil
@@ -35,7 +34,7 @@ class Requirement:
         supported_range: tuple[Version, Version],
         req_type: str,
         command: str,
-        version_post_process: Optional[Callable[[str], str]] = None,
+        version_post_process: Callable[[str], str] | None = None,
     ):
         self.name = name
         self.ideal_range = ideal_range
@@ -46,7 +45,7 @@ class Requirement:
         self.version = self.get_version()
         self.status = self.check_version()
 
-    def get_version(self) -> Optional[str]:
+    def get_version(self) -> str | None:
         try:
             version = subprocess.check_output(self.command, shell=True).decode().strip()  # noqa: S602
             if self.version_post_process:
