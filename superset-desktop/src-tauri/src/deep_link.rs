@@ -32,6 +32,15 @@ fn is_dashboard_identifier(value: &str) -> bool {
             .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
 }
 
+fn static_route(path: &str, route: &str) -> Option<String> {
+    if path.is_empty() {
+        Some(route.to_string())
+    } else {
+        warn!("Invalid static deep link path: {}", path);
+        None
+    }
+}
+
 fn parse_deep_link(url: &str) -> Option<String> {
     if url.contains("/../") || url.ends_with("/..") || url.contains("/./") || url.ends_with("/.") {
         warn!("Rejected deep link with dot segment: {}", url);
@@ -74,9 +83,9 @@ fn parse_deep_link(url: &str) -> Option<String> {
                 return None;
             }
         }
-        "explore" => "/explore/".to_string(),
-        "sqllab" | "sql" => "/sqllab/".to_string(),
-        "home" => "/superset/welcome/".to_string(),
+        "explore" => static_route(path, "/explore/")?,
+        "sqllab" | "sql" => static_route(path, "/sqllab/")?,
+        "home" => static_route(path, "/superset/welcome/")?,
         other => {
             warn!("Unknown deep link host: {}", other);
             return None;
@@ -157,5 +166,8 @@ mod tests {
         assert_eq!(parse_deep_link("axbi://dashboard/1?next=/admin"), None);
         assert_eq!(parse_deep_link("axbi://chart/42#settings"), None);
         assert_eq!(parse_deep_link("axbi://user@dashboard/1"), None);
+        assert_eq!(parse_deep_link("axbi://explore/extra"), None);
+        assert_eq!(parse_deep_link("axbi://sqllab/query/1"), None);
+        assert_eq!(parse_deep_link("axbi://home/admin"), None);
     }
 }
