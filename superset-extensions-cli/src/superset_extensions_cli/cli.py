@@ -749,22 +749,41 @@ def copy_frontend_dist(cwd: Path) -> str:
         )
 
     ensure_output_directory(dist_dir, "dist directory")
-    ensure_output_directory(frontend_output_dir, "dist/frontend directory")
-    ensure_output_directory(frontend_dist_output_dir, "dist/frontend/dist directory")
+    staged_frontend_output_dir = create_temporary_output_directory(
+        dist_dir,
+        ".frontend.",
+        "temporary frontend output directory",
+    )
+    staged_frontend_dist_output_dir = staged_frontend_output_dir / "dist"
 
-    for _, tgt in copy_targets:
-        ensure_output_file_parent(
-            tgt,
-            frontend_dist_output_dir,
-            f"frontend asset {tgt.relative_to(frontend_dist_output_dir)}",
-        )
+    try:
+        for f, tgt in copy_targets:
+            relative_target = tgt.relative_to(frontend_dist_output_dir)
+            staged_target = staged_frontend_dist_output_dir / relative_target
+            ensure_output_file_parent(
+                staged_target,
+                staged_frontend_dist_output_dir,
+                f"frontend asset {relative_target}",
+            )
+            copy_output_file(
+                f,
+                staged_target,
+                f"frontend asset {relative_target}",
+            )
 
-    for f, tgt in copy_targets:
-        copy_output_file(
-            f,
-            tgt,
-            f"frontend asset {tgt.relative_to(frontend_dist_output_dir)}",
+        publish_staged_output_directory(
+            staged_frontend_output_dir,
+            frontend_output_dir,
+            "dist/frontend directory",
         )
+    except click.ClickException:
+        try:
+            remove_output_directory(
+                staged_frontend_output_dir, "temporary frontend output directory"
+            )
+        except click.ClickException:
+            pass
+        raise
 
     return remote_entries[0]
 
@@ -918,7 +937,6 @@ def rebuild_frontend(cwd: Path, frontend_dir: Path) -> str | None:
         click.secho("❌ Frontend build failed", fg="red")
         return None
 
-    clean_dist_frontend(cwd)
     remote_entry = copy_frontend_dist(cwd)
     click.secho("✅ Frontend rebuilt", fg="green")
     return remote_entry

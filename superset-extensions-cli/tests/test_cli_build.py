@@ -1697,6 +1697,7 @@ def test_copy_frontend_dist_copies_files_correctly(isolated_filesystem):
     assert_file_exists(dist_dir / "frontend" / "dist" / "remoteEntry.abc123.js")
     assert_file_exists(dist_dir / "frontend" / "dist" / "main.js")
     assert_file_exists(dist_dir / "frontend" / "dist" / "assets" / "style.css")
+    assert list(dist_dir.glob(".frontend*.tmp")) == []
 
 
 @pytest.mark.unit
@@ -1707,6 +1708,9 @@ def test_copy_frontend_dist_reports_copy_failures(isolated_filesystem):
     (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
 
     clean_dist(isolated_filesystem)
+    existing_output = isolated_filesystem / "dist" / "frontend" / "dist" / "old.js"
+    existing_output.parent.mkdir(parents=True)
+    existing_output.write_text("old content")
 
     with patch(
         "superset_extensions_cli.cli.shutil.copy2",
@@ -1717,6 +1721,59 @@ def test_copy_frontend_dist_reports_copy_failures(isolated_filesystem):
             match="Failed to copy frontend asset remoteEntry\\.abc123\\.js: disk full",
         ):
             copy_frontend_dist(isolated_filesystem)
+
+    assert existing_output.read_text() == "old content"
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_removes_stale_output_files(isolated_filesystem):
+    """Test copy_frontend_dist replaces stale frontend output with current files."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+
+    stale_output = isolated_filesystem / "dist" / "frontend" / "dist"
+    stale_output.mkdir(parents=True)
+    (stale_output / "stale.js").write_text("stale content")
+
+    copy_frontend_dist(isolated_filesystem)
+
+    assert_file_exists(stale_output / "remoteEntry.abc123.js")
+    assert not (stale_output / "stale.js").exists()
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_restores_existing_output_on_publish_failure(
+    isolated_filesystem, monkeypatch
+):
+    """Test copy_frontend_dist restores old output when publishing staged output fails."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+
+    existing_output = isolated_filesystem / "dist" / "frontend" / "dist" / "old.js"
+    existing_output.parent.mkdir(parents=True)
+    existing_output.write_text("old content")
+    frontend_output_dir = isolated_filesystem / "dist" / "frontend"
+    original_replace = Path.replace
+
+    def fail_staged_publish(path, target):
+        if path.name.startswith(".frontend.") and target == frontend_output_dir:
+            raise OSError("permission denied")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_staged_publish)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to publish dist/frontend directory: permission denied",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert existing_output.read_text() == "old content"
+    assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
 
 
 @pytest.mark.unit
