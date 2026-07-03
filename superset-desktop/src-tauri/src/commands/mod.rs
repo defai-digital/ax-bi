@@ -38,13 +38,15 @@ fn normalize_server_url(value: &str) -> Result<String, String> {
         return Err("AXBI_SERVER_URL must not be empty".to_string());
     }
 
-    let mut url = Url::parse(trimmed)
+    let url = Url::parse(trimmed)
         .map_err(|_| "AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string())?;
     if url.scheme() != "http" && url.scheme() != "https" {
         return Err("AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string());
     }
+    if url.query().is_some() || url.fragment().is_some() {
+        return Err("AXBI_SERVER_URL must not include query or fragment".to_string());
+    }
 
-    url.set_fragment(None);
     Ok(url.as_str().trim_end_matches('/').to_string())
 }
 
@@ -122,6 +124,14 @@ mod tests {
         assert_eq!(
             normalize_server_url("file:///tmp/superset").unwrap_err(),
             "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test?tenant=ax").unwrap_err(),
+            "AXBI_SERVER_URL must not include query or fragment"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test#dashboard").unwrap_err(),
+            "AXBI_SERVER_URL must not include query or fragment"
         );
     }
 }
