@@ -102,6 +102,8 @@ export const permissionCheckResponseSchema = {
     contractVersion: { const: AUTHORIZATION_CONTRACT_VERSION },
     allowed: { type: 'boolean' },
     reason: { type: 'string' },
+    statusCode: { type: 'integer', minimum: 100, maximum: 599 },
+    error: { type: 'string' },
   },
 } as const;
 

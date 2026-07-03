@@ -832,6 +832,44 @@ test('permission check endpoint delegates to Superset client', async () => {
   });
 });
 
+test('permission check endpoint returns fail-closed details', async () => {
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      permissionCheck: {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        statusCode: 503,
+        error: 'connect failed',
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/permissions/check',
+    payload: {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    statusCode: 503,
+    error: 'connect failed',
+  });
+});
+
 test('annotation layer list endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(

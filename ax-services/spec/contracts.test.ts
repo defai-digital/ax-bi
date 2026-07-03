@@ -239,6 +239,14 @@ test('permission check request schema is registered in authorization contracts',
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],
   });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties
+      .statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
+  });
 });
 
 test('RLS list request schema is registered in RLS list contracts', () => {
