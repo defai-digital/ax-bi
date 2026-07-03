@@ -1515,19 +1515,16 @@ export class SupersetClient
       request.limit,
       request.includeCertifiedOnly,
     );
-    const url = new URL(`${this.config.supersetBaseUrl}${path}`);
-    url.searchParams.set('q', query);
-    return url.toString();
+    return this.buildSupersetQueryUrl(path, query);
   }
 
   private buildAnnotationLayerListUrl(
     request: AnnotationLayerListRequest,
   ): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.annotationLayer}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.annotationLayer,
+      buildAnnotationLayerListQuery(request),
     );
-    url.searchParams.set('q', buildAnnotationLayerListQuery(request));
-    return url.toString();
   }
 
   private buildAnnotationListUrl(request: AnnotationListRequest): string {
@@ -1535,98 +1532,92 @@ export class SupersetClient
       /\/$/,
       '',
     );
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${basePath}/${request.layerId}/annotation/`,
+    return this.buildSupersetQueryUrl(
+      `${basePath}/${request.layerId}/annotation/`,
+      buildAnnotationListQuery(request),
     );
-    url.searchParams.set('q', buildAnnotationListQuery(request));
-    return url.toString();
   }
 
   private buildDashboardListUrl(request: DashboardListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dashboard}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.dashboard,
+      buildDashboardListQuery(request),
     );
-    url.searchParams.set('q', buildDashboardListQuery(request));
-    return url.toString();
   }
 
   private buildChartListUrl(request: ChartListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.chart}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.chart,
+      buildChartListQuery(request),
     );
-    url.searchParams.set('q', buildChartListQuery(request));
-    return url.toString();
   }
 
   private buildDatasetListUrl(request: DatasetListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dataset}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.dataset,
+      buildDatasetListQuery(request),
     );
-    url.searchParams.set('q', buildDatasetListQuery(request));
-    return url.toString();
   }
 
   private buildDatabaseListUrl(request: DatabaseListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.database}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.database,
+      buildDatabaseListQuery(request),
     );
-    url.searchParams.set('q', buildDatabaseListQuery(request));
-    return url.toString();
   }
 
   private buildQueryListUrl(request: QueryListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.query}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.query,
+      buildQueryListQuery(request),
     );
-    url.searchParams.set('q', buildQueryListQuery(request));
-    return url.toString();
   }
 
   private buildSavedQueryListUrl(request: SavedQueryListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.savedQuery}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.savedQuery,
+      buildSavedQueryListQuery(request),
     );
-    url.searchParams.set('q', buildSavedQueryListQuery(request));
-    return url.toString();
   }
 
   private buildReportListUrl(request: ReportListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.report}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.report,
+      buildReportListQuery(request),
     );
-    url.searchParams.set('q', buildReportListQuery(request));
-    return url.toString();
   }
 
   private buildRoleListUrl(request: RoleListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.role}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.role,
+      buildRoleListQuery(request),
     );
-    url.searchParams.set('q', buildRoleListQuery(request));
-    return url.toString();
   }
 
   private buildRlsListUrl(request: RlsListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.rls}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.rls,
+      buildRlsListQuery(request),
     );
-    url.searchParams.set('q', buildRlsListQuery(request));
-    return url.toString();
   }
 
   private buildTagListUrl(request: TagListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.tag}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.tag,
+      buildTagListQuery(request),
     );
-    url.searchParams.set('q', buildTagListQuery(request));
-    return url.toString();
   }
 
   private buildTaskListUrl(request: TaskListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.task}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.task,
+      buildTaskListQuery(request),
     );
-    url.searchParams.set('q', buildTaskListQuery(request));
+  }
+
+  private buildSupersetQueryUrl(path: string, query: string): string {
+    const url = new URL(`${this.config.supersetBaseUrl}${path}`);
+    url.searchParams.set('q', query);
     return url.toString();
   }
 }
