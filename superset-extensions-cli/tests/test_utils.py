@@ -615,6 +615,34 @@ def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
     assert list(output_dir.glob(".metadata.txt.*.tmp")) == []
 
 
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_promoted_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes verify the promoted target identity."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    replacement_path = isolated_filesystem / "replacement.txt"
+    replacement_path.write_text("replacement")
+    original_replace = Path.replace
+
+    def swap_target_after_replace(path, target):
+        result = original_replace(path, target)
+        if target == output_path and path != replacement_path:
+            output_path.unlink()
+            original_replace(replacement_path, output_path)
+        return result
+
+    monkeypatch.setattr(Path, "replace", swap_target_after_replace)
+
+    with pytest.raises(OSError, match="Failed to verify promoted temporary file"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "replacement"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
 # Write JSON Tests
 @pytest.mark.unit
 def test_write_json_round_trip(isolated_filesystem):

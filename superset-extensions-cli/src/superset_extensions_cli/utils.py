@@ -234,6 +234,8 @@ def write_text_atomic(path: Path, content: str) -> None:
         if get_read_path_identity(temp_path) != temp_identity:
             raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
         temp_path.replace(path)
+        if get_read_path_identity(path) != temp_identity:
+            raise OSError(f"Failed to verify promoted temporary file: {path}")
         temp_path = None
     except OSError:
         if temp_path is not None:
