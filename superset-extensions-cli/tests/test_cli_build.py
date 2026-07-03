@@ -1400,6 +1400,40 @@ def test_init_frontend_deps_runs_npm_i_when_missing(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_changed_frontend_before_install(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dependency install refuses a changed frontend directory."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    saved_frontend = isolated_filesystem / "saved-frontend"
+    replacement_frontend = isolated_filesystem / "replacement-frontend"
+    replacement_frontend.mkdir()
+
+    def swap_frontend_during_npm_validation():
+        frontend_dir.rename(saved_frontend)
+        replacement_frontend.rename(frontend_dir)
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.validate_npm",
+        swap_frontend_during_npm_validation,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed before dependency install",
+    ):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert saved_frontend.is_dir()
+    assert frontend_dir.is_dir()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_init_frontend_deps_exits_on_npm_ci_failure(
     mock_validate_npm, mock_run, isolated_filesystem

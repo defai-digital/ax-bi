@@ -158,6 +158,10 @@ def init_frontend_deps(frontend_dir: Path) -> None:
     If node_modules is missing under `frontend_dir`, run `npm ci` if package-lock.json
     exists, otherwise run `npm i`.
     """
+    require_optional_directory(frontend_dir, "frontend")
+    frontend_identity = get_directory_path_identity(frontend_dir)
+    if frontend_identity is None:
+        raise click.ClickException("frontend path is no longer safe.")
     node_modules = frontend_dir / "node_modules"
     if node_modules.is_symlink():
         raise click.ClickException("frontend/node_modules path is a symlink.")
@@ -178,6 +182,14 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             error_msg = "❌ `npm i` failed. Aborting."
 
         validate_npm()
+        current_frontend_identity = get_directory_path_identity(frontend_dir)
+        if (
+            current_frontend_identity is None
+            or current_frontend_identity[:2] != frontend_identity[:2]
+        ):
+            raise click.ClickException(
+                "frontend path changed before dependency install."
+            )
         try:
             res = subprocess.run(  # noqa: S603
                 npm_command,  # noqa: S607
