@@ -22,7 +22,7 @@ Pydantic schemas for dataset-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, cast, Dict, List, Literal
+from typing import Annotated, Any, cast, Literal
 
 from pydantic import (
     BaseModel,
@@ -87,7 +87,7 @@ class DatasetFilter(ColumnOperator):
         description="Operator to use. Use get_schema(model_type='dataset') for "
         "available operators.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
@@ -104,7 +104,7 @@ class TableColumnInfo(BaseModel):
     @model_serializer(mode="wrap")
     def _filter_column_fields_by_context(
         self, serializer: Any, info: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Filter column fields based on serialization context.
 
         If context contains 'column_fields', only include those fields plus
@@ -157,7 +157,7 @@ class DatasetInfo(BaseModel):
     created_on_humanized: str | None = Field(
         None, description="Humanized creation time"
     )
-    tags: List[TagInfo] = Field(default_factory=list, description="Dataset tags")
+    tags: list[TagInfo] = Field(default_factory=list, description="Dataset tags")
     is_virtual: bool | None = Field(
         None, description="Whether the dataset is virtual (uses SQL)"
     )
@@ -169,15 +169,15 @@ class DatasetInfo(BaseModel):
     main_dttm_col: str | None = Field(None, description="Main datetime column")
     offset: int | None = Field(None, description="Offset")
     cache_timeout: int | None = Field(None, description="Cache timeout")
-    params: Dict[str, Any | None] | None = Field(None, description="Extra params")
-    template_params: Dict[str, Any | None] | None = Field(
+    params: dict[str, Any | None] | None = Field(None, description="Extra params")
+    template_params: dict[str, Any | None] | None = Field(
         None, description="Template params"
     )
-    extra: Dict[str, Any | None] | None = Field(None, description="Extra metadata")
-    columns: List[TableColumnInfo] = Field(
+    extra: dict[str, Any | None] | None = Field(None, description="Extra metadata")
+    columns: list[TableColumnInfo] = Field(
         default_factory=list, description="Columns in the dataset"
     )
-    metrics: List[SqlMetricInfo] = Field(
+    metrics: list[SqlMetricInfo] = Field(
         default_factory=list,
         description="Saved metrics (pre-defined aggregations). "
         "NOT columns — use saved_metric=true in chart configs.",
@@ -192,7 +192,7 @@ class DatasetInfo(BaseModel):
     )
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         """Filter fields based on serialization context.
 
         If context contains 'select_columns', only include those fields.
@@ -210,7 +210,7 @@ class DatasetInfo(BaseModel):
 
 
 class DatasetList(BaseModel):
-    datasets: List[DatasetInfo]
+    datasets: list[DatasetInfo]
     count: int
     total_count: int
     page: int
@@ -218,23 +218,23 @@ class DatasetList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each dataset",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[DatasetFilter] = Field(
+    filters_applied: list[DatasetFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -247,7 +247,7 @@ class ListDatasetsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl
     """Request schema for list_datasets with clear, unambiguous types."""
 
     filters: Annotated[
-        List[DatasetFilter],
+        list[DatasetFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -256,7 +256,7 @@ class ListDatasetsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns if not "
@@ -295,7 +295,7 @@ class ListDatasetsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl
     ]
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListDatasetsRequest":
+    def validate_search_and_filters(self) -> ListDatasetsRequest:
         """Prevent using both search and filters simultaneously."""
         from superset.mcp_service.utils.schema_utils import (
             ensure_search_and_filters_not_combined,
@@ -315,7 +315,7 @@ class DatasetError(MCPResourceError):
     pass
 
 
-DEFAULT_GET_DATASET_INFO_COLUMNS: List[str] = [
+DEFAULT_GET_DATASET_INFO_COLUMNS: list[str] = [
     "id",
     "table_name",
     "schema",
@@ -331,7 +331,7 @@ DEFAULT_GET_DATASET_INFO_COLUMNS: List[str] = [
     "metrics",
 ]
 
-DEFAULT_GET_DATASET_INFO_COLUMN_FIELDS: List[str] = [
+DEFAULT_GET_DATASET_INFO_COLUMN_FIELDS: list[str] = [
     "column_name",
     "type",
     "is_dttm",
@@ -346,7 +346,7 @@ class GetDatasetInfoRequest(MetadataCacheControl):
         Field(description="Dataset identifier - can be numeric ID or UUID string"),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=lambda: list(DEFAULT_GET_DATASET_INFO_COLUMNS),
             description=(
@@ -358,7 +358,7 @@ class GetDatasetInfoRequest(MetadataCacheControl):
         ),
     ]
     column_fields: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=lambda: list(DEFAULT_GET_DATASET_INFO_COLUMN_FIELDS),
             description=(
@@ -454,7 +454,7 @@ class CreateDatasetRequest(BaseModel):
         ),
     ]
     owners: Annotated[
-        List[int] | None,
+        list[int] | None,
         Field(
             default=None,
             description="Optional list of owner user IDs. "
@@ -539,7 +539,7 @@ class UploadFilesRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    files: List[FileItem] = Field(
+    files: list[FileItem] = Field(
         ...,
         min_length=1,
         description="List of files to upload. Each file is processed independently "
@@ -548,7 +548,7 @@ class UploadFilesRequest(BaseModel):
 
     @field_validator("files", mode="after")
     @classmethod
-    def _limit_batch_size(cls, v: List[FileItem]) -> List[FileItem]:
+    def _limit_batch_size(cls, v: list[FileItem]) -> list[FileItem]:
         """Enforce a maximum batch size of 10 files."""
         if len(v) > 10:
             raise ValueError("Maximum 10 files per batch upload")
@@ -585,7 +585,7 @@ class FileUploadResult(BaseModel):
 class UploadFilesResponse(BaseModel):
     """Response schema for upload_files batch upload."""
 
-    results: List[FileUploadResult] = Field(..., description="Per-file upload results")
+    results: list[FileUploadResult] = Field(..., description="Per-file upload results")
     total: int = Field(..., description="Total number of files processed")
     succeeded: int = Field(..., description="Number of files uploaded successfully")
     failed: int = Field(..., description="Number of files that failed to upload")
@@ -662,7 +662,7 @@ class CreateVirtualDatasetResponse(BaseModel):
     dataset_name: str = Field(..., description="Name of the created dataset.")
     sql: str = Field(..., description="SQL query stored in the dataset.")
     database_id: int = Field(..., description="Database ID used.")
-    columns: List[str] = Field(
+    columns: list[str] = Field(
         default_factory=list,
         description="Column names available for charting. "
         "Use these when building chart configs.",
@@ -690,7 +690,7 @@ class CreateVirtualDatasetResponse(BaseModel):
 
     @field_validator("columns")
     @classmethod
-    def sanitize_columns(cls, v: List[str]) -> List[str]:
+    def sanitize_columns(cls, v: list[str]) -> list[str]:
         """Escape delimiter tokens in returned column names."""
         return [escape_llm_context_delimiters(column) for column in v]
 
@@ -749,14 +749,14 @@ class QueryDatasetRequest(QueryCacheControl):
         ...,
         description="Dataset identifier — numeric ID or UUID string.",
     )
-    metrics: List[str] = Field(
+    metrics: list[str] = Field(
         default_factory=list,
         description=(
             "Saved metric names to compute (e.g. ['count', 'avg_revenue']). "
             "Use get_dataset_info to discover available metrics."
         ),
     )
-    columns: List[str] = Field(
+    columns: list[str] = Field(
         default_factory=list,
         description=(
             "Column/dimension names for GROUP BY or SELECT "
@@ -764,7 +764,7 @@ class QueryDatasetRequest(QueryCacheControl):
             "Use get_dataset_info to discover available columns."
         ),
     )
-    filters: List[QueryDatasetFilter] = Field(
+    filters: list[QueryDatasetFilter] = Field(
         default_factory=list,
         description=(
             'Filter conditions (e.g. [{"col": "status", "op": "==", "val": "active"}]).'
@@ -785,7 +785,7 @@ class QueryDatasetRequest(QueryCacheControl):
             "Defaults to the dataset's main datetime column."
         ),
     )
-    order_by: List[str] | None = Field(
+    order_by: list[str] | None = Field(
         default=None,
         description="Column or metric names to sort results by.",
     )
@@ -801,7 +801,7 @@ class QueryDatasetRequest(QueryCacheControl):
     )
 
     @model_validator(mode="after")
-    def validate_metrics_or_columns(self) -> "QueryDatasetRequest":
+    def validate_metrics_or_columns(self) -> QueryDatasetRequest:
         """At least one of metrics or columns must be provided."""
         if not self.metrics and not self.columns:
             raise ValueError(
@@ -818,10 +818,10 @@ class QueryDatasetResponse(BaseModel):
 
     dataset_id: int = Field(..., description="Dataset ID")
     dataset_name: str = Field(..., description="Dataset name")
-    columns: List[DataColumn] = Field(
+    columns: list[DataColumn] = Field(
         default_factory=list, description="Column metadata for returned data"
     )
-    data: List[Dict[str, Any]] = Field(
+    data: list[dict[str, Any]] = Field(
         default_factory=list, description="Query result rows"
     )
     row_count: int = Field(0, description="Number of rows returned")
@@ -835,10 +835,10 @@ class QueryDatasetResponse(BaseModel):
     cache_status: CacheStatus | None = Field(
         None, description="Cache hit/miss information"
     )
-    applied_filters: List[QueryDatasetFilter] = Field(
+    applied_filters: list[QueryDatasetFilter] = Field(
         default_factory=list, description="Filters that were applied to the query"
     )
-    warnings: List[str] = Field(
+    warnings: list[str] = Field(
         default_factory=list, description="Any warnings encountered during execution"
     )
 
@@ -850,7 +850,7 @@ class QueryDatasetResponse(BaseModel):
 
     @field_validator("columns")
     @classmethod
-    def sanitize_columns(cls, v: List[DataColumn]) -> List[DataColumn]:
+    def sanitize_columns(cls, v: list[DataColumn]) -> list[DataColumn]:
         """Escape column names and wrap sample values in query responses."""
         sanitized_columns: list[DataColumn] = []
         for index, column in enumerate(v):
@@ -874,10 +874,10 @@ class QueryDatasetResponse(BaseModel):
 
     @field_validator("data")
     @classmethod
-    def sanitize_data(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def sanitize_data(cls, v: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Wrap query result row strings and escape delimiter tokens in row keys."""
         return cast(
-            List[Dict[str, Any]],
+            list[dict[str, Any]],
             sanitize_for_llm_context(
                 v,
                 field_path=("data",),
@@ -895,8 +895,8 @@ class QueryDatasetResponse(BaseModel):
     @classmethod
     def sanitize_applied_filters(
         cls,
-        v: List[QueryDatasetFilter],
-    ) -> List[QueryDatasetFilter]:
+        v: list[QueryDatasetFilter],
+    ) -> list[QueryDatasetFilter]:
         """Wrap echoed filter values without changing query execution inputs."""
         sanitized_filters: list[QueryDatasetFilter] = []
         for index, filter_ in enumerate(v):
@@ -912,10 +912,10 @@ class QueryDatasetResponse(BaseModel):
 
     @field_validator("warnings")
     @classmethod
-    def sanitize_warnings(cls, v: List[str]) -> List[str]:
+    def sanitize_warnings(cls, v: list[str]) -> list[str]:
         """Wrap warning strings before LLM exposure."""
         return cast(
-            List[str],
+            list[str],
             sanitize_for_llm_context(
                 v,
                 field_path=("warnings",),
@@ -924,7 +924,7 @@ class QueryDatasetResponse(BaseModel):
         )
 
 
-def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
+def _parse_json_field(obj: Any, field_name: str) -> dict[str, Any] | None:
     """Parse a field that may be stored as a JSON string into a dict."""
     value = getattr(obj, field_name, None)
     if isinstance(value, str):

@@ -17,7 +17,7 @@
 
 """Schemas for SQL Lab MCP tools."""
 
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import (
     AliasChoices,
@@ -42,7 +42,7 @@ class _SchemaFieldNormalizer(BaseModel):
     """
 
     @model_serializer(mode="wrap", when_used="json")
-    def _normalize_schema_field(self, serializer: Any, _info: Any) -> Dict[str, Any]:
+    def _normalize_schema_field(self, serializer: Any, _info: Any) -> dict[str, Any]:
         data = serializer(self)
         if "schema_name" in data:
             data["schema"] = data.pop("schema_name")
