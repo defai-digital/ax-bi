@@ -325,13 +325,13 @@ def batch_operation(
         percentage = (offset / count) * 100 if count else 0
         logger.info(
             "Progress: %s/%s (%.2f%%)",
-            "{:,}".format(offset),
-            "{:,}".format(count),
+            f"{offset:,}",
+            f"{count:,}",
             percentage,
         )
         callable(offset, min(offset + batch_size, count))
 
-    logger.info("Progress: %s/%s (100%%)", "{:,}".format(count), "{:,}".format(count))
+    logger.info("Progress: %s/%s (100%%)", f"{count:,}", f"{count:,}")
     logger.info(
         "End: %s%s%s batch operation %ssuccessfully%s executed.",  # noqa: E501
         GREEN,
