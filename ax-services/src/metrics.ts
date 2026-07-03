@@ -24,6 +24,8 @@ import {
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
 
+const UNMATCHED_ROUTE_METRIC_PATH = '<unmatched>';
+
 interface MutableRouteMetrics {
   count: number;
   errorCount: number;
@@ -113,13 +115,7 @@ export class ServiceMetrics {
 }
 
 function routeMetricsPath(request: FastifyRequest): string {
-  return request.routeOptions.url ?? stripQueryString(request.url);
-}
-
-function stripQueryString(url: string): string {
-  const queryIndex = url.indexOf('?');
-
-  return queryIndex === -1 ? url : url.slice(0, queryIndex);
+  return request.routeOptions.url ?? UNMATCHED_ROUTE_METRIC_PATH;
 }
 
 function toRouteContract(metrics: MutableRouteMetrics): RouteMetricsContract {

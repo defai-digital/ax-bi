@@ -739,7 +739,7 @@ test('metrics endpoint returns request counters by route', async () => {
   ).toBeGreaterThanOrEqual(0);
 });
 
-test('metrics endpoint strips query strings from fallback route keys', async () => {
+test('metrics endpoint aggregates unmatched routes under one key', async () => {
   const server = buildServer(config, makeSupersetClient());
 
   await server.inject({
@@ -748,7 +748,7 @@ test('metrics endpoint strips query strings from fallback route keys', async () 
   });
   await server.inject({
     method: 'GET',
-    url: '/missing?token=second',
+    url: '/another-missing?token=second',
   });
 
   const response = await server.inject({
@@ -759,13 +759,14 @@ test('metrics endpoint strips query strings from fallback route keys', async () 
 
   expect(response.statusCode).toBe(200);
   expect(routes).toMatchObject({
-    'GET /missing': {
+    'GET <unmatched>': {
       count: 2,
       errorCount: 0,
     },
   });
+  expect(Object.keys(routes)).not.toContain('GET /another-missing');
   expect(Object.keys(routes)).not.toContain('GET /missing?token=first');
-  expect(Object.keys(routes)).not.toContain('GET /missing?token=second');
+  expect(Object.keys(routes)).not.toContain('GET /another-missing?token=second');
 });
 
 test('asset search endpoint delegates to Superset client', async () => {
