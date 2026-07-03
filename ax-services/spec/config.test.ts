@@ -138,6 +138,15 @@ test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '0' })).toThrow(
     'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
   );
+  expect(() =>
+    buildConfig({ AX_SUPERSET_TIMEOUT_MS: '2147483648' }),
+  ).toThrow('AX_SUPERSET_TIMEOUT_MS must be between 1 and 2147483647');
+});
+
+test('buildConfig accepts maximum supported Superset timeout', () => {
+  const config = buildConfig({ AX_SUPERSET_TIMEOUT_MS: '2147483647' });
+
+  expect(config.supersetTimeoutMs).toBe(2147483647);
 });
 
 test('buildConfig treats blank optional token as absent', () => {

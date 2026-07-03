@@ -66,6 +66,7 @@ const DEFAULT_SUPERSET_TASK_LIST_PATH = '/api/v1/task/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL: LogLevel = 'info';
 const MAX_PORT = 65535;
+const MAX_SUPERSET_TIMEOUT_MS = 2_147_483_647;
 const LOG_LEVELS = new Set<LogLevel>([
   'debug',
   'info',
@@ -103,6 +104,21 @@ function parsePort(value: string | undefined): number {
   }
 
   return port;
+}
+
+function parseSupersetTimeout(value: string | undefined): number {
+  const timeout = parsePositiveInteger(
+    value,
+    DEFAULT_SUPERSET_TIMEOUT_MS,
+    'AX_SUPERSET_TIMEOUT_MS',
+  );
+  if (timeout > MAX_SUPERSET_TIMEOUT_MS) {
+    throw new Error(
+      `AX_SUPERSET_TIMEOUT_MS must be between 1 and ${MAX_SUPERSET_TIMEOUT_MS}`,
+    );
+  }
+
+  return timeout;
 }
 
 function normalizeSupersetBaseUrl(value: string): string {
@@ -229,11 +245,7 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
         'AX_SUPERSET_TASK_LIST_PATH',
       ),
     },
-    supersetTimeoutMs: parsePositiveInteger(
-      env.AX_SUPERSET_TIMEOUT_MS,
-      DEFAULT_SUPERSET_TIMEOUT_MS,
-      'AX_SUPERSET_TIMEOUT_MS',
-    ),
+    supersetTimeoutMs: parseSupersetTimeout(env.AX_SUPERSET_TIMEOUT_MS),
     supersetInternalToken: normalizeOptionalSecret(
       env.AX_SUPERSET_INTERNAL_TOKEN,
     ),
