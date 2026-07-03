@@ -346,6 +346,8 @@ def rollback_dist_replacement(
         if get_directory_path_identity(backup_path) != backup_identity:
             raise OSError("backup path changed")
         backup_path.replace(dist_dir)
+        if get_directory_path_identity(dist_dir) != backup_identity:
+            raise OSError("restored backup path changed")
     except OSError as ex:
         raise click.ClickException(
             f"Failed to restore previous dist directory: {ex}"
