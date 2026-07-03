@@ -2592,6 +2592,28 @@ def test_init_frontend_deps_runs_npm_i_when_missing(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+@patch("superset_extensions_cli.cli.validate_npm")
+def test_init_frontend_deps_uses_validated_npm_path(
+    mock_validate_npm, mock_run, isolated_filesystem
+):
+    """Test dependency install uses the npm executable that validation resolved."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    mock_validate_npm.return_value = "/usr/local/bin/npm"
+    mock_run.return_value = Mock(returncode=0)
+
+    init_frontend_deps(frontend_dir)
+
+    mock_validate_npm.assert_called_once()
+    mock_run.assert_called_once_with(
+        ["/usr/local/bin/npm", "i"],
+        cwd=frontend_dir,
+        text=True,
+    )
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 def test_init_frontend_deps_rejects_changed_frontend_before_install(
     mock_run,
     isolated_filesystem,
@@ -3141,7 +3163,10 @@ def test_run_frontend_build_with_output_messages(isolated_filesystem):
     frontend_dir = isolated_filesystem / "frontend"
     frontend_dir.mkdir()
 
-    with patch("subprocess.run") as mock_run:
+    with (
+        patch("subprocess.run") as mock_run,
+        patch("superset_extensions_cli.cli.validate_npm", return_value="npm"),
+    ):
         mock_result = Mock(returncode=0)
         mock_run.return_value = mock_result
 
@@ -3150,6 +3175,34 @@ def test_run_frontend_build_with_output_messages(isolated_filesystem):
         assert result.returncode == 0
         mock_run.assert_called_once_with(
             ["npm", "run", "build"], cwd=frontend_dir, text=True
+        )
+
+
+@pytest.mark.unit
+def test_run_frontend_build_uses_validated_npm_path(isolated_filesystem):
+    """Test frontend builds use the npm executable that validation resolved."""
+    from superset_extensions_cli.cli import run_frontend_build
+
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+
+    with (
+        patch("subprocess.run") as mock_run,
+        patch(
+            "superset_extensions_cli.cli.validate_npm",
+            return_value="/usr/local/bin/npm",
+        ),
+    ):
+        mock_result = Mock(returncode=0)
+        mock_run.return_value = mock_result
+
+        result = run_frontend_build(frontend_dir)
+
+        assert result.returncode == 0
+        mock_run.assert_called_once_with(
+            ["/usr/local/bin/npm", "run", "build"],
+            cwd=frontend_dir,
+            text=True,
         )
 
 
@@ -3163,7 +3216,10 @@ def test_run_frontend_build_returns_failure_on_launch_error(
     frontend_dir = isolated_filesystem / "frontend"
     frontend_dir.mkdir()
 
-    with patch("subprocess.run") as mock_run:
+    with (
+        patch("subprocess.run") as mock_run,
+        patch("superset_extensions_cli.cli.validate_npm", return_value="npm"),
+    ):
         mock_run.side_effect = PermissionError("Permission denied")
 
         result = run_frontend_build(frontend_dir)
@@ -3206,6 +3262,7 @@ def test_run_frontend_build_rejects_changed_frontend_before_launch(
         "get_directory_path_identity",
         swap_frontend_after_build_identity,
     )
+    monkeypatch.setattr(cli, "validate_npm", lambda: "npm")
 
     with pytest.raises(
         click.ClickException,
@@ -3248,6 +3305,7 @@ def test_run_frontend_build_rejects_frontend_content_change_before_launch(
         "get_directory_path_identity",
         change_frontend_after_build_identity,
     )
+    monkeypatch.setattr(cli, "validate_npm", lambda: "npm")
 
     with pytest.raises(
         click.ClickException,

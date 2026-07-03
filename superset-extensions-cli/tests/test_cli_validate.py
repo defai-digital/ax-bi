@@ -1166,8 +1166,13 @@ def test_validate_npm_succeeds_with_valid_versions(mock_run, mock_which, npm_ver
     mock_which.return_value = "/usr/bin/npm"
     mock_run.return_value = Mock(returncode=0, stdout=f"{npm_version}\n", stderr="")
 
-    # Should not raise SystemExit
-    validate_npm()
+    assert validate_npm() == str(Path("/usr/bin/npm").resolve())
+    mock_run.assert_called_once_with(
+        [str(Path("/usr/bin/npm").resolve()), "-v"],
+        stdout=cli.subprocess.PIPE,
+        stderr=cli.subprocess.PIPE,
+        text=True,
+    )
 
 
 @pytest.mark.unit

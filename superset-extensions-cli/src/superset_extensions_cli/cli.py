@@ -101,19 +101,21 @@ def is_cli_temporary_dist_artifact(relative_path: Path) -> bool:
     return file_name.startswith(".") and file_name.endswith(".tmp")
 
 
-def validate_npm() -> None:
-    """Abort if `npm` is not on PATH."""
-    if shutil.which("npm") is None:
+def validate_npm() -> str:
+    """Return the resolved npm executable path after validating it."""
+    npm_path = shutil.which("npm")
+    if npm_path is None:
         click.secho(
             "❌ npm is not installed or not on your PATH.",
             err=True,
             fg="red",
         )
         sys.exit(1)
+    npm_command = str(Path(npm_path).resolve())
 
     try:
         result = subprocess.run(  # noqa: S603
-            ["npm", "-v"],  # noqa: S607
+            [npm_command, "-v"],  # noqa: S607
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -144,6 +146,7 @@ def validate_npm() -> None:
                 fg="red",
             )
             sys.exit(1)
+        return npm_command
 
     except OSError as ex:
         click.secho(
@@ -187,7 +190,9 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             npm_command = ["npm", "i"]
             error_msg = "❌ `npm i` failed. Aborting."
 
-        validate_npm()
+        npm_executable = validate_npm()
+        if isinstance(npm_executable, str):
+            npm_command = [npm_executable, *npm_command[1:]]
         validate_node_modules_path(node_modules)
         current_frontend_identity = get_directory_path_identity(frontend_dir)
         if current_frontend_identity != frontend_identity:
@@ -1555,7 +1560,10 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
 
     click.echo()
     click.secho("⚙️  Building frontend assets…", fg="cyan")
-    command = ["npm", "run", "build"]
+    npm_executable = validate_npm()
+    if not isinstance(npm_executable, str):
+        npm_executable = "npm"
+    command = [npm_executable, "run", "build"]
     current_frontend_identity = get_directory_path_identity(frontend_dir)
     if current_frontend_identity != frontend_identity:
         raise click.ClickException("frontend path changed before frontend build.")
