@@ -89,6 +89,47 @@ def test_update_fails_with_invalid_extension_json(
 
 
 @pytest.mark.cli
+@pytest.mark.parametrize("package_json", ["{ invalid json", "[]"])
+def test_update_fails_with_invalid_frontend_package_json(
+    cli_runner, isolated_filesystem, extension_with_versions, package_json
+):
+    """Test update reports malformed frontend/package.json cleanly."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    (isolated_filesystem / "frontend" / "package.json").write_text(package_json)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Invalid frontend/package.json" in result.output
+    ext = read_json(isolated_filesystem / "extension.json")
+    assert ext["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_fails_with_malformed_backend_pyproject_toml(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update reports malformed backend/pyproject.toml cleanly."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    (isolated_filesystem / "backend" / "pyproject.toml").write_text("[ invalid toml")
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Invalid backend/pyproject.toml" in result.output
+    ext = read_json(isolated_filesystem / "extension.json")
+    assert ext["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):

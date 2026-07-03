@@ -107,6 +107,45 @@ include = "src/**/*.py"
     assert "Invalid backend build config" in result.output
 
 
+@pytest.mark.cli
+@pytest.mark.parametrize("package_json", ["{ invalid json", "[]"])
+def test_validate_fails_with_invalid_frontend_package_json(
+    cli_runner, isolated_filesystem, extension_with_versions, package_json
+):
+    """Test validate reports malformed frontend/package.json cleanly."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    (isolated_filesystem / "frontend" / "package.json").write_text(package_json)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Invalid frontend/package.json" in result.output
+
+
+@pytest.mark.cli
+def test_validate_fails_with_malformed_backend_pyproject_toml(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate reports malformed backend pyproject.toml cleanly."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    (isolated_filesystem / "backend" / "pyproject.toml").write_text("[ invalid toml")
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Invalid backend pyproject.toml" in result.output
+
+
 # Validate NPM Function Tests
 @pytest.mark.unit
 @patch("shutil.which")

@@ -142,17 +142,32 @@ def clean_dist_frontend(cwd: Path) -> None:
         shutil.rmtree(frontend_dist)
 
 
+def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
+    """Load an optional JSON metadata file and require an object when present."""
+    try:
+        data = read_json(path)
+    except Exception as ex:
+        raise click.ClickException(f"Invalid {label}: {ex}") from ex
+
+    if data is not None and not isinstance(data, dict):
+        raise click.ClickException(f"Invalid {label}: expected a JSON object.")
+
+    return data
+
+
+def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
+    """Load an optional TOML metadata file and wrap parser errors for the CLI."""
+    try:
+        return read_toml(path)
+    except Exception as ex:
+        raise click.ClickException(f"Invalid {label}: {ex}") from ex
+
+
 def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     """Load and validate an extension.json file for CLI commands."""
-    try:
-        extension_data = read_json(path)
-    except Exception as ex:
-        raise click.ClickException(f"Invalid extension.json: {ex}") from ex
-
+    extension_data = load_json_object(path, "extension.json")
     if extension_data is None:
         raise click.ClickException("extension.json not found.")
-    if not isinstance(extension_data, dict):
-        raise click.ClickException("Invalid extension.json: expected a JSON object.")
 
     try:
         extension = ExtensionConfig.model_validate(extension_data)
@@ -296,7 +311,9 @@ def copy_backend_files(cwd: Path) -> None:
     backend_dir = (cwd / "backend").resolve()
 
     # Read build config from pyproject.toml
-    pyproject = read_toml(backend_dir / "pyproject.toml")
+    pyproject = load_toml_object(
+        backend_dir / "pyproject.toml", "backend pyproject.toml"
+    )
     assert pyproject
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
@@ -403,7 +420,11 @@ def validate() -> None:
             sys.exit(1)
 
         # Validate pyproject.toml has build configuration
-        pyproject = read_toml(pyproject_path)
+        try:
+            pyproject = load_toml_object(pyproject_path, "backend pyproject.toml")
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
         if not pyproject:
             click.secho("❌ Failed to read backend pyproject.toml", err=True, fg="red")
             sys.exit(1)
@@ -455,7 +476,11 @@ def validate() -> None:
     frontend_pkg_path = cwd / "frontend" / "package.json"
     frontend_pkg = None
     if frontend_pkg_path.is_file():
-        frontend_pkg = read_json(frontend_pkg_path)
+        try:
+            frontend_pkg = load_json_object(frontend_pkg_path, "frontend/package.json")
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
         if frontend_pkg:
             if frontend_pkg.get("version") != extension.version:
                 mismatches.append(
@@ -470,7 +495,13 @@ def validate() -> None:
 
     backend_pyproject_path = cwd / "backend" / "pyproject.toml"
     if backend_pyproject_path.is_file():
-        backend_pyproject = read_toml(backend_pyproject_path)
+        try:
+            backend_pyproject = load_toml_object(
+                backend_pyproject_path, "backend/pyproject.toml"
+            )
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
         if backend_pyproject:
             project = backend_pyproject.get("project", {})
             if project.get("version") != extension.version:
@@ -543,6 +574,26 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         else extension.license
     )
 
+    frontend_pkg_path = cwd / "frontend" / "package.json"
+    frontend_pkg = None
+    if frontend_pkg_path.is_file():
+        try:
+            frontend_pkg = load_json_object(frontend_pkg_path, "frontend/package.json")
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
+
+    backend_pyproject_path = cwd / "backend" / "pyproject.toml"
+    backend_pyproject = None
+    if backend_pyproject_path.is_file():
+        try:
+            backend_pyproject = load_toml_object(
+                backend_pyproject_path, "backend/pyproject.toml"
+            )
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
+
     updated: list[str] = []
 
     # Update extension.json if version or license changed
@@ -563,9 +614,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         updated.append("extension.json")
 
     # Update frontend/package.json
-    frontend_pkg_path = cwd / "frontend" / "package.json"
-    if frontend_pkg_path.is_file():
-        frontend_pkg = read_json(frontend_pkg_path)
+    if frontend_pkg is not None:
         if frontend_pkg:
             pkg_changed = False
             if frontend_pkg.get("version") != target_version:
@@ -579,9 +628,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                 updated.append("frontend/package.json")
 
     # Update backend/pyproject.toml
-    backend_pyproject_path = cwd / "backend" / "pyproject.toml"
-    if backend_pyproject_path.is_file():
-        backend_pyproject = read_toml(backend_pyproject_path)
+    if backend_pyproject is not None:
         if backend_pyproject:
             project = backend_pyproject.setdefault("project", {})
             toml_changed = False
@@ -621,7 +668,9 @@ def build(ctx: click.Context) -> None:
 
     # Build backend independently if it exists
     if backend_dir.exists():
-        pyproject = read_toml(backend_dir / "pyproject.toml")
+        pyproject = load_toml_object(
+            backend_dir / "pyproject.toml", "backend pyproject.toml"
+        )
         if pyproject:
             rebuild_backend(cwd)
 

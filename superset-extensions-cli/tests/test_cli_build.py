@@ -801,6 +801,23 @@ apache_superset_extensions = "invalid"
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_malformed_pyproject_toml(
+    isolated_filesystem,
+):
+    """Test copy_backend_files reports malformed backend pyproject.toml cleanly."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+    (backend_dir / "pyproject.toml").write_text("[ invalid toml")
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="Invalid backend pyproject.toml"):
+        copy_backend_files(isolated_filesystem)
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"
