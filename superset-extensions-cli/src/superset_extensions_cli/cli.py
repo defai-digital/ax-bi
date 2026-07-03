@@ -1485,6 +1485,31 @@ def rebuild_backend(cwd: Path) -> None:
     click.secho("✅ Backend files synced", fg="green")
 
 
+def require_conventional_entrypoint(
+    path: Path,
+    cwd: Path,
+    label: str,
+    convention: str,
+) -> None:
+    """Validate a conventional entrypoint file and report a convention hint."""
+    try:
+        exists = optional_file_exists(path, label)
+    except click.ClickException as ex:
+        if "exists but is not a file" not in ex.message:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
+        exists = False
+
+    if not exists:
+        click.secho(
+            f"❌ {label} not found at expected location: {path.relative_to(cwd)}",
+            err=True,
+            fg="red",
+        )
+        click.secho(f"   Convention requires: {convention}", fg="yellow")
+        sys.exit(1)
+
+
 def validate_bundle_output_path(path: Path) -> None:
     """Validate that a bundle output path can be safely opened for writing."""
     if path.is_symlink():
@@ -1584,11 +1609,11 @@ def validate() -> None:
     # Validate conventional backend structure if backend directory exists
     backend_dir = cwd / "backend"
     try:
-        require_optional_directory(backend_dir, "backend")
+        has_backend_dir = optional_directory_exists(backend_dir, "backend")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
-    if backend_dir.exists():
+    if has_backend_dir:
         # Check for pyproject.toml
         pyproject_path = backend_dir / "pyproject.toml"
         try:
@@ -1633,67 +1658,28 @@ def validate() -> None:
             backend_dir / "src" / publisher_snake / name_snake / "entrypoint.py"
         )
 
-        if expected_entry_file.is_symlink():
-            click.secho(
-                f"❌ Backend entry point path is a symlink: {expected_entry_file.relative_to(cwd)}",
-                err=True,
-                fg="red",
-            )
-            sys.exit(1)
-        if (symlinked_parent := find_symlinked_parent(expected_entry_file)) is not None:
-            click.secho(
-                "❌ Backend entry point parent directory is a symlink: "
-                f"{symlinked_parent}.",
-                err=True,
-                fg="red",
-            )
-            sys.exit(1)
-        if not expected_entry_file.is_file():
-            click.secho(
-                f"❌ Backend entry point not found at expected location: {expected_entry_file.relative_to(cwd)}",
-                err=True,
-                fg="red",
-            )
-            click.secho(
-                f"   Convention requires: backend/src/{publisher_snake}/{name_snake}/entrypoint.py",
-                fg="yellow",
-            )
-            sys.exit(1)
+        require_conventional_entrypoint(
+            expected_entry_file,
+            cwd,
+            "Backend entry point",
+            f"backend/src/{publisher_snake}/{name_snake}/entrypoint.py",
+        )
 
     # Validate conventional frontend entry point if frontend directory exists
     frontend_dir = cwd / "frontend"
     try:
-        require_optional_directory(frontend_dir, "frontend")
+        has_frontend_dir = optional_directory_exists(frontend_dir, "frontend")
     except click.ClickException as ex:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
-    if frontend_dir.exists():
+    if has_frontend_dir:
         expected_frontend_entry = frontend_dir / "src" / "index.tsx"
-        if expected_frontend_entry.is_symlink():
-            click.secho(
-                f"❌ Frontend entry point path is a symlink: {expected_frontend_entry.relative_to(cwd)}",
-                err=True,
-                fg="red",
-            )
-            sys.exit(1)
-        if (
-            symlinked_parent := find_symlinked_parent(expected_frontend_entry)
-        ) is not None:
-            click.secho(
-                "❌ Frontend entry point parent directory is a symlink: "
-                f"{symlinked_parent}.",
-                err=True,
-                fg="red",
-            )
-            sys.exit(1)
-        if not expected_frontend_entry.is_file():
-            click.secho(
-                f"❌ Frontend entry point not found at expected location: {expected_frontend_entry.relative_to(cwd)}",
-                err=True,
-                fg="red",
-            )
-            click.secho("   Convention requires: frontend/src/index.tsx", fg="yellow")
-            sys.exit(1)
+        require_conventional_entrypoint(
+            expected_frontend_entry,
+            cwd,
+            "Frontend entry point",
+            "frontend/src/index.tsx",
+        )
 
     # Validate version and license consistency across extension.json, frontend, and backend
     mismatches: list[str] = []

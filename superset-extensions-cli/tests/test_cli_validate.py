@@ -652,6 +652,55 @@ def test_validate_rejects_symlinked_backend_entrypoint_parent(
 
 
 @pytest.mark.cli
+def test_validate_rejects_backend_entrypoint_changed_during_validation(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test validate refuses a backend entrypoint changed during validation."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    entrypoint_path = (
+        isolated_filesystem
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_extension"
+        / "entrypoint.py"
+    )
+    replacement_entrypoint = isolated_filesystem / "replacement-entrypoint.py"
+    replacement_entrypoint.write_text("# replacement")
+
+    from superset_extensions_cli import cli
+
+    original_get_read_path_identity = cli.get_read_path_identity
+    identity_reads = 0
+
+    def replace_entrypoint_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_read_path_identity(path)
+        if path == entrypoint_path:
+            identity_reads += 1
+            if identity_reads == 1:
+                entrypoint_path.unlink()
+                replacement_entrypoint.replace(entrypoint_path)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_read_path_identity",
+        replace_entrypoint_after_first_identity,
+    )
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Backend entry point path changed during validation" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_when_frontend_entrypoint_is_directory(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
@@ -769,6 +818,53 @@ def test_validate_fails_when_source_path_is_not_directory(
 
     assert result.exit_code == 1
     assert expected_message in result.output
+
+
+@pytest.mark.cli
+def test_validate_rejects_source_directory_changed_during_validation(
+    cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test validate refuses a source directory changed during validation."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+    backend_dir = isolated_filesystem / "backend"
+    backend_dir.mkdir()
+    saved_backend_dir = isolated_filesystem / "saved-backend"
+    replacement_backend_dir = isolated_filesystem / "replacement-backend"
+    replacement_backend_dir.mkdir()
+
+    from superset_extensions_cli import cli
+
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def replace_backend_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == backend_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                backend_dir.rename(saved_backend_dir)
+                replacement_backend_dir.rename(backend_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        replace_backend_after_first_identity,
+    )
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "backend path changed during validation" in result.output
 
 
 @pytest.mark.cli
