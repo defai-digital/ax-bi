@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import click
@@ -666,6 +667,32 @@ def test_write_manifest_rejects_symlinked_manifest_path(isolated_filesystem):
         write_manifest(isolated_filesystem, manifest)
 
     assert outside_manifest.read_text() == "keep"
+
+
+@pytest.mark.unit
+def test_write_manifest_reports_write_errors(isolated_filesystem, monkeypatch):
+    """Test write_manifest reports filesystem write failures cleanly."""
+    manifest = Manifest(
+        id="test-org.test-extension",
+        publisher="test-org",
+        name="test-extension",
+        displayName="Test Extension",
+        version="1.0.0",
+    )
+    original_write_text = Path.write_text
+
+    def fail_manifest_write(path, *args, **kwargs):
+        if path == isolated_filesystem / "dist" / "manifest.json":
+            raise OSError("disk full")
+        return original_write_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_manifest_write)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to write dist/manifest.json: disk full",
+    ):
+        write_manifest(isolated_filesystem, manifest)
 
 
 # Frontend Build Tests

@@ -547,9 +547,12 @@ def write_manifest(cwd: Path, manifest: Manifest) -> None:
     ensure_output_directory(dist_dir, "dist directory")
     manifest_path = dist_dir / "manifest.json"
     validate_output_file(manifest_path, "dist/manifest.json")
-    manifest_path.write_text(
-        manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True)
-    )
+    try:
+        manifest_path.write_text(
+            manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True)
+        )
+    except OSError as ex:
+        raise click.ClickException(f"Failed to write dist/manifest.json: {ex}") from ex
     click.secho("✅ Manifest updated", fg="green")
 
 
