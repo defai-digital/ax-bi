@@ -853,6 +853,14 @@ def validate() -> None:
                 fg="red",
             )
             sys.exit(1)
+        if (symlinked_parent := find_symlinked_parent(expected_entry_file)) is not None:
+            click.secho(
+                "❌ Backend entry point parent directory is a symlink: "
+                f"{symlinked_parent}.",
+                err=True,
+                fg="red",
+            )
+            sys.exit(1)
         if not expected_entry_file.is_file():
             click.secho(
                 f"❌ Backend entry point not found at expected location: {expected_entry_file.relative_to(cwd)}",
@@ -877,6 +885,16 @@ def validate() -> None:
         if expected_frontend_entry.is_symlink():
             click.secho(
                 f"❌ Frontend entry point path is a symlink: {expected_frontend_entry.relative_to(cwd)}",
+                err=True,
+                fg="red",
+            )
+            sys.exit(1)
+        if (
+            symlinked_parent := find_symlinked_parent(expected_frontend_entry)
+        ) is not None:
+            click.secho(
+                "❌ Frontend entry point parent directory is a symlink: "
+                f"{symlinked_parent}.",
                 err=True,
                 fg="red",
             )

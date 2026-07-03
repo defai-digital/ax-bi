@@ -430,6 +430,33 @@ def test_validate_rejects_symlinked_backend_entrypoint(
 
 
 @pytest.mark.cli
+def test_validate_rejects_symlinked_backend_entrypoint_parent(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate refuses backend entrypoints below symlinked parents."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    entrypoint_dir = (
+        isolated_filesystem / "backend" / "src" / "test_org" / "test_extension"
+    )
+    (entrypoint_dir / "entrypoint.py").unlink()
+    entrypoint_dir.rmdir()
+    outside_entrypoint_dir = isolated_filesystem / "outside-entrypoint-package"
+    outside_entrypoint_dir.mkdir()
+    (outside_entrypoint_dir / "entrypoint.py").write_text("# outside")
+    entrypoint_dir.symlink_to(outside_entrypoint_dir)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Backend entry point parent directory is a symlink" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_when_frontend_entrypoint_is_directory(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
@@ -471,6 +498,31 @@ def test_validate_rejects_symlinked_frontend_entrypoint(
 
     assert result.exit_code == 1
     assert "Frontend entry point path is a symlink" in result.output
+
+
+@pytest.mark.cli
+def test_validate_rejects_symlinked_frontend_entrypoint_parent(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate refuses frontend entrypoints below symlinked parents."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    frontend_src = isolated_filesystem / "frontend" / "src"
+    (frontend_src / "index.tsx").unlink()
+    frontend_src.rmdir()
+    outside_frontend_src = isolated_filesystem / "outside-frontend-src"
+    outside_frontend_src.mkdir()
+    (outside_frontend_src / "index.tsx").write_text("export default {}")
+    frontend_src.symlink_to(outside_frontend_src)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Frontend entry point parent directory is a symlink" in result.output
 
 
 @pytest.mark.cli
