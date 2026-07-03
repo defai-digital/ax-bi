@@ -619,6 +619,34 @@ def test_write_text_atomic_rejects_changed_expected_target(
 
 
 @pytest.mark.unit
+def test_write_text_atomic_rejects_created_target_when_missing_required(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a target created after missing preflight."""
+    output_path = isolated_filesystem / "output.txt"
+    original_validate_write_path = utils.validate_write_path
+    validation_calls = 0
+
+    def create_target_before_promote(path):
+        nonlocal validation_calls
+        result = original_validate_write_path(path)
+        if path == output_path:
+            validation_calls += 1
+            if validation_calls == 2:
+                output_path.write_text("created")
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", create_target_before_promote)
+
+    with pytest.raises(OSError, match="Refusing to promote over existing target"):
+        write_text_atomic(output_path, "new", require_missing=True)
+
+    assert output_path.read_text() == "created"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
     isolated_filesystem,
     monkeypatch,

@@ -1376,7 +1376,7 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
         raise click.ClickException(f"Refusing to create {label}: path already exists.")
     validate_output_file(path, label)
     try:
-        write_text_atomic(path, content)
+        write_text_atomic(path, content, require_missing=True)
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 

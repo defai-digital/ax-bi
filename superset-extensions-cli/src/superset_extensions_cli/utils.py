@@ -212,6 +212,7 @@ def write_text_atomic(
     content: str,
     *,
     expected_existing_identity: tuple[int, int, int, int] | None = None,
+    require_missing: bool = False,
 ) -> None:
     """Write text via a same-directory temporary file before replacing the target."""
     path = validate_write_path(path)
@@ -242,6 +243,8 @@ def write_text_atomic(
             and get_read_path_identity(path) != expected_existing_identity
         ):
             raise OSError(f"Refusing to promote through changed target: {path}")
+        if require_missing and (path.exists() or path.is_symlink()):
+            raise OSError(f"Refusing to promote over existing target: {path}")
         if get_read_path_identity(temp_path) != temp_identity:
             raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
         temp_path.replace(path)

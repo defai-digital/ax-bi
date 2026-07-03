@@ -389,6 +389,28 @@ def test_init_reports_scaffold_file_write_errors(
     )
 
 
+@pytest.mark.unit
+def test_write_scaffold_file_requires_missing_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test scaffold file creation binds the final write to a missing target."""
+    target_path = isolated_filesystem / "extension.json"
+    seen_require_missing: list[bool] = []
+    original_write_text_atomic = cli.write_text_atomic
+
+    def capture_require_missing(path, content, **kwargs):
+        seen_require_missing.append(kwargs.get("require_missing", False))
+        return original_write_text_atomic(path, content, **kwargs)
+
+    monkeypatch.setattr(cli, "write_text_atomic", capture_require_missing)
+
+    cli.write_scaffold_file(target_path, "extension.json", "{}")
+
+    assert seen_require_missing == [True]
+    assert target_path.read_text() == "{}"
+
+
 @pytest.mark.cli
 def test_init_cleans_partial_scaffold_on_nested_directory_error(
     cli_runner, isolated_filesystem, monkeypatch
