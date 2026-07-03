@@ -593,6 +593,27 @@ test('searchAssets records status warnings for non-json error responses', async 
   });
 });
 
+test('searchAssets records warnings for malformed successful Superset list responses', async () => {
+  global.fetch = async () => Response.json({ count: 1 }, { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: [
+      'dashboard search failed: Superset list response must include a result array',
+    ],
+  });
+});
+
 test('searchAssets rejects invalid limits before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {
@@ -1604,6 +1625,49 @@ test('listDashboards records warnings for failed Superset list responses', async
     ],
     columnsLoaded: [],
     warnings: ['dashboard list returned status 504 from Superset'],
+  });
+});
+
+test('listDashboards records warnings for malformed successful Superset list responses', async () => {
+  global.fetch = async () => Response.json({ count: 1 }, { status: 200 });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: [
+      'dashboard list failed: Superset list response must include a result array',
+    ],
   });
 });
 

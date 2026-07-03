@@ -2274,7 +2274,7 @@ function escapeRisonString(value: string): string {
 
 function extractSupersetResults(payload: unknown): SupersetListItem[] {
   if (!isRecord(payload) || !Array.isArray(payload['result'])) {
-    return [];
+    throw new Error('Superset list response must include a result array');
   }
 
   return payload['result']
