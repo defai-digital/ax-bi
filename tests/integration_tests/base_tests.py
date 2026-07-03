@@ -20,7 +20,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from importlib.util import find_spec
 from io import BytesIO
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from zipfile import ZipFile
 
@@ -68,7 +68,7 @@ def get_resp(
     data: Any = None,
     follow_redirects: bool = True,
     raise_on_error: bool = True,
-    json_: Optional[str] = None,
+    json_: str | None = None,
 ):
     """Shortcut to get the parsed results while following redirects"""
     if data:
@@ -264,7 +264,7 @@ class SupersetTestCase(TestCase):
         return user
 
     @staticmethod
-    def get_role(name: str) -> Optional[ab_models.User]:
+    def get_role(name: str) -> ab_models.User | None:
         user = (
             db.session.query(security_manager.role_model)
             .filter_by(name=name)
@@ -301,7 +301,7 @@ class SupersetTestCase(TestCase):
 
     @staticmethod
     def get_table(
-        name: str, database_id: Optional[int] = None, schema: Optional[str] = None
+        name: str, database_id: int | None = None, schema: str | None = None
     ) -> SqlaTable:
         schema = schema or get_example_default_schema()
 
@@ -574,18 +574,18 @@ class SupersetTestCase(TestCase):
     def insert_dashboard(
         self,
         dashboard_title: str,
-        slug: Optional[str],
+        slug: str | None,
         owners: list[int],
         roles: list[int] = [],  # noqa: B006
         created_by=None,
-        slices: Optional[list[Slice]] = None,
+        slices: list[Slice] | None = None,
         position_json: str = "",
         css: str = "",
         json_metadata: str = "",
         published: bool = False,
-        certified_by: Optional[str] = None,
-        certification_details: Optional[str] = None,
-        desc: Optional[str] = None,
+        certified_by: str | None = None,
+        certification_details: str | None = None,
+        desc: str | None = None,
     ) -> Dashboard:
         obj_owners = list()  # noqa: C408
         obj_roles = list()  # noqa: C408
