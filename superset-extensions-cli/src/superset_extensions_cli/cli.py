@@ -891,7 +891,7 @@ def publish_staged_output_directory(
             f"Refusing to publish {label}: staged path is not safe to publish."
         )
     validate_output_directory(target_path, label)
-    target_parent_identity = get_directory_path_identity(target_path.parent)
+    target_parent_identity = get_read_parent_identity(target_path)
     if target_parent_identity is None:
         raise click.ClickException(
             f"Refusing to publish {label}: target parent path is unsafe."
@@ -924,7 +924,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -937,7 +937,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -949,7 +949,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -958,20 +958,20 @@ def publish_staged_output_directory(
     target_replaced = False
     published_target_identity: tuple[int, int, int, int] | None = None
     try:
-        current_parent_identity = get_directory_path_identity(target_path.parent)
+        current_parent_identity = get_read_parent_identity(target_path)
         if (
             current_parent_identity is None
-            or current_parent_identity[:2] != target_parent_identity[:2]
+            or current_parent_identity != target_parent_identity
         ):
             raise click.ClickException(
                 f"Refusing to publish {label}: target parent path changed."
             )
         staged_path.replace(target_path)
         target_replaced = True
-        current_parent_identity = get_directory_path_identity(target_path.parent)
+        current_parent_identity = get_read_parent_identity(target_path)
         if (
             current_parent_identity is None
-            or current_parent_identity[:2] != target_parent_identity[:2]
+            or current_parent_identity != target_parent_identity
         ):
             raise click.ClickException(
                 f"Failed to publish {label}: target parent path changed."
@@ -993,7 +993,7 @@ def publish_staged_output_directory(
                     backup_root,
                     f"temporary {label} backup directory",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1023,7 +1023,7 @@ def publish_staged_output_directory(
                     label,
                     published_target_identity,
                     allow_content_changes=False,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException as cleanup_ex:
                 raise click.ClickException(
@@ -1048,7 +1048,7 @@ def publish_staged_output_directory(
                 backup_root,
                 f"temporary {label} backup directory",
                 backup_root_identity,
-                expected_parent_identity=target_parent_identity[:2],
+                expected_parent_identity=target_parent_identity,
             )
         except click.ClickException:
             pass
@@ -1084,7 +1084,7 @@ def publish_output_file(
             f"Refusing to publish {label}: staged path changed before publish."
         )
     validate_output_file(target_path, label)
-    target_parent_identity = get_directory_path_identity(target_path.parent)
+    target_parent_identity = get_read_parent_identity(target_path)
     if target_parent_identity is None:
         raise click.ClickException(
             f"Refusing to publish {label}: target parent path is unsafe."
@@ -1117,7 +1117,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1130,7 +1130,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1143,7 +1143,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1155,7 +1155,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1165,20 +1165,20 @@ def publish_output_file(
     published_target_identity: tuple[int, int, int, int] | None = None
     published_target_directory_identity: tuple[int, int, int, int] | None = None
     try:
-        current_parent_identity = get_directory_path_identity(target_path.parent)
+        current_parent_identity = get_read_parent_identity(target_path)
         if (
             current_parent_identity is None
-            or current_parent_identity[:2] != target_parent_identity[:2]
+            or current_parent_identity != target_parent_identity
         ):
             raise click.ClickException(
                 f"Refusing to publish {label}: target parent path changed."
             )
         staged_path.replace(target_path)
         target_replaced = True
-        current_parent_identity = get_directory_path_identity(target_path.parent)
+        current_parent_identity = get_read_parent_identity(target_path)
         if (
             current_parent_identity is None
-            or current_parent_identity[:2] != target_parent_identity[:2]
+            or current_parent_identity != target_parent_identity
         ):
             raise click.ClickException(
                 f"Failed to publish {label}: target parent path changed."
@@ -1207,7 +1207,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1220,7 +1220,7 @@ def publish_output_file(
                     backup_root,
                     f"temporary {label} backup",
                     backup_root_identity,
-                    expected_parent_identity=target_parent_identity[:2],
+                    expected_parent_identity=target_parent_identity,
                 )
             except click.ClickException:
                 pass
@@ -1234,7 +1234,7 @@ def publish_output_file(
                 target_path,
                 label,
                 published_target_identity,
-                expected_parent_identity=target_parent_identity[:2],
+                expected_parent_identity=target_parent_identity,
             )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(
@@ -1249,7 +1249,7 @@ def publish_output_file(
                 target_path,
                 label,
                 published_target_directory_identity,
-                expected_parent_identity=target_parent_identity[:2],
+                expected_parent_identity=target_parent_identity,
             )
         except click.ClickException as cleanup_ex:
             raise click.ClickException(
@@ -1274,7 +1274,7 @@ def publish_output_file(
                 backup_root,
                 f"temporary {label} backup",
                 backup_root_identity,
-                expected_parent_identity=target_parent_identity[:2],
+                expected_parent_identity=target_parent_identity,
             )
         except click.ClickException:
             pass

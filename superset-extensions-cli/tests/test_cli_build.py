@@ -1326,21 +1326,21 @@ def test_publish_output_file_rejects_changed_target_parent(
     replacement_output_dir = isolated_filesystem / "replacement-output"
     replacement_output_dir.mkdir()
 
-    original_get_directory_path_identity = cli.get_directory_path_identity
+    original_get_read_parent_identity = cli.get_read_parent_identity
     parent_identity_reads = 0
 
     def swap_target_parent_before_publish(path):
         nonlocal parent_identity_reads
-        if path == output_dir:
+        if path == output_path:
             parent_identity_reads += 1
             if parent_identity_reads == 2:
                 output_dir.rename(saved_output_dir)
                 replacement_output_dir.rename(output_dir)
-        return original_get_directory_path_identity(path)
+        return original_get_read_parent_identity(path)
 
     monkeypatch.setattr(
         cli,
-        "get_directory_path_identity",
+        "get_read_parent_identity",
         swap_target_parent_before_publish,
     )
 
@@ -1997,21 +1997,21 @@ def test_publish_staged_output_directory_rejects_changed_target_parent(
     replacement_output_dir = isolated_filesystem / "replacement-dist"
     replacement_output_dir.mkdir()
 
-    original_get_directory_path_identity = cli.get_directory_path_identity
+    original_get_read_parent_identity = cli.get_read_parent_identity
     parent_identity_reads = 0
 
     def swap_target_parent_before_publish(path):
         nonlocal parent_identity_reads
-        if path == output_dir:
+        if path == output_path:
             parent_identity_reads += 1
             if parent_identity_reads == 2:
                 output_dir.rename(saved_output_dir)
                 replacement_output_dir.rename(output_dir)
-        return original_get_directory_path_identity(path)
+        return original_get_read_parent_identity(path)
 
     monkeypatch.setattr(
         cli,
-        "get_directory_path_identity",
+        "get_read_parent_identity",
         swap_target_parent_before_publish,
     )
 
