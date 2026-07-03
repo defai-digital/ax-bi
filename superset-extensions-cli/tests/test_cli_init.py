@@ -210,6 +210,80 @@ def test_init_fails_when_target_is_broken_symlink(
 
 
 @pytest.mark.cli
+def test_init_reports_scaffold_directory_create_errors(
+    cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test init reports target directory creation failures cleanly."""
+    original_mkdir = Path.mkdir
+
+    def fail_target_mkdir(path, *args, **kwargs):
+        if path == isolated_filesystem / "test-extension":
+            raise OSError("permission denied")
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", fail_target_mkdir)
+
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "1.0.0",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to create extension directory: permission denied" in result.output
+
+
+@pytest.mark.cli
+def test_init_reports_scaffold_file_write_errors(
+    cli_runner, isolated_filesystem, monkeypatch
+):
+    """Test init reports scaffold file write failures cleanly."""
+    original_write_text = Path.write_text
+
+    def fail_extension_json_write(path, *args, **kwargs):
+        if path == isolated_filesystem / "test-extension" / "extension.json":
+            raise OSError("disk full")
+        return original_write_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", fail_extension_json_write)
+
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "1.0.0",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Failed to create extension.json: disk full" in result.output
+
+
+@pytest.mark.cli
 def test_extension_json_content_is_correct(
     cli_runner, isolated_filesystem, cli_input_both
 ):

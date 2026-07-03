@@ -465,6 +465,46 @@ def validate_initial_extension_config(
         raise click.ClickException(f"Invalid initial extension metadata: {ex}") from ex
 
 
+def create_scaffold_directory(path: Path, label: str) -> None:
+    """Create a new scaffold directory without following unsafe boundaries."""
+    if path.exists() or path.is_symlink():
+        raise click.ClickException(f"Refusing to create {label}: path already exists.")
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to create {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
+    invalid_parent = next(
+        (parent for parent in path.parents if parent.exists() and not parent.is_dir()),
+        None,
+    )
+    if invalid_parent is not None:
+        raise click.ClickException(
+            f"Refusing to create {label}: parent exists but is not a directory: "
+            f"{invalid_parent}."
+        )
+
+    try:
+        path.mkdir()
+    except FileExistsError as ex:
+        raise click.ClickException(
+            f"Refusing to create {label}: path already exists."
+        ) from ex
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+
+
+def write_scaffold_file(path: Path, label: str, content: str) -> None:
+    """Create a scaffold file after validating the output boundary."""
+    if path.exists() or path.is_symlink():
+        raise click.ClickException(f"Refusing to create {label}: path already exists.")
+    validate_output_file(path, label)
+    try:
+        path.write_text(content)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+
+
 def build_manifest(cwd: Path, remote_entry: str | None) -> Manifest:
     _, extension = load_extension_config(cwd / "extension.json")
 
@@ -1528,63 +1568,100 @@ def init(
         "version": version,
     }
 
-    # Create base directory
-    target_dir.mkdir()
-    extension_json = env.get_template("extension.json.j2").render(ctx)
-    (target_dir / "extension.json").write_text(extension_json)
-    click.secho("✅ Created extension.json", fg="green")
-
-    # Create .gitignore
-    gitignore = env.get_template("gitignore.j2").render(ctx)
-    (target_dir / ".gitignore").write_text(gitignore)
-    click.secho("✅ Created .gitignore", fg="green")
-
-    # Initialize frontend files
-    if include_frontend:
-        frontend_dir = target_dir / "frontend"
-        frontend_dir.mkdir()
-        frontend_src_dir = frontend_dir / "src"
-        frontend_src_dir.mkdir()
-
-        # frontend files
-        package_json = env.get_template("frontend/package.json.j2").render(ctx)
-        (frontend_dir / "package.json").write_text(package_json)
-        webpack_config = env.get_template("frontend/webpack.config.js.j2").render(ctx)
-        (frontend_dir / "webpack.config.js").write_text(webpack_config)
-        tsconfig_json = env.get_template("frontend/tsconfig.json.j2").render(ctx)
-        (frontend_dir / "tsconfig.json").write_text(tsconfig_json)
-        index_tsx = env.get_template("frontend/src/index.tsx.j2").render(ctx)
-        (frontend_src_dir / "index.tsx").write_text(index_tsx)
-        click.secho("✅ Created frontend folder structure", fg="green")
-
-    # Initialize backend files with publisher.name structure
-    if include_backend:
-        backend_dir = target_dir / "backend"
-        backend_dir.mkdir()
-        backend_src_dir = backend_dir / "src"
-        backend_src_dir.mkdir()
-
-        # Create publisher directory (e.g., my_org)
-        publisher_snake = kebab_to_snake_case(names["publisher"])
-        publisher_dir = backend_src_dir / publisher_snake
-        publisher_dir.mkdir()
-
-        # Create extension package directory (e.g., my_org/dashboard_widgets)
-        name_snake = kebab_to_snake_case(names["name"])
-        extension_package_dir = publisher_dir / name_snake
-        extension_package_dir.mkdir()
-
-        # backend files
-        pyproject_toml = env.get_template("backend/pyproject.toml.j2").render(ctx)
-        (backend_dir / "pyproject.toml").write_text(pyproject_toml)
-
-        # Extension package files
-        entrypoint_py = env.get_template("backend/src/package/entrypoint.py.j2").render(
-            ctx
+    try:
+        # Create base directory
+        create_scaffold_directory(target_dir, "extension directory")
+        extension_json = env.get_template("extension.json.j2").render(ctx)
+        write_scaffold_file(
+            target_dir / "extension.json",
+            "extension.json",
+            extension_json,
         )
-        (extension_package_dir / "entrypoint.py").write_text(entrypoint_py)
+        click.secho("✅ Created extension.json", fg="green")
 
-        click.secho("✅ Created backend folder structure", fg="green")
+        # Create .gitignore
+        gitignore = env.get_template("gitignore.j2").render(ctx)
+        write_scaffold_file(target_dir / ".gitignore", ".gitignore", gitignore)
+        click.secho("✅ Created .gitignore", fg="green")
+
+        # Initialize frontend files
+        if include_frontend:
+            frontend_dir = target_dir / "frontend"
+            create_scaffold_directory(frontend_dir, "frontend directory")
+            frontend_src_dir = frontend_dir / "src"
+            create_scaffold_directory(frontend_src_dir, "frontend src directory")
+
+            # frontend files
+            package_json = env.get_template("frontend/package.json.j2").render(ctx)
+            write_scaffold_file(
+                frontend_dir / "package.json",
+                "frontend/package.json",
+                package_json,
+            )
+            webpack_config = env.get_template("frontend/webpack.config.js.j2").render(
+                ctx
+            )
+            write_scaffold_file(
+                frontend_dir / "webpack.config.js",
+                "frontend/webpack.config.js",
+                webpack_config,
+            )
+            tsconfig_json = env.get_template("frontend/tsconfig.json.j2").render(ctx)
+            write_scaffold_file(
+                frontend_dir / "tsconfig.json",
+                "frontend/tsconfig.json",
+                tsconfig_json,
+            )
+            index_tsx = env.get_template("frontend/src/index.tsx.j2").render(ctx)
+            write_scaffold_file(
+                frontend_src_dir / "index.tsx",
+                "frontend/src/index.tsx",
+                index_tsx,
+            )
+            click.secho("✅ Created frontend folder structure", fg="green")
+
+        # Initialize backend files with publisher.name structure
+        if include_backend:
+            backend_dir = target_dir / "backend"
+            create_scaffold_directory(backend_dir, "backend directory")
+            backend_src_dir = backend_dir / "src"
+            create_scaffold_directory(backend_src_dir, "backend src directory")
+
+            # Create publisher directory (e.g., my_org)
+            publisher_snake = kebab_to_snake_case(names["publisher"])
+            publisher_dir = backend_src_dir / publisher_snake
+            create_scaffold_directory(publisher_dir, "backend publisher directory")
+
+            # Create extension package directory (e.g., my_org/dashboard_widgets)
+            name_snake = kebab_to_snake_case(names["name"])
+            extension_package_dir = publisher_dir / name_snake
+            create_scaffold_directory(
+                extension_package_dir,
+                "backend extension package directory",
+            )
+
+            # backend files
+            pyproject_toml = env.get_template("backend/pyproject.toml.j2").render(ctx)
+            write_scaffold_file(
+                backend_dir / "pyproject.toml",
+                "backend/pyproject.toml",
+                pyproject_toml,
+            )
+
+            # Extension package files
+            entrypoint_py = env.get_template(
+                "backend/src/package/entrypoint.py.j2"
+            ).render(ctx)
+            write_scaffold_file(
+                extension_package_dir / "entrypoint.py",
+                "backend entrypoint.py",
+                entrypoint_py,
+            )
+
+            click.secho("✅ Created backend folder structure", fg="green")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
 
     click.secho(
         f"🎉 Extension {names['display_name']} (ID: {names['id']}) initialized at {target_dir}",
