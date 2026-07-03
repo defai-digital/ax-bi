@@ -942,6 +942,13 @@ def require_optional_directory(path: Path, label: str) -> None:
         )
     if (path.exists() or path.is_symlink()) and not path.is_dir():
         raise click.ClickException(f"{label} path exists but is not a directory.")
+    if path.exists():
+        directory_identity = get_directory_path_identity(path)
+        if directory_identity is None:
+            raise click.ClickException(f"{label} path is no longer safe.")
+        current_identity = get_directory_path_identity(path)
+        if current_identity is None or current_identity[:2] != directory_identity[:2]:
+            raise click.ClickException(f"{label} path changed during validation.")
 
 
 def optional_directory_exists(path: Path, label: str) -> bool:

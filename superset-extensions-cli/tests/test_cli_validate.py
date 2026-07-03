@@ -30,6 +30,7 @@ from superset_extensions_cli.cli import (
     load_toml_object,
     optional_directory_exists,
     optional_file_exists,
+    require_optional_directory,
     validate_npm,
 )
 
@@ -113,6 +114,43 @@ def test_optional_directory_exists_rejects_changed_path(
 
     with pytest.raises(click.ClickException, match="frontend path changed"):
         optional_directory_exists(source_dir, "frontend")
+
+    assert saved_dir.is_dir()
+    assert source_dir.is_dir()
+
+
+@pytest.mark.unit
+def test_require_optional_directory_rejects_changed_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional directory validation refuses a changed path."""
+    source_dir = isolated_filesystem / "backend"
+    source_dir.mkdir()
+    saved_dir = isolated_filesystem / "saved-backend"
+    replacement_dir = isolated_filesystem / "replacement-backend"
+    replacement_dir.mkdir()
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def swap_directory_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                source_dir.rename(saved_dir)
+                replacement_dir.rename(source_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_directory_after_first_identity,
+    )
+
+    with pytest.raises(click.ClickException, match="backend path changed"):
+        require_optional_directory(source_dir, "backend")
 
     assert saved_dir.is_dir()
     assert source_dir.is_dir()
