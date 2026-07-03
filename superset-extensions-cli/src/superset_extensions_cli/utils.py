@@ -100,7 +100,8 @@ DISPLAY_NAME_REGEX = re.compile(DISPLAY_NAME_PATTERN)
 
 
 def read_toml(path: Path) -> dict[str, Any] | None:
-    if not path.is_file():
+    path = Path(path)
+    if path.is_symlink() or not path.is_file():
         return None
 
     with path.open("rb") as f:
@@ -109,7 +110,7 @@ def read_toml(path: Path) -> dict[str, Any] | None:
 
 def read_json(path: Path) -> dict[str, Any] | None:
     path = Path(path)
-    if not path.is_file():
+    if path.is_symlink() or not path.is_file():
         return None
 
     return json.loads(path.read_text())

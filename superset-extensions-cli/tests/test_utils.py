@@ -68,6 +68,19 @@ def test_read_json_with_directory_instead_of_file(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_json_with_symlinked_file(isolated_filesystem):
+    """Test read_json returns None when path is a symlink."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "outside"}')
+    json_link = isolated_filesystem / "test.json"
+    json_link.symlink_to(outside_file)
+
+    result = read_json(json_link)
+
+    assert result is None
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
@@ -121,6 +134,19 @@ def test_read_toml_with_directory_instead_of_file(isolated_filesystem):
     directory.mkdir()
 
     result = read_toml(directory)
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_with_symlinked_file(isolated_filesystem):
+    """Test read_toml returns None when path is a symlink."""
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "outside"')
+    toml_link = isolated_filesystem / "pyproject.toml"
+    toml_link.symlink_to(outside_file)
+
+    result = read_toml(toml_link)
 
     assert result is None
 
