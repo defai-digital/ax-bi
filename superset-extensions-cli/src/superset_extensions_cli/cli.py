@@ -777,6 +777,11 @@ def publish_staged_output_directory(
             f"Refusing to publish {label}: staged path is not safe to publish."
         )
     validate_output_directory(target_path, label)
+    target_parent_identity = get_directory_path_identity(target_path.parent)
+    if target_parent_identity is None:
+        raise click.ClickException(
+            f"Refusing to publish {label}: target parent path is unsafe."
+        )
 
     backup_root: Path | None = None
     backup_path: Path | None = None
@@ -836,8 +841,24 @@ def publish_staged_output_directory(
     target_replaced = False
     published_target_identity: tuple[int, int, int, int] | None = None
     try:
+        current_parent_identity = get_directory_path_identity(target_path.parent)
+        if (
+            current_parent_identity is None
+            or current_parent_identity[:2] != target_parent_identity[:2]
+        ):
+            raise click.ClickException(
+                f"Refusing to publish {label}: target parent path changed."
+            )
         staged_path.replace(target_path)
         target_replaced = True
+        current_parent_identity = get_directory_path_identity(target_path.parent)
+        if (
+            current_parent_identity is None
+            or current_parent_identity[:2] != target_parent_identity[:2]
+        ):
+            raise click.ClickException(
+                f"Failed to publish {label}: target parent path changed."
+            )
         published_target_identity = get_directory_path_identity(target_path)
         validate_output_directory(target_path, label)
         if get_directory_path_identity(target_path) != staged_identity:
@@ -943,6 +964,11 @@ def publish_output_file(
             f"Refusing to publish {label}: staged path changed before publish."
         )
     validate_output_file(target_path, label)
+    target_parent_identity = get_directory_path_identity(target_path.parent)
+    if target_parent_identity is None:
+        raise click.ClickException(
+            f"Refusing to publish {label}: target parent path is unsafe."
+        )
 
     backup_root: Path | None = None
     backup_path: Path | None = None
@@ -1015,8 +1041,24 @@ def publish_output_file(
     published_target_identity: tuple[int, int, int, int] | None = None
     published_target_directory_identity: tuple[int, int, int, int] | None = None
     try:
+        current_parent_identity = get_directory_path_identity(target_path.parent)
+        if (
+            current_parent_identity is None
+            or current_parent_identity[:2] != target_parent_identity[:2]
+        ):
+            raise click.ClickException(
+                f"Refusing to publish {label}: target parent path changed."
+            )
         staged_path.replace(target_path)
         target_replaced = True
+        current_parent_identity = get_directory_path_identity(target_path.parent)
+        if (
+            current_parent_identity is None
+            or current_parent_identity[:2] != target_parent_identity[:2]
+        ):
+            raise click.ClickException(
+                f"Failed to publish {label}: target parent path changed."
+            )
         published_target_identity = get_read_path_identity(target_path)
         if published_target_identity is None:
             published_target_directory_identity = get_directory_path_identity(

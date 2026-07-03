@@ -1270,6 +1270,51 @@ def test_publish_output_file_rejects_non_file_staged_path(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_publish_output_file_rejects_changed_target_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged file publishing refuses a changed target parent."""
+    staged_file = isolated_filesystem / ".bundle.tmp"
+    staged_file.write_text("new bundle")
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "bundle.supx"
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    parent_identity_reads = 0
+
+    def swap_target_parent_before_publish(path):
+        nonlocal parent_identity_reads
+        if path == output_dir:
+            parent_identity_reads += 1
+            if parent_identity_reads == 2:
+                output_dir.rename(saved_output_dir)
+                replacement_output_dir.rename(output_dir)
+        return original_get_directory_path_identity(path)
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_target_parent_before_publish,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to publish bundle: target parent path changed",
+    ):
+        publish_output_file(staged_file, output_path, "bundle")
+
+    assert staged_file.read_text() == "new bundle"
+    assert saved_output_dir.is_dir()
+    assert output_dir.is_dir()
+    assert not output_path.exists()
+
+
+@pytest.mark.unit
 def test_publish_output_file_restores_existing_target_when_staged_file_changes(
     isolated_filesystem,
     monkeypatch,
@@ -1723,6 +1768,58 @@ def test_publish_staged_output_directory_rejects_non_directory_staged_path(
 
     assert not output_path.exists()
     assert staged_file.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_publish_staged_output_directory_rejects_changed_target_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test staged directory publishing refuses a changed target parent."""
+    staged_dir = isolated_filesystem / ".frontend.tmp"
+    staged_dir.mkdir()
+    (staged_dir / "new.js").write_text("new")
+    output_dir = isolated_filesystem / "dist"
+    output_dir.mkdir()
+    output_path = output_dir / "frontend"
+    saved_output_dir = isolated_filesystem / "saved-dist"
+    replacement_output_dir = isolated_filesystem / "replacement-dist"
+    replacement_output_dir.mkdir()
+
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    parent_identity_reads = 0
+
+    def swap_target_parent_before_publish(path):
+        nonlocal parent_identity_reads
+        if path == output_dir:
+            parent_identity_reads += 1
+            if parent_identity_reads == 2:
+                output_dir.rename(saved_output_dir)
+                replacement_output_dir.rename(output_dir)
+        return original_get_directory_path_identity(path)
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_target_parent_before_publish,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match=(
+            "Refusing to publish dist/frontend directory: target parent path changed"
+        ),
+    ):
+        publish_staged_output_directory(
+            staged_dir,
+            output_path,
+            "dist/frontend directory",
+        )
+
+    assert_file_exists(staged_dir / "new.js")
+    assert saved_output_dir.is_dir()
+    assert output_dir.is_dir()
+    assert not output_path.exists()
 
 
 @pytest.mark.unit
