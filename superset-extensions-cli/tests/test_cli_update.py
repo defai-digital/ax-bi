@@ -658,6 +658,54 @@ def test_update_refuses_rollback_when_written_metadata_changes(
 
 
 @pytest.mark.cli
+def test_update_refuses_rollback_when_metadata_directory_changes(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update verifies metadata directories after rollback writes."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_pkg_path = frontend_dir / "package.json"
+    backend_pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    saved_frontend_dir = isolated_filesystem / "saved-frontend"
+    replacement_frontend_dir = isolated_filesystem / "replacement-frontend"
+    replacement_frontend_dir.mkdir()
+    (replacement_frontend_dir / "package.json").write_text(
+        json.dumps({"version": "9.9.9", "license": "Apache-2.0"})
+    )
+    original_replace = Path.replace
+    original_write_text_atomic = cli.write_text_atomic
+
+    def fail_backend_pyproject_replace(path, target):
+        if target == backend_pyproject_path:
+            raise OSError("disk full")
+        return original_replace(path, target)
+
+    def swap_frontend_after_rollback(path, content, **kwargs):
+        result = original_write_text_atomic(path, content, **kwargs)
+        if path == frontend_pkg_path:
+            frontend_dir.rename(saved_frontend_dir)
+            replacement_frontend_dir.rename(frontend_dir)
+        return result
+
+    monkeypatch.setattr(Path, "replace", fail_backend_pyproject_replace)
+    monkeypatch.setattr(cli, "write_text_atomic", swap_frontend_after_rollback)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Failed to roll back frontend/package.json" in result.output
+    assert "directory path changed" in result.output
+    assert read_json(saved_frontend_dir / "package.json")["version"] == "1.0.0"
+    assert read_json(frontend_pkg_path)["version"] == "9.9.9"
+    assert read_toml(backend_pyproject_path)["project"]["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):

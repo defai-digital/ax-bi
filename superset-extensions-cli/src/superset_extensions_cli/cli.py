@@ -2485,11 +2485,46 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             try:
                 if get_read_path_identity(path) != written_identity:
                     raise OSError(f"Refusing to roll back {label}: path changed.")
+                rollback_directory_identity: tuple[int, int, int, int] | None = None
+                rollback_directory: Path | None = None
+                if frontend_identity is not None and path.is_relative_to(frontend_dir):
+                    rollback_directory = frontend_dir
+                    rollback_directory_identity = get_directory_path_identity(
+                        frontend_dir
+                    )
+                if backend_identity is not None and path.is_relative_to(backend_dir):
+                    rollback_directory = backend_dir
+                    rollback_directory_identity = get_directory_path_identity(
+                        backend_dir
+                    )
+                if (
+                    rollback_directory is not None
+                    and rollback_directory_identity is None
+                ):
+                    raise OSError(
+                        f"Refusing to roll back {label}: directory path changed."
+                    )
                 write_text_atomic(
                     path,
                     original_contents[path],
                     expected_existing_identity=written_identity,
                 )
+                if (
+                    rollback_directory is not None
+                    and rollback_directory_identity is not None
+                ):
+                    current_directory_identity = get_directory_path_identity(
+                        rollback_directory
+                    )
+                    if (
+                        current_directory_identity is None
+                        or current_directory_identity[:2]
+                        != rollback_directory_identity[:2]
+                    ):
+                        raise OSError(
+                            f"Refusing to roll back {label}: directory path changed."
+                        )
+                    refresh_metadata_directory_identity(path)
             except OSError as rollback_ex:
                 click.secho(
                     f"❌ Failed to roll back {label}: {rollback_ex}",
