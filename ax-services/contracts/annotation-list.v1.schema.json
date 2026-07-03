@@ -206,13 +206,15 @@
       "columnsRequested": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "columnsLoaded": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "warnings": {

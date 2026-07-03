@@ -178,14 +178,8 @@ export const savedQueryListResponseSchema = {
     totalPages: { type: 'integer', minimum: 0 },
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
     warnings: warningSchema,
   },
 } as const;

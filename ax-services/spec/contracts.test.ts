@@ -213,6 +213,29 @@ test('response warning schemas are bounded and shared', () => {
   ).toBe(warningSchema);
 });
 
+test('list response column schemas are token constrained and shared', () => {
+  const responseSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema,
+    annotationListContractSchemas.annotationListResponseSchema,
+    chartListContractSchemas.chartListResponseSchema,
+    dashboardListContractSchemas.dashboardListResponseSchema,
+    databaseListContractSchemas.databaseListResponseSchema,
+    datasetListContractSchemas.datasetListResponseSchema,
+    queryListContractSchemas.queryListResponseSchema,
+    reportListContractSchemas.reportListResponseSchema,
+    roleListContractSchemas.roleListResponseSchema,
+    rlsListContractSchemas.rlsListResponseSchema,
+    savedQueryListContractSchemas.savedQueryListResponseSchema,
+    tagListContractSchemas.tagListResponseSchema,
+    taskListContractSchemas.taskListResponseSchema,
+  ];
+
+  for (const schema of responseSchemas) {
+    expect(schema.properties.columnsRequested).toBe(listColumnSchema);
+    expect(schema.properties.columnsLoaded).toBe(listColumnSchema);
+  }
+});
+
 test('health response schema is stable', () => {
   expect(healthResponseSchema).toEqual({
     $id: 'ax-services.health.v1.response',

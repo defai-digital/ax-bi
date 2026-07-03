@@ -176,14 +176,8 @@ export const annotationListResponseSchema = {
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
     layerId: { type: 'integer', minimum: 0 },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
     warnings: warningSchema,
   },
 } as const;
