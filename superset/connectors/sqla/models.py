@@ -21,10 +21,10 @@ import builtins
 import logging
 import re
 from collections import defaultdict
-from collections.abc import Hashable
+from collections.abc import Callable, Hashable
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any, Callable, cast, Optional, Union
+from typing import Any, cast, Optional, Union
 
 import pandas as pd
 import sqlalchemy as sa
@@ -980,7 +980,7 @@ class TableColumn(AuditMixinNullable, ImportExportMixin, CertificationMixin, Mod
     datetime_format = Column(String(100))
     extra = Column(Text)
 
-    table: Mapped["SqlaTable"] = relationship(
+    table: Mapped[SqlaTable] = relationship(
         "SqlaTable",
         back_populates="columns",
     )
@@ -1221,7 +1221,7 @@ class SqlMetric(AuditMixinNullable, ImportExportMixin, CertificationMixin, Model
     expression = Column(utils.MediumText(), nullable=False)
     extra = Column(Text)
 
-    table: Mapped["SqlaTable"] = relationship(
+    table: Mapped[SqlaTable] = relationship(
         "SqlaTable",
         back_populates="metrics",
     )
