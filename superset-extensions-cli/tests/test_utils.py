@@ -324,6 +324,20 @@ def test_write_json_rejects_symlinked_output(isolated_filesystem):
     assert outside_file.read_text() == '{"name": "original"}'
 
 
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_parent(isolated_filesystem):
+    """Test write_json refuses to write through a symlinked parent directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_json(output_dir / "metadata.json", {"name": "updated"})
+
+    assert not (outside_dir / "metadata.json").exists()
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -352,3 +366,17 @@ def test_write_toml_rejects_symlinked_output(isolated_filesystem):
         write_toml(toml_link, {"project": {"name": "updated"}})
 
     assert outside_file.read_text() == '[project]\nname = "original"\n'
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_parent(isolated_filesystem):
+    """Test write_toml refuses to write through a symlinked parent directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_toml(output_dir / "pyproject.toml", {"project": {"name": "updated"}})
+
+    assert not (outside_dir / "pyproject.toml").exists()

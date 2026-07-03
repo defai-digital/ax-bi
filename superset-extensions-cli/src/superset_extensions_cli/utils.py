@@ -116,17 +116,23 @@ def read_json(path: Path) -> dict[str, Any] | None:
     return json.loads(path.read_text())
 
 
-def write_json(path: Path, data: dict[str, Any]) -> None:
+def validate_write_path(path: Path) -> Path:
+    """Return a normalized output path after rejecting symlink boundaries."""
     path = Path(path)
     if path.is_symlink():
         raise OSError(f"Refusing to write through symlink: {path}")
+    if path.parent.is_symlink():
+        raise OSError(f"Refusing to write through symlinked directory: {path.parent}")
+    return path
+
+
+def write_json(path: Path, data: dict[str, Any]) -> None:
+    path = validate_write_path(path)
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
 def write_toml(path: Path, data: dict[str, Any]) -> None:
-    path = Path(path)
-    if path.is_symlink():
-        raise OSError(f"Refusing to write through symlink: {path}")
+    path = validate_write_path(path)
     path.write_text(tomli_w.dumps(data))
 
 
