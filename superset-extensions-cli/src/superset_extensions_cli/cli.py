@@ -314,7 +314,8 @@ def copy_backend_files(cwd: Path) -> None:
     pyproject = load_toml_object(
         backend_dir / "pyproject.toml", "backend pyproject.toml"
     )
-    assert pyproject
+    if pyproject is None:
+        raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
     # Process include patterns
