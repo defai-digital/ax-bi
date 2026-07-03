@@ -21,7 +21,7 @@ import subprocess
 import sys
 import time
 import zipfile
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Callable
 
 import click
@@ -54,6 +54,11 @@ from superset_extensions_cli.utils import (
 )
 
 REMOTE_ENTRY_REGEX = re.compile(r"^remoteEntry\..+\.js$")
+
+
+def split_path_parts(path: str) -> list[str]:
+    """Split path components regardless of platform path separators."""
+    return [part for part in re.split(r"[\\/]+", path) if part]
 
 
 def validate_npm() -> None:
@@ -412,8 +417,13 @@ def copy_backend_files(cwd: Path) -> None:
         # Include patterns are only meant to select files within the backend
         # directory. Reject absolute patterns or ones that walk outside it via
         # parent ("..") components before handing them to glob().
-        pattern_parts = Path(pattern).parts
-        if Path(pattern).is_absolute() or ".." in pattern_parts:
+        windows_pattern = PureWindowsPath(pattern)
+        if (
+            Path(pattern).is_absolute()
+            or bool(windows_pattern.drive)
+            or bool(windows_pattern.root)
+            or ".." in split_path_parts(pattern)
+        ):
             raise click.ClickException(
                 f"Invalid include pattern {pattern!r}: patterns must be "
                 "relative to the backend directory and may not contain '..'."
@@ -489,7 +499,7 @@ class FrontendChangeHandler(FileSystemEventHandler):
 
 def is_frontend_dist_path(path: str) -> bool:
     """Return whether a watched frontend path is inside frontend/dist."""
-    parts = [part for part in re.split(r"[\\/]+", path) if part]
+    parts = split_path_parts(path)
     return any(
         part == "frontend" and index + 1 < len(parts) and parts[index + 1] == "dist"
         for index, part in enumerate(parts)

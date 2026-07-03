@@ -768,8 +768,12 @@ exclude = []
     [
         "../../.ssh/*",
         "../config",
+        r"..\config",
         "src/../../secret.txt",
+        r"src\..\..\secret.txt",
         "/etc/passwd",
+        r"C:\Windows\win.ini",
+        r"\Windows\win.ini",
     ],
 )
 def test_copy_backend_files_rejects_patterns_escaping_backend_dir(
@@ -792,7 +796,7 @@ license = "Apache-2.0"
 
 [tool.apache_superset_extensions.build]
 include = [
-    "{bad_pattern}",
+    '{bad_pattern}',
 ]
 exclude = []
 """
@@ -809,7 +813,7 @@ exclude = []
 
     clean_dist(isolated_filesystem)
 
-    with pytest.raises(click.ClickException):
+    with pytest.raises(click.ClickException, match="Invalid include pattern"):
         copy_backend_files(isolated_filesystem)
 
     # Nothing outside the backend directory should have been staged into dist,
