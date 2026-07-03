@@ -30,7 +30,7 @@ import math
 from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 from itertools import product
-from typing import Any, cast, Optional, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -532,7 +532,7 @@ class BaseViz:  # pylint: disable=too-many-public-methods
         payload = self.get_df_payload(query_obj)
 
         # if payload does not have a df, we are raising an error here.
-        df = cast(Optional[pd.DataFrame], payload["df"])
+        df = cast(pd.DataFrame | None, payload["df"])
 
         if self.status != QueryStatus.FAILED:
             payload["data"] = self.get_data(df)
