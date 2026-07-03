@@ -254,6 +254,21 @@ def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_ensure_output_directory_rejects_non_directory_parent(isolated_filesystem):
+    """Test output directory creation refuses file parent paths."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write dist/frontend directory: parent exists but is not a directory",
+    ):
+        ensure_output_directory(output_parent / "frontend", "dist/frontend directory")
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
 def test_validate_output_file_rejects_symlinked_parent(isolated_filesystem):
     """Test output file validation refuses symlinked parent directories."""
     outside_dir = isolated_filesystem / "outside"
