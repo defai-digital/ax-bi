@@ -2016,9 +2016,9 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
         ? item.is_virtual
         : item.type === 'virtual',
     databaseId:
-      typeof item.database_id === 'number'
+      isSupersetId(item.database_id)
         ? item.database_id
-        : typeof item.database?.id === 'number'
+        : isSupersetId(item.database?.id)
           ? item.database.id
           : undefined,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
@@ -2100,7 +2100,7 @@ function toSavedQueryListItem(
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     label: typeof item.label === 'string' ? item.label : undefined,
     sql: typeof item.sql === 'string' ? item.sql : undefined,
-    dbId: typeof item.db_id === 'number' ? item.db_id : undefined,
+    dbId: isSupersetId(item.db_id) ? item.db_id : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
     catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
     description:
@@ -2144,7 +2144,7 @@ function toAnnotationListItem(
     endDttm: typeof item.end_dttm === 'string' ? item.end_dttm : undefined,
     jsonMetadata:
       typeof item.json_metadata === 'string' ? item.json_metadata : undefined,
-    layerId: typeof item.layer_id === 'number' ? item.layer_id : fallbackLayerId,
+    layerId: isSupersetId(item.layer_id) ? item.layer_id : fallbackLayerId,
   };
 }
 
@@ -2163,9 +2163,11 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
     endTime: typeof item.end_time === 'number' ? item.end_time : undefined,
     rows: typeof item.rows === 'number' ? item.rows : undefined,
     databaseId:
-      typeof item.database_id === 'number'
+      isSupersetId(item.database_id)
         ? item.database_id
-        : item.database?.id,
+        : isSupersetId(item.database?.id)
+          ? item.database.id
+          : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
     catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
     tabName: typeof item.tab_name === 'string' ? item.tab_name : undefined,
@@ -2175,7 +2177,11 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
     limit: typeof item.limit === 'number' ? item.limit : undefined,
     progress: typeof item.progress === 'number' ? item.progress : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
-    userId: typeof item.user_id === 'number' ? item.user_id : item.user?.id,
+    userId: isSupersetId(item.user_id)
+      ? item.user_id
+      : isSupersetId(item.user?.id)
+        ? item.user.id
+        : undefined,
   };
 }
 
@@ -2193,8 +2199,8 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
     active: typeof item.active === 'boolean' ? item.active : undefined,
     crontab: typeof item.crontab === 'string' ? item.crontab : undefined,
     dashboardId:
-      typeof item.dashboard_id === 'number' ? item.dashboard_id : undefined,
-    chartId: typeof item.chart_id === 'number' ? item.chart_id : undefined,
+      isSupersetId(item.dashboard_id) ? item.dashboard_id : undefined,
+    chartId: isSupersetId(item.chart_id) ? item.chart_id : undefined,
     lastEvalDttm:
       typeof item.last_eval_dttm === 'string' ? item.last_eval_dttm : undefined,
     lastEvalDttmHumanized:
@@ -2260,7 +2266,7 @@ function toRlsTableRef(value: unknown): RlsTableRef | undefined {
   }
 
   const ref: RlsTableRef = {};
-  if (typeof value.id === 'number') {
+  if (isSupersetId(value.id)) {
     ref.id = value.id;
   }
   if (typeof value.table_name === 'string') {
@@ -2275,7 +2281,7 @@ function toRlsRoleRef(value: unknown): RlsRoleRef | undefined {
   }
 
   const ref: RlsRoleRef = {};
-  if (typeof value.id === 'number') {
+  if (isSupersetId(value.id)) {
     ref.id = value.id;
   }
   if (typeof value.name === 'string') {

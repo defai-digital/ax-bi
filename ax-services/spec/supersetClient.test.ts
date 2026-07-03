@@ -1195,6 +1195,56 @@ test('listDatasets maps Superset dataset list responses', async () => {
   });
 });
 
+test('listDatasets ignores invalid related database IDs', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 2,
+      result: [
+        {
+          id: 11,
+          table_name: 'sales_fact',
+          database_id: -3,
+          database: {
+            id: 2.5,
+            database_name: 'examples',
+          },
+        },
+        {
+          id: 12,
+          table_name: 'inventory_fact',
+          database_id: 4,
+        },
+      ],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDatasets({
+    contractVersion: DATASET_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.datasets).toEqual([
+    {
+      id: 11,
+      tableName: 'sales_fact',
+      databaseName: 'examples',
+      isVirtual: false,
+    },
+    {
+      id: 12,
+      tableName: 'inventory_fact',
+      isVirtual: false,
+      databaseId: 4,
+    },
+  ]);
+});
+
 test('listDatasets records warnings for failed Superset list responses', async () => {
   global.fetch = async () =>
     new Response('upstream timeout', {
