@@ -219,12 +219,20 @@ def clean_dist(cwd: Path) -> None:
 
 def start_dist_replacement(
     cwd: Path,
-) -> tuple[Path | None, Path | None, tuple[int, int, int, int] | None]:
+) -> tuple[
+    Path | None,
+    Path | None,
+    tuple[int, int, int, int] | None,
+    tuple[int, int, int, int],
+]:
     """Move existing dist aside before a full build writes replacement output."""
     dist_dir = cwd / "dist"
     if not dist_dir.exists():
         ensure_output_directory(dist_dir, "dist directory")
-        return None, None, None
+        replacement_identity = get_directory_path_identity(dist_dir)
+        if replacement_identity is None:
+            raise click.ClickException("Refusing to build dist directory: unsafe path.")
+        return None, None, None, replacement_identity
 
     validate_output_directory(dist_dir, "dist directory")
     dist_identity = get_directory_path_identity(dist_dir)
@@ -276,7 +284,10 @@ def start_dist_replacement(
         except click.ClickException:
             pass
         raise
-    return backup_root, backup_path, backup_identity
+    replacement_identity = get_directory_path_identity(dist_dir)
+    if replacement_identity is None:
+        raise click.ClickException("Refusing to build dist directory: unsafe path.")
+    return backup_root, backup_path, backup_identity, replacement_identity
 
 
 def rollback_dist_replacement(
@@ -284,10 +295,17 @@ def rollback_dist_replacement(
     backup_root: Path | None,
     backup_path: Path | None,
     backup_identity: tuple[int, int, int, int] | None,
+    replacement_identity: tuple[int, int, int, int],
 ) -> None:
     """Restore the previous dist directory after a failed full build."""
     dist_dir = cwd / "dist"
     try:
+        ensure_directory_identity_unchanged(
+            dist_dir,
+            "dist directory",
+            replacement_identity,
+            "rollback cleanup",
+        )
         remove_output_directory(dist_dir, "dist directory")
     except click.ClickException as ex:
         raise click.ClickException(
@@ -2089,9 +2107,12 @@ def build(ctx: click.Context) -> None:
             )
             sys.exit(1)
 
-    dist_backup_root, dist_backup_path, dist_backup_identity = start_dist_replacement(
-        cwd
-    )
+    (
+        dist_backup_root,
+        dist_backup_path,
+        dist_backup_identity,
+        dist_replacement_identity,
+    ) = start_dist_replacement(cwd)
     try:
         if has_frontend:
             ensure_directory_identity_unchanged(
@@ -2133,6 +2154,7 @@ def build(ctx: click.Context) -> None:
                 dist_backup_root,
                 dist_backup_path,
                 dist_backup_identity,
+                dist_replacement_identity,
             )
         except click.ClickException as rollback_ex:
             if isinstance(ex, click.ClickException):

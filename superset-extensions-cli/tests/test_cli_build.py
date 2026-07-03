@@ -422,6 +422,65 @@ def test_build_command_reports_failed_dist_cleanup_during_rollback(
 @patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
 @patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.read_toml")
+def test_build_command_rejects_changed_dist_during_rollback_cleanup(
+    mock_read_toml,
+    mock_rebuild_backend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+):
+    """Test rollback refuses to clean a dist path changed after replacement."""
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    mock_copy_frontend_dist.return_value = "remoteEntry.abc123.js"
+    mock_read_toml.return_value = {
+        "project": {"name": "test", "version": "1.0.0"},
+        "tool": {
+            "apache_superset_extensions": {
+                "build": {"include": ["src/test_org/test_extension/**/*.py"]}
+            }
+        },
+    }
+
+    extension_with_build_structure(isolated_filesystem)
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
+    failed_dist = isolated_filesystem / "failed-dist"
+    replacement_dist = isolated_filesystem / "replacement-dist"
+    replacement_dist.mkdir()
+    (replacement_dist / "manifest.json").write_text("replacement")
+
+    def fail_after_dist_swap(_cwd):
+        current_dist = isolated_filesystem / "dist"
+        current_dist.rename(failed_dist)
+        replacement_dist.rename(current_dist)
+        raise click.ClickException("backend failed")
+
+    mock_rebuild_backend.side_effect = fail_after_dist_swap
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "backend failed" in result.output
+    assert "Failed to clean failed dist directory before restore" in result.output
+    assert "dist directory path changed before rollback cleanup" in result.output
+    assert ((isolated_filesystem / "dist") / "manifest.json").read_text() == (
+        "replacement"
+    )
+    assert failed_dist.exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.run_frontend_build")
 def test_build_command_restores_existing_dist_when_remote_entry_missing(
     mock_run_frontend_build,
     mock_init_frontend_deps,
