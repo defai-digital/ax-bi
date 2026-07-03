@@ -2865,6 +2865,25 @@ def test_get_copy_source_identity_rejects_symlinked_root(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_get_copy_source_identity_rejects_symlinked_root_parent(
+    isolated_filesystem,
+):
+    """Test copy source identity refuses roots below symlinked parents."""
+    outside_parent = isolated_filesystem / "outside-parent"
+    outside_root = outside_parent / "source-root"
+    outside_root.mkdir(parents=True)
+    source_parent = isolated_filesystem / "linked-parent"
+    source_parent.symlink_to(outside_parent)
+    source_root = source_parent / "source-root"
+    source_file = source_root / "module.py"
+    (outside_root / "module.py").write_text("# source")
+
+    identity = cli.get_copy_source_identity(source_file, source_root)
+
+    assert identity is None
+
+
+@pytest.mark.unit
 def test_get_copy_source_identity_rejects_symlink_outside_root(isolated_filesystem):
     """Test copy source identity refuses source paths resolving outside root."""
     source_root = isolated_filesystem / "source-root"

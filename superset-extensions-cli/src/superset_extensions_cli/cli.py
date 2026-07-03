@@ -645,9 +645,7 @@ def get_output_copy_source_identity(
 
 def get_copy_source_identity(source: Path, root: Path) -> PathIdentity | None:
     """Return source file identity after confirming it resolves inside root."""
-    if root.is_symlink() or not root.is_dir():
-        return None
-    if any(parent.is_symlink() for parent in (root.parent, *root.parent.parents)):
+    if get_directory_node_identity(root) is None:
         return None
     try:
         resolved_root = root.resolve()
