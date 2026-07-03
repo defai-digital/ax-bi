@@ -17,7 +17,8 @@
 import json
 import logging
 import os
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 # ruff: noqa: E402
 import celery

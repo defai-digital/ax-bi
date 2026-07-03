@@ -18,7 +18,8 @@
 
 import logging
 import uuid as uuid_module
-from typing import Any, Optional, Callable
+from typing import Any, Optional
+from collections.abc import Callable
 from collections.abc import Iterator
 
 import yaml

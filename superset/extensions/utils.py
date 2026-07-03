@@ -21,8 +21,9 @@ import logging
 import os
 import re
 import sys
+from collections.abc import Generator, Iterable
 from pathlib import Path
-from typing import Any, Generator, Iterable, Tuple
+from typing import Any
 from zipfile import ZipFile
 
 from flask import current_app
@@ -66,7 +67,7 @@ class InMemoryLoader(importlib.abc.Loader):
 
 class InMemoryFinder(importlib.abc.MetaPathFinder):
     def __init__(self, file_dict: dict[str, bytes], source_base_path: str) -> None:
-        self.modules: dict[str, Tuple[Any, Any, Any]] = {}
+        self.modules: dict[str, tuple[Any, Any, Any]] = {}
 
         # Detect if this is a virtual path (supx://) or filesystem path
         is_virtual_path = source_base_path.startswith("supx://")
@@ -114,7 +115,7 @@ class InMemoryFinder(importlib.abc.MetaPathFinder):
             # Namespace packages have empty content
             self.modules[ns_name] = (b"", True, ns_path)
 
-    def _get_module_name(self, file_path: str) -> Tuple[str, bool]:
+    def _get_module_name(self, file_path: str) -> tuple[str, bool]:
         parts = list(Path(file_path).parts)
         is_package = parts[-1] == "__init__.py"
         if is_package:

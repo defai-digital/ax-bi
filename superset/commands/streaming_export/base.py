@@ -23,10 +23,11 @@ import io
 import logging
 import time
 from abc import abstractmethod
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from decimal import Decimal
 from numbers import Real
-from typing import Any, Callable, Generator
+from typing import Any
 
 from flask import current_app as app, g, has_app_context
 from sqlalchemy import text
