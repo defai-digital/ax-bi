@@ -373,6 +373,11 @@ export class SupersetClient
         'annotation layer list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyAnnotationLayerListResponse(request, [
+        'annotation layer list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildAnnotationLayerListUrl(request);
 
@@ -437,6 +442,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptyAnnotationListResponse(request, [
         'annotation list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptyAnnotationListResponse(request, [
+        'annotation list request contains invalid filters',
       ]);
     }
 
@@ -594,6 +604,11 @@ export class SupersetClient
         'dashboard list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyDashboardListResponse(request, [
+        'dashboard list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildDashboardListUrl(request);
 
@@ -651,6 +666,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptyChartListResponse(request, [
         'chart list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptyChartListResponse(request, [
+        'chart list request contains invalid filters',
       ]);
     }
 
@@ -712,6 +732,11 @@ export class SupersetClient
         'dataset list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyDatasetListResponse(request, [
+        'dataset list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildDatasetListUrl(request);
 
@@ -769,6 +794,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptyDatabaseListResponse(request, [
         'database list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptyDatabaseListResponse(request, [
+        'database list request contains invalid filters',
       ]);
     }
 
@@ -830,6 +860,11 @@ export class SupersetClient
         'query list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyQueryListResponse(request, [
+        'query list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildQueryListUrl(request);
 
@@ -887,6 +922,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptySavedQueryListResponse(request, [
         'saved query list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptySavedQueryListResponse(request, [
+        'saved query list request contains invalid filters',
       ]);
     }
 
@@ -948,6 +988,11 @@ export class SupersetClient
         'report list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyReportListResponse(request, [
+        'report list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildReportListUrl(request);
 
@@ -1007,6 +1052,11 @@ export class SupersetClient
         'role list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyRoleListResponse(request, [
+        'role list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildRoleListUrl(request);
 
@@ -1062,6 +1112,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptyRlsListResponse(request, [
         'RLS filter list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptyRlsListResponse(request, [
+        'RLS filter list request contains invalid filters',
       ]);
     }
 
@@ -1123,6 +1178,11 @@ export class SupersetClient
         'tag list request contains invalid ordering',
       ]);
     }
+    if (!hasValidListFilters(request)) {
+      return emptyTagListResponse(request, [
+        'tag list request contains invalid filters',
+      ]);
+    }
 
     const url = this.buildTagListUrl(request);
 
@@ -1178,6 +1238,11 @@ export class SupersetClient
     if (!hasValidListOrdering(request)) {
       return emptyTaskListResponse(request, [
         'task list request contains invalid ordering',
+      ]);
+    }
+    if (!hasValidListFilters(request)) {
+      return emptyTaskListResponse(request, [
+        'task list request contains invalid filters',
       ]);
     }
 
@@ -1413,6 +1478,10 @@ interface ListPaginationRequest {
 interface ListOrderingRequest {
   orderColumn?: unknown;
   orderDirection: unknown;
+}
+
+interface ListFilterRequest {
+  filters: unknown;
 }
 
 interface SupersetListItem {
@@ -3315,7 +3384,39 @@ function isOptionalListOrderColumn(value: unknown): boolean {
   return (
     value === undefined ||
     (typeof value === 'string' &&
-      (value === '' || /^[A-Za-z0-9_]+$/.test(value)))
+      (value === '' || isRisonToken(value)))
+  );
+}
+
+function hasValidListFilters(request: ListFilterRequest): boolean {
+  return Array.isArray(request.filters) && request.filters.every(isListFilter);
+}
+
+function isListFilter(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    isRisonToken(value.col) &&
+    isRisonToken(value.opr) &&
+    isListFilterValue(value.value)
+  );
+}
+
+function isRisonToken(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_]+$/.test(value);
+}
+
+function isListFilterValue(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.every(isListFilterScalar);
+  }
+  return isListFilterScalar(value);
+}
+
+function isListFilterScalar(value: unknown): boolean {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))
   );
 }
 
