@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from functools import wraps
 from inspect import (
     getcallargs,
@@ -29,7 +30,7 @@ from inspect import (
     signature,
 )
 from logging import Logger
-from typing import Any, Callable, cast, Union
+from typing import Any, cast, Union
 
 _DEFAULT_ENTER_MSG_PREFIX = "enter to "
 _DEFAULT_ENTER_MSG_SUFFIX = ""
