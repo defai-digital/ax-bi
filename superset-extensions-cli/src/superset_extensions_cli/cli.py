@@ -153,6 +153,16 @@ def validate_npm() -> None:
         sys.exit(1)
 
 
+def validate_node_modules_path(node_modules: Path) -> None:
+    """Validate frontend/node_modules before dependency install decisions."""
+    if node_modules.is_symlink():
+        raise click.ClickException("frontend/node_modules path is a symlink.")
+    if node_modules.exists() and not node_modules.is_dir():
+        raise click.ClickException(
+            "frontend/node_modules path exists but is not a directory."
+        )
+
+
 def init_frontend_deps(frontend_dir: Path) -> None:
     """
     If node_modules is missing under `frontend_dir`, run `npm ci` if package-lock.json
@@ -163,12 +173,7 @@ def init_frontend_deps(frontend_dir: Path) -> None:
     if frontend_identity is None:
         raise click.ClickException("frontend path is no longer safe.")
     node_modules = frontend_dir / "node_modules"
-    if node_modules.is_symlink():
-        raise click.ClickException("frontend/node_modules path is a symlink.")
-    if node_modules.exists() and not node_modules.is_dir():
-        raise click.ClickException(
-            "frontend/node_modules path exists but is not a directory."
-        )
+    validate_node_modules_path(node_modules)
 
     if not node_modules.exists():
         package_lock = frontend_dir / "package-lock.json"
@@ -190,6 +195,7 @@ def init_frontend_deps(frontend_dir: Path) -> None:
             raise click.ClickException(
                 "frontend path changed before dependency install."
             )
+        validate_node_modules_path(node_modules)
         try:
             res = subprocess.run(  # noqa: S603
                 npm_command,  # noqa: S607

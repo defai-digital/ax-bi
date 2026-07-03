@@ -1434,6 +1434,34 @@ def test_init_frontend_deps_rejects_changed_frontend_before_install(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_node_modules_symlink_before_install(
+    mock_run,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dependency install rechecks node_modules before npm launch."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    outside_node_modules = isolated_filesystem / "outside-node-modules"
+    outside_node_modules.mkdir()
+
+    def create_node_modules_symlink_during_npm_validation():
+        (frontend_dir / "node_modules").symlink_to(outside_node_modules)
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.validate_npm",
+        create_node_modules_symlink_during_npm_validation,
+    )
+
+    with pytest.raises(click.ClickException, match="node_modules path is a symlink"):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+    assert (frontend_dir / "node_modules").is_symlink()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_init_frontend_deps_exits_on_npm_ci_failure(
     mock_validate_npm, mock_run, isolated_filesystem
