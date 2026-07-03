@@ -182,7 +182,16 @@ function normalizePath(value: string, name: string): string {
 
 function normalizeOptionalSecret(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
-  return trimmed === '' ? undefined : trimmed;
+  if (trimmed === '' || trimmed === undefined) {
+    return undefined;
+  }
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+    throw new Error(
+      'AX_SUPERSET_INTERNAL_TOKEN must not contain control characters',
+    );
+  }
+
+  return trimmed;
 }
 
 function normalizeLogLevel(value: string | undefined): LogLevel {

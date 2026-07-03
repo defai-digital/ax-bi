@@ -177,6 +177,12 @@ test('buildConfig treats blank optional token as absent', () => {
   expect(config.supersetInternalToken).toBeUndefined();
 });
 
+test('buildConfig rejects internal tokens with control characters', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_INTERNAL_TOKEN: 'token-123\nX-Other: value' }),
+  ).toThrow('AX_SUPERSET_INTERNAL_TOKEN must not contain control characters');
+});
+
 test('buildConfig rejects invalid Superset URL', () => {
   expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'not a url' })).toThrow(
     'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
