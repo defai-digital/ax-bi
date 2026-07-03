@@ -23,12 +23,12 @@ from pathlib import Path
 from typing import Any
 
 import tomli_w
-
 from superset_core.extensions.constants import (
     DISPLAY_NAME_PATTERN,
     PUBLISHER_PATTERN,
     TECHNICAL_NAME_PATTERN,
 )
+
 from superset_extensions_cli.exceptions import ExtensionNameError
 from superset_extensions_cli.types import ExtensionNames
 

@@ -21,8 +21,9 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
 import click
+import pytest
+
 import superset_extensions_cli.cli as cli
 from superset_extensions_cli.cli import (
     app,
@@ -1401,8 +1402,7 @@ def test_validate_npm_succeeds_with_valid_versions(mock_run, mock_which, npm_ver
     )
     mock_run.assert_called_once_with(
         [str(Path("/bin/sh").resolve()), "-v"],
-        stdout=cli.subprocess.PIPE,
-        stderr=cli.subprocess.PIPE,
+        capture_output=True,
         text=True,
     )
 

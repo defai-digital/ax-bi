@@ -23,9 +23,10 @@ import sys
 import tempfile
 import time
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
-from typing import Any, Callable
+from typing import Any
 
 import click
 import semver
@@ -142,8 +143,7 @@ def validate_npm() -> ValidatedNpmExecutable:
     try:
         result = subprocess.run(  # noqa: S603
             [npm_command, "-v"],  # noqa: S607
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         if result.returncode != 0:
