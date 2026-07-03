@@ -33,6 +33,7 @@ from superset_extensions_cli.cli import (
     copy_frontend_dist,
     create_temporary_output_directory,
     ensure_output_directory,
+    ensure_output_file_parent,
     init_frontend_deps,
     publish_output_file,
     publish_staged_output_directory,
@@ -1173,6 +1174,45 @@ def test_validate_output_file_parent_rejects_broken_symlinked_root(
 
     assert root.is_symlink()
     assert not (isolated_filesystem / "missing-backend-output").exists()
+
+
+@pytest.mark.unit
+def test_ensure_output_file_parent_rejects_changed_root(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test output file parent creation refuses a changed root directory."""
+    root = isolated_filesystem / "dist" / "backend"
+    root.mkdir(parents=True)
+    target = root / "src" / "test_org" / "module.py"
+    saved_root = isolated_filesystem / "saved-backend"
+    replacement_root = isolated_filesystem / "replacement-backend"
+    replacement_root.mkdir()
+    original_mkdir = Path.mkdir
+    swapped = False
+
+    def swap_root_before_mkdir(path, *args, **kwargs):
+        nonlocal swapped
+        if path == target.parent and not swapped:
+            root.rename(saved_root)
+            replacement_root.rename(root)
+            swapped = True
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", swap_root_before_mkdir)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create parent for backend file .*parent path changed",
+    ):
+        ensure_output_file_parent(
+            target,
+            root,
+            "backend file src/test_org/module.py",
+        )
+
+    assert saved_root.is_dir()
+    assert target.parent.is_dir()
 
 
 # Frontend Dependencies Tests

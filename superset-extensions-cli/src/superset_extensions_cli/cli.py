@@ -404,11 +404,26 @@ def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
 def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
     """Create an output file parent after validating existing ancestors."""
     validate_output_file_parent(path, root, label)
+    anchor = get_existing_output_directory_anchor(root)
+    anchor_identity = get_directory_path_identity(anchor)
+    if anchor_identity is None:
+        raise click.ClickException(
+            f"Refusing to create parent for {label}: parent path is unsafe."
+        )
     parent = path.parent
     try:
         parent.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise click.ClickException(f"Failed to create parent for {label}: {ex}") from ex
+    current_anchor_identity = get_directory_path_identity(anchor)
+    if (
+        current_anchor_identity is None
+        or current_anchor_identity[:2] != anchor_identity[:2]
+    ):
+        raise click.ClickException(
+            f"Refusing to create parent for {label}: parent path changed."
+        )
+    validate_output_file_parent(path, root, label)
 
 
 def copy_output_file(source: Path, target: Path, label: str) -> None:
