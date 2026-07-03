@@ -206,6 +206,35 @@ test('checkPermission fails closed for invalid numeric identifiers', async () =>
   expect(fetchCalled).toBe(false);
 });
 
+test('checkPermission fails closed for unsafe numeric identifiers', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.checkPermission({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    principal: {
+      type: 'user',
+      userId: Number.MAX_SAFE_INTEGER + 1,
+    },
+    resource: {
+      type: 'dashboard',
+      id: 5,
+    },
+    action: 'read',
+  });
+
+  expect(result).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    error: 'authorization request contains invalid numeric identifier',
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('checkPermission fails closed for invalid request shapes', async () => {
   let fetchCalled = false;
   global.fetch = async () => {
@@ -1893,6 +1922,52 @@ test('listDashboards rejects malformed requests before querying Superset', async
     totalCount: 0,
     page: 1,
     pageSize: 100,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [
+      'id',
+      'dashboard_title',
+      'slug',
+      'description',
+      'certified_by',
+      'certification_details',
+      'url',
+      'changed_on',
+      'changed_on_humanized',
+    ],
+    columnsLoaded: [],
+    warnings: ['dashboard list request contains invalid pagination'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
+test('listDashboards rejects unsafe pagination before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: Number.MAX_SAFE_INTEGER + 1,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result).toEqual({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    dashboards: [],
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
     totalPages: 0,
     hasNext: false,
     hasPrevious: false,

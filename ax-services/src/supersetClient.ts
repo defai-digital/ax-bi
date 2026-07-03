@@ -3832,7 +3832,7 @@ function isCacheTimeout(value: unknown): value is number {
 }
 
 function isInteger(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value);
+  return typeof value === 'number' && Number.isSafeInteger(value);
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
