@@ -829,6 +829,63 @@ def test_create_temporary_output_directory_rejects_changed_parent(
 
 
 @pytest.mark.unit
+def test_create_temporary_output_directory_rejects_changed_temp_cleanup_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test temporary cleanup refuses a temp path changed after creation."""
+    output_parent = isolated_filesystem / "dist"
+    output_parent.mkdir()
+    saved_parent = isolated_filesystem / "saved-dist"
+    replacement_parent = isolated_filesystem / "replacement-dist"
+    replacement_parent.mkdir()
+    saved_temp = isolated_filesystem / "saved-temp"
+    replacement_temp = isolated_filesystem / "replacement-temp"
+    replacement_temp.mkdir()
+    (replacement_temp / "replacement.txt").write_text("replacement")
+
+    from superset_extensions_cli import cli
+
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    temp_path: Path | None = None
+
+    def swap_temp_before_parent_recheck(path):
+        nonlocal temp_path
+        identity = original_get_directory_path_identity(path)
+        if (
+            path.parent == output_parent
+            and path.name.startswith(".frontend.")
+            and temp_path is None
+        ):
+            temp_path = path
+            path.rename(saved_temp)
+            output_parent.rename(saved_parent)
+            replacement_parent.rename(output_parent)
+            replacement_temp.rename(path)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_temp_before_parent_recheck,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to create temporary frontend output directory: parent path changed",
+    ):
+        create_temporary_output_directory(
+            output_parent,
+            ".frontend.",
+            "temporary frontend output directory",
+        )
+
+    assert temp_path is not None
+    assert_file_exists(temp_path / "replacement.txt")
+    assert saved_temp.exists()
+
+
+@pytest.mark.unit
 def test_ensure_output_directory_rejects_symlinked_parent(isolated_filesystem):
     """Test output directory creation refuses symlinked parent directories."""
     outside_dir = isolated_filesystem / "outside"

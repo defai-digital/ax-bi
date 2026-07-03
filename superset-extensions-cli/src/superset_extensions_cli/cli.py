@@ -694,13 +694,16 @@ def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> 
         temp_path = Path(tempfile.mkdtemp(prefix=prefix, suffix=".tmp", dir=parent))
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
+    temp_identity = get_directory_path_identity(temp_path)
+    if temp_identity is None:
+        raise click.ClickException(f"Refusing to create {label}: temp path is unsafe.")
     current_parent_identity = get_directory_path_identity(parent)
     if (
         current_parent_identity is None
         or current_parent_identity[:2] != parent_identity[:2]
     ):
         try:
-            remove_output_directory(temp_path, label)
+            remove_output_directory(temp_path, label, temp_identity)
         except click.ClickException:
             pass
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
