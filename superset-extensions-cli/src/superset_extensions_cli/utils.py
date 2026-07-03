@@ -387,20 +387,6 @@ def _normalized_to_kebab(normalized: str) -> str:
     return normalized.replace(" ", "-")
 
 
-def _normalized_to_snake(normalized: str) -> str:
-    """Convert normalized string to snake_case."""
-    return normalized.replace(" ", "_")
-
-
-def _normalized_to_camel(normalized: str) -> str:
-    """Convert normalized string to camelCase."""
-    parts = normalized.split()
-    if not parts:
-        return ""
-    # First part lowercase, subsequent parts capitalized
-    return parts[0] + "".join(word.capitalize() for word in parts[1:])
-
-
 def kebab_to_camel_case(kebab_name: str) -> str:
     """Convert kebab-case to camelCase (e.g., 'hello-world' -> 'helloWorld')."""
     parts = kebab_name.split("-")
