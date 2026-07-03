@@ -172,6 +172,39 @@ def test_read_json_returns_none_when_path_is_replaced_during_read(
 
 
 @pytest.mark.unit
+def test_read_json_returns_none_when_parent_is_replaced_during_read(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test read_json refuses content if the parent identity changes during read."""
+    metadata_dir = isolated_filesystem / "metadata"
+    metadata_dir.mkdir()
+    json_file = metadata_dir / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    saved_metadata_dir = isolated_filesystem / "saved-metadata"
+    replacement_metadata_dir = isolated_filesystem / "replacement-metadata"
+    original_read_text = Path.read_text
+
+    def replace_parent_during_read(path, *args, **kwargs):
+        if path == json_file:
+            metadata_dir.rename(saved_metadata_dir)
+            replacement_metadata_dir.mkdir()
+            (saved_metadata_dir / "metadata.json").rename(
+                replacement_metadata_dir / "metadata.json"
+            )
+            replacement_metadata_dir.rename(metadata_dir)
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_parent_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert not (saved_metadata_dir / "metadata.json").exists()
+    assert json.loads(original_read_text(json_file)) == {"name": "original"}
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
@@ -341,6 +374,39 @@ def test_read_toml_returns_none_when_path_is_replaced_during_read(
     assert result is None
     assert not toml_file.is_symlink()
     assert 'name = "replacement"' in toml_file.read_text()
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_parent_is_replaced_during_read(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test read_toml refuses content if the parent identity changes during read."""
+    metadata_dir = isolated_filesystem / "metadata"
+    metadata_dir.mkdir()
+    toml_file = metadata_dir / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    saved_metadata_dir = isolated_filesystem / "saved-metadata"
+    replacement_metadata_dir = isolated_filesystem / "replacement-metadata"
+    original_open = Path.open
+
+    def replace_parent_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            metadata_dir.rename(saved_metadata_dir)
+            replacement_metadata_dir.mkdir()
+            (saved_metadata_dir / "pyproject.toml").rename(
+                replacement_metadata_dir / "pyproject.toml"
+            )
+            replacement_metadata_dir.rename(metadata_dir)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_parent_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert not (saved_metadata_dir / "pyproject.toml").exists()
+    assert 'name = "original"' in toml_file.read_text()
 
 
 @pytest.mark.unit

@@ -122,8 +122,8 @@ def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
-def get_write_parent_identity(path: Path) -> tuple[int, int] | None:
-    """Return output parent identity unless it crosses a symlink boundary."""
+def _get_parent_directory_identity(path: Path) -> tuple[int, int] | None:
+    """Return parent identity unless it crosses a symlink boundary."""
     parent = Path(path).parent
     if parent.is_symlink() or not parent.is_dir():
         return None
@@ -136,12 +136,25 @@ def get_write_parent_identity(path: Path) -> tuple[int, int] | None:
     return (stat.st_dev, stat.st_ino)
 
 
+def get_read_parent_identity(path: Path) -> tuple[int, int] | None:
+    """Return read parent identity unless it crosses a symlink boundary."""
+    return _get_parent_directory_identity(path)
+
+
+def get_write_parent_identity(path: Path) -> tuple[int, int] | None:
+    """Return output parent identity unless it crosses a symlink boundary."""
+    return _get_parent_directory_identity(path)
+
+
 def read_toml(path: Path) -> dict[str, Any] | None:
     read_path = validate_read_path(path)
     if read_path is None:
         return None
     initial_identity = get_read_path_identity(path)
     if initial_identity is None:
+        return None
+    parent_identity = get_read_parent_identity(path)
+    if parent_identity is None:
         return None
 
     try:
@@ -150,7 +163,10 @@ def read_toml(path: Path) -> dict[str, Any] | None:
     except OSError as ex:
         raise OSError(f"Failed to read TOML file {read_path}: {ex}") from ex
 
-    if get_read_path_identity(path) != initial_identity:
+    if (
+        get_read_parent_identity(path) != parent_identity
+        or get_read_path_identity(path) != initial_identity
+    ):
         return None
     return tomllib.loads(content.decode("utf-8"))
 
@@ -162,13 +178,19 @@ def read_json(path: Path) -> dict[str, Any] | None:
     initial_identity = get_read_path_identity(path)
     if initial_identity is None:
         return None
+    parent_identity = get_read_parent_identity(path)
+    if parent_identity is None:
+        return None
 
     try:
         content = read_path.read_text()
     except OSError as ex:
         raise OSError(f"Failed to read JSON file {read_path}: {ex}") from ex
 
-    if get_read_path_identity(path) != initial_identity:
+    if (
+        get_read_parent_identity(path) != parent_identity
+        or get_read_path_identity(path) != initial_identity
+    ):
         return None
     return json.loads(content)
 
