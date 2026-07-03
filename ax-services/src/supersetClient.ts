@@ -3696,9 +3696,10 @@ function hasValidListFilters(request: unknown): request is ListFilterRequest {
 }
 
 function hasValidListSearch(request: Record<string, unknown>): boolean {
+  const search = request['search'];
   return (
-    request['search'] === undefined ||
-    isRisonScalarString(request['search'])
+    search === undefined ||
+    (isRisonScalarString(search) && (search === '' || search.trim() !== ''))
   );
 }
 

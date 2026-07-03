@@ -1991,7 +1991,7 @@ test('listDashboards rejects invalid search values before querying Superset', as
   };
   const client = new SupersetClient(buildConfig({}));
 
-  for (const search of ['sales\nregion', { query: 'sales' }]) {
+  for (const search of ['sales\nregion', '   ', { query: 'sales' }]) {
     const result = await client.listDashboards({
       contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
       filters: [],
