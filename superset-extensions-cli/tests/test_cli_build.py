@@ -309,6 +309,64 @@ def test_build_command_reports_original_and_rollback_failures(
 @patch("superset_extensions_cli.cli.copy_frontend_dist")
 @patch("superset_extensions_cli.cli.rebuild_backend")
 @patch("superset_extensions_cli.cli.read_toml")
+def test_build_command_rejects_changed_dist_backup_during_rollback(
+    mock_read_toml,
+    mock_rebuild_backend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+):
+    """Test full build refuses to restore a changed dist backup."""
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    mock_copy_frontend_dist.return_value = "remoteEntry.abc123.js"
+    mock_read_toml.return_value = {
+        "project": {"name": "test", "version": "1.0.0"},
+        "tool": {
+            "apache_superset_extensions": {
+                "build": {"include": ["src/test_org/test_extension/**/*.py"]}
+            }
+        },
+    }
+
+    extension_with_build_structure(isolated_filesystem)
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
+    replacement_backup = isolated_filesystem / "replacement-dist"
+    replacement_backup.mkdir()
+    (replacement_backup / "manifest.json").write_text("replacement")
+    saved_backup = isolated_filesystem / "saved-backup-dist"
+
+    def fail_after_backup_swap(_cwd):
+        backup_path = next(isolated_filesystem.glob(".dist-backup.*.tmp/dist"))
+        backup_path.rename(saved_backup)
+        replacement_backup.rename(backup_path)
+        raise click.ClickException("backend failed")
+
+    mock_rebuild_backend.side_effect = fail_after_backup_swap
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "backend failed" in result.output
+    assert (
+        "Failed to restore previous dist directory: backup path changed"
+        in result.output
+    )
+    assert (saved_backup / "manifest.json").read_text() == "previous"
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.read_toml")
 def test_build_command_reports_failed_dist_cleanup_during_rollback(
     mock_read_toml,
     mock_rebuild_backend,
