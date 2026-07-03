@@ -231,7 +231,7 @@ test('buildConfig rejects blank Superset path overrides', () => {
 
 test('buildConfig rejects ambiguous Superset path overrides', () => {
   const message =
-    'AX_SUPERSET_HEALTH_PATH must be a URL path without query, fragment, backslash, or control characters';
+    'AX_SUPERSET_HEALTH_PATH must be a URL path without query, fragment, backslash, whitespace, or control characters';
 
   expect(() =>
     buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health?verbose=true' }),
@@ -244,6 +244,9 @@ test('buildConfig rejects ambiguous Superset path overrides', () => {
   ).toThrow(message);
   expect(() =>
     buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health\nready' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health ready' }),
   ).toThrow(message);
 });
 
