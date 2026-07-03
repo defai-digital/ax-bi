@@ -2889,6 +2889,57 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_changed_staged_cleanup_root(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test backend copy failure does not clean a swapped staged root."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/__init__.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+    replacement_root = isolated_filesystem / "replacement-backend-stage"
+    replacement_root.mkdir()
+    (replacement_root / "replacement.txt").write_text("replacement")
+    saved_root = isolated_filesystem / "saved-backend-stage"
+    swapped_root: Path | None = None
+
+    from superset_extensions_cli import cli
+
+    def swap_staged_root_during_copy(source, target, label):
+        nonlocal swapped_root
+        staged_root = next(
+            parent for parent in target.parents if parent.name.startswith(".backend.")
+        )
+        staged_root.rename(saved_root)
+        replacement_root.rename(staged_root)
+        swapped_root = staged_root
+        raise click.ClickException("copy failed")
+
+    monkeypatch.setattr(cli, "copy_output_file", swap_staged_root_during_copy)
+
+    with pytest.raises(click.ClickException, match="copy failed"):
+        copy_backend_files(isolated_filesystem)
+
+    assert swapped_root is not None
+    assert_file_exists(swapped_root / "replacement.txt")
+    assert saved_root.exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_restores_existing_output_on_publish_failure(
     isolated_filesystem, monkeypatch
 ):
@@ -3545,6 +3596,44 @@ def test_copy_frontend_dist_rejects_source_changed_before_copy(
     assert outside_file.read_text() == "outside"
     assert not (isolated_filesystem / "dist" / "frontend" / "dist" / "main.js").exists()
     assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_changed_staged_cleanup_root(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test frontend copy failure does not clean a swapped staged root."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "main.js").write_text("main content")
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    replacement_root = isolated_filesystem / "replacement-frontend-stage"
+    replacement_root.mkdir()
+    (replacement_root / "replacement.txt").write_text("replacement")
+    saved_root = isolated_filesystem / "saved-frontend-stage"
+    swapped_root: Path | None = None
+
+    from superset_extensions_cli import cli
+
+    def swap_staged_root_during_copy(source, target, label):
+        nonlocal swapped_root
+        staged_root = next(
+            parent for parent in target.parents if parent.name.startswith(".frontend.")
+        )
+        staged_root.rename(saved_root)
+        replacement_root.rename(staged_root)
+        swapped_root = staged_root
+        raise click.ClickException("copy failed")
+
+    monkeypatch.setattr(cli, "copy_output_file", swap_staged_root_during_copy)
+
+    with pytest.raises(click.ClickException, match="copy failed"):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert swapped_root is not None
+    assert_file_exists(swapped_root / "replacement.txt")
+    assert saved_root.exists()
 
 
 @pytest.mark.unit

@@ -1499,6 +1499,11 @@ def copy_frontend_dist(cwd: Path) -> str:
         ".frontend.",
         "temporary frontend output directory",
     )
+    staged_frontend_identity = get_directory_path_identity(staged_frontend_output_dir)
+    if staged_frontend_identity is None:
+        raise click.ClickException(
+            "Refusing to stage frontend assets: temporary output path is unsafe."
+        )
     staged_frontend_dist_output_dir = staged_frontend_output_dir / "dist"
 
     try:
@@ -1530,7 +1535,9 @@ def copy_frontend_dist(cwd: Path) -> str:
     except click.ClickException:
         try:
             remove_output_directory(
-                staged_frontend_output_dir, "temporary frontend output directory"
+                staged_frontend_output_dir,
+                "temporary frontend output directory",
+                staged_frontend_identity,
             )
         except click.ClickException:
             pass
@@ -1651,6 +1658,11 @@ def copy_backend_files(cwd: Path) -> None:
         ".backend.",
         "temporary backend output directory",
     )
+    staged_backend_identity = get_directory_path_identity(staged_backend_output_dir)
+    if staged_backend_identity is None:
+        raise click.ClickException(
+            "Refusing to stage backend files: temporary output path is unsafe."
+        )
 
     try:
         for f, tgt, identity in copy_targets.values():
@@ -1681,7 +1693,9 @@ def copy_backend_files(cwd: Path) -> None:
     except click.ClickException:
         try:
             remove_output_directory(
-                staged_backend_output_dir, "temporary backend output directory"
+                staged_backend_output_dir,
+                "temporary backend output directory",
+                staged_backend_identity,
             )
         except click.ClickException:
             pass
