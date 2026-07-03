@@ -203,6 +203,50 @@ def test_build_command_handles_frontend_build_failure(
     mock_rebuild_backend.assert_not_called()
 
 
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+@patch("superset_extensions_cli.cli.init_frontend_deps")
+@patch("superset_extensions_cli.cli.run_frontend_build")
+@patch("superset_extensions_cli.cli.copy_frontend_dist")
+@patch("superset_extensions_cli.cli.rebuild_backend")
+@patch("superset_extensions_cli.cli.read_toml")
+def test_build_command_restores_existing_dist_on_backend_failure(
+    mock_read_toml,
+    mock_rebuild_backend,
+    mock_copy_frontend_dist,
+    mock_run_frontend_build,
+    mock_init_frontend_deps,
+    mock_validate_npm,
+    cli_runner,
+    isolated_filesystem,
+    extension_with_build_structure,
+):
+    """Test full build restores previous dist when backend output fails."""
+    mock_run_frontend_build.return_value = Mock(returncode=0)
+    mock_copy_frontend_dist.return_value = "remoteEntry.abc123.js"
+    mock_rebuild_backend.side_effect = click.ClickException("backend failed")
+    mock_read_toml.return_value = {
+        "project": {"name": "test", "version": "1.0.0"},
+        "tool": {
+            "apache_superset_extensions": {
+                "build": {"include": ["src/test_org/test_extension/**/*.py"]}
+            }
+        },
+    }
+
+    extension_with_build_structure(isolated_filesystem)
+    previous_dist = isolated_filesystem / "dist"
+    previous_dist.mkdir()
+    (previous_dist / "manifest.json").write_text("previous")
+
+    result = cli_runner.invoke(app, ["build"])
+
+    assert result.exit_code == 1
+    assert "backend failed" in result.output
+    assert (previous_dist / "manifest.json").read_text() == "previous"
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
+
+
 # Clean Dist Tests
 @pytest.mark.unit
 def test_clean_dist_removes_existing_dist_directory(isolated_filesystem):

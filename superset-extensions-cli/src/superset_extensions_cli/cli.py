@@ -198,6 +198,68 @@ def clean_dist(cwd: Path) -> None:
     ensure_output_directory(dist_dir, "dist directory")
 
 
+def start_dist_replacement(cwd: Path) -> tuple[Path | None, Path | None]:
+    """Move existing dist aside before a full build writes replacement output."""
+    dist_dir = cwd / "dist"
+    if not dist_dir.exists():
+        ensure_output_directory(dist_dir, "dist directory")
+        return None, None
+
+    validate_output_directory(dist_dir, "dist directory")
+    backup_root = create_temporary_output_directory(
+        cwd,
+        ".dist-backup.",
+        "temporary dist backup directory",
+    )
+    backup_path = backup_root / "dist"
+    try:
+        dist_dir.replace(backup_path)
+    except OSError as ex:
+        try:
+            remove_output_directory(backup_root, "temporary dist backup directory")
+        except click.ClickException:
+            pass
+        raise click.ClickException(f"Failed to back up dist directory: {ex}") from ex
+
+    ensure_output_directory(dist_dir, "dist directory")
+    return backup_root, backup_path
+
+
+def rollback_dist_replacement(
+    cwd: Path, backup_root: Path | None, backup_path: Path | None
+) -> None:
+    """Restore the previous dist directory after a failed full build."""
+    dist_dir = cwd / "dist"
+    try:
+        remove_output_directory(dist_dir, "dist directory")
+    except click.ClickException:
+        pass
+
+    if backup_root is None or backup_path is None:
+        return
+
+    try:
+        backup_path.replace(dist_dir)
+    except OSError as ex:
+        raise click.ClickException(
+            f"Failed to restore previous dist directory: {ex}"
+        ) from ex
+    try:
+        remove_output_directory(backup_root, "temporary dist backup directory")
+    except click.ClickException:
+        pass
+
+
+def cleanup_dist_replacement_backup(backup_root: Path | None) -> None:
+    """Remove a full-build dist backup after a successful publish."""
+    if backup_root is None:
+        return
+    try:
+        remove_output_directory(backup_root, "temporary dist backup directory")
+    except click.ClickException:
+        pass
+
+
 def ensure_output_directory(path: Path, label: str) -> None:
     """Create an output directory after validating the path is safe to write."""
     validate_output_directory(path, label)
@@ -1501,23 +1563,28 @@ def build(ctx: click.Context) -> None:
             )
             sys.exit(1)
 
-    clean_dist(cwd)
+    dist_backup_root, dist_backup_path = start_dist_replacement(cwd)
+    try:
+        if has_frontend:
+            remote_entry = copy_frontend_dist(cwd)
+            click.secho("✅ Frontend rebuilt", fg="green")
 
-    if has_frontend:
-        remote_entry = copy_frontend_dist(cwd)
-        click.secho("✅ Frontend rebuilt", fg="green")
+        # Build backend independently if it exists
+        if has_backend:
+            pyproject = load_toml_object(
+                backend_dir / "pyproject.toml", "backend pyproject.toml"
+            )
+            if pyproject:
+                rebuild_backend(cwd)
 
-    # Build backend independently if it exists
-    if has_backend:
-        pyproject = load_toml_object(
-            backend_dir / "pyproject.toml", "backend pyproject.toml"
-        )
-        if pyproject:
-            rebuild_backend(cwd)
+        # Build manifest and write it
+        manifest = build_manifest(cwd, remote_entry)
+        write_manifest(cwd, manifest)
+    except Exception:
+        rollback_dist_replacement(cwd, dist_backup_root, dist_backup_path)
+        raise
 
-    # Build manifest and write it
-    manifest = build_manifest(cwd, remote_entry)
-    write_manifest(cwd, manifest)
+    cleanup_dist_replacement_backup(dist_backup_root)
 
     click.secho("✅ Full build completed in dist/", fg="green")
 
