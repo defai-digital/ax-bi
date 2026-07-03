@@ -32,12 +32,14 @@
             "minimum": 0
           },
           "username": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$"
           },
           "roles": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$"
             }
           }
         }
@@ -63,7 +65,8 @@
             "minimum": 0
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$"
           }
         }
       },

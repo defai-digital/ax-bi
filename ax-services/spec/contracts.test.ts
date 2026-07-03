@@ -233,9 +233,27 @@ test('permission check request schema is registered in authorization contracts',
     type: 'integer',
     minimum: 0,
   });
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.username,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.roles.items,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+  });
   expect(permissionCheckRequestSchema.properties.resource.properties.id).toEqual({
     type: 'integer',
     minimum: 0,
+  });
+  expect(
+    permissionCheckRequestSchema.properties.resource.properties.uuid,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
   });
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],

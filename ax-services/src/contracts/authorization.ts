@@ -58,6 +58,11 @@ export interface PermissionCheckResult extends PermissionCheckResponse {
   error?: string;
 }
 
+const cleanAuthorizationStringSchema = {
+  type: 'string',
+  pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
 export const permissionCheckRequestSchema = {
   $id: 'ax-services.permission-check.v1.request',
   type: 'object',
@@ -72,10 +77,10 @@ export const permissionCheckRequestSchema = {
       properties: {
         type: { enum: ['user', 'guest', 'service'] },
         userId: { type: 'integer', minimum: 0 },
-        username: { type: 'string' },
+        username: cleanAuthorizationStringSchema,
         roles: {
           type: 'array',
-          items: { type: 'string' },
+          items: cleanAuthorizationStringSchema,
         },
       },
     },
@@ -86,7 +91,7 @@ export const permissionCheckRequestSchema = {
       properties: {
         type: { enum: ['chart', 'dashboard', 'database', 'dataset', 'query'] },
         id: { type: 'integer', minimum: 0 },
-        uuid: { type: 'string' },
+        uuid: cleanAuthorizationStringSchema,
       },
     },
     action: { enum: ['create', 'delete', 'read', 'write'] },

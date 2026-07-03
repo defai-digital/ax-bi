@@ -912,6 +912,67 @@ test('permission check endpoint delegates to Superset client', async () => {
   });
 });
 
+test('permission check endpoint rejects unsafe authorization strings', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onCheckPermission(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const payload of [
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'user',
+        username: 'admin\nroot',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+        roles: ['Admin', '   '],
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        uuid: '',
+      },
+      action: 'read',
+    },
+  ]) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/permissions/check',
+      payload,
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
 test('permission check endpoint returns fail-closed details', async () => {
   const server = buildServer(
     config,
