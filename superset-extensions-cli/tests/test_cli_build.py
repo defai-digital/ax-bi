@@ -3320,6 +3320,52 @@ def test_clean_dist_frontend_rejects_changed_directory(
 
 
 @pytest.mark.unit
+def test_clean_dist_frontend_rejects_changed_parent(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test clean_dist_frontend refuses a directory moved under a new parent."""
+    from superset_extensions_cli import cli
+    from superset_extensions_cli.cli import clean_dist_frontend
+
+    dist_dir = isolated_filesystem / "dist"
+    frontend_dir = dist_dir / "frontend"
+    frontend_dir.mkdir(parents=True)
+    (frontend_dir / "artifact.js").write_text("old")
+    saved_dist_dir = isolated_filesystem / "saved-dist"
+    replacement_dist_dir = isolated_filesystem / "replacement-dist"
+    original_get_read_parent_identity = cli.get_read_parent_identity
+    parent_reads = 0
+
+    def replace_parent_after_initial_identity(path):
+        nonlocal parent_reads
+        parent_identity = original_get_read_parent_identity(path)
+        if path == frontend_dir:
+            parent_reads += 1
+            if parent_reads == 1:
+                dist_dir.rename(saved_dist_dir)
+                replacement_dist_dir.mkdir()
+                (saved_dist_dir / "frontend").rename(replacement_dist_dir / "frontend")
+                replacement_dist_dir.rename(dist_dir)
+        return parent_identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_read_parent_identity",
+        replace_parent_after_initial_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean dist/frontend directory: path changed",
+    ):
+        clean_dist_frontend(isolated_filesystem)
+
+    assert not (saved_dist_dir / "frontend").exists()
+    assert_file_exists(frontend_dir / "artifact.js")
+
+
+@pytest.mark.unit
 def test_run_frontend_build_with_output_messages(isolated_filesystem):
     """Test run_frontend_build produces expected output messages."""
     from superset_extensions_cli.cli import run_frontend_build

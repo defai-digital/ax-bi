@@ -709,6 +709,7 @@ def remove_output_directory(
     expected_identity: tuple[int, int, int, int] | None = None,
     *,
     allow_content_changes: bool = True,
+    expected_parent_identity: tuple[int, int] | None = None,
 ) -> None:
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
@@ -744,6 +745,12 @@ def remove_output_directory(
     directory_identity = get_directory_path_identity(path)
     if directory_identity is None:
         raise click.ClickException(f"Refusing to clean {label}: path is unsafe.")
+    parent_identity = get_read_parent_identity(path)
+    if parent_identity is None or (
+        expected_parent_identity is not None
+        and parent_identity != expected_parent_identity
+    ):
+        raise click.ClickException(f"Refusing to clean {label}: path changed.")
     if (
         expected_identity is not None
         and directory_identity != expected_identity
@@ -753,7 +760,10 @@ def remove_output_directory(
     ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
-        if get_directory_path_identity(path) != directory_identity:
+        if (
+            get_read_parent_identity(path) != parent_identity
+            or get_directory_path_identity(path) != directory_identity
+        ):
             raise click.ClickException(f"Refusing to clean {label}: path changed.")
         shutil.rmtree(path)
     except click.ClickException:
