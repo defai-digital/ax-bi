@@ -3660,9 +3660,23 @@ function isRisonToken(value: unknown): value is string {
 
 function isListFilterValue(value: unknown): boolean {
   if (Array.isArray(value)) {
-    return value.every(isListFilterScalar);
+    return isHomogeneousListFilterArray(value);
   }
   return isListFilterScalar(value);
+}
+
+function isHomogeneousListFilterArray(value: unknown[]): boolean {
+  if (value.length === 0) {
+    return true;
+  }
+  if (!isListFilterScalar(value[0])) {
+    return false;
+  }
+
+  const scalarType = typeof value[0];
+  return value.every(
+    item => isListFilterScalar(item) && typeof item === scalarType,
+  );
 }
 
 function isListFilterScalar(value: unknown): boolean {
