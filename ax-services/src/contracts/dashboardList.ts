@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { listColumnSchema, listOrderColumnSchema } from './listColumn';
+import {
+  listColumnSchema,
+  listOrderColumnSchema,
+  listSearchSchema,
+} from './listColumn';
 
 export const DASHBOARD_LIST_CONTRACT_VERSION = 'dashboard-list.v1';
 
@@ -136,7 +140,7 @@ export const dashboardListRequestSchema = {
       items: dashboardFilterSchema,
     },
     selectColumns: listColumnSchema,
-    search: { type: 'string' },
+    search: listSearchSchema,
     orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
     page: { type: 'integer', minimum: 1 },

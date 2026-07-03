@@ -81,7 +81,8 @@
         }
       },
       "search": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^(?:$|(?=.*\\S)[^\\u0000-\\u001F\\u007F]+)$"
       },
       "orderColumn": {
         "anyOf": [

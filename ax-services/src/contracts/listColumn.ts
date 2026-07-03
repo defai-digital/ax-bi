@@ -28,3 +28,8 @@ export const listOrderColumnSchema = {
     { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
   ],
 } as const;
+
+export const listSearchSchema = {
+  type: 'string',
+  pattern: '^(?:$|(?=.*\\S)[^\\u0000-\\u001F\\u007F]+)$',
+} as const;

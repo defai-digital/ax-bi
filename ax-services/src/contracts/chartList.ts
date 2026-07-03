@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { listColumnSchema, listOrderColumnSchema } from './listColumn';
+import {
+  listColumnSchema,
+  listOrderColumnSchema,
+  listSearchSchema,
+} from './listColumn';
 
 export const CHART_LIST_CONTRACT_VERSION = 'chart-list.v1';
 
@@ -134,7 +138,7 @@ export const chartListRequestSchema = {
       items: chartFilterSchema,
     },
     selectColumns: listColumnSchema,
-    search: { type: 'string' },
+    search: listSearchSchema,
     orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
     page: { type: 'integer', minimum: 1 },

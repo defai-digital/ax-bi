@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { listColumnSchema, listOrderColumnSchema } from './listColumn';
+import {
+  listColumnSchema,
+  listOrderColumnSchema,
+  listSearchSchema,
+} from './listColumn';
 
 export const TASK_LIST_CONTRACT_VERSION = 'task-list.v1';
 
@@ -128,7 +132,7 @@ export const taskListRequestSchema = {
       items: taskFilterSchema,
     },
     selectColumns: listColumnSchema,
-    search: { type: 'string' },
+    search: listSearchSchema,
     orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
     page: { type: 'integer', minimum: 1 },
