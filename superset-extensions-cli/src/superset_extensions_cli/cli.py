@@ -1183,7 +1183,7 @@ def require_optional_directory(path: Path, label: str) -> None:
         if directory_identity is None:
             raise click.ClickException(f"{label} path is no longer safe.")
         current_identity = get_directory_path_identity(path)
-        if current_identity is None or current_identity[:2] != directory_identity[:2]:
+        if current_identity != directory_identity:
             raise click.ClickException(f"{label} path changed during validation.")
 
 
@@ -1196,7 +1196,7 @@ def optional_directory_exists(path: Path, label: str) -> bool:
     if directory_identity is None:
         raise click.ClickException(f"{label} path is no longer safe.")
     current_identity = get_directory_path_identity(path)
-    if current_identity is None or current_identity[:2] != directory_identity[:2]:
+    if current_identity != directory_identity:
         raise click.ClickException(f"{label} path changed during validation.")
     return True
 

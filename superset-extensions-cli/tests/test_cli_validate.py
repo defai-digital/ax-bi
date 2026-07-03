@@ -121,6 +121,41 @@ def test_optional_directory_exists_rejects_changed_path(
 
 
 @pytest.mark.unit
+def test_optional_directory_exists_rejects_changed_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test optional directory helper refuses entry changes during validation."""
+    source_dir = isolated_filesystem / "frontend"
+    source_dir.mkdir()
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def add_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                (source_dir / "added.txt").write_text("new entry")
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        add_file_after_first_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="frontend path changed during validation",
+    ):
+        optional_directory_exists(source_dir, "frontend")
+
+    assert (source_dir / "added.txt").read_text() == "new entry"
+
+
+@pytest.mark.unit
 def test_require_optional_directory_rejects_changed_path(
     isolated_filesystem,
     monkeypatch,
@@ -155,6 +190,41 @@ def test_require_optional_directory_rejects_changed_path(
 
     assert saved_dir.is_dir()
     assert source_dir.is_dir()
+
+
+@pytest.mark.unit
+def test_require_optional_directory_rejects_changed_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test required directory validation refuses entry changes."""
+    source_dir = isolated_filesystem / "backend"
+    source_dir.mkdir()
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def add_file_after_first_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == source_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                (source_dir / "added.txt").write_text("new entry")
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        add_file_after_first_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="backend path changed during validation",
+    ):
+        require_optional_directory(source_dir, "backend")
+
+    assert (source_dir / "added.txt").read_text() == "new entry"
 
 
 @pytest.mark.unit
