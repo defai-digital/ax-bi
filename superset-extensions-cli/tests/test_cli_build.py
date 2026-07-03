@@ -271,6 +271,38 @@ def test_init_frontend_deps_skips_when_node_modules_exists(
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_symlinked_node_modules(
+    mock_run, isolated_filesystem
+):
+    """Test init_frontend_deps refuses symlinked node_modules directories."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    outside_node_modules = isolated_filesystem / "outside-node-modules"
+    outside_node_modules.mkdir()
+    (frontend_dir / "node_modules").symlink_to(outside_node_modules)
+
+    with pytest.raises(click.ClickException, match="node_modules path is a symlink"):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
+def test_init_frontend_deps_rejects_node_modules_file(mock_run, isolated_filesystem):
+    """Test init_frontend_deps refuses non-directory node_modules paths."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    (frontend_dir / "node_modules").write_text("not a directory")
+
+    with pytest.raises(click.ClickException, match="node_modules path exists"):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_init_frontend_deps_runs_npm_i_when_missing(
     mock_validate_npm, mock_run, isolated_filesystem

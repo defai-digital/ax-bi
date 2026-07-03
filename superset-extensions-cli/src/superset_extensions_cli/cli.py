@@ -120,6 +120,13 @@ def init_frontend_deps(frontend_dir: Path) -> None:
     exists, otherwise run `npm i`.
     """
     node_modules = frontend_dir / "node_modules"
+    if node_modules.is_symlink():
+        raise click.ClickException("frontend/node_modules path is a symlink.")
+    if node_modules.exists() and not node_modules.is_dir():
+        raise click.ClickException(
+            "frontend/node_modules path exists but is not a directory."
+        )
+
     if not node_modules.exists():
         package_lock = frontend_dir / "package-lock.json"
         if package_lock.exists():
