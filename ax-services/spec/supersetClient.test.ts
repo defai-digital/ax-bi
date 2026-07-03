@@ -235,6 +235,66 @@ test('checkPermission fails closed for invalid request shapes', async () => {
   expect(fetchCalled).toBe(false);
 });
 
+test('checkPermission fails closed for extra authorization fields', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  for (const request of [
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+      tenant: 'ax',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+        tenant: 'ax',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+        slug: 'sales',
+      },
+      action: 'read',
+    },
+  ]) {
+    const result = await client.checkPermission(
+      request as unknown as Parameters<SupersetClient['checkPermission']>[0],
+    );
+
+    expect(result).toEqual({
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      allowed: false,
+      error: 'authorization request contains invalid request shape',
+    });
+  }
+
+  expect(fetchCalled).toBe(false);
+});
+
 test('checkPermission fails closed for unsafe authorization strings', async () => {
   let fetchCalled = false;
   global.fetch = async () => {

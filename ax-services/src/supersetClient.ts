@@ -3510,9 +3510,17 @@ function hasValidAuthorizationRequestShape(
 
   const { principal, resource } = request;
   return (
+    hasOnlyKeys(request, [
+      'contractVersion',
+      'principal',
+      'resource',
+      'action',
+    ]) &&
     request['contractVersion'] === AUTHORIZATION_CONTRACT_VERSION &&
     isRecord(principal) &&
+    hasOnlyKeys(principal, ['type', 'userId', 'username', 'roles']) &&
     isRecord(resource) &&
+    hasOnlyKeys(resource, ['type', 'id', 'uuid']) &&
     isPrincipalType(principal['type']) &&
     isOptionalCleanString(principal['username']) &&
     isOptionalCleanStringArray(principal['roles']) &&
@@ -3543,6 +3551,13 @@ function isPermissionAction(value: unknown): boolean {
     value === 'read' ||
     value === 'write'
   );
+}
+
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every(key => allowedKeys.includes(key));
 }
 
 function isOptionalSupersetId(value: unknown): boolean {
