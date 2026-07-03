@@ -196,6 +196,12 @@ test('buildConfig rejects invalid Superset URL', () => {
   expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'not a url' })).toThrow(
     'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
   );
+  expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'http:dashboard' })).toThrow(
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+  );
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https:/dashboard' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
 });
 
 test('buildConfig rejects unsupported Superset URL protocols', () => {

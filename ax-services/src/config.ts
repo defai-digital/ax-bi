@@ -156,9 +156,17 @@ function parseSupersetTimeout(value: string | undefined): number {
 
 function normalizeSupersetBaseUrl(value: string): string {
   try {
-    const url = new URL(value);
+    const trimmed = value.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      throw new Error('explicit HTTP(S) authority required');
+    }
+
+    const url = new URL(trimmed);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('unsupported protocol');
+    }
+    if (url.hostname === '') {
+      throw new Error('host required');
     }
     if (url.username !== '' || url.password !== '') {
       throw new Error('credentials not allowed');
