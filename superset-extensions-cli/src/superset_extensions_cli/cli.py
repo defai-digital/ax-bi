@@ -2231,11 +2231,14 @@ def dev(ctx: click.Context) -> None:
             rebuild_backend(cwd)
 
     # Build watch message based on existing directories
-    watch_dirs = []
-    if optional_directory_exists(frontend_dir, "frontend"):
-        watch_dirs.append(str(frontend_dir))
-    if optional_directory_exists(backend_dir, "backend"):
-        watch_dirs.append(str(backend_dir))
+    watch_targets: list[tuple[str, Path, tuple[int, int, int, int]]] = []
+    for label, directory in (("frontend", frontend_dir), ("backend", backend_dir)):
+        if optional_directory_exists(directory, label):
+            directory_identity = get_directory_path_identity(directory)
+            if directory_identity is None:
+                raise click.ClickException(f"{label} path is no longer safe.")
+            watch_targets.append((label, directory, directory_identity))
+    watch_dirs = [str(directory) for _, directory, _ in watch_targets]
 
     if watch_dirs:
         click.secho(f"👀 Watching for changes in: {', '.join(watch_dirs)}", fg="green")
@@ -2245,14 +2248,17 @@ def dev(ctx: click.Context) -> None:
     observer = Observer()
 
     # Only set up watchers for directories that exist
-    if optional_directory_exists(frontend_dir, "frontend"):
-        frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
-        observer.schedule(frontend_handler, str(frontend_dir), recursive=True)
-
-    if optional_directory_exists(backend_dir, "backend"):
-        backend_handler = FileSystemEventHandler()
-        backend_handler.on_any_event = lambda event: backend_watcher()
-        observer.schedule(backend_handler, str(backend_dir), recursive=True)
+    for label, directory, directory_identity in watch_targets:
+        current_identity = get_directory_path_identity(directory)
+        if current_identity is None or current_identity[:2] != directory_identity[:2]:
+            raise click.ClickException(f"{label} path changed before watch setup.")
+        if label == "frontend":
+            frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
+            observer.schedule(frontend_handler, str(directory), recursive=True)
+        else:
+            backend_handler = FileSystemEventHandler()
+            backend_handler.on_any_event = lambda event: backend_watcher()
+            observer.schedule(backend_handler, str(directory), recursive=True)
 
     if watch_dirs:
         observer.start()
