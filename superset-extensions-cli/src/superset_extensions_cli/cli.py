@@ -167,6 +167,33 @@ def ensure_output_directory(path: Path, label: str) -> None:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
 
+def ensure_output_file_parent(path: Path, root: Path, label: str) -> None:
+    """Create an output file parent after validating existing ancestors."""
+    if not path.is_relative_to(root):
+        raise click.ClickException(
+            f"Refusing to write {label}: path is outside {root}."
+        )
+
+    parent = path.parent
+    current = parent
+    while current != root:
+        if current.is_symlink():
+            raise click.ClickException(
+                f"Refusing to write {label}: parent directory is a symlink: {current}."
+            )
+        if current.exists() and not current.is_dir():
+            raise click.ClickException(
+                f"Refusing to write {label}: parent exists but is not a directory: "
+                f"{current}."
+            )
+        current = current.parent
+
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except OSError as ex:
+        raise click.ClickException(f"Failed to create parent for {label}: {ex}") from ex
+
+
 def validate_output_file(path: Path, label: str) -> None:
     """Validate that an output file path is safe to write."""
     if path.is_symlink():
@@ -411,9 +438,18 @@ def copy_frontend_dist(cwd: Path) -> str:
     ensure_output_directory(frontend_output_dir, "dist/frontend directory")
     ensure_output_directory(frontend_dist_output_dir, "dist/frontend/dist directory")
 
-    for f in frontend_files:
-        tgt = frontend_dist_output_dir / f.relative_to(frontend_dist)
-        tgt.parent.mkdir(parents=True, exist_ok=True)
+    copy_targets = [
+        (f, frontend_dist_output_dir / f.relative_to(frontend_dist))
+        for f in frontend_files
+    ]
+    for _, tgt in copy_targets:
+        ensure_output_file_parent(
+            tgt,
+            frontend_dist_output_dir,
+            f"frontend asset {tgt.relative_to(frontend_dist_output_dir)}",
+        )
+
+    for f, tgt in copy_targets:
         shutil.copy2(f, tgt)
 
     return remote_entries[0]
@@ -485,6 +521,8 @@ def copy_backend_files(cwd: Path) -> None:
         raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
+    copy_targets: list[tuple[Path, Path]] = []
+
     # Process include patterns
     for pattern in include_patterns:
         # Include patterns are only meant to select files within the backend
@@ -524,9 +562,17 @@ def copy_backend_files(cwd: Path) -> None:
             if should_exclude:
                 continue
 
-            tgt = backend_output_dir / relative_path
-            tgt.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(f, tgt)
+            copy_targets.append((f, backend_output_dir / relative_path))
+
+    for _, tgt in copy_targets:
+        ensure_output_file_parent(
+            tgt,
+            backend_output_dir,
+            f"backend file {tgt.relative_to(backend_output_dir)}",
+        )
+
+    for f, tgt in copy_targets:
+        shutil.copy2(f, tgt)
 
 
 def rebuild_frontend(cwd: Path, frontend_dir: Path) -> str | None:

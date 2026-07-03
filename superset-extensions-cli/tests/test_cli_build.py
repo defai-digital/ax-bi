@@ -1062,6 +1062,46 @@ exclude = []
 
 
 @pytest.mark.unit
+def test_copy_backend_files_rejects_nested_symlinked_backend_output_parent(
+    isolated_filesystem,
+):
+    """Test copy_backend_files refuses nested symlinked output parents."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    nested_src = backend_src / "nested"
+    nested_src.mkdir(parents=True)
+    (backend_src / "top.py").write_text("# top")
+    (nested_src / "module.py").write_text("# nested")
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+include = [
+    "src/test_org/test_ext/**/*.py",
+]
+exclude = []
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    output_pkg = isolated_filesystem / "dist" / "backend" / "src" / "test_org"
+    output_pkg.mkdir(parents=True)
+    outside_output = isolated_filesystem / "outside-nested-backend-output"
+    outside_output.mkdir()
+    (output_pkg / "test_ext").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write backend file .*parent directory is a symlink",
+    ):
+        copy_backend_files(isolated_filesystem)
+
+    assert not (outside_output / "top.py").exists()
+    assert not (outside_output / "nested" / "module.py").exists()
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"
@@ -1255,6 +1295,33 @@ def test_copy_frontend_dist_rejects_symlinked_frontend_dist_output_root(
         copy_frontend_dist(isolated_filesystem)
 
     assert not (outside_output / "remoteEntry.abc123.js").exists()
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_rejects_nested_symlinked_output_parent(
+    isolated_filesystem,
+):
+    """Test copy_frontend_dist refuses nested symlinked output parents."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    assets_dir = frontend_dist / "assets"
+    assets_dir.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (assets_dir / "style.css").write_text("css content")
+
+    output_dist = isolated_filesystem / "dist" / "frontend" / "dist"
+    output_dist.mkdir(parents=True)
+    outside_output = isolated_filesystem / "outside-nested-frontend-output"
+    outside_output.mkdir()
+    (output_dist / "assets").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write frontend asset .*parent directory is a symlink",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (output_dist / "remoteEntry.abc123.js").exists()
+    assert not (outside_output / "style.css").exists()
 
 
 @pytest.mark.unit
