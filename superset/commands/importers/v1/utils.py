@@ -18,7 +18,7 @@
 import logging
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any, Optional
+from typing import Any
 from zipfile import ZipFile
 
 import yaml
@@ -93,7 +93,7 @@ def load_metadata(contents: dict[str, str]) -> dict[str, str]:
 
 
 def validate_metadata_type(
-    metadata: Optional[dict[str, str]],
+    metadata: dict[str, str] | None,
     type_: str,
     exceptions: list[ValidationError],
 ) -> None:
