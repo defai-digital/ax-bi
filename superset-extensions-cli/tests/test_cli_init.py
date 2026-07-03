@@ -587,6 +587,55 @@ def test_init_refuses_cleanup_when_scaffold_root_content_changes(
 
 
 @pytest.mark.cli
+def test_init_refuses_cleanup_when_nested_scaffold_content_changes(
+    cli_runner,
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test init does not clean scaffold root after unexpected nested changes."""
+    target_dir = isolated_filesystem / "test-extension"
+    nested_external_file = target_dir / "frontend" / "src" / "external.tsx"
+    original_write_scaffold_file = cli.write_scaffold_file
+
+    def change_nested_before_scaffold_failure(path, label, content):
+        if label == "backend/pyproject.toml":
+            raise click.ClickException("scaffold failed")
+        original_write_scaffold_file(path, label, content)
+        if label == "frontend/src/index.tsx":
+            nested_external_file.write_text("external")
+
+    monkeypatch.setattr(
+        "superset_extensions_cli.cli.write_scaffold_file",
+        change_nested_before_scaffold_failure,
+    )
+
+    result = cli_runner.invoke(
+        app,
+        [
+            "init",
+            "--publisher",
+            "test-org",
+            "--name",
+            "test-extension",
+            "--display-name",
+            "Test Extension",
+            "--version",
+            "1.0.0",
+            "--license",
+            "Apache-2.0",
+            "--frontend",
+            "--backend",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Refusing to clean extension directory: path changed" in result.output
+    assert "scaffold failed" in result.output
+    assert_file_exists(target_dir / "frontend" / "src" / "index.tsx")
+    assert nested_external_file.read_text() == "external"
+
+
+@pytest.mark.cli
 def test_extension_json_content_is_correct(
     cli_runner, isolated_filesystem, cli_input_both
 ):

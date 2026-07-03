@@ -3020,7 +3020,7 @@ def init(
 
     created_target_dir = False
     target_dir_identity: tuple[int, int, int, int] | None = None
-    expected_target_entries: set[str] = set()
+    expected_scaffold_entries: dict[Path, set[str]] = {}
 
     def refresh_target_dir_identity() -> None:
         nonlocal target_dir_identity
@@ -3030,6 +3030,14 @@ def init(
                 "Refusing to create extension directory: path changed."
             )
 
+    def track_scaffold_directory(path: Path) -> None:
+        expected_scaffold_entries.setdefault(path, set())
+        if path != target_dir:
+            expected_scaffold_entries.setdefault(path.parent, set()).add(path.name)
+
+    def track_scaffold_file(path: Path) -> None:
+        expected_scaffold_entries.setdefault(path.parent, set()).add(path.name)
+
     def ensure_target_entries_unchanged() -> None:
         if (
             not target_dir.exists()
@@ -3037,16 +3045,22 @@ def init(
             or not target_dir.is_dir()
         ):
             return
-        current_entries = {entry.name for entry in target_dir.iterdir()}
-        if current_entries != expected_target_entries:
-            raise click.ClickException(
-                "Refusing to clean extension directory: path changed."
-            )
+        for directory, expected_entries in expected_scaffold_entries.items():
+            if not directory.is_dir() or directory.is_symlink():
+                raise click.ClickException(
+                    "Refusing to clean extension directory: path changed."
+                )
+            current_entries = {entry.name for entry in directory.iterdir()}
+            if current_entries != expected_entries:
+                raise click.ClickException(
+                    "Refusing to clean extension directory: path changed."
+                )
 
     try:
         # Create base directory
         create_scaffold_directory(target_dir, "extension directory")
         created_target_dir = True
+        track_scaffold_directory(target_dir)
         refresh_target_dir_identity()
         extension_json = env.get_template("extension.json.j2").render(ctx)
         write_scaffold_file(
@@ -3054,14 +3068,14 @@ def init(
             "extension.json",
             extension_json,
         )
-        expected_target_entries.add("extension.json")
+        track_scaffold_file(target_dir / "extension.json")
         refresh_target_dir_identity()
         click.secho("✅ Created extension.json", fg="green")
 
         # Create .gitignore
         gitignore = env.get_template("gitignore.j2").render(ctx)
         write_scaffold_file(target_dir / ".gitignore", ".gitignore", gitignore)
-        expected_target_entries.add(".gitignore")
+        track_scaffold_file(target_dir / ".gitignore")
         refresh_target_dir_identity()
         click.secho("✅ Created .gitignore", fg="green")
 
@@ -3069,10 +3083,11 @@ def init(
         if include_frontend:
             frontend_dir = target_dir / "frontend"
             create_scaffold_directory(frontend_dir, "frontend directory")
-            expected_target_entries.add("frontend")
+            track_scaffold_directory(frontend_dir)
             refresh_target_dir_identity()
             frontend_src_dir = frontend_dir / "src"
             create_scaffold_directory(frontend_src_dir, "frontend src directory")
+            track_scaffold_directory(frontend_src_dir)
 
             # frontend files
             package_json = env.get_template("frontend/package.json.j2").render(ctx)
@@ -3081,6 +3096,7 @@ def init(
                 "frontend/package.json",
                 package_json,
             )
+            track_scaffold_file(frontend_dir / "package.json")
             webpack_config = env.get_template("frontend/webpack.config.js.j2").render(
                 ctx
             )
@@ -3089,33 +3105,38 @@ def init(
                 "frontend/webpack.config.js",
                 webpack_config,
             )
+            track_scaffold_file(frontend_dir / "webpack.config.js")
             tsconfig_json = env.get_template("frontend/tsconfig.json.j2").render(ctx)
             write_scaffold_file(
                 frontend_dir / "tsconfig.json",
                 "frontend/tsconfig.json",
                 tsconfig_json,
             )
+            track_scaffold_file(frontend_dir / "tsconfig.json")
             index_tsx = env.get_template("frontend/src/index.tsx.j2").render(ctx)
             write_scaffold_file(
                 frontend_src_dir / "index.tsx",
                 "frontend/src/index.tsx",
                 index_tsx,
             )
+            track_scaffold_file(frontend_src_dir / "index.tsx")
             click.secho("✅ Created frontend folder structure", fg="green")
 
         # Initialize backend files with publisher.name structure
         if include_backend:
             backend_dir = target_dir / "backend"
             create_scaffold_directory(backend_dir, "backend directory")
-            expected_target_entries.add("backend")
+            track_scaffold_directory(backend_dir)
             refresh_target_dir_identity()
             backend_src_dir = backend_dir / "src"
             create_scaffold_directory(backend_src_dir, "backend src directory")
+            track_scaffold_directory(backend_src_dir)
 
             # Create publisher directory (e.g., my_org)
             publisher_snake = kebab_to_snake_case(names["publisher"])
             publisher_dir = backend_src_dir / publisher_snake
             create_scaffold_directory(publisher_dir, "backend publisher directory")
+            track_scaffold_directory(publisher_dir)
 
             # Create extension package directory (e.g., my_org/dashboard_widgets)
             name_snake = kebab_to_snake_case(names["name"])
@@ -3124,6 +3145,7 @@ def init(
                 extension_package_dir,
                 "backend extension package directory",
             )
+            track_scaffold_directory(extension_package_dir)
 
             # backend files
             pyproject_toml = env.get_template("backend/pyproject.toml.j2").render(ctx)
@@ -3132,6 +3154,7 @@ def init(
                 "backend/pyproject.toml",
                 pyproject_toml,
             )
+            track_scaffold_file(backend_dir / "pyproject.toml")
 
             # Extension package files
             entrypoint_py = env.get_template(
@@ -3142,6 +3165,7 @@ def init(
                 "backend entrypoint.py",
                 entrypoint_py,
             )
+            track_scaffold_file(extension_package_dir / "entrypoint.py")
 
             click.secho("✅ Created backend folder structure", fg="green")
     except click.ClickException as ex:
