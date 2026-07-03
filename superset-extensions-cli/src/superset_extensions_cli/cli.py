@@ -311,9 +311,10 @@ def run_frontend_build(frontend_dir: Path) -> subprocess.CompletedProcess[str]:
 def copy_frontend_dist(cwd: Path) -> str:
     dist_dir = cwd / "dist"
     frontend_dist = (cwd / "frontend" / "dist").resolve()
-    remote_entry: str | None = None
+    frontend_files: list[Path] = []
+    remote_entries: list[str] = []
 
-    for f in frontend_dist.rglob("*"):
+    for f in sorted(frontend_dist.rglob("*")):
         if not f.is_file():
             continue
         resolved = f.resolve()
@@ -323,15 +324,23 @@ def copy_frontend_dist(cwd: Path) -> str:
                 f"frontend dist directory {frontend_dist}."
             )
         if REMOTE_ENTRY_REGEX.match(f.name):
-            remote_entry = f.name
+            remote_entries.append(f.name)
+        frontend_files.append(f)
+
+    if not remote_entries:
+        click.secho("❌ No remote entry file found.", err=True, fg="red")
+        sys.exit(1)
+    if len(remote_entries) > 1:
+        raise click.ClickException(
+            f"Multiple remote entry files found: {', '.join(sorted(remote_entries))}."
+        )
+
+    for f in frontend_files:
         tgt = dist_dir / "frontend" / "dist" / f.relative_to(frontend_dist)
         tgt.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, tgt)
 
-    if not remote_entry:
-        click.secho("❌ No remote entry file found.", err=True, fg="red")
-        sys.exit(1)
-    return remote_entry
+    return remote_entries[0]
 
 
 def get_backend_build_patterns(

@@ -1038,6 +1038,24 @@ def test_copy_frontend_dist_rejects_symlink_outside_dist(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_copy_frontend_dist_rejects_multiple_remote_entries(isolated_filesystem):
+    """Test copy_frontend_dist rejects ambiguous remote entry outputs."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    frontend_dist.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (frontend_dist / "remoteEntry.xyz789.js").write_text("remote entry content")
+    (frontend_dist / "main.js").write_text("main content")
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="Multiple remote entry files found"):
+        copy_frontend_dist(isolated_filesystem)
+
+    copied_main = isolated_filesystem / "dist" / "frontend" / "dist" / "main.js"
+    assert not copied_main.exists()
+
+
+@pytest.mark.unit
 def test_copy_frontend_dist_exits_when_no_remote_entry(isolated_filesystem):
     """Test copy_frontend_dist exits when no remoteEntry file found."""
     # Create frontend/dist without remoteEntry file
