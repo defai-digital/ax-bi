@@ -338,6 +338,21 @@ def test_write_json_rejects_symlinked_parent(isolated_filesystem):
     assert not (outside_dir / "metadata.json").exists()
 
 
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_ancestor(isolated_filesystem):
+    """Test write_json refuses to write below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_json(output_dir / "nested" / "metadata.json", {"name": "updated"})
+
+    assert not (outside_nested / "metadata.json").exists()
+
+
 # Write TOML Tests
 @pytest.mark.unit
 def test_write_toml_round_trip(isolated_filesystem):
@@ -380,3 +395,21 @@ def test_write_toml_rejects_symlinked_parent(isolated_filesystem):
         write_toml(output_dir / "pyproject.toml", {"project": {"name": "updated"}})
 
     assert not (outside_dir / "pyproject.toml").exists()
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_ancestor(isolated_filesystem):
+    """Test write_toml refuses to write below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_toml(
+            output_dir / "nested" / "pyproject.toml",
+            {"project": {"name": "x"}},
+        )
+
+    assert not (outside_nested / "pyproject.toml").exists()
