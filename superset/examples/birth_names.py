@@ -137,14 +137,13 @@ def _add_table_metrics(datasource: SqlaTable) -> None:
         columns.append(
             TableColumn(
                 column_name="num_california",
-                expression="CASE WHEN %s = 'CA' THEN %s ELSE 0 END"
-                % (col_state, col_num),
+                expression=f"CASE WHEN {col_state} = 'CA' THEN {col_num} ELSE 0 END",
             )
         )
 
     if not any(col.metric_name == "sum__num" for col in metrics):
         col = str(column("num").compile(db.engine))
-        metrics.append(SqlMetric(metric_name="sum__num", expression="SUM(%s)" % col))
+        metrics.append(SqlMetric(metric_name="sum__num", expression=f"SUM({col})"))
 
     for col in columns:
         if col.column_name == "ds":  # type: ignore
