@@ -853,6 +853,31 @@ test('searchAssets rejects invalid request shapes before querying Superset', asy
   expect(fetchCalled).toBe(false);
 });
 
+test('searchAssets rejects extra request fields before querying Superset', async () => {
+  let fetchCalled = false;
+  global.fetch = async () => {
+    fetchCalled = true;
+    throw new Error('unexpected fetch');
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+    tenant: 'ax',
+  } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
+
+  expect(result).toEqual({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    assets: [],
+    warnings: ['asset search request contains invalid request shape'],
+  });
+  expect(fetchCalled).toBe(false);
+});
+
 test('searchAssets rejects wrong request contract versions before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {

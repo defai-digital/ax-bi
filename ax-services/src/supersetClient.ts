@@ -3709,6 +3709,13 @@ function hasValidAssetSearchRequestShape(
 ): request is AssetSearchRequest {
   return (
     isRecord(request) &&
+    hasOnlyKeys(request, [
+      'contractVersion',
+      'query',
+      'assetTypes',
+      'includeCertifiedOnly',
+      'limit',
+    ]) &&
     request['contractVersion'] === ASSET_SEARCH_CONTRACT_VERSION &&
     typeof request['query'] === 'string' &&
     Array.isArray(request['assetTypes']) &&
