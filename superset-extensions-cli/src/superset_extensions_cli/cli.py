@@ -218,6 +218,32 @@ def validate_output_file_parent(path: Path, root: Path, label: str) -> None:
         raise click.ClickException(
             f"Refusing to write {label}: path is outside {root}."
         )
+    symlinked_root = next(
+        (
+            parent
+            for parent in (root, *root.parents)
+            if parent.exists() and parent.is_symlink()
+        ),
+        None,
+    )
+    if symlinked_root is not None:
+        raise click.ClickException(
+            f"Refusing to write {label}: parent directory is a symlink: "
+            f"{symlinked_root}."
+        )
+    invalid_root_parent = next(
+        (
+            parent
+            for parent in (root, *root.parents)
+            if parent.exists() and not parent.is_dir()
+        ),
+        None,
+    )
+    if invalid_root_parent is not None:
+        raise click.ClickException(
+            f"Refusing to write {label}: parent exists but is not a directory: "
+            f"{invalid_root_parent}."
+        )
     if path.is_symlink():
         raise click.ClickException(f"Refusing to write {label}: path is a symlink.")
     if path.exists() and not path.is_file():
@@ -650,14 +676,21 @@ def copy_frontend_dist(cwd: Path) -> str:
             f"Multiple remote entry files found: {', '.join(sorted(remote_entries))}."
         )
 
-    ensure_output_directory(dist_dir, "dist directory")
-    ensure_output_directory(frontend_output_dir, "dist/frontend directory")
-    ensure_output_directory(frontend_dist_output_dir, "dist/frontend/dist directory")
-
     copy_targets = [
         (f, frontend_dist_output_dir / f.relative_to(frontend_dist))
         for f in frontend_files
     ]
+    for _, tgt in copy_targets:
+        validate_output_file_parent(
+            tgt,
+            frontend_dist_output_dir,
+            f"frontend asset {tgt.relative_to(frontend_dist_output_dir)}",
+        )
+
+    ensure_output_directory(dist_dir, "dist directory")
+    ensure_output_directory(frontend_output_dir, "dist/frontend directory")
+    ensure_output_directory(frontend_dist_output_dir, "dist/frontend/dist directory")
+
     for _, tgt in copy_targets:
         ensure_output_file_parent(
             tgt,

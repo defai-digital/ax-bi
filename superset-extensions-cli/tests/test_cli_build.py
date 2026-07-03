@@ -1410,7 +1410,7 @@ exclude = []
 
     with pytest.raises(
         click.ClickException,
-        match="Refusing to write dist/backend directory: path is a symlink",
+        match="Refusing to write backend file .*parent directory is a symlink",
     ):
         copy_backend_files(isolated_filesystem)
 
@@ -1703,7 +1703,7 @@ def test_copy_frontend_dist_rejects_symlinked_frontend_output_root(
 
     with pytest.raises(
         click.ClickException,
-        match="Refusing to write dist/frontend directory: path is a symlink",
+        match="Refusing to write frontend asset .*parent directory is a symlink",
     ):
         copy_frontend_dist(isolated_filesystem)
 
@@ -1728,7 +1728,7 @@ def test_copy_frontend_dist_rejects_symlinked_frontend_dist_output_root(
 
     with pytest.raises(
         click.ClickException,
-        match="Refusing to write dist/frontend/dist directory: path is a symlink",
+        match="Refusing to write frontend asset .*parent directory is a symlink",
     ):
         copy_frontend_dist(isolated_filesystem)
 
@@ -1760,6 +1760,32 @@ def test_copy_frontend_dist_rejects_nested_symlinked_output_parent(
 
     assert not (output_dist / "remoteEntry.abc123.js").exists()
     assert not (outside_output / "style.css").exists()
+
+
+@pytest.mark.unit
+def test_copy_frontend_dist_validates_targets_before_creating_output(
+    isolated_filesystem,
+):
+    """Test frontend target validation runs before creating output directories."""
+    frontend_dist = isolated_filesystem / "frontend" / "dist"
+    assets_dir = frontend_dist / "assets"
+    assets_dir.mkdir(parents=True)
+    (frontend_dist / "remoteEntry.abc123.js").write_text("remote entry content")
+    (assets_dir / "style.css").write_text("css content")
+
+    output_dist_parent = isolated_filesystem / "dist" / "frontend"
+    output_dist_parent.mkdir(parents=True)
+    outside_output = isolated_filesystem / "outside-nested-frontend-output"
+    outside_output.mkdir()
+    (output_dist_parent / "dist").symlink_to(outside_output)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to write frontend asset .*parent directory is a symlink",
+    ):
+        copy_frontend_dist(isolated_filesystem)
+
+    assert not (outside_output / "assets").exists()
 
 
 @pytest.mark.unit
