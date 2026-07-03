@@ -54,7 +54,6 @@ from superset_extensions_cli.utils import (
 )
 
 REMOTE_ENTRY_REGEX = re.compile(r"^remoteEntry\..+\.js$")
-FRONTEND_DIST_REGEX = re.compile(r"/frontend/dist")
 
 
 def validate_npm() -> None:
@@ -482,10 +481,19 @@ class FrontendChangeHandler(FileSystemEventHandler):
         self.trigger_build = trigger_build
 
     def on_any_event(self, event: Any) -> None:
-        if FRONTEND_DIST_REGEX.search(event.src_path):
+        if is_frontend_dist_path(event.src_path):
             return
         click.secho(f"🔁 Frontend change detected: {event.src_path}", fg="yellow")
         self.trigger_build()
+
+
+def is_frontend_dist_path(path: str) -> bool:
+    """Return whether a watched frontend path is inside frontend/dist."""
+    parts = Path(path).parts
+    return any(
+        part == "frontend" and index + 1 < len(parts) and parts[index + 1] == "dist"
+        for index, part in enumerate(parts)
+    )
 
 
 @click.group(help="CLI for validating and bundling Superset extensions.")

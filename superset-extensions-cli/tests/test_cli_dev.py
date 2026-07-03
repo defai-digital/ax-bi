@@ -145,14 +145,21 @@ def test_frontend_change_handler_init():
 
 
 @pytest.mark.unit
-def test_frontend_change_handler_ignores_dist_changes():
+@pytest.mark.parametrize(
+    "source_path",
+    [
+        "/path/to/frontend/dist/file.js",
+        "/path/to/frontend/dist/assets/style.css",
+    ],
+)
+def test_frontend_change_handler_ignores_dist_changes(source_path):
     """Test FrontendChangeHandler ignores changes in dist directory."""
     mock_trigger = Mock()
     handler = FrontendChangeHandler(trigger_build=mock_trigger)
 
     # Create mock event with dist path
     mock_event = Mock()
-    mock_event.src_path = "/path/to/frontend/dist/file.js"
+    mock_event.src_path = source_path
 
     handler.on_any_event(mock_event)
 
@@ -167,6 +174,7 @@ def test_frontend_change_handler_ignores_dist_changes():
         "/path/to/frontend/src/component.tsx",
         "/path/to/frontend/webpack.config.js",
         "/path/to/frontend/package.json",
+        "/path/to/frontend/dist-helper/source.ts",
     ],
 )
 def test_frontend_change_handler_triggers_on_source_changes(source_path):
