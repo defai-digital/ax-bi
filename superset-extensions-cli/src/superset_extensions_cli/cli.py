@@ -129,7 +129,7 @@ def init_frontend_deps(frontend_dir: Path) -> None:
 
     if not node_modules.exists():
         package_lock = frontend_dir / "package-lock.json"
-        if package_lock.exists():
+        if optional_file_exists(package_lock, "frontend/package-lock.json"):
             click.secho("⚙️  node_modules not found, running `npm ci`…", fg="cyan")
             npm_command = ["npm", "ci"]
             error_msg = "❌ `npm ci` failed. Aborting."

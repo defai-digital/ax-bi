@@ -303,6 +303,42 @@ def test_init_frontend_deps_rejects_node_modules_file(mock_run, isolated_filesys
 
 @pytest.mark.unit
 @patch("subprocess.run")
+def test_init_frontend_deps_rejects_symlinked_package_lock(
+    mock_run, isolated_filesystem
+):
+    """Test init_frontend_deps refuses symlinked package lock files."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    outside_lock = isolated_filesystem / "outside-package-lock.json"
+    outside_lock.write_text("{}")
+    (frontend_dir / "package-lock.json").symlink_to(outside_lock)
+
+    with pytest.raises(
+        click.ClickException, match="package-lock.json path is a symlink"
+    ):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
+def test_init_frontend_deps_rejects_package_lock_directory(
+    mock_run, isolated_filesystem
+):
+    """Test init_frontend_deps refuses non-file package lock paths."""
+    frontend_dir = isolated_filesystem / "frontend"
+    frontend_dir.mkdir()
+    (frontend_dir / "package-lock.json").mkdir()
+
+    with pytest.raises(click.ClickException, match="package-lock.json path exists"):
+        init_frontend_deps(frontend_dir)
+
+    mock_run.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("subprocess.run")
 @patch("superset_extensions_cli.cli.validate_npm")
 def test_init_frontend_deps_runs_npm_i_when_missing(
     mock_validate_npm, mock_run, isolated_filesystem
