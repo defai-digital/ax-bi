@@ -203,6 +203,29 @@ def test_update_rejects_symlinked_frontend_package_before_writing(
 
 
 @pytest.mark.cli
+def test_update_rejects_symlinked_frontend_directory_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses metadata inside a symlinked frontend directory."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    frontend_dir = isolated_filesystem / "frontend"
+    outside_frontend = isolated_filesystem / "outside-frontend"
+    frontend_dir.rename(outside_frontend)
+    frontend_dir.symlink_to(outside_frontend)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "frontend path is a symlink" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert read_json(outside_frontend / "package.json")["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_rejects_symlinked_backend_pyproject_before_writing(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
@@ -225,6 +248,31 @@ def test_update_rejects_symlinked_backend_pyproject_before_writing(
     assert "path is a symlink" in result.output
     assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
     assert read_toml(outside_pyproject)["project"]["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_rejects_symlinked_backend_directory_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses metadata inside a symlinked backend directory."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    backend_dir = isolated_filesystem / "backend"
+    outside_backend = isolated_filesystem / "outside-backend"
+    backend_dir.rename(outside_backend)
+    backend_dir.symlink_to(outside_backend)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "backend path is a symlink" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+    assert (
+        read_toml(outside_backend / "pyproject.toml")["project"]["version"] == "1.0.0"
+    )
 
 
 @pytest.mark.cli

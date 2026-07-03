@@ -752,7 +752,7 @@ def validate() -> None:
 
     # Validate version and license consistency across extension.json, frontend, and backend
     mismatches: list[str] = []
-    frontend_pkg_path = cwd / "frontend" / "package.json"
+    frontend_pkg_path = frontend_dir / "package.json"
     frontend_pkg = None
     try:
         has_frontend_pkg = optional_file_exists(
@@ -873,7 +873,14 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         else extension.license
     )
 
-    frontend_pkg_path = cwd / "frontend" / "package.json"
+    frontend_dir = cwd / "frontend"
+    try:
+        require_optional_directory(frontend_dir, "frontend")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+
+    frontend_pkg_path = frontend_dir / "package.json"
     frontend_pkg = None
     try:
         has_frontend_pkg = optional_file_exists(
@@ -889,7 +896,14 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             click.secho(f"❌ {ex.message}", err=True, fg="red")
             sys.exit(1)
 
-    backend_pyproject_path = cwd / "backend" / "pyproject.toml"
+    backend_dir = cwd / "backend"
+    try:
+        require_optional_directory(backend_dir, "backend")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+
+    backend_pyproject_path = backend_dir / "pyproject.toml"
     backend_pyproject = None
     backend_project = None
     try:
