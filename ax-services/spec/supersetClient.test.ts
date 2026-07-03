@@ -65,6 +65,23 @@ test('checkHealth returns Superset status and forwards request ID', async () => 
   });
 });
 
+test('checkHealth normalizes direct caller request IDs before forwarding', async () => {
+  const seenInits: RequestInit[] = [];
+  global.fetch = async (_input, init) => {
+    seenInits.push(init ?? {});
+    return new Response('OK', { status: 200 });
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  await client.checkHealth('  request-abc  ');
+  await client.checkHealth('request abc');
+
+  expect(seenInits[0]?.headers).toEqual({
+    'x-request-id': 'request-abc',
+  });
+  expect(seenInits[1]?.headers).toEqual({});
+});
+
 test('checkPermission posts authorization request to Superset', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
