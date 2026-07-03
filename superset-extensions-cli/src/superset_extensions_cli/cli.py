@@ -467,6 +467,16 @@ def rebuild_backend(cwd: Path) -> None:
     click.secho("✅ Backend files synced", fg="green")
 
 
+def validate_bundle_output_path(path: Path) -> None:
+    """Validate that a bundle output path can be safely opened for writing."""
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to write bundle to symlink: {path}.")
+    if path.exists() and not path.is_file():
+        raise click.ClickException(
+            f"Refusing to write bundle: {path} exists but is not a file."
+        )
+
+
 class FrontendChangeHandler(FileSystemEventHandler):
     def __init__(self, trigger_build: Callable[[], None]):
         self.trigger_build = trigger_build
@@ -829,6 +839,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     try:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
+        validate_bundle_output_path(zip_path)
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in dist_dir.rglob("*"):
                 if not file.is_file():

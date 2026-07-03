@@ -311,6 +311,45 @@ def test_bundle_skips_output_file_inside_dist(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_symlink_output_path(
+    mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
+):
+    """Test bundle refuses output paths that are symlinks."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    target = isolated_filesystem / "target.supx"
+    target.write_text("original")
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.symlink_to(target)
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_path)])
+
+    assert result.exit_code == 1
+    assert "Refusing to write bundle to symlink" in result.output
+    assert target.read_text() == "original"
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_non_file_output_path(
+    mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
+):
+    """Test bundle refuses existing output paths that are not regular files."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "test-extension-1.0.0.supx"
+    output_path.mkdir()
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_dir)])
+
+    assert result.exit_code == 1
+    assert "exists but is not a file" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_short_option(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):
