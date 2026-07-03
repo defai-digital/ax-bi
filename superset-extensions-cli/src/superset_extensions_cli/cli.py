@@ -51,6 +51,7 @@ from superset_extensions_cli.utils import (
     validate_publisher,
     validate_technical_name,
     write_json,
+    write_text_atomic,
     write_toml,
 )
 
@@ -513,7 +514,7 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
         raise click.ClickException(f"Refusing to create {label}: path already exists.")
     validate_output_file(path, label)
     try:
-        path.write_text(content)
+        write_text_atomic(path, content)
     except OSError as ex:
         raise click.ClickException(f"Failed to create {label}: {ex}") from ex
 
@@ -561,8 +562,9 @@ def write_manifest(cwd: Path, manifest: Manifest) -> None:
     manifest_path = dist_dir / "manifest.json"
     validate_output_file(manifest_path, "dist/manifest.json")
     try:
-        manifest_path.write_text(
-            manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True)
+        write_text_atomic(
+            manifest_path,
+            manifest.model_dump_json(indent=2, exclude_none=True, by_alias=True),
         )
     except OSError as ex:
         raise click.ClickException(f"Failed to write dist/manifest.json: {ex}") from ex

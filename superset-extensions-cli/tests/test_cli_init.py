@@ -251,14 +251,15 @@ def test_init_reports_scaffold_file_write_errors(
     cli_runner, isolated_filesystem, monkeypatch
 ):
     """Test init reports scaffold file write failures cleanly."""
-    original_write_text = Path.write_text
+    extension_json_path = isolated_filesystem / "test-extension" / "extension.json"
+    original_replace = Path.replace
 
-    def fail_extension_json_write(path, *args, **kwargs):
-        if path == isolated_filesystem / "test-extension" / "extension.json":
+    def fail_extension_json_replace(path, target):
+        if target == extension_json_path:
             raise OSError("disk full")
-        return original_write_text(path, *args, **kwargs)
+        return original_replace(path, target)
 
-    monkeypatch.setattr(Path, "write_text", fail_extension_json_write)
+    monkeypatch.setattr(Path, "replace", fail_extension_json_replace)
 
     result = cli_runner.invoke(
         app,
@@ -281,6 +282,11 @@ def test_init_reports_scaffold_file_write_errors(
 
     assert result.exit_code == 1
     assert "Failed to create extension.json: disk full" in result.output
+    assert not extension_json_path.exists()
+    assert (
+        list((isolated_filesystem / "test-extension").glob(".extension.json.*.tmp"))
+        == []
+    )
 
 
 @pytest.mark.cli

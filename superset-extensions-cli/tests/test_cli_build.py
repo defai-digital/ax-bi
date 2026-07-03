@@ -679,20 +679,26 @@ def test_write_manifest_reports_write_errors(isolated_filesystem, monkeypatch):
         displayName="Test Extension",
         version="1.0.0",
     )
-    original_write_text = Path.write_text
+    manifest_path = isolated_filesystem / "dist" / "manifest.json"
+    manifest_path.parent.mkdir()
+    manifest_path.write_text("original manifest")
+    original_replace = Path.replace
 
-    def fail_manifest_write(path, *args, **kwargs):
-        if path == isolated_filesystem / "dist" / "manifest.json":
+    def fail_manifest_replace(path, target):
+        if target == manifest_path:
             raise OSError("disk full")
-        return original_write_text(path, *args, **kwargs)
+        return original_replace(path, target)
 
-    monkeypatch.setattr(Path, "write_text", fail_manifest_write)
+    monkeypatch.setattr(Path, "replace", fail_manifest_replace)
 
     with pytest.raises(
         click.ClickException,
         match="Failed to write dist/manifest.json: disk full",
     ):
         write_manifest(isolated_filesystem, manifest)
+
+    assert manifest_path.read_text() == "original manifest"
+    assert list(manifest_path.parent.glob(".manifest.json.*.tmp")) == []
 
 
 # Frontend Build Tests
