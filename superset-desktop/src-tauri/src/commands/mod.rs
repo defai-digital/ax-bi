@@ -31,6 +31,8 @@ pub struct AppConfig {
 }
 
 const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
+const MAX_NOTIFICATION_TITLE_CHARS: usize = 128;
+const MAX_NOTIFICATION_BODY_CHARS: usize = 1024;
 
 fn normalize_server_url(value: &str) -> Result<String, String> {
     let trimmed = value.trim();
@@ -51,6 +53,24 @@ fn normalize_server_url(value: &str) -> Result<String, String> {
     }
 
     Ok(url.as_str().trim_end_matches('/').to_string())
+}
+
+fn validate_notification_input(title: &str, body: &str) -> Result<(), String> {
+    if title.trim().is_empty() {
+        return Err("Notification title must not be empty".to_string());
+    }
+    if title.chars().count() > MAX_NOTIFICATION_TITLE_CHARS {
+        return Err(format!(
+            "Notification title must be at most {MAX_NOTIFICATION_TITLE_CHARS} characters"
+        ));
+    }
+    if body.chars().count() > MAX_NOTIFICATION_BODY_CHARS {
+        return Err(format!(
+            "Notification body must be at most {MAX_NOTIFICATION_BODY_CHARS} characters"
+        ));
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -84,6 +104,7 @@ pub async fn show_notification<R: Runtime>(
     body: String,
 ) -> Result<(), String> {
     use tauri_plugin_notification::NotificationExt;
+    validate_notification_input(&title, &body)?;
     app.notification()
         .builder()
         .title(title)
@@ -100,7 +121,7 @@ pub async fn get_version() -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{normalize_server_url, DEFAULT_SERVER_URL};
+    use super::{normalize_server_url, validate_notification_input, DEFAULT_SERVER_URL};
 
     #[test]
     fn normalizes_valid_server_urls() {
@@ -139,6 +160,23 @@ mod tests {
         assert_eq!(
             normalize_server_url("https://user:s3cr3t@superset.example.test").unwrap_err(),
             "AXBI_SERVER_URL must not include credentials"
+        );
+    }
+
+    #[test]
+    fn validates_notification_input() {
+        assert!(validate_notification_input("Job complete", "").is_ok());
+        assert_eq!(
+            validate_notification_input("   ", "body").unwrap_err(),
+            "Notification title must not be empty"
+        );
+        assert_eq!(
+            validate_notification_input(&"a".repeat(129), "body").unwrap_err(),
+            "Notification title must be at most 128 characters"
+        );
+        assert_eq!(
+            validate_notification_input("Title", &"b".repeat(1025)).unwrap_err(),
+            "Notification body must be at most 1024 characters"
         );
     }
 }
