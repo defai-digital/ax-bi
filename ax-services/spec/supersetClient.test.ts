@@ -631,6 +631,37 @@ test('searchAssets records warnings for malformed successful Superset list respo
   });
 });
 
+test('searchAssets deduplicates requested asset types before querying Superset', async () => {
+  const seenInputs: string[] = [];
+  global.fetch = async input => {
+    seenInputs.push(String(input));
+    return Response.json({
+      result: [
+        {
+          id: 1,
+          uuid: 'dashboard-uuid',
+          dashboard_title: 'Sales dashboard',
+          certified_by: null,
+        },
+      ],
+    });
+  };
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.searchAssets({
+    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+    query: 'sales',
+    assetTypes: ['dashboard', 'dashboard'],
+    includeCertifiedOnly: false,
+    limit: 10,
+  });
+
+  expect(seenInputs).toHaveLength(1);
+  expect(seenInputs[0]).toContain('/api/v1/dashboard/');
+  expect(result.assets).toHaveLength(1);
+  expect(result.warnings).toEqual([]);
+});
+
 test('searchAssets rejects invalid limits before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {

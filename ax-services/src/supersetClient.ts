@@ -571,7 +571,9 @@ export class SupersetClient
       request.assetTypes.length > 0
         ? request.assetTypes
         : (['chart', 'dashboard', 'dataset'] satisfies AssetType[]);
-    const supportedTypes = requestedTypes.filter(isSupportedSearchType);
+    const supportedTypes = [
+      ...new Set(requestedTypes.filter(isSupportedSearchType)),
+    ];
 
     if (requestedTypes.includes('metric')) {
       warnings.push('Metric search is not supported by the TypeScript path.');
