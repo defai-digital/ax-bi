@@ -1758,20 +1758,28 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         )
         sys.exit(1)
 
-    written_paths: list[tuple[Path, str]] = []
+    written_paths: list[tuple[Path, str, tuple[int, int, int, int]]] = []
     try:
         for path, label, data in pending_json_writes:
             write_json(path, data)
-            written_paths.append((path, label))
+            written_identity = get_read_path_identity(path)
+            if written_identity is None:
+                raise OSError(f"Failed to verify written {label}: unsafe path.")
+            written_paths.append((path, label, written_identity))
             updated.append(label)
 
         for path, label, data in pending_toml_writes:
             write_toml(path, data)
-            written_paths.append((path, label))
+            written_identity = get_read_path_identity(path)
+            if written_identity is None:
+                raise OSError(f"Failed to verify written {label}: unsafe path.")
+            written_paths.append((path, label, written_identity))
             updated.append(label)
     except OSError as ex:
-        for path, label in reversed(written_paths):
+        for path, label, written_identity in reversed(written_paths):
             try:
+                if get_read_path_identity(path) != written_identity:
+                    raise OSError(f"Refusing to roll back {label}: path changed.")
                 write_text_atomic(path, original_contents[path])
             except OSError as rollback_ex:
                 click.secho(

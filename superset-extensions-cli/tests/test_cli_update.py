@@ -431,6 +431,51 @@ def test_update_rolls_back_completed_writes_on_later_failure(
 
 
 @pytest.mark.cli
+def test_update_refuses_rollback_when_written_metadata_changes(
+    cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
+):
+    """Test update does not roll back a metadata file changed after writing."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    extension_json_path = isolated_filesystem / "extension.json"
+    backend_pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    replacement_json_path = isolated_filesystem / "replacement-extension.json"
+    replacement_json_path.write_text(
+        json.dumps(
+            {
+                "publisher": "replacement-org",
+                "name": "replacement-extension",
+                "displayName": "Replacement Extension",
+                "version": "9.9.9",
+                "license": "Apache-2.0",
+                "permissions": [],
+            }
+        )
+    )
+    original_replace = Path.replace
+
+    def fail_backend_write_after_extension_swap(path, target):
+        if target == backend_pyproject_path:
+            extension_json_path.unlink()
+            original_replace(replacement_json_path, extension_json_path)
+            raise OSError("disk full")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_backend_write_after_extension_swap)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "Failed to roll back extension.json" in result.output
+    assert "Refusing to roll back extension.json: path changed" in result.output
+    assert read_json(extension_json_path)["version"] == "9.9.9"
+    assert read_toml(backend_pyproject_path)["project"]["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
