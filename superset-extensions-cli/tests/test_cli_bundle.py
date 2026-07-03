@@ -354,6 +354,7 @@ def test_bundle_rejects_dist_symlink_outside_dist(
 
     assert result.exit_code == 1
     assert "resolved path is outside the dist directory" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
 
 
 @pytest.mark.cli
