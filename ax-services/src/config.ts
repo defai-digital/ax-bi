@@ -161,6 +161,7 @@ function normalizeSupersetBaseUrl(value: string): string {
       throw new Error('explicit HTTP(S) authority required');
     }
 
+    validatePathSegments(rawUrlPath(trimmed), 'AX_SUPERSET_BASE_URL');
     const url = new URL(trimmed);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('unsupported protocol');
@@ -193,7 +194,17 @@ function normalizePath(value: string, name: string): string {
       `${name} must be a URL path without query, fragment, backslash, whitespace, or control characters`,
     );
   }
-  for (const segment of trimmed.split('/')) {
+  validatePathSegments(trimmed, name);
+
+  return `/${trimmed.replace(/^\/+/, '')}`;
+}
+
+function rawUrlPath(value: string): string {
+  return value.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i, '');
+}
+
+function validatePathSegments(value: string, name: string): void {
+  for (const segment of value.split('/')) {
     let decodedSegment: string;
     try {
       decodedSegment = decodeURIComponent(segment);
@@ -209,8 +220,6 @@ function normalizePath(value: string, name: string): string {
       throw new Error(`${name} must not contain encoded path separators`);
     }
   }
-
-  return `/${trimmed.replace(/^\/+/, '')}`;
 }
 
 function normalizeOptionalSecret(value: string | undefined): string | undefined {

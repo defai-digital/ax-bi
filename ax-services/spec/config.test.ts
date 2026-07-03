@@ -229,6 +229,19 @@ test('buildConfig rejects Superset base URLs with credentials', () => {
   ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
 });
 
+test('buildConfig rejects ambiguous Superset base URL paths', () => {
+  for (const AX_SUPERSET_BASE_URL of [
+    'https://example.test/superset/../admin',
+    'https://example.test/superset/%2e%2e/admin',
+    'https://example.test/superset%2fapi',
+    'https://example.test/superset/%zz',
+  ]) {
+    expect(() => buildConfig({ AX_SUPERSET_BASE_URL })).toThrow(
+      'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+    );
+  }
+});
+
 test('buildConfig rejects blank Superset path overrides', () => {
   expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
     'AX_SUPERSET_HEALTH_PATH must not be empty',
