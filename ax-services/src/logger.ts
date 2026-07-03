@@ -63,7 +63,18 @@ function createSafeLogReplacer(): (key: string, value: unknown) => unknown {
 }
 
 function stringifyLogEntry(entry: LogContext): string {
-  return JSON.stringify(entry, createSafeLogReplacer());
+  try {
+    return JSON.stringify(entry, createSafeLogReplacer());
+  } catch (error) {
+    return JSON.stringify({
+      level: typeof entry['level'] === 'string' ? entry['level'] : 'error',
+      message:
+        typeof entry['message'] === 'string'
+          ? entry['message']
+          : 'failed to serialize log entry',
+      serializationError: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 const LOG_LEVEL_PRIORITY: Record<Exclude<LogLevel, 'silent'>, number> = {

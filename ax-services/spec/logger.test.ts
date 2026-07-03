@@ -108,3 +108,26 @@ test('logger serializes circular context values without throwing', () => {
     }),
   );
 });
+
+test('logger falls back when context JSON serialization fails', () => {
+  const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const logger = createLogger('info');
+
+  expect(() =>
+    logger.info('request completed', {
+      context: {
+        toJSON() {
+          throw new Error('cannot serialize context');
+        },
+      },
+    }),
+  ).not.toThrow();
+
+  expect(log).toHaveBeenCalledWith(
+    JSON.stringify({
+      level: 'info',
+      message: 'request completed',
+      serializationError: 'cannot serialize context',
+    }),
+  );
+});
