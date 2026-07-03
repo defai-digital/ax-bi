@@ -89,6 +89,10 @@ NPM_RESERVED = {
     "bower_components",
 }
 
+MAX_PUBLISHER_LENGTH = 64
+MAX_TECHNICAL_NAME_LENGTH = 64
+MAX_DISPLAY_NAME_LENGTH = 128
+
 # Compiled patterns for publisher/name validation
 PUBLISHER_REGEX = re.compile(PUBLISHER_PATTERN)
 TECHNICAL_NAME_REGEX = re.compile(TECHNICAL_NAME_PATTERN)
@@ -229,6 +233,11 @@ def validate_publisher(publisher: str) -> None:
     if not publisher:
         raise ExtensionNameError("Publisher cannot be empty")
 
+    if len(publisher) > MAX_PUBLISHER_LENGTH:
+        raise ExtensionNameError(
+            f"Publisher must be at most {MAX_PUBLISHER_LENGTH} characters"
+        )
+
     if not PUBLISHER_REGEX.match(publisher):
         raise ExtensionNameError(
             "Publisher must start with a letter and contain only lowercase letters, numbers, and hyphens (e.g., 'my-org')"
@@ -247,6 +256,11 @@ def validate_technical_name(name: str) -> None:
     """
     if not name:
         raise ExtensionNameError("Extension name cannot be empty")
+
+    if len(name) > MAX_TECHNICAL_NAME_LENGTH:
+        raise ExtensionNameError(
+            f"Extension name must be at most {MAX_TECHNICAL_NAME_LENGTH} characters"
+        )
 
     if not TECHNICAL_NAME_REGEX.match(name):
         raise ExtensionNameError(
@@ -272,6 +286,11 @@ def validate_display_name(display_name: str) -> str:
 
     # Normalize whitespace: strip and collapse multiple spaces
     normalized = " ".join(display_name.strip().split())
+
+    if len(normalized) > MAX_DISPLAY_NAME_LENGTH:
+        raise ExtensionNameError(
+            f"Display name must be at most {MAX_DISPLAY_NAME_LENGTH} characters"
+        )
 
     if not DISPLAY_NAME_REGEX.match(normalized):
         raise ExtensionNameError(
@@ -355,8 +374,7 @@ def generate_extension_names(
     # Use provided technical name or generate from display name
     if technical_name is None:
         technical_name = suggest_technical_name(display_name)
-    else:
-        validate_technical_name(technical_name)
+    validate_technical_name(technical_name)
 
     # Generate composite ID
     composite_id = f"{publisher}.{technical_name}"

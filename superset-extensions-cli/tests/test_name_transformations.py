@@ -133,6 +133,12 @@ def test_validate_display_name_invalid(invalid_display, error_match):
         validate_display_name(invalid_display)
 
 
+def test_validate_display_name_rejects_overlong_names():
+    """Test display names are length bounded."""
+    with pytest.raises(ExtensionNameError, match="at most 128 characters"):
+        validate_display_name("A" * 129)
+
+
 # Python package name validation tests
 
 
@@ -266,6 +272,12 @@ def test_validate_publisher_invalid(invalid_publisher, error_match):
         validate_publisher(invalid_publisher)
 
 
+def test_validate_publisher_rejects_overlong_names():
+    """Test publisher names are length bounded."""
+    with pytest.raises(ExtensionNameError, match="at most 64 characters"):
+        validate_publisher("a" * 65)
+
+
 # Technical name validation tests
 
 
@@ -302,6 +314,12 @@ def test_validate_technical_name_invalid(invalid_name, error_match):
     """Test invalid technical names."""
     with pytest.raises(ExtensionNameError, match=error_match):
         validate_technical_name(invalid_name)
+
+
+def test_validate_technical_name_rejects_overlong_names():
+    """Test technical extension names are length bounded."""
+    with pytest.raises(ExtensionNameError, match="at most 64 characters"):
+        validate_technical_name("a" * 65)
 
 
 # Name suggestion tests
@@ -396,6 +414,12 @@ def test_generate_extension_names_invalid(invalid_display):
     """Test invalid name generation scenarios."""
     with pytest.raises(ExtensionNameError):
         generate_extension_names(invalid_display, "test-org")
+
+
+def test_generate_extension_names_rejects_overlong_suggested_names():
+    """Test generated technical names are length bounded."""
+    with pytest.raises(ExtensionNameError, match="at most 64 characters"):
+        generate_extension_names("A" * 65, "test-org")
 
 
 def test_generate_extension_names_unicode():
