@@ -32,6 +32,10 @@ fn is_dashboard_identifier(value: &str) -> bool {
             .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
 }
 
+fn is_chart_identifier(value: &str) -> bool {
+    !value.is_empty() && value.len() <= 20 && value.chars().all(|ch| ch.is_ascii_digit())
+}
+
 fn static_route(path: &str, route: &str) -> Option<String> {
     if path.is_empty() {
         Some(route.to_string())
@@ -76,7 +80,7 @@ fn parse_deep_link(url: &str) -> Option<String> {
         "chart" => {
             if path.is_empty() {
                 "/chart/list/".to_string()
-            } else if path.chars().all(|ch| ch.is_ascii_digit()) {
+            } else if is_chart_identifier(path) {
                 format!("/explore/?slice_id={path}")
             } else {
                 warn!("Invalid chart deep link identifier: {}", path);
@@ -161,6 +165,7 @@ mod tests {
         assert_eq!(parse_deep_link("https://dashboard/1"), None);
         assert_eq!(parse_deep_link("axbi://unknown/path"), None);
         assert_eq!(parse_deep_link("axbi://chart/1abc"), None);
+        assert_eq!(parse_deep_link("axbi://chart/123456789012345678901"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/../admin"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/.."), None);
         assert_eq!(parse_deep_link("axbi://dashboard/1?next=/admin"), None);
