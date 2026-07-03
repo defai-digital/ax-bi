@@ -694,10 +694,12 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
                 msg = f"Field [{k}] is not part of the portioning key"
                 raise SupersetTemplateException(msg)
         if len(kwargs.keys()) != len(part_fields) - 1:
-            # pylint: disable=consider-using-f-string
+            required_filters = len(part_fields) - 1
+            total_fields = len(part_fields)
             msg = (
-                "A filter needs to be specified for {} out of the {} fields."
-            ).format(len(part_fields) - 1, len(part_fields))
+                f"A filter needs to be specified for {required_filters} "
+                f"out of the {total_fields} fields."
+            )
             raise SupersetTemplateException(msg)
 
         for field in part_fields:
