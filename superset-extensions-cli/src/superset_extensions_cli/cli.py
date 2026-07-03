@@ -675,6 +675,11 @@ def validate_bundle_output_path(path: Path) -> None:
         raise click.ClickException(
             f"Refusing to write bundle: {path} exists but is not a file."
         )
+    if path.parent.exists() and not path.parent.is_dir():
+        raise click.ClickException(
+            f"Refusing to write bundle: parent exists but is not a directory: "
+            f"{path.parent}."
+        )
 
 
 class FrontendChangeHandler(FileSystemEventHandler):
