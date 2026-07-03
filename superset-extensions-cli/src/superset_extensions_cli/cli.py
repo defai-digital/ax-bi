@@ -2270,7 +2270,11 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                 raise click.ClickException(
                     f"Refusing to update {label}: path changed after snapshot."
                 )
-            write_json(path, data)
+            write_json(
+                path,
+                data,
+                expected_existing_identity=original_identities[path],
+            )
             written_identity = get_read_path_identity(path)
             if written_identity is None:
                 raise OSError(f"Failed to verify written {label}: unsafe path.")
@@ -2284,7 +2288,11 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
                 raise click.ClickException(
                     f"Refusing to update {label}: path changed after snapshot."
                 )
-            write_toml(path, data)
+            write_toml(
+                path,
+                data,
+                expected_existing_identity=original_identities[path],
+            )
             written_identity = get_read_path_identity(path)
             if written_identity is None:
                 raise OSError(f"Failed to verify written {label}: unsafe path.")
@@ -2296,7 +2304,11 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             try:
                 if get_read_path_identity(path) != written_identity:
                     raise OSError(f"Refusing to roll back {label}: path changed.")
-                write_text_atomic(path, original_contents[path])
+                write_text_atomic(
+                    path,
+                    original_contents[path],
+                    expected_existing_identity=written_identity,
+                )
             except OSError as rollback_ex:
                 click.secho(
                     f"❌ Failed to roll back {label}: {rollback_ex}",

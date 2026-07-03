@@ -545,6 +545,39 @@ def test_update_rejects_metadata_changed_after_snapshot(
 
 
 @pytest.mark.cli
+def test_update_binds_metadata_write_to_snapshot_identity(
+    cli_runner,
+    isolated_filesystem,
+    extension_with_versions,
+    monkeypatch,
+):
+    """Test update passes the metadata snapshot identity into writes."""
+    extension_with_versions(isolated_filesystem, ext_version="1.0.0")
+    extension_json_path = isolated_filesystem / "extension.json"
+    expected_identity = cli.get_read_path_identity(extension_json_path)
+    assert expected_identity is not None
+    original_write_json = cli.write_json
+    seen_identities: list[tuple[int, int, int, int] | None] = []
+
+    def capture_write_identity(path, data, *, expected_existing_identity=None):
+        if path == extension_json_path:
+            seen_identities.append(expected_existing_identity)
+        return original_write_json(
+            path,
+            data,
+            expected_existing_identity=expected_existing_identity,
+        )
+
+    monkeypatch.setattr(cli, "write_json", capture_write_identity)
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 0
+    assert seen_identities == [expected_identity]
+    assert read_json(extension_json_path)["version"] == "2.0.0"
+
+
+@pytest.mark.cli
 def test_update_rolls_back_completed_writes_on_later_failure(
     cli_runner, isolated_filesystem, extension_with_versions, monkeypatch
 ):

@@ -207,7 +207,12 @@ def validate_write_path(path: Path) -> Path:
     return path
 
 
-def write_text_atomic(path: Path, content: str) -> None:
+def write_text_atomic(
+    path: Path,
+    content: str,
+    *,
+    expected_existing_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     """Write text via a same-directory temporary file before replacing the target."""
     path = validate_write_path(path)
     parent_identity = get_write_parent_identity(path)
@@ -232,6 +237,11 @@ def write_text_atomic(path: Path, content: str) -> None:
         if get_write_parent_identity(path) != parent_identity:
             raise OSError(f"Refusing to promote through changed parent: {path.parent}")
         validate_write_path(path)
+        if (
+            expected_existing_identity is not None
+            and get_read_path_identity(path) != expected_existing_identity
+        ):
+            raise OSError(f"Refusing to promote through changed target: {path}")
         if get_read_path_identity(temp_path) != temp_identity:
             raise OSError(f"Refusing to promote changed temporary file: {temp_path}")
         temp_path.replace(path)
@@ -253,18 +263,36 @@ def write_text_atomic(path: Path, content: str) -> None:
         raise
 
 
-def write_json(path: Path, data: dict[str, Any]) -> None:
+def write_json(
+    path: Path,
+    data: dict[str, Any],
+    *,
+    expected_existing_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     path = validate_write_path(path)
     try:
-        write_text_atomic(path, json.dumps(data, indent=2) + "\n")
+        write_text_atomic(
+            path,
+            json.dumps(data, indent=2) + "\n",
+            expected_existing_identity=expected_existing_identity,
+        )
     except OSError as ex:
         raise OSError(f"Failed to write JSON file {path}: {ex}") from ex
 
 
-def write_toml(path: Path, data: dict[str, Any]) -> None:
+def write_toml(
+    path: Path,
+    data: dict[str, Any],
+    *,
+    expected_existing_identity: tuple[int, int, int, int] | None = None,
+) -> None:
     path = validate_write_path(path)
     try:
-        write_text_atomic(path, tomli_w.dumps(data))
+        write_text_atomic(
+            path,
+            tomli_w.dumps(data),
+            expected_existing_identity=expected_existing_identity,
+        )
     except OSError as ex:
         raise OSError(f"Failed to write TOML file {path}: {ex}") from ex
 

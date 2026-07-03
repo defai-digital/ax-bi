@@ -584,6 +584,41 @@ def test_write_text_atomic_rejects_swapped_temporary_file(
 
 
 @pytest.mark.unit
+def test_write_text_atomic_rejects_changed_expected_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a target changed after snapshot."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    expected_identity = utils.get_read_path_identity(output_path)
+    assert expected_identity is not None
+    original_validate_write_path = utils.validate_write_path
+    validation_calls = 0
+
+    def change_target_before_promote(path):
+        nonlocal validation_calls
+        result = original_validate_write_path(path)
+        if path == output_path:
+            validation_calls += 1
+            if validation_calls == 2:
+                output_path.write_text("changed")
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", change_target_before_promote)
+
+    with pytest.raises(OSError, match="Refusing to promote through changed target"):
+        write_text_atomic(
+            output_path,
+            "new",
+            expected_existing_identity=expected_identity,
+        )
+
+    assert output_path.read_text() == "changed"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
     isolated_filesystem,
     monkeypatch,
