@@ -830,10 +830,10 @@ test('listDashboards maps Superset dashboard list responses', async () => {
   });
 });
 
-test('listDashboards ignores negative Superset counts', async () => {
+test('listDashboards ignores Superset counts lower than mapped results', async () => {
   global.fetch = async () =>
     Response.json({
-      count: -20,
+      count: 0,
       result: [
         {
           id: 7,
