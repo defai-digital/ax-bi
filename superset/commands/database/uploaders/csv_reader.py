@@ -240,8 +240,8 @@ class CSVReader(BaseDataReader):
             invalid_value = df.loc[idx, column]
             line_number = idx + kwargs.get("header", 0) + 2
             error_details.append(
-                "  • Line %s: '%s' cannot be converted to %s"
-                % (line_number, invalid_value, dtype)
+                f"  • Line {line_number}: '{invalid_value}' "
+                f"cannot be converted to {dtype}"
             )
 
         return error_details, total_errors
