@@ -29,12 +29,14 @@ from superset_extensions_cli.cli import (
     app,
     build_manifest,
     clean_dist,
+    cleanup_dist_replacement_backup,
     copy_backend_files,
     copy_frontend_dist,
     copy_output_file,
     create_temporary_output_directory,
     ensure_output_directory,
     ensure_output_file_parent,
+    get_directory_path_identity,
     init_frontend_deps,
     publish_output_file,
     publish_staged_output_directory,
@@ -693,6 +695,31 @@ def test_start_dist_replacement_rejects_swapped_dist_backup(
     assert not dist_dir.exists()
     assert not replacement_dir.exists()
     assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_cleanup_dist_replacement_backup_rejects_changed_backup_root(
+    isolated_filesystem,
+):
+    """Test full-build backup cleanup refuses a changed backup root."""
+    backup_root = isolated_filesystem / ".dist-backup.test.tmp"
+    backup_root.mkdir()
+    (backup_root / "dist").mkdir()
+    (backup_root / "dist" / "manifest.json").write_text("previous")
+    backup_root_identity = get_directory_path_identity(backup_root)
+    assert backup_root_identity is not None
+    saved_backup_root = isolated_filesystem / "saved-dist-backup"
+    replacement_backup_root = isolated_filesystem / "replacement-dist-backup"
+    replacement_backup_root.mkdir()
+    (replacement_backup_root / "replacement.txt").write_text("replacement")
+
+    backup_root.rename(saved_backup_root)
+    replacement_backup_root.rename(backup_root)
+
+    cleanup_dist_replacement_backup(backup_root, backup_root_identity)
+
+    assert_file_exists(backup_root / "replacement.txt")
+    assert_file_exists(saved_backup_root / "dist" / "manifest.json")
 
 
 @pytest.mark.unit
