@@ -628,6 +628,19 @@ def test_metadata_loaders_refuse_symlinked_input_parents(
 
 
 @pytest.mark.unit
+def test_json_metadata_loader_rejects_non_object_json(isolated_filesystem):
+    """Test JSON metadata loading keeps object-only validation at the CLI boundary."""
+    metadata_file = isolated_filesystem / "metadata.json"
+    metadata_file.write_text("[1, 2, 3]")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Invalid metadata.json: expected a JSON object",
+    ):
+        load_json_object(metadata_file, "metadata.json")
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("loader", "reader_name", "filename", "content"),
     [

@@ -220,7 +220,7 @@ def read_toml(path: Path) -> dict[str, Any] | None:
     return tomllib.loads(content.decode("utf-8"))
 
 
-def read_json(path: Path) -> dict[str, Any] | None:
+def read_json(path: Path) -> object | None:
     read_path = validate_read_path(path)
     if read_path is None:
         return None

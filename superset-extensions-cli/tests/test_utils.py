@@ -312,6 +312,9 @@ def test_read_json_returns_none_when_parent_is_replaced_during_read(
         ({"simple": "value"}, {"simple": "value"}),
         ({"nested": {"key": "value"}}, {"nested": {"key": "value"}}),
         ({"array": [1, 2, 3]}, {"array": [1, 2, 3]}),
+        ([1, 2, 3], [1, 2, 3]),
+        ("value", "value"),
+        (True, True),
         ({}, {}),  # Empty JSON object
     ],
 )
