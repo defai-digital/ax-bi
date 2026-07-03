@@ -29,6 +29,11 @@ const metadataKeySchema = {
   maxLength: 128,
   pattern: '^[^\\u0000-\\u001F\\u007F]+$',
 } as const;
+const httpStatusCodeSchema = {
+  type: 'integer',
+  minimum: 100,
+  maximum: 599,
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -99,7 +104,7 @@ const dependencyHealthSchema = {
   properties: {
     ok: { type: 'boolean' },
     url: { type: 'string' },
-    statusCode: { type: 'number' },
+    statusCode: httpStatusCodeSchema,
     error: externalMessageSchema,
   },
 } as const;
@@ -111,7 +116,7 @@ const dependencyMetadataSchema = {
   properties: {
     ok: { type: 'boolean' },
     url: { type: 'string' },
-    statusCode: { type: 'number' },
+    statusCode: httpStatusCodeSchema,
     keyCount: { type: 'integer', minimum: 0, maximum: 100 },
     keys: {
       type: 'array',

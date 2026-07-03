@@ -197,6 +197,14 @@ test('readiness response schema is registered in runtime contracts', () => {
   });
   expect(
     readinessResponseSchema.properties.dependencies.properties.superset
+      .properties.statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
+  });
+  expect(
+    readinessResponseSchema.properties.dependencies.properties.superset
       .properties.error,
   ).toEqual({
     type: 'string',
@@ -248,6 +256,14 @@ test('metadata response schema is registered in runtime contracts', () => {
     type: 'integer',
     minimum: 0,
     maximum: 100,
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
   });
   expect(
     metadataResponseSchema.properties.dependencies.properties.supersetMetadata
