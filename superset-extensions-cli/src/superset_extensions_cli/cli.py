@@ -1576,16 +1576,21 @@ def cleanup_scaffold_directory(
     """Remove a scaffold directory created during a failed init run."""
     if path.is_symlink():
         raise click.ClickException(f"Refusing to clean {label}: path is a symlink.")
+    if (symlinked_parent := find_symlinked_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to clean {label}: parent directory is a symlink: "
+            f"{symlinked_parent}."
+        )
+    if (invalid_parent := find_non_directory_parent(path)) is not None:
+        raise click.ClickException(
+            f"Refusing to clean {label}: parent exists but is not a directory: "
+            f"{invalid_parent}."
+        )
     if not path.exists():
         return
     if not path.is_dir():
         raise click.ClickException(
             f"Refusing to clean {label}: path exists but is not a directory."
-        )
-    if (symlinked_parent := find_symlinked_parent(path)) is not None:
-        raise click.ClickException(
-            f"Refusing to clean {label}: parent directory is a symlink: "
-            f"{symlinked_parent}."
         )
     directory_identity = get_directory_path_identity(path)
     if directory_identity is None:

@@ -233,6 +233,47 @@ def test_cleanup_scaffold_directory_rejects_broken_symlink_target(
 
 
 @pytest.mark.unit
+def test_cleanup_scaffold_directory_rejects_missing_target_under_symlinked_parent(
+    isolated_filesystem,
+):
+    """Test scaffold cleanup refuses a missing path below a symlinked parent."""
+    outside_parent = isolated_filesystem / "outside"
+    outside_parent.mkdir()
+    parent_link = isolated_filesystem / "linked-parent"
+    parent_link.symlink_to(outside_parent)
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean extension directory: parent directory is a symlink",
+    ):
+        cleanup_scaffold_directory(
+            parent_link / "test-extension", "extension directory"
+        )
+
+    assert parent_link.is_symlink()
+    assert not (outside_parent / "test-extension").exists()
+
+
+@pytest.mark.unit
+def test_cleanup_scaffold_directory_rejects_missing_target_under_file_parent(
+    isolated_filesystem,
+):
+    """Test scaffold cleanup refuses a missing path below a file parent."""
+    file_parent = isolated_filesystem / "file-parent"
+    file_parent.write_text("not a directory")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean extension directory: parent exists but is not",
+    ):
+        cleanup_scaffold_directory(
+            file_parent / "test-extension", "extension directory"
+        )
+
+    assert file_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
 def test_cleanup_scaffold_directory_rejects_changed_target(
     isolated_filesystem,
     monkeypatch,
