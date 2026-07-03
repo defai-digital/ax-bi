@@ -268,6 +268,14 @@ def optional_directory_exists(path: Path, label: str) -> bool:
     return path.exists()
 
 
+def optional_file_exists(path: Path, label: str) -> bool:
+    """Return whether an optional project file exists after validation."""
+    if path.exists() or path.is_symlink():
+        if not path.is_file():
+            raise click.ClickException(f"{label} path exists but is not a file.")
+    return path.exists()
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
@@ -586,7 +594,14 @@ def validate() -> None:
     if backend_dir.exists():
         # Check for pyproject.toml
         pyproject_path = backend_dir / "pyproject.toml"
-        if not pyproject_path.exists():
+        try:
+            has_pyproject = optional_file_exists(
+                pyproject_path, "backend/pyproject.toml"
+            )
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
+        if not has_pyproject:
             click.secho(
                 "❌ Backend directory exists but pyproject.toml not found",
                 err=True,
@@ -655,7 +670,14 @@ def validate() -> None:
     mismatches: list[str] = []
     frontend_pkg_path = cwd / "frontend" / "package.json"
     frontend_pkg = None
-    if frontend_pkg_path.is_file():
+    try:
+        has_frontend_pkg = optional_file_exists(
+            frontend_pkg_path, "frontend/package.json"
+        )
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+    if has_frontend_pkg:
         try:
             frontend_pkg = load_json_object(frontend_pkg_path, "frontend/package.json")
         except click.ClickException as ex:
@@ -674,7 +696,14 @@ def validate() -> None:
                 )
 
     backend_pyproject_path = cwd / "backend" / "pyproject.toml"
-    if backend_pyproject_path.is_file():
+    try:
+        has_backend_pyproject = optional_file_exists(
+            backend_pyproject_path, "backend/pyproject.toml"
+        )
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+    if has_backend_pyproject:
         try:
             backend_pyproject = load_toml_object(
                 backend_pyproject_path, "backend/pyproject.toml"
@@ -762,7 +791,14 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
 
     frontend_pkg_path = cwd / "frontend" / "package.json"
     frontend_pkg = None
-    if frontend_pkg_path.is_file():
+    try:
+        has_frontend_pkg = optional_file_exists(
+            frontend_pkg_path, "frontend/package.json"
+        )
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+    if has_frontend_pkg:
         try:
             frontend_pkg = load_json_object(frontend_pkg_path, "frontend/package.json")
         except click.ClickException as ex:
@@ -772,7 +808,14 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     backend_pyproject_path = cwd / "backend" / "pyproject.toml"
     backend_pyproject = None
     backend_project = None
-    if backend_pyproject_path.is_file():
+    try:
+        has_backend_pyproject = optional_file_exists(
+            backend_pyproject_path, "backend/pyproject.toml"
+        )
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+    if has_backend_pyproject:
         try:
             backend_pyproject = load_toml_object(
                 backend_pyproject_path, "backend/pyproject.toml"

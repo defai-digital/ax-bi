@@ -228,6 +228,48 @@ def test_update_rejects_symlinked_backend_pyproject_before_writing(
 
 
 @pytest.mark.cli
+def test_update_rejects_frontend_package_directory_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses frontend metadata paths that are directories."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    package_json_path = isolated_filesystem / "frontend" / "package.json"
+    package_json_path.unlink()
+    package_json_path.mkdir()
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "frontend/package.json path exists but is not a file" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+
+
+@pytest.mark.cli
+def test_update_rejects_backend_pyproject_directory_before_writing(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test update refuses backend metadata paths that are directories."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    pyproject_path.unlink()
+    pyproject_path.mkdir()
+
+    result = cli_runner.invoke(app, ["update", "--version", "2.0.0"])
+
+    assert result.exit_code == 1
+    assert "backend/pyproject.toml path exists but is not a file" in result.output
+    assert read_json(isolated_filesystem / "extension.json")["version"] == "1.0.0"
+
+
+@pytest.mark.cli
 def test_update_with_version_flag(
     cli_runner, isolated_filesystem, extension_with_versions
 ):

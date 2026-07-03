@@ -23,7 +23,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 import click
-from superset_extensions_cli.cli import app, optional_directory_exists, validate_npm
+from superset_extensions_cli.cli import (
+    app,
+    optional_directory_exists,
+    optional_file_exists,
+    validate_npm,
+)
 
 
 def create_file_path(path: Path) -> None:
@@ -64,6 +69,27 @@ def test_optional_directory_exists_validates_project_paths(isolated_filesystem):
     source_link.symlink_to(target_dir)
     with pytest.raises(click.ClickException, match="path is a symlink"):
         optional_directory_exists(source_link, "linked")
+
+
+@pytest.mark.unit
+def test_optional_file_exists_validates_project_paths(isolated_filesystem):
+    """Test optional file helper accepts only regular files or missing paths."""
+    missing_path = isolated_filesystem / "missing.json"
+    assert optional_file_exists(missing_path, "missing.json") is False
+
+    metadata_file = isolated_filesystem / "extension.json"
+    metadata_file.write_text("{}")
+    assert optional_file_exists(metadata_file, "extension.json") is True
+
+    metadata_dir = isolated_filesystem / "package.json"
+    metadata_dir.mkdir()
+    with pytest.raises(click.ClickException, match="not a file"):
+        optional_file_exists(metadata_dir, "package.json")
+
+    broken_link = isolated_filesystem / "pyproject.toml"
+    broken_link.symlink_to(isolated_filesystem / "missing-target")
+    with pytest.raises(click.ClickException, match="not a file"):
+        optional_file_exists(broken_link, "pyproject.toml")
 
 
 # Validate Command Tests
@@ -268,6 +294,27 @@ def test_validate_fails_with_invalid_frontend_package_json(
 
 
 @pytest.mark.cli
+def test_validate_fails_when_frontend_package_json_is_directory(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate reports frontend package metadata paths that are directories."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    package_json_path = isolated_filesystem / "frontend" / "package.json"
+    package_json_path.unlink()
+    package_json_path.mkdir()
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "frontend/package.json path exists but is not a file" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_with_malformed_backend_pyproject_toml(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
@@ -284,6 +331,27 @@ def test_validate_fails_with_malformed_backend_pyproject_toml(
 
     assert result.exit_code == 1
     assert "Invalid backend pyproject.toml" in result.output
+
+
+@pytest.mark.cli
+def test_validate_fails_when_backend_pyproject_is_directory(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate reports backend TOML metadata paths that are directories."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    pyproject_path = isolated_filesystem / "backend" / "pyproject.toml"
+    pyproject_path.unlink()
+    pyproject_path.mkdir()
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "backend/pyproject.toml path exists but is not a file" in result.output
 
 
 @pytest.mark.cli
