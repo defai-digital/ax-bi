@@ -290,6 +290,36 @@ def test_validate_fails_when_backend_entrypoint_is_directory(
 
 
 @pytest.mark.cli
+def test_validate_rejects_symlinked_backend_entrypoint(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate refuses a symlinked backend entrypoint."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        backend_version="1.0.0",
+    )
+    entrypoint_path = (
+        isolated_filesystem
+        / "backend"
+        / "src"
+        / "test_org"
+        / "test_extension"
+        / "entrypoint.py"
+    )
+    outside_entrypoint = isolated_filesystem / "outside-entrypoint.py"
+    outside_entrypoint.write_text("# outside")
+    entrypoint_path.unlink()
+    entrypoint_path.symlink_to(outside_entrypoint)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Backend entry point path is a symlink" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_when_frontend_entrypoint_is_directory(
     cli_runner, isolated_filesystem, extension_with_versions
 ):
@@ -308,6 +338,29 @@ def test_validate_fails_when_frontend_entrypoint_is_directory(
 
     assert result.exit_code == 1
     assert "Frontend entry point not found" in result.output
+
+
+@pytest.mark.cli
+def test_validate_rejects_symlinked_frontend_entrypoint(
+    cli_runner, isolated_filesystem, extension_with_versions
+):
+    """Test validate refuses a symlinked frontend entrypoint."""
+    extension_with_versions(
+        isolated_filesystem,
+        ext_version="1.0.0",
+        frontend_version="1.0.0",
+    )
+    entrypoint_path = isolated_filesystem / "frontend" / "src" / "index.tsx"
+    outside_entrypoint = isolated_filesystem / "outside-index.tsx"
+    outside_entrypoint.write_text("export default {}")
+    entrypoint_path.unlink()
+    entrypoint_path.symlink_to(outside_entrypoint)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Frontend entry point path is a symlink" in result.output
 
 
 @pytest.mark.cli
