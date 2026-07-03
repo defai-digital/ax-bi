@@ -2094,9 +2094,11 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
+    output_directory_identity: tuple[int, int, int, int] | None = None
     if output is None:
         zip_path = Path(default_filename)
     elif output.is_dir():
+        output_directory_identity = get_directory_path_identity(output)
         zip_path = output / default_filename
     else:
         zip_path = output
@@ -2106,6 +2108,14 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
         validate_bundle_output_path(zip_path)
+        if (
+            output is not None
+            and output_directory_identity is not None
+            and get_directory_path_identity(output) != output_directory_identity
+        ):
+            raise click.ClickException(
+                f"Refusing to write bundle: output directory changed: {output}."
+            )
         output_parent_identity = get_directory_path_identity(zip_path.parent)
         if output_parent_identity is None:
             raise click.ClickException(

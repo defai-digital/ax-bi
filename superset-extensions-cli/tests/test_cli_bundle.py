@@ -585,6 +585,55 @@ def test_bundle_rejects_output_parent_changed_before_temp_creation(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_output_directory_changed_after_path_selection(
+    mock_build,
+    cli_runner,
+    isolated_filesystem,
+    extension_setup_for_bundling,
+    monkeypatch,
+):
+    """Test bundle refuses a directory output changed after path selection."""
+    mock_build.return_value = None
+    extension_setup_for_bundling(isolated_filesystem)
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+
+    from superset_extensions_cli import cli
+
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def swap_output_directory_after_path_selection(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == output_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                output_dir.rename(saved_output_dir)
+                replacement_output_dir.rename(output_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        swap_output_directory_after_path_selection,
+    )
+
+    result = cli_runner.invoke(app, ["bundle", "--output", str(output_dir)])
+
+    assert result.exit_code == 1
+    assert "Failed to create bundle" in result.output
+    assert "output directory changed" in result.output
+    assert saved_output_dir.is_dir()
+    assert output_dir.is_dir()
+    assert not (output_dir / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_includes_all_files_recursively(
     mock_build, cli_runner, isolated_filesystem
 ):
