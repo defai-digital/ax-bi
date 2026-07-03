@@ -161,6 +161,52 @@ def test_bundle_command_fails_with_invalid_manifest_schema(
 
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_manifest_symlink(mock_build, cli_runner, isolated_filesystem):
+    """Test bundle refuses to read a symlinked manifest."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    outside_manifest = isolated_filesystem / "outside-manifest.json"
+    outside_manifest.write_text(
+        json.dumps(
+            {
+                "id": "test-org.test-extension",
+                "publisher": "test-org",
+                "name": "test-extension",
+                "displayName": "Test Extension",
+                "version": "1.0.0",
+                "permissions": [],
+            }
+        )
+    )
+    (dist_dir / "manifest.json").symlink_to(outside_manifest)
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "Refusing to read dist/manifest.json: path is a symlink" in result.output
+    assert not (isolated_filesystem / "test-extension-1.0.0.supx").exists()
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
+def test_bundle_rejects_manifest_directory(mock_build, cli_runner, isolated_filesystem):
+    """Test bundle refuses manifest paths that are not files."""
+    mock_build.return_value = None
+
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").mkdir()
+
+    result = cli_runner.invoke(app, ["bundle"])
+
+    assert result.exit_code == 1
+    assert "dist/manifest.json: path exists but is not a file" in result.output
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.build")
 def test_bundle_command_handles_zip_creation_error(
     mock_build, cli_runner, isolated_filesystem, extension_setup_for_bundling
 ):

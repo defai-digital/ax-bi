@@ -276,6 +276,15 @@ def optional_file_exists(path: Path, label: str) -> bool:
     return path.exists()
 
 
+def input_file_exists(path: Path, label: str) -> bool:
+    """Return whether an input file exists after validating it is safe to read."""
+    if path.is_symlink():
+        raise click.ClickException(f"Refusing to read {label}: path is a symlink.")
+    if path.exists() and not path.is_file():
+        raise click.ClickException(f"Invalid {label}: path exists but is not a file.")
+    return path.exists()
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
@@ -965,7 +974,13 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     dist_dir = cwd / "dist"
     manifest_path = dist_dir / "manifest.json"
 
-    if not manifest_path.exists():
+    try:
+        has_manifest = input_file_exists(manifest_path, "dist/manifest.json")
+    except click.ClickException as ex:
+        click.secho(f"❌ {ex.message}", err=True, fg="red")
+        sys.exit(1)
+
+    if not has_manifest:
         click.secho(
             "❌ dist/manifest.json not found. Run `build` first.", err=True, fg="red"
         )
