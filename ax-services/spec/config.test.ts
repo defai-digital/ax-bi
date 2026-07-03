@@ -256,6 +256,15 @@ test('buildConfig rejects ambiguous Superset path overrides', () => {
   ).toThrow(message);
 });
 
+test('buildConfig rejects Superset path overrides with dot segments', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/../health' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain dot path segments');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_CHART_LIST_PATH: 'api/./v1/chart' }),
+  ).toThrow('AX_SUPERSET_CHART_LIST_PATH must not contain dot path segments');
+});
+
 test('buildConfig rejects unsupported log levels', () => {
   expect(() => buildConfig({ AX_SERVICES_LOG_LEVEL: 'verbose' })).toThrow(
     'AX_SERVICES_LOG_LEVEL must be one of: debug, info, warn, error, silent',

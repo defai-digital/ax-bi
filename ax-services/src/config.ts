@@ -193,6 +193,9 @@ function normalizePath(value: string, name: string): string {
       `${name} must be a URL path without query, fragment, backslash, whitespace, or control characters`,
     );
   }
+  if (trimmed.split('/').some(segment => segment === '.' || segment === '..')) {
+    throw new Error(`${name} must not contain dot path segments`);
+  }
 
   return `/${trimmed.replace(/^\/+/, '')}`;
 }
