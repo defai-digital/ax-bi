@@ -228,6 +228,53 @@ def copy_frontend_dist(cwd: Path) -> str:
     return remote_entry
 
 
+def get_backend_build_patterns(
+    pyproject: dict[str, Any],
+) -> tuple[list[str], list[str]]:
+    """Return validated backend build include and exclude patterns."""
+    tool_config = pyproject.get("tool", {})
+    if not isinstance(tool_config, dict):
+        raise click.ClickException(
+            "Invalid backend build config: [tool] must be a table."
+        )
+
+    extension_config = tool_config.get("apache_superset_extensions", {})
+    if not isinstance(extension_config, dict):
+        raise click.ClickException(
+            "Invalid backend build config: "
+            "[tool.apache_superset_extensions] must be a table."
+        )
+
+    build_config = extension_config.get("build", {})
+    if not isinstance(build_config, dict):
+        raise click.ClickException(
+            "Invalid backend build config: "
+            "[tool.apache_superset_extensions.build] must be a table."
+        )
+
+    include_patterns = build_config.get("include")
+    if (
+        not isinstance(include_patterns, list)
+        or not include_patterns
+        or not all(isinstance(pattern, str) and pattern for pattern in include_patterns)
+    ):
+        raise click.ClickException(
+            "Invalid backend build config: 'include' must be a non-empty "
+            "list of string patterns."
+        )
+
+    exclude_patterns = build_config.get("exclude", [])
+    if not isinstance(exclude_patterns, list) or not all(
+        isinstance(pattern, str) and pattern for pattern in exclude_patterns
+    ):
+        raise click.ClickException(
+            "Invalid backend build config: 'exclude' must be a list of "
+            "string patterns when provided."
+        )
+
+    return include_patterns, exclude_patterns
+
+
 def copy_backend_files(cwd: Path) -> None:
     """Copy backend files based on pyproject.toml build configuration (validation already passed)."""
     dist_dir = cwd / "dist"
@@ -236,11 +283,7 @@ def copy_backend_files(cwd: Path) -> None:
     # Read build config from pyproject.toml
     pyproject = read_toml(backend_dir / "pyproject.toml")
     assert pyproject
-    build_config = (
-        pyproject.get("tool", {}).get("apache_superset_extensions", {}).get("build", {})
-    )
-    include_patterns = build_config.get("include", [])
-    exclude_patterns = build_config.get("exclude", [])
+    include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
     # Process include patterns
     for pattern in include_patterns:
@@ -355,14 +398,11 @@ def validate() -> None:
             click.secho("❌ Failed to read backend pyproject.toml", err=True, fg="red")
             sys.exit(1)
 
-        build_config = (
-            pyproject.get("tool", {})
-            .get("apache_superset_extensions", {})
-            .get("build", {})
-        )
-        if not build_config.get("include"):
+        try:
+            get_backend_build_patterns(pyproject)
+        except click.ClickException as ex:
             click.secho(
-                "❌ Missing [tool.apache_superset_extensions.build] section with 'include' patterns in pyproject.toml",
+                f"❌ {ex.message}",
                 err=True,
                 fg="red",
             )

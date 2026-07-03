@@ -55,6 +55,43 @@ def test_validate_command_calls_npm_validation(cli_runner):
         mock_validate.assert_called_once()
 
 
+@pytest.mark.cli
+def test_validate_fails_with_invalid_backend_build_config(
+    cli_runner, isolated_filesystem
+):
+    """Test validate reports malformed backend build config cleanly."""
+    import json
+
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+
+    backend_dir = isolated_filesystem / "backend"
+    entrypoint_dir = backend_dir / "src" / "test_org" / "test_extension"
+    entrypoint_dir.mkdir(parents=True)
+    (entrypoint_dir / "entrypoint.py").write_text("# entry")
+    (backend_dir / "pyproject.toml").write_text(
+        """[project]
+name = "test-org-test-extension"
+version = "1.0.0"
+
+[tool.apache_superset_extensions.build]
+include = "src/**/*.py"
+"""
+    )
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Invalid backend build config" in result.output
+
+
 # Validate NPM Function Tests
 @pytest.mark.unit
 @patch("shutil.which")

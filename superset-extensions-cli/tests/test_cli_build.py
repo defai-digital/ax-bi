@@ -730,6 +730,67 @@ exclude = []
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "build_config",
+    [
+        'include = "src/**/*.py"\nexclude = []',
+        'include = ["src/**/*.py"]\nexclude = "*.py"',
+        'include = ["src/**/*.py", 123]\nexclude = []',
+        'include = ["src/**/*.py"]\nexclude = [123]',
+    ],
+)
+def test_copy_backend_files_rejects_invalid_build_pattern_config(
+    isolated_filesystem, build_config
+):
+    """Test copy_backend_files validates include and exclude pattern shapes."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+
+    pyproject_content = f"""[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool.apache_superset_extensions.build]
+{build_config}
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="Invalid backend build config"):
+        copy_backend_files(isolated_filesystem)
+
+
+@pytest.mark.unit
+def test_copy_backend_files_rejects_invalid_build_parent_config(
+    isolated_filesystem,
+):
+    """Test copy_backend_files validates parent build config tables."""
+    backend_dir = isolated_filesystem / "backend"
+    backend_src = backend_dir / "src" / "test_org" / "test_ext"
+    backend_src.mkdir(parents=True)
+    (backend_src / "__init__.py").write_text("# init")
+
+    pyproject_content = """[project]
+name = "test_org-test_ext"
+version = "1.0.0"
+license = "Apache-2.0"
+
+[tool]
+apache_superset_extensions = "invalid"
+"""
+    (backend_dir / "pyproject.toml").write_text(pyproject_content)
+
+    clean_dist(isolated_filesystem)
+
+    with pytest.raises(click.ClickException, match="Invalid backend build config"):
+        copy_backend_files(isolated_filesystem)
+
+
+@pytest.mark.unit
 def test_copy_backend_files_stages_symlink_at_matched_path(isolated_filesystem):
     """Symlinked files inside backend are staged at the matched path, not the target."""
     backend_dir = isolated_filesystem / "backend"
