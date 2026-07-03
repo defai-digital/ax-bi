@@ -32,6 +32,9 @@ from superset_core.extensions.constants import (
 from superset_extensions_cli.exceptions import ExtensionNameError
 from superset_extensions_cli.types import ExtensionNames
 
+PathIdentity = tuple[int, int, int, int]
+NodeIdentity = tuple[int, int]
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -110,7 +113,7 @@ def validate_read_path(path: Path) -> Path | None:
     return path
 
 
-def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
+def get_read_path_identity(path: Path) -> PathIdentity | None:
     """Return file identity for a safe input path."""
     read_path = validate_read_path(path)
     if read_path is None:
@@ -122,7 +125,7 @@ def get_read_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
-def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
+def get_directory_path_identity(path: Path) -> PathIdentity | None:
     """Return directory identity unless the path crosses a symlink boundary."""
     if path.is_symlink() or not path.is_dir():
         return None
@@ -135,7 +138,7 @@ def get_directory_path_identity(path: Path) -> tuple[int, int, int, int] | None:
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
-def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
+def get_directory_node_identity(path: Path) -> NodeIdentity | None:
     """Return stable directory node identity without content metadata."""
     identity = get_directory_path_identity(path)
     if identity is None:
@@ -143,17 +146,17 @@ def get_directory_node_identity(path: Path) -> tuple[int, int] | None:
     return identity[:2]
 
 
-def _get_parent_directory_identity(path: Path) -> tuple[int, int] | None:
+def _get_parent_directory_identity(path: Path) -> NodeIdentity | None:
     """Return parent identity unless it crosses a symlink boundary."""
     return get_directory_node_identity(Path(path).parent)
 
 
-def get_read_parent_identity(path: Path) -> tuple[int, int] | None:
+def get_read_parent_identity(path: Path) -> NodeIdentity | None:
     """Return read parent identity unless it crosses a symlink boundary."""
     return _get_parent_directory_identity(path)
 
 
-def get_write_parent_identity(path: Path) -> tuple[int, int] | None:
+def get_write_parent_identity(path: Path) -> NodeIdentity | None:
     """Return output parent identity unless it crosses a symlink boundary."""
     return _get_parent_directory_identity(path)
 
@@ -245,7 +248,7 @@ def write_text_atomic(
     path: Path,
     content: str,
     *,
-    expected_existing_identity: tuple[int, int, int, int] | None = None,
+    expected_existing_identity: PathIdentity | None = None,
     require_missing: bool = False,
 ) -> None:
     """Write text via a same-directory temporary file before replacing the target."""
@@ -254,7 +257,7 @@ def write_text_atomic(
     if parent_identity is None:
         raise OSError(f"Refusing to write through unsafe parent: {path.parent}")
     temp_path: Path | None = None
-    temp_identity: tuple[int, int, int, int] | None = None
+    temp_identity: PathIdentity | None = None
     try:
         with tempfile.NamedTemporaryFile(
             "w",
@@ -306,7 +309,7 @@ def write_json(
     path: Path,
     data: dict[str, Any],
     *,
-    expected_existing_identity: tuple[int, int, int, int] | None = None,
+    expected_existing_identity: PathIdentity | None = None,
 ) -> None:
     path = validate_write_path(path)
     try:
@@ -323,7 +326,7 @@ def write_toml(
     path: Path,
     data: dict[str, Any],
     *,
-    expected_existing_identity: tuple[int, int, int, int] | None = None,
+    expected_existing_identity: PathIdentity | None = None,
 ) -> None:
     path = validate_write_path(path)
     try:

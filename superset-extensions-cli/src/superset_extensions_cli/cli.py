@@ -43,6 +43,8 @@ from superset_extensions_cli.constants import MIN_NPM_VERSION
 from superset_extensions_cli.exceptions import ExtensionNameError
 from superset_extensions_cli.types import ExtensionNames
 from superset_extensions_cli.utils import (
+    NodeIdentity,
+    PathIdentity,
     generate_extension_names,
     get_directory_node_identity,
     get_directory_path_identity,
@@ -75,7 +77,7 @@ class ValidatedNpmExecutable:
     """Npm executable path and identity validated before command launch."""
 
     path: str
-    identity: tuple[int, int, int, int]
+    identity: PathIdentity
 
 
 def split_path_parts(path: str) -> list[str]:
@@ -271,10 +273,10 @@ def start_dist_replacement(
 ) -> tuple[
     Path | None,
     Path | None,
-    tuple[int, int, int, int] | None,
-    tuple[int, int, int, int] | None,
-    tuple[int, int] | None,
-    tuple[int, int, int, int],
+    PathIdentity | None,
+    PathIdentity | None,
+    NodeIdentity | None,
+    PathIdentity,
 ]:
     """Move existing dist aside before a full build writes replacement output."""
     dist_dir = cwd / "dist"
@@ -384,10 +386,10 @@ def rollback_dist_replacement(
     cwd: Path,
     backup_root: Path | None,
     backup_path: Path | None,
-    backup_identity: tuple[int, int, int, int] | None,
-    backup_root_identity: tuple[int, int, int, int] | None,
-    backup_root_parent_identity: tuple[int, int] | None,
-    replacement_identity: tuple[int, int, int, int],
+    backup_identity: PathIdentity | None,
+    backup_root_identity: PathIdentity | None,
+    backup_root_parent_identity: NodeIdentity | None,
+    replacement_identity: PathIdentity,
 ) -> None:
     """Restore the previous dist directory after a failed full build."""
     dist_dir = cwd / "dist"
@@ -430,8 +432,8 @@ def rollback_dist_replacement(
 
 def cleanup_dist_replacement_backup(
     backup_root: Path | None,
-    backup_root_identity: tuple[int, int, int, int] | None,
-    backup_root_parent_identity: tuple[int, int] | None,
+    backup_root_identity: PathIdentity | None,
+    backup_root_parent_identity: NodeIdentity | None,
 ) -> None:
     """Remove a full-build dist backup after a successful publish."""
     if backup_root is None:
@@ -630,7 +632,7 @@ def copy_output_file(source: Path, target: Path, label: str) -> None:
 
 def get_output_copy_source_identity(
     source: Path,
-) -> tuple[int, int, int, int] | None:
+) -> PathIdentity | None:
     """Return source identity for output copy, following file symlinks."""
     if not source.is_file():
         return None
@@ -641,9 +643,7 @@ def get_output_copy_source_identity(
     return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
 
 
-def get_copy_source_identity(
-    source: Path, root: Path
-) -> tuple[int, int, int, int] | None:
+def get_copy_source_identity(source: Path, root: Path) -> PathIdentity | None:
     """Return source file identity after confirming it resolves inside root."""
     try:
         resolved = source.resolve()
@@ -663,7 +663,7 @@ def get_copy_source_identity(
 def ensure_copy_source_unchanged(
     source: Path,
     root: Path,
-    identity: tuple[int, int, int, int],
+    identity: PathIdentity,
     label: str,
 ) -> None:
     """Fail if a source file changes after copy target planning."""
@@ -717,10 +717,10 @@ def clean_dist_frontend(cwd: Path) -> None:
 def remove_output_directory(
     path: Path,
     label: str,
-    expected_identity: tuple[int, int, int, int] | None = None,
+    expected_identity: PathIdentity | None = None,
     *,
     allow_content_changes: bool = True,
-    expected_parent_identity: tuple[int, int] | None = None,
+    expected_parent_identity: NodeIdentity | None = None,
 ) -> None:
     """Remove an output directory after validating the path is safe to clean."""
     if path.is_symlink():
@@ -786,10 +786,10 @@ def remove_output_directory(
 def remove_output_file(
     path: Path,
     label: str,
-    expected_identity: tuple[int, int, int, int],
+    expected_identity: PathIdentity,
     *,
     allow_content_changes: bool = False,
-    expected_parent_identity: tuple[int, int] | None = None,
+    expected_parent_identity: NodeIdentity | None = None,
 ) -> None:
     """Remove an output file only if it still matches the expected identity."""
     current_parent_identity = get_read_parent_identity(path)
@@ -879,8 +879,8 @@ def publish_staged_output_directory(
 
     backup_root: Path | None = None
     backup_path: Path | None = None
-    backup_identity: tuple[int, int, int, int] | None = None
-    backup_root_identity: tuple[int, int, int, int] | None = None
+    backup_identity: PathIdentity | None = None
+    backup_root_identity: PathIdentity | None = None
     if target_path.exists():
         target_identity = get_directory_path_identity(target_path)
         if target_identity is None:
@@ -936,7 +936,7 @@ def publish_staged_output_directory(
             raise click.ClickException(f"Failed to back up {label}: path changed.")
 
     target_replaced = False
-    published_target_identity: tuple[int, int, int, int] | None = None
+    published_target_identity: PathIdentity | None = None
     try:
         current_parent_identity = get_read_parent_identity(target_path)
         if (
@@ -1040,7 +1040,7 @@ def publish_output_file(
     staged_path: Path,
     target_path: Path,
     label: str,
-    expected_staged_identity: tuple[int, int, int, int] | None = None,
+    expected_staged_identity: PathIdentity | None = None,
 ) -> None:
     """Replace an output file with a staged file."""
     if staged_path.is_symlink():
@@ -1072,8 +1072,8 @@ def publish_output_file(
 
     backup_root: Path | None = None
     backup_path: Path | None = None
-    backup_identity: tuple[int, int, int, int] | None = None
-    backup_root_identity: tuple[int, int, int, int] | None = None
+    backup_identity: PathIdentity | None = None
+    backup_root_identity: PathIdentity | None = None
     if target_path.exists():
         target_identity = get_read_path_identity(target_path)
         if target_identity is None:
@@ -1142,8 +1142,8 @@ def publish_output_file(
             raise click.ClickException(f"Failed to back up {label}: backup is unsafe.")
 
     target_replaced = False
-    published_target_identity: tuple[int, int, int, int] | None = None
-    published_target_directory_identity: tuple[int, int, int, int] | None = None
+    published_target_identity: PathIdentity | None = None
+    published_target_directory_identity: PathIdentity | None = None
     try:
         current_parent_identity = get_read_parent_identity(target_path)
         if (
@@ -1399,7 +1399,7 @@ def optional_directory_exists(path: Path, label: str) -> bool:
 def get_optional_directory_identity(
     path: Path,
     label: str,
-) -> tuple[int, int, int, int] | None:
+) -> PathIdentity | None:
     """Return the identity of an optional project directory when present."""
     if not optional_directory_exists(path, label):
         return None
@@ -1412,11 +1412,11 @@ def get_optional_directory_identity(
 def ensure_directory_identity_unchanged(
     path: Path,
     label: str,
-    identity: tuple[int, int, int, int] | None,
+    identity: PathIdentity | None,
     operation: str = "metadata update",
     *,
     allow_content_changes: bool = True,
-    expected_parent_identity: tuple[int, int] | None = None,
+    expected_parent_identity: NodeIdentity | None = None,
 ) -> None:
     """Fail if an optional project directory changed after validation."""
     if identity is None:
@@ -1609,7 +1609,7 @@ def write_scaffold_file(path: Path, label: str, content: str) -> None:
 def cleanup_scaffold_directory(
     path: Path,
     label: str,
-    expected_identity: tuple[int, int, int, int] | None = None,
+    expected_identity: PathIdentity | None = None,
     *,
     allow_content_changes: bool = True,
 ) -> None:
@@ -1756,7 +1756,7 @@ def copy_frontend_dist(cwd: Path) -> str:
     if frontend_dist_parent_identity is None:
         raise click.ClickException("frontend/dist path is no longer safe.")
     frontend_dist = frontend_dist_path.resolve()
-    frontend_files: list[tuple[Path, tuple[int, int, int, int]]] = []
+    frontend_files: list[tuple[Path, PathIdentity]] = []
     remote_entries: list[str] = []
 
     for f in sorted(frontend_dist.rglob("*")):
@@ -1927,7 +1927,7 @@ def copy_backend_files(cwd: Path) -> None:
         raise click.ClickException("backend pyproject.toml not found.")
     include_patterns, exclude_patterns = get_backend_build_patterns(pyproject)
 
-    copy_targets: dict[Path, tuple[Path, Path, tuple[int, int, int, int]]] = {}
+    copy_targets: dict[Path, tuple[Path, Path, PathIdentity]] = {}
 
     # Process include patterns
     for pattern in include_patterns:
@@ -2122,7 +2122,7 @@ def get_bundle_default_filename(extension_name: str, extension_version: str) -> 
 
 def verify_bundle_archive_contents(
     archive_path: Path,
-    bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]],
+    bundle_entries: list[tuple[Path, Path, PathIdentity]],
     resolved_dist_dir: Path,
 ) -> None:
     """Verify a temporary bundle archive still matches planned dist entries."""
@@ -2562,7 +2562,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     pending_writes = [*pending_json_writes, *pending_toml_writes]
     try:
         original_contents: dict[Path, str] = {}
-        original_identities: dict[Path, tuple[int, int, int, int]] = {}
+        original_identities: dict[Path, PathIdentity] = {}
         for path, label, _ in pending_writes:
             ensure_metadata_directories_unchanged()
             original_content = read_input_text(path, label)
@@ -2581,7 +2581,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         )
         sys.exit(1)
 
-    written_paths: list[tuple[Path, str, tuple[int, int, int, int]]] = []
+    written_paths: list[tuple[Path, str, PathIdentity]] = []
     try:
         for path, label, data in pending_json_writes:
             ensure_metadata_directories_unchanged()
@@ -2623,7 +2623,7 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
             try:
                 if get_read_path_identity(path) != written_identity:
                     raise OSError(f"Refusing to roll back {label}: path changed.")
-                rollback_directory_identity: tuple[int, int] | None = None
+                rollback_directory_identity: NodeIdentity | None = None
                 rollback_directory: Path | None = None
                 if frontend_identity is not None and path.is_relative_to(frontend_dir):
                     rollback_directory = frontend_dir
@@ -2835,7 +2835,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         click.secho(f"❌ {ex.message}", err=True, fg="red")
         sys.exit(1)
 
-    output_directory_identity: tuple[int, int, int, int] | None = None
+    output_directory_identity: PathIdentity | None = None
     if output is None:
         zip_path = Path(default_filename)
     elif output.is_dir():
@@ -2845,8 +2845,8 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
         zip_path = output
 
     temp_path: Path | None = None
-    temp_identity: tuple[int, int, int, int] | None = None
-    output_parent_cleanup_identity: tuple[int, int] | None = None
+    temp_identity: PathIdentity | None = None
+    output_parent_cleanup_identity: NodeIdentity | None = None
     try:
         resolved_dist_dir = dist_dir.resolve()
         resolved_zip_path = zip_path.resolve()
@@ -2867,7 +2867,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                 f"{zip_path.parent}."
             )
 
-        bundle_entries: list[tuple[Path, Path, tuple[int, int, int, int]]] = []
+        bundle_entries: list[tuple[Path, Path, PathIdentity]] = []
         for file in dist_dir.rglob("*"):
             if not file.is_file():
                 continue
@@ -3003,9 +3003,7 @@ def dev(ctx: click.Context) -> None:
             rebuild_backend(cwd)
 
     # Build watch message based on existing directories
-    watch_targets: list[
-        tuple[str, Path, tuple[int, int, int, int], tuple[int, int]]
-    ] = []
+    watch_targets: list[tuple[str, Path, PathIdentity, NodeIdentity]] = []
     for label, directory in (("frontend", frontend_dir), ("backend", backend_dir)):
         if optional_directory_exists(directory, label):
             directory_identity = get_directory_path_identity(directory)
@@ -3230,9 +3228,9 @@ def init(
     }
 
     created_target_dir = False
-    target_dir_identity: tuple[int, int, int, int] | None = None
+    target_dir_identity: PathIdentity | None = None
     expected_scaffold_entries: dict[Path, set[str]] = {}
-    expected_scaffold_identities: dict[Path, tuple[int, int, int, int]] = {}
+    expected_scaffold_identities: dict[Path, PathIdentity] = {}
 
     def refresh_target_dir_identity() -> None:
         nonlocal target_dir_identity
