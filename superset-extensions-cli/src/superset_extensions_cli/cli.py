@@ -236,6 +236,12 @@ def start_dist_replacement(
         "temporary dist backup directory",
     )
     backup_path = backup_root / "dist"
+    if get_directory_path_identity(dist_dir) != dist_identity:
+        try:
+            remove_output_directory(backup_root, "temporary dist backup directory")
+        except click.ClickException:
+            pass
+        raise click.ClickException("Failed to back up dist directory: path changed.")
     try:
         dist_dir.replace(backup_path)
     except OSError as ex:

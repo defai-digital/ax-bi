@@ -555,6 +555,48 @@ def test_start_dist_replacement_restores_dist_when_replacement_create_fails(
 
 
 @pytest.mark.unit
+def test_start_dist_replacement_rejects_changed_dist_before_backup_move(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test dist replacement refuses a dist path changed before backup move."""
+    dist_dir = isolated_filesystem / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "manifest.json").write_text("previous")
+    saved_dist = isolated_filesystem / "saved-dist"
+    replacement_dist = isolated_filesystem / "replacement-dist"
+    replacement_dist.mkdir()
+    (replacement_dist / "manifest.json").write_text("replacement")
+
+    from superset_extensions_cli import cli
+
+    original_create_temporary_output_directory = cli.create_temporary_output_directory
+
+    def swap_dist_after_backup_root_creation(parent, prefix, label):
+        backup_root = original_create_temporary_output_directory(parent, prefix, label)
+        if parent == isolated_filesystem and prefix.startswith(".dist-backup."):
+            dist_dir.rename(saved_dist)
+            replacement_dist.rename(dist_dir)
+        return backup_root
+
+    monkeypatch.setattr(
+        cli,
+        "create_temporary_output_directory",
+        swap_dist_after_backup_root_creation,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Failed to back up dist directory: path changed",
+    ):
+        start_dist_replacement(isolated_filesystem)
+
+    assert (saved_dist / "manifest.json").read_text() == "previous"
+    assert (dist_dir / "manifest.json").read_text() == "replacement"
+    assert list(isolated_filesystem.glob(".dist-backup.*.tmp")) == []
+
+
+@pytest.mark.unit
 def test_start_dist_replacement_rejects_swapped_dist_backup(
     isolated_filesystem,
     monkeypatch,
