@@ -677,10 +677,17 @@ def remove_output_file(
     path: Path,
     label: str,
     expected_identity: tuple[int, int, int, int],
+    *,
+    allow_content_changes: bool = False,
 ) -> None:
     """Remove an output file only if it still matches the expected identity."""
     current_identity = get_read_path_identity(path)
-    if current_identity is None or current_identity[:2] != expected_identity[:2]:
+    if current_identity is None or (
+        current_identity != expected_identity
+        and not (
+            allow_content_changes and current_identity[:2] == expected_identity[:2]
+        )
+    ):
         raise click.ClickException(f"Refusing to clean {label}: path changed.")
     try:
         if get_read_path_identity(path) != current_identity:
@@ -2514,7 +2521,12 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
     except Exception as ex:
         if temp_path is not None and temp_identity is not None:
             try:
-                remove_output_file(temp_path, "temporary bundle", temp_identity)
+                remove_output_file(
+                    temp_path,
+                    "temporary bundle",
+                    temp_identity,
+                    allow_content_changes=True,
+                )
             except click.ClickException:
                 pass
         click.secho(f"❌ Failed to create bundle: {ex}", err=True, fg="red")

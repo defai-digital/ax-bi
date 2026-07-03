@@ -1463,6 +1463,29 @@ def test_remove_output_file_rejects_changed_path_before_unlink(
 
 
 @pytest.mark.unit
+def test_remove_output_file_rejects_changed_content_before_unlink(
+    isolated_filesystem,
+):
+    """Test file cleanup refuses a file changed after identity capture."""
+    output_path = isolated_filesystem / "bundle.supx"
+    output_path.write_text("failed bundle")
+
+    from superset_extensions_cli import cli
+
+    expected_identity = cli.get_read_path_identity(output_path)
+    assert expected_identity is not None
+    output_path.write_text("replacement bundle")
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean bundle: path changed",
+    ):
+        remove_output_file(output_path, "bundle", expected_identity)
+
+    assert output_path.read_text() == "replacement bundle"
+
+
+@pytest.mark.unit
 def test_publish_output_file_rejects_changed_backup_cleanup_root(
     isolated_filesystem,
     monkeypatch,
