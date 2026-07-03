@@ -1401,6 +1401,51 @@ def test_clean_dist_frontend_rejects_non_directory_parent(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_clean_dist_frontend_rejects_changed_directory(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test clean_dist_frontend refuses a directory changed before deletion."""
+    from superset_extensions_cli import cli
+    from superset_extensions_cli.cli import clean_dist_frontend
+
+    frontend_dir = isolated_filesystem / "dist" / "frontend"
+    frontend_dir.mkdir(parents=True)
+    (frontend_dir / "artifact.js").write_text("old")
+    replacement_dir = isolated_filesystem / "replacement-frontend"
+    replacement_dir.mkdir()
+    (replacement_dir / "replacement.js").write_text("replacement")
+    saved_original = isolated_filesystem / "saved-frontend"
+    original_get_directory_path_identity = cli.get_directory_path_identity
+    identity_reads = 0
+
+    def replace_frontend_after_initial_identity(path):
+        nonlocal identity_reads
+        identity = original_get_directory_path_identity(path)
+        if path == frontend_dir:
+            identity_reads += 1
+            if identity_reads == 1:
+                frontend_dir.rename(saved_original)
+                replacement_dir.rename(frontend_dir)
+        return identity
+
+    monkeypatch.setattr(
+        cli,
+        "get_directory_path_identity",
+        replace_frontend_after_initial_identity,
+    )
+
+    with pytest.raises(
+        click.ClickException,
+        match="Refusing to clean dist/frontend directory: path changed",
+    ):
+        clean_dist_frontend(isolated_filesystem)
+
+    assert_file_exists(saved_original / "artifact.js")
+    assert_file_exists(frontend_dir / "replacement.js")
+
+
+@pytest.mark.unit
 def test_run_frontend_build_with_output_messages(isolated_filesystem):
     """Test run_frontend_build produces expected output messages."""
     from superset_extensions_cli.cli import run_frontend_build
