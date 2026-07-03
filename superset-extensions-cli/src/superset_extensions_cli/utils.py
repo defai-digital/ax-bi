@@ -219,6 +219,9 @@ def validate_npm_package_name(name: str) -> None:
     Raises:
         ExtensionNameError: If name is invalid
     """
+    if not name:
+        raise ExtensionNameError("NPM package name cannot be empty")
+
     if name.lower() in NPM_RESERVED:
         raise ExtensionNameError(f"'{name}' is a reserved npm package name")
 

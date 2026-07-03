@@ -242,6 +242,12 @@ def test_validate_npm_package_name_reserved(reserved_name):
         validate_npm_package_name(reserved_name)
 
 
+def test_validate_npm_package_name_rejects_empty_name():
+    """Test empty NPM package names are rejected with a domain error."""
+    with pytest.raises(ExtensionNameError, match="NPM package name cannot be empty"):
+        validate_npm_package_name("")
+
+
 # Publisher validation tests
 
 
