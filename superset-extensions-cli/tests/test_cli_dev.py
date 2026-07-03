@@ -30,6 +30,7 @@ from superset_extensions_cli.cli import app, FrontendChangeHandler
 # Dev Command Tests
 @pytest.mark.cli
 @patch("superset_extensions_cli.cli.Observer")
+@patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
 @patch("superset_extensions_cli.cli.rebuild_frontend")
 @patch("superset_extensions_cli.cli.rebuild_backend")
@@ -41,6 +42,7 @@ def test_dev_command_starts_watchers(
     mock_rebuild_backend,
     mock_rebuild_frontend,
     mock_init_frontend_deps,
+    mock_validate_npm,
     mock_observer_class,
     cli_runner,
     isolated_filesystem,
@@ -82,6 +84,7 @@ def test_dev_command_starts_watchers(
 
     # Initial setup calls
     mock_init_frontend_deps.assert_called_once()
+    mock_validate_npm.assert_called()
     mock_rebuild_frontend.assert_called()
     mock_rebuild_backend.assert_called()
     mock_build_manifest.assert_called()
@@ -89,6 +92,7 @@ def test_dev_command_starts_watchers(
 
 
 @pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
 @patch("superset_extensions_cli.cli.init_frontend_deps")
 @patch("superset_extensions_cli.cli.rebuild_frontend")
 @patch("superset_extensions_cli.cli.rebuild_backend")
@@ -100,6 +104,7 @@ def test_dev_command_initial_build(
     mock_rebuild_backend,
     mock_rebuild_frontend,
     mock_init_frontend_deps,
+    mock_validate_npm,
     cli_runner,
     isolated_filesystem,
     extension_setup_for_dev,
@@ -129,9 +134,34 @@ def test_dev_command_initial_build(
 
     # Verify initial build steps
     frontend_dir = isolated_filesystem / "frontend"
+    mock_validate_npm.assert_called_once()
     mock_init_frontend_deps.assert_called_once_with(frontend_dir)
     mock_rebuild_frontend.assert_called_once_with(isolated_filesystem, frontend_dir)
     mock_rebuild_backend.assert_called_once_with(isolated_filesystem)
+
+
+@pytest.mark.cli
+@patch("superset_extensions_cli.cli.validate_npm")
+def test_dev_command_validates_before_building(
+    mock_validate_npm, cli_runner, isolated_filesystem
+):
+    """Test dev command validates the extension before building or watching."""
+    extension_json = {
+        "publisher": "test-org",
+        "name": "test-extension",
+        "displayName": "Test Extension",
+        "version": "1.0.0",
+        "permissions": [],
+    }
+    (isolated_filesystem / "extension.json").write_text(json.dumps(extension_json))
+    (isolated_filesystem / "frontend").write_text("not a directory")
+
+    result = cli_runner.invoke(app, ["dev"])
+
+    assert result.exit_code == 1
+    mock_validate_npm.assert_called_once()
+    assert "frontend path exists but is not a directory" in result.output
+    assert not (isolated_filesystem / "dist").exists()
 
 
 # FrontendChangeHandler Tests

@@ -99,9 +99,25 @@ def extension_setup_for_dev():
         }
         (base_path / "extension.json").write_text(json.dumps(extension_json))
 
-        # Create frontend and backend directories
-        (base_path / "frontend").mkdir()
-        (base_path / "backend").mkdir()
+        # Create conventional frontend and backend directories.
+        frontend_src = base_path / "frontend" / "src"
+        frontend_src.mkdir(parents=True)
+        (frontend_src / "index.tsx").write_text("// frontend entry")
+
+        backend_dir = base_path / "backend"
+        backend_src = backend_dir / "src" / "test_org" / "test_extension"
+        backend_src.mkdir(parents=True)
+        (backend_src / "entrypoint.py").write_text("# backend entry")
+        (backend_dir / "pyproject.toml").write_text(
+            """[project]
+name = "test-org-test-extension"
+version = "1.0.0"
+
+[tool.apache_superset_extensions.build]
+include = ["src/**/*.py"]
+exclude = []
+"""
+        )
 
     return _setup
 

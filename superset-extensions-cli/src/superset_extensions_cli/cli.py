@@ -914,6 +914,8 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
 @click.pass_context
 def dev(ctx: click.Context) -> None:
     """Automatically rebuild the extension as files change."""
+    ctx.invoke(validate)
+
     cwd = Path.cwd()
     frontend_dir = cwd / "frontend"
     backend_dir = cwd / "backend"
