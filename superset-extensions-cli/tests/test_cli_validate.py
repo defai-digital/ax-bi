@@ -139,6 +139,30 @@ def test_validate_fails_with_invalid_extension_json(
 
 
 @pytest.mark.cli
+def test_validate_rejects_symlinked_extension_json(cli_runner, isolated_filesystem):
+    """Test validate refuses to read symlinked extension metadata."""
+    outside_extension_json = isolated_filesystem / "outside-extension.json"
+    outside_extension_json.write_text(
+        json.dumps(
+            {
+                "publisher": "test-org",
+                "name": "test-extension",
+                "displayName": "Test Extension",
+                "version": "1.0.0",
+                "permissions": [],
+            }
+        )
+    )
+    (isolated_filesystem / "extension.json").symlink_to(outside_extension_json)
+
+    with patch("superset_extensions_cli.cli.validate_npm"):
+        result = cli_runner.invoke(app, ["validate"])
+
+    assert result.exit_code == 1
+    assert "Refusing to read extension.json: path is a symlink" in result.output
+
+
+@pytest.mark.cli
 def test_validate_fails_with_invalid_backend_build_config(
     cli_runner, isolated_filesystem
 ):

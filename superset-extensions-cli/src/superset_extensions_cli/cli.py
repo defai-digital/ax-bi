@@ -242,6 +242,9 @@ def get_pyproject_project_table(
 
 def load_extension_config(path: Path) -> tuple[dict[str, Any], ExtensionConfig]:
     """Load and validate an extension.json file for CLI commands."""
+    if not input_file_exists(path, "extension.json"):
+        raise click.ClickException("extension.json not found.")
+
     extension_data = load_json_object(path, "extension.json")
     if extension_data is None:
         raise click.ClickException("extension.json not found.")
