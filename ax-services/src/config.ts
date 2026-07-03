@@ -38,7 +38,7 @@ export interface ServiceConfig {
     task: string;
   };
   supersetTimeoutMs: number;
-  supersetInternalToken?: string;
+  supersetInternalToken: string | undefined;
   logLevel: LogLevel;
 }
 

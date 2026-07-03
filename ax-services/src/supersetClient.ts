@@ -599,12 +599,15 @@ export class SupersetClient
         };
       }
 
-      return {
+      const result: PermissionCheckResult = {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
         allowed: payload.allowed === true,
-        reason: typeof payload.reason === 'string' ? payload.reason : undefined,
         statusCode: response.status,
       };
+      if (typeof payload.reason === 'string') {
+        result.reason = payload.reason;
+      }
+      return result;
     } catch (error) {
       return {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
@@ -2211,7 +2214,7 @@ function toDashboardListItem(
     return undefined;
   }
 
-  return {
+  return omitUndefined<DashboardListItem>({
     id: item.id,
     dashboardTitle:
       typeof item.dashboard_title === 'string' ? item.dashboard_title : undefined,
@@ -2232,7 +2235,7 @@ function toDashboardListItem(
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
@@ -2240,7 +2243,7 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<ChartListItem>({
     id: item.id,
     sliceName: typeof item.slice_name === 'string' ? item.slice_name : undefined,
     vizType: typeof item.viz_type === 'string' ? item.viz_type : undefined,
@@ -2259,7 +2262,7 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined {
@@ -2267,7 +2270,7 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
     return undefined;
   }
 
-  return {
+  return omitUndefined<DatasetListItem>({
     id: item.id,
     tableName: typeof item.table_name === 'string' ? item.table_name : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
@@ -2297,7 +2300,7 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
           : undefined,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     url: typeof item.url === 'string' ? item.url : undefined,
-  };
+  });
 }
 
 function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefined {
@@ -2305,7 +2308,7 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
     return undefined;
   }
 
-  return {
+  return omitUndefined<DatabaseListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     databaseName:
@@ -2360,7 +2363,7 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toSavedQueryListItem(
@@ -2370,7 +2373,7 @@ function toSavedQueryListItem(
     return undefined;
   }
 
-  return {
+  return omitUndefined<SavedQueryListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     label: typeof item.label === 'string' ? item.label : undefined,
@@ -2383,7 +2386,7 @@ function toSavedQueryListItem(
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
     lastRun: typeof item.last_run === 'string' ? item.last_run : undefined,
-  };
+  });
 }
 
 function toAnnotationLayerListItem(
@@ -2393,13 +2396,13 @@ function toAnnotationLayerListItem(
     return undefined;
   }
 
-  return {
+  return omitUndefined<AnnotationLayerListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     descr: typeof item.descr === 'string' ? item.descr : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
-  };
+  });
 }
 
 function toAnnotationListItem(
@@ -2410,7 +2413,7 @@ function toAnnotationListItem(
     return undefined;
   }
 
-  return {
+  return omitUndefined<AnnotationListItem>({
     id: item.id,
     shortDescr:
       typeof item.short_descr === 'string' ? item.short_descr : undefined,
@@ -2420,7 +2423,7 @@ function toAnnotationListItem(
     jsonMetadata:
       typeof item.json_metadata === 'string' ? item.json_metadata : undefined,
     layerId: isSupersetId(item.layer_id) ? item.layer_id : fallbackLayerId,
-  };
+  });
 }
 
 function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
@@ -2428,7 +2431,7 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<QueryListItem>({
     id: item.id,
     sql: typeof item.sql === 'string' ? item.sql : undefined,
     executedSql:
@@ -2463,7 +2466,7 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
       : isSupersetId(item.user?.id)
         ? item.user.id
         : undefined,
-  };
+  });
 }
 
 function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
@@ -2471,7 +2474,7 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<ReportListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     description:
@@ -2504,7 +2507,7 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
@@ -2512,10 +2515,10 @@ function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<RoleListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
-  };
+  });
 }
 
 function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
@@ -2523,7 +2526,7 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<RlsListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     filterType:
@@ -2538,7 +2541,7 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
         : typeof item.changed_on_delta_humanized === 'string'
           ? item.changed_on_delta_humanized
           : undefined,
-  };
+  });
 }
 
 function toRlsTableRef(value: unknown): RlsTableRef | undefined {
@@ -2576,7 +2579,7 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<TagListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     type: typeof item.type === 'string' ? item.type : undefined,
@@ -2592,7 +2595,7 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
@@ -2600,7 +2603,7 @@ function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
     return undefined;
   }
 
-  return {
+  return omitUndefined<TaskListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     taskType: typeof item.task_type === 'string' ? item.task_type : undefined,
@@ -2610,7 +2613,15 @@ function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
     scope: typeof item.scope === 'string' ? item.scope : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
-  };
+  });
+}
+
+function omitUndefined<T extends object>(
+  value: Record<string, unknown>,
+): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as T;
 }
 
 function extractDatabaseName(item: SupersetListItem): string | undefined {

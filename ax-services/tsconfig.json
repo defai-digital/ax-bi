@@ -6,6 +6,7 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "types": ["node"],
