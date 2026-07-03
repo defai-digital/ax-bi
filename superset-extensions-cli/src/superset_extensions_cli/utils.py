@@ -169,6 +169,7 @@ def validate_write_path(path: Path) -> Path:
 
 def write_text_atomic(path: Path, content: str) -> None:
     """Write text via a same-directory temporary file before replacing the target."""
+    path = validate_write_path(path)
     temp_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -181,6 +182,7 @@ def write_text_atomic(path: Path, content: str) -> None:
         ) as temp_file:
             temp_path = Path(temp_file.name)
             temp_file.write(content)
+        validate_write_path(path)
         temp_path.replace(path)
         temp_path = None
     except OSError:

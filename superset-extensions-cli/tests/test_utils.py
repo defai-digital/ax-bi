@@ -21,7 +21,13 @@ import json
 from pathlib import Path
 
 import pytest
-from superset_extensions_cli.utils import read_json, read_toml, write_json, write_toml
+from superset_extensions_cli.utils import (
+    read_json,
+    read_toml,
+    write_json,
+    write_text_atomic,
+    write_toml,
+)
 
 
 # Read JSON Tests
@@ -390,6 +396,47 @@ def test_read_toml_with_permission_denied(isolated_filesystem):
             toml_file.chmod(0o644)
         except (OSError, PermissionError):
             pass
+
+
+# Atomic Write Tests
+@pytest.mark.unit
+def test_write_text_atomic_round_trip(isolated_filesystem):
+    """Test atomic text writes replace file contents."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+
+    write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "new"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_symlinked_output(isolated_filesystem):
+    """Test atomic text writes refuse symlinked output paths."""
+    outside_file = isolated_filesystem / "outside.txt"
+    outside_file.write_text("original")
+    output_path = isolated_filesystem / "output.txt"
+    output_path.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_text_atomic(output_path, "updated")
+
+    assert outside_file.read_text() == "original"
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_symlinked_parent(isolated_filesystem):
+    """Test atomic text writes refuse symlinked parent directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_text_atomic(output_dir / "metadata.txt", "updated")
+
+    assert not (outside_dir / "metadata.txt").exists()
 
 
 # Write JSON Tests
