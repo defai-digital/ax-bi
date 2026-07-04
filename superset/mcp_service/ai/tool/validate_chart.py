@@ -184,11 +184,8 @@ async def validate_chart(request: ValidateChartRequest, ctx: Context) -> dict[st
     ```
     """
     await ctx.info(
-        "Validating chart config: dataset_id=%s, chart_type=%s"
-        % (
-            request.dataset_id,
-            request.config.get("chart_type", "unknown"),
-        )
+        f"Validating chart config: dataset_id={request.dataset_id}, "
+        f"chart_type={request.config.get('chart_type', 'unknown')}"
     )
 
     with mcp_event_log_context(action="mcp.validate_chart.run"):
@@ -198,7 +195,7 @@ async def validate_chart(request: ValidateChartRequest, ctx: Context) -> dict[st
             await ctx.info("Chart validation passed")
         else:
             await ctx.warning(
-                "Chart validation failed: %d error(s)" % len(result["errors"])
+                f"Chart validation failed: {len(result['errors'])} error(s)"
             )
 
         return ValidateChartResponse(
