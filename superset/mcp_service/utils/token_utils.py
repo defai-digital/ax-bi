@@ -48,14 +48,14 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from math import ceil
-from typing import Any, TypeAlias, Union
+from typing import Any, TypeAlias
 
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 # Type alias for MCP tool responses (Pydantic models, dicts, lists, strings, bytes)
-ToolResponse: TypeAlias = Union[BaseModel, dict[str, Any], list[Any], str, bytes]
+ToolResponse: TypeAlias = BaseModel | dict[str, Any] | list[Any] | str | bytes
 
 # Fallback character-to-token ratio used when tiktoken is unavailable.
 # 3.0 is conservative for JSON content (the previous 3.5 under-counted
@@ -158,7 +158,7 @@ def estimate_response_tokens(response: ToolResponse) -> int:
         if hasattr(response, "model_dump"):
             # Pydantic model
             response_str = json.dumps(response.model_dump())
-        elif isinstance(response, (dict, list)):
+        elif isinstance(response, dict | list):
             response_str = json.dumps(response)
         elif isinstance(response, bytes):
             # Delegate to estimate_token_count which handles decoding safely
@@ -190,7 +190,7 @@ def get_response_size_bytes(response: ToolResponse) -> int:
 
         if hasattr(response, "model_dump"):
             response_str = json.dumps(response.model_dump())
-        elif isinstance(response, (dict, list)):
+        elif isinstance(response, dict | list):
             response_str = json.dumps(response)
         elif isinstance(response, bytes):
             return len(response)
@@ -518,13 +518,13 @@ def _truncate_strings_recursive(
                     f"Field '{field_path}' truncated from {original_len} chars"
                 )
                 changed = True
-            elif isinstance(value, (dict, list)):
+            elif isinstance(value, dict | list):
                 changed |= _truncate_strings_recursive(
                     value, notes, max_chars, field_path, _depth + 1
                 )
     elif isinstance(data, list):
         for i, item in enumerate(data):
-            if isinstance(item, (dict, list)):
+            if isinstance(item, dict | list):
                 changed |= _truncate_strings_recursive(
                     item, notes, max_chars, f"{path}[{i}]", _depth + 1
                 )
@@ -579,7 +579,7 @@ def _replace_collections_with_summaries(data: dict[str, Any], notes: list[str]) 
     """
     changed = False
     for key, value in list(data.items()):
-        if not isinstance(value, (list, dict)) or not value:
+        if not isinstance(value, list | dict) or not value:
             continue
         count = len(value)
         if isinstance(value, list):

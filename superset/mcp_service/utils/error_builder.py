@@ -73,9 +73,9 @@ def _sanitize_template_vars(vars_dict: dict[str, Any]) -> dict[str, Any]:
     sanitized = {}
     for key, value in vars_dict.items():
         # Only sanitize string-like values that could contain user input
-        if isinstance(value, (str, int, float)) or value is None:
+        if isinstance(value, str | int | float) or value is None:
             sanitized[key] = _sanitize_user_input(value)
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             # Sanitize lists of strings
             sanitized[key] = ", ".join(
                 [_sanitize_user_input(item) for item in value[:10]]
