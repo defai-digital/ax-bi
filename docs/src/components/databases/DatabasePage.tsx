@@ -774,7 +774,7 @@ const DatabasePage: React.FC<DatabasePageProps> = ({ database, name }) => {
               Help improve this documentation by editing the engine spec:
             </Text>
             <a
-              href={`https://github.com/apache/superset/edit/master/superset/db_engine_specs/${databaseModuleFilename}`}
+              href={`https://github.com/defai-digital/ax-bi/edit/main/superset/db_engine_specs/${databaseModuleFilename}`}
               target="_blank"
               rel="noreferrer"
             >

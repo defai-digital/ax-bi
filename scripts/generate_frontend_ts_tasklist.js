@@ -17,7 +17,7 @@
  * under the License.
  */
 
-// Run this from the superset-frontend directory with
+// Run this from the ax-bi-frontend directory with
 // `node ../scripts/generate_frontend_ts_tasklist.js `, then copy and paste the output into issue
 // #10004
 const { readdirSync } = require("fs");

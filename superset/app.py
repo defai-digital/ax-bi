@@ -169,7 +169,7 @@ class SupersetApp(Flask):
 
             # Check if database is up-to-date with migrations
             if not self._is_database_up_to_date():
-                logger.info("Pending database migrations: run 'superset db upgrade'")
+                logger.info("Pending database migrations: run 'ax-bi db upgrade'")
                 return
 
             logger.info("Syncing configuration to database...")

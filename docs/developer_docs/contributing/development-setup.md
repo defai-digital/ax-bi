@@ -68,7 +68,7 @@ Note that:
   - **Redis** as the message queue for our async backend and caching backend
 - It'll load up examples into the database upon the first startup
 - all other details and pointers available in
-  [docker-compose.yml](https://github.com/apache/superset/blob/master/docker-compose.yml)
+  [docker-compose.yml](https://github.com/defai-digital/ax-bi/blob/main/docker-compose.yml)
 - The local repository is mounted within the services, meaning updating
   the code on the host will be reflected in the docker images
 - Superset is served at localhost:9000/
@@ -106,7 +106,7 @@ Affecting the Docker build process:
   Set to `true` for debugging: `SUPERSET_DEBUG_ENABLED=true docker compose up`
 
 For more env vars that affect your configuration, see this
-[superset_config.py](https://github.com/apache/superset/blob/master/docker/pythonpath_dev/superset_config.py)
+[superset_config.py](https://github.com/defai-digital/ax-bi/blob/main/docker/pythonpath_dev/superset_config.py)
 used in the `docker compose` context to assign env vars to the superset configuration.
 
 ### Accessing the postgres database
@@ -272,7 +272,7 @@ curl -f http://localhost:8088/health && echo "✅ Superset ready"
 ### Key Development Commands
 ```bash
 # Frontend development
-cd superset-frontend
+cd ax-bi-frontend
 npm run dev          # Development server on http://localhost:9000
 npm run test         # Run all tests
 npm run test -- filename.test.tsx  # Run single test file
@@ -285,7 +285,7 @@ pytest tests/unit_tests/specific_test.py  # Run single test file
 pytest tests/unit_tests/  # Run all tests in directory
 ```
 
-For detailed development context, environment setup, and coding guidelines, see [LLMS.md](https://github.com/apache/superset/blob/master/LLMS.md).
+For detailed development context, environment setup, and coding guidelines, see [LLMS.md](https://github.com/defai-digital/ax-bi/blob/main/LLMS.md).
 
 ## Alternatives to `docker compose`
 
@@ -317,22 +317,22 @@ pip install -r requirements/development.txt
 pip install -e .
 
 # Initialize the database
-superset db upgrade
+ax-bi db upgrade
 
 # Create an admin user in your metadata database (use `admin` as username to be able to load the examples)
-superset fab create-admin
+ax-bi fab create-admin
 
 # Create default roles and permissions
-superset init
+ax-bi init
 
 # Load some data to play with.
 # Note: you MUST have previously created an admin user with the username `admin` for this command to work.
-superset load-examples
+ax-bi load-examples
 
 # Start the Flask dev web server from inside your virtualenv.
 # Note that your page may not have CSS at this point.
 # See instructions below on how to build the front-end assets.
-superset run -p 8088 --with-threads --reload --debugger --debug
+ax-bi run -p 8088 --with-threads --reload --debugger --debug
 ```
 
 Or you can install it via our Makefile
@@ -356,7 +356,7 @@ $ make pre-commit
 via `.flaskenv`, however, if needed, it should be set to `superset.app:create_app()`**
 
 If you have made changes to the FAB-managed templates, which are not built the same way as the newer, React-powered front-end assets, you need to start the app without the `--with-threads` argument like so:
-`superset run -p 8088 --reload --debugger --debug`
+`ax-bi run -p 8088 --reload --debugger --debug`
 
 #### Dependencies
 
@@ -402,7 +402,7 @@ gunicorn "superset.app:create_app()" -k "geventwebsocket.gunicorn.workers.Gevent
 
 ### Frontend
 
-Frontend assets (TypeScript, JavaScript, CSS, and images) must be compiled in order to properly display the web UI. The `superset-frontend` directory contains all NPM-managed frontend assets. Note that for some legacy pages there are additional frontend assets bundled with Flask-Appbuilder (e.g. jQuery and bootstrap). These are not managed by NPM and may be phased out in the future.
+Frontend assets (TypeScript, JavaScript, CSS, and images) must be compiled in order to properly display the web UI. The `ax-bi-frontend` directory contains all NPM-managed frontend assets. Note that for some legacy pages there are additional frontend assets bundled with Flask-Appbuilder (e.g. jQuery and bootstrap). These are not managed by NPM and may be phased out in the future.
 
 #### Prerequisite
 
@@ -423,7 +423,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-cd superset-frontend
+cd ax-bi-frontend
 nvm install --lts
 nvm use --lts
 ```
@@ -442,7 +442,7 @@ Install third-party dependencies listed in `package.json` via:
 
 ```bash
 # From the root of the repository
-cd superset-frontend
+cd ax-bi-frontend
 
 # Install dependencies from `package-lock.json`
 npm ci
@@ -510,7 +510,7 @@ So a typical development workflow is the following:
 
    ```bash
    # Install Superset and dependencies, plus load your virtual environment first, as detailed above.
-   superset run -p 8088 --with-threads --reload --debugger --debug
+   ax-bi run -p 8088 --with-threads --reload --debugger --debug
    ```
 
 2. in parallel, run the Webpack dev server locally on port `9000`,<br/>
@@ -553,7 +553,7 @@ See docs [here](https://superset.apache.org/admin-docs/installation/docker-compo
 #### Updating NPM packages
 
 Use npm in the prescribed way, making sure that
-`superset-frontend/package-lock.json` is updated according to `npm`-prescribed
+`ax-bi-frontend/package-lock.json` is updated according to `npm`-prescribed
 best practices.
 
 #### Feature flags
@@ -566,7 +566,7 @@ FEATURE_FLAGS = {
 }
 ```
 
-If you want to use the same flag in the client code, also add it to the FeatureFlag TypeScript enum in [@superset-ui/core](https://github.com/apache/superset/blob/master/superset-frontend/packages/superset-ui-core/src/utils/featureFlags.ts). For example,
+If you want to use the same flag in the client code, also add it to the FeatureFlag TypeScript enum in [@superset-ui/core](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/superset-ui-core/src/utils/featureFlags.ts). For example,
 
 ```typescript
 export enum FeatureFlag {
@@ -609,8 +609,8 @@ For automation and CI/CD, Superset makes extensive use of GitHub Actions (GHA). 
 can find all of the workflows and other assets under the `.github/` folder. This includes:
 
 - running the backend unit test suites (`tests/`)
-- running the frontend test suites (`superset-frontend/src/**.*.test.*`)
-- running our Playwright end-to-end tests (`superset-frontend/playwright/`) and legacy Cypress tests (`superset-frontend/cypress-base/`)
+- running the frontend test suites (`ax-bi-frontend/src/**.*.test.*`)
+- running our Playwright end-to-end tests (`ax-bi-frontend/playwright/`) and legacy Cypress tests (`ax-bi-frontend/cypress-base/`)
 - linting the codebase, including all Python, Typescript and Javascript, yaml and beyond
 - checking for all sorts of other rules conventions
 
@@ -697,7 +697,7 @@ act --job test-python-38 --secret GITHUB_TOKEN=$GITHUB_TOKEN --event pull_reques
 
 #### Running locally using a test script
 
-There is also a utility script included in the Superset codebase to run Python integration tests. The [readme can be found here](https://github.com/apache/superset/tree/master/scripts/tests).
+There is also a utility script included in the Superset codebase to run Python integration tests. The [readme can be found here](https://github.com/defai-digital/ax-bi/tree/main/scripts/tests).
 
 To run all integration tests, for example, run this script from the root directory:
 
@@ -716,7 +716,7 @@ pytest ./link_to_test.py
 We use [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) to test TypeScript. Tests can be run with:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run test
 ```
 
@@ -907,7 +907,7 @@ You can now launch your VSCode debugger with the same config as above. VSCode wi
 Superset includes a [Storybook](https://storybook.js.org/) to preview the layout/styling of various Superset components and variations thereof. To open and view the Storybook:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run storybook
 ```
 
@@ -962,7 +962,7 @@ Submissions will be considered for submission (or removal) on a case-by-case bas
 1. Generate the migration file
 
    ```bash
-   superset db migrate -m 'add_metadata_column_to_annotation_model'
+   ax-bi db migrate -m 'add_metadata_column_to_annotation_model'
    ```
 
    This will generate a file in `migrations/version/{SHA}_this_will_be_in_the_migration_filename.py`.
@@ -972,7 +972,7 @@ Submissions will be considered for submission (or removal) on a case-by-case bas
 1. Upgrade the DB
 
    ```bash
-   superset db upgrade
+   ax-bi db upgrade
    ```
 
    The output should look like this:
@@ -992,7 +992,7 @@ Submissions will be considered for submission (or removal) on a case-by-case bas
 1. Test the migration's `down` method
 
    ```bash
-   superset db downgrade
+   ax-bi db downgrade
    ```
 
    The output should look like this:
@@ -1019,7 +1019,7 @@ To fix it:
 1. Get the migration heads
 
    ```bash
-   superset db heads
+   ax-bi db heads
    ```
 
    This should list two or more migration hashes. E.g.
@@ -1054,15 +1054,15 @@ To fix it:
    from alembic import op
    ```
 
-   Alternatively, you may also run `superset db merge` to create a migration script
+   Alternatively, you may also run `ax-bi db merge` to create a migration script
    just for merging the heads.
 
    ```bash
-   superset db merge {HASH1} {HASH2}
+   ax-bi db merge {HASH1} {HASH2}
    ```
 
 3. Upgrade the DB to the new checkpoint
 
    ```bash
-   superset db upgrade
+   ax-bi db upgrade
    ```

@@ -31,7 +31,7 @@ Apache Superset uses Playwright for end-to-end testing, migrating from the legac
 ### Playwright (Recommended)
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Run all tests
 npm run playwright:test
@@ -58,7 +58,7 @@ npm run playwright:debug tests/auth/login.spec.ts
 Cypress tests are being migrated to Playwright. For legacy tests:
 
 ```bash
-cd superset-frontend/cypress-base
+cd ax-bi-frontend/cypress-base
 npm run cypress-run-chrome    # Headless
 npm run cypress-debug         # Interactive UI
 ```
@@ -66,7 +66,7 @@ npm run cypress-debug         # Interactive UI
 ## Project Architecture
 
 ```
-superset-frontend/playwright/
+ax-bi-frontend/playwright/
 ├── components/core/     # Reusable UI components
 ├── pages/              # Page Object Models
 ├── tests/              # Test files organized by feature

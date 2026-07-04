@@ -86,7 +86,7 @@ Everything you need to contribute to the Apache Superset project. This section i
 - **[Configuration Guide](https://superset.apache.org/admin-docs/configuration/configuring-superset)** - Setup and configuration
 
 ### Important Files
-- **[UPDATING.md](https://github.com/apache/superset/blob/master/UPDATING.md)** - Breaking changes log
+- **[UPDATING.md](https://github.com/defai-digital/ax-bi/blob/main/UPDATING.md)** - Breaking changes log
 
 ## Where to Start?
 

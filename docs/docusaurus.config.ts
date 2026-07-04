@@ -57,9 +57,9 @@ if (!versionsConfig.user_docs.disabled) {
         docPath: string;
       }) => {
         if (docPath === 'intro.md') {
-          return 'https://github.com/apache/superset/edit/master/README.md';
+          return 'https://github.com/defai-digital/ax-bi/edit/main/README.md';
         }
-        return `https://github.com/apache/superset/edit/master/docs/${versionDocsDirPath}/${docPath}`;
+        return `https://github.com/defai-digital/ax-bi/edit/main/docs/${versionDocsDirPath}/${docPath}`;
       },
       remarkPlugins: [
         remarkImportPartial,
@@ -91,7 +91,7 @@ if (!versionsConfig.components.disabled) {
       path: 'components',
       routeBasePath: 'components',
       sidebarPath: require.resolve('./sidebarComponents.js'),
-      editUrl: 'https://github.com/apache/superset/edit/master/docs/components',
+      editUrl: 'https://github.com/defai-digital/ax-bi/edit/main/docs/components',
       remarkPlugins: [
         remarkImportPartial,
         remarkLocalizeBadges,
@@ -122,7 +122,7 @@ if (!versionsConfig.admin_docs.disabled) {
       path: 'admin_docs',
       routeBasePath: 'admin-docs',
       sidebarPath: require.resolve('./sidebarAdminDocs.js'),
-      editUrl: 'https://github.com/apache/superset/edit/master/docs/admin_docs',
+      editUrl: 'https://github.com/defai-digital/ax-bi/edit/main/docs/admin_docs',
       remarkPlugins: [
         remarkImportPartial,
         remarkLocalizeBadges,
@@ -154,7 +154,7 @@ if (!versionsConfig.developer_docs.disabled) {
       routeBasePath: 'developer-docs',
       sidebarPath: require.resolve('./sidebarTutorials.js'),
       editUrl:
-        'https://github.com/apache/superset/edit/master/docs/developer_docs',
+        'https://github.com/defai-digital/ax-bi/edit/main/docs/developer_docs',
       remarkPlugins: [
         remarkImportPartial,
         remarkLocalizeBadges,
@@ -770,9 +770,8 @@ const config: Config = {
         docs: false,
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/main/website/blog/',
+            'https://github.com/defai-digital/ax-bi/edit/main/docs/blog/',
         },
         theme: {
           customCss: require.resolve('./src/styles/custom.css'),

@@ -39,7 +39,7 @@ A public Storybook with components from the `master` branch is available at:
 To run the main Superset Storybook locally:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Start Storybook (opens at http://localhost:6006)
 npm run storybook
@@ -53,7 +53,7 @@ npm run build-storybook
 The `@superset-ui` packages have a separate Storybook for component library development:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Install dependencies and bootstrap packages
 npm ci && npm run bootstrap

@@ -155,6 +155,20 @@ Available MCP tool groups include:
 
 The MCP service lives in [`superset/mcp_service/`](https://github.com/defai-digital/ax-bi/tree/main/superset/mcp_service) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for the product direction.
 
+## Naming Policy
+
+AX-BI uses an external rename strategy. Public commands and local development
+paths use AX-BI names: `ax-bi`, `ax-bi-mcp`, and `ax-bi-frontend/`.
+
+Core Superset namespaces remain in place for compatibility with upstream
+Superset, existing imports, migrations, extensions, package contracts, Helm
+values, and deployment configuration. This is intentional: directories such as
+`superset/`, `superset-core/`, `superset-extensions-cli/`,
+`superset-embedded-sdk/`, `superset-websocket/`, and `helm/superset` are not
+unfinished rename work. See the
+[AX-BI Rename Policy](https://github.com/defai-digital/ax-bi/blob/main/docs/developer_docs/ax-bi-rename-policy.md)
+before renaming any remaining `superset*` surface.
+
 ## Workspace Architecture
 
 AX-BI keeps the browser, API, MCP, and sidecar layers connected to one governed Superset metadata and security model.
@@ -289,14 +303,14 @@ AX-BI has a Flask/Python backend and a React/TypeScript frontend.
 make flask-app
 
 # Frontend dev server (port 9000)
-cd superset-frontend && npm run dev-server
+cd ax-bi-frontend && npm run dev-server
 
 # Run the MCP service
-superset mcp run            # requires: pip install fastmcp
+ax-bi mcp run            # requires: pip install fastmcp
 
 # Tests
 pytest                                 # backend
-cd superset-frontend && npm run test   # frontend
+cd ax-bi-frontend && npm run test   # frontend
 
 # Always run before pushing
 pre-commit run --all-files

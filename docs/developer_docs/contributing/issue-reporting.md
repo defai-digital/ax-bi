@@ -46,7 +46,7 @@ Learn how to effectively report bugs and request features for Apache Superset.
 3. **Verify Version**
    ```bash
    # Check Superset version
-   superset version
+   ax-bi version
 
    # Try latest version
    pip install --upgrade apache-superset
@@ -380,7 +380,7 @@ print(f'NumPy: {numpy.__version__}')
 "
 
 # Database versions
-superset shell
+ax-bi shell
 >>> from superset import db
 >>> print(db.engine.dialect.server_version_info)
 ```

@@ -37,10 +37,10 @@ PATTERNS = {
     ],
     "frontend": [
         r"^\.github/workflows/.*(bashlib|frontend|e2e)",
-        r"^superset-frontend/",
+        r"^ax-bi-frontend/",
     ],
     "frontend_build": [
-        r"^superset-frontend/(?!(?:cypress-base|playwright)/)",
+        r"^ax-bi-frontend/(?!(?:cypress-base|playwright)/)",
     ],
     "ax-services": [
         r"^\.github/workflows/ax-services\.yml",

@@ -35,26 +35,26 @@
  * here instead of importing the full package barrel.
  */
 
-// Paths relative to docs/src/shims/ → superset-frontend/packages/superset-ui-core/src/
+// Paths relative to docs/src/shims/ → ax-bi-frontend/packages/superset-ui-core/src/
 
 // utils — leaf modules with no heavy transitive deps
-export { default as ensureIsArray } from '../../../superset-frontend/packages/superset-ui-core/src/utils/ensureIsArray';
+export { default as ensureIsArray } from '../../../ax-bi-frontend/packages/superset-ui-core/src/utils/ensureIsArray';
 export {
   safeHtmlSpan,
   isProbablyHTML,
   isJsonString,
-} from '../../../superset-frontend/packages/superset-ui-core/src/utils/html';
+} from '../../../ax-bi-frontend/packages/superset-ui-core/src/utils/html';
 
 // hooks
-export { usePrevious } from '../../../superset-frontend/packages/superset-ui-core/src/hooks/usePrevious/usePrevious';
-export { useTruncation } from '../../../superset-frontend/packages/superset-ui-core/src/hooks/useTruncation';
+export { usePrevious } from '../../../ax-bi-frontend/packages/superset-ui-core/src/hooks/usePrevious/usePrevious';
+export { useTruncation } from '../../../ax-bi-frontend/packages/superset-ui-core/src/hooks/useTruncation';
 
 // time-format
-export { getTimeFormatter } from '../../../superset-frontend/packages/superset-ui-core/src/time-format/TimeFormatterRegistrySingleton';
-export { default as TimeFormats } from '../../../superset-frontend/packages/superset-ui-core/src/time-format/TimeFormats';
+export { getTimeFormatter } from '../../../ax-bi-frontend/packages/superset-ui-core/src/time-format/TimeFormatterRegistrySingleton';
+export { default as TimeFormats } from '../../../ax-bi-frontend/packages/superset-ui-core/src/time-format/TimeFormats';
 
 // color
-export { hexToRgb } from '../../../superset-frontend/packages/superset-ui-core/src/color/utils';
+export { hexToRgb } from '../../../ax-bi-frontend/packages/superset-ui-core/src/color/utils';
 
 export function formatNumber(
   _format: string | undefined,

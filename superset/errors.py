@@ -26,7 +26,7 @@ class SupersetErrorType(StrEnum):
     """
     Types of errors that can exist within Superset.
 
-    Keep in sync with superset-frontend/packages/superset-ui-core/src/query/types/Query.ts
+    Keep in sync with ax-bi-frontend/packages/superset-ui-core/src/query/types/Query.ts
     """  # noqa: E501
 
     # Frontend errors
@@ -200,7 +200,7 @@ class ErrorLevel(StrEnum):
     """
     Levels of errors that can exist within Superset.
 
-    Keep in sync with superset-frontend/packages/superset-ui-core/src/query/types/Query.ts
+    Keep in sync with ax-bi-frontend/packages/superset-ui-core/src/query/types/Query.ts
     """  # noqa: E501
 
     INFO = "info"

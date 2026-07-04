@@ -391,7 +391,7 @@ def apply_display_max_row_limit(
 
 
 # see all dashboard components type in
-# /superset-frontend/src/dashboard/util/componentTypes.js
+# /ax-bi-frontend/src/dashboard/util/componentTypes.js
 CONTAINER_TYPES = ["COLUMN", "GRID", "TABS", "TAB", "ROW"]
 
 

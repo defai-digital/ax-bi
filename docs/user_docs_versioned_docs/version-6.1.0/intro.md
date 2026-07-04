@@ -191,7 +191,7 @@ Try out Superset's [quickstart](https://superset.apache.org/user-docs/quickstart
 ## Get Involved
 
 - Ask and answer questions on [StackOverflow](https://stackoverflow.com/questions/tagged/apache-superset) using the **apache-superset** tag
-- [Join our community's Slack](http://bit.ly/join-superset-slack) and please read our [Slack Community Guidelines](https://github.com/apache/superset/blob/master/CODE_OF_CONDUCT.md#slack-community-guidelines)
+- [Join our community's Slack](http://bit.ly/join-superset-slack) and please read our [Slack Community Guidelines](https://github.com/defai-digital/ax-bi/blob/main/CODE_OF_CONDUCT.md#slack-community-guidelines)
 - [Join our dev@superset.apache.org Mailing list](https://lists.apache.org/list.html?dev@superset.apache.org). To join, simply send an email to [dev-subscribe@superset.apache.org](mailto:dev-subscribe@superset.apache.org)
 - Follow us on social media: [X](https://x.com/apachesuperset) | [LinkedIn](https://www.linkedin.com/company/apache-superset) | [Bluesky](https://bsky.app/profile/apachesuperset.bsky.social) | [Reddit](https://reddit.com/r/apache-superset)
 - If you want to help troubleshoot GitHub Issues involving the numerous database drivers that Superset supports, please consider adding your name and the databases you have access to on the [Superset Database Familiarity Rolodex](https://docs.google.com/spreadsheets/d/1U1qxiLvOX0kBTUGME1AHHi6Ywel6ECF8xk_Qy-V9R8c/edit#gid=0)
@@ -229,7 +229,7 @@ Understanding the Superset Points of View
 - Deploying Superset
 
   - [Official Docker image](https://hub.docker.com/r/apache/superset)
-  - [Helm Chart](https://github.com/apache/superset/tree/master/helm/superset)
+  - [Helm Chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset)
 
 - Recordings of Past [Superset Community Events](https://preset.io/events)
 

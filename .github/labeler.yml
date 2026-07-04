@@ -35,16 +35,16 @@
 "dependencies:npm":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset-frontend/package.json'
-    - 'superset-frontend/package-lock.json'
+    - 'ax-bi-frontend/package.json'
+    - 'ax-bi-frontend/package-lock.json'
     - 'superset-embedded-sdk/package.json'
     - 'superset-embedded-sdk/package-lock.json'
     - 'superset-websocket/package.json'
     - 'superset-websocket/package-lock.json'
-    - 'superset-frontend/cypress-base/package.json'
-    - 'superset-frontend/cypress-base/package-lock.json'
-    - 'superset-frontend/packages/**/package.json'
-    - 'superset-frontend/plugins/**/package.json'
+    - 'ax-bi-frontend/cypress-base/package.json'
+    - 'ax-bi-frontend/cypress-base/package-lock.json'
+    - 'ax-bi-frontend/packages/**/package.json'
+    - 'ax-bi-frontend/plugins/**/package.json'
 
 ############################################
 # Areas of the main codebase
@@ -153,12 +153,12 @@
 "plugins":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset-frontend/plugins/**'
+    - 'ax-bi-frontend/plugins/**'
 
 "packages":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset-frontend/packages/**'
+    - 'ax-bi-frontend/packages/**'
 
 "embedded":
 - changed-files:

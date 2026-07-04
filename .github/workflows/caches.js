@@ -24,11 +24,11 @@ const homeDirectory = process.env.HOME;
 const assetsConfig = {
   path: [`${workspaceDirectory}/superset/static/assets`],
   hashFiles: [
-    `${workspaceDirectory}/superset-frontend/src/**/*`,
-    `${workspaceDirectory}/superset-frontend/packages/**/*`,
-    `${workspaceDirectory}/superset-frontend/plugins/**/*`,
-    `${workspaceDirectory}/superset-frontend/*.js`,
-    `${workspaceDirectory}/superset-frontend/*.json`,
+    `${workspaceDirectory}/ax-bi-frontend/src/**/*`,
+    `${workspaceDirectory}/ax-bi-frontend/packages/**/*`,
+    `${workspaceDirectory}/ax-bi-frontend/plugins/**/*`,
+    `${workspaceDirectory}/ax-bi-frontend/*.js`,
+    `${workspaceDirectory}/ax-bi-frontend/*.json`,
   ],
   // dont use restore keys as it may give an invalid older build
   restoreKeys: '',
@@ -42,7 +42,7 @@ module.exports = {
   },
   npm: {
     path: [`${homeDirectory}/.npm`],
-    hashFiles: [`${workspaceDirectory}/superset-frontend/package-lock.json`],
+    hashFiles: [`${workspaceDirectory}/ax-bi-frontend/package-lock.json`],
   },
   assets: assetsConfig,
   // use separate cache for instrumented JS files and regular assets
@@ -52,7 +52,7 @@ module.exports = {
   cypress: {
     path: [`${homeDirectory}/.cache/Cypress`],
     hashFiles: [
-      `${workspaceDirectory}/superset-frontend/cypress-base/package-lock.json`,
+      `${workspaceDirectory}/ax-bi-frontend/cypress-base/package-lock.json`,
     ],
   },
 };
