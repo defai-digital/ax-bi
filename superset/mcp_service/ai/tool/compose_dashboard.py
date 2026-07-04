@@ -305,8 +305,8 @@ async def compose_dashboard(  # noqa: C901
     3. compose_dashboard(plan=plan, chart_ids=[1, 2, 3]) -> dashboard URL
     """
     await ctx.info(
-        "Composing dashboard: title='%s', charts=%d, draft=%s"
-        % (request.plan.title, len(request.chart_ids), request.draft)
+        f"Composing dashboard: title='{request.plan.title}', "
+        f"charts={len(request.chart_ids)}, draft={request.draft}"
     )
 
     try:
@@ -444,9 +444,7 @@ async def compose_dashboard(  # noqa: C901
         if len(fresh_charts) > 5:
             layout_summary += f" and {len(fresh_charts) - 5} more"
 
-        await ctx.info(
-            "Dashboard composed: id=%s, url=%s" % (dashboard.id, dashboard_url)
-        )
+        await ctx.info(f"Dashboard composed: id={dashboard.id}, url={dashboard_url}")
 
         return ComposeDashboardResponse(
             dashboard={
