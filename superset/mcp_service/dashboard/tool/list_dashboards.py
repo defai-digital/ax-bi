@@ -432,20 +432,13 @@ async def _list_dashboards_python(
     """Run the authoritative Python dashboard list path."""
 
     await ctx.info(
-        "Listing dashboards: page=%s, page_size=%s, search=%s"
-        % (
-            request.page,
-            request.page_size,
-            request.search,
-        )
+        f"Listing dashboards: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
     await ctx.debug(
-        "Dashboard listing filters: filters=%s, order_column=%s, order_direction=%s"
-        % (
-            len(request.filters),
-            request.order_column,
-            request.order_direction,
-        )
+        f"Dashboard listing filters: filters={len(request.filters)}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}"
     )
 
     from superset.daos.dashboard import DashboardDAO
