@@ -356,17 +356,17 @@ def map_config_to_form_data(
     """Map chart config to Superset form_data."""
     if isinstance(config, TableChartConfig):
         return map_table_config(config)
-    elif isinstance(config, XYChartConfig):
+    if isinstance(config, XYChartConfig):
         return map_xy_config(config, dataset_id=dataset_id)
-    elif isinstance(config, PieChartConfig):
+    if isinstance(config, PieChartConfig):
         return map_pie_config(config)
-    elif isinstance(config, PivotTableChartConfig):
+    if isinstance(config, PivotTableChartConfig):
         return map_pivot_table_config(config)
-    elif isinstance(config, MixedTimeseriesChartConfig):
+    if isinstance(config, MixedTimeseriesChartConfig):
         return map_mixed_timeseries_config(config, dataset_id=dataset_id)
-    elif isinstance(config, HandlebarsChartConfig):
+    if isinstance(config, HandlebarsChartConfig):
         return map_handlebars_config(config)
-    elif isinstance(config, BigNumberChartConfig):
+    if isinstance(config, BigNumberChartConfig):
         if config.show_trendline and config.temporal_column:
             if not is_column_truly_temporal(config.temporal_column, dataset_id):
                 raise ValueError(
@@ -374,8 +374,7 @@ def map_config_to_form_data(
                     f"'{config.temporal_column}' is not temporal."
                 )
         return map_big_number_config(config)
-    else:
-        raise ValueError(f"Unsupported config type: {type(config)}")
+    raise ValueError(f"Unsupported config type: {type(config)}")
 
 
 def _add_adhoc_filters(
@@ -1254,7 +1253,7 @@ def _handlebars_chart_what(config: HandlebarsChartConfig) -> str:
         # Raw columns reject sql_expression at validation, so col.name is set.
         cols = ", ".join(col.name or "" for col in config.columns[:3])
         return f"Handlebars ({cols})"
-    elif config.metrics:
+    if config.metrics:
         # Prefer raw column name for back-compat with existing chart names;
         # SQL metrics fall back to label, then the expression itself.
         metrics = ", ".join(
@@ -1349,17 +1348,17 @@ def _resolve_viz_type(config: Any) -> str:
             "scatter": "echarts_timeseries_scatter",
         }
         return viz_type_map.get(kind, "echarts_timeseries_line")
-    elif chart_type == "table":
+    if chart_type == "table":
         return getattr(config, "viz_type", "table")
-    elif chart_type == "pie":
+    if chart_type == "pie":
         return "pie"
-    elif chart_type == "pivot_table":
+    if chart_type == "pivot_table":
         return "pivot_table_v2"
-    elif chart_type == "mixed_timeseries":
+    if chart_type == "mixed_timeseries":
         return "mixed_timeseries"
-    elif chart_type == "handlebars":
+    if chart_type == "handlebars":
         return "handlebars"
-    elif chart_type == "big_number":
+    if chart_type == "big_number":
         show_trendline = getattr(config, "show_trendline", False)
         temporal_column = getattr(config, "temporal_column", None)
         return (
