@@ -21,6 +21,7 @@ import { useJsonValidation } from '@superset-ui/core/components/AsyncAceEditor';
 import type { JsonValidationAnnotation } from '@superset-ui/core/components/AsyncAceEditor';
 import { type AnyThemeConfig } from '@apache-superset/core/theme';
 import { validateTheme } from '../utils/themeStructureValidation';
+import { validateThemeContrast } from '../utils/themeContrastValidation';
 
 /**
  * Find the line number where a specific token appears in JSON string.
@@ -135,6 +136,26 @@ export function useThemeValidation(
           text: issue.message,
         });
       });
+
+      // WCAG contrast warnings (non-blocking) for token pairs set together
+      // in this theme (e.g. colorText + colorBgContainer). Guarded the same
+      // way validateTheme guards its own token object handling above.
+      if (
+        config.token &&
+        typeof config.token === 'object' &&
+        !Array.isArray(config.token)
+      ) {
+        validateThemeContrast(config.token as Record<string, unknown>).forEach(
+          issue => {
+            annotations.push({
+              type: 'warning',
+              row: findTokenLineInJson(debouncedValue, issue.tokenName),
+              column: 0,
+              text: issue.message,
+            });
+          },
+        );
+      }
 
       return annotations;
     } catch {

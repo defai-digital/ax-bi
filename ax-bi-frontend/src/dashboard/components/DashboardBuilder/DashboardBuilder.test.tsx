@@ -665,3 +665,79 @@ test('should allow dashboard tab content to overflow into the scroll container',
     target: '.grid-container .ant-tabs-body',
   });
 });
+
+test('should use theme tokens instead of hardcoded hex colors for the dashboard canvas', () => {
+  // Regression test: StyledContent, StyledDashboardContent, the
+  // .grid-container/.dashboard-grid/.grid-row rules, .background--white, and
+  // .dashboard-component-chart-holder used to hardcode dark colors
+  // (#050b12 / #0f172a / #1e293b / #e2e8f0) unconditionally, so the
+  // dashboard canvas rendered near-black even when the app-wide theme was
+  // set to Light. They must instead follow theme tokens so the canvas
+  // adapts to the active theme like the rest of the app.
+  (useStoredSidebarWidth as jest.Mock).mockImplementation(() => [
+    100,
+    jest.fn(),
+  ]);
+  (fetchFaveStar as jest.Mock).mockReturnValue({ type: 'mock-action' });
+  (setActiveTab as jest.Mock).mockReturnValue({ type: 'mock-action' });
+
+  const { getByTestId } = render(<DashboardBuilder />, {
+    useRedux: true,
+    store: storeWithState({
+      ...mockState,
+      dashboardLayout: undoableDashboardLayout,
+    }),
+    useDnd: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  const dashboardContentWrapper = getByTestId('dashboard-content-wrapper');
+
+  // StyledContent wraps dashboard-content-wrapper directly.
+  expect(dashboardContentWrapper.parentElement).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgLayout,
+  );
+
+  // .background--white is one of the row background style options; it must
+  // resolve to a real (themeable) surface color, not a hardcoded dark navy.
+  expect(dashboardContentWrapper).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgContainer,
+    { target: '.background--white' },
+  );
+
+  const dashboardContent = dashboardContentWrapper.querySelector(
+    '.dashboard-content',
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgLayout,
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgLayout,
+    { target: '.grid-container' },
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgLayout,
+    { target: '.dashboard-grid' },
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'background-color',
+    supersetTheme.colorBgContainer,
+    { target: '.dashboard-component-chart-holder' },
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'border',
+    `1px solid ${supersetTheme.colorBorderSecondary}`,
+    { target: '.dashboard-component-chart-holder' },
+  );
+  expect(dashboardContent).toHaveStyleRule(
+    'color',
+    supersetTheme.colorText,
+    { target: '.dashboard-component-chart-holder' },
+  );
+});

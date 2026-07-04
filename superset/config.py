@@ -1130,9 +1130,9 @@ _THEME_DEFAULT_BASE: Theme = {
         "brandAppName": APP_NAME,
         "brandLogoAlt": "AX-BI",
         "brandLogoUrl": APP_ICON,
-        "brandLogoMargin": "4px 0 0 -8px",
+        "brandLogoMargin": "18px 0",
         "brandLogoHref": LOGO_TARGET_PATH or "/",
-        "brandLogoHeight": "34px",
+        "brandLogoHeight": "24px",
         # Spinner - Set this to use a custom GIF/image loader
         # "brandSpinnerUrl": "/static/assets/images/loading.gif",
         "brandSpinnerUrl": None,
@@ -1143,7 +1143,12 @@ _THEME_DEFAULT_BASE: Theme = {
         "colorError": "#e04355",
         "colorWarning": "#fcc700",
         "colorSuccess": "#5ac189",
-        "colorInfo": "#66bcfe",
+        # colorInfo intentionally shifted toward indigo/violet (hue ~239deg)
+        # rather than a lighter teal-blue like colorPrimary (hue ~194deg) --
+        # the two were previously close enough in hue/lightness (#66bcfe) to
+        # read as the same color at a glance, making info banners hard to
+        # distinguish from primary actions.
+        "colorInfo": "#6366f1",
         # Fonts
         "fontUrls": [],
         "fontFamily": "Inter, Helvetica, Arial, sans-serif",
@@ -1175,6 +1180,21 @@ _THEME_DARK_BASE: Theme = {
         "brandLogoUrl": APP_ICON_DARK,
         # Darker selection color for dark mode
         "colorEditorSelection": "#5c4d1a",
+        # Explicit dark-mode neutral ramp, pinned rather than left to antd's
+        # `dark` algorithm to derive on its own. Left unpinned, the algorithm
+        # resolves colorBgLayout/colorBgBase to pure black (#000000) with
+        # colorBgContainer at #141414 -- functional, but true black is harsher
+        # than the soft, slightly cool-tinted charcoal most dark dashboard UIs
+        # (e.g. Grafana) use, and pinning it here means a future antd upgrade
+        # can't silently change it. Each step is a small lightness increase
+        # for a clear elevation order: layout < container < elevated < spotlight.
+        "colorBgBase": "#11161a",
+        "colorBgLayout": "#11161a",
+        "colorBgContainer": "#171d22",
+        "colorBgElevated": "#1f262c",
+        "colorBgSpotlight": "#2a333a",
+        "colorBorder": "#2c363d",
+        "colorBorderSecondary": "#222a30",
     },
     "algorithm": "dark",
 }

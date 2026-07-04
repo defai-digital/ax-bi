@@ -524,7 +524,9 @@ const ThemeModal: FunctionComponent<ThemeModalProps> = ({
                   </a>
                   {t(' for details.')}{' '}
                   <Typography.Text type="secondary">
-                    {t('Unknown tokens will be highlighted as warnings.')}
+                    {t(
+                      'Unknown tokens and low-contrast color pairs (e.g. colorText with colorBgContainer) will be highlighted as warnings.',
+                    )}
                   </Typography.Text>
                 </span>
               }

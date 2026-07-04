@@ -131,3 +131,40 @@ test('useThemeValidation respects enabled option', () => {
 
   expect(result.current.annotations).toHaveLength(0);
 });
+
+test('useThemeValidation warns (non-blocking) when a token pair fails WCAG contrast', () => {
+  const themeWithPoorContrast = JSON.stringify({
+    token: {
+      colorText: '#777777',
+      colorBgContainer: '#666666',
+    },
+  });
+
+  const { result } = renderHook(() =>
+    useThemeValidation(themeWithPoorContrast),
+  );
+
+  expect(result.current.hasErrors).toBe(false);
+  expect(result.current.hasWarnings).toBe(true);
+  expect(
+    result.current.annotations.some(
+      a => a.type === 'warning' && /contrast ratio/.test(a.text),
+    ),
+  ).toBe(true);
+});
+
+test('useThemeValidation does not warn when a token pair clears WCAG contrast', () => {
+  const themeWithGoodContrast = JSON.stringify({
+    token: {
+      colorText: '#ffffff',
+      colorBgContainer: '#000000',
+    },
+  });
+
+  const { result } = renderHook(() =>
+    useThemeValidation(themeWithGoodContrast),
+  );
+
+  expect(result.current.hasWarnings).toBe(false);
+  expect(result.current.annotations).toHaveLength(0);
+});

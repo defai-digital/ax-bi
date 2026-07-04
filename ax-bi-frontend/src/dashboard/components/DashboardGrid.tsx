@@ -102,7 +102,8 @@ const GridContent = styled.div<{ editMode?: boolean }>`
     }
 
     & > .empty-droptarget:last-child {
-      height: ${theme.sizeUnit * 24}px;
+      min-height: ${theme.sizeUnit * 24}px;
+      height: 40vh;
     }
 
     & > .empty-droptarget.empty-droptarget--full:only-child {

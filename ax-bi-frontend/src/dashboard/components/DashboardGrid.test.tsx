@@ -17,6 +17,7 @@
  * under the License.
  */
 import { fireEvent, render } from 'spec/helpers/testing-library';
+import { supersetTheme } from '@apache-superset/core/theme';
 
 import DashboardGrid from 'src/dashboard/components/DashboardGrid';
 import newComponentFactory from 'src/dashboard/util/newComponentFactory';
@@ -174,4 +175,26 @@ test('should still render empty state while empty grid width is measuring', () =
   expect(
     queryByText('Drag and drop components and charts to the dashboard'),
   ).toBeInTheDocument();
+});
+
+test('should size the trailing empty-droptarget generously so a chart can be dropped below existing rows', () => {
+  // Regression test: this drop target used to be a thin, fixed
+  // ${theme.sizeUnit * 24}px (96px) strip directly below the last row. The
+  // visually "empty" canvas beneath it extends much further, so real drags
+  // landing past that thin strip missed the target entirely and were
+  // silently rejected by the browser's native HTML5 drag-and-drop (no
+  // `drop` event fired at all, confirmed by instrumenting dragover/drop in
+  // a live repro). Growing it to 40vh (matching the 80vh convention already
+  // used for `.empty-droptarget--full:only-child`) closes that dead zone.
+  const { getByTestId } = setup({ editMode: true });
+  const gridContent = getByTestId('grid-content');
+
+  expect(gridContent).toHaveStyleRule('height', '40vh', {
+    target: '.empty-droptarget:last-child',
+  });
+  expect(gridContent).toHaveStyleRule(
+    'min-height',
+    `${supersetTheme.sizeUnit * 24}px`,
+    { target: '.empty-droptarget:last-child' },
+  );
 });

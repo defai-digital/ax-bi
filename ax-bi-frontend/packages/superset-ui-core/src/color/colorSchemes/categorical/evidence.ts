@@ -28,6 +28,10 @@ const schemes = [
     id: 'evidence',
     label: 'Evidence',
     group: ColorSchemeGroup.Featured,
+    // Muted and consistent-chroma by design, unlike the fully-saturated
+    // "Superset Colors" baseline -- promoted to default for better
+    // multi-series legibility out of the box.
+    isDefault: true,
     colors: [
       '#236aa4',
       '#45a1bf',
