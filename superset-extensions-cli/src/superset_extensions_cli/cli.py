@@ -1042,53 +1042,41 @@ def publish_output_file(
                 f"Refusing to back up {label}: backup root path is unsafe."
             )
         if get_read_path_identity(target_path) != target_identity:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: path changed.")
         try:
             copy_output_file(target_path, backup_path, f"temporary {label} backup")
         except click.ClickException as ex:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(
                 f"Failed to back up {label}: {ex.message}"
             ) from ex
         if get_read_path_identity(target_path) != target_identity:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: path changed.")
         backup_identity = get_output_copy_source_identity(backup_path)
         if backup_identity is None:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: backup is unsafe.")
 
     target_replaced = False
@@ -1132,28 +1120,22 @@ def publish_output_file(
         publish_error = ex
     else:
         if backup_root is not None:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
         return
 
     if not target_replaced:
         if backup_root is not None:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
         raise publish_error
 
     if target_path.is_symlink() or target_path.is_file():
@@ -1199,15 +1181,12 @@ def publish_output_file(
                 f"{publish_error.message}; also failed to restore previous "
                 f"{label}: {restore_ex}"
             ) from restore_ex
-        try:
-            remove_output_directory(
-                backup_root,
-                f"temporary {label} backup",
-                backup_root_identity,
-                expected_parent_identity=target_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            f"temporary {label} backup",
+            backup_root_identity,
+            expected_parent_identity=target_parent_identity,
+        )
 
     raise publish_error
 
