@@ -135,7 +135,7 @@ def is_empty(value: Any) -> bool:
     """
     if value is None:
         return True
-    if isinstance(value, (list, dict, str, tuple, set)):
+    if isinstance(value, list | dict | str | tuple | set):
         return len(value) == 0
     return False
 

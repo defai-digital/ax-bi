@@ -284,7 +284,7 @@ class AsyncQueryManager:
         start_id = increment_id(last_id) if last_id else "-"
         results = self._cache.xrange(stream_name, start_id, "+", self.MAX_EVENT_COUNT)
         # Decode bytes to strings, decode_responses is not supported at RedisCache and RedisSentinelCache  # noqa: E501
-        if isinstance(self._cache, (RedisSentinelCacheBackend, RedisCacheBackend)):
+        if isinstance(self._cache, RedisSentinelCacheBackend | RedisCacheBackend):
             decoded_results = [
                 (
                     event_id.decode("utf-8"),

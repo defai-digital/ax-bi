@@ -367,7 +367,7 @@ def _strip_overridable_keys(value: Any) -> Any:
             for key, val in value.items()
             if key not in GUEST_OVERRIDABLE_VALUE_KEYS
         }
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list | tuple):
         return [_strip_overridable_keys(item) for item in value]
     return value
 
@@ -512,7 +512,7 @@ def _native_filter_query_modified(
             return True
     # order-by entries are ``(expression, asc)`` pairs.
     for order in getattr(query, "orderby", None) or []:
-        expr = order[0] if isinstance(order, (list, tuple)) and order else order
+        expr = order[0] if isinstance(order, list | tuple) and order else order
         if not _native_filter_term_allowed(expr, allowed_columns, allowed_metrics):
             return True
     return False
@@ -582,7 +582,7 @@ def _collect_sortable_identifiers(
 
     def add_orderby(entries: Any) -> None:
         for entry in entries or []:
-            if isinstance(entry, (list, tuple)) and entry:
+            if isinstance(entry, list | tuple) and entry:
                 allowed.add(freeze_value(entry[0]))
 
     params = stored_chart.params_dict
@@ -630,7 +630,7 @@ def _orderby_modified(
         # sort the chart could have produced, so treat it as tampering rather
         # than letting it crash query building when it is later unpacked.
         if not (
-            isinstance(entry, (list, tuple))
+            isinstance(entry, list | tuple)
             and len(entry) == 2
             and isinstance(entry[1], bool)
         ):
