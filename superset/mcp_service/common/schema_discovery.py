@@ -102,24 +102,23 @@ def _get_sqlalchemy_type_name(col_type: Any) -> str:
     """Convert SQLAlchemy column type to a friendly type name."""
     if isinstance(col_type, (sa.String, sa.Text)):
         return "str"
-    elif isinstance(col_type, sa.Boolean):
+    if isinstance(col_type, sa.Boolean):
         return "bool"
-    elif isinstance(col_type, (sa.Integer, sa.SmallInteger, sa.BigInteger)):
+    if isinstance(col_type, (sa.Integer, sa.SmallInteger, sa.BigInteger)):
         return "int"
-    elif isinstance(col_type, (sa.Float, sa.Numeric)):
+    if isinstance(col_type, (sa.Float, sa.Numeric)):
         return "float"
-    elif isinstance(col_type, sa.DateTime):
+    if isinstance(col_type, sa.DateTime):
         return "datetime"
-    elif isinstance(col_type, sa.Date):
+    if isinstance(col_type, sa.Date):
         return "date"
-    elif isinstance(col_type, sa.Time):
+    if isinstance(col_type, sa.Time):
         return "time"
-    elif isinstance(col_type, sa.JSON):
+    if isinstance(col_type, sa.JSON):
         return "dict"
-    elif isinstance(col_type, sa.ARRAY):
+    if isinstance(col_type, sa.ARRAY):
         return "list"
-    else:
-        return "str"  # Default fallback
+    return "str"  # Default fallback
 
 
 # Descriptions for common model columns that SQLAlchemy models don't document.

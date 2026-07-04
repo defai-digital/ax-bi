@@ -172,10 +172,9 @@ def parse_json_or_list(
             logger.debug(
                 "Could not parse %s as JSON, trying comma-separated", param_name
             )
-            items = [
+            return [
                 item.strip() for item in value.split(item_separator) if item.strip()
             ]
-            return items
 
     # For any other type, wrap in a list
     logger.debug("Wrapping %s value in list", param_name)

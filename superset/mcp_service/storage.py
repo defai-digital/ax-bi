@@ -81,9 +81,9 @@ def get_mcp_store(
     # Use existing app context if available, otherwise push one
     if has_app_context():
         return _get_store()
-    else:
-        with flask_app.app_context():
-            return _get_store()
+
+    with flask_app.app_context():
+        return _get_store()
 
 
 def _create_redis_store(
