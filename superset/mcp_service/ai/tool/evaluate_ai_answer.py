@@ -349,7 +349,7 @@ async def evaluate_ai_answer(  # noqa: C901
     warnings: list[str] = []
 
     await ctx.info(
-        "Evaluating AI answer: eval_id=%s, prompt='%s'" % (eval_id, request.prompt[:80])
+        f"Evaluating AI answer: eval_id={eval_id}, prompt='{request.prompt[:80]}'"
     )
 
     if not user_can_view_data_model_metadata():
@@ -452,8 +452,8 @@ async def evaluate_ai_answer(  # noqa: C901
     duration = int((time.time() - start_time) * 1000)
 
     await ctx.info(
-        "Evaluation complete: eval_id=%s, passed=%s, score=%.2f, duration=%dms"
-        % (eval_id, passed, overall_score, duration)
+        f"Evaluation complete: eval_id={eval_id}, passed={passed}, "
+        f"score={overall_score:.2f}, duration={duration}ms"
     )
 
     return EvaluateAIAnswerResponse(

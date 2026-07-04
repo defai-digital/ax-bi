@@ -336,12 +336,9 @@ async def ask_dashboard_question(
     ```
     """
     await ctx.info(
-        "Asking dashboard question: id=%s, question='%s', follow_up_chart=%s"
-        % (
-            request.dashboard_id,
-            request.question[:80],
-            request.generate_follow_up_chart,
-        )
+        f"Asking dashboard question: id={request.dashboard_id}, "
+        f"question='{request.question[:80]}', "
+        f"follow_up_chart={request.generate_follow_up_chart}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -420,8 +417,8 @@ async def ask_dashboard_question(
             all_warnings.append(f"Follow-up chart generation failed: {e}")
 
     await ctx.info(
-        "Dashboard question answered: id=%s, confidence=%.2f, sources=%d"
-        % (request.dashboard_id, confidence, len(sources))
+        f"Dashboard question answered: id={request.dashboard_id}, "
+        f"confidence={confidence:.2f}, sources={len(sources)}"
     )
 
     return AskDashboardQuestionResponse(
