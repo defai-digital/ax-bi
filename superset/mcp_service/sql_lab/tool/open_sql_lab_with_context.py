@@ -134,23 +134,20 @@ def open_sql_lab_with_context(
             # LLMs) but emit `name` on the URL.
             params["name"] = request.title
 
-        if request.dataset_in_context:
+        if request.dataset_in_context and not request.sql:
             # Add dataset context as a comment in the SQL if no SQL provided
-            if not request.sql:
-                context_comment = (
-                    f"-- Context: Working with dataset '{request.dataset_in_context}'\n"
-                    f"-- Database: {database.database_name}\n"
-                )
-                if request.schema_name:
-                    context_comment += f"-- Schema: {request.schema_name}\n"
-                    table_reference = (
-                        f"{request.schema_name}.{request.dataset_in_context}"
-                    )
-                else:
-                    table_reference = request.dataset_in_context
+            context_comment = (
+                f"-- Context: Working with dataset '{request.dataset_in_context}'\n"
+                f"-- Database: {database.database_name}\n"
+            )
+            if request.schema_name:
+                context_comment += f"-- Schema: {request.schema_name}\n"
+                table_reference = f"{request.schema_name}.{request.dataset_in_context}"
+            else:
+                table_reference = request.dataset_in_context
 
-                context_comment += f"\nSELECT * FROM {table_reference} LIMIT 100;"
-                params["sql"] = context_comment
+            context_comment += f"\nSELECT * FROM {table_reference} LIMIT 100;"
+            params["sql"] = context_comment
 
         # Construct SQL Lab URL with full base URL
         query_string = urlencode(params)

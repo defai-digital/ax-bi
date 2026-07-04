@@ -186,11 +186,14 @@ def create_report(  # noqa: C901
         )
 
         # Validate that either dashboard or chart is specified for reports
-        if request.report_type == "Report":
-            if not request.dashboard_id and not request.chart_id:
-                return CreateReportResponse(
-                    error="Reports require either dashboard_id or chart_id."
-                )
+        if (
+            request.report_type == "Report"
+            and not request.dashboard_id
+            and not request.chart_id
+        ):
+            return CreateReportResponse(
+                error="Reports require either dashboard_id or chart_id."
+            )
 
         # Build recipients
         recipients: list[dict[str, Any]] = []

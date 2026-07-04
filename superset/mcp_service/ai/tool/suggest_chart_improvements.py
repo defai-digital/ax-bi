@@ -158,21 +158,20 @@ def _heuristic_analysis(  # noqa: C901
                     "preview_config": None,
                 }
             )
-        if "trend" in goal_lower:
-            if viz_type not in _TIME_SERIES_TYPES:
-                suggestions.append(
-                    {
-                        "reason": (
-                            "For trend analysis, a time series line chart is "
-                            "usually the most effective visualization."
-                        ),
-                        "config_changes": {
-                            "chart_type": "xy",
-                            "kind": "line",
-                        },
-                        "preview_config": None,
-                    }
-                )
+        if "trend" in goal_lower and viz_type not in _TIME_SERIES_TYPES:
+            suggestions.append(
+                {
+                    "reason": (
+                        "For trend analysis, a time series line chart is "
+                        "usually the most effective visualization."
+                    ),
+                    "config_changes": {
+                        "chart_type": "xy",
+                        "kind": "line",
+                    },
+                    "preview_config": None,
+                }
+            )
 
     current_analysis = (
         f"Chart type: {viz_type or 'unknown'}. "
