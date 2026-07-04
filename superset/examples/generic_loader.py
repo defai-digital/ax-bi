@@ -76,7 +76,7 @@ def serialize_numpy_arrays(obj: Any) -> Any:  # noqa: C901
     elif isinstance(obj, np.generic):
         # Handle numpy scalar types
         return obj.item()
-    elif isinstance(obj, (list, tuple)):
+    elif isinstance(obj, list | tuple):
         return [serialize_numpy_arrays(item) for item in obj]
     elif isinstance(obj, dict):
         return {key: serialize_numpy_arrays(val) for key, val in obj.items()}
@@ -160,7 +160,7 @@ def load_parquet_table(  # noqa: C901
                         else None
                     )
                     if sample_val is not None and isinstance(
-                        sample_val, (np.ndarray, list, dict)
+                        sample_val, np.ndarray | list | dict
                     ):
                         logger.info("Converting complex column %s to JSON string", col)
 
