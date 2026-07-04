@@ -146,14 +146,13 @@ def _resolve_effective_form_data(
     """
     from superset.utils import json as utils_json
 
-    if form_data_key:
-        if cached_raw := _get_cached_form_data(form_data_key):
-            try:
-                parsed = utils_json.loads(cached_raw)
-                if isinstance(parsed, dict):
-                    return parsed, True
-            except (TypeError, ValueError):
-                pass
+    if form_data_key and (cached_raw := _get_cached_form_data(form_data_key)):
+        try:
+            parsed = utils_json.loads(cached_raw)
+            if isinstance(parsed, dict):
+                return parsed, True
+        except (TypeError, ValueError):
+            pass
 
     try:
         saved = utils_json.loads(chart.params) if chart.params else {}
@@ -214,11 +213,15 @@ def _resolve_datasource_name(
     datasource_id = form_data.get("datasource_id")
     datasource_type = form_data.get("datasource_type", "table")
 
-    if not datasource_id and (combined := form_data.get("datasource")):
-        if isinstance(combined, str) and "__" in combined:
-            parts = combined.split("__", 1)
-            datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
-            datasource_type = parts[1] if len(parts) > 1 else "table"
+    if (
+        not datasource_id
+        and (combined := form_data.get("datasource"))
+        and isinstance(combined, str)
+        and "__" in combined
+    ):
+        parts = combined.split("__", 1)
+        datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
+        datasource_type = parts[1] if len(parts) > 1 else "table"
 
     if not datasource_id:
         return None

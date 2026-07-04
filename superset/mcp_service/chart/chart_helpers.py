@@ -644,11 +644,15 @@ def resolve_form_data_datasource(
     datasource_id = form_data.get("datasource_id")
     datasource_type = form_data.get("datasource_type")
 
-    if not datasource_id and (combined := form_data.get("datasource")):
-        if isinstance(combined, str) and "__" in combined:
-            parts = combined.split("__", 1)
-            datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
-            datasource_type = parts[1] if len(parts) > 1 else None
+    if (
+        not datasource_id
+        and (combined := form_data.get("datasource"))
+        and isinstance(combined, str)
+        and "__" in combined
+    ):
+        parts = combined.split("__", 1)
+        datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
+        datasource_type = parts[1] if len(parts) > 1 else None
 
     if not datasource_id and chart:
         datasource_id = getattr(chart, "datasource_id", None)

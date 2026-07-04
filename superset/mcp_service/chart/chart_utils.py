@@ -367,12 +367,15 @@ def map_config_to_form_data(
     if isinstance(config, HandlebarsChartConfig):
         return map_handlebars_config(config)
     if isinstance(config, BigNumberChartConfig):
-        if config.show_trendline and config.temporal_column:
-            if not is_column_truly_temporal(config.temporal_column, dataset_id):
-                raise ValueError(
-                    f"Big Number trendline requires a temporal SQL column; "
-                    f"'{config.temporal_column}' is not temporal."
-                )
+        if (
+            config.show_trendline
+            and config.temporal_column
+            and not is_column_truly_temporal(config.temporal_column, dataset_id)
+        ):
+            raise ValueError(
+                f"Big Number trendline requires a temporal SQL column; "
+                f"'{config.temporal_column}' is not temporal."
+            )
         return map_big_number_config(config)
     raise ValueError(f"Unsupported config type: {type(config)}")
 

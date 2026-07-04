@@ -705,11 +705,14 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         # Better type detection for x-axis
         x_type = field_types.get(x_field, "nominal")
         # Override if we know it's the x_axis from form_data (likely temporal)
-        if form_data and x_field == form_data.get("x_axis"):
-            if any(
+        if (
+            form_data
+            and x_field == form_data.get("x_axis")
+            and any(
                 kw in x_field.lower() for kw in ["date", "time", "year", "month", "day"]
-            ):
-                x_type = "temporal"
+            )
+        ):
+            x_type = "temporal"
 
         y_type = field_types.get(y_field, "quantitative")
 
