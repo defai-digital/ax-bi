@@ -23,6 +23,7 @@ import type { DatabaseItem } from './types.js';
 /** CRUD operations for database connections. */
 export class DatabasesResource extends BaseResource<DatabaseItem> {
   protected readonly basePath = '/api/v1/database';
+  protected readonly searchColumn = 'database_name';
 
   /** Test a database connection before saving. */
   async testConnection(params: {

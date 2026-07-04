@@ -23,6 +23,7 @@ import type { DatasetItem, CreateDatasetInput, UpdateDatasetInput } from './type
 /** CRUD operations for datasets (tables). */
 export class DatasetsResource extends BaseResource<DatasetItem> {
   protected readonly basePath = '/api/v1/dataset';
+  protected readonly searchColumn = 'table_name';
 
   /** Create a new dataset. */
   override async create(data: CreateDatasetInput): Promise<DatasetItem> {

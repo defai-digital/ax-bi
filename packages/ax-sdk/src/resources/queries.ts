@@ -23,9 +23,12 @@ import type { QueryItem } from './types.js';
 /** Read-only operations for query history. */
 export class QueriesResource extends BaseResource<QueryItem> {
   protected readonly basePath = '/api/v1/query';
+  protected readonly searchColumn = 'sql';
 
   /** Get the results of a previously executed query. */
   async getResults(key: string): Promise<Record<string, unknown>> {
-    return this.http.get<Record<string, unknown>>(`/api/v1/sqllab/results/${key}`);
+    return this.http.get<Record<string, unknown>>('/api/v1/sqllab/results/', {
+      q: JSON.stringify({ key }),
+    });
   }
 }

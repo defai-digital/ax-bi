@@ -28,6 +28,8 @@ import type { SupersetListEnvelope, SupersetItemEnvelope, SupersetDeleteEnvelope
  */
 export abstract class BaseResource<TItem> {
   protected abstract readonly basePath: string;
+  /** The column name used for text search in the backend API (e.g. 'dashboard_title', 'slice_name'). */
+  protected abstract readonly searchColumn: string;
 
   constructor(protected readonly http: HttpClient) {}
 
@@ -97,7 +99,7 @@ export abstract class BaseResource<TItem> {
       query['q'] = JSON.stringify({
         filters: [
           ...(params.filters ?? []),
-          { col: 'name', opr: 'ct', value: params.search },
+          { col: this.searchColumn, opr: 'ct', value: params.search },
         ],
         order_column: params.orderColumn,
         order_direction: params.orderDirection,

@@ -23,6 +23,7 @@ import type { DashboardItem, CreateDashboardInput, UpdateDashboardInput } from '
 /** CRUD operations for dashboards. */
 export class DashboardsResource extends BaseResource<DashboardItem> {
   protected readonly basePath = '/api/v1/dashboard';
+  protected readonly searchColumn = 'dashboard_title';
 
   /** Create a new dashboard. */
   override async create(data: CreateDashboardInput): Promise<DashboardItem> {

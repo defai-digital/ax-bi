@@ -23,6 +23,7 @@ import type { ChartItem, CreateChartInput, UpdateChartInput } from './types.js';
 /** CRUD operations for charts (slices). */
 export class ChartsResource extends BaseResource<ChartItem> {
   protected readonly basePath = '/api/v1/chart';
+  protected readonly searchColumn = 'slice_name';
 
   /** Create a new chart. */
   override async create(data: CreateChartInput): Promise<ChartItem> {

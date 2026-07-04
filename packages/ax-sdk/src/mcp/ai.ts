@@ -41,35 +41,23 @@ export interface PlanDashboardParams {
 }
 
 export interface ChartIntentParams {
-  chart_intent: {
-    metric: string;
-    dimension?: string;
-    chart_type?: string;
-    filters?: Array<{ column: string; operator: string; value: unknown }>;
-    time_range?: string;
-  };
-  dataset_id: number;
+  prompt: string;
+  dataset_id?: number | string;
   save_chart?: boolean;
+  max_preview_rows?: number;
 }
 
 export interface ComposeDashboardParams {
-  dashboard_plan: {
-    title: string;
-    description?: string;
-    sections?: Array<{
-      title: string;
-      chart_ids: number[];
-    }>;
-    global_filters?: Record<string, unknown>;
-  };
+  plan: Record<string, unknown>;
   chart_ids: number[];
   draft?: boolean;
+  narrative_blocks?: Array<{ content: string; position?: string }>;
 }
 
 export interface ExplainDashboardParams {
-  dashboard_id: number;
+  dashboard_id: number | string;
   question?: string;
-  scope?: 'full' | 'summary' | 'charts';
+  scope?: 'overview' | 'chart' | 'data';
 }
 
 export interface ExecuteSqlParams {
@@ -80,7 +68,8 @@ export interface ExecuteSqlParams {
 }
 
 export interface ValidateChartParams {
-  chart_id: number;
+  dataset_id: number;
+  config: Record<string, unknown>;
 }
 
 export interface SearchAssetsParams {
@@ -93,14 +82,14 @@ export interface SearchAssetsParams {
 
 export interface AssetSearchResult {
   assets: Array<{
-    assetType: string;
+    asset_type: string;
     id: number;
     uuid: string;
     name: string;
     description?: string;
     certified: boolean;
-    relevanceScore: number;
-    relevanceReason?: string;
+    relevance_score?: number;
+    relevance_reason?: string;
     owners: string[];
     tags: string[];
   }>;
@@ -108,71 +97,79 @@ export interface AssetSearchResult {
 }
 
 export interface DatasetDescription {
-  dataset_id: number;
+  id: number;
   name: string;
   description?: string;
+  certified: boolean;
+  main_time_column?: string;
   columns: Array<{
     name: string;
     type: string;
-    is_dttm: boolean;
     description?: string;
-    sample_values?: unknown[];
+    aliases?: string[];
+    is_dimension?: boolean;
   }>;
   metrics: Array<{
     name: string;
     expression: string;
     description?: string;
   }>;
-  time_columns?: string[];
-  synonyms?: string[];
+  privacy?: Record<string, unknown>;
 }
 
+export interface DatasetDescriptionEnvelope {
+  dataset: DatasetDescription;
+  warnings: string[];
+}
+
+export interface DashboardPlanEnvelope {
+  plan: DashboardPlan;
+  warnings: string[];
+}
 export interface DashboardPlan {
+  plan_id: string;
   title: string;
   description?: string;
+  datasets?: Array<Record<string, unknown>>;
   sections: Array<{
     title: string;
-    chart_intents: Array<{
-      metric: string;
-      dimension?: string;
-      chart_type: string;
-    }>;
+    chart_intents: Array<Record<string, unknown>>;
   }>;
-  global_filters?: Record<string, unknown>;
-  clarifying_questions?: string[];
+  chart_intents?: Array<Record<string, unknown>>;
+  global_filters?: Array<Record<string, unknown>>;
+  layout_hints?: Record<string, unknown>;
   assumptions?: string[];
-  confidence_score?: number;
+  clarifying_questions?: string[];
+  confidence?: number;
 }
 
 export interface ChartPreview {
-  chart_id?: number;
-  preview_url?: string;
-  form_data: Record<string, unknown>;
-  validation_result: {
-    is_valid: boolean;
-    errors?: string[];
-    warnings?: string[];
-  };
+  chart?: Record<string, unknown>;
+  dataset_used?: Record<string, unknown>;
+  chart_type_selected?: string;
   explanation?: string;
+  confidence?: number;
+  warnings?: string[];
+  preview_url?: string;
+  alternatives?: string[];
 }
 
 export interface ComposeResult {
-  dashboard_id: number;
-  dashboard_url: string;
+  dashboard?: Record<string, unknown>;
+  dashboard_url?: string;
   layout_summary?: string;
+  lineage?: Record<string, unknown>;
   warnings?: string[];
-  draft: boolean;
+  error?: string;
 }
 
 export interface DashboardExplanation {
   summary: string;
-  charts: Array<{
-    chart_id: number;
-    title: string;
-    description: string;
-  }>;
+  source_charts: Array<Record<string, unknown>>;
+  key_metrics?: Array<Record<string, unknown>>;
   caveats?: string[];
   follow_up_suggestions?: string[];
+  warnings?: string[];
 }
 
 export interface SqlResult {
@@ -213,17 +210,17 @@ export class AIResource {
   }
 
   /** Get AI-ready dataset metadata (columns, metrics, sample values). */
-  async describeDataset(params: DescribeDatasetParams): Promise<DatasetDescription> {
-    return this.callMcpTool<DatasetDescription>('describe_dataset_for_ai', {
+  async describeDataset(params: DescribeDatasetParams): Promise<DatasetDescriptionEnvelope> {
+    return this.callMcpTool<DatasetDescriptionEnvelope>('describe_dataset_for_ai', {
       dataset_id: params.dataset_id,
       include_sample_values: params.include_sample_values ?? false,
-      include_usage_stats: params.include_usage_stats ?? false,
+      include_usage_stats: params.include_usage_stats ?? true,
     });
   }
 
   /** Create a dashboard plan without creating artifacts. */
-  async planDashboard(params: PlanDashboardParams): Promise<DashboardPlan> {
-    return this.callMcpTool<DashboardPlan>('plan_dashboard', {
+  async planDashboard(params: PlanDashboardParams): Promise<DashboardPlanEnvelope> {
+    return this.callMcpTool<DashboardPlanEnvelope>('plan_dashboard', {
       prompt: params.prompt,
       dataset_candidates: params.dataset_candidates ?? [],
       constraints: params.constraints ?? {},
@@ -233,18 +230,20 @@ export class AIResource {
   /** Generate a chart from business intent. Returns preview + validation. */
   async createChartFromIntent(params: ChartIntentParams): Promise<ChartPreview> {
     return this.callMcpTool<ChartPreview>('create_chart_from_intent', {
-      chart_intent: params.chart_intent,
+      prompt: params.prompt,
       dataset_id: params.dataset_id,
-      save_chart: params.save_chart ?? false,
+      save_chart: params.save_chart ?? true,
+      max_preview_rows: params.max_preview_rows ?? 100,
     });
   }
 
   /** Compose a dashboard from a plan and chart IDs. */
   async composeDashboard(params: ComposeDashboardParams): Promise<ComposeResult> {
     return this.callMcpTool<ComposeResult>('compose_dashboard', {
-      dashboard_plan: params.dashboard_plan,
+      plan: params.plan,
       chart_ids: params.chart_ids,
       draft: params.draft ?? true,
+      narrative_blocks: params.narrative_blocks,
     });
   }
 
@@ -253,7 +252,7 @@ export class AIResource {
     return this.callMcpTool<DashboardExplanation>('explain_dashboard', {
       dashboard_id: params.dashboard_id,
       question: params.question,
-      scope: params.scope ?? 'full',
+      scope: params.scope ?? 'overview',
     });
   }
 
@@ -267,10 +266,11 @@ export class AIResource {
     });
   }
 
-  /** Validate a chart's configuration without rendering. */
+  /** Validate a chart configuration against a dataset. */
   async validateChart(params: ValidateChartParams): Promise<ChartValidation> {
     return this.callMcpTool<ChartValidation>('validate_chart', {
-      chart_id: params.chart_id,
+      dataset_id: params.dataset_id,
+      config: params.config,
     });
   }
 
