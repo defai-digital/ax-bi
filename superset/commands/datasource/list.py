@@ -110,7 +110,7 @@ class GetCombinedDatasourceListCommand(BaseCommand):
         if source_type == "all":
             if database_id is not None:
                 return "database"
-            elif semantic_layer_uuid is not None:
+            if semantic_layer_uuid is not None:
                 return "semantic_layer"
 
         return source_type
