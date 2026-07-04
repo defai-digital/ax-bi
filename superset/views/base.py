@@ -296,7 +296,7 @@ def get_environment_tag() -> dict[str, Any]:
     # this is the actual name we want to use
     env_name = os.environ.get(env_envvar)
 
-    if not env_name or env_name not in env_tag_templates.keys():
+    if not env_name or env_name not in env_tag_templates:
         env_name = "debug" if debug else None
 
     env_tag = env_tag_templates.get(env_name)

@@ -127,7 +127,7 @@ def get_sqla_type(native_type: str) -> TypeEngine[Any]:
 def get_dtype(df: pd.DataFrame, dataset: SqlaTable) -> dict[str, TypeEngine[Any]]:
     dtype: dict[str, TypeEngine[Any]] = {}
     for column in dataset.columns:
-        if not column.type or column.column_name not in df.keys():
+        if not column.type or column.column_name not in df:
             continue
 
         try:

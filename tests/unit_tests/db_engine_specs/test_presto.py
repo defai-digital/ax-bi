@@ -164,6 +164,27 @@ def test_where_latest_partition(
     )
 
 
+def test_latest_sub_partition_rejects_unknown_filter() -> None:
+    """
+    Unknown partition filters should fail before the partition query is executed.
+    """
+    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from superset.exceptions import SupersetTemplateException
+
+    database = mock.Mock()
+    table = Table("test_table", "test_schema")
+
+    with pytest.raises(SupersetTemplateException, match=r"Field \[bad_field\]"):
+        PrestoEngineSpec.latest_sub_partition(
+            database,
+            table,
+            indexes=[{"column_names": ["ds", "event_type"]}],
+            bad_field="click",
+        )
+
+    database.get_df.assert_not_called()
+
+
 def test_adjust_engine_params_fully_qualified() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has catalog and schema.

@@ -689,11 +689,11 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
             )
 
         part_fields = indexes[0]["column_names"]
-        for k in kwargs.keys():  # pylint: disable=consider-iterating-dictionary
-            if k not in k in part_fields:  # pylint: disable=comparison-with-itself
+        for k in kwargs:
+            if k not in part_fields:
                 msg = f"Field [{k}] is not part of the portioning key"
                 raise SupersetTemplateException(msg)
-        if len(kwargs.keys()) != len(part_fields) - 1:
+        if len(kwargs) != len(part_fields) - 1:
             required_filters = len(part_fields) - 1
             total_fields = len(part_fields)
             msg = (

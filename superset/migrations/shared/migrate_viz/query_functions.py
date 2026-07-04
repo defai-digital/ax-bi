@@ -296,11 +296,11 @@ def is_adhoc_column(column: Any = None) -> bool:
     if type(column) is not dict:
         return False
     return (
-        "sqlExpression" in column.keys()
+        "sqlExpression" in column
         and column["sqlExpression"] is not None
-        and "label" in column.keys()
+        and "label" in column
         and column["label"] is not None
-        and ("sqlExpression" not in column.keys() or column["expressionType"] == "SQL")
+        and ("sqlExpression" not in column or column["expressionType"] == "SQL")
     )
 
 
@@ -663,10 +663,10 @@ def extract_extras(form_data: dict[str, Any]) -> dict[str, Any]:
             filters.append(filter_item)
 
     # SQL: set extra properties based on TS logic
-    if "time_grain_sqla" in form_data.keys() or "time_grain_sqla" in extract.keys():
+    if "time_grain_sqla" in form_data or "time_grain_sqla" in extract:
         # If time_grain_sqla is set in form_data, use it
         # Otherwise, use the value from extract
-        value = form_data.get("time_grain_sqla") or form_data.get("time_grain_sqla")
+        value = form_data.get("time_grain_sqla") or extract.get("time_grain_sqla")
         extras["time_grain_sqla"] = value
 
     extract["granularity"] = (
@@ -1026,7 +1026,7 @@ def normalize_time_column(
             updated = dict(_columns[axis_idx])
             updated["columnType"] = "BASE_AXIS"
             if _extras:
-                if "time_grain_sqla" in _extras.keys():
+                if "time_grain_sqla" in _extras:
                     updated["timeGrain"] = _extras["time_grain_sqla"]
             mutated_columns[axis_idx] = updated
 
@@ -1039,7 +1039,7 @@ def normalize_time_column(
                 "expressionType": "SQL",
             }
             if _extras:
-                if "time_grain_sqla" in _extras.keys():
+                if "time_grain_sqla" in _extras:
                     mutated_columns[axis_idx]["timeGrain"] = _extras["time_grain_sqla"]
 
         # Create a new query object without the 'is_timeseries' key.
@@ -1479,7 +1479,7 @@ def retain_form_data_suffix(
     for key, value in entries:
         if key.endswith(control_suffix):
             new_form_data[key[: -len(control_suffix)]] = value
-        if not key.endswith(control_suffix) and key not in new_form_data.keys():
+        if not key.endswith(control_suffix) and key not in new_form_data:
             new_form_data[key] = value
     return new_form_data
 
