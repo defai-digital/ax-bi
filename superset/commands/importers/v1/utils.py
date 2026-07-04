@@ -355,7 +355,7 @@ def import_tag(
 
             # If tag does not exist, create it
             if tag is None:
-                description = tag_descriptions.get(tag_name, None)
+                description = tag_descriptions.get(tag_name)
                 tag = Tag(name=tag_name, description=description, type="custom")
                 db_session.add(tag)
                 existing_tags[tag_name] = tag  # Update the existing_tags dictionary

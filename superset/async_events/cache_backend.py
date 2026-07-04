@@ -137,14 +137,14 @@ class RedisCacheBackend(RedisCache):
             "host": config.get("CACHE_REDIS_HOST", "localhost"),
             "port": config.get("CACHE_REDIS_PORT", 6379),
             "db": config.get("CACHE_REDIS_DB", 0),
-            "password": config.get("CACHE_REDIS_PASSWORD", None),
-            "key_prefix": config.get("CACHE_KEY_PREFIX", None),
+            "password": config.get("CACHE_REDIS_PASSWORD"),
+            "key_prefix": config.get("CACHE_KEY_PREFIX"),
             "default_timeout": config.get("CACHE_DEFAULT_TIMEOUT", 300),
             "ssl": config.get("CACHE_REDIS_SSL", False),
-            "ssl_certfile": config.get("CACHE_REDIS_SSL_CERTFILE", None),
-            "ssl_keyfile": config.get("CACHE_REDIS_SSL_KEYFILE", None),
+            "ssl_certfile": config.get("CACHE_REDIS_SSL_CERTFILE"),
+            "ssl_keyfile": config.get("CACHE_REDIS_SSL_KEYFILE"),
             "ssl_cert_reqs": config.get("CACHE_REDIS_SSL_CERT_REQS", "required"),
-            "ssl_ca_certs": config.get("CACHE_REDIS_SSL_CA_CERTS", None),
+            "ssl_ca_certs": config.get("CACHE_REDIS_SSL_CA_CERTS"),
         }
 
         # Handle username separately as it's optional for Redis authentication.
@@ -301,14 +301,14 @@ class RedisSentinelCacheBackend(RedisSentinelCache):
         kwargs = {
             "sentinels": config.get("CACHE_REDIS_SENTINELS", [("127.0.0.1", 26379)]),
             "master": config.get("CACHE_REDIS_SENTINEL_MASTER", "mymaster"),
-            "password": config.get("CACHE_REDIS_PASSWORD", None),
-            "sentinel_password": config.get("CACHE_REDIS_SENTINEL_PASSWORD", None),
+            "password": config.get("CACHE_REDIS_PASSWORD"),
+            "sentinel_password": config.get("CACHE_REDIS_SENTINEL_PASSWORD"),
             "key_prefix": config.get("CACHE_KEY_PREFIX", ""),
             "db": config.get("CACHE_REDIS_DB", 0),
             "ssl": config.get("CACHE_REDIS_SSL", False),
-            "ssl_certfile": config.get("CACHE_REDIS_SSL_CERTFILE", None),
-            "ssl_keyfile": config.get("CACHE_REDIS_SSL_KEYFILE", None),
+            "ssl_certfile": config.get("CACHE_REDIS_SSL_CERTFILE"),
+            "ssl_keyfile": config.get("CACHE_REDIS_SSL_KEYFILE"),
             "ssl_cert_reqs": config.get("CACHE_REDIS_SSL_CERT_REQS", "required"),
-            "ssl_ca_certs": config.get("CACHE_REDIS_SSL_CA_CERTS", None),
+            "ssl_ca_certs": config.get("CACHE_REDIS_SSL_CA_CERTS"),
         }
         return cls(**kwargs)

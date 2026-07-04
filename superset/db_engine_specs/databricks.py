@@ -426,7 +426,7 @@ class DatabricksDynamicBaseEngineSpec(BasicParametersMixin, DatabricksBaseEngine
                 ),
             )
 
-        host = parameters.get("host", None)
+        host = parameters.get("host")
         if not host:
             return errors
 
@@ -441,7 +441,7 @@ class DatabricksDynamicBaseEngineSpec(BasicParametersMixin, DatabricksBaseEngine
             )
             return errors
 
-        port = parameters.get("port", None)
+        port = parameters.get("port")
         if not port:
             return errors
         try:
