@@ -271,8 +271,7 @@ class WebDriverPlaywright(WebDriverProxy):
     def _get_screenshot(page: Page, element: Locator, element_name: str) -> bytes:
         if element_name == "standalone":
             return page.screenshot(full_page=True)
-        else:
-            return element.screenshot()
+        return element.screenshot()
 
     def get_screenshot(  # pylint: disable=too-many-locals, too-many-statements  # noqa: C901
         self, url: str, element_name: str, user: User | None = None
