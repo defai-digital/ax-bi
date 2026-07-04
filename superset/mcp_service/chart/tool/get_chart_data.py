@@ -341,22 +341,14 @@ async def get_chart_data(  # noqa: C901
     Returns underlying data in requested format with cache status.
     """
     await ctx.info(
-        "Starting chart data retrieval: identifier=%s, format=%s, limit=%s, "
-        "form_data_key=%s"
-        % (
-            request.identifier,
-            request.format,
-            request.limit,
-            request.form_data_key,
-        )
+        f"Starting chart data retrieval: identifier={request.identifier}, "
+        f"format={request.format}, limit={request.limit}, "
+        f"form_data_key={request.form_data_key}"
     )
     await ctx.debug(
-        "Cache settings: use_cache=%s, force_refresh=%s, cache_timeout=%s"
-        % (
-            request.use_cache,
-            request.force_refresh,
-            request.cache_timeout,
-        )
+        f"Cache settings: use_cache={request.use_cache}, "
+        f"force_refresh={request.force_refresh}, "
+        f"cache_timeout={request.cache_timeout}"
     )
 
     try:
@@ -372,7 +364,7 @@ async def get_chart_data(  # noqa: C901
             ):
                 await ctx.info(
                     "No chart identifier - querying data from unsaved chart cache: "
-                    "form_data_key=%s" % (request.form_data_key,)
+                    f"form_data_key={request.form_data_key}"
                 )
                 cached_form_data = get_cached_form_data(request.form_data_key)
                 if not cached_form_data:
@@ -410,7 +402,7 @@ async def get_chart_data(  # noqa: C901
         ]
 
         with mcp_event_log_context(action="mcp.get_chart_data.chart_lookup"):
-            await ctx.debug("Looking up chart: identifier=%s" % (request.identifier,))
+            await ctx.debug(f"Looking up chart: identifier={request.identifier}")
             if request.identifier is None:
                 return ChartError(
                     error="Chart identifier is required",
@@ -421,7 +413,7 @@ async def get_chart_data(  # noqa: C901
             )
 
         if not chart:
-            await ctx.warning("Chart not found: identifier=%s" % (request.identifier,))
+            await ctx.warning(f"Chart not found: identifier={request.identifier}")
             safe_id = escape_llm_context_delimiters(str(request.identifier)[:200])
             return ChartError(
                 error=(
@@ -432,12 +424,8 @@ async def get_chart_data(  # noqa: C901
             )
 
         await ctx.info(
-            "Chart found successfully: chart_id=%s, chart_name=%s, viz_type=%s"
-            % (
-                chart.id,
-                chart.slice_name,
-                chart.viz_type,
-            )
+            f"Chart found successfully: chart_id={chart.id}, "
+            f"chart_name={chart.slice_name}, viz_type={chart.viz_type}"
         )
         logger.info("Getting data for chart %s: %s", chart.id, chart.slice_name)
 
@@ -445,8 +433,7 @@ async def get_chart_data(  # noqa: C901
         validation_result = validate_chart_dataset(chart, check_access=True)
         if not validation_result.is_valid:
             await ctx.warning(
-                "Chart found but dataset is not accessible: %s"
-                % (validation_result.error,)
+                f"Chart found but dataset is not accessible: {validation_result.error}"
             )
             return ChartError(
                 error=validation_result.error
@@ -455,7 +442,7 @@ async def get_chart_data(  # noqa: C901
             )
         # Log any warnings (e.g., virtual dataset warnings)
         for warning in validation_result.warnings:
-            await ctx.warning("Dataset warning: %s" % (warning,))
+            await ctx.warning(f"Dataset warning: {warning}")
 
         start_time = time.time()
 
@@ -474,8 +461,8 @@ async def get_chart_data(  # noqa: C901
                     action="mcp.get_chart_data.unsaved_state_override"
                 ):
                     await ctx.info(
-                        "Retrieving unsaved chart state from cache: form_data_key=%s"
-                        % (request.form_data_key,)
+                        "Retrieving unsaved chart state from cache: "
+                        f"form_data_key={request.form_data_key}"
                     )
                     if cached_form_data := get_cached_form_data(request.form_data_key):
                         try:
@@ -495,8 +482,8 @@ async def get_chart_data(  # noqa: C901
                                 )
                         except (TypeError, ValueError) as e:
                             await ctx.warning(
-                                "Failed to parse cached form_data: %s. "
-                                "Falling back to saved chart configuration." % str(e)
+                                f"Failed to parse cached form_data: {str(e)}. "
+                                "Falling back to saved chart configuration."
                             )
                     else:
                         await ctx.warning(
@@ -595,11 +582,10 @@ async def get_chart_data(  # noqa: C901
                     for query in fallback_queries
                 ):
                     await ctx.warning(
-                        "Cannot construct fallback query for chart %s "
-                        "(viz_type=%s): no metrics, columns, or groupby "
+                        f"Cannot construct fallback query for chart {chart.id} "
+                        f"(viz_type={viz_type}): no metrics, columns, or groupby "
                         "could be extracted from form_data. "
                         "Re-save the chart to populate query_context."
-                        % (chart.id, viz_type)
                     )
                     return ChartError(
                         error=(
@@ -645,14 +631,10 @@ async def get_chart_data(  # noqa: C901
 
             await ctx.report_progress(3, 4, "Executing data query")
             await ctx.debug(
-                "Query execution parameters: datasource_id=%s, datasource_type=%s, "
-                "row_limit=%s, force_refresh=%s"
-                % (
-                    chart.datasource_id,
-                    chart.datasource_type,
-                    request.limit or 100,
-                    request.force_refresh,
-                )
+                f"Query execution parameters: datasource_id={chart.datasource_id}, "
+                f"datasource_type={chart.datasource_type}, "
+                f"row_limit={request.limit or 100}, "
+                f"force_refresh={request.force_refresh}"
             )
 
             # Execute the query
@@ -664,8 +646,8 @@ async def get_chart_data(  # noqa: C901
             # Handle empty query results for certain chart types
             if not result or ("queries" not in result) or len(result["queries"]) == 0:
                 await ctx.warning(
-                    "Empty query results: chart_id=%s, chart_type=%s"
-                    % (chart.id, chart.viz_type)
+                    f"Empty query results: chart_id={chart.id}, "
+                    f"chart_type={chart.viz_type}"
                 )
                 return ChartError(
                     error=f"No query results returned for chart {chart.id}. "
@@ -679,18 +661,14 @@ async def get_chart_data(  # noqa: C901
             raw_columns = query_result.get("colnames", [])
 
             await ctx.debug(
-                "Query results received: row_count=%s, column_count=%s, "
-                "has_cache_key=%s"
-                % (
-                    len(data),
-                    len(raw_columns),
-                    bool(query_result.get("cache_key")),
-                )
+                f"Query results received: row_count={len(data)}, "
+                f"column_count={len(raw_columns)}, "
+                f"has_cache_key={bool(query_result.get('cache_key'))}"
             )
 
             # Check if we have data to work with
             if not data:
-                await ctx.warning("No data in query results: chart_id=%s" % (chart.id,))
+                await ctx.warning(f"No data in query results: chart_id={chart.id}")
                 return ChartError(
                     error=f"No data available for chart {chart.id}", error_type="NoData"
                 )
@@ -844,17 +822,12 @@ async def get_chart_data(  # noqa: C901
             )
 
             await ctx.info(
-                "Chart data retrieval completed successfully: chart_id=%s, "
-                "rows_returned=%s, columns_returned=%s, execution_time_ms=%s, "
-                "cache_hit=%s, data_completeness=%s"
-                % (
-                    chart.id,
-                    len(data),
-                    len(raw_columns),
-                    execution_time,
-                    cache_status.cache_hit,
-                    round(data_completeness, 3),
-                )
+                "Chart data retrieval completed successfully: "
+                f"chart_id={chart.id}, rows_returned={len(data)}, "
+                f"columns_returned={len(raw_columns)}, "
+                f"execution_time_ms={execution_time}, "
+                f"cache_hit={cache_status.cache_hit}, "
+                f"data_completeness={round(data_completeness, 3)}"
             )
 
             # Default JSON format
@@ -879,12 +852,8 @@ async def get_chart_data(  # noqa: C901
 
         except (CommandException, SupersetException, ValueError) as data_error:
             await ctx.error(
-                "Data retrieval failed: chart_id=%s, error=%s, error_type=%s"
-                % (
-                    chart.id,
-                    str(data_error),
-                    type(data_error).__name__,
-                )
+                f"Data retrieval failed: chart_id={chart.id}, "
+                f"error={str(data_error)}, error_type={type(data_error).__name__}"
             )
             logger.error("Data retrieval error for chart %s: %s", chart.id, data_error)
             return ChartError(
@@ -894,17 +863,14 @@ async def get_chart_data(  # noqa: C901
 
     except OAuth2RedirectError as ex:
         await ctx.warning(
-            "Chart data requires OAuth authentication: identifier=%s"
-            % request.identifier
+            f"Chart data requires OAuth authentication: identifier={request.identifier}"
         )
         return ChartError(
             error=build_oauth2_redirect_message(ex),
             error_type="OAUTH2_REDIRECT",
         )
     except OAuth2Error:
-        await ctx.error(
-            "OAuth2 configuration error: identifier=%s" % request.identifier
-        )
+        await ctx.error(f"OAuth2 configuration error: identifier={request.identifier}")
         return ChartError(
             error=OAUTH2_CONFIG_ERROR_MESSAGE,
             error_type="OAUTH2_REDIRECT_ERROR",
@@ -919,12 +885,8 @@ async def get_chart_data(  # noqa: C901
         AttributeError,
     ) as e:
         await ctx.error(
-            "Chart data retrieval failed: identifier=%s, error=%s, error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            f"Chart data retrieval failed: identifier={request.identifier}, "
+            f"error={str(e)}, error_type={type(e).__name__}"
         )
         logger.error("Error in get_chart_data: %s", e)
         return ChartError(
