@@ -44,12 +44,11 @@ def _is_valid_algorithm(algorithm: Any) -> bool:
     """Helper function to validate theme algorithm"""
     if isinstance(algorithm, str):
         return _is_valid_theme_mode(algorithm) or algorithm == ThemeMode.SYSTEM
-    elif isinstance(algorithm, list):
+    if isinstance(algorithm, list):
         return all(
             isinstance(alg, str) and _is_valid_theme_mode(alg) for alg in algorithm
         )
-    else:
-        return False
+    return False
 
 
 def is_valid_theme(theme: dict[str, Any]) -> bool:
