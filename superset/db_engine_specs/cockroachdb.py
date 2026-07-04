@@ -50,6 +50,6 @@ class CockroachDbEngineSpec(PostgresEngineSpec):
         sqla_type = cls.get_sqla_column_type(target_type)
         if isinstance(sqla_type, types.Date):
             return f"'{dttm.date().isoformat()}'"
-        if isinstance(sqla_type, (types.String, types.DateTime)):
+        if isinstance(sqla_type, types.String | types.DateTime):
             return f"""'{dttm.isoformat(sep=" ", timespec="seconds")}'"""
         return None

@@ -80,7 +80,7 @@ class PhoenixEngineSpec(BaseEngineSpec):  # pylint: disable=abstract-method
 
         if isinstance(sqla_type, types.Date):
             return f"TO_DATE('{dttm.date().isoformat()}', 'yyyy-MM-dd')"
-        if isinstance(sqla_type, (types.DateTime, types.TIMESTAMP)):
+        if isinstance(sqla_type, types.DateTime | types.TIMESTAMP):
             datetime_formatted = dttm.isoformat(sep=" ", timespec="seconds")
             return f"TO_TIMESTAMP('{datetime_formatted}', 'yyyy-MM-dd HH:mm:ss')"
         return None

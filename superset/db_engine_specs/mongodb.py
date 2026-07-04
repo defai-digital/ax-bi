@@ -117,7 +117,7 @@ class MongoDBEngineSpec(BaseEngineSpec):
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(
-            sqla_type, (types.String, types.DateTime, types.Date, types.TIMESTAMP)
+            sqla_type, types.String | types.DateTime | types.Date | types.TIMESTAMP
         ):
             # Return ISO format datetime string for MongoDB compatibility
             return f"""{dttm.isoformat(sep=" ", timespec="seconds")!r}"""
