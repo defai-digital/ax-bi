@@ -171,10 +171,7 @@ def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
     }
 
     # Apply conversions and build records
-    if converted:
-        df_processed = dframe.assign(**converted)
-    else:
-        df_processed = dframe
+    df_processed = dframe.assign(**converted) if converted else dframe
 
     records = df_processed.to_dict(orient="records")
 
