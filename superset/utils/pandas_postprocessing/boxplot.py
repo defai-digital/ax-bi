@@ -78,10 +78,10 @@ def boxplot(  # noqa: C901
 
     elif whisker_type == PostProcessingBoxplotWhiskerType.PERCENTILE:
         if (
-            not isinstance(percentiles, (list, tuple))
+            not isinstance(percentiles, list | tuple)
             or len(percentiles) != 2
-            or not isinstance(percentiles[0], (int, float))
-            or not isinstance(percentiles[1], (int, float))
+            or not isinstance(percentiles[0], int | float)
+            or not isinstance(percentiles[1], int | float)
             or percentiles[0] >= percentiles[1]
         ):
             raise InvalidPostProcessingError(
