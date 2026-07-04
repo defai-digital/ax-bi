@@ -119,9 +119,9 @@ def get_or_create_local_db() -> Database:
     if local_db:
         if local_db.sqlalchemy_uri != sqlalchemy_uri:
             raise LocalDatabaseConfigurationError(
-                "A database named '%s' already exists but does not match the "
+                f"A database named '{db_name}' already exists but does not match the "
                 "configured local upload DuckDB database. Rename that database "
-                "or change LOCAL_DB_NAME." % db_name
+                "or change LOCAL_DB_NAME."
             )
         if _repair_local_db(local_db):
             db.session.commit()

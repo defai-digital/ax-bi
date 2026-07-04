@@ -24,16 +24,35 @@
         "const": "ok"
       },
       "timestamp": {
-        "type": "string"
+        "type": "string",
+        "format": "date-time",
+        "maxLength": 32
       },
       "version": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
       },
       "nodeVersion": {
-        "type": "string"
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^v\\d+\\.\\d+\\.\\d+"
       },
       "platform": {
-        "type": "string"
+        "enum": [
+          "aix",
+          "android",
+          "darwin",
+          "freebsd",
+          "haiku",
+          "linux",
+          "openbsd",
+          "sunos",
+          "win32",
+          "cygwin",
+          "netbsd"
+        ]
       },
       "uptimeSeconds": {
         "type": "number"
@@ -85,19 +104,30 @@
                 "type": "string"
               },
               "statusCode": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
               },
               "keyCount": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
               },
               "keys": {
                 "type": "array",
+                "maxItems": 100,
                 "items": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
                 }
               },
               "error": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             }
           }
@@ -127,7 +157,8 @@
         "const": "ok"
       },
       "uptimeSeconds": {
-        "type": "number"
+        "type": "number",
+        "minimum": 0
       },
       "requests": {
         "type": "object",
@@ -141,16 +172,20 @@
         "additionalProperties": false,
         "properties": {
           "total": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "errorCount": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "averageDurationMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "maxDurationMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "routes": {
             "type": "object",
@@ -165,16 +200,20 @@
               "additionalProperties": false,
               "properties": {
                 "count": {
-                  "type": "number"
+                  "type": "integer",
+                  "minimum": 0
                 },
                 "errorCount": {
-                  "type": "number"
+                  "type": "integer",
+                  "minimum": 0
                 },
                 "averageDurationMs": {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 },
                 "maxDurationMs": {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 }
               }
             }
@@ -228,10 +267,15 @@
                 "type": "string"
               },
               "statusCode": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
               },
               "error": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
               }
             }
           }

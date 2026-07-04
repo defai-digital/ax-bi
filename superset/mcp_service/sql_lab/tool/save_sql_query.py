@@ -63,8 +63,7 @@ async def save_sql_query(
     Requires a database_id, a label (name), and the SQL text.
     """
     await ctx.info(
-        "Saving SQL query: database_id=%s, label=%r"
-        % (request.database_id, request.label)
+        f"Saving SQL query: database_id={request.database_id}, label={request.label!r}"
     )
 
     try:
@@ -118,7 +117,7 @@ async def save_sql_query(
         saved_query_url = f"{base_url}/sqllab?savedQueryId={saved_query.id}"
 
         await ctx.info(
-            "Saved query created: id=%s, url=%s" % (saved_query.id, saved_query_url)
+            f"Saved query created: id={saved_query.id}, url={saved_query_url}"
         )
 
         return SaveSqlQueryResponse(
@@ -139,7 +138,7 @@ async def save_sql_query(
 
         db.session.rollback()  # pylint: disable=consider-using-transaction
         await ctx.error(
-            "Failed to save SQL query: error=%s, database_id=%s"
-            % (str(e), request.database_id)
+            f"Failed to save SQL query: error={str(e)}, "
+            f"database_id={request.database_id}"
         )
         raise

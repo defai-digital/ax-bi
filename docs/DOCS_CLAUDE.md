@@ -28,7 +28,7 @@ You are currently in the `/docs` subdirectory of the Apache Superset repository.
 ```
 /Users/evan_1/GitHub/superset/     # Main repository root
 ├── superset/                      # Python backend code
-├── superset-frontend/             # React/TypeScript frontend
+├── ax-bi-frontend/             # React/TypeScript frontend
 └── docs/                         # Documentation site (YOU ARE HERE)
     ├── docs/                     # Main documentation content
     ├── admin_docs/               # Admin-focused guides
@@ -313,7 +313,7 @@ Always use full URLs:
 Reference code in the main repository:
 
 ```markdown
-See the [main configuration file](https://github.com/apache/superset/blob/master/superset/config.py)
+See the [main configuration file](https://github.com/defai-digital/ax-bi/blob/main/superset/config.py)
 ```
 
 ## 🛠️ Common Documentation Tasks
@@ -447,7 +447,7 @@ version: 1
 ## superset_config.py
 
 Superset exposes hundreds of configurable parameters through its
-[config.py module](https://github.com/apache/superset/blob/master/superset/config.py).
+[config.py module](https://github.com/defai-digital/ax-bi/blob/main/superset/config.py).
 
 ```bash
 export SUPERSET_CONFIG_PATH=/app/superset_config.py
@@ -604,8 +604,8 @@ Ensure you have Python 3.9+ and Node.js 16+ installed before proceeding.
 
 3. **Initialize the database**
    ```bash
-   superset db upgrade
-   superset init
+   ax-bi db upgrade
+   ax-bi init
    ```
 
 :::tip Success Check

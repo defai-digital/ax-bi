@@ -145,7 +145,17 @@ PROJECT.md
 models/
 
 # Local/internal planning artifacts.
+.internal/
 ax-internal/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+GPT.md
+GTP.md
+.cursor/
+.devcontainer/
+ASF/
+RESOURCES/
 .env.local
 oxc-custom-build/
 *.code-workspace

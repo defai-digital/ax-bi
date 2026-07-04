@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError
@@ -112,7 +112,7 @@ class ImportAssetsCommand(BaseCommand):
     def _import(  # noqa: C901
         configs: dict[str, Any],
         sparse: bool = False,
-        contents: Optional[dict[str, Any]] = None,
+        contents: dict[str, Any] | None = None,
         overwrite: bool = True,
     ) -> None:
         contents = {} if contents is None else contents
@@ -312,7 +312,7 @@ class ImportAssetsCommand(BaseCommand):
 
         # verify that the metadata file is present and valid
         try:
-            metadata: Optional[dict[str, str]] = load_metadata(self.contents)
+            metadata: dict[str, str] | None = load_metadata(self.contents)
         except ValidationError as exc:
             exceptions.append(exc)
             metadata = None

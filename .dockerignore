@@ -39,9 +39,9 @@
 tests/
 docs/
 install/
-superset-frontend/cypress-base/
-superset-frontend/coverage/
-superset-frontend/.temp_cache/
+ax-bi-frontend/cypress-base/
+ax-bi-frontend/coverage/
+ax-bi-frontend/.temp_cache/
 superset/static/assets/
 superset-websocket/dist/
 venv

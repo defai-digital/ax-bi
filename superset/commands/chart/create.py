@@ -17,7 +17,7 @@
 import logging
 from datetime import datetime
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app, g
 from flask_appbuilder.models.sqla import Model
@@ -76,7 +76,7 @@ class CreateChartCommand(CreateMixin, BaseCommand):
         datasource_type = self._properties["datasource_type"]
         datasource_id = self._properties["datasource_id"]
         dashboard_ids = self._properties.get("dashboards", [])
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
+        owner_ids: list[int] | None = self._properties.get("owners")
 
         # Reject removed legacy chart types (they have modern replacements).
         viz_type = self._properties.get("viz_type")

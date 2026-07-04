@@ -48,14 +48,14 @@ function test_init() {
   echo --------------------
   echo Upgrading
   echo --------------------
-  superset db upgrade
+  ax-bi db upgrade
   echo --------------------
   echo Superset init
   echo --------------------
-  superset init
+  ax-bi init
   echo Load test users
   echo --------------------
-  superset load-test-users
+  ax-bi load-test-users
 }
 
 #
@@ -79,9 +79,9 @@ while (( "$#" )); do
   case "$1" in
     --help)
       echo Switches:
-      echo --no-init : Will not, reset the test DB, superset init and load examples
+      echo --no-init : Will not, reset the test DB, ax-bi init and load examples
       echo --no-reset-db: Will not reset the test DB
-      echo --no-tests: Will not run any test, by default reset the DB, superset init and load_examples
+      echo --no-tests: Will not run any test, by default reset the DB, ax-bi init and load_examples
       echo --reset-db: Just resets the test DB, will not run any test
       echo --module: Run a specific test module: --module tests/charts/api_tests.py for example
       exit 0

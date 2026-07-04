@@ -25,7 +25,7 @@ system-level info.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, List
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -235,7 +235,7 @@ class UserMatch(BaseModel):
 class FindUsersResponse(BaseModel):
     """Response schema for find_users tool."""
 
-    users: List[UserMatch] = Field(
+    users: list[UserMatch] = Field(
         default_factory=list,
         description=(
             "Matching users. Pass user.id as the value for created_by_fk or "

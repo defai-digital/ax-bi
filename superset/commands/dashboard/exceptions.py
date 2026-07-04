@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 from marshmallow.validate import ValidationError
@@ -45,7 +44,7 @@ class DashboardInvalidError(CommandInvalidError):
 
 class DashboardNotFoundError(ObjectNotFoundError):
     def __init__(
-        self, dashboard_id: Optional[str] = None, exception: Optional[Exception] = None
+        self, dashboard_id: str | None = None, exception: Exception | None = None
     ) -> None:
         super().__init__("Dashboard", dashboard_id, exception)
 

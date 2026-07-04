@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 from urllib import parse
 
 from flask_babel import gettext as __
@@ -39,11 +39,11 @@ from superset.utils.network import is_hostname_valid, is_port_open
 
 
 class BasicParametersType(TypedDict, total=False):
-    username: Optional[str]
-    password: Optional[str]
+    username: str | None
+    password: str | None
     host: str
     database: str
-    port: Optional[int]
+    port: int | None
     query: dict[str, Any]
     encryption: bool
 
@@ -137,8 +137,8 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         if target_type.lower() == "date":
             formatted_date = dttm.date().isoformat()
         else:
@@ -149,7 +149,7 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
     def build_sqlalchemy_uri(
         cls,
         parameters: BaseBasicParametersType,
-        encrypted_extra: Optional[dict[str, Any]] = None,
+        encrypted_extra: dict[str, Any] | None = None,
     ) -> str:
         raw_query = parameters.get("query") or {}
         query_params = raw_query.copy() if isinstance(raw_query, dict) else {}
@@ -180,7 +180,7 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
 
     @classmethod
     def get_parameters_from_uri(
-        cls, uri: str, encrypted_extra: Optional[dict[str, Any]] = None
+        cls, uri: str, encrypted_extra: dict[str, Any] | None = None
     ) -> BaseBasicParametersType:
         url = make_url_safe(uri)
         query = {
@@ -282,7 +282,7 @@ class CouchbaseEngineSpec(BasicParametersMixin, BaseEngineSpec):
         cls,
         sqlalchemy_uri: URL,
         connect_args: dict[str, Any],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the configured schema.
         """

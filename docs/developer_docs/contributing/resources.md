@@ -112,7 +112,7 @@ flowchart TD
 
 For the full interactive Entity-Relationship Diagram, please visit the [developer documentation](/developer-docs/contributing/resources).
 
-You can also [download the .svg](https://github.com/apache/superset/tree/master/docs/static/img/erd.svg) directly from GitHub.
+You can also [download the .svg](https://github.com/defai-digital/ax-bi/tree/main/docs/static/img/erd.svg) directly from GitHub.
 
 ## Additional Resources
 

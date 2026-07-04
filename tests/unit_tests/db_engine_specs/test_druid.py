@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime
-from typing import Optional
 from unittest import mock
 
 import pandas as pd
@@ -39,7 +38,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.druid import DruidEngineSpec as spec  # noqa: N813

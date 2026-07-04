@@ -16,8 +16,9 @@
 # under the License.
 
 import logging
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any
 from zipfile import ZipFile
 
 import yaml
@@ -92,7 +93,7 @@ def load_metadata(contents: dict[str, str]) -> dict[str, str]:
 
 
 def validate_metadata_type(
-    metadata: Optional[dict[str, str]],
+    metadata: dict[str, str] | None,
     type_: str,
     exceptions: list[ValidationError],
 ) -> None:
@@ -434,10 +435,10 @@ def safe_insert_dashboard_chart_relationships(
 
 
 def get_resource_mappings_batched(
-    model_class: Type[Any],
+    model_class: type[Any],
     batch_size: int = 1000,
     value_func: Callable[[Any], Any] = lambda x: x.id,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     offset = 0
     mapping = {}
     while True:

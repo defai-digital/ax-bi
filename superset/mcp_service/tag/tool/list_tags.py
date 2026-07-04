@@ -372,18 +372,14 @@ async def _list_tags_python(
     """Run the authoritative Python tag list path."""
 
     await ctx.info(
-        "Listing tags: page=%s, page_size=%s, search=%s"
-        % (request.page, request.page_size, request.search)
+        f"Listing tags: page={request.page}, page_size={request.page_size}, "
+        f"search={request.search}"
     )
     await ctx.debug(
-        "Tag listing parameters: filters=%s, order_column=%s, "
-        "order_direction=%s, select_columns=%s"
-        % (
-            request.filters,
-            request.order_column,
-            request.order_direction,
-            request.select_columns,
-        )
+        f"Tag listing parameters: filters={request.filters}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}, "
+        f"select_columns={request.select_columns}"
     )
 
     try:
@@ -421,7 +417,8 @@ async def _list_tags_python(
 
     except Exception as e:
         await ctx.error(
-            "Tag listing failed: page=%s, page_size=%s, error=%s, error_type=%s"
-            % (request.page, request.page_size, str(e), type(e).__name__)
+            f"Tag listing failed: page={request.page}, "
+            f"page_size={request.page_size}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

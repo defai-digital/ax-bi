@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -24,8 +23,8 @@ from superset.commands.exceptions import ForbiddenError, ObjectNotFoundError
 class EmbeddedDashboardNotFoundError(ObjectNotFoundError):
     def __init__(
         self,
-        embedded_dashboard_uuid: Optional[str] = None,
-        exception: Optional[Exception] = None,
+        embedded_dashboard_uuid: str | None = None,
+        exception: Exception | None = None,
     ) -> None:
         super().__init__("EmbeddedDashboard", embedded_dashboard_uuid, exception)
 

@@ -17,7 +17,7 @@
 import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ ALL_LANGUAGE_PACKS: dict[str, dict[str, Any]] = {"en": {}}
 DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def get_language_pack(locale: str) -> Optional[dict[str, Any]]:
+def get_language_pack(locale: str) -> dict[str, Any] | None:
     """Get/cache a language pack
 
     Returns the language pack from cache if it exists, caches otherwise

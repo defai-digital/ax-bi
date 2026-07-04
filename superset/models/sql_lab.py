@@ -22,7 +22,7 @@ import logging
 import re
 from collections.abc import Hashable
 from datetime import datetime
-from typing import Any, cast, Optional, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 
 import sqlalchemy as sqla
 from flask import current_app as app
@@ -174,7 +174,7 @@ class Query(
     )
 
     @hybrid_property
-    def duration(self) -> Optional[float]:
+    def duration(self) -> float | None:
         start = self.start_running_time or self.start_time
         if self.end_time is not None and start is not None:
             return float(self.end_time - start)
@@ -245,8 +245,8 @@ class Query(
         return self.database.name
 
     @property
-    def username(self) -> str:
-        return self.user.username
+    def username(self) -> str | None:
+        return self.user.username if self.user else None
 
     @property
     def columns(self) -> list["TableColumn"]:
@@ -275,7 +275,7 @@ class Query(
         return table_columns
 
     @property
-    def db_extra(self) -> Optional[dict[str, Any]]:
+    def db_extra(self) -> dict[str, Any] | None:
         return None
 
     @property
@@ -358,10 +358,10 @@ class Query(
         return 0
 
     @property
-    def main_dttm_col(self) -> Optional[str]:
+    def main_dttm_col(self) -> str | None:
         for col in self.columns:
-            if col.get("is_dttm"):
-                return col.get("column_name")
+            if col.is_dttm:
+                return col.column_name
         return None
 
     @property
@@ -410,7 +410,7 @@ class Query(
         return set(column_names).issubset(set(self.column_names))
 
     @property
-    def tracking_url(self) -> Optional[str]:
+    def tracking_url(self) -> str | None:
         """
         Transform tracking url at run time because the exact URL may depend
         on query properties such as execution and finish time.
@@ -430,7 +430,7 @@ class Query(
     def tracking_url(self, value: str) -> None:
         self.tracking_url_raw = value
 
-    def get_column(self, column_name: Optional[str]) -> Optional[dict[str, Any]]:
+    def get_column(self, column_name: str | None) -> dict[str, Any] | None:
         if not column_name:
             return None
         for col in self.columns:
@@ -442,8 +442,8 @@ class Query(
         self,
         col: "AdhocColumn",  # type: ignore  # noqa: F821
         force_type_check: bool = False,
-        template_processor: Optional[BaseTemplateProcessor] = None,
-    ) -> tuple[ColumnElement, Optional[GenericDataType]]:
+        template_processor: BaseTemplateProcessor | None = None,
+    ) -> tuple[ColumnElement, GenericDataType | None]:
         """
         Turn an adhoc column into a sqlalchemy column.
         :param col: Adhoc column definition
@@ -536,8 +536,8 @@ class SavedQuery(
         )
 
     @property
-    def user_email(self) -> str:
-        return self.user.email
+    def user_email(self) -> str | None:
+        return self.user.email if self.user else None
 
     @property
     def sqlalchemy_uri(self) -> URL:
@@ -548,10 +548,14 @@ class SavedQuery(
 
     @property
     def last_run_humanized(self) -> str:
+        if self.last_run:
+            return naturaltime(datetime.now() - self.last_run)
         return naturaltime(datetime.now() - self.changed_on)
 
     @property
     def _last_run_delta_humanized(self) -> str:
+        if self.last_run:
+            return naturaltime(datetime.now() - self.last_run)
         return naturaltime(datetime.now() - self.changed_on)
 
     @renders("changed_on")

@@ -18,7 +18,7 @@
 from contextlib import nullcontext
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -44,8 +44,8 @@ FIXED_USERNAME = "admin"
 
 
 def _get_users(
-    params: Optional[Union[int, list[int]]],
-) -> Optional[Union[User, list[User]]]:
+    params: int | list[int] | None,
+) -> User | list[User] | None:
     if params is None:
         return None
     if isinstance(params, int):
@@ -56,8 +56,8 @@ def _get_users(
 @dataclass
 class ModelConfig:
     owners: list[int]
-    creator: Optional[int] = None
-    modifier: Optional[int] = None
+    creator: int | None = None
+    modifier: int | None = None
 
 
 class ModelType(int, Enum):
@@ -322,7 +322,7 @@ def test_get_executor(
     model_type: ModelType,
     executors: list[Executor],
     model_config: ModelConfig,
-    current_user: Optional[int],
+    current_user: int | None,
     expected_result: tuple[ExecutorType, int] | Exception,
 ) -> None:
     from superset.models.dashboard import Dashboard
@@ -330,7 +330,7 @@ def test_get_executor(
     from superset.reports.models import ReportSchedule
     from superset.tasks.utils import get_executor
 
-    model: type[Union[Dashboard, ReportSchedule, Slice]]
+    model: type[Dashboard | ReportSchedule | Slice]
     model_kwargs: dict[str, Any] = {}
     if model_type == ModelType.REPORT_SCHEDULE:
         model = ReportSchedule

@@ -17,7 +17,7 @@
 """A collection of ORM sqlalchemy models for Superset"""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import rison
 from cron_descriptor import get_description
@@ -256,8 +256,8 @@ class ReportSchedule(AuditMixinNullable, ExtraJSONMixin, Model):
         native_filter_id: str,
         filter_type: str,
         column_name: str,
-        values: list[Optional[str]],
-    ) -> tuple[dict[str, Any], Optional[str]]:
+        values: list[str | None],
+    ) -> tuple[dict[str, Any], str | None]:
         """
         Generate a native filter configuration for the given filter type.
 

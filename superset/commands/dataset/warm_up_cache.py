@@ -16,7 +16,7 @@
 # under the License.
 
 
-from typing import Any, Optional
+from typing import Any
 
 from superset.commands.base import BaseCommand
 from superset.commands.chart.warm_up_cache import ChartWarmUpCacheCommand
@@ -37,8 +37,8 @@ class DatasetWarmUpCacheCommand(BaseCommand):
         self,
         db_name: str,
         table_name: str,
-        dashboard_id: Optional[int],
-        extra_filters: Optional[str],
+        dashboard_id: int | None,
+        extra_filters: str | None,
     ):
         self._db_name = db_name
         self._table_name = table_name

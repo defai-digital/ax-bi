@@ -20,7 +20,8 @@ from __future__ import annotations
 import dataclasses
 import logging
 from abc import ABC
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 from flask_babel import gettext as __
 

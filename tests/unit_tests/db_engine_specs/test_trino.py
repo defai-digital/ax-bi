@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 from collections import namedtuple
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
@@ -301,7 +301,7 @@ def test_auth_ignores_non_object_encrypted_extra() -> None:
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -330,7 +330,7 @@ def test_get_column_spec(
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.trino import TrinoEngineSpec

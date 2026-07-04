@@ -17,9 +17,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache
-from typing import Callable, TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 from uuid import UUID
 
 from flask_babel import lazy_gettext as _

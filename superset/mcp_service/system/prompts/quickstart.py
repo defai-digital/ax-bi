@@ -56,7 +56,14 @@ async def quickstart_prompt(
 4. Call `generate_explore_link` to create interactive chart previews
 5. Iterate on chart configuration until the visualization answers your question
 6. Call `generate_chart(save_chart=True)` to save charts you want to keep
-7. Call `generate_dashboard` with your saved chart IDs to build a dashboard""",
+7. Call `generate_dashboard` with your saved chart IDs to build a dashboard
+
+**Or, upload a file and get a dashboard in one step:**
+1. Call `upload_file(file_content, filename)` to upload a CSV/Excel file
+   - For multi-sheet Excel: `sheet_name` selects a specific sheet
+   - Response includes `sheet_names` listing all available sheets
+2. Call `prompt_to_dashboard(prompt, dataset_ids=[<id>])` to go from
+   uploaded data to a live dashboard in a single call""",
         "executive": f"""**Workflow for Executives:**
 
 1. Call `get_instance_info` to see available dashboards and charts
@@ -65,7 +72,11 @@ async def quickstart_prompt(
 4. To create a new KPI dashboard:
    a. Call `list_datasets` to find data sources
    b. Create charts with `generate_chart` (line/bar/table)
-   c. Call `generate_dashboard` with chart IDs""",
+   c. Call `generate_dashboard` with chart IDs
+
+**Or, upload a file and get a dashboard in one step:**
+1. Call `upload_file` with your CSV/Excel file
+2. Call `prompt_to_dashboard` with the dataset ID from step 1""",
         "developer": """**Workflow for Developers:**
 
 1. Call `get_instance_info` to understand the instance
@@ -92,5 +103,12 @@ async def quickstart_prompt(
 - `generate_dashboard` - Create a dashboard from chart IDs
 - `execute_sql` - Run SQL queries against a database
 - `get_schema` - Discover filterable/sortable columns for list tools
+
+**File Upload & AI-Powered Dashboard Creation:**
+- `upload_file` - Upload CSV/Excel (returns DatasetInfo with sheet_names)
+- `upload_files` - Batch upload up to 10 files at once
+- `prompt_to_dashboard` - Create a dashboard from a text prompt + dataset IDs
+  (chains plan_dashboard → create_chart_from_intent → compose_dashboard)
+- `plan_dashboard` - Preview a dashboard plan before creating (read-only)
 
 Start by calling `get_instance_info` to see what data is available."""

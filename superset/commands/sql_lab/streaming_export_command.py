@@ -128,7 +128,7 @@ class StreamingSqlResultExportCommand(BaseStreamingCSVExportCommand):
             sql = executed_sql
             script = SQLScript(sql, database.db_engine_spec.engine)
             # when a query has multiple statements only the last one returns data
-            limit = script.statements[-1].get_limit_value()
+            limit = script.statements[-1].get_limit_value() if script.statements else None
 
         # Adjust limit based on limiting factor
         if limit is not None and limiting_factor in {

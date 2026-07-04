@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from sqlalchemy import column  # noqa: F401
@@ -48,8 +48,8 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_elasticsearch_convert_dttm(
     target_type: str,
-    db_extra: Optional[dict[str, Any]],
-    expected_result: Optional[str],
+    db_extra: dict[str, Any] | None,
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.elasticsearch import (
@@ -68,7 +68,7 @@ def test_elasticsearch_convert_dttm(
 )
 def test_opendistro_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.elasticsearch import (

@@ -16,21 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listSearchSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from './listColumn';
+
 export const ANNOTATION_LIST_CONTRACT_VERSION = 'annotation-list.v1';
 
-export type AnnotationFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type AnnotationFilterValue = SharedListFilterValue;
 
-export interface AnnotationListFilter {
-  col: string;
-  opr: string;
-  value: AnnotationFilterValue;
-}
+export type AnnotationListFilter = SharedListFilter;
 
 export interface AnnotationListRequest {
   contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;
@@ -70,38 +74,18 @@ export interface AnnotationListResponse {
   warnings: string[];
 }
 
-const annotationFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const annotationListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     shortDescr: { type: 'string' },
     longDescr: { type: 'string' },
     startDttm: { type: 'string' },
     endDttm: { type: 'string' },
     jsonMetadata: { type: 'string' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
   },
 } as const;
 
@@ -120,20 +104,17 @@ export const annotationListRequestSchema = {
   additionalProperties: false,
   properties: {
     contractVersion: { const: ANNOTATION_LIST_CONTRACT_VERSION },
-    layerId: { type: 'number', minimum: 1 },
+    layerId: { type: 'integer', minimum: 1 },
     filters: {
       type: 'array',
-      items: annotationFilterSchema,
+      items: listFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
+    selectColumns: listColumnSchema,
+    search: listSearchSchema,
+    orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
   },
 } as const;
 
@@ -162,26 +143,17 @@ export const annotationListResponseSchema = {
       type: 'array',
       items: annotationListItemSchema,
     },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    layerId: { type: 'number' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    layerId: { type: 'integer', minimum: 0 },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
+    warnings: warningSchema,
   },
 } as const;
 

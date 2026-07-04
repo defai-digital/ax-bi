@@ -32,9 +32,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global proxy instance for cleanup
-proxy: FastMCP | None = None
-
 
 def signal_handler(signum: int, frame: Any) -> None:
     """Handle shutdown signals gracefully"""
@@ -45,11 +42,7 @@ def signal_handler(signum: int, frame: Any) -> None:
 
 def main() -> None:
     """Main function to run the proxy"""
-    global proxy
-
     try:
-        from fastmcp import FastMCP
-
         # Set up signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)

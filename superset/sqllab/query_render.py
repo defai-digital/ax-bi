@@ -17,7 +17,8 @@
 # pylint: disable=invalid-name, too-few-public-methods, too-many-arguments
 from __future__ import annotations
 
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 from flask_babel import gettext as __, ngettext
 from jinja2 import TemplateError

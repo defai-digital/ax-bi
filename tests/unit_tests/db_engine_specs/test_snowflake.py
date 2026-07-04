@@ -18,7 +18,7 @@
 # pylint: disable=import-outside-toplevel
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -53,7 +53,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.snowflake import (

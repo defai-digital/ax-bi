@@ -1370,7 +1370,7 @@ This is currently implement for Presto and Postgres, via custom classes in `supe
 Superset has a command to test the connection to a given database, as well as checking if the SQLAlchemy dialect implements all necessary methods used by Superset, and checking which features are supported by the DB engine spec (if one exists). To run the tool just call the `test-db` command with the SQLAlchemy URI to be tested:
 
 ```bash
-superset test-db sqlite://
+ax-bi test-db sqlite://
 ```
 
 If the connection needs additional arguments they can be passed when the command runs.

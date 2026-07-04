@@ -26,8 +26,9 @@ during extension loading.
 from __future__ import annotations
 
 import contextlib
+from collections.abc import Generator
 from threading import local
-from typing import Any, Generator
+from typing import Any
 
 from superset_core.extensions.types import Manifest
 
@@ -41,7 +42,7 @@ class ExtensionContext:
     def __init__(self, manifest: Manifest):
         self.manifest = manifest
 
-    def __enter__(self) -> "ExtensionContext":
+    def __enter__(self) -> ExtensionContext:
         if getattr(_extension_context, "current", None) is not None:
             current_extension = _extension_context.current.manifest.id
             raise RuntimeError(

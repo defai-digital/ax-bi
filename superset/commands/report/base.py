@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any
 
 from croniter import croniter
 from flask import current_app as app
@@ -248,7 +248,7 @@ class BaseReportScheduleCommand(BaseCommand):
             exceptions.append(ReportScheduleEitherChartOrDashboardError())
 
     def _validate_report_extra(self, exceptions: list[ValidationError]) -> None:
-        extra: Optional[ReportScheduleExtra] = self._properties.get("extra")
+        extra: ReportScheduleExtra | None = self._properties.get("extra")
         dashboard = self._properties.get("dashboard")
 
         # On PUT requests, dashboard may not be in the payload — fall back to the model

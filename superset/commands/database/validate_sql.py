@@ -16,7 +16,7 @@
 # under the License.
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app as app
 from flask_babel import gettext as __
@@ -49,8 +49,8 @@ class ValidateSQLCommand(BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._properties = data.copy()
         self._model_id = model_id
-        self._model: Optional[Database] = None
-        self._validator: Optional[type[BaseSQLValidator]] = None
+        self._model: Database | None = None
+        self._validator: type[BaseSQLValidator] | None = None
 
     def run(self) -> list[dict[str, Any]]:
         """

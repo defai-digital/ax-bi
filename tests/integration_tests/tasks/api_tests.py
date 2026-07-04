@@ -16,8 +16,8 @@
 # under the License.
 """Integration tests for Task REST API"""
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 import rison
 from superset_core.tasks.types import TaskStatus

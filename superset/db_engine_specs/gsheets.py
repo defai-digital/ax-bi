@@ -167,8 +167,8 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
     @classmethod
     def get_oauth2_authorization_uri(
         cls,
-        config: "OAuth2ClientConfig",
-        state: "OAuth2State",
+        config: OAuth2ClientConfig,
+        state: OAuth2State,
         code_verifier: str | None = None,
     ) -> str:
         """
@@ -280,9 +280,10 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
             cursor = conn.cursor()
             escaped_table = table.table.replace('"', '""')
             cursor.execute(f'SELECT GET_METADATA("{escaped_table}")')
-            results = cursor.fetchone()[0]
+            row = cursor.fetchone()
+            results = row[0] if row else None
         try:
-            metadata = json.loads(results)
+            metadata = json.loads(results) if results else {}
         except Exception:  # pylint: disable=broad-except
             metadata = {}
 

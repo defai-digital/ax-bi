@@ -123,7 +123,7 @@ class UpdateTaskCommand(BaseCommand):
         with task_lock(dedup_key):
             return self._execute_update()
 
-    def _execute_update(self) -> "Task":
+    def _execute_update(self) -> Task:
         """
         Execute the update operation under lock.
 

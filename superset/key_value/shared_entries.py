@@ -16,7 +16,7 @@
 # under the License.
 
 import logging
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid3
 
 from superset.daos.key_value import KeyValueDAO
@@ -35,7 +35,7 @@ RESOURCE = KeyValueResource.APP
 CODEC = JsonKeyValueCodec()
 
 
-def get_shared_value(key: SharedKey) -> Optional[Any]:
+def get_shared_value(key: SharedKey) -> Any:
     """
     Get a shared value by key, with configurable fallback for backward compatibility.
 

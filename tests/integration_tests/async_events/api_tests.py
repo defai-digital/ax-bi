@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, Type
+from typing import Any
 from unittest import mock
 
 from superset.async_events.cache_backend import (
@@ -31,12 +31,12 @@ from tests.integration_tests.test_app import app
 class TestAsyncEventApi(SupersetTestCase):
     UUID = "943c920-32a5-412a-977d-b8e47d36f5a4"
 
-    def fetch_events(self, last_id: Optional[str] = None):
+    def fetch_events(self, last_id: str | None = None):
         base_uri = "api/v1/async_event/"
         uri = f"{base_uri}?last_id={last_id}" if last_id else base_uri
         return self.client.get(uri)
 
-    def run_test_with_cache_backend(self, cache_backend_cls: Type[Any], test_func):
+    def run_test_with_cache_backend(self, cache_backend_cls: type[Any], test_func):
         app._got_first_request = False
         async_query_manager_factory.init_app(app)
 

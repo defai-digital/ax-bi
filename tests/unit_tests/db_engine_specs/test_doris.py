@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -73,7 +73,7 @@ from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -187,9 +187,7 @@ def test_adjust_engine_params_no_database() -> None:
         ("doris://localhost:9030/", None),
     ],
 )
-def test_get_schema_from_engine_params(
-    url: str, expected_schema: Optional[str]
-) -> None:
+def test_get_schema_from_engine_params(url: str, expected_schema: str | None) -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
@@ -214,8 +212,8 @@ def test_get_schema_from_engine_params(
 )
 def test_get_default_catalog(
     mocker: MockerFixture,
-    database_value: Optional[str],
-    expected_catalog: Optional[str],
+    database_value: str | None,
+    expected_catalog: str | None,
 ) -> None:
     """
     Test the ``get_default_catalog`` method.

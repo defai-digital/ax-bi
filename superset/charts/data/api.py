@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask import current_app as app, g, make_response, request, Response
 from flask_appbuilder.api import expose, protect
@@ -768,7 +769,7 @@ class ChartDataRestApi(ChartRestApi):
         csv_generator_callable = command.run()
 
         # Get encoding from config
-        encoding = app.config.get("CSV_EXPORT", {}).get("encoding", "utf-8")
+        encoding = (app.config.get("CSV_EXPORT") or {}).get("encoding", "utf-8")
 
         # Create response with streaming headers
         response = Response(
