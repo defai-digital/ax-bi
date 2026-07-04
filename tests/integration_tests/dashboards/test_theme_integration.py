@@ -380,7 +380,7 @@ class TestDashboardThemeIntegration(SupersetTestCase):
         contents = dict(command.run())
 
         # Verify theme file is included in export
-        theme_files = [path for path in contents.keys() if path.startswith("themes/")]
+        theme_files = [path for path in contents if path.startswith("themes/")]
         assert len(theme_files) == 1
 
         theme_path = theme_files[0]
@@ -392,9 +392,7 @@ class TestDashboardThemeIntegration(SupersetTestCase):
         assert "json_data" in theme_content
 
         # Verify dashboard includes theme_uuid
-        dashboard_files = [
-            path for path in contents.keys() if path.startswith("dashboards/")
-        ]
+        dashboard_files = [path for path in contents if path.startswith("dashboards/")]
         assert len(dashboard_files) == 1
 
         dashboard_content = yaml.safe_load(contents[dashboard_files[0]]())

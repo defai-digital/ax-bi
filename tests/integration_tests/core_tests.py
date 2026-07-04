@@ -355,7 +355,7 @@ class TestCore(SupersetTestCase):
             "id",
         ]
         for k in keys:
-            assert k in resp.keys()
+            assert k in resp
 
     def test_fetch_datasource_metadata_rejects_malformed_datasource_key(self):
         self.login(ADMIN_USERNAME)

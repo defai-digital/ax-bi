@@ -812,9 +812,7 @@ async def test_columns_available_are_serializable(mock_list, mcp_server):
     mock_list.return_value = ([report], 1)
 
     serializable_cols = [
-        col
-        for col in ReportInfo.model_fields.keys()
-        if col not in USER_DIRECTORY_FIELDS
+        col for col in ReportInfo.model_fields if col not in USER_DIRECTORY_FIELDS
     ]
 
     async with Client(mcp_server) as client:

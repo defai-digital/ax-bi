@@ -1910,9 +1910,9 @@ def test_merge_request_params_when_url_params_undefined():
     form_data = {"since": "2000", "until": "now"}
     url_params = {"form_data": form_data, "dashboard_ids": "(1,2,3,4,5)"}
     merge_request_params(form_data, url_params)
-    assert "url_params" in form_data.keys()
+    assert "url_params" in form_data
     assert "dashboard_ids" in form_data["url_params"]
-    assert "form_data" not in form_data.keys()
+    assert "form_data" not in form_data
 
 
 def test_merge_request_params_when_url_params_predefined():
@@ -1923,7 +1923,7 @@ def test_merge_request_params_when_url_params_predefined():
     }
     url_params = {"form_data": form_data, "dashboard_ids": "(1,2,3,4,5)"}
     merge_request_params(form_data, url_params)
-    assert "url_params" in form_data.keys()
+    assert "url_params" in form_data
     assert "abc" in form_data["url_params"]
     assert url_params["dashboard_ids"] == form_data["url_params"]["dashboard_ids"]
 
