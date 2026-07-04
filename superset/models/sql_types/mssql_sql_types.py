@@ -17,7 +17,7 @@
 
 # pylint: disable=abstract-method
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.sql.sqltypes import CHAR
@@ -44,7 +44,7 @@ class GUID(TypeDecorator):
         """Return the SQL type for the GUID type, which is CHAR(36) in SQL Server."""
         return "CHAR(36)"
 
-    def process_bind_param(self, value: str, dialect: Dialect) -> Optional[str]:
+    def process_bind_param(self, value: str | None, dialect: Dialect) -> str | None:
         """Prepare the UUID value for binding to the database."""
         if value is None:
             return None
@@ -53,8 +53,8 @@ class GUID(TypeDecorator):
         return str(value)
 
     def process_result_value(
-        self, value: Optional[str], dialect: Dialect
-    ) -> Optional[uuid.UUID]:
+        self, value: str | None, dialect: Dialect
+    ) -> uuid.UUID | None:
         """Convert the string back to a UUID when retrieving from the database."""
         if value is None:
             return None

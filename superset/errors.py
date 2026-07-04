@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import lazy_gettext as _
 
@@ -26,7 +26,7 @@ class SupersetErrorType(StrEnum):
     """
     Types of errors that can exist within Superset.
 
-    Keep in sync with superset-frontend/packages/superset-ui-core/src/query/types/Query.ts
+    Keep in sync with ax-bi-frontend/packages/superset-ui-core/src/query/types/Query.ts
     """  # noqa: E501
 
     # Frontend errors
@@ -200,7 +200,7 @@ class ErrorLevel(StrEnum):
     """
     Levels of errors that can exist within Superset.
 
-    Keep in sync with superset-frontend/packages/superset-ui-core/src/query/types/Query.ts
+    Keep in sync with ax-bi-frontend/packages/superset-ui-core/src/query/types/Query.ts
     """  # noqa: E501
 
     INFO = "info"
@@ -217,7 +217,7 @@ class SupersetError:
     message: str
     error_type: SupersetErrorType
     level: ErrorLevel
-    extra: Optional[dict[str, Any]] = None
+    extra: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """

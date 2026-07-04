@@ -16,21 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listSearchSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from './listColumn';
+
 export const SAVED_QUERY_LIST_CONTRACT_VERSION = 'saved-query-list.v1';
 
-export type SavedQueryFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type SavedQueryFilterValue = SharedListFilterValue;
 
-export interface SavedQueryListFilter {
-  col: string;
-  opr: string;
-  value: SavedQueryFilterValue;
-}
+export type SavedQueryListFilter = SharedListFilter;
 
 export interface SavedQueryListRequest {
   contractVersion: typeof SAVED_QUERY_LIST_CONTRACT_VERSION;
@@ -72,36 +76,16 @@ export interface SavedQueryListResponse {
   warnings: string[];
 }
 
-const savedQueryFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const savedQueryListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     label: { type: 'string' },
     sql: { type: 'string' },
-    dbId: { type: 'number' },
+    dbId: { type: 'integer', minimum: 0 },
     schema: { type: 'string' },
     catalog: { type: 'string' },
     description: { type: 'string' },
@@ -127,17 +111,14 @@ export const savedQueryListRequestSchema = {
     contractVersion: { const: SAVED_QUERY_LIST_CONTRACT_VERSION },
     filters: {
       type: 'array',
-      items: savedQueryFilterSchema,
+      items: listFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
+    selectColumns: listColumnSchema,
+    search: listSearchSchema,
+    orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
   },
 } as const;
 
@@ -165,25 +146,16 @@ export const savedQueryListResponseSchema = {
       type: 'array',
       items: savedQueryListItemSchema,
     },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
+    warnings: warningSchema,
   },
 } as const;
 

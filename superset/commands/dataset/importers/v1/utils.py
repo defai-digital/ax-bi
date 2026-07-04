@@ -325,7 +325,7 @@ def import_dataset(  # noqa: C901
 def _convert_temporal_columns(df: pd.DataFrame, dtype: dict[str, Any]) -> None:
     """Convert Date/DateTime columns in-place, coercing only out-of-bounds values."""
     for column_name, sqla_type in dtype.items():
-        if isinstance(sqla_type, (Date, DateTime)):
+        if isinstance(sqla_type, Date | DateTime):
             try:
                 df[column_name] = pd.to_datetime(df[column_name])
             except OutOfBoundsDatetime:

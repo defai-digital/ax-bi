@@ -23,7 +23,8 @@ into the abstract superset-core API modules. This allows the core API
 to be used with direct imports while maintaining loose coupling.
 """
 
-from typing import Any, Callable, TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING, TypeVar
 
 from sqlalchemy.orm import scoped_session
 

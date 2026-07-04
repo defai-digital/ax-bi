@@ -45,8 +45,9 @@ Configuration:
 """
 
 import logging
+from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
-from typing import Any, Callable, TYPE_CHECKING, TypeVar
+from typing import Any, TYPE_CHECKING, TypeVar
 
 from flask import current_app, g, has_app_context, has_request_context
 from flask_appbuilder.security.sqla.models import User
@@ -461,18 +462,21 @@ def _resolve_user_from_jwt_context(app: Any) -> User | None:
     # correct option (warn, don't change the key out from under existing
     # single-issuer deployments).
     configured_issuer = get_mcp_jwt_issuer(app.config)
-    if isinstance(configured_issuer, (list, tuple, set)) and len(configured_issuer) > 1:
-        if not get_mcp_user_resolver(app.config):
-            token_iss = claims.get("iss") if isinstance(claims, dict) else None
-            logger.warning(
-                "Multiple JWT issuers are trusted (MCP_JWT_ISSUER is a list) but "
-                "the default user resolver maps token claims to Superset users by "
-                "username/email without binding the issuer (iss=%s). Distinct "
-                "issuers minting the same username/email will collide. Configure an "
-                "issuer-aware MCP_USER_RESOLVER to derive a compound (iss+sub) "
-                "identity.",
-                _sanitize_for_log(token_iss),
-            )
+    if (
+        isinstance(configured_issuer, list | tuple | set)
+        and len(configured_issuer) > 1
+        and not get_mcp_user_resolver(app.config)
+    ):
+        token_iss = claims.get("iss") if isinstance(claims, dict) else None
+        logger.warning(
+            "Multiple JWT issuers are trusted (MCP_JWT_ISSUER is a list) but "
+            "the default user resolver maps token claims to Superset users by "
+            "username/email without binding the issuer (iss=%s). Distinct "
+            "issuers minting the same username/email will collide. Configure an "
+            "issuer-aware MCP_USER_RESOLVER to derive a compound (iss+sub) "
+            "identity.",
+            _sanitize_for_log(token_iss),
+        )
 
     # Use configurable resolver or default
 
@@ -650,7 +654,7 @@ def get_user_from_request() -> User:
         if not user:
             raise ValueError(
                 f"User '{username}' not found. "
-                f"Please create admin user with: superset fab create-admin"
+                f"Please create admin user with: ax-bi fab create-admin"
             )
         return user
 
@@ -997,8 +1001,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         user.username,
                         tool_func.__name__,
                     )
-                    result = await tool_func(*args, **_inject_ctx(kwargs))
-                    return result
+                    return await tool_func(*args, **_inject_ctx(kwargs))
                 except Exception:
                     _cleanup_session_on_error()
                     raise
@@ -1044,8 +1047,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         user.username,
                         tool_func.__name__,
                     )
-                    result = tool_func(*args, **_inject_ctx(kwargs))
-                    return result
+                    return tool_func(*args, **_inject_ctx(kwargs))
                 except Exception:
                     _cleanup_session_on_error()
                     raise

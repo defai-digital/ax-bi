@@ -63,7 +63,7 @@ edit files...
 
 # Run tests
 pytest tests/unit_tests/
-cd superset-frontend && npm run test
+cd ax-bi-frontend && npm run test
 
 # Run linting
 pre-commit run --all-files
@@ -225,7 +225,7 @@ pytest tests/integration_tests/ -v
 
 #### Frontend Test Failures
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run test -- --coverage
 ```
 

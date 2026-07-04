@@ -16,21 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listSearchSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from './listColumn';
+
 export const ROLE_LIST_CONTRACT_VERSION = 'role-list.v1';
 
-export type RoleFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type RoleFilterValue = SharedListFilterValue;
 
-export interface RoleListFilter {
-  col: string;
-  opr: string;
-  value: RoleFilterValue;
-}
+export type RoleListFilter = SharedListFilter;
 
 export interface RoleListRequest {
   contractVersion: typeof ROLE_LIST_CONTRACT_VERSION;
@@ -63,32 +67,12 @@ export interface RoleListResponse {
   warnings: string[];
 }
 
-const roleFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const roleListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     name: { type: 'string' },
   },
 } as const;
@@ -109,17 +93,14 @@ export const roleListRequestSchema = {
     contractVersion: { const: ROLE_LIST_CONTRACT_VERSION },
     filters: {
       type: 'array',
-      items: roleFilterSchema,
+      items: listFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
+    selectColumns: listColumnSchema,
+    search: listSearchSchema,
+    orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
   },
 } as const;
 
@@ -147,25 +128,16 @@ export const roleListResponseSchema = {
       type: 'array',
       items: roleListItemSchema,
     },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
+    warnings: warningSchema,
   },
 } as const;
 

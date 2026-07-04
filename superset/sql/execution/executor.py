@@ -59,6 +59,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import logging
+import re
 import time
 import uuid
 from datetime import datetime
@@ -183,10 +184,14 @@ def execute_sql_with_cursor(
         # Update progress on Query model
         progress_pct = int(((i + 1) / total) * 100)
         query.progress = progress_pct
-        query.set_extra_json_key(
-            "progress",
-            f"Running statement {i + 1} of {total}",
-        )
+        # Only set progress message while still running (not after last statement)
+        if i < total - 1:
+            query.set_extra_json_key(
+                "progress",
+                f"Running statement {i + 1} of {total}",
+            )
+        else:
+            query.set_extra_json_key("progress", "Execution complete")
         db.session.commit()  # pylint: disable=consider-using-transaction
 
     return results
@@ -547,8 +552,10 @@ class SQLExecutor:
 
                 # Build StatementResult for each executed statement
                 # with both original and executed SQL
+                # Note: Don't use strict=True here as execution may be cancelled
+                # partway through, resulting in fewer results than statements
                 for orig_sql, (exec_sql, result_set, exec_time, rowcount) in zip(
-                    original_sqls, execution_results, strict=True
+                    original_sqls, execution_results, strict=False
                 ):
                     if result_set is not None:
                         # SELECT statement
@@ -690,7 +697,7 @@ class SQLExecutor:
         :param script: Parsed SQL script
         :returns: Set of disallowed functions found, or None if none found
         """
-        disallowed_config = app.config.get("DISALLOWED_SQL_FUNCTIONS", {})
+        disallowed_config = app.config.get("DISALLOWED_SQL_FUNCTIONS") or {}
         engine_name = self.database.db_engine_spec.engine
 
         # Get disallowed functions for this engine
@@ -704,7 +711,13 @@ class SQLExecutor:
             # Use the statement's AST to check for function calls
             statement_str = str(statement).upper()
             for func in engine_disallowed:
-                if func.upper() in statement_str:
+                # Use word boundary matching to avoid false positives
+                # (e.g., "pg_sleep" should not match "pg_sleep_until")
+                func_upper = func.upper()
+                # Check if function appears as a complete word/token
+                # by ensuring it's followed by ( or whitespace or end of string
+                pattern = rf"\b{re.escape(func_upper)}\s*\("
+                if re.search(pattern, statement_str):
                     found.add(func)
 
         return found if found else None
@@ -716,7 +729,7 @@ class SQLExecutor:
         :param script: Parsed SQL script
         :returns: Set of disallowed tables found, or None if none found
         """
-        disallowed_config = app.config.get("DISALLOWED_SQL_TABLES", {})
+        disallowed_config = app.config.get("DISALLOWED_SQL_TABLES") or {}
         engine_name = self.database.db_engine_spec.engine
 
         # Get disallowed tables for this engine

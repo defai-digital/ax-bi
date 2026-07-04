@@ -37,7 +37,7 @@ class AxServicesConfig:
     internal_token: str | None = None
 
     @classmethod
-    def from_mapping(cls, config: Mapping[str, Any]) -> "AxServicesConfig":
+    def from_mapping(cls, config: Mapping[str, Any]) -> AxServicesConfig:
         """Build sidecar config from a Flask app config mapping."""
 
         return cls(

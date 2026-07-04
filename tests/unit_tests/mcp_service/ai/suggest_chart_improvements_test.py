@@ -18,12 +18,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 import types
 from collections.abc import Callable
 from importlib import import_module
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 
 def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
@@ -83,3 +84,24 @@ def test_non_object_form_data_is_treated_as_absent_in_heuristic_path() -> None:
         suggestion.config_changes.get("show_trendline") is True
         for suggestion in result.suggestions
     )
+
+
+def test_llm_analysis_uses_asyncio_to_thread() -> None:
+    """_llm_analysis wraps sync complete_json in asyncio.to_thread."""
+    mock_provider = MagicMock()
+    mock_provider.complete_json.return_value = {
+        "current_analysis": "Good chart",
+        "suggestions": [{"reason": "Add color", "config_changes": {}}],
+    }
+
+    with patch.object(module, "get_llm_provider", return_value=mock_provider):
+        result = asyncio.run(
+            module._llm_analysis(
+                chart_config={"viz_type": "pie", "form_data": {}},
+                data_sample=None,
+                goal=None,
+            )
+        )
+    assert result is not None
+    assert result.current_analysis == "Good chart"
+    mock_provider.complete_json.assert_called_once()

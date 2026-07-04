@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { isIP } from 'net';
+
 export interface ServiceConfig {
   host: string;
   port: number;
@@ -38,11 +40,35 @@ export interface ServiceConfig {
     task: string;
   };
   supersetTimeoutMs: number;
-  supersetInternalToken?: string;
-  logLevel: string;
+  supersetInternalToken: string | undefined;
+  logLevel: LogLevel;
 }
 
-type Environment = Partial<Record<string, string>>;
+type EnvironmentVariable =
+  | 'AX_SERVICES_HOST'
+  | 'AX_SERVICES_PORT'
+  | 'AX_SUPERSET_BASE_URL'
+  | 'AX_SUPERSET_HEALTH_PATH'
+  | 'AX_SUPERSET_METADATA_PATH'
+  | 'AX_SUPERSET_PERMISSION_PATH'
+  | 'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH'
+  | 'AX_SUPERSET_CHART_LIST_PATH'
+  | 'AX_SUPERSET_DASHBOARD_LIST_PATH'
+  | 'AX_SUPERSET_DATABASE_LIST_PATH'
+  | 'AX_SUPERSET_DATASET_LIST_PATH'
+  | 'AX_SUPERSET_QUERY_LIST_PATH'
+  | 'AX_SUPERSET_REPORT_LIST_PATH'
+  | 'AX_SUPERSET_ROLE_LIST_PATH'
+  | 'AX_SUPERSET_RLS_LIST_PATH'
+  | 'AX_SUPERSET_SAVED_QUERY_LIST_PATH'
+  | 'AX_SUPERSET_TAG_LIST_PATH'
+  | 'AX_SUPERSET_TASK_LIST_PATH'
+  | 'AX_SUPERSET_TIMEOUT_MS'
+  | 'AX_SUPERSET_INTERNAL_TOKEN'
+  | 'AX_SERVICES_LOG_LEVEL';
+
+type Environment = Partial<Record<EnvironmentVariable, string | undefined>>;
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 5010;
@@ -63,108 +89,279 @@ const DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
 const DEFAULT_SUPERSET_TAG_LIST_PATH = '/api/v1/tag/';
 const DEFAULT_SUPERSET_TASK_LIST_PATH = '/api/v1/task/';
 const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
-const DEFAULT_LOG_LEVEL = 'info';
+const DEFAULT_LOG_LEVEL: LogLevel = 'info';
+const MAX_PORT = 65535;
+const MAX_SUPERSET_TIMEOUT_MS = 2_147_483_647;
+const HOSTNAME_PATTERN =
+  /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+const LOG_LEVELS = new Set<LogLevel>([
+  'debug',
+  'info',
+  'warn',
+  'error',
+  'silent',
+]);
+
+function normalizeHost(value: string | undefined): string {
+  const host = value?.trim();
+  if (host === '' || host === undefined) {
+    return DEFAULT_HOST;
+  }
+  if (/\s|[\u0000-\u001f\u007f]/.test(host)) {
+    throw new Error(
+      'AX_SERVICES_HOST must not contain whitespace or control characters',
+    );
+  }
+  if (!isListenHost(host)) {
+    throw new Error(
+      'AX_SERVICES_HOST must be a hostname or IP address without scheme, path, or port',
+    );
+  }
+
+  return host;
+}
+
+function isListenHost(value: string): boolean {
+  if (isIP(value) !== 0) {
+    return true;
+  }
+  return HOSTNAME_PATTERN.test(value);
+}
 
 function parsePositiveInteger(
   value: string | undefined,
   defaultValue: number,
   name: string,
 ): number {
-  if (value === undefined || value === '') {
+  const normalized = value?.trim();
+  if (normalized === undefined || normalized === '') {
     return defaultValue;
   }
 
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
+  if (!/^[1-9]\d*$/.test(normalized)) {
     throw new Error(`${name} must be a positive integer`);
   }
 
+  const parsed = Number(normalized);
   return parsed;
+}
+
+function parsePort(value: string | undefined): number {
+  const port = parsePositiveInteger(value, DEFAULT_PORT, 'AX_SERVICES_PORT');
+  if (port > MAX_PORT) {
+    throw new Error(`AX_SERVICES_PORT must be between 1 and ${MAX_PORT}`);
+  }
+
+  return port;
+}
+
+function parseSupersetTimeout(value: string | undefined): number {
+  const timeout = parsePositiveInteger(
+    value,
+    DEFAULT_SUPERSET_TIMEOUT_MS,
+    'AX_SUPERSET_TIMEOUT_MS',
+  );
+  if (timeout > MAX_SUPERSET_TIMEOUT_MS) {
+    throw new Error(
+      `AX_SUPERSET_TIMEOUT_MS must be between 1 and ${MAX_SUPERSET_TIMEOUT_MS}`,
+    );
+  }
+
+  return timeout;
 }
 
 function normalizeSupersetBaseUrl(value: string): string {
   try {
-    const url = new URL(value);
+    const trimmed = value.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      throw new Error('explicit HTTP(S) authority required');
+    }
+
+    validatePathSegments(rawUrlPath(trimmed), 'AX_SUPERSET_BASE_URL');
+    const url = new URL(trimmed);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      throw new Error('unsupported protocol');
+    }
+    if (url.hostname === '') {
+      throw new Error('host required');
+    }
+    if (url.username !== '' || url.password !== '') {
+      throw new Error('credentials not allowed');
+    }
+    if (url.search !== '' || url.hash !== '') {
+      throw new Error('query or fragment not allowed');
+    }
     return url.toString().replace(/\/$/, '');
   } catch (error) {
-    throw new Error('AX_SUPERSET_BASE_URL must be a valid URL', {
+    throw new Error('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL', {
       cause: error,
     });
   }
 }
 
-function normalizePath(value: string): string {
-  return value.startsWith('/') ? value : `/${value}`;
+function normalizePath(value: string, name: string): string {
+  const trimmed = value.trim();
+
+  if (trimmed === '') {
+    throw new Error(`${name} must not be empty`);
+  }
+  if (/[?#\\\s\u0000-\u001f\u007f]/.test(trimmed)) {
+    throw new Error(
+      `${name} must be a URL path without query, fragment, backslash, whitespace, or control characters`,
+    );
+  }
+  validatePathSegments(trimmed, name);
+
+  return `/${trimmed.replace(/^\/+/, '')}`;
+}
+
+function normalizeEnvPath(
+  env: Environment,
+  name: EnvironmentVariable,
+  defaultValue: string,
+): string {
+  return normalizePath(env[name] || defaultValue, name);
+}
+
+function rawUrlPath(value: string): string {
+  return value.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/?#]*/i, '');
+}
+
+function validatePathSegments(value: string, name: string): void {
+  for (const segment of value.split('/')) {
+    let decodedSegment: string;
+    try {
+      decodedSegment = decodeURIComponent(segment);
+    } catch (error) {
+      throw new Error(`${name} must contain valid percent-encoding`, {
+        cause: error,
+      });
+    }
+    if (decodedSegment === '.' || decodedSegment === '..') {
+      throw new Error(`${name} must not contain dot path segments`);
+    }
+    if (/[\\/]/.test(decodedSegment)) {
+      throw new Error(`${name} must not contain encoded path separators`);
+    }
+  }
+}
+
+function normalizeOptionalSecret(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (trimmed === '' || trimmed === undefined) {
+    return undefined;
+  }
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+    throw new Error(
+      'AX_SUPERSET_INTERNAL_TOKEN must not contain control characters',
+    );
+  }
+
+  return trimmed;
+}
+
+function normalizeLogLevel(value: string | undefined): LogLevel {
+  const logLevel = value?.trim().toLowerCase();
+  if (logLevel === '' || logLevel === undefined) {
+    return DEFAULT_LOG_LEVEL;
+  }
+  if (!LOG_LEVELS.has(logLevel as LogLevel)) {
+    throw new Error(
+      `AX_SERVICES_LOG_LEVEL must be one of: ${[...LOG_LEVELS].join(', ')}`,
+    );
+  }
+
+  return logLevel as LogLevel;
 }
 
 export function buildConfig(env: Environment = process.env): ServiceConfig {
   return {
-    host: env.AX_SERVICES_HOST || DEFAULT_HOST,
-    port: parsePositiveInteger(
-      env.AX_SERVICES_PORT,
-      DEFAULT_PORT,
-      'AX_SERVICES_PORT',
-    ),
+    host: normalizeHost(env.AX_SERVICES_HOST),
+    port: parsePort(env.AX_SERVICES_PORT),
     supersetBaseUrl: normalizeSupersetBaseUrl(
       env.AX_SUPERSET_BASE_URL || DEFAULT_SUPERSET_BASE_URL,
     ),
-    supersetHealthPath: normalizePath(
-      env.AX_SUPERSET_HEALTH_PATH || DEFAULT_SUPERSET_HEALTH_PATH,
+    supersetHealthPath: normalizeEnvPath(
+      env,
+      'AX_SUPERSET_HEALTH_PATH',
+      DEFAULT_SUPERSET_HEALTH_PATH,
     ),
-    supersetMetadataPath: normalizePath(
-      env.AX_SUPERSET_METADATA_PATH || DEFAULT_SUPERSET_METADATA_PATH,
+    supersetMetadataPath: normalizeEnvPath(
+      env,
+      'AX_SUPERSET_METADATA_PATH',
+      DEFAULT_SUPERSET_METADATA_PATH,
     ),
-    supersetPermissionPath: normalizePath(
-      env.AX_SUPERSET_PERMISSION_PATH || DEFAULT_SUPERSET_PERMISSION_PATH,
+    supersetPermissionPath: normalizeEnvPath(
+      env,
+      'AX_SUPERSET_PERMISSION_PATH',
+      DEFAULT_SUPERSET_PERMISSION_PATH,
     ),
     supersetAssetSearchPaths: {
-      annotationLayer: normalizePath(
-        env.AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH ||
-          DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
+      annotationLayer: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH',
+        DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
       ),
-      chart: normalizePath(
-        env.AX_SUPERSET_CHART_LIST_PATH || DEFAULT_SUPERSET_CHART_LIST_PATH,
+      chart: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_CHART_LIST_PATH',
+        DEFAULT_SUPERSET_CHART_LIST_PATH,
       ),
-      dashboard: normalizePath(
-        env.AX_SUPERSET_DASHBOARD_LIST_PATH ||
-          DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+      dashboard: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_DASHBOARD_LIST_PATH',
+        DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
       ),
-      database: normalizePath(
-        env.AX_SUPERSET_DATABASE_LIST_PATH ||
-          DEFAULT_SUPERSET_DATABASE_LIST_PATH,
+      database: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_DATABASE_LIST_PATH',
+        DEFAULT_SUPERSET_DATABASE_LIST_PATH,
       ),
-      dataset: normalizePath(
-        env.AX_SUPERSET_DATASET_LIST_PATH || DEFAULT_SUPERSET_DATASET_LIST_PATH,
+      dataset: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_DATASET_LIST_PATH',
+        DEFAULT_SUPERSET_DATASET_LIST_PATH,
       ),
-      query: normalizePath(
-        env.AX_SUPERSET_QUERY_LIST_PATH || DEFAULT_SUPERSET_QUERY_LIST_PATH,
+      query: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_QUERY_LIST_PATH',
+        DEFAULT_SUPERSET_QUERY_LIST_PATH,
       ),
-      report: normalizePath(
-        env.AX_SUPERSET_REPORT_LIST_PATH || DEFAULT_SUPERSET_REPORT_LIST_PATH,
+      report: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_REPORT_LIST_PATH',
+        DEFAULT_SUPERSET_REPORT_LIST_PATH,
       ),
-      role: normalizePath(
-        env.AX_SUPERSET_ROLE_LIST_PATH || DEFAULT_SUPERSET_ROLE_LIST_PATH,
+      role: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_ROLE_LIST_PATH',
+        DEFAULT_SUPERSET_ROLE_LIST_PATH,
       ),
-      rls: normalizePath(
-        env.AX_SUPERSET_RLS_LIST_PATH || DEFAULT_SUPERSET_RLS_LIST_PATH,
+      rls: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_RLS_LIST_PATH',
+        DEFAULT_SUPERSET_RLS_LIST_PATH,
       ),
-      savedQuery: normalizePath(
-        env.AX_SUPERSET_SAVED_QUERY_LIST_PATH ||
-          DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
+      savedQuery: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_SAVED_QUERY_LIST_PATH',
+        DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
       ),
-      tag: normalizePath(
-        env.AX_SUPERSET_TAG_LIST_PATH || DEFAULT_SUPERSET_TAG_LIST_PATH,
+      tag: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_TAG_LIST_PATH',
+        DEFAULT_SUPERSET_TAG_LIST_PATH,
       ),
-      task: normalizePath(
-        env.AX_SUPERSET_TASK_LIST_PATH || DEFAULT_SUPERSET_TASK_LIST_PATH,
+      task: normalizeEnvPath(
+        env,
+        'AX_SUPERSET_TASK_LIST_PATH',
+        DEFAULT_SUPERSET_TASK_LIST_PATH,
       ),
     },
-    supersetTimeoutMs: parsePositiveInteger(
-      env.AX_SUPERSET_TIMEOUT_MS,
-      DEFAULT_SUPERSET_TIMEOUT_MS,
-      'AX_SUPERSET_TIMEOUT_MS',
+    supersetTimeoutMs: parseSupersetTimeout(env.AX_SUPERSET_TIMEOUT_MS),
+    supersetInternalToken: normalizeOptionalSecret(
+      env.AX_SUPERSET_INTERNAL_TOKEN,
     ),
-    supersetInternalToken: env.AX_SUPERSET_INTERNAL_TOKEN || undefined,
-    logLevel: env.AX_SERVICES_LOG_LEVEL || DEFAULT_LOG_LEVEL,
+    logLevel: normalizeLogLevel(env.AX_SERVICES_LOG_LEVEL),
   };
 }

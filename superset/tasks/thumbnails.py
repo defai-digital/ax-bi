@@ -18,7 +18,7 @@
 """Utility functions used across Superset"""
 
 import logging
-from typing import cast, Optional
+from typing import cast
 
 from flask import current_app
 
@@ -36,11 +36,11 @@ logger = logging.getLogger(__name__)
 
 @celery_app.task(name="cache_chart_thumbnail", soft_time_limit=300)
 def cache_chart_thumbnail(
-    current_user: Optional[str],
+    current_user: str | None,
     chart_id: str,
     force: bool,
-    window_size: Optional[WindowSize] = None,
-    thumb_size: Optional[WindowSize] = None,
+    window_size: WindowSize | None = None,
+    thumb_size: WindowSize | None = None,
 ) -> None:
     # pylint: disable=import-outside-toplevel
     from superset.models.slice import Slice
@@ -73,11 +73,11 @@ def cache_chart_thumbnail(
 
 @celery_app.task(name="cache_dashboard_thumbnail", soft_time_limit=300)
 def cache_dashboard_thumbnail(
-    current_user: Optional[str],
+    current_user: str | None,
     dashboard_id: int,
     force: bool,
-    thumb_size: Optional[WindowSize] = None,
-    window_size: Optional[WindowSize] = None,
+    thumb_size: WindowSize | None = None,
+    window_size: WindowSize | None = None,
     cache_key: str | None = None,
 ) -> None:
     # pylint: disable=import-outside-toplevel
@@ -114,10 +114,10 @@ def cache_dashboard_screenshot(  # pylint: disable=too-many-arguments
     dashboard_id: int,
     dashboard_url: str,
     force: bool,
-    cache_key: Optional[str] = None,
-    guest_token: Optional[GuestToken] = None,
-    thumb_size: Optional[WindowSize] = None,
-    window_size: Optional[WindowSize] = None,
+    cache_key: str | None = None,
+    guest_token: GuestToken | None = None,
+    thumb_size: WindowSize | None = None,
+    window_size: WindowSize | None = None,
 ) -> None:
     # pylint: disable=import-outside-toplevel
     from superset.models.dashboard import Dashboard

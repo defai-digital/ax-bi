@@ -17,7 +17,7 @@
 import logging
 import textwrap
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app
 from flask_appbuilder.models.sqla import Model
@@ -67,7 +67,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[Dashboard] = None
+        self._model: Dashboard | None = None
 
     @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
     def run(self) -> Model:
@@ -107,10 +107,10 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
-        roles_ids: Optional[list[int]] = self._properties.get("roles")
-        slug: Optional[str] = self._properties.get("slug")
-        tag_ids: Optional[list[int]] = self._properties.get("tags")
+        owner_ids: list[int] | None = self._properties.get("owners")
+        roles_ids: list[int] | None = self._properties.get("roles")
+        slug: str | None = self._properties.get("slug")
+        tag_ids: list[int] | None = self._properties.get("tags")
 
         self._validate_json_fields(exceptions)
 

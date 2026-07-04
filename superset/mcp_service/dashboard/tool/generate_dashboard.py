@@ -22,7 +22,7 @@ This tool creates a new dashboard with specified charts and layout configuration
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from fastmcp import Context
 from flask import g
@@ -46,7 +46,7 @@ from superset.utils import json
 logger = logging.getLogger(__name__)
 
 
-def _create_dashboard_layout(chart_objects: List[Any]) -> Dict[str, Any]:
+def _create_dashboard_layout(chart_objects: list[Any]) -> dict[str, Any]:
     """
     Create a simple dashboard layout with charts arranged in a grid.
 
@@ -56,7 +56,7 @@ def _create_dashboard_layout(chart_objects: List[Any]) -> Dict[str, Any]:
     Args:
         chart_objects: List of Chart ORM objects (not IDs)
     """
-    layout: Dict[str, Any] = {}
+    layout: dict[str, Any] = {}
 
     # Grid configuration based on real Superset dashboard patterns
     # Use 2-chart rows with medium-sized charts (like existing dashboards)
@@ -143,7 +143,7 @@ _DEFAULT_DASHBOARD_TITLE = "Dashboard"
 _MAX_TITLE_LENGTH = 150
 
 
-def _generate_title_from_charts(chart_objects: List[Any]) -> str:
+def _generate_title_from_charts(chart_objects: list[Any]) -> str:
     """
     Build a descriptive dashboard title from the included chart names.
 

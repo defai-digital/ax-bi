@@ -23,9 +23,9 @@ superset/examples/ and loaded via the example loading system.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from io import BytesIO
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import yaml
 

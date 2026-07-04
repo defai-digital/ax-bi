@@ -145,7 +145,7 @@ class WebhookNotification(BaseNotification):
             if files:
                 data = {}
                 for key, value in payload.items():
-                    if isinstance(value, (dict, list)):
+                    if isinstance(value, dict | list):
                         data[key] = json.dumps(value)
                     else:
                         data[key] = value

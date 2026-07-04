@@ -18,8 +18,9 @@
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 from sqlalchemy import inspect
@@ -40,7 +41,7 @@ def _write_dataframe_to_table(
     table_name: str,
     database: Database,
     engine: Any,
-    schema: Optional[str],
+    schema: str | None,
 ) -> None:
     """Write a dataframe to an example table.
 
@@ -75,7 +76,7 @@ def serialize_numpy_arrays(obj: Any) -> Any:  # noqa: C901
     elif isinstance(obj, np.generic):
         # Handle numpy scalar types
         return obj.item()
-    elif isinstance(obj, (list, tuple)):
+    elif isinstance(obj, list | tuple):
         return [serialize_numpy_arrays(item) for item in obj]
     elif isinstance(obj, dict):
         return {key: serialize_numpy_arrays(val) for key, val in obj.items()}
@@ -85,13 +86,13 @@ def serialize_numpy_arrays(obj: Any) -> Any:  # noqa: C901
 def load_parquet_table(  # noqa: C901
     parquet_file: str,
     table_name: str,
-    database: Optional[Database] = None,
+    database: Database | None = None,
     only_metadata: bool = False,
     force: bool = False,
-    sample_rows: Optional[int] = None,
-    data_file: Optional[Any] = None,
-    schema: Optional[str] = None,
-    uuid: Optional[str] = None,
+    sample_rows: int | None = None,
+    data_file: Any | None = None,
+    schema: str | None = None,
+    uuid: str | None = None,
 ) -> SqlaTable:
     """Load a Parquet file into the example database.
 
@@ -159,12 +160,12 @@ def load_parquet_table(  # noqa: C901
                         else None
                     )
                     if sample_val is not None and isinstance(
-                        sample_val, (np.ndarray, list, dict)
+                        sample_val, np.ndarray | list | dict
                     ):
                         logger.info("Converting complex column %s to JSON string", col)
 
                         # Convert to JSON string for database storage
-                        def safe_serialize(x: Any, column_name: str) -> Optional[str]:
+                        def safe_serialize(x: Any, column_name: str) -> str | None:
                             if x is None:
                                 return None
                             try:
@@ -226,12 +227,12 @@ def load_parquet_table(  # noqa: C901
 
 def create_generic_loader(
     parquet_file: str,
-    table_name: Optional[str] = None,
-    description: Optional[str] = None,
-    sample_rows: Optional[int] = None,
-    data_file: Optional[Any] = None,
-    schema: Optional[str] = None,
-    uuid: Optional[str] = None,
+    table_name: str | None = None,
+    description: str | None = None,
+    sample_rows: int | None = None,
+    data_file: Any | None = None,
+    schema: str | None = None,
+    uuid: str | None = None,
 ) -> Callable[[Database, SqlaTable], None]:
     """Create a loader function for a specific Parquet file.
 

@@ -22,7 +22,7 @@ MCP tool: get_chart_type_schema
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import TypeAdapter
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -40,7 +40,7 @@ from superset.mcp_service.chart.schemas import (
 logger = logging.getLogger(__name__)
 
 # Module-level TypeAdapters — one per chart type, compiled once.
-_CHART_TYPE_ADAPTERS: Dict[str, TypeAdapter[Any]] = {
+_CHART_TYPE_ADAPTERS: dict[str, TypeAdapter[Any]] = {
     "xy": TypeAdapter(XYChartConfig),
     "table": TypeAdapter(TableChartConfig),
     "pie": TypeAdapter(PieChartConfig),
@@ -53,7 +53,7 @@ _CHART_TYPE_ADAPTERS: Dict[str, TypeAdapter[Any]] = {
 VALID_CHART_TYPES = sorted(_CHART_TYPE_ADAPTERS.keys())
 
 # Per-type examples — lightweight inline examples for each chart type.
-_CHART_EXAMPLES: Dict[str, list[Dict[str, Any]]] = {
+_CHART_EXAMPLES: dict[str, list[dict[str, Any]]] = {
     "xy": [
         {
             "chart_type": "xy",
@@ -131,7 +131,7 @@ _CHART_EXAMPLES: Dict[str, list[Dict[str, Any]]] = {
 def _get_chart_type_schema_impl(
     chart_type: str,
     include_examples: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Pure logic for chart type schema lookup — no auth, no decorators."""
     adapter = _CHART_TYPE_ADAPTERS.get(chart_type)
     if adapter is None:
@@ -159,7 +159,7 @@ def _get_chart_type_schema_impl(
         }
 
     schema = adapter.json_schema()
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "chart_type": chart_type,
         "schema": schema,
     }
@@ -181,7 +181,7 @@ def _get_chart_type_schema_impl(
 def get_chart_type_schema(
     chart_type: str,
     include_examples: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get the full JSON Schema and examples for a specific chart type.
 
     Use this tool to discover the exact fields, types, and constraints

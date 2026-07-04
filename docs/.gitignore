@@ -36,7 +36,7 @@ docs/databases/
 developer_docs/api/
 
 # Generated component documentation MDX files (regenerated at build time)
-# Source of truth is Storybook stories in superset-frontend/packages/superset-ui-core/src/components/
+# Source of truth is Storybook stories in ax-bi-frontend/packages/superset-ui-core/src/components/
 developer_docs/components/
 
 # Note: src/data/databases.json is COMMITTED (not ignored) to preserve feature diagnostics

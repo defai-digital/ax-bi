@@ -15,7 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 import contextlib
-from typing import Callable, ContextManager
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 
 import pytest
 from flask_appbuilder.security.sqla import models as ab_models
@@ -56,7 +57,9 @@ def async_example_db(app_context):
 
 
 @pytest.fixture
-def example_query(get_or_create_user: Callable[..., ContextManager[ab_models.User]]):
+def example_query(
+    get_or_create_user: Callable[..., AbstractContextManager[ab_models.User]],
+):
     with get_or_create_user("sqllab-test-user") as user:
         query = Query(
             client_id=shortid()[:10], database=get_example_database(), user=user

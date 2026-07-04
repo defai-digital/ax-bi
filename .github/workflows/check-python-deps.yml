@@ -69,7 +69,7 @@ jobs:
             echo
             echo "ERROR: The pinned dependencies are not up-to-date."
             echo "Please run './scripts/uv-pip-compile.sh' and commit the changes."
-            echo "More info: https://github.com/apache/superset/tree/master/requirements"
+            echo "More info: https://github.com/defai-digital/ax-bi/tree/main/requirements"
             exit 1
           else
             echo "Pinned dependencies are up-to-date."

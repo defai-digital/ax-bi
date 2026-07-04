@@ -382,7 +382,7 @@ function extractArgs(args, regexes) {
 /**
  * Remove the package segment from path.
  *
- * For example: `superset-frontend/foo/bar.ts` -> `foo/bar.ts`
+ * For example: `ax-bi-frontend/foo/bar.ts` -> `foo/bar.ts`
  *
  * @param {string[]} args
  * @param {string} package

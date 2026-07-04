@@ -16,7 +16,7 @@
 # under the License.
 
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from flask_appbuilder.security.sqla.models import User
@@ -51,21 +51,21 @@ def insert_report_schedule(
     name: str,
     crontab: str,
     owners: list[User],
-    timezone: Optional[str] = None,
-    sql: Optional[str] = None,
-    description: Optional[str] = None,
-    chart: Optional[Slice] = None,
-    dashboard: Optional[Dashboard] = None,
-    database: Optional[Database] = None,
-    validator_type: Optional[str] = None,
-    validator_config_json: Optional[str] = None,
-    log_retention: Optional[int] = None,
-    last_state: Optional[ReportState] = None,
-    grace_period: Optional[int] = None,
-    recipients: Optional[list[ReportRecipients]] = None,
-    report_format: Optional[ReportDataFormat] = None,
-    logs: Optional[list[ReportExecutionLog]] = None,
-    extra: Optional[dict[Any, Any]] = None,
+    timezone: str | None = None,
+    sql: str | None = None,
+    description: str | None = None,
+    chart: Slice | None = None,
+    dashboard: Dashboard | None = None,
+    database: Database | None = None,
+    validator_type: str | None = None,
+    validator_config_json: str | None = None,
+    log_retention: int | None = None,
+    last_state: ReportState | None = None,
+    grace_period: int | None = None,
+    recipients: list[ReportRecipients] | None = None,
+    report_format: ReportDataFormat | None = None,
+    logs: list[ReportExecutionLog] | None = None,
+    extra: dict[Any, Any] | None = None,
     force_screenshot: bool = False,
 ) -> ReportSchedule:
     owners = owners or []
@@ -102,23 +102,23 @@ def insert_report_schedule(
 
 
 def create_report_notification(
-    email_target: Optional[str] = None,
-    slack_channel: Optional[str] = None,
-    chart: Optional[Slice] = None,
-    dashboard: Optional[Dashboard] = None,
-    database: Optional[Database] = None,
-    sql: Optional[str] = None,
+    email_target: str | None = None,
+    slack_channel: str | None = None,
+    chart: Slice | None = None,
+    dashboard: Dashboard | None = None,
+    database: Database | None = None,
+    sql: str | None = None,
     report_type: ReportScheduleType = ReportScheduleType.REPORT,
-    validator_type: Optional[str] = None,
-    validator_config_json: Optional[str] = None,
-    grace_period: Optional[int] = None,
-    report_format: Optional[ReportDataFormat] = None,
-    name: Optional[str] = None,
-    extra: Optional[dict[str, Any]] = None,
+    validator_type: str | None = None,
+    validator_config_json: str | None = None,
+    grace_period: int | None = None,
+    report_format: ReportDataFormat | None = None,
+    name: str | None = None,
+    extra: dict[str, Any] | None = None,
     force_screenshot: bool = False,
-    owners: Optional[list[User]] = None,
-    ccTarget: Optional[str] = None,  # noqa: N803
-    bccTarget: Optional[str] = None,  # noqa: N803
+    owners: list[User] | None = None,
+    ccTarget: str | None = None,  # noqa: N803
+    bccTarget: str | None = None,  # noqa: N803
     use_slack_v2: bool = False,
 ) -> ReportSchedule:
     if not owners:
@@ -174,7 +174,7 @@ def create_report_notification(
     return report_schedule
 
 
-def cleanup_report_schedule(report_schedule: Optional[ReportSchedule] = None) -> None:
+def cleanup_report_schedule(report_schedule: ReportSchedule | None = None) -> None:
     if report_schedule:
         db.session.query(ReportExecutionLog).filter(
             ReportExecutionLog.report_schedule == report_schedule

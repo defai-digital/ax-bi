@@ -28,7 +28,7 @@ Two complementary mechanisms run per change:
 
 Every hook is defensive: a semantic-index failure is logged and swallowed so it
 can never break a dataset/column/metric write. When Celery is unavailable, the
-``superset semantic-index reindex-stale`` CLI command is the manual safety net.
+``ax-bi semantic-index reindex-stale`` CLI command is the manual safety net.
 """
 
 from __future__ import annotations

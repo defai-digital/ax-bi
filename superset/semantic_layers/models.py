@@ -163,7 +163,7 @@ class SemanticLayer(AuditMixinNullable, Model):
     def after_insert(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticLayer",
+        target: SemanticLayer,
     ) -> None:
         from superset import security_manager
 
@@ -173,7 +173,7 @@ class SemanticLayer(AuditMixinNullable, Model):
     def before_update(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticLayer",
+        target: SemanticLayer,
     ) -> None:
         from superset import security_manager
 
@@ -183,7 +183,7 @@ class SemanticLayer(AuditMixinNullable, Model):
     def after_delete(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticLayer",
+        target: SemanticLayer,
     ) -> None:
         from superset import security_manager
 
@@ -255,7 +255,7 @@ class SemanticView(AuditMixinNullable, Model):
     def after_insert(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticView",
+        target: SemanticView,
     ) -> None:
         from superset import security_manager
 
@@ -265,7 +265,7 @@ class SemanticView(AuditMixinNullable, Model):
     def before_update(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticView",
+        target: SemanticView,
     ) -> None:
         from superset import security_manager
 
@@ -275,7 +275,7 @@ class SemanticView(AuditMixinNullable, Model):
     def after_delete(
         mapper: Mapper,
         connection: Connection,
-        target: "SemanticView",
+        target: SemanticView,
     ) -> None:
         from superset import security_manager
 

@@ -38,7 +38,6 @@ from superset.mcp_service.utils.sanitization import (
 from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 list_annotation_layers_module = importlib.import_module(
     "superset.mcp_service.annotation_layer.tool.list_annotation_layers"

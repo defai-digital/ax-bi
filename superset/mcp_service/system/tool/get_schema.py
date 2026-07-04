@@ -24,7 +24,7 @@ Column metadata is extracted dynamically from SQLAlchemy models.
 """
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastmcp import Context
 from superset_core.mcp.decorators import tool, ToolAnnotations

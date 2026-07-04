@@ -18,9 +18,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from io import BytesIO
-from typing import Any, Callable
+from typing import Any
 from zipfile import is_zipfile, ZipFile
 
 from flask import request, Response, send_file

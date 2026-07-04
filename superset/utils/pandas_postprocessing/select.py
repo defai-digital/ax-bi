@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from pandas import DataFrame
 
@@ -24,9 +23,9 @@ from superset.utils.pandas_postprocessing.utils import validate_column_args
 @validate_column_args("columns", "drop", "rename")
 def select(
     df: DataFrame,
-    columns: Optional[list[str]] = None,
-    exclude: Optional[list[str]] = None,
-    rename: Optional[dict[str, str]] = None,
+    columns: list[str] | None = None,
+    exclude: list[str] | None = None,
+    rename: dict[str, str] | None = None,
 ) -> DataFrame:
     """
     Only select a subset of columns in the original dataset. Can be useful for

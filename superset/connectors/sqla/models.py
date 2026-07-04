@@ -21,10 +21,10 @@ import builtins
 import logging
 import re
 from collections import defaultdict
-from collections.abc import Hashable
+from collections.abc import Callable, Hashable
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any, Callable, cast, Optional, Union
+from typing import Any, cast
 
 import pandas as pd
 import sqlalchemy as sa
@@ -780,7 +780,7 @@ class BaseDatasource(
 
     def get_sqla_row_level_filters(
         self,
-        template_processor: Optional[BaseTemplateProcessor] = None,
+        template_processor: BaseTemplateProcessor | None = None,
         include_global_guest_rls: bool = True,
     ) -> list[TextClause]:
         """
@@ -797,7 +797,7 @@ class BaseDatasource(
         template_processor = template_processor or self.get_template_processor()
 
         all_filters: list[TextClause] = []
-        filter_groups: dict[Union[int, str], list[TextClause]] = defaultdict(list)
+        filter_groups: dict[int | str, list[TextClause]] = defaultdict(list)
         try:
             for filter_ in security_manager.get_rls_filters(self):
                 clause = self.text(
@@ -980,7 +980,7 @@ class TableColumn(AuditMixinNullable, ImportExportMixin, CertificationMixin, Mod
     datetime_format = Column(String(100))
     extra = Column(Text)
 
-    table: Mapped["SqlaTable"] = relationship(
+    table: Mapped[SqlaTable] = relationship(
         "SqlaTable",
         back_populates="columns",
     )
@@ -1221,7 +1221,7 @@ class SqlMetric(AuditMixinNullable, ImportExportMixin, CertificationMixin, Model
     expression = Column(utils.MediumText(), nullable=False)
     extra = Column(Text)
 
-    table: Mapped["SqlaTable"] = relationship(
+    table: Mapped[SqlaTable] = relationship(
         "SqlaTable",
         back_populates="metrics",
     )
@@ -1269,9 +1269,7 @@ class SqlMetric(AuditMixinNullable, ImportExportMixin, CertificationMixin, Model
     @property
     def perm(self) -> str | None:
         return (
-            ("{parent_name}.[{obj.metric_name}](id:{obj.id})").format(
-                obj=self, parent_name=self.table.full_name
-            )
+            f"{self.table.full_name}.[{self.metric_name}](id:{self.id})"
             if self.table
             else None
         )

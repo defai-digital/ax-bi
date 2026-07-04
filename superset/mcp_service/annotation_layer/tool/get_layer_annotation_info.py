@@ -57,8 +57,8 @@ async def get_layer_annotation_info(
     ```
     """
     await ctx.info(
-        "Retrieving annotation: layer_id=%s, annotation_id=%s"
-        % (request.layer_id, request.annotation_id)
+        f"Retrieving annotation: layer_id={request.layer_id}, "
+        f"annotation_id={request.annotation_id}"
     )
 
     try:
@@ -69,7 +69,7 @@ async def get_layer_annotation_info(
             layer = AnnotationLayerDAO.find_by_id(request.layer_id)
 
         if layer is None:
-            await ctx.warning("Annotation layer not found: id=%s" % (request.layer_id,))
+            await ctx.warning(f"Annotation layer not found: id={request.layer_id}")
             return AnnotationLayerError.create(
                 error=f"Annotation layer with id '{request.layer_id}' not found",
                 error_type="not_found",
@@ -83,7 +83,7 @@ async def get_layer_annotation_info(
 
         if annotation is None:
             await ctx.warning(
-                "Annotation not found: annotation_id=%s" % (request.annotation_id,)
+                f"Annotation not found: annotation_id={request.annotation_id}"
             )
             return AnnotationLayerError.create(
                 error=f"Annotation with id '{request.annotation_id}' not found",
@@ -93,8 +93,8 @@ async def get_layer_annotation_info(
         # Verify the annotation belongs to the requested layer
         if getattr(annotation, "layer_id", None) != request.layer_id:
             await ctx.warning(
-                "Annotation %s does not belong to layer %s"
-                % (request.annotation_id, request.layer_id)
+                f"Annotation {request.annotation_id} does not belong to "
+                f"layer {request.layer_id}"
             )
             return AnnotationLayerError.create(
                 error=(
@@ -106,8 +106,8 @@ async def get_layer_annotation_info(
 
         result = serialize_annotation(annotation)
         await ctx.info(
-            "Annotation retrieved: id=%s, short_descr=%s"
-            % (result.id if result else None, result.short_descr if result else None)
+            f"Annotation retrieved: id={result.id if result else None}, "
+            f"short_descr={result.short_descr if result else None}"
         )
         return result or AnnotationLayerError.create(
             error="Failed to serialize annotation",
@@ -116,9 +116,9 @@ async def get_layer_annotation_info(
 
     except Exception as e:
         await ctx.error(
-            "Annotation lookup failed: layer_id=%s, annotation_id=%s, "
-            "error=%s, error_type=%s"
-            % (request.layer_id, request.annotation_id, str(e), type(e).__name__)
+            f"Annotation lookup failed: layer_id={request.layer_id}, "
+            f"annotation_id={request.annotation_id}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return AnnotationLayerError.create(
             error=f"Failed to get annotation info: {str(e)}",

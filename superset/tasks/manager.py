@@ -21,7 +21,8 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
 
 import redis
@@ -231,7 +232,7 @@ class TaskManager:
         timeout: float | None = None,
         poll_interval: float = 1.0,
         app: Any = None,
-    ) -> "Task":
+    ) -> Task:
         """
         Block until task reaches terminal state.
 
@@ -257,7 +258,7 @@ class TaskManager:
             remaining = timeout - elapsed
             return remaining if remaining > 0 else 0
 
-        def get_task() -> "Task | None":
+        def get_task() -> Task | None:
             if app:
                 with app.app_context():
                     return TaskDAO.find_one_or_none(uuid=task_uuid)
@@ -303,9 +304,9 @@ class TaskManager:
         pubsub: redis.client.PubSub,
         timeout: float | None,
         poll_interval: float,
-        get_task: Callable[[], "Task | None"],
+        get_task: Callable[[], Task | None],
         time_remaining: Callable[[], float | None],
-    ) -> "Task | None":
+    ) -> Task | None:
         """
         Wait for task completion using Redis pub/sub.
 
@@ -362,9 +363,9 @@ class TaskManager:
         cls,
         task_uuid: UUID,
         poll_interval: float,
-        get_task: Callable[[], "Task | None"],
+        get_task: Callable[[], Task | None],
         time_remaining: Callable[[], float | None],
-    ) -> "Task":
+    ) -> Task:
         """
         Wait for task completion using database polling.
 
@@ -684,7 +685,7 @@ class TaskManager:
         timeout: int | None,
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
-    ) -> "Task":
+    ) -> Task:
         """
         Create task entry and schedule for async execution.
 

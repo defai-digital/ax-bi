@@ -22,7 +22,7 @@ Validates that referenced columns exist in the dataset schema.
 
 import difflib
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from superset.mcp_service.chart.schemas import (
     BigNumberChartConfig,
@@ -61,7 +61,7 @@ class DatasetValidator:
         config: Any,
         dataset_id: int | str,
         dataset_context: DatasetContext | None = None,
-    ) -> Tuple[bool, ChartGenerationError | None]:
+    ) -> tuple[bool, ChartGenerationError | None]:
         """
         Validate chart configuration against dataset schema.
 
@@ -116,7 +116,7 @@ class DatasetValidator:
 
     @staticmethod
     def _validate_columns_exist(  # noqa: C901
-        column_refs: List[ColumnRef], dataset_context: DatasetContext
+        column_refs: list[ColumnRef], dataset_context: DatasetContext
     ) -> ChartGenerationError | None:
         """Validate that non-saved-metric column refs exist in the dataset.
 
@@ -134,8 +134,8 @@ class DatasetValidator:
             metric["name"].lower() for metric in dataset_context.available_metrics
         }
 
-        invalid_columns: List[ColumnRef] = []
-        saved_metric_typo: List[ColumnRef] = []
+        invalid_columns: list[ColumnRef] = []
+        saved_metric_typo: list[ColumnRef] = []
         for col_ref in column_refs:
             if col_ref.saved_metric:
                 continue
@@ -178,7 +178,7 @@ class DatasetValidator:
 
     @staticmethod
     def _build_saved_metric_hint_error(
-        refs: List[ColumnRef],
+        refs: list[ColumnRef],
     ) -> ChartGenerationError:
         """Error response when a non-saved-metric ref names a saved metric."""
         names = [r.name for r in refs]
@@ -269,7 +269,7 @@ class DatasetValidator:
             return None
 
     @staticmethod
-    def _extract_column_references(config: Any) -> List[ColumnRef]:  # noqa: C901
+    def _extract_column_references(config: Any) -> list[ColumnRef]:  # noqa: C901
         """Extract all column references from a chart configuration.
 
         Covers every supported ``ChartConfig`` variant so fast-path tools
@@ -278,7 +278,7 @@ class DatasetValidator:
         mixed timeseries / handlebars / big number charts — not just XY and
         table.
         """
-        refs: List[ColumnRef] = []
+        refs: list[ColumnRef] = []
 
         if isinstance(config, TableChartConfig):
             refs.extend(config.columns)
@@ -376,7 +376,7 @@ class DatasetValidator:
 
     @staticmethod
     def _normalize_xy_config(
-        config_dict: Dict[str, Any], dataset_context: DatasetContext
+        config_dict: dict[str, Any], dataset_context: DatasetContext
     ) -> None:
         """Normalize column names in an XY chart config dict in place."""
         # Normalize x-axis column
@@ -405,7 +405,7 @@ class DatasetValidator:
 
     @staticmethod
     def _normalize_table_config(
-        config_dict: Dict[str, Any], dataset_context: DatasetContext
+        config_dict: dict[str, Any], dataset_context: DatasetContext
     ) -> None:
         """Normalize column names in a table chart config dict in place."""
         if "columns" in config_dict and config_dict["columns"]:
@@ -419,7 +419,7 @@ class DatasetValidator:
 
     @staticmethod
     def _normalize_filters(
-        config_dict: Dict[str, Any], dataset_context: DatasetContext
+        config_dict: dict[str, Any], dataset_context: DatasetContext
     ) -> None:
         """Normalize filter column names in a config dict in place."""
         if "filters" in config_dict and config_dict["filters"]:
@@ -479,7 +479,7 @@ class DatasetValidator:
     @staticmethod
     def _get_column_suggestions(
         column_name: str, dataset_context: DatasetContext, max_suggestions: int = 3
-    ) -> List[ColumnSuggestion]:
+    ) -> list[ColumnSuggestion]:
         """Get column name suggestions using fuzzy matching."""
         all_names = []
 
@@ -521,8 +521,8 @@ class DatasetValidator:
 
     @staticmethod
     def _build_column_error(
-        invalid_columns: List[ColumnRef],
-        suggestions_map: Dict[str, List[ColumnSuggestion]],
+        invalid_columns: list[ColumnRef],
+        suggestions_map: dict[str, list[ColumnSuggestion]],
         dataset_context: DatasetContext,
     ) -> ChartGenerationError:
         """Build error for invalid columns."""
@@ -539,30 +539,29 @@ class DatasetValidator:
                 return ChartErrorBuilder.column_not_found_error(
                     col_name, [s.name for s in suggestions]
                 )
-            else:
-                return ChartErrorBuilder.column_not_found_error(col_name)
-        else:
-            # Multiple invalid columns
-            invalid_names: list[str] = [col.name for col in invalid_columns if col.name]
-            return ChartErrorBuilder.build_error(
-                error_type="multiple_invalid_columns",
-                template_key="column_not_found",
-                template_vars={
-                    "column": ", ".join(invalid_names[:3])
-                    + ("..." if len(invalid_names) > 3 else ""),
-                    "suggestions": "Use get_dataset_info to see all available columns",
-                },
-                custom_suggestions=[
-                    f"Invalid columns: {', '.join(invalid_names)}",
-                    "Check spelling and case sensitivity",
-                    "Use get_dataset_info to list available columns",
-                ],
-                error_code="MULTIPLE_INVALID_COLUMNS",
-            )
+            return ChartErrorBuilder.column_not_found_error(col_name)
+
+        # Multiple invalid columns
+        invalid_names: list[str] = [col.name for col in invalid_columns if col.name]
+        return ChartErrorBuilder.build_error(
+            error_type="multiple_invalid_columns",
+            template_key="column_not_found",
+            template_vars={
+                "column": ", ".join(invalid_names[:3])
+                + ("..." if len(invalid_names) > 3 else ""),
+                "suggestions": "Use get_dataset_info to see all available columns",
+            },
+            custom_suggestions=[
+                f"Invalid columns: {', '.join(invalid_names)}",
+                "Check spelling and case sensitivity",
+                "Use get_dataset_info to list available columns",
+            ],
+            error_code="MULTIPLE_INVALID_COLUMNS",
+        )
 
     @staticmethod
     def _validate_saved_metrics(
-        column_refs: List[ColumnRef], dataset_context: DatasetContext
+        column_refs: list[ColumnRef], dataset_context: DatasetContext
     ) -> ChartGenerationError | None:
         """Validate that saved_metric refs exist in dataset metrics.
 
@@ -608,8 +607,8 @@ class DatasetValidator:
 
     @staticmethod
     def _validate_aggregations(
-        column_refs: List[ColumnRef], dataset_context: DatasetContext
-    ) -> List[ChartGenerationError]:
+        column_refs: list[ColumnRef], dataset_context: DatasetContext
+    ) -> list[ChartGenerationError]:
         """Validate that aggregations are appropriate for column types."""
         errors = []
 

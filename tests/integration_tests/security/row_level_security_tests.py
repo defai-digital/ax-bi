@@ -16,7 +16,7 @@
 # under the License.
 # isort:skip_file
 import re
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -763,7 +763,7 @@ class GuestTokenRowLevelSecurityTests(SupersetTestCase):
             "clause": "name = 'Alice'",
         }
 
-    def guest_user_with_rls(self, rules: Optional[list[Any]] = None) -> GuestUser:
+    def guest_user_with_rls(self, rules: list[Any] | None = None) -> GuestUser:
         if rules is None:
             rules = [self.default_rls_rule()]
         return security_manager.get_guest_user_from_token(

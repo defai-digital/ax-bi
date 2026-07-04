@@ -20,7 +20,8 @@ from __future__ import annotations
 
 import inspect
 import logging
-from typing import Any, Callable, cast, Generic, ParamSpec, TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import Any, cast, Generic, ParamSpec, TYPE_CHECKING, TypeVar
 
 from superset_core.tasks.types import TaskOptions, TaskScope, TaskStatus
 
@@ -48,7 +49,7 @@ def task(
     name: str | None = None,
     scope: TaskScope = TaskScope.PRIVATE,
     timeout: int | None = None,
-) -> Callable[[Callable[P, R]], "TaskWrapper[P]"] | "TaskWrapper[P]":
+) -> Callable[[Callable[P, R]], TaskWrapper[P]] | TaskWrapper[P]:
     """
     Decorator to register a task with default scope.
 
@@ -110,7 +111,7 @@ def task(
         is discarded; only side effects and context updates matter.
     """
 
-    def decorator(f: Callable[P, R]) -> "TaskWrapper[P]":
+    def decorator(f: Callable[P, R]) -> TaskWrapper[P]:
         # Use function name if no name provided
         base_task_name = name if name is not None else f.__name__
 
@@ -253,7 +254,7 @@ class TaskWrapper(Generic[P]):
                 "defeating the purpose of shared tasks."
             )
 
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> "Task":
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Task:
         """
         Call the function synchronously.
 
@@ -317,7 +318,7 @@ class TaskWrapper(Generic[P]):
         # New task - execute inline
         return self._execute_inline(task, options, args, kwargs)
 
-    def _wait_for_existing_task(self, task: "Task", timeout: int | None) -> "Task":
+    def _wait_for_existing_task(self, task: Task, timeout: int | None) -> Task:
         """
         Wait for an existing task to complete.
 
@@ -383,11 +384,11 @@ class TaskWrapper(Generic[P]):
 
     def _execute_inline(
         self,
-        task: "Task",
+        task: Task,
         options: TaskOptions,
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
-    ) -> "Task":
+    ) -> Task:
         """
         Execute task function inline (synchronously).
 
@@ -556,7 +557,7 @@ class TaskWrapper(Generic[P]):
             if final_task and final_task.status in TERMINAL_STATES:
                 TaskManager.publish_completion(task_uuid, final_task.status)
 
-    def schedule(self, *args: P.args, **kwargs: P.kwargs) -> "Task":
+    def schedule(self, *args: P.args, **kwargs: P.kwargs) -> Task:
         """
         Schedule this task for asynchronous execution.
 

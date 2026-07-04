@@ -384,7 +384,7 @@ class DatabendConnectEngineSpec(BasicParametersMixin, DatabendEngineSpec):
             ]
         port = parameters.get("port")
         if port is not None:
-            if isinstance(port, (int, str)):
+            if isinstance(port, int | str):
                 try:
                     port = int(port)
                     if port <= 0 or port >= 65535:

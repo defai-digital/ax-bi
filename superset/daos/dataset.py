@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import dateutil.parser
 from sqlalchemy import or_, select
@@ -446,7 +446,7 @@ class DatasetDAO(BaseDAO[SqlaTable]):
         )
 
     @classmethod
-    def get_filterable_columns_and_operators(cls) -> Dict[str, List[str]]:
+    def get_filterable_columns_and_operators(cls) -> dict[str, list[str]]:
         filterable = super().get_filterable_columns_and_operators()
         # Add custom fields
         filterable.update(DATASET_CUSTOM_FIELDS)

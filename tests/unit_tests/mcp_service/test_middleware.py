@@ -101,6 +101,7 @@ class TestStructuredContentStripperMiddleware:
     async def test_converts_structured_only_result_to_json_text(self) -> None:
         """Structured-only tool results must not become empty responses."""
         from fastmcp.tools.tool import ToolResult
+
         from superset.utils.json import loads as json_loads
 
         middleware = StructuredContentStripperMiddleware()
@@ -128,8 +129,10 @@ class TestStructuredContentStripperMiddleware:
         assert payload["chart_url"] == "http://127.0.0.1:8080/explore/?slice_id=12"
 
     @pytest.mark.asyncio
-    async def test_preserves_existing_text_content_when_stripping_structured(self) -> None:
-        """Existing text content should remain untouched when structured data is stripped."""
+    async def test_preserves_existing_text_content_when_stripping_structured(
+        self,
+    ) -> None:
+        """Existing text content survives structured-data stripping."""
         import mcp.types as mt
         from fastmcp.tools.tool import ToolResult
 
