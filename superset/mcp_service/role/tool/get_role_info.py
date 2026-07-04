@@ -57,7 +57,7 @@ async def get_role_info(
     }
     ```
     """
-    await ctx.info("Retrieving role information: identifier=%s" % (request.identifier,))
+    await ctx.info(f"Retrieving role information: identifier={request.identifier}")
 
     try:
         from superset.daos.role import RoleDAO
@@ -78,20 +78,21 @@ async def get_role_info(
 
         if isinstance(result, RoleInfo):
             await ctx.info(
-                "Role information retrieved successfully: role_id=%s, name=%s"
-                % (result.id, result.name)
+                "Role information retrieved successfully: "
+                f"role_id={result.id}, name={result.name}"
             )
         else:
             await ctx.warning(
-                "Role retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Role retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Role information retrieval failed: identifier=%s, error=%s, error_type=%s"
-            % (request.identifier, str(e), type(e).__name__)
+            "Role information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise
