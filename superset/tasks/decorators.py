@@ -155,9 +155,8 @@ def task(
     if func is None:
         # Called with parentheses: @task() or @task(name="foo", scope=TaskScope.SHARED)
         return decorator
-    else:
-        # Called without parentheses: @task
-        return decorator(func)
+    # Called without parentheses: @task
+    return decorator(func)
 
 
 class TaskWrapper(Generic[P]):
