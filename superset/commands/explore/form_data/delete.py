@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from abc import ABC
-from typing import Optional
 
 from flask import session
 from sqlalchemy.exc import SQLAlchemyError
@@ -46,7 +45,7 @@ class DeleteFormDataCommand(BaseCommand, ABC):
             state = cache_manager.explore_form_data_cache.get(key)
             if is_temporary_explore_state(state):
                 datasource_id: int = state["datasource_id"]
-                chart_id: Optional[int] = state["chart_id"]
+                chart_id: int | None = state["chart_id"]
                 datasource_type = DatasourceType(state["datasource_type"])
                 check_access(datasource_id, chart_id, datasource_type)
                 if state["owner"] != get_user_id():

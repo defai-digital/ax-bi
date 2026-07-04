@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, Union
+from typing import Any
 
 from flask_babel import gettext as _
 from pandas import DataFrame
@@ -32,11 +32,11 @@ def rolling(  # pylint: disable=too-many-arguments
     df: DataFrame,
     rolling_type: str,
     columns: dict[str, str],
-    window: Optional[int] = None,
-    rolling_type_options: Optional[dict[str, Any]] = None,
+    window: int | None = None,
+    rolling_type_options: dict[str, Any] | None = None,
     center: bool = False,
-    win_type: Optional[str] = None,
-    min_periods: Optional[int] = None,
+    win_type: str | None = None,
+    min_periods: int | None = None,
 ) -> DataFrame:
     """
     Apply a rolling window on the dataset. See the Pandas docs for further details:
@@ -62,7 +62,7 @@ def rolling(  # pylint: disable=too-many-arguments
     rolling_type_options = rolling_type_options or {}
     df_rolling = df.loc[:, columns.keys()]
 
-    kwargs: dict[str, Union[str, int]] = {}
+    kwargs: dict[str, str | int] = {}
     if window is None:
         raise InvalidPostProcessingError(_("Undefined window for rolling operation"))
     if window == 0:

@@ -24,7 +24,7 @@ guest rules are not duplicated across inner and outer queries.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
 from flask import Flask

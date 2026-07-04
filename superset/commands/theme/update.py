@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from superset.commands.base import UpdateMixin
 from superset.commands.theme.exceptions import (
@@ -34,7 +34,7 @@ class UpdateThemeCommand(UpdateMixin):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[Theme] = None
+        self._model: Theme | None = None
 
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:

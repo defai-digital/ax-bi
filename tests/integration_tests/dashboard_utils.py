@@ -16,8 +16,6 @@
 # under the License.
 """Utils to provide dashboards for tests"""
 
-from typing import Optional
-
 from pandas import DataFrame  # noqa: F401
 
 from superset import db
@@ -32,7 +30,7 @@ from superset.utils.core import DatasourceType, get_example_default_schema
 def get_table(
     table_name: str,
     database: Database,
-    schema: Optional[str] = None,
+    schema: str | None = None,
 ):
     schema = schema or get_example_default_schema()
     return (
@@ -46,8 +44,8 @@ def create_table_metadata(
     table_name: str,
     database: Database,
     table_description: str = "",
-    fetch_values_predicate: Optional[str] = None,
-    schema: Optional[str] = None,
+    fetch_values_predicate: str | None = None,
+    schema: str | None = None,
 ) -> SqlaTable:
     schema = schema or get_example_default_schema()
 

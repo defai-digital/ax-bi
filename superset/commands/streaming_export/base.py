@@ -23,10 +23,11 @@ import io
 import logging
 import time
 from abc import abstractmethod
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from decimal import Decimal
 from numbers import Real
-from typing import Any, Callable, Generator
+from typing import Any
 
 from flask import current_app as app, g, has_app_context
 from sqlalchemy import text
@@ -133,7 +134,7 @@ class BaseStreamingCSVExportCommand(BaseCommand):
             # as numbers in CSV output.
             if isinstance(value, bool):
                 formatted.append(value)
-            elif isinstance(value, (float, Decimal, Real)):
+            elif isinstance(value, float | Decimal | Real):
                 # Format numeric values with custom decimal separator
                 formatted.append(str(value).replace(".", decimal_separator))
             else:

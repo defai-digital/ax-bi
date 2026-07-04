@@ -30,7 +30,7 @@ This is a list of statements that describe how we do backend development in Supe
 - Files are generally organized by feature or object type. Within each domain, we can have api controllers, models, schemas, commands, and data access objects (DAO).
   - See: [Proposal for Improving Superset's Python Code Organization](https://github.com/apache/superset/issues/9077)
 - API controllers use Marshmallow Schemas to serialize/deserialize data.
-- Authentication and authorization are controlled by the [security manager](https://github.com/apache/superset/blob/master/superset/security/manager).
+- Authentication and authorization are controlled by the [security manager](https://github.com/defai-digital/ax-bi/blob/main/superset/security/manager).
 - We use Pytest for unit and integration tests. These live in the `tests` directory.
 - We add tests for every new piece of functionality added to the backend.
 - We use pytest fixtures to share setup between tests.

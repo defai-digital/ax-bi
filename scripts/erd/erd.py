@@ -24,7 +24,7 @@ import json
 import os
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 import click
 import jinja2
@@ -188,7 +188,7 @@ def generate_erd(file_path: str) -> None:
     type=click.Path(dir_okay=False, writable=True),
     help="File to write the ERD to",
 )
-def erd(output: Optional[str] = None) -> None:
+def erd(output: str | None = None) -> None:
     """
     Generates a PlantUML ERD of the models/database
 

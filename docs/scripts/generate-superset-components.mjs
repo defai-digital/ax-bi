@@ -62,7 +62,7 @@ const OUTPUT_DIR = path.join(DOCS_DIR, 'developer_docs/components');
 const JSON_OUTPUT_PATH = path.join(DOCS_DIR, 'static/data/components.json');
 const TYPES_OUTPUT_DIR = path.join(DOCS_DIR, 'src/types/apache-superset-core');
 const TYPES_OUTPUT_PATH = path.join(TYPES_OUTPUT_DIR, 'index.d.ts');
-const FRONTEND_DIR = path.join(ROOT_DIR, 'superset-frontend');
+const FRONTEND_DIR = path.join(ROOT_DIR, 'ax-bi-frontend');
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   console.log(`Usage: node scripts/generate-superset-components.mjs
@@ -1246,7 +1246,7 @@ ${useDefaultImport ? `import ${componentName} from '${docImportPath}';` : `impor
 
 :::tip[Improve this page]
 This documentation is auto-generated from the component's Storybook story.
-Help improve it by [editing the story file](https://github.com/apache/superset/edit/master/${relativePath}).
+Help improve it by [editing the story file](https://github.com/defai-digital/ax-bi/edit/main/${relativePath}).
 :::
 `;
 }
@@ -1389,7 +1389,7 @@ This component library is actively being documented. See the [Components TODO](.
 
 ---
 
-*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/apache/superset/blob/master/superset-frontend/packages/superset-ui-core/src/components/DesignSystem.stories.tsx) story.*
+*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/superset-ui-core/src/components/DesignSystem.stories.tsx) story.*
 `;
 }
 

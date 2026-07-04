@@ -19,7 +19,7 @@ import builtins
 from datetime import datetime
 from decimal import Decimal
 from types import ModuleType
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -75,7 +75,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -97,7 +97,7 @@ def test_get_column_spec(
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813

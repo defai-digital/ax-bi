@@ -21,7 +21,7 @@ Provides functionality to filter sensitive data based on user permissions.
 """
 
 import logging
-from typing import Any, List, Optional, Set
+from typing import Any
 
 from flask_appbuilder.security.sqla.models import User
 from pydantic import BaseModel
@@ -62,7 +62,7 @@ SENSITIVE_FIELD_PERMISSIONS = {
 }
 
 
-def get_current_user() -> Optional[User]:
+def get_current_user() -> User | None:
     """Get the current authenticated user."""
     try:
         from flask import g
@@ -92,7 +92,7 @@ def user_can_access_dataset_permission(permission: str) -> bool:
 
 
 def user_has_permission(
-    user: Optional[User], permission: str, resource: Optional[str] = None
+    user: User | None, permission: str, resource: str | None = None
 ) -> bool:
     """
     Check if user has a specific permission.
@@ -127,13 +127,9 @@ def user_has_permission(
 
         if resource:
             return security_manager.has_access(permission, resource, user)
-        else:
-            # Check if user has permission on any resource
-            for pvm in user.get_permissions():
-                if pvm.permission.name == permission:
-                    return True
 
-        return False
+        # Check if user has permission on any resource
+        return any(pvm.permission.name == permission for pvm in user.get_permissions())
     except Exception as e:
         logger.warning(
             "Error checking permission %s for user %s: %s", permission, user, e
@@ -143,9 +139,9 @@ def user_has_permission(
 
 def get_allowed_fields(
     object_type: str,
-    user: Optional[User] = None,
-    requested_fields: Optional[List[str]] = None,
-) -> Set[str]:
+    user: User | None = None,
+    requested_fields: list[str] | None = None,
+) -> set[str]:
     """
     Get the set of fields that the user is allowed to access for a given object type.
 
@@ -168,9 +164,8 @@ def get_allowed_fields(
     if not user:
         if requested_fields:
             return set(requested_fields) - sensitive_fields
-        else:
-            # Return empty set - caller should use default safe fields
-            return set()
+        # Return empty set - caller should use default safe fields
+        return set()
 
     # Check permissions for sensitive fields
     allowed_fields = set()
@@ -204,8 +199,8 @@ def get_allowed_fields(
 def filter_sensitive_data(
     data: Any,
     object_type: str,
-    user: Optional[User] = None,
-    allowed_fields: Optional[Set[str]] = None,
+    user: User | None = None,
+    allowed_fields: set[str] | None = None,
 ) -> Any:
     """
     Filter sensitive data from an object based on user permissions.
@@ -235,11 +230,8 @@ def filter_sensitive_data(
     if isinstance(data, BaseModel):
         # Convert Pydantic model to dict for filtering
         data_dict = data.model_dump()
-        filtered_dict = filter_sensitive_data(
-            data_dict, object_type, user, allowed_fields
-        )
         # Return as dict since we can't easily reconstruct the Pydantic model
-        return filtered_dict
+        return filter_sensitive_data(data_dict, object_type, user, allowed_fields)
 
     if not isinstance(data, dict):
         # Not a dict-like object, return as-is
@@ -267,8 +259,8 @@ def filter_sensitive_data(
 
 
 def apply_field_permissions_to_columns(
-    columns: List[str], object_type: str, user: Optional[User] = None
-) -> List[str]:
+    columns: list[str], object_type: str, user: User | None = None
+) -> list[str]:
     """
     Filter a list of column names based on field-level permissions.
 
@@ -293,9 +285,7 @@ class PermissionAwareSerializer:
         self.object_type = object_type
         self.base_serializer = base_serializer
 
-    def serialize(
-        self, obj: Any, columns: List[str], user: Optional[User] = None
-    ) -> Any:
+    def serialize(self, obj: Any, columns: list[str], user: User | None = None) -> Any:
         """
         Serialize object with field-level permissions applied.
 
@@ -320,16 +310,16 @@ class PermissionAwareSerializer:
 
 
 # Convenience functions for common object types
-def filter_dataset_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_dataset_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from dataset objects."""
     return filter_sensitive_data(data, "dataset", user)
 
 
-def filter_chart_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_chart_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from chart objects."""
     return filter_sensitive_data(data, "chart", user)
 
 
-def filter_dashboard_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_dashboard_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from dashboard objects."""
     return filter_sensitive_data(data, "dashboard", user)

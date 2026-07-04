@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlparse
 
 from flask import current_app
@@ -52,7 +52,7 @@ def _is_valid_algorithm(algorithm: Any) -> bool:
         return False
 
 
-def is_valid_theme(theme: Dict[str, Any]) -> bool:
+def is_valid_theme(theme: dict[str, Any]) -> bool:
     """Validate theme dictionary structure and types.
 
     A valid theme can be empty or must contain properly typed fields:
@@ -94,7 +94,7 @@ def is_valid_theme(theme: Dict[str, Any]) -> bool:
         return False
 
 
-def sanitize_theme_tokens(theme_config: Dict[str, Any]) -> Dict[str, Any]:
+def sanitize_theme_tokens(theme_config: dict[str, Any]) -> dict[str, Any]:
     """Sanitize theme configuration, focusing on potentially dangerous content.
 
     Sanitizes both brandSpinnerSvg content and brandSpinnerUrl values to prevent XSS.
@@ -103,7 +103,7 @@ def sanitize_theme_tokens(theme_config: Dict[str, Any]) -> Dict[str, Any]:
         theme_config: Theme configuration dictionary
 
     Returns:
-        Dict[str, Any]: Sanitized theme configuration
+        dict[str, Any]: Sanitized theme configuration
     """
     if not isinstance(theme_config, dict):
         return theme_config

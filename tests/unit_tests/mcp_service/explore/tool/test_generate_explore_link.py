@@ -46,7 +46,6 @@ generate_explore_link_module = importlib.import_module(
     "superset.mcp_service.explore.tool.generate_explore_link"
 )
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 _PERMALINK_PATCH = (

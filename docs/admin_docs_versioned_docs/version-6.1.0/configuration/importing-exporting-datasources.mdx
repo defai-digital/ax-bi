@@ -74,13 +74,13 @@ As a reminder, you can use the `-b` flag to include back references.
 In order to import datasources from a ZIP file, run:
 
 ```bash
-superset import_datasources -p <path / filename>
+ax-bi import_datasources -p <path / filename>
 ```
 
 The optional username flag **-u** sets the user used for the datasource import. The default is 'admin'. Example:
 
 ```bash
-superset import_datasources -p <path / filename> -u 'admin'
+ax-bi import_datasources -p <path / filename> -u 'admin'
 ```
 
 ## Dashboard Import Overwrite Behavior
@@ -121,21 +121,21 @@ superset legacy_import_datasources -p <path or filename>
 When using an older Superset version (2.x.x & 3.x.x) of Superset, the command is `import_datasources`. ZIP and YAML files are supported and to switch between them the feature flag `VERSIONED_EXPORT` is used. When `VERSIONED_EXPORT` is `True`, `import_datasources` expects a ZIP file, otherwise YAML. Example:
 
 ```bash
-superset import_datasources -p <path or filename>
+ax-bi import_datasources -p <path or filename>
 ```
 
 When `VERSIONED_EXPORT` is `False`, if you supply a path all files ending with **yaml** or **yml** will be parsed. You can apply
 additional flags (e.g. to search the supplied path recursively):
 
 ```bash
-superset import_datasources -p <path> -r
+ax-bi import_datasources -p <path> -r
 ```
 
 The sync flag **-s** takes parameters in order to sync the supplied elements with your file. Be
 careful this can delete the contents of your meta database. Example:
 
 ```bash
-superset import_datasources -p <path / filename> -s columns,metrics
+ax-bi import_datasources -p <path / filename> -s columns,metrics
 ```
 
 This will sync all metrics and columns for all datasources found in the `<path /filename>` in the

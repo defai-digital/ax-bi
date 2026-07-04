@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -27,7 +26,7 @@ from superset.commands.exceptions import (
 
 class DatasetAccessDeniedError(ForbiddenError):
     def __init__(
-        self, message: str, datasource_id: Optional[int], datasource_type: Optional[str]
+        self, message: str, datasource_id: int | None, datasource_type: str | None
     ) -> None:
         self.message = message
         self.datasource_id = datasource_id

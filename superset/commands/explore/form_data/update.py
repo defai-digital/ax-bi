@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from abc import ABC
-from typing import Optional
 
 from flask import session
 from sqlalchemy.exc import SQLAlchemyError
@@ -48,7 +47,7 @@ class UpdateFormDataCommand(BaseCommand, ABC):
     ):
         self._cmd_params = cmd_params
 
-    def run(self) -> Optional[str]:
+    def run(self) -> str | None:
         self.validate()
         try:
             datasource_id = self._cmd_params.datasource_id

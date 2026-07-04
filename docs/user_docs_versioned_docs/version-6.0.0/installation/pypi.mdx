@@ -79,7 +79,7 @@ brew install readline pkg-config libffi openssl mysql postgresql@14
 ```
 
 You should install a recent version of Python. Refer to the
-[pyproject.toml](https://github.com/apache/superset/blob/master/pyproject.toml) file for a list of Python
+[pyproject.toml](https://github.com/defai-digital/ax-bi/blob/main/pyproject.toml) file for a list of Python
 versions officially supported by Superset. We'd recommend using a Python version manager
 like [pyenv](https://github.com/pyenv/pyenv)
 (and also [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)).
@@ -141,23 +141,23 @@ export FLASK_APP=superset
 Then, you need to initialize the database:
 
 ```bash
-superset db upgrade
+ax-bi db upgrade
 ```
 
 Finish installing by running through the following commands:
 
 ```bash
 # Create an admin user in your metadata database (use `admin` as username to be able to load the examples)
-superset fab create-admin
+ax-bi fab create-admin
 
 # Load some data to play with
-superset load_examples
+ax-bi load_examples
 
 # Create default roles and permissions
-superset init
+ax-bi init
 
 # To start a development web server on port 8088, use -p to bind to another port
-superset run -p 8088 --with-threads --reload --debugger
+ax-bi run -p 8088 --with-threads --reload --debugger
 ```
 
 If everything worked, you should be able to navigate to `hostname:port` in your browser (e.g.

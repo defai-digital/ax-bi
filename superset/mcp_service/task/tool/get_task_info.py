@@ -65,7 +65,7 @@ async def get_task_info(
     {"identifier": "a1b2c3d4-5678-90ab-cdef-1234567890ab"}
     ```
     """
-    await ctx.info("Retrieving task: identifier=%s" % (request.identifier,))
+    await ctx.info(f"Retrieving task: identifier={request.identifier}")
 
     try:
         with mcp_event_log_context(action="mcp.get_task_info.lookup"):
@@ -83,21 +83,21 @@ async def get_task_info(
 
         if isinstance(result, TaskInfo):
             await ctx.info(
-                "Task retrieved: id=%s, task_type=%s, status=%s"
-                % (result.id, result.task_type, result.status)
+                f"Task retrieved: id={result.id}, task_type={result.task_type}, "
+                f"status={result.status}"
             )
         else:
             await ctx.warning(
-                "Task retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Task retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Task retrieval failed: identifier=%s, error=%s, error_type=%s"
-            % (request.identifier, str(e), type(e).__name__)
+            f"Task retrieval failed: identifier={request.identifier}, "
+            f"error={str(e)}, error_type={type(e).__name__}"
         )
         return TaskError.create(
             error=f"Failed to get task info: {str(e)}",

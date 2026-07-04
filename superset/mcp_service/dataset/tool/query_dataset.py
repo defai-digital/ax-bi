@@ -136,14 +136,9 @@ async def query_dataset(  # noqa: C901
     ```
     """
     await ctx.info(
-        "Starting dataset query: dataset_id=%s, metrics=%s, columns=%s, "
-        "row_limit=%s"
-        % (
-            request.dataset_id,
-            request.metrics,
-            request.columns,
-            request.row_limit,
-        )
+        f"Starting dataset query: dataset_id={request.dataset_id}, "
+        f"metrics={request.metrics}, columns={request.columns}, "
+        f"row_limit={request.row_limit}"
     )
 
     try:
@@ -181,7 +176,7 @@ async def query_dataset(  # noqa: C901
             dataset = _resolve_dataset(request.dataset_id, eager_options)
 
         if dataset is None:
-            await ctx.error("Dataset not found: identifier=%s" % (request.dataset_id,))
+            await ctx.error(f"Dataset not found: identifier={request.dataset_id}")
             return DatasetError.create(
                 error=(
                     f"No dataset found with identifier: {request.dataset_id}."
@@ -192,13 +187,8 @@ async def query_dataset(  # noqa: C901
 
         dataset_name = getattr(dataset, "table_name", None) or f"Dataset {dataset.id}"
         await ctx.info(
-            "Dataset found: id=%s, name=%s, columns=%s, metrics=%s"
-            % (
-                dataset.id,
-                dataset_name,
-                len(dataset.columns),
-                len(dataset.metrics),
-            )
+            f"Dataset found: id={dataset.id}, name={dataset_name}, "
+            f"columns={len(dataset.columns)}, metrics={len(dataset.metrics)}"
         )
 
         # ------------------------------------------------------------------
@@ -229,7 +219,7 @@ async def query_dataset(  # noqa: C901
 
         if validation_errors:
             error_msg = "; ".join(validation_errors)
-            await ctx.error("Validation failed: %s" % (error_msg,))
+            await ctx.error(f"Validation failed: {error_msg}")
             return DatasetError.create(
                 error=error_msg,
                 error_type="ValidationError",
@@ -262,7 +252,7 @@ async def query_dataset(  # noqa: C901
                 )
             # Validate that the temporal column actually exists on the dataset
             if temporal_col not in valid_columns:
-                await ctx.error("time_column '%s' not found on dataset" % temporal_col)
+                await ctx.error(f"time_column '{temporal_col}' not found on dataset")
                 return DatasetError.create(
                     error=(
                         f"time_column '{temporal_col}' does not exist on this dataset."
@@ -294,7 +284,7 @@ async def query_dataset(  # noqa: C901
             )
             granularity = temporal_col
             await ctx.debug(
-                "Time filter: column=%s, range=%s" % (temporal_col, request.time_range)
+                f"Time filter: column={temporal_col}, range={request.time_range}"
             )
 
         # ------------------------------------------------------------------
@@ -316,7 +306,7 @@ async def query_dataset(  # noqa: C901
                 (col, not request.order_desc) for col in request.order_by
             ]
 
-        await ctx.debug("Query dict keys: %s" % (sorted(query_dict.keys()),))
+        await ctx.debug(f"Query dict keys: {sorted(query_dict.keys())}")
 
         # ------------------------------------------------------------------
         # Step 5: Create QueryContext and execute
@@ -345,7 +335,7 @@ async def query_dataset(  # noqa: C901
         query_duration_ms = int((time.time() - start_time) * 1000)
 
         if not result or "queries" not in result or len(result["queries"]) == 0:
-            await ctx.warning("Query returned no results for dataset %s" % dataset.id)
+            await ctx.warning(f"Query returned no results for dataset {dataset.id}")
             return DatasetError.create(
                 error="Query returned no results.",
                 error_type="EmptyQuery",
@@ -394,7 +384,7 @@ async def query_dataset(  # noqa: C901
             if sample_values:
                 if all(isinstance(v, bool) for v in sample_values):
                     data_type = "boolean"
-                elif all(isinstance(v, (int, float)) for v in sample_values):
+                elif all(isinstance(v, int | float) for v in sample_values):
                     data_type = "numeric"
 
             # Compute null_count and unique non-null values in one pass
@@ -429,8 +419,8 @@ async def query_dataset(  # noqa: C901
         )
 
         await ctx.info(
-            "Query complete: rows=%s, columns=%s, duration=%sms"
-            % (len(data), len(raw_columns), query_duration_ms)
+            f"Query complete: rows={len(data)}, columns={len(raw_columns)}, "
+            f"duration={query_duration_ms}ms"
         )
 
         return QueryDatasetResponse(
@@ -452,28 +442,28 @@ async def query_dataset(  # noqa: C901
 
     except OAuth2RedirectError as exc:
         redirect_msg = build_oauth2_redirect_message(exc)
-        await ctx.error("OAuth2 redirect required: %s" % (redirect_msg,))
+        await ctx.error(f"OAuth2 redirect required: {redirect_msg}")
         return DatasetError.create(
             error=redirect_msg,
             error_type="OAuth2Redirect",
         )
 
     except OAuth2Error as exc:
-        await ctx.error("OAuth2 error: %s" % (str(exc),))
+        await ctx.error(f"OAuth2 error: {str(exc)}")
         return DatasetError.create(
             error=f"OAuth2 authentication error: {exc}",
             error_type="OAuth2Error",
         )
 
     except (CommandException, SupersetException) as exc:
-        await ctx.error("Query failed: %s" % (str(exc),))
+        await ctx.error(f"Query failed: {str(exc)}")
         return DatasetError.create(
             error=f"Query execution failed: {exc}",
             error_type="QueryError",
         )
 
     except SQLAlchemyError as exc:
-        await ctx.error("Database error: %s" % (str(exc),))
+        await ctx.error(f"Database error: {str(exc)}")
         return DatasetError.create(
             error=f"Database error: {exc}",
             error_type="DatabaseError",
@@ -485,7 +475,7 @@ async def query_dataset(  # noqa: C901
             type(exc).__name__,
             str(exc),
         )
-        await ctx.error("Unexpected error: %s: %s" % (type(exc).__name__, str(exc)))
+        await ctx.error(f"Unexpected error: {type(exc).__name__}: {str(exc)}")
         return DatasetError.create(
             error="An unexpected error occurred while querying the dataset.",
             error_type="UnexpectedError",

@@ -72,7 +72,7 @@ def _validate_embeddings(
             f"{expected_count} inputs"
         )
     for index, vector in enumerate(embeddings):
-        if isinstance(vector, (bytes, str)):
+        if isinstance(vector, bytes | str):
             raise EmbeddingProviderError(f"Embedding {index} is not a vector")
         try:
             vector_length = len(vector)
@@ -84,7 +84,7 @@ def _validate_embeddings(
                 f"{expected_dimensions}"
             )
         for dimension, value in enumerate(vector):
-            if isinstance(value, (bool, bytes, str)):
+            if isinstance(value, bool | bytes | str):
                 raise EmbeddingProviderError(
                     f"Embedding {index} dimension {dimension} is not numeric"
                 )
@@ -277,7 +277,7 @@ class HashDevEmbeddingProvider:
 
         embeddings = []
         for text in texts:
-            seed = sha256(f"{is_query}:{text}".encode("utf-8")).digest()
+            seed = sha256(f"{is_query}:{text}".encode()).digest()
             values: list[float] = []
             while len(values) < self.dimensions:
                 seed = sha256(seed).digest()

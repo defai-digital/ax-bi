@@ -16,7 +16,7 @@
 # under the License.
 
 # pylint: disable=abstract-method
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.sql.sqltypes import DATE, Integer, TIMESTAMP
@@ -47,7 +47,7 @@ class Interval(TypeEngine):
     """
 
     @property
-    def python_type(self) -> Optional[type[Any]]:
+    def python_type(self) -> type[Any] | None:
         return None
 
     @classmethod
@@ -61,7 +61,7 @@ class Array(TypeEngine):
     """
 
     @property
-    def python_type(self) -> Optional[type[list[Any]]]:
+    def python_type(self) -> type[list[Any]] | None:
         return list
 
     @classmethod
@@ -75,7 +75,7 @@ class Map(TypeEngine):
     """
 
     @property
-    def python_type(self) -> Optional[type[dict[Any, Any]]]:
+    def python_type(self) -> type[dict[Any, Any]] | None:
         return dict
 
     @classmethod
@@ -89,7 +89,7 @@ class Row(TypeEngine):
     """
 
     @property
-    def python_type(self) -> Optional[type[Any]]:
+    def python_type(self) -> type[Any] | None:
         return None
 
     @classmethod

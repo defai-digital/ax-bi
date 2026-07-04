@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app, g
 from flask_appbuilder.security.sqla.models import Role
@@ -216,7 +216,7 @@ class FilterRelatedRoles(BaseFilter):  # pylint: disable=too-few-public-methods
     name = _("Role")
     arg_name = "roles"
 
-    def apply(self, query: Query, value: Optional[Any]) -> Query:
+    def apply(self, query: Query, value: Any | None) -> Query:
         role_model = security_manager.role_model
         if value:
             return query.filter(

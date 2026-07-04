@@ -16,7 +16,7 @@
 # under the License.
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from superset import db, security_manager
 from superset.commands.base import BaseCommand
@@ -34,8 +34,8 @@ class ResetSupersetCommand(BaseCommand):
         self,
         confirm: bool,
         user: Any,
-        exclude_users: Optional[str] = None,
-        exclude_roles: Optional[str] = None,
+        exclude_users: str | None = None,
+        exclude_roles: str | None = None,
     ) -> None:
         self._user = user
         self._confirm = confirm

@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from importlib import util
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from flask import current_app
@@ -63,7 +63,7 @@ class CSVReaderOptions(ReaderOptions, total=False):
 class CSVReader(BaseDataReader):
     def __init__(
         self,
-        options: Optional[CSVReaderOptions] = None,
+        options: CSVReaderOptions | None = None,
     ) -> None:
         options = options or {}
         super().__init__(
@@ -240,8 +240,8 @@ class CSVReader(BaseDataReader):
             invalid_value = df.loc[idx, column]
             line_number = idx + kwargs.get("header", 0) + 2
             error_details.append(
-                "  • Line %s: '%s' cannot be converted to %s"
-                % (line_number, invalid_value, dtype)
+                f"  • Line {line_number}: '{invalid_value}' "
+                f"cannot be converted to {dtype}"
             )
 
         return error_details, total_errors

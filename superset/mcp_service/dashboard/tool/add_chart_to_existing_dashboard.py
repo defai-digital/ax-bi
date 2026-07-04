@@ -23,7 +23,7 @@ This tool adds a chart to an existing dashboard with automatic layout positionin
 
 import logging
 import re
-from typing import Any, Dict
+from typing import Any
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -65,7 +65,7 @@ _EMOJI_RE = re.compile(
 )
 
 
-def _find_next_row_position(layout: Dict[str, Any]) -> str:
+def _find_next_row_position(layout: dict[str, Any]) -> str:
     """
     Generate a unique ROW ID for a new row in the dashboard layout.
 
@@ -92,7 +92,7 @@ def _normalize_tab_text(text: str | None) -> str:
 
 
 def _match_tab_in_children(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     tabs_children: list[str],
     target_tab: str,
 ) -> str | None:
@@ -116,7 +116,7 @@ def _match_tab_in_children(
     return None
 
 
-def _collect_tabs_groups(layout: Dict[str, Any]) -> list[list[str]]:
+def _collect_tabs_groups(layout: dict[str, Any]) -> list[list[str]]:
     """Collect all TABS groups from ROOT_ID and GRID_ID children.
 
     Superset dashboards can place TABS under either ROOT_ID or GRID_ID
@@ -138,7 +138,7 @@ def _collect_tabs_groups(layout: Dict[str, Any]) -> list[list[str]]:
 
 
 def _first_tab_from_groups(
-    layout: Dict[str, Any], groups: list[list[str]]
+    layout: dict[str, Any], groups: list[list[str]]
 ) -> str | None:
     """Return the first valid TAB ID from the collected groups."""
     for tabs_children in groups:
@@ -149,7 +149,7 @@ def _first_tab_from_groups(
     return None
 
 
-def _collect_available_tab_names(layout: Dict[str, Any]) -> list[str]:
+def _collect_available_tab_names(layout: dict[str, Any]) -> list[str]:
     """Collect display entries (label + component ID) for all TAB components.
 
     Always includes the component ID so callers can retry unambiguously even
@@ -167,7 +167,7 @@ def _collect_available_tab_names(layout: Dict[str, Any]) -> list[str]:
 
 
 def _find_tab_insert_target(
-    layout: Dict[str, Any], target_tab: str | None = None
+    layout: dict[str, Any], target_tab: str | None = None
 ) -> str | None:
     """
     Detect if the dashboard uses tabs and return the appropriate tab's ID.
@@ -198,7 +198,7 @@ def _find_tab_insert_target(
 
 
 def _add_chart_to_layout(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     chart: Any,
     chart_id: int,
     row_key: str,
@@ -278,7 +278,7 @@ def _add_chart_to_layout(
 
 
 def _ensure_layout_structure(
-    layout: Dict[str, Any], row_key: str, parent_id: str
+    layout: dict[str, Any], row_key: str, parent_id: str
 ) -> None:
     """
     Ensure the dashboard layout has proper GRID and ROOT structure,
@@ -338,7 +338,7 @@ def _ensure_layout_structure(
 
 
 def _resolve_parent_container(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     dashboard_id: int,
     target_tab: str | None,
 ) -> tuple[str, None] | tuple[None, AddChartToDashboardResponse]:

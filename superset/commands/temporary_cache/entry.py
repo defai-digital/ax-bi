@@ -14,11 +14,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, TypedDict, TypeGuard
+from typing import Any, TypedDict, TypeGuard
 
 
 class Entry(TypedDict):
-    owner: Optional[int]
+    owner: int | None
     value: str
 
 

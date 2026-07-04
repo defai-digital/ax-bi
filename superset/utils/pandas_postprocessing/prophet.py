@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional, Union
 
 import pandas as pd
 from flask_babel import gettext as _
@@ -28,8 +27,8 @@ from superset.utils.pandas_postprocessing.utils import PROPHET_TIME_GRAIN_MAP
 
 
 def _prophet_parse_seasonality(
-    input_value: Optional[Union[bool, int]],
-) -> Union[bool, str, int]:
+    input_value: bool | int | None,
+) -> bool | str | int:
     if input_value is None:
         return "auto"
     if isinstance(input_value, bool):
@@ -43,9 +42,9 @@ def _prophet_parse_seasonality(
 def _prophet_fit_and_predict(  # pylint: disable=too-many-arguments
     df: DataFrame,
     confidence_interval: float,
-    yearly_seasonality: Union[bool, str, int],
-    weekly_seasonality: Union[bool, str, int],
-    daily_seasonality: Union[bool, str, int],
+    yearly_seasonality: bool | str | int,
+    weekly_seasonality: bool | str | int,
+    daily_seasonality: bool | str | int,
     periods: int,
     freq: str,
 ) -> DataFrame:
@@ -90,10 +89,10 @@ def prophet(  # pylint: disable=too-many-arguments  # noqa: C901
     time_grain: str,
     periods: int,
     confidence_interval: float,
-    yearly_seasonality: Optional[Union[bool, int]] = None,
-    weekly_seasonality: Optional[Union[bool, int]] = None,
-    daily_seasonality: Optional[Union[bool, int]] = None,
-    index: Optional[str] = None,
+    yearly_seasonality: bool | int | None = None,
+    weekly_seasonality: bool | int | None = None,
+    daily_seasonality: bool | int | None = None,
+    index: str | None = None,
 ) -> DataFrame:
     """
     Add forecasts to each series in a timeseries dataframe, along with confidence

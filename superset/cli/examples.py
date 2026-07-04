@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from collections.abc import Collection
-from typing import Any, Callable
+from collections.abc import Callable, Collection
+from typing import Any
 
 import click
 from flask.cli import with_appcontext

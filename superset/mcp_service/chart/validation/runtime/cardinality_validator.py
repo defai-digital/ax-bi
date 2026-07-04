@@ -20,7 +20,7 @@ Cardinality validation to prevent unusable visualizations from high-cardinality 
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class CardinalityValidator:
         x_column: str,
         chart_type: str = "default",
         group_by_column: str | None = None,
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """
         Check cardinality of X-axis and group_by columns.
 
@@ -100,7 +100,7 @@ class CardinalityValidator:
     @staticmethod
     def _check_column_patterns(
         x_column: str, group_by_column: str | None = None
-    ) -> List[str]:
+    ) -> list[str]:
         """Check for known high-cardinality column patterns."""
         warnings = []
 
@@ -133,7 +133,7 @@ class CardinalityValidator:
     @staticmethod
     def _get_suggestions(
         column: str, chart_type: str, pattern_based: bool = False
-    ) -> List[str]:
+    ) -> list[str]:
         """Get suggestions for handling high cardinality."""
         suggestions = []
 
@@ -183,13 +183,12 @@ class CardinalityValidator:
         return suggestions
 
     @staticmethod
-    def suggest_chart_type(cardinality: int) -> List[str]:
+    def suggest_chart_type(cardinality: int) -> list[str]:
         """Suggest appropriate chart types based on cardinality."""
         if cardinality <= 10:
             return ["bar", "pie", "donut", "area"]
-        elif cardinality <= 30:
+        if cardinality <= 30:
             return ["bar", "line", "area"]
-        elif cardinality <= 100:
+        if cardinality <= 100:
             return ["line", "scatter"]
-        else:
-            return ["table", "pivot_table", "heatmap"]
+        return ["table", "pivot_table", "heatmap"]

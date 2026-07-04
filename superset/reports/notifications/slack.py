@@ -17,7 +17,6 @@
 import logging
 from collections.abc import Sequence
 from io import IOBase
-from typing import Union
 
 import backoff
 from flask import g
@@ -80,7 +79,7 @@ class SlackNotification(SlackMixin, BaseNotification):  # pylint: disable=too-fe
 
     def _get_inline_files(
         self,
-    ) -> tuple[Union[str, None], Sequence[Union[str, IOBase, bytes]]]:
+    ) -> tuple[str | None, Sequence[str | IOBase | bytes]]:
         if self._content.csv:
             return ("csv", [self._content.csv])
         if self._content.screenshots:

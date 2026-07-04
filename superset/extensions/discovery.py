@@ -17,8 +17,8 @@
 
 import logging
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 from zipfile import is_zipfile, ZipFile
 
 from superset.extensions.types import LoadedExtension

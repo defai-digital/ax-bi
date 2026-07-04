@@ -44,7 +44,6 @@ from superset.mcp_service.utils.sanitization import (
     sanitize_for_llm_context,
 )
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -344,12 +343,10 @@ class TestExecuteSql:
     async def test_execute_sql_database_not_found(
         self,
         mock_db,
-        mock_security_manager,  # noqa: PT019
+        unused_security_manager,  # noqa: PT019
         mcp_server,
     ):
         """Test graceful error when database is not found."""
-        # mock_security_manager is patched but not used (error happens first)
-        del mock_security_manager  # Silence unused variable warning
         mock_db.session.query.return_value.filter_by.return_value.first.return_value = (
             None
         )

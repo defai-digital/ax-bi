@@ -14,7 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture

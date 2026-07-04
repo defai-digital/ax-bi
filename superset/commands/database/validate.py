@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from contextlib import closing
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as __
 
@@ -49,7 +49,7 @@ def _load_encrypted_extra(value: Any) -> dict[str, Any]:
 class ValidateDatabaseParametersCommand(BaseCommand):
     def __init__(self, properties: dict[str, Any]):
         self._properties = properties.copy()
-        self._model: Optional[Database] = None
+        self._model: Database | None = None
 
     def run(self) -> None:
         self.validate()

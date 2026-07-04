@@ -40,7 +40,7 @@ class TestSupersetApp:
 
         # Assert
         mock_logger.info.assert_called_once_with(
-            "Pending database migrations: run 'superset db upgrade'"
+            "Pending database migrations: run 'ax-bi db upgrade'"
         )
 
     @patch("superset.extensions.db")
@@ -61,7 +61,7 @@ class TestSupersetApp:
         # Assert - _is_database_up_to_date should catch the error and return False
         # which causes the info log about pending migrations
         mock_logger.info.assert_called_once_with(
-            "Pending database migrations: run 'superset db upgrade'"
+            "Pending database migrations: run 'ax-bi db upgrade'"
         )
 
     @patch("superset.extensions.feature_flag_manager")

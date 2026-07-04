@@ -60,6 +60,15 @@ import {
   runtimeContractSchemas,
 } from '../src/contracts/runtime';
 import {
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from '../src/contracts/listColumn';
+import {
   queryListContractSchemas,
   QUERY_LIST_CONTRACT_VERSION,
 } from '../src/contracts/queryList';
@@ -154,6 +163,133 @@ test('task list contract version is explicit', () => {
   expect(TASK_LIST_CONTRACT_VERSION).toBe('task-list.v1');
 });
 
+test('response warning schemas are bounded and shared', () => {
+  expect(warningSchema).toEqual({
+    type: 'array',
+    maxItems: 10,
+    items: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 512,
+      pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+    },
+  });
+  expect(
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema
+      .properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    annotationListContractSchemas.annotationListResponseSchema.properties
+      .warnings,
+  ).toBe(warningSchema);
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    chartListContractSchemas.chartListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    databaseListContractSchemas.databaseListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    datasetListContractSchemas.datasetListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    queryListContractSchemas.queryListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    reportListContractSchemas.reportListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    roleListContractSchemas.roleListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    rlsListContractSchemas.rlsListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    savedQueryListContractSchemas.savedQueryListResponseSchema.properties
+      .warnings,
+  ).toBe(warningSchema);
+  expect(
+    tagListContractSchemas.tagListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+  expect(
+    taskListContractSchemas.taskListResponseSchema.properties.warnings,
+  ).toBe(warningSchema);
+});
+
+test('list response column schemas are token constrained and shared', () => {
+  const responseSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema,
+    annotationListContractSchemas.annotationListResponseSchema,
+    chartListContractSchemas.chartListResponseSchema,
+    dashboardListContractSchemas.dashboardListResponseSchema,
+    databaseListContractSchemas.databaseListResponseSchema,
+    datasetListContractSchemas.datasetListResponseSchema,
+    queryListContractSchemas.queryListResponseSchema,
+    reportListContractSchemas.reportListResponseSchema,
+    roleListContractSchemas.roleListResponseSchema,
+    rlsListContractSchemas.rlsListResponseSchema,
+    savedQueryListContractSchemas.savedQueryListResponseSchema,
+    tagListContractSchemas.tagListResponseSchema,
+    taskListContractSchemas.taskListResponseSchema,
+  ];
+
+  for (const schema of responseSchemas) {
+    expect(schema.properties.columnsRequested).toBe(listColumnSchema);
+    expect(schema.properties.columnsLoaded).toBe(listColumnSchema);
+  }
+});
+
+test('list pagination and filter schemas are shared', () => {
+  const requestSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListRequestSchema,
+    annotationListContractSchemas.annotationListRequestSchema,
+    chartListContractSchemas.chartListRequestSchema,
+    dashboardListContractSchemas.dashboardListRequestSchema,
+    databaseListContractSchemas.databaseListRequestSchema,
+    datasetListContractSchemas.datasetListRequestSchema,
+    queryListContractSchemas.queryListRequestSchema,
+    reportListContractSchemas.reportListRequestSchema,
+    roleListContractSchemas.roleListRequestSchema,
+    rlsListContractSchemas.rlsListRequestSchema,
+    savedQueryListContractSchemas.savedQueryListRequestSchema,
+    tagListContractSchemas.tagListRequestSchema,
+    taskListContractSchemas.taskListRequestSchema,
+  ];
+  const responseSchemas = [
+    annotationLayerListContractSchemas.annotationLayerListResponseSchema,
+    annotationListContractSchemas.annotationListResponseSchema,
+    chartListContractSchemas.chartListResponseSchema,
+    dashboardListContractSchemas.dashboardListResponseSchema,
+    databaseListContractSchemas.databaseListResponseSchema,
+    datasetListContractSchemas.datasetListResponseSchema,
+    queryListContractSchemas.queryListResponseSchema,
+    reportListContractSchemas.reportListResponseSchema,
+    roleListContractSchemas.roleListResponseSchema,
+    rlsListContractSchemas.rlsListResponseSchema,
+    savedQueryListContractSchemas.savedQueryListResponseSchema,
+    tagListContractSchemas.tagListResponseSchema,
+    taskListContractSchemas.taskListResponseSchema,
+  ];
+
+  for (const schema of requestSchemas) {
+    expect(schema.properties.filters.items).toBe(listFilterSchema);
+    expect(schema.properties.page).toBe(listPageSchema);
+    expect(schema.properties.pageSize).toBe(listPageSizeSchema);
+  }
+  for (const schema of responseSchemas) {
+    expect(schema.properties.count).toBe(listCountSchema);
+    expect(schema.properties.totalCount).toBe(listCountSchema);
+    expect(schema.properties.page).toBe(listPageSchema);
+    expect(schema.properties.pageSize).toBe(listPageSizeSchema);
+    expect(schema.properties.totalPages).toBe(listTotalPagesSchema);
+  }
+});
+
 test('health response schema is stable', () => {
   expect(healthResponseSchema).toEqual({
     $id: 'ax-services.health.v1.response',
@@ -173,10 +309,37 @@ test('health response schema is stable', () => {
       contractVersion: { const: 'runtime.v1' },
       service: { const: 'ax-services' },
       status: { const: 'ok' },
-      timestamp: { type: 'string' },
-      version: { type: 'string' },
-      nodeVersion: { type: 'string' },
-      platform: { type: 'string' },
+      timestamp: {
+        type: 'string',
+        format: 'date-time',
+        maxLength: 32,
+      },
+      version: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 128,
+        pattern: '^[^\\u0000-\\u001f\\u007f]+$',
+      },
+      nodeVersion: {
+        type: 'string',
+        maxLength: 64,
+        pattern: '^v\\d+\\.\\d+\\.\\d+',
+      },
+      platform: {
+        enum: [
+          'aix',
+          'android',
+          'darwin',
+          'freebsd',
+          'haiku',
+          'linux',
+          'openbsd',
+          'sunos',
+          'win32',
+          'cygwin',
+          'netbsd',
+        ],
+      },
       uptimeSeconds: { type: 'number' },
     },
   });
@@ -189,10 +352,41 @@ test('readiness response schema is registered in runtime contracts', () => {
   expect(readinessResponseSchema.properties.status).toEqual({
     enum: ['ready', 'not_ready'],
   });
+  expect(
+    readinessResponseSchema.properties.dependencies.properties.superset
+      .properties.statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
+  });
+  expect(
+    readinessResponseSchema.properties.dependencies.properties.superset
+      .properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
 });
 
 test('metrics response schema is registered in runtime contracts', () => {
   expect(runtimeContractSchemas.metricsResponseSchema).toBe(metricsResponseSchema);
+  expect(metricsResponseSchema.properties.uptimeSeconds).toEqual({
+    type: 'number',
+    minimum: 0,
+  });
+  expect(metricsResponseSchema.properties.requests.properties.total).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    metricsResponseSchema.properties.requests.properties.averageDurationMs,
+  ).toEqual({
+    type: 'number',
+    minimum: 0,
+  });
   expect(metricsResponseSchema.properties.requests.properties.routes).toEqual({
     type: 'object',
     additionalProperties: {
@@ -200,10 +394,10 @@ test('metrics response schema is registered in runtime contracts', () => {
       required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
       additionalProperties: false,
       properties: {
-        count: { type: 'number' },
-        errorCount: { type: 'number' },
-        averageDurationMs: { type: 'number' },
-        maxDurationMs: { type: 'number' },
+        count: { type: 'integer', minimum: 0 },
+        errorCount: { type: 'integer', minimum: 0 },
+        averageDurationMs: { type: 'number', minimum: 0 },
+        maxDurationMs: { type: 'number', minimum: 0 },
       },
     },
   });
@@ -218,7 +412,38 @@ test('metadata response schema is registered in runtime contracts', () => {
       .properties.keys,
   ).toEqual({
     type: 'array',
-    items: { type: 'string' },
+    maxItems: 100,
+    items: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+    },
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.keyCount,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+    maximum: 100,
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
+  });
+  expect(
+    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+      .properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 
@@ -226,16 +451,71 @@ test('permission check request schema is registered in authorization contracts',
   expect(authorizationContractSchemas.permissionCheckRequestSchema).toBe(
     permissionCheckRequestSchema,
   );
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.userId,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.username,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    permissionCheckRequestSchema.properties.principal.properties.roles.items,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(permissionCheckRequestSchema.properties.resource.properties.id).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    permissionCheckRequestSchema.properties.resource.properties.uuid,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+  });
   expect(permissionCheckRequestSchema.properties.action).toEqual({
     enum: ['create', 'delete', 'read', 'write'],
+  });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties
+      .statusCode,
+  ).toEqual({
+    type: 'integer',
+    minimum: 100,
+    maximum: 599,
+  });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties.reason,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    authorizationContractSchemas.permissionCheckResponseSchema.properties.error,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 
 test('RLS list request schema is registered in RLS list contracts', () => {
   expect(rlsListContractSchemas.rlsListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
+  expect(
+    rlsListContractSchemas.rlsListRequestSchema.properties.selectColumns,
+  ).toBe(listColumnSchema);
   expect(
     rlsListContractSchemas.rlsListResponseSchema.properties.rlsFilters.items
       .properties.clause,
@@ -244,17 +524,127 @@ test('RLS list request schema is registered in RLS list contracts', () => {
   });
 });
 
+test('dashboard list request schema restricts requested columns, search, and ordering', () => {
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.value.anyOf,
+  ).toEqual([
+    { type: 'string', pattern: '^[^\\u0000-\\u001F\\u007F]*$' },
+    { type: 'number' },
+    { type: 'boolean' },
+    {
+      type: 'array',
+      items: { type: 'string', pattern: '^[^\\u0000-\\u001F\\u007F]*$' },
+    },
+    { type: 'array', items: { type: 'number' } },
+    { type: 'array', items: { type: 'boolean' } },
+  ]);
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties
+      .selectColumns,
+  ).toEqual({
+    type: 'array',
+    items: { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.search,
+  ).toEqual({
+    type: 'string',
+    pattern: '^(?:$|(?=.*\\S)[^\\u0000-\\u001F\\u007F]+)$',
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties
+      .orderColumn,
+  ).toEqual({
+    anyOf: [
+      { const: '' },
+      { type: 'string', pattern: '^[A-Za-z0-9_]+$' },
+    ],
+  });
+});
+
 test('asset search request schema is registered in asset search contracts', () => {
   expect(assetSearchContractSchemas.assetSearchRequestSchema.properties.query).toEqual(
     {
       type: 'string',
+      maxLength: 256,
+      pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
     },
   );
+  expect(
+    assetSearchContractSchemas.assetSearchRequestSchema.properties.limit,
+  ).toEqual({
+    type: 'integer',
+    minimum: 1,
+    maximum: 100,
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets
+      .maxItems,
+  ).toBe(100);
   expect(
     assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
       .properties.assetType,
   ).toEqual({
     enum: ['chart', 'dashboard', 'dataset', 'metric'],
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.relevanceScore,
+  ).toEqual({
+    type: 'number',
+    minimum: 0,
+    maximum: 2,
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.name,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.uuid,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.description,
+  ).toEqual({
+    type: 'string',
+    maxLength: 1024,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.relevanceReason,
+  ).toEqual({
+    type: 'string',
+    maxLength: 256,
+    pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.owners.items,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 128,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+  });
+  expect(
+    assetSearchContractSchemas.assetSearchResponseSchema.properties.assets.items
+      .properties.tags.items,
+  ).toEqual({
+    type: 'string',
+    minLength: 1,
+    maxLength: 128,
+    pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   });
 });
 
@@ -262,32 +652,32 @@ test('annotation list request schema is registered in annotation list contracts'
   expect(
     annotationListContractSchemas.annotationListRequestSchema.properties.layerId,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
     annotationListContractSchemas.annotationListResponseSchema.properties.annotations
       .items.properties,
   ).toEqual({
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     shortDescr: { type: 'string' },
     longDescr: { type: 'string' },
     startDttm: { type: 'string' },
     endDttm: { type: 'string' },
     jsonMetadata: { type: 'string' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
   });
 });
 
 test('role list request schema is registered in role list contracts', () => {
   expect(roleListContractSchemas.roleListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
     roleListContractSchemas.roleListResponseSchema.properties.roles.items.properties,
   ).toEqual({
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     name: { type: 'string' },
   });
 });
@@ -297,7 +687,7 @@ test('annotation layer list request schema is registered in annotation layer lis
     annotationLayerListContractSchemas.annotationLayerListRequestSchema.properties
       .page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -312,8 +702,34 @@ test('dashboard list request schema is registered in dashboard list contracts', 
   expect(
     dashboardListContractSchemas.dashboardListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.col,
+  ).toEqual({
+    type: 'string',
+    pattern: '^[A-Za-z0-9_]+$',
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListRequestSchema.properties.filters
+      .items.properties.opr,
+  ).toEqual({
+    type: 'string',
+    pattern: '^[A-Za-z0-9_]+$',
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.count,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
+  });
+  expect(
+    dashboardListContractSchemas.dashboardListResponseSchema.properties.totalPages,
+  ).toEqual({
+    type: 'integer',
+    minimum: 0,
   });
   expect(
     dashboardListContractSchemas.dashboardListResponseSchema.properties
@@ -325,7 +741,7 @@ test('dashboard list request schema is registered in dashboard list contracts', 
 
 test('chart list request schema is registered in chart list contracts', () => {
   expect(chartListContractSchemas.chartListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -340,7 +756,7 @@ test('dataset list request schema is registered in dataset list contracts', () =
   expect(
     datasetListContractSchemas.datasetListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -355,7 +771,7 @@ test('database list request schema is registered in database list contracts', ()
   expect(
     databaseListContractSchemas.databaseListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -368,7 +784,7 @@ test('database list request schema is registered in database list contracts', ()
 
 test('query list request schema is registered in query list contracts', () => {
   expect(queryListContractSchemas.queryListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -383,7 +799,7 @@ test('saved query list request schema is registered in saved query list contract
   expect(
     savedQueryListContractSchemas.savedQueryListRequestSchema.properties.page,
   ).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -396,7 +812,7 @@ test('saved query list request schema is registered in saved query list contract
 
 test('report list request schema is registered in report list contracts', () => {
   expect(reportListContractSchemas.reportListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -409,7 +825,7 @@ test('report list request schema is registered in report list contracts', () => 
 
 test('tag list request schema is registered in tag list contracts', () => {
   expect(tagListContractSchemas.tagListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(
@@ -421,7 +837,7 @@ test('tag list request schema is registered in tag list contracts', () => {
 
 test('task list request schema is registered in task list contracts', () => {
   expect(taskListContractSchemas.taskListRequestSchema.properties.page).toEqual({
-    type: 'number',
+    type: 'integer',
     minimum: 1,
   });
   expect(

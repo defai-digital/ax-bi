@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from superset.daos.chart import ChartDAO
 from superset.daos.dashboard import DashboardDAO
@@ -26,7 +26,7 @@ from superset.models.sql_lab import SavedQuery
 from superset.tags.models import ObjectType
 
 
-def to_object_type(object_type: Union[ObjectType, int, str]) -> Optional[ObjectType]:
+def to_object_type(object_type: ObjectType | int | str) -> ObjectType | None:
     if isinstance(object_type, ObjectType):
         return object_type
     for type_ in ObjectType:
@@ -37,7 +37,7 @@ def to_object_type(object_type: Union[ObjectType, int, str]) -> Optional[ObjectT
 
 def to_object_model(
     object_type: ObjectType, object_id: int, skip_base_filter: bool = False
-) -> Optional[Union[Dashboard, SavedQuery, Slice, Any]]:
+) -> Dashboard | SavedQuery | Slice | Any | None:
     if ObjectType.dashboard == object_type:
         return DashboardDAO.find_by_id(object_id, skip_base_filter=skip_base_filter)
     if ObjectType.query == object_type:

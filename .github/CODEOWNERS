@@ -6,9 +6,9 @@
 
 # Notify some committers of changes in the components
 
-/superset-frontend/src/components/Select/ @michael-s-molina @geido @kgabryje
-/superset-frontend/src/components/MetadataBar/ @michael-s-molina @geido @kgabryje
-/superset-frontend/src/components/DropdownContainer/ @michael-s-molina @geido @kgabryje
+/ax-bi-frontend/src/components/Select/ @michael-s-molina @geido @kgabryje
+/ax-bi-frontend/src/components/MetadataBar/ @michael-s-molina @geido @kgabryje
+/ax-bi-frontend/src/components/DropdownContainer/ @michael-s-molina @geido @kgabryje
 
 # Notify Helm Chart maintainers about changes in it
 
@@ -16,7 +16,7 @@
 
 # Notify E2E test maintainers of changes
 
-/superset-frontend/cypress-base/ @sadpandajoe @geido @eschutho @rusackas @betodealmeida @mistercrunch
+/ax-bi-frontend/cypress-base/ @sadpandajoe @geido @eschutho @rusackas @betodealmeida @mistercrunch
 
 # Notify PMC members of changes to GitHub Actions
 
@@ -34,7 +34,7 @@
 # Maps are a finicky contribution process we care about
 
 **/*.geojson @villebro @rusackas
-/superset-frontend/plugins/legacy-plugin-chart-country-map/ @villebro @rusackas
+/ax-bi-frontend/plugins/legacy-plugin-chart-country-map/ @villebro @rusackas
 
 # Notify translation maintainers of changes to translations
 
@@ -47,6 +47,6 @@
 /superset-extensions-cli/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
 /superset/core/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
 /superset/extensions/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
-/superset-frontend/src/packages/superset-core/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
-/superset-frontend/src/core/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
-/superset-frontend/src/extensions/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
+/ax-bi-frontend/src/packages/superset-core/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
+/ax-bi-frontend/src/core/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje
+/ax-bi-frontend/src/extensions/ @michael-s-molina @villebro @geido @eschutho @rusackas @kgabryje

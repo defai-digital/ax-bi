@@ -354,7 +354,9 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
             "slug": self.slug,
             "slices": [slc.data for slc in self.slices],
             "position_json": self.position,
-            "last_modified_time": self.changed_on.replace(microsecond=0).timestamp(),
+            "last_modified_time": self.changed_on.replace(microsecond=0).timestamp()
+            if self.changed_on
+            else None,
             "is_managed_externally": self.is_managed_externally,
         }
 

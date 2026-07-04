@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional, Union
+from typing import Any
 
 from celery.utils.log import get_task_logger
 from flask import current_app
@@ -171,7 +171,7 @@ class DashboardTagsStrategy(Strategy):  # pylint: disable=too-few-public-methods
 
     name = "dashboard_tags"
 
-    def __init__(self, tags: Optional[list[str]] = None) -> None:
+    def __init__(self, tags: list[str] | None = None) -> None:
         super().__init__()
         self.tags = tags or []
 
@@ -207,7 +207,7 @@ strategies = [DummyStrategy, TopNDashboardsStrategy, DashboardTagsStrategy]
 @celery_app.task(name="cache-warmup")
 def cache_warmup(
     strategy_name: str, *args: Any, **kwargs: Any
-) -> Union[dict[str, list[str]], str]:
+) -> dict[str, list[str]] | str:
     """
     Warm up cache.
 
@@ -220,7 +220,7 @@ def cache_warmup(
         if class_.name == strategy_name:  # type: ignore
             break
     else:
-        message = "No strategy %s found!" % strategy_name
+        message = f"No strategy {strategy_name} found!"
         logger.error(message, exc_info=True)
         return message
 

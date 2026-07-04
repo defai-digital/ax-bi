@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
 from marshmallow import validate, ValidationError
@@ -43,7 +43,7 @@ class OneOfCaseInsensitive(validate.OneOf):
         return value
 
 
-def validate_json(value: Union[bytes, bytearray, str]) -> None:
+def validate_json(value: bytes | bytearray | str) -> None:
     """
     JSON Validator that can be passed to a Marshmallow `Field`'s validate argument.
 
@@ -56,7 +56,7 @@ def validate_json(value: Union[bytes, bytearray, str]) -> None:
         raise ValidationError("JSON not valid") from ex
 
 
-def validate_external_url(value: Optional[str]) -> None:
+def validate_external_url(value: str | None) -> None:
     """
     Validator for externally managed object URLs.
 

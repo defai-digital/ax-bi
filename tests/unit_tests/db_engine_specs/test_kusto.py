@@ -16,7 +16,6 @@
 # under the License.
 # pylint: disable=unused-argument, import-outside-toplevel, protected-access
 from datetime import datetime
-from typing import Optional
 
 import pytest
 from sqlalchemy import column
@@ -91,7 +90,7 @@ def test_kql_has_mutation(kql: str, expected: bool) -> None:
 )
 def test_kql_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.kusto import KustoKqlEngineSpec as spec  # noqa: N813
@@ -111,7 +110,7 @@ def test_kql_convert_dttm(
 )
 def test_sql_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.kusto import KustoSqlEngineSpec as spec  # noqa: N813

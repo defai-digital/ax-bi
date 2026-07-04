@@ -47,7 +47,7 @@ class DatasetColumnData(TypedDict, total=False):
     is_dttm: bool
     python_date_format: str | None
     type: str
-    type_generic: NotRequired["GenericDataType" | None]
+    type_generic: NotRequired[GenericDataType | None]
     verbose_name: str | None
     warning_markdown: str | None
 
@@ -84,7 +84,7 @@ class AdhocMetricColumn(TypedDict, total=False):
     is_dttm: bool
     python_date_format: str | None
     type: str
-    type_generic: "GenericDataType"
+    type_generic: GenericDataType
     verbose_name: str | None
 
 
@@ -121,7 +121,7 @@ class ResultSetColumnType(TypedDict):
     column_name: str
     type: SQLType | str | None
     is_dttm: bool | None
-    type_generic: NotRequired["GenericDataType" | None]
+    type_generic: NotRequired[GenericDataType | None]
 
     nullable: NotRequired[Any]
     default: NotRequired[Any]
@@ -203,7 +203,7 @@ class QueryObjectDict(TypedDict, total=False):
     apply_fetch_values_predicate: bool
     columns: list[Column]
     extras: dict[str, Any]
-    filter: list["QueryObjectFilterClause"]
+    filter: list[QueryObjectFilterClause]
     from_dttm: datetime | None
     granularity: str | None
     inner_from_dttm: datetime | None
@@ -315,8 +315,8 @@ class ExplorableData(TypedDict, total=False):
     perm: str | None
     edit_url: str
     sql: str | None
-    columns: list["DatasetColumnData"]
-    metrics: list["DatasetMetricData"]
+    columns: list[DatasetColumnData]
+    metrics: list[DatasetMetricData]
     folders: Any  # JSON field, can be list or dict
     order_by_choices: list[tuple[str, str]]
     owners: list[int] | list[dict[str, Any]]  # Can be either format
@@ -324,7 +324,7 @@ class ExplorableData(TypedDict, total=False):
     select_star: str | None
 
     # Additional fields from SqlaTable and data_for_slices
-    column_types: list["GenericDataType"]
+    column_types: list[GenericDataType]
     column_names: set[str] | list[str]
     granularity_sqla: list[tuple[Any, Any]]
     time_grain_sqla: list[tuple[Any, Any]]

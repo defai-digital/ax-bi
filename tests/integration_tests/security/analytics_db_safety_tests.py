@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 import pytest
 from flask import current_app
@@ -125,7 +124,7 @@ def test_check_sqlalchemy_uri(
     monkeypatch,
     sqlalchemy_uri: str,
     error: bool,
-    error_message: Optional[str],
+    error_message: str | None,
 ):
     monkeypatch.setitem(current_app.config, "ALLOW_DUCKDB_CONNECTIONS", False)
     if error:

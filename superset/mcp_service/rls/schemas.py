@@ -22,7 +22,7 @@ Pydantic schemas for row level security filter responses.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -69,7 +69,7 @@ class RlsColumnFilter(ColumnOperator):
         description="Column to filter on.",
     )
     opr: ColumnOperatorEnum = Field(..., description="Operator to use.")
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by"
     )
 
@@ -90,10 +90,10 @@ class RlsFilterInfo(BaseModel):
     id: int | None = Field(None, description="RLS filter ID")
     name: str | None = Field(None, description="RLS filter name")
     filter_type: str | None = Field(None, description="Filter type: Regular or Base")
-    tables: List[RlsTableRef] | None = Field(
+    tables: list[RlsTableRef] | None = Field(
         None, description="Tables this filter applies to"
     )
-    roles: List[RlsRoleRef] | None = Field(
+    roles: list[RlsRoleRef] | None = Field(
         None, description="Roles this filter applies to"
     )
     clause: str | None = Field(None, description="SQL WHERE clause")
@@ -110,12 +110,12 @@ class RlsFilterInfo(BaseModel):
     )
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return select_serialized_response_fields(serializer(self), info)
 
 
 class RlsFilterList(BaseModel):
-    rls_filters: List[RlsFilterInfo]
+    rls_filters: list[RlsFilterInfo]
     count: int
     total_count: int
     page: int
@@ -123,11 +123,11 @@ class RlsFilterList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(default_factory=list)
-    columns_loaded: List[str] = Field(default_factory=list)
-    columns_available: List[str] = Field(default_factory=list)
-    sortable_columns: List[str] = Field(default_factory=list)
-    filters_applied: List[RlsColumnFilter] = Field(default_factory=list)
+    columns_requested: list[str] = Field(default_factory=list)
+    columns_loaded: list[str] = Field(default_factory=list)
+    columns_available: list[str] = Field(default_factory=list)
+    sortable_columns: list[str] = Field(default_factory=list)
+    filters_applied: list[RlsColumnFilter] = Field(default_factory=list)
     pagination: PaginationInfo | None = None
     timestamp: datetime | None = None
     model_config = ConfigDict(ser_json_timedelta="iso8601")
@@ -137,7 +137,7 @@ class ListRlsFiltersRequest(BaseModel):
     """Request schema for list_rls_filters."""
 
     filters: Annotated[
-        List[RlsColumnFilter],
+        list[RlsColumnFilter],
         Field(
             default_factory=list,
             description="List of filter objects (col, opr, value). "
@@ -145,7 +145,7 @@ class ListRlsFiltersRequest(BaseModel):
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="Columns to include in response. Defaults to common columns.",
@@ -181,16 +181,16 @@ class ListRlsFiltersRequest(BaseModel):
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[RlsColumnFilter]:
+    def parse_filters(cls, v: Any) -> list[RlsColumnFilter]:
         return parse_filters(v, RlsColumnFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_columns(cls, v: Any) -> List[str]:
+    def parse_columns(cls, v: Any) -> list[str]:
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListRlsFiltersRequest":
+    def validate_search_and_filters(self) -> ListRlsFiltersRequest:
         ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 

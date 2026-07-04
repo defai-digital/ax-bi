@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 import pygeohash as geohash_lib
 from flask_babel import gettext as _
@@ -83,7 +82,7 @@ def geodetic_parse(
     geodetic: str,
     longitude: str,
     latitude: str,
-    altitude: Optional[str] = None,
+    altitude: str | None = None,
 ) -> DataFrame:
     """
     Parse a column containing a geodetic point string

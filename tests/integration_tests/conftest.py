@@ -19,8 +19,9 @@ from __future__ import annotations
 import contextlib
 import functools
 import os
+from collections.abc import Callable
 from textwrap import dedent
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest

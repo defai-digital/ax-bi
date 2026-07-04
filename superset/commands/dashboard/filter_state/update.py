@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import cast, Optional
+from typing import cast
 
 from flask import session
 
@@ -30,7 +30,7 @@ from superset.utils.core import get_user_id
 
 
 class UpdateFilterStateCommand(UpdateTemporaryCacheCommand):
-    def update(self, cmd_params: CommandParameters) -> Optional[str]:
+    def update(self, cmd_params: CommandParameters) -> str | None:
         resource_id = cmd_params.resource_id
         key = cmd_params.key
         value = cast(str, cmd_params.value)  # schema ensures that value is not optional

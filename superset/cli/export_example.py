@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import click
 from flask.cli import with_appcontext
@@ -92,12 +91,12 @@ def write_file_with_header(path: Path, content: bytes) -> None:
 )
 @click.option("--force", "-f", is_flag=True, help="Overwrite existing example folder")
 def export_example(  # noqa: C901
-    dashboard_id: Optional[int],
-    dashboard_slug: Optional[str],
+    dashboard_id: int | None,
+    dashboard_slug: str | None,
     name: str,
     output_dir: str,
     export_data: bool,
-    sample_rows: Optional[int],
+    sample_rows: int | None,
     force: bool,
 ) -> None:
     """Export a dashboard as an example.

@@ -39,7 +39,7 @@ def get_default_lock_ttl() -> int:
     return int(current_app.config.get("DISTRIBUTED_LOCK_DEFAULT_TTL", 30))
 
 
-def get_redis_client() -> "redis.Redis[Any] | None":
+def get_redis_client() -> redis.Redis[Any] | None:
     """
     Get Redis client from distributed coordination if available.
 
