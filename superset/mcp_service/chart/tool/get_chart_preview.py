@@ -1101,7 +1101,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                 ):
                     await ctx.info(
                         "No chart identifier - creating transient chart from "
-                        "form_data_key={}".format(request.form_data_key)
+                        f"form_data_key={request.form_data_key}"
                     )
                     from superset.commands.explore.form_data.get import (
                         GetFormDataCommand,
@@ -1158,9 +1158,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
 
             else:
-                await ctx.debug(
-                    "Looking up chart: identifier={}".format(request.identifier)
-                )
+                await ctx.debug(f"Looking up chart: identifier={request.identifier}")
                 if request.identifier is None:
                     return ChartError(
                         error="Chart identifier is required",
@@ -1228,9 +1226,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
 
         if not chart:
-            await ctx.warning(
-                "Chart not found: identifier={}".format(request.identifier)
-            )
+            await ctx.warning(f"Chart not found: identifier={request.identifier}")
             is_form_data_key = (
                 isinstance(request.identifier, str)
                 and len(request.identifier) > 8
@@ -1274,9 +1270,8 @@ async def _get_chart_preview_internal(  # noqa: C901
             validation_result = validate_chart_dataset(chart, check_access=True)
             if not validation_result.is_valid:
                 await ctx.warning(
-                    "Chart found but dataset is not accessible: {}".format(
-                        validation_result.error
-                    )
+                    "Chart found but dataset is not accessible: "
+                    f"{validation_result.error}"
                 )
                 return ChartError(
                     error=validation_result.error
@@ -1285,7 +1280,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                 )
             # Log any warnings (e.g., virtual dataset warnings)
             for warning in validation_result.warnings:
-                await ctx.warning("Dataset warning: {}".format(warning))
+                await ctx.warning(f"Dataset warning: {warning}")
 
         # If form_data_key is provided, override chart.params with cached
         # form_data so the preview reflects what the user actually sees
@@ -1295,7 +1290,7 @@ async def _get_chart_preview_internal(  # noqa: C901
             ):
                 await ctx.info(
                     "Retrieving unsaved chart state from cache: "
-                    "form_data_key={}".format(request.form_data_key)
+                    f"form_data_key={request.form_data_key}"
                 )
                 from superset.commands.explore.form_data.get import (
                     GetFormDataCommand,
@@ -1328,8 +1323,8 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
                 except (CommandException, ValueError, KeyError) as e:
                     await ctx.warning(
-                        "Failed to retrieve cached form_data: {}. "
-                        "Using saved chart configuration.".format(str(e))
+                        f"Failed to retrieve cached form_data: {str(e)}. "
+                        "Using saved chart configuration."
                     )
 
         import time
@@ -1338,14 +1333,9 @@ async def _get_chart_preview_internal(  # noqa: C901
 
         await ctx.report_progress(2, 3, f"Generating {request.format} preview")
         await ctx.debug(
-            "Preview generation parameters: chart_id={}, viz_type={}, "
-            "datasource_id={}, width={}, height={}".format(
-                chart.id,
-                chart.viz_type,
-                chart.datasource_id,
-                request.width,
-                request.height,
-            )
+            f"Preview generation parameters: chart_id={chart.id}, "
+            f"viz_type={chart.viz_type}, datasource_id={chart.datasource_id}, "
+            f"width={request.width}, height={request.height}"
         )
 
         # Handle different preview formats using strategy pattern
@@ -1355,13 +1345,10 @@ async def _get_chart_preview_internal(  # noqa: C901
 
         if isinstance(content, ChartError):
             await ctx.error(
-                "Preview generation failed: chart_id={}, format={}, error={}, "
-                "error_type={}".format(
-                    chart.id,
-                    request.format,
-                    content.error,
-                    content.error_type,
-                )
+                "Preview generation failed: "
+                f"chart_id={chart.id}, format={request.format}, "
+                f"error={content.error}, "
+                f"error_type={content.error_type}"
             )
             return content
 
@@ -1383,11 +1370,8 @@ async def _get_chart_preview_internal(  # noqa: C901
             )
 
         await ctx.debug(
-            "Preview generation completed: execution_time_ms={}, "
-            "content_type={}".format(
-                execution_time,
-                type(content).__name__,
-            )
+            f"Preview generation completed: execution_time_ms={execution_time}, "
+            f"content_type={type(content).__name__}"
         )
 
         # Create backward-compatible response with enhanced metadata
@@ -1409,9 +1393,8 @@ async def _get_chart_preview_internal(  # noqa: C901
         # surface when the ORM session expires or commits mid-request.
         await ctx.error(
             "Chart preview failed due to database session error: "
-            "identifier={}, error_type={}, error={}".format(
-                request.identifier, type(e).__name__, str(e)
-            )
+            f"identifier={request.identifier}, error_type={type(e).__name__}, "
+            f"error={str(e)}"
         )
         logger.exception("SQLAlchemy error in get_chart_preview: %s", e)
         return ChartError(
@@ -1428,13 +1411,10 @@ async def _get_chart_preview_internal(  # noqa: C901
         TypeError,
     ) as e:
         await ctx.error(
-            "Chart preview generation failed: identifier={}, format={}, error={}, "
-            "error_type={}".format(
-                request.identifier,
-                request.format,
-                str(e),
-                type(e).__name__,
-            )
+            "Chart preview generation failed: "
+            f"identifier={request.identifier}, format={request.format}, "
+            f"error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         logger.error("Error in get_chart_preview: %s", e)
         return ChartError(
@@ -1459,21 +1439,15 @@ async def get_chart_preview(
     Returns preview URL or formatted content (ascii, table, vega_lite).
     """
     await ctx.info(
-        "Starting chart preview generation: identifier={}, format={}, width={}, "
-        "height={}".format(
-            request.identifier,
-            request.format,
-            request.width,
-            request.height,
-        )
+        "Starting chart preview generation: "
+        f"identifier={request.identifier}, format={request.format}, "
+        f"width={request.width}, "
+        f"height={request.height}"
     )
     await ctx.debug(
-        "Cache control settings: use_cache={}, force_refresh={}, "
-        "cache_timeout={}".format(
-            request.use_cache,
-            request.force_refresh,
-            request.cache_timeout,
-        )
+        f"Cache control settings: use_cache={request.use_cache}, "
+        f"force_refresh={request.force_refresh}, "
+        f"cache_timeout={request.cache_timeout}"
     )
 
     try:
@@ -1490,26 +1464,22 @@ async def get_chart_preview(
             )
         else:
             await ctx.warning(
-                "Chart preview generation failed: error_type={}, error={}".format(
-                    result.error_type, result.error
-                )
+                "Chart preview generation failed: "
+                f"error_type={result.error_type}, error={result.error}"
             )
 
         return result
     except OAuth2RedirectError as ex:
         await ctx.warning(
-            "Chart preview requires OAuth authentication: identifier={}".format(
-                request.identifier
-            )
+            "Chart preview requires OAuth authentication: "
+            f"identifier={request.identifier}"
         )
         return ChartError(
             error=build_oauth2_redirect_message(ex),
             error_type="OAUTH2_REDIRECT",
         )
     except OAuth2Error:
-        await ctx.error(
-            "OAuth2 configuration error: identifier={}".format(request.identifier)
-        )
+        await ctx.error(f"OAuth2 configuration error: identifier={request.identifier}")
         return ChartError(
             error=OAUTH2_CONFIG_ERROR_MESSAGE,
             error_type="OAUTH2_REDIRECT_ERROR",
@@ -1524,12 +1494,9 @@ async def get_chart_preview(
         AttributeError,
     ) as e:
         await ctx.error(
-            "Chart preview generation failed: identifier={}, error={}, "
-            "error_type={}".format(
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Chart preview generation failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return ChartError(
             error=f"Failed to generate chart preview: {str(e)}",
