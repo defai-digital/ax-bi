@@ -266,7 +266,7 @@ def _answer_with_llm(  # noqa: C901
                 if hasattr(result, "suggested_next_questions")
                 else [],
             )
-        elif isinstance(result, dict):
+        if isinstance(result, dict):
             return (
                 result.get("answer", ""),
                 result.get("confidence", 0.5),

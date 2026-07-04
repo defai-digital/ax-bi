@@ -23,6 +23,7 @@ layout, draft mode, and lineage metadata.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import uuid
 from typing import Any
@@ -464,10 +465,8 @@ async def compose_dashboard(  # noqa: C901
     except SQLAlchemyError as e:
         from superset import db
 
-        try:
+        with contextlib.suppress(SQLAlchemyError):
             db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            pass
         logger.error("Dashboard composition failed: %s", e, exc_info=True)
         return ComposeDashboardResponse(
             error=f"Failed to create dashboard: {e}",
