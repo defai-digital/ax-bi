@@ -157,8 +157,8 @@ async def upload_and_plan(
     ```
     """
     await ctx.info(
-        "Upload-and-plan: filename='%s', prompt='%s'"
-        % (request.filename, request.prompt[:80])
+        f"Upload-and-plan: filename='{request.filename}', "
+        f"prompt='{request.prompt[:80]}'"
     )
 
     if not user_can_view_data_model_metadata():
@@ -207,8 +207,7 @@ async def upload_and_plan(
     sheet_names = ds_dict.get("sheet_names", [])
 
     await ctx.info(
-        "File uploaded: dataset_id=%s, table='%s', sheets=%s"
-        % (ds_id, ds_table, sheet_names)
+        f"File uploaded: dataset_id={ds_id}, table='{ds_table}', sheets={sheet_names}"
     )
 
     # ------------------------------------------------------------------
@@ -228,9 +227,7 @@ async def upload_and_plan(
         )
 
         if not datasets:
-            all_warnings.append(
-                "Upload succeeded but dataset not found for planning."
-            )
+            all_warnings.append("Upload succeeded but dataset not found for planning.")
             return UploadAndPlanResponse(
                 dataset=ds_dict,
                 warnings=all_warnings,
@@ -278,9 +275,7 @@ async def upload_and_plan(
         sections=[
             DashboardPlanSection(
                 title="Charts",
-                chart_intents=[
-                    ci.model_dump() for ci in plan_full.chart_intents
-                ],
+                chart_intents=[ci.model_dump() for ci in plan_full.chart_intents],
             )
         ],
         layout_hints=plan_full.layout_hints,
@@ -303,12 +298,9 @@ async def upload_and_plan(
             )
 
     await ctx.info(
-        "Upload-and-plan complete: plan_id=%s, charts=%d, confidence=%.2f"
-        % (
-            plan_full.plan_id,
-            len(plan_full.chart_intents),
-            plan_full.confidence,
-        )
+        f"Upload-and-plan complete: plan_id={plan_full.plan_id}, "
+        f"charts={len(plan_full.chart_intents)}, "
+        f"confidence={plan_full.confidence:.2f}"
     )
 
     return UploadAndPlanResponse(
@@ -325,8 +317,17 @@ def _derive_title(prompt: str) -> str:
 
     words = re.findall(r"[A-Za-z]+", prompt)
     skip = {
-        "create", "make", "build", "show", "me",
-        "a", "an", "the", "with", "for", "and",
+        "create",
+        "make",
+        "build",
+        "show",
+        "me",
+        "a",
+        "an",
+        "the",
+        "with",
+        "for",
+        "and",
     }
     meaningful = [w for w in words if w.lower() not in skip][:5]
     if meaningful:
