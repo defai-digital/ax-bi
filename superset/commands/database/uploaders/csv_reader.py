@@ -153,10 +153,13 @@ class CSVReader(BaseDataReader):
         best_count = 0
         for candidate in DELIMITER_CANDIDATES:
             counts = [line.count(candidate) for line in head]
-            if counts and all(count == counts[0] for count in counts):
-                if counts[0] > best_count:
-                    best = candidate
-                    best_count = counts[0]
+            if (
+                counts
+                and all(count == counts[0] for count in counts)
+                and counts[0] > best_count
+            ):
+                best = candidate
+                best_count = counts[0]
         return best
 
     @staticmethod
@@ -408,16 +411,19 @@ class CSVReader(BaseDataReader):
 
         try:
             types = None
-            if "dtype" in kwargs and kwargs["dtype"]:
-                if isinstance(kwargs["dtype"], dict):
-                    custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
-                    if pandas_types:
-                        kwargs["dtype"] = pandas_types
-                    else:
-                        kwargs.pop("dtype", None)
+            if (
+                "dtype" in kwargs
+                and kwargs["dtype"]
+                and isinstance(kwargs["dtype"], dict)
+            ):
+                custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
+                if pandas_types:
+                    kwargs["dtype"] = pandas_types
+                else:
+                    kwargs.pop("dtype", None)
 
-                    # Custom types for our manual casting
-                    types = custom_types if custom_types else None
+                # Custom types for our manual casting
+                types = custom_types if custom_types else None
 
             if "chunksize" in kwargs:
                 chunks = []
