@@ -555,7 +555,7 @@ class SQLExecutor:
                 # Note: Don't use strict=True here as execution may be cancelled
                 # partway through, resulting in fewer results than statements
                 for orig_sql, (exec_sql, result_set, exec_time, rowcount) in zip(
-                    original_sqls, execution_results
+                    original_sqls, execution_results, strict=False
                 ):
                     if result_set is not None:
                         # SELECT statement
