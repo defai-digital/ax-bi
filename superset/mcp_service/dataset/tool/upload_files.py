@@ -90,7 +90,7 @@ async def upload_files(
     Each successful file result includes a full DatasetInfo that can be fed into
     generate_chart, query_dataset, or compose_dashboard.
     """
-    await ctx.info("Batch uploading %d file(s)" % len(request.files))
+    await ctx.info(f"Batch uploading {len(request.files)} file(s)")
 
     results: list[FileUploadResult] = []
     succeeded = 0
@@ -115,7 +115,7 @@ async def upload_files(
                 )
             )
             await ctx.warning(
-                "Failed to upload '%s': %s" % (file_item.filename, result.error)
+                f"Failed to upload '{file_item.filename}': {result.error}"
             )
         elif isinstance(result, DatasetInfo):
             succeeded += 1
@@ -127,9 +127,7 @@ async def upload_files(
                     error=None,
                 )
             )
-            await ctx.info(
-                "Uploaded '%s' -> dataset id=%s" % (file_item.filename, result.id)
-            )
+            await ctx.info(f"Uploaded '{file_item.filename}' -> dataset id={result.id}")
         else:
             # Unexpected response type — treat as failure
             failed += 1
@@ -142,9 +140,7 @@ async def upload_files(
                 )
             )
 
-    await ctx.info(
-        "Batch upload complete: %d succeeded, %d failed" % (succeeded, failed)
-    )
+    await ctx.info(f"Batch upload complete: {succeeded} succeeded, {failed} failed")
 
     return UploadFilesResponse(
         results=results,

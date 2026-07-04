@@ -322,7 +322,7 @@ def upload_single_file(  # noqa: C901
     except Exception as exc:
         logger.exception("upload_single_file failed for '%s'", filename)
         return DatasetError.create(
-            error="Upload failed: %s" % str(exc),
+            error=f"Upload failed: {str(exc)}",
             error_type="UploadFailedError",
         )
 
@@ -368,7 +368,7 @@ async def upload_file(
     For multiple files, use the upload_files tool instead.
     """
     await ctx.info(
-        "Uploading file '%s' (%d bytes)" % (request.filename, len(request.file_content))
+        f"Uploading file '{request.filename}' ({len(request.file_content)} bytes)"
     )
 
     result = upload_single_file(
@@ -379,7 +379,7 @@ async def upload_file(
     )
 
     if isinstance(result, DatasetError):
-        await ctx.error("Upload failed for '%s'" % request.filename)
+        await ctx.error(f"Upload failed for '{request.filename}'")
     else:
-        await ctx.info("Dataset created from uploaded file '%s'" % request.filename)
+        await ctx.info(f"Dataset created from uploaded file '{request.filename}'")
     return result
