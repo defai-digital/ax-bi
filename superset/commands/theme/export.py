@@ -61,8 +61,7 @@ class ExportThemesCommand(ExportModelsCommand):
 
         payload["version"] = EXPORT_VERSION
 
-        file_content = yaml.safe_dump(payload, sort_keys=False)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False)
 
     @staticmethod
     def _export(

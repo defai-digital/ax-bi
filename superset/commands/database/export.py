@@ -117,8 +117,7 @@ class ExportDatabasesCommand(ExportModelsCommand):
 
         payload["version"] = EXPORT_VERSION
 
-        file_content = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
 
     @staticmethod
     def _export(

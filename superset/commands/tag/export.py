@@ -115,8 +115,7 @@ class ExportTagsCommand:
         payload["tags"].extend(merged_tags)
 
         # Convert to YAML format
-        file_content = yaml.safe_dump(payload, sort_keys=False)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False)
 
     @staticmethod
     def export(
