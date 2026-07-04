@@ -333,13 +333,12 @@ class BaseReportState:
                         raise json.JSONDecodeError(
                             "Anchor value is not a list", anchor, 0
                         )
-                    urls = self._get_tabs_urls(
+                    return self._get_tabs_urls(
                         anchor_list,
                         dashboard_state=dashboard_state,
                         native_filter_params=native_filter_params,
                         user_friendly=user_friendly,
                     )
-                    return urls
                 except (TypeError, json.JSONDecodeError):
                     logger.debug("Anchor value is not a list, Fall back to single tab")
 
@@ -564,9 +563,7 @@ class BaseReportState:
         :raises: ReportSchedulePdfFailedError
         """
         screenshots = self._get_screenshots()
-        pdf = build_pdf_from_screenshots(screenshots)
-
-        return pdf
+        return build_pdf_from_screenshots(screenshots)
 
     def _get_csv_data(self) -> bytes:
         start_time = naive_utcnow()

@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 from typing import Any, cast
 
 from sqlalchemy import union_all
@@ -228,10 +229,8 @@ class GetCombinedDatasourceListCommand(BaseCommand):
                 elif opr == "dataset_is_null_or_empty" and isinstance(value, bool):
                     sql_filter = value
             elif col == "database" and value is not None:
-                try:
+                with suppress(TypeError, ValueError):
                     database_id = int(value)
-                except (TypeError, ValueError):
-                    pass
             elif col == "semantic_layer_uuid" and value is not None:
                 semantic_layer_uuid = str(value)
 
