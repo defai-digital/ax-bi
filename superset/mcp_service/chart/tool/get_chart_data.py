@@ -714,7 +714,7 @@ async def get_chart_data(  # noqa: C901
                 elif sample_values:
                     if all(isinstance(v, bool) for v in sample_values):
                         data_type = "boolean"
-                    elif all(isinstance(v, (int, float)) for v in sample_values):
+                    elif all(isinstance(v, int | float) for v in sample_values):
                         data_type = "numeric"
 
                 columns.append(
@@ -997,9 +997,7 @@ async def _query_from_form_data(
                 row.get(col_name) for row in data[:3] if row.get(col_name) is not None
             ]
             data_type = "string"
-            if sample_values and all(
-                isinstance(v, (int, float)) for v in sample_values
-            ):
+            if sample_values and all(isinstance(v, int | float) for v in sample_values):
                 data_type = "numeric"
             columns.append(
                 DataColumn(
@@ -1086,7 +1084,7 @@ def _export_data_as_csv(
                 # Handle None values and convert to string
                 if value is None:
                     csv_row[col] = ""
-                elif isinstance(value, (list, dict)):
+                elif isinstance(value, list | dict):
                     csv_row[col] = str(value)
                 else:
                     csv_row[col] = value
@@ -1173,7 +1171,7 @@ def _write_excel_data(ws: Any, data: list[dict[str, Any]], columns: list[str]) -
             value = row.get(col, "")
             if value is None:
                 value = ""
-            elif isinstance(value, (list, dict)):
+            elif isinstance(value, list | dict):
                 value = str(value)
             ws.cell(row=row_idx, column=col_idx, value=value)
 
@@ -1236,7 +1234,7 @@ def _write_xlsxwriter_data(
             value = row.get(col, "")
             if value is None:
                 value = ""
-            elif isinstance(value, (list, dict)):
+            elif isinstance(value, list | dict):
                 value = str(value)
             worksheet.write(row_idx + 1, col_idx, value)
 

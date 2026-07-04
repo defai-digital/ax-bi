@@ -104,7 +104,7 @@ def _optional_number(value: Any) -> int | float | None:
 
     return (
         value
-        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        if isinstance(value, int | float) and not isinstance(value, bool)
         else None
     )
 

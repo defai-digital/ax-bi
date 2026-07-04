@@ -463,7 +463,7 @@ def _resolve_user_from_jwt_context(app: Any) -> User | None:
     # single-issuer deployments).
     configured_issuer = get_mcp_jwt_issuer(app.config)
     if (
-        isinstance(configured_issuer, (list, tuple, set))
+        isinstance(configured_issuer, list | tuple | set)
         and len(configured_issuer) > 1
         and not get_mcp_user_resolver(app.config)
     ):

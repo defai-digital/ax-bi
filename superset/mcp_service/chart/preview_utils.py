@@ -309,7 +309,7 @@ def _generate_safe_ascii_bar_chart(data: list[dict[str, Any]]) -> str:
         value = None
 
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
+            if isinstance(val, int | float) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:
                 label = val
@@ -359,7 +359,7 @@ def _extract_numeric_values_safe(data: list[dict[str, Any]]) -> list[float]:
     values = []
     for row in data[:20]:
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val):
+            if isinstance(val, int | float) and not _is_nan(val):
                 values.append(val)
                 break
     return values
@@ -416,7 +416,7 @@ def _generate_safe_ascii_pie_chart(data: list[dict[str, Any]]) -> str:
         value = None
 
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
+            if isinstance(val, int | float) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:
                 label = val
@@ -527,7 +527,7 @@ def _generate_vega_lite_preview_from_data(  # noqa: C901
                     field_type = "temporal"
                 else:
                     field_type = "nominal"
-            elif isinstance(sample_val, (int, float)):
+            elif isinstance(sample_val, int | float):
                 field_type = "quantitative"
 
         encoding["x"] = {
@@ -545,7 +545,7 @@ def _generate_vega_lite_preview_from_data(  # noqa: C901
             if any(
                 agg in str(col).upper()
                 for agg in ["SUM", "AVG", "COUNT", "MIN", "MAX", "TOTAL"]
-            ) or isinstance(data[0].get(col), (int, float)):
+            ) or isinstance(data[0].get(col), int | float):
                 metric_col = col
                 break
 

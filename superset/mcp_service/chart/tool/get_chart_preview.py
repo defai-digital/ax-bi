@@ -639,7 +639,7 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
             return "temporal"
         # Check for numeric fields
         if all(
-            isinstance(val, (int, float)) and not isinstance(val, bool)
+            isinstance(val, int | float) and not isinstance(val, bool)
             for val in sample_values
         ):
             return "quantitative"

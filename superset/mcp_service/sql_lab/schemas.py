@@ -117,7 +117,7 @@ class ColumnInfo(BaseModel):
         """Coerce non-boolean values (e.g. Athena's 'UNKNOWN') to None."""
         if v is None or isinstance(v, bool):
             return v
-        if isinstance(v, (int, float)):
+        if isinstance(v, int | float):
             if v == 1:
                 return True
             if v == 0:

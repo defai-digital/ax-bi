@@ -147,7 +147,7 @@ def _sanitize_error_for_logging(error: Exception) -> str:
     error_str = re.sub(r"\b(\d+)\.\d+\.\d+\.\d+\b", r"\1.xxx.xxx.xxx", error_str)
 
     # For certain error types, provide generic messages
-    if isinstance(error, (OperationalError, TimeoutError)):
+    if isinstance(error, OperationalError | TimeoutError):
         return "Database operation failed"
     if isinstance(error, PermissionError):
         return "Access denied"
@@ -678,7 +678,7 @@ class GlobalErrorHandlerMiddleware(Middleware):
             raise ToolError(
                 f"Validation error in {tool_name}: {'; '.join(validation_details)}"
             ) from error
-        elif isinstance(error, (OperationalError, TimeoutError)):
+        elif isinstance(error, OperationalError | TimeoutError):
             # Database errors
             raise ToolError(
                 f"Database error in {tool_name}: Service temporarily unavailable. "
@@ -703,12 +703,12 @@ class GlobalErrorHandlerMiddleware(Middleware):
             raise ToolError(
                 f"Invalid parameter in {tool_name}: {str(error)}"
             ) from error
-        elif isinstance(error, (ObjectNotFoundError, CommandInvalidError)):
+        elif isinstance(error, ObjectNotFoundError | CommandInvalidError):
             # Superset command: not found (404) or validation (422)
             raise ToolError(
                 f"Invalid request for {tool_name}: {_sanitize_error_for_logging(error)}"
             ) from error
-        elif isinstance(error, (ForbiddenError, SupersetSecurityException)):
+        elif isinstance(error, ForbiddenError | SupersetSecurityException):
             # Superset access denied — agent tried a tool it can't use
             raise ToolError(
                 f"Permission denied for {tool_name}: "

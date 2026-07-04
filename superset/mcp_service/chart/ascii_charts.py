@@ -77,7 +77,7 @@ def _generate_ascii_bar_chart(data: list[Any], width: int, height: int) -> str:
 
             for _key, val in row.items():
                 if (
-                    isinstance(val, (int, float))
+                    isinstance(val, int | float)
                     and not isinstance(val, bool)
                     and not _is_nan_value(val)
                     and numeric_val is None
@@ -285,7 +285,7 @@ def _extract_time_series_data(
 
             for key, val in row.items():
                 if (
-                    isinstance(val, (int, float))
+                    isinstance(val, int | float)
                     and not isinstance(val, bool)
                     and not _is_nan_value(val)
                     and numeric_val is None
@@ -544,7 +544,7 @@ def _extract_scatter_data(
         # Find the first two numeric columns
         for key, val in data[0].items():
             if (
-                isinstance(val, (int, float))
+                isinstance(val, int | float)
                 and not isinstance(val, bool)
                 and not _is_nan_value(val)
             ):
@@ -560,10 +560,10 @@ def _extract_scatter_data(
                     x_val = row.get(x_column)
                     y_val = row.get(y_column)
                     if (
-                        isinstance(x_val, (int, float))
+                        isinstance(x_val, int | float)
                         and not isinstance(x_val, bool)
                         and not _is_nan_value(x_val)
-                        and isinstance(y_val, (int, float))
+                        and isinstance(y_val, int | float)
                         and not isinstance(y_val, bool)
                         and not _is_nan_value(y_val)
                     ):
@@ -849,7 +849,7 @@ def _format_table_row(
             formatted_val = formatted_val[: width - 5] + "..."
 
         # Align numbers right, text left
-        if isinstance(val, (int, float)):
+        if isinstance(val, int | float):
             formatted_values.append(f"{formatted_val:>{width - 2}}")
         else:
             formatted_values.append(f"{formatted_val:<{width - 2}}")
@@ -867,7 +867,7 @@ def _create_numeric_summaries(data: list[Any], headers: list[str]) -> list[str]:
         for row in data:
             if isinstance(row, dict):
                 val = row.get(header)
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     values.append(val)
 
         if len(values) >= 2:

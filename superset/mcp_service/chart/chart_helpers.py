@@ -94,7 +94,7 @@ def get_cached_form_data(form_data_key: str) -> str | None:
 
 def resolve_datasource_engine(datasource_id: Any, datasource_type: str) -> str:
     """Return the datasource engine name, or ``"base"`` if it cannot be resolved."""
-    if not isinstance(datasource_id, (int, str)):
+    if not isinstance(datasource_id, int | str):
         return "base"
     try:
         # avoid circular import
@@ -678,7 +678,7 @@ def build_query_context_from_form_data(
     from superset.common.query_context_factory import QueryContextFactory
 
     datasource_id, datasource_type = resolve_form_data_datasource(form_data, chart)
-    if not isinstance(datasource_id, (int, str)):
+    if not isinstance(datasource_id, int | str):
         raise ValueError(
             "Cannot determine datasource ID from form_data. "
             "Provide a chart identifier or ensure form_data contains "

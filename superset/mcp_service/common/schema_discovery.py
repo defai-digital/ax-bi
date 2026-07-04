@@ -100,13 +100,13 @@ class GetSchemaResponse(BaseModel):
 
 def _get_sqlalchemy_type_name(col_type: Any) -> str:
     """Convert SQLAlchemy column type to a friendly type name."""
-    if isinstance(col_type, (sa.String, sa.Text)):
+    if isinstance(col_type, sa.String | sa.Text):
         return "str"
     if isinstance(col_type, sa.Boolean):
         return "bool"
-    if isinstance(col_type, (sa.Integer, sa.SmallInteger, sa.BigInteger)):
+    if isinstance(col_type, sa.Integer | sa.SmallInteger | sa.BigInteger):
         return "int"
-    if isinstance(col_type, (sa.Float, sa.Numeric)):
+    if isinstance(col_type, sa.Float | sa.Numeric):
         return "float"
     if isinstance(col_type, sa.DateTime):
         return "datetime"

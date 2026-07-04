@@ -109,7 +109,7 @@ def _health_response_from_ax_services(
         python_version=str(payload.get("nodeVersion") or "unknown"),
         platform=str(payload.get("platform") or "unknown"),
         uptime_seconds=float(payload["uptimeSeconds"])
-        if isinstance(payload.get("uptimeSeconds"), (int, float))
+        if isinstance(payload.get("uptimeSeconds"), int | float)
         else None,
     )
 

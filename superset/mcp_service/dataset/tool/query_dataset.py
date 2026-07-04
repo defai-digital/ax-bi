@@ -394,7 +394,7 @@ async def query_dataset(  # noqa: C901
             if sample_values:
                 if all(isinstance(v, bool) for v in sample_values):
                     data_type = "boolean"
-                elif all(isinstance(v, (int, float)) for v in sample_values):
+                elif all(isinstance(v, int | float) for v in sample_values):
                     data_type = "numeric"
 
             # Compute null_count and unique non-null values in one pass

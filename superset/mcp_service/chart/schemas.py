@@ -653,7 +653,7 @@ def _normalize_group_by_input(v: Any) -> Any:
     """Accept a single ColumnRef/dict/str and normalize to list of dicts."""
     if isinstance(v, str):
         return [{"name": v}]
-    if isinstance(v, (dict, ColumnRef)):
+    if isinstance(v, dict | ColumnRef):
         return [v]
     if isinstance(v, list):
         return [{"name": item} if isinstance(item, str) else item for item in v]

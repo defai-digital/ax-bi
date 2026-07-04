@@ -282,7 +282,7 @@ def _sanitize_row_values(rows: list[dict[str, Any]]) -> None:
     """Sanitize non-serializable values in rows for JSON serialization."""
     for row in rows:
         for key, value in row.items():
-            if isinstance(value, (bytes, memoryview)):
+            if isinstance(value, bytes | memoryview):
                 raw = bytes(value) if isinstance(value, memoryview) else value
                 try:
                     row[key] = raw.decode("utf-8")
@@ -290,7 +290,9 @@ def _sanitize_row_values(rows: list[dict[str, Any]]) -> None:
                     row[key] = raw.hex()
             elif isinstance(value, Decimal):
                 row[key] = float(value)
-            elif not isinstance(value, (str, int, float, bool, type(None), list, dict)):
+            elif not isinstance(
+                value, str | int | float | bool | type(None) | list | dict
+            ):
                 row[key] = str(value)
 
 

@@ -568,7 +568,7 @@ def _normalize_call_tool_arguments(
     properties = tool_schema.get("properties", {})
     result = dict(arguments)
     for key, value in result.items():
-        if not isinstance(value, (dict, list)) or key not in properties:
+        if not isinstance(value, dict | list) or key not in properties:
             continue
         prop_schema = properties[key]
         variants = prop_schema.get("oneOf") or prop_schema.get("anyOf") or []
