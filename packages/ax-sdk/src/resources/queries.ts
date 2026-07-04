@@ -22,7 +22,7 @@ import type { QueryItem } from './types.js';
 
 /** Read-only operations for query history. */
 export class QueriesResource extends BaseResource<QueryItem> {
-  protected readonly basePath = '/api/v1/saved_query';
+  protected readonly basePath = '/api/v1/query';
 
   /** Get the results of a previously executed query. */
   async getResults(key: string): Promise<Record<string, unknown>> {
