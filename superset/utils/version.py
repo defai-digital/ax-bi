@@ -80,12 +80,11 @@ def get_dev_env_label() -> str:
     # Build label
     if branch and sha:
         return f"{branch}@{sha}"
-    elif sha:
+    if sha:
         return f"@{sha}"
-    elif branch:
+    if branch:
         return branch
-    else:
-        return ""
+    return ""
 
 
 def _get_local_branch() -> str | None:
