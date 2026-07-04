@@ -224,5 +224,4 @@ class AppRootMiddleware:
             environ["PATH_INFO"] = original_path_info.removeprefix(self.app_root)
             environ["SCRIPT_NAME"] = self.app_root
             return self.wsgi_app(environ, start_response)
-        else:
-            return NotFound()(environ, start_response)
+        return NotFound()(environ, start_response)
