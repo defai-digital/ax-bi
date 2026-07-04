@@ -97,10 +97,10 @@ operator_map: dict[ColumnOperatorEnum, Any] = {
         f"%{_escape_like(val)}%", escape="\\"
     ),
     ColumnOperatorEnum.in_: lambda col, val: col.in_(
-        val if isinstance(val, (list, tuple)) else [val]
+        val if isinstance(val, list | tuple) else [val]
     ),
     ColumnOperatorEnum.nin: lambda col, val: (
-        ~col.in_(val if isinstance(val, (list, tuple)) else [val])
+        ~col.in_(val if isinstance(val, list | tuple) else [val])
     ),
     ColumnOperatorEnum.gt: lambda col, val: col > val,
     ColumnOperatorEnum.gte: lambda col, val: col >= val,
@@ -608,13 +608,13 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
 
         filterable: dict[str, Any] = {}
         for name, col in columns.items():
-            if isinstance(col.type, (sa.String, sa.Text)):
+            if isinstance(col.type, sa.String | sa.Text):
                 filterable[name] = TYPE_OPERATOR_MAP["string"]
-            elif isinstance(col.type, (sa.Boolean,)):
+            elif isinstance(col.type, sa.Boolean):
                 filterable[name] = TYPE_OPERATOR_MAP["boolean"]
-            elif isinstance(col.type, (sa.Integer, sa.Float, sa.Numeric)):
+            elif isinstance(col.type, sa.Integer | sa.Float | sa.Numeric):
                 filterable[name] = TYPE_OPERATOR_MAP["number"]
-            elif isinstance(col.type, (sa.DateTime, sa.Date, sa.Time)):
+            elif isinstance(col.type, sa.DateTime | sa.Date | sa.Time):
                 filterable[name] = TYPE_OPERATOR_MAP["datetime"]
             else:
                 # Fallback to eq/ne/null
