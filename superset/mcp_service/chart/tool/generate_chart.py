@@ -178,9 +178,8 @@ async def generate_chart(  # noqa: C901
     """
     start_time = time.time()
     await ctx.info(
-        "Starting chart generation: dataset_id=%s, chart_type=%s, "
-        "save_chart=%s, preview_formats=%s"
-        % (
+        "Starting chart generation: dataset_id={}, chart_type={}, "
+        "save_chart={}, preview_formats={}".format(
             request.dataset_id,
             request.config.chart_type,
             request.save_chart,
@@ -188,8 +187,7 @@ async def generate_chart(  # noqa: C901
         )
     )
     await ctx.debug(
-        "Chart configuration details: chart_type=%s, fields=%s"
-        % (
+        "Chart configuration details: chart_type={}, fields={}".format(
             request.config.chart_type,
             sorted(request.config.model_fields_set),
         )
@@ -207,7 +205,7 @@ async def generate_chart(  # noqa: C901
         # Run comprehensive validation pipeline
         await ctx.report_progress(1, 5, "Running validation pipeline")
         await ctx.debug(
-            "Validating chart request: dataset_id=%s" % (request.dataset_id,)
+            "Validating chart request: dataset_id={}".format(request.dataset_id)
         )
         with mcp_event_log_context(action="mcp.generate_chart.validation"):
             from superset.mcp_service.chart.validation import ValidationPipeline
@@ -225,7 +223,9 @@ async def generate_chart(  # noqa: C901
                 runtime_warnings = validation_result.warnings.get("warnings", [])
                 if runtime_warnings:
                     await ctx.info(
-                        "Runtime suggestions: %s" % ("; ".join(runtime_warnings[:3]),)
+                        "Runtime suggestions: {}".format(
+                            "; ".join(runtime_warnings[:3])
+                        )
                     )
 
         if not validation_result.is_valid:
@@ -233,8 +233,9 @@ async def generate_chart(  # noqa: C901
             if validation_result.error is None:
                 raise RuntimeError("Validation failed but error object is missing")
             await ctx.warning(
-                "Chart validation failed: error=%s"
-                % (validation_result.error.model_dump(),)
+                "Chart validation failed: error={}".format(
+                    validation_result.error.model_dump()
+                )
             )
             return GenerateChartResponse.model_validate(
                 {
@@ -272,7 +273,9 @@ async def generate_chart(  # noqa: C901
             # Find the dataset to get its numeric ID
             from superset.daos.dataset import DatasetDAO
 
-            await ctx.debug("Looking up dataset: dataset_id=%s" % (request.dataset_id,))
+            await ctx.debug(
+                "Looking up dataset: dataset_id={}".format(request.dataset_id)
+            )
             with mcp_event_log_context(action="mcp.generate_chart.dataset_lookup"):
                 dataset = None
                 if isinstance(request.dataset_id, int) or (
@@ -308,7 +311,7 @@ async def generate_chart(  # noqa: C901
 
             if not dataset:
                 await ctx.warning(
-                    "Dataset not found: dataset_id=%s" % (request.dataset_id,)
+                    "Dataset not found: dataset_id={}".format(request.dataset_id)
                 )
                 from superset.mcp_service.common.error_schemas import (
                     ChartGenerationError,
@@ -352,7 +355,7 @@ async def generate_chart(  # noqa: C901
             chart_name = request.chart_name or generate_chart_name(
                 config, dataset_name=dataset_name
             )
-            await ctx.debug("Chart name: chart_name=%s" % (chart_name,))
+            await ctx.debug("Chart name: chart_name={}".format(chart_name))
             form_data_with_datasource = {
                 **form_data,
                 "datasource": f"{dataset.id}__table",
@@ -394,8 +397,7 @@ async def generate_chart(  # noqa: C901
                         )
 
                 await ctx.info(
-                    "Chart created successfully: chart_id=%s, chart_name=%s"
-                    % (
+                    "Chart created successfully: chart_id={}, chart_name={}".format(
                         chart.id,
                         chart.slice_name,
                     )
@@ -406,8 +408,9 @@ async def generate_chart(  # noqa: C901
                 if not dataset_check.is_valid:
                     # Dataset validation failed - warn but don't fail the operation
                     await ctx.warning(
-                        "Chart created but dataset validation failed: %s"
-                        % (dataset_check.error,)
+                        "Chart created but dataset validation failed: {}".format(
+                            dataset_check.error
+                        )
                     )
                     logger.warning(
                         "Chart %s created but dataset validation failed: %s",
@@ -431,7 +434,9 @@ async def generate_chart(  # noqa: C901
                         compile_result.error,
                     )
                     await ctx.warning(
-                        "Chart compile check failed: error=%s" % (compile_result.error,)
+                        "Chart compile check failed: error={}".format(
+                            compile_result.error
+                        )
                     )
                     from superset.daos.chart import ChartDAO
 
@@ -479,7 +484,7 @@ async def generate_chart(  # noqa: C901
 
             except CommandException as e:
                 logger.error("Chart creation failed: %s", e)
-                await ctx.error("Chart creation failed: error=%s" % (str(e),))
+                await ctx.error("Chart creation failed: error={}".format(str(e)))
                 raise
             # Update explore URL to use saved chart
             explore_url = f"{get_superset_base_url()}/explore/?slice_id={chart.id}"
@@ -505,7 +510,7 @@ async def generate_chart(  # noqa: C901
                     form_data_key = MCPCreateFormDataCommand(cmd_params).run()
                     await ctx.debug(
                         "Generated form_data_key for saved chart: "
-                        "form_data_key=%s" % (form_data_key,)
+                        "form_data_key={}".format(form_data_key)
                     )
             except CommandException as fdk_error:
                 logger.warning(
@@ -513,7 +518,7 @@ async def generate_chart(  # noqa: C901
                     fdk_error,
                 )
                 await ctx.warning(
-                    "Failed to generate form_data_key: error=%s" % (str(fdk_error),)
+                    "Failed to generate form_data_key: error={}".format(str(fdk_error))
                 )
                 # form_data_key remains None but chart is still valid
         else:
@@ -524,7 +529,9 @@ async def generate_chart(  # noqa: C901
             explore_url = generate_explore_link(
                 request.dataset_id, form_data, prefer_permalink=False
             )
-            await ctx.debug("Generated explore link: explore_url=%s" % (explore_url,))
+            await ctx.debug(
+                "Generated explore link: explore_url={}".format(explore_url)
+            )
 
             # Extract form_data_key from the explore URL
             form_data_key = extract_form_data_key_from_url(explore_url)
@@ -556,7 +563,9 @@ async def generate_chart(  # noqa: C901
                     compile_result = _compile_chart(form_data, numeric_dataset_id)
                 if not compile_result.success:
                     await ctx.warning(
-                        "Chart compile check failed: error=%s" % (compile_result.error,)
+                        "Chart compile check failed: error={}".format(
+                            compile_result.error
+                        )
                     )
                     from superset.mcp_service.common.error_schemas import (
                         ChartGenerationError,
@@ -629,13 +638,13 @@ async def generate_chart(  # noqa: C901
         previews = {}
         if request.generate_preview:
             await ctx.debug(
-                "Generating previews: formats=%s" % (str(request.preview_formats),)
+                "Generating previews: formats={}".format(str(request.preview_formats))
             )
             try:
                 with mcp_event_log_context(action="mcp.generate_chart.preview"):
                     for format_type in request.preview_formats:
                         await ctx.debug(
-                            "Processing preview format: format=%s" % (format_type,)
+                            "Processing preview format: format={}".format(format_type)
                         )
 
                         if chart_id:
@@ -654,8 +663,9 @@ async def generate_chart(  # noqa: C901
 
                             if isinstance(preview_result, ChartError):
                                 await ctx.warning(
-                                    "Preview '%s' failed: %s"
-                                    % (format_type, preview_result.error)
+                                    "Preview '{}' failed: {}".format(
+                                        format_type, preview_result.error
+                                    )
                                 )
                             elif hasattr(preview_result, "content"):
                                 previews[format_type] = preview_result.content
@@ -693,15 +703,16 @@ async def generate_chart(  # noqa: C901
 
                                 if isinstance(preview_result, ChartError):
                                     await ctx.warning(
-                                        "Preview '%s' failed: %s"
-                                        % (format_type, preview_result.error)
+                                        "Preview '{}' failed: {}".format(
+                                            format_type, preview_result.error
+                                        )
                                     )
                                 else:
                                     previews[format_type] = preview_result
 
             except (CommandException, ValueError, KeyError) as e:
                 # Log warning but don't fail the entire request
-                await ctx.warning("Preview generation failed: error=%s" % (str(e),))
+                await ctx.warning("Preview generation failed: error={}".format(str(e)))
                 logger.warning("Preview generation failed: %s", e)
 
         # Return enhanced data while maintaining backward compatibility
@@ -811,16 +822,15 @@ async def generate_chart(  # noqa: C901
         }
         await ctx.report_progress(5, 5, "Chart generation completed")
         await ctx.info(
-            "Chart generation completed successfully: chart_id=%s, execution_time_ms=%s"
-            % (
+            "Chart generation completed successfully: chart_id={}, "
+            "execution_time_ms={}".format(
                 chart.id if chart else None,
                 int((time.time() - start_time) * 1000),
             )
         )
         await ctx.debug(
-            "Final chart response: success=True, chart_id=%s, chart_name=%s, "
-            "chart_url=%s, form_data_key=%s, warnings=%s"
-            % (
+            "Final chart response: success=True, chart_id={}, chart_name={}, "
+            "chart_url={}, form_data_key={}, warnings={}".format(
                 chart.id if chart else None,
                 chart_name,
                 explore_url,
@@ -832,8 +842,9 @@ async def generate_chart(  # noqa: C901
 
     except OAuth2RedirectError as ex:
         await ctx.warning(
-            "Chart generation requires OAuth authentication: dataset_id=%s"
-            % request.dataset_id
+            "Chart generation requires OAuth authentication: dataset_id={}".format(
+                request.dataset_id
+            )
         )
         return GenerateChartResponse.model_validate(
             {
@@ -848,7 +859,7 @@ async def generate_chart(  # noqa: C901
         )
     except OAuth2Error:
         await ctx.error(
-            "OAuth2 configuration error: dataset_id=%s" % request.dataset_id
+            "OAuth2 configuration error: dataset_id={}".format(request.dataset_id)
         )
         return GenerateChartResponse.model_validate(
             {
@@ -871,8 +882,7 @@ async def generate_chart(  # noqa: C901
                 "Database rollback failed during error handling", exc_info=True
             )
         await ctx.error(
-            "Chart generation failed: error=%s, execution_time_ms=%s"
-            % (
+            "Chart generation failed: error={}, execution_time_ms={}".format(
                 str(e),
                 int((time.time() - start_time) * 1000),
             )
