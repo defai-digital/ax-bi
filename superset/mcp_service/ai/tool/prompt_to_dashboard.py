@@ -148,8 +148,8 @@ async def prompt_to_dashboard(  # noqa: C901
     """
     start_time = time.time()
     await ctx.info(
-        "Prompt-to-dashboard: prompt='%s', datasets=%s, max_charts=%d"
-        % (request.prompt[:80], request.dataset_ids, request.max_charts)
+        f"Prompt-to-dashboard: prompt='{request.prompt[:80]}', "
+        f"datasets={request.dataset_ids}, max_charts={request.max_charts}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -213,8 +213,8 @@ async def prompt_to_dashboard(  # noqa: C901
 
     tool_chain.append("plan_dashboard")
     await ctx.info(
-        "Plan ready: title='%s', charts=%d, confidence=%.2f"
-        % (plan_full.title, len(plan_full.chart_intents), plan_full.confidence)
+        f"Plan ready: title='{plan_full.title}', "
+        f"charts={len(plan_full.chart_intents)}, confidence={plan_full.confidence:.2f}"
     )
 
     # ------------------------------------------------------------------
@@ -373,12 +373,9 @@ async def prompt_to_dashboard(  # noqa: C901
     duration = int((time.time() - start_time) * 1000)
 
     await ctx.info(
-        "Prompt-to-dashboard complete: dashboard_id=%s, charts=%d, duration=%dms"
-        % (
-            dashboard_data.get("id") if dashboard_data else None,
-            len(chart_ids),
-            duration,
-        )
+        f"Prompt-to-dashboard complete: "
+        f"dashboard_id={dashboard_data.get('id') if dashboard_data else None}, "
+        f"charts={len(chart_ids)}, duration={duration}ms"
     )
 
     return PromptToDashboardResponse(
