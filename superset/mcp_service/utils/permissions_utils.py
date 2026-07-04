@@ -21,7 +21,7 @@ Provides functionality to filter sensitive data based on user permissions.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.security.sqla.models import User
 from pydantic import BaseModel
@@ -62,7 +62,7 @@ SENSITIVE_FIELD_PERMISSIONS = {
 }
 
 
-def get_current_user() -> Optional[User]:
+def get_current_user() -> User | None:
     """Get the current authenticated user."""
     try:
         from flask import g
@@ -92,7 +92,7 @@ def user_can_access_dataset_permission(permission: str) -> bool:
 
 
 def user_has_permission(
-    user: Optional[User], permission: str, resource: Optional[str] = None
+    user: User | None, permission: str, resource: str | None = None
 ) -> bool:
     """
     Check if user has a specific permission.
@@ -129,11 +129,7 @@ def user_has_permission(
             return security_manager.has_access(permission, resource, user)
 
         # Check if user has permission on any resource
-        for pvm in user.get_permissions():
-            if pvm.permission.name == permission:
-                return True
-
-        return False
+        return any(pvm.permission.name == permission for pvm in user.get_permissions())
     except Exception as e:
         logger.warning(
             "Error checking permission %s for user %s: %s", permission, user, e
@@ -143,8 +139,8 @@ def user_has_permission(
 
 def get_allowed_fields(
     object_type: str,
-    user: Optional[User] = None,
-    requested_fields: Optional[list[str]] = None,
+    user: User | None = None,
+    requested_fields: list[str] | None = None,
 ) -> set[str]:
     """
     Get the set of fields that the user is allowed to access for a given object type.
@@ -203,8 +199,8 @@ def get_allowed_fields(
 def filter_sensitive_data(
     data: Any,
     object_type: str,
-    user: Optional[User] = None,
-    allowed_fields: Optional[set[str]] = None,
+    user: User | None = None,
+    allowed_fields: set[str] | None = None,
 ) -> Any:
     """
     Filter sensitive data from an object based on user permissions.
@@ -263,7 +259,7 @@ def filter_sensitive_data(
 
 
 def apply_field_permissions_to_columns(
-    columns: list[str], object_type: str, user: Optional[User] = None
+    columns: list[str], object_type: str, user: User | None = None
 ) -> list[str]:
     """
     Filter a list of column names based on field-level permissions.
@@ -289,9 +285,7 @@ class PermissionAwareSerializer:
         self.object_type = object_type
         self.base_serializer = base_serializer
 
-    def serialize(
-        self, obj: Any, columns: list[str], user: Optional[User] = None
-    ) -> Any:
+    def serialize(self, obj: Any, columns: list[str], user: User | None = None) -> Any:
         """
         Serialize object with field-level permissions applied.
 
@@ -316,16 +310,16 @@ class PermissionAwareSerializer:
 
 
 # Convenience functions for common object types
-def filter_dataset_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_dataset_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from dataset objects."""
     return filter_sensitive_data(data, "dataset", user)
 
 
-def filter_chart_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_chart_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from chart objects."""
     return filter_sensitive_data(data, "chart", user)
 
 
-def filter_dashboard_data(data: Any, user: Optional[User] = None) -> Any:
+def filter_dashboard_data(data: Any, user: User | None = None) -> Any:
     """Filter sensitive data from dashboard objects."""
     return filter_sensitive_data(data, "dashboard", user)
