@@ -198,13 +198,13 @@ class SupersetTestCase(TestCase):
                 pvms.extend(role.permissions)
 
         for pvm in extra_pvms or []:
-            if isinstance(pvm, (tuple, list)):
+            if isinstance(pvm, tuple | list):
                 pvms.append(security_manager.find_permission_view_menu(*pvm))
             else:
                 pvms.append(pvm)
 
         for pvm in pvms_to_remove or []:
-            if isinstance(pvm, (tuple, list)):
+            if isinstance(pvm, tuple | list):
                 pvm = security_manager.find_permission_view_menu(*pvm)
             if pvm:
                 pvms = [
