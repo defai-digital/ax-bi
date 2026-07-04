@@ -180,11 +180,11 @@ class ImportAssetsCommand(BaseCommand):
                 chart_ids[str(chart.uuid)] = chart.id
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        import_tag(
-                            config["tags"], contents, chart.id, "chart", db.session
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    import_tag(config["tags"], contents, chart.id, "chart", db.session)
 
         # import dashboards
         for file_name, config in configs.items():
@@ -212,15 +212,17 @@ class ImportAssetsCommand(BaseCommand):
                 db.session.execute(insert(dashboard_slices).values(dashboard_chart_ids))
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        import_tag(
-                            config["tags"],
-                            contents,
-                            dashboard.id,
-                            "dashboard",
-                            db.session,
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    import_tag(
+                        config["tags"],
+                        contents,
+                        dashboard.id,
+                        "dashboard",
+                        db.session,
+                    )
 
                 # Migrate any filter-box charts to native dashboard filters.
                 migrate_dashboard(dashboard)
