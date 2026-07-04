@@ -72,7 +72,7 @@ def _validate_embeddings(
             f"{expected_count} inputs"
         )
     for index, vector in enumerate(embeddings):
-        if isinstance(vector, (bytes, str)):
+        if isinstance(vector, bytes | str):
             raise EmbeddingProviderError(f"Embedding {index} is not a vector")
         try:
             vector_length = len(vector)
@@ -84,7 +84,7 @@ def _validate_embeddings(
                 f"{expected_dimensions}"
             )
         for dimension, value in enumerate(vector):
-            if isinstance(value, (bool, bytes, str)):
+            if isinstance(value, bool | bytes | str):
                 raise EmbeddingProviderError(
                     f"Embedding {index} dimension {dimension} is not numeric"
                 )
