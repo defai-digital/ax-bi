@@ -278,9 +278,8 @@ def _resolve_ref(
             _defs=defs,
             _resolving=resolving | {ref_name},
         )
-        if isinstance(inlined, dict):
-            if desc := obj.get("description"):
-                inlined.setdefault("description", desc)
+        if isinstance(inlined, dict) and (desc := obj.get("description")):
+            inlined.setdefault("description", desc)
         return inlined
 
     replacement: dict[str, Any] = {"type": "object"}
@@ -497,9 +496,8 @@ def _create_search_result_serializer(
     def _serializer(tools: Sequence[Any]) -> list[dict[str, Any]]:
         results = _serialize_tools_without_output_schema(tools)
         for data in results:
-            if compact:
-                if input_schema := data.get("inputSchema"):
-                    data["inputSchema"] = _compact_schema(input_schema)
+            if compact and (input_schema := data.get("inputSchema")):
+                data["inputSchema"] = _compact_schema(input_schema)
             if max_desc and (desc := data.get("description")):
                 data["description"] = _truncate_description(desc, max_desc)
         return results

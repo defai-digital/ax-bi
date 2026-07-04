@@ -462,18 +462,21 @@ def _resolve_user_from_jwt_context(app: Any) -> User | None:
     # correct option (warn, don't change the key out from under existing
     # single-issuer deployments).
     configured_issuer = get_mcp_jwt_issuer(app.config)
-    if isinstance(configured_issuer, (list, tuple, set)) and len(configured_issuer) > 1:
-        if not get_mcp_user_resolver(app.config):
-            token_iss = claims.get("iss") if isinstance(claims, dict) else None
-            logger.warning(
-                "Multiple JWT issuers are trusted (MCP_JWT_ISSUER is a list) but "
-                "the default user resolver maps token claims to Superset users by "
-                "username/email without binding the issuer (iss=%s). Distinct "
-                "issuers minting the same username/email will collide. Configure an "
-                "issuer-aware MCP_USER_RESOLVER to derive a compound (iss+sub) "
-                "identity.",
-                _sanitize_for_log(token_iss),
-            )
+    if (
+        isinstance(configured_issuer, (list, tuple, set))
+        and len(configured_issuer) > 1
+        and not get_mcp_user_resolver(app.config)
+    ):
+        token_iss = claims.get("iss") if isinstance(claims, dict) else None
+        logger.warning(
+            "Multiple JWT issuers are trusted (MCP_JWT_ISSUER is a list) but "
+            "the default user resolver maps token claims to Superset users by "
+            "username/email without binding the issuer (iss=%s). Distinct "
+            "issuers minting the same username/email will collide. Configure an "
+            "issuer-aware MCP_USER_RESOLVER to derive a compound (iss+sub) "
+            "identity.",
+            _sanitize_for_log(token_iss),
+        )
 
     # Use configurable resolver or default
 
