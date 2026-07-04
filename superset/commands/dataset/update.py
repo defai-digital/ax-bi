@@ -332,12 +332,11 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
 
     @staticmethod
     def _get_duplicates(data: list[dict[str, Any]], key: str) -> list[str]:
-        duplicates = [
+        return [
             name
             for name, count in Counter([item[key] for item in data]).items()
             if count > 1
         ]
-        return duplicates
 
 
 def validate_folders(  # noqa: C901

@@ -40,8 +40,7 @@ class UpdateThemeCommand(UpdateMixin):
     def run(self) -> Theme:
         self.validate()
         assert self._model
-        theme = ThemeDAO.update(self._model, self._properties)
-        return theme
+        return ThemeDAO.update(self._model, self._properties)
 
     def validate(self) -> None:
         # Validate theme exists

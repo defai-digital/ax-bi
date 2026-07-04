@@ -209,5 +209,4 @@ class QueryEstimationCommand(BaseCommand):
         query_cost_formatter = query_cost_formatters.get(
             spec.engine, spec.query_cost_formatter
         )
-        cost = query_cost_formatter(cost)
-        return cost
+        return query_cost_formatter(cost)
