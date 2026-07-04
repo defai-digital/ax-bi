@@ -17,7 +17,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, Generic, ParamSpec, TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import Generic, ParamSpec, TYPE_CHECKING, TypeVar
 
 from superset_core.tasks.types import TaskContext, TaskScope
 
@@ -32,7 +33,7 @@ def task(
     name: str | None = None,
     scope: TaskScope = TaskScope.PRIVATE,
     timeout: int | None = None,
-) -> Callable[[Callable[P, R]], "TaskWrapper[P]"]:
+) -> Callable[[Callable[P, R]], TaskWrapper[P]]:
     """
     Decorator to register a task.
 
@@ -109,11 +110,11 @@ class TaskWrapper(Generic[P]):
     Both __call__ and .schedule() return Task.
     """
 
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> "Task":
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Task:
         """Execute the task synchronously."""
         raise NotImplementedError("Will be replaced during initialization")
 
-    def schedule(self, *args: P.args, **kwargs: P.kwargs) -> "Task":
+    def schedule(self, *args: P.args, **kwargs: P.kwargs) -> Task:
         """Schedule the task for async execution."""
         raise NotImplementedError("Will be replaced during initialization")
 

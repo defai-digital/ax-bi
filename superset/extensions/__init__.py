@@ -17,7 +17,8 @@
 import json
 import logging
 import os
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 # ruff: noqa: E402
 import celery
@@ -86,7 +87,7 @@ class ResultsBackendManager:
         self._use_msgpack = app.config["RESULTS_BACKEND_USE_MSGPACK"]
 
     @property
-    def results_backend(self) -> Optional[BaseCache]:
+    def results_backend(self) -> BaseCache | None:
         return self._results_backend
 
     @property
@@ -96,7 +97,7 @@ class ResultsBackendManager:
 
 class UIManifestProcessor:
     def __init__(self, app_dir: str) -> None:
-        self.app: Optional[Flask] = None
+        self.app: Flask | None = None
         self.manifest: dict[str, dict[str, list[str]]] = {}
         self.manifest_file = f"{app_dir}/static/assets/manifest.json"
 

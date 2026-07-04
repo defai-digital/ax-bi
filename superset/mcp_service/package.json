@@ -1,18 +1,19 @@
 {
-  "name": "@superset/mcp-server",
+  "name": "@ax-bi/mcp-server",
   "version": "1.0.0",
-  "description": "Apache Superset MCP (Model Context Protocol) Server",
+  "description": "AX-BI MCP (Model Context Protocol) Server",
   "main": "index.js",
   "bin": {
-    "superset-mcp": "./bin/superset-mcp.js"
+    "ax-bi-mcp": "./bin/ax-bi-mcp.js"
   },
   "scripts": {
-    "start": "node bin/superset-mcp.js",
-    "stdio": "node bin/superset-mcp.js --stdio",
-    "http": "node bin/superset-mcp.js --http"
+    "start": "node bin/ax-bi-mcp.js",
+    "stdio": "node bin/ax-bi-mcp.js --stdio",
+    "http": "node bin/ax-bi-mcp.js --http"
   },
   "keywords": [
     "mcp",
+    "ax-bi",
     "superset",
     "apache-superset",
     "model-context-protocol",

@@ -21,7 +21,7 @@ import logging
 import re
 import time
 from datetime import datetime
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import requests
 from flask import current_app as app
@@ -184,7 +184,7 @@ class ImpalaEngineSpec(BaseEngineSpec):
             return
 
     @classmethod
-    def get_cancel_query_id(cls, cursor: Any, query: Query) -> Optional[str]:
+    def get_cancel_query_id(cls, cursor: Any, query: Query) -> str | None:
         """
         Get Impala Query ID that will be used to cancel the running
         queries to release impala resources.

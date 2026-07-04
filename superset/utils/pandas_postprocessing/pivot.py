@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as _
 from pandas import DataFrame
@@ -30,7 +30,7 @@ from superset.utils.pandas_postprocessing.utils import (
 def _restore_dropped_metric_columns(
     df: DataFrame,
     expected_metrics: list[str],
-    orig_columns: Optional[DataFrame],
+    orig_columns: DataFrame | None,
 ) -> DataFrame:
     """Re-add metric columns that pivot_table dropped due to all-NaN values.
 
@@ -94,13 +94,13 @@ def pivot(  # pylint: disable=too-many-arguments
     df: DataFrame,
     index: list[str],
     aggregates: dict[str, dict[str, Any]],
-    columns: Optional[list[str]] = None,
-    metric_fill_value: Optional[Any] = None,
-    column_fill_value: Optional[str] = NULL_STRING,
-    drop_missing_columns: Optional[bool] = True,
+    columns: list[str] | None = None,
+    metric_fill_value: Any | None = None,
+    column_fill_value: str | None = NULL_STRING,
+    drop_missing_columns: bool | None = True,
     combine_value_with_metric: bool = False,
-    marginal_distributions: Optional[bool] = None,
-    marginal_distribution_name: Optional[str] = None,
+    marginal_distributions: bool | None = None,
+    marginal_distribution_name: str | None = None,
 ) -> DataFrame:
     """
     Perform a pivot operation on a DataFrame.

@@ -22,7 +22,7 @@ prompt to add the x-axis to filters when the column name case didn't match
 exactly (e.g., 'order_date' vs 'OrderDate').
 """
 
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -124,7 +124,7 @@ class TestNormalizeXYConfig:
         self, mock_dataset_context: DatasetContext
     ) -> None:
         """Test that x-axis column name is normalized."""
-        config_dict: Dict[str, Any] = {
+        config_dict: dict[str, Any] = {
             "chart_type": "xy",
             "x": {"name": "orderdate"},
             "y": [{"name": "Sales", "aggregate": "SUM"}],
@@ -139,7 +139,7 @@ class TestNormalizeXYConfig:
         self, mock_dataset_context: DatasetContext
     ) -> None:
         """Test that y-axis column names are normalized."""
-        config_dict: Dict[str, Any] = {
+        config_dict: dict[str, Any] = {
             "chart_type": "xy",
             "x": {"name": "OrderDate"},
             "y": [
@@ -158,7 +158,7 @@ class TestNormalizeXYConfig:
         self, mock_dataset_context: DatasetContext
     ) -> None:
         """Test that group_by column name is normalized."""
-        config_dict: Dict[str, Any] = {
+        config_dict: dict[str, Any] = {
             "chart_type": "xy",
             "x": {"name": "OrderDate"},
             "y": [{"name": "Sales", "aggregate": "SUM"}],
@@ -178,7 +178,7 @@ class TestNormalizeTableConfig:
         self, mock_dataset_context: DatasetContext
     ) -> None:
         """Test that table column names are normalized."""
-        config_dict: Dict[str, Any] = {
+        config_dict: dict[str, Any] = {
             "chart_type": "table",
             "columns": [
                 {"name": "orderdate"},
@@ -201,7 +201,7 @@ class TestNormalizeFilters:
         self, mock_dataset_context: DatasetContext
     ) -> None:
         """Test that filter column names are normalized."""
-        config_dict: Dict[str, Any] = {
+        config_dict: dict[str, Any] = {
             "filters": [
                 {"column": "productline", "op": "=", "value": "Classic Cars"},
                 {"column": "ORDERDATE", "op": ">", "value": "2023-01-01"},

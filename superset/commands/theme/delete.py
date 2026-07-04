@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from superset.commands.base import BaseCommand
 from superset.commands.theme.exceptions import (
@@ -36,8 +35,8 @@ logger = logging.getLogger(__name__)
 class DeleteThemeCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[Theme]] = None
-        self._dashboard_usage: Optional[dict[int, list[str]]] = None
+        self._models: list[Theme] | None = None
+        self._dashboard_usage: dict[int, list[str]] | None = None
 
     @transaction(on_error=partial(on_error, reraise=ThemeDeleteFailedError))
     def run(self) -> None:

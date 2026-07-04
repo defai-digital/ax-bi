@@ -19,7 +19,7 @@
 import platform
 import subprocess
 import sys
-from typing import Callable, Optional, Set, Tuple
+from collections.abc import Callable
 
 import click
 import psutil
@@ -30,11 +30,11 @@ class Requirement:
     def __init__(
         self,
         name: str,
-        ideal_range: Tuple[Version, Version],
-        supported_range: Tuple[Version, Version],
+        ideal_range: tuple[Version, Version],
+        supported_range: tuple[Version, Version],
         req_type: str,
         command: str,
-        version_post_process: Optional[Callable[[str], str]] = None,
+        version_post_process: Callable[[str], str] | None = None,
     ):
         self.name = name
         self.ideal_range = ideal_range
@@ -45,7 +45,7 @@ class Requirement:
         self.version = self.get_version()
         self.status = self.check_version()
 
-    def get_version(self) -> Optional[str]:
+    def get_version(self) -> str | None:
         try:
             version = subprocess.check_output(self.command, shell=True).decode().strip()  # noqa: S602
             if self.version_post_process:
@@ -185,7 +185,7 @@ def main(docker: bool, frontend: bool, backend: bool) -> None:  # noqa: C901
     print(get_docker_platform())
     print("\n")
 
-    check_req_types: Set[str] = set()
+    check_req_types: set[str] = set()
     if docker:
         check_req_types.add("docker")
     if frontend:

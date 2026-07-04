@@ -18,9 +18,120 @@
 from __future__ import annotations
 
 import json
+from contextlib import suppress
+from pathlib import Path
 
 import pytest
-from superset_extensions_cli.utils import read_json, read_toml, write_json, write_toml
+
+import superset_extensions_cli.utils as utils
+from superset_extensions_cli.utils import (
+    find_non_directory_parent,
+    find_non_directory_path_or_parent,
+    find_symlinked_parent,
+    find_symlinked_path_or_parent,
+    get_directory_node_identity,
+    get_directory_path_identity,
+    read_json,
+    read_toml,
+    write_json,
+    write_text_atomic,
+    write_toml,
+)
+
+
+@pytest.mark.unit
+def test_find_symlinked_parent_returns_nearest_symlinked_parent(isolated_filesystem):
+    """Test symlink parent discovery returns the direct symlink boundary."""
+    outside_dir = isolated_filesystem / "outside"
+    nested_outside_dir = outside_dir / "nested"
+    nested_outside_dir.mkdir(parents=True)
+    linked_dir = isolated_filesystem / "linked"
+    linked_dir.symlink_to(outside_dir)
+
+    assert find_symlinked_parent(linked_dir / "nested" / "metadata.json") == linked_dir
+
+
+@pytest.mark.unit
+def test_find_symlinked_path_or_parent_returns_symlinked_path(isolated_filesystem):
+    """Test symlink path discovery returns the path before checking parents."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text("{}")
+    linked_file = isolated_filesystem / "metadata.json"
+    linked_file.symlink_to(outside_file)
+
+    assert find_symlinked_path_or_parent(linked_file) == linked_file
+
+
+@pytest.mark.unit
+def test_find_non_directory_parent_returns_file_parent(isolated_filesystem):
+    """Test non-directory parent discovery returns an existing file parent."""
+    file_parent = isolated_filesystem / "metadata"
+    file_parent.write_text("not a directory")
+
+    assert find_non_directory_parent(file_parent / "metadata.json") == file_parent
+
+
+@pytest.mark.unit
+def test_find_non_directory_path_or_parent_returns_file_path(isolated_filesystem):
+    """Test non-directory path discovery returns the path before parents."""
+    file_path = isolated_filesystem / "metadata"
+    file_path.write_text("not a directory")
+
+    assert find_non_directory_path_or_parent(file_path) == file_path
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_returns_directory_metadata(isolated_filesystem):
+    """Test directory path identity includes node and content metadata."""
+    directory = isolated_filesystem / "metadata"
+    directory.mkdir()
+
+    identity = get_directory_path_identity(directory)
+    stat = directory.stat()
+
+    assert identity == (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+
+
+@pytest.mark.unit
+def test_get_directory_node_identity_returns_stable_node_identity(isolated_filesystem):
+    """Test directory node identity excludes directory content metadata."""
+    directory = isolated_filesystem / "metadata"
+    directory.mkdir()
+
+    path_identity = get_directory_path_identity(directory)
+    node_identity = get_directory_node_identity(directory)
+
+    assert path_identity is not None
+    assert node_identity == path_identity[:2]
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_rejects_symlinked_directory(
+    isolated_filesystem,
+):
+    """Test directory path identity refuses a symlinked directory path."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    directory_link = isolated_filesystem / "metadata"
+    directory_link.symlink_to(outside_dir)
+
+    assert get_directory_path_identity(directory_link) is None
+    assert get_directory_node_identity(directory_link) is None
+
+
+@pytest.mark.unit
+def test_get_directory_path_identity_rejects_symlinked_ancestor(
+    isolated_filesystem,
+):
+    """Test directory path identity refuses paths below symlinked ancestors."""
+    outside_dir = isolated_filesystem / "outside"
+    nested_outside_dir = outside_dir / "metadata"
+    nested_outside_dir.mkdir(parents=True)
+    directory_link = isolated_filesystem / "linked"
+    directory_link.symlink_to(outside_dir)
+
+    assert get_directory_path_identity(directory_link / "metadata") is None
+    assert get_directory_node_identity(directory_link / "metadata") is None
 
 
 # Read JSON Tests
@@ -34,6 +145,26 @@ def test_read_json_with_valid_file(isolated_filesystem):
     result = read_json(json_file)
 
     assert result == json_data
+
+
+@pytest.mark.unit
+def test_read_json_uses_utf8_encoding(isolated_filesystem, monkeypatch):
+    """Test read_json decodes content with the repository text encoding."""
+    json_file = isolated_filesystem / "test.json"
+    json_file.write_text('{"name": "caf\\u00e9"}', encoding="utf-8")
+    original_read_text = Path.read_text
+    observed_encoding = None
+
+    def capture_read_text(path, *args, **kwargs):
+        nonlocal observed_encoding
+        if path == json_file:
+            observed_encoding = kwargs.get("encoding")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", capture_read_text)
+
+    assert read_json(json_file) == {"name": "caf\u00e9"}
+    assert observed_encoding == "utf-8"
 
 
 @pytest.mark.unit
@@ -68,12 +199,144 @@ def test_read_json_with_directory_instead_of_file(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_json_with_symlinked_file(isolated_filesystem):
+    """Test read_json returns None when path is a symlink."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "outside"}')
+    json_link = isolated_filesystem / "test.json"
+    json_link.symlink_to(outside_file)
+
+    result = read_json(json_link)
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_json_with_symlinked_parent(isolated_filesystem):
+    """Test read_json returns None when a parent directory is a symlink."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "metadata.json").write_text('{"name": "outside"}')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_json(output_dir / "metadata.json")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_json_with_symlinked_ancestor(isolated_filesystem):
+    """Test read_json returns None below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    (outside_nested / "metadata.json").write_text('{"name": "outside"}')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_json(output_dir / "nested" / "metadata.json")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_json_returns_none_when_path_becomes_symlink_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_json refuses content if the path becomes unsafe during read."""
+    json_file = isolated_filesystem / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "outside"}')
+    original_read_text = Path.read_text
+
+    def replace_json_during_read(path, *args, **kwargs):
+        if path == json_file:
+            json_file.unlink()
+            json_file.symlink_to(outside_file)
+            return original_read_text(outside_file, *args, **kwargs)
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_json_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert json_file.is_symlink()
+
+
+@pytest.mark.unit
+def test_read_json_returns_none_when_path_is_replaced_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_json refuses content if the file identity changes during read."""
+    json_file = isolated_filesystem / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    replacement_file = isolated_filesystem / "replacement.json"
+    replacement_file.write_text('{"name": "replacement"}')
+    original_read_text = Path.read_text
+
+    def replace_json_during_read(path, *args, **kwargs):
+        if path == json_file:
+            content = original_read_text(replacement_file, *args, **kwargs)
+            json_file.unlink()
+            json_file.write_text(content)
+            return content
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_json_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert not json_file.is_symlink()
+    assert json.loads(original_read_text(json_file)) == {"name": "replacement"}
+
+
+@pytest.mark.unit
+def test_read_json_returns_none_when_parent_is_replaced_during_read(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test read_json refuses content if the parent identity changes during read."""
+    metadata_dir = isolated_filesystem / "metadata"
+    metadata_dir.mkdir()
+    json_file = metadata_dir / "metadata.json"
+    json_file.write_text('{"name": "original"}')
+    saved_metadata_dir = isolated_filesystem / "saved-metadata"
+    replacement_metadata_dir = isolated_filesystem / "replacement-metadata"
+    original_read_text = Path.read_text
+
+    def replace_parent_during_read(path, *args, **kwargs):
+        if path == json_file:
+            metadata_dir.rename(saved_metadata_dir)
+            replacement_metadata_dir.mkdir()
+            (saved_metadata_dir / "metadata.json").rename(
+                replacement_metadata_dir / "metadata.json"
+            )
+            replacement_metadata_dir.rename(metadata_dir)
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", replace_parent_during_read)
+
+    result = read_json(json_file)
+
+    assert result is None
+    assert not (saved_metadata_dir / "metadata.json").exists()
+    assert json.loads(original_read_text(json_file)) == {"name": "original"}
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "json_content,expected",
     [
         ({"simple": "value"}, {"simple": "value"}),
         ({"nested": {"key": "value"}}, {"nested": {"key": "value"}}),
         ({"array": [1, 2, 3]}, {"array": [1, 2, 3]}),
+        ([1, 2, 3], [1, 2, 3]),
+        ("value", "value"),
+        (True, True),
         ({}, {}),  # Empty JSON object
     ],
 )
@@ -87,6 +350,24 @@ def test_read_json_with_various_valid_content(
     result = read_json(json_file)
 
     assert result == expected
+
+
+@pytest.mark.unit
+def test_read_json_reports_read_errors(isolated_filesystem, monkeypatch):
+    """Test read_json reports filesystem read failures with path context."""
+    json_file = isolated_filesystem / "test.json"
+    json_file.write_text("{}")
+    original_read_text = Path.read_text
+
+    def fail_json_read(path, *args, **kwargs):
+        if path == json_file:
+            raise OSError("permission denied")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fail_json_read)
+
+    with pytest.raises(OSError, match="Failed to read JSON file .*permission denied"):
+        read_json(json_file)
 
 
 # Read TOML Tests
@@ -126,13 +407,160 @@ def test_read_toml_with_directory_instead_of_file(isolated_filesystem):
 
 
 @pytest.mark.unit
+def test_read_toml_with_symlinked_file(isolated_filesystem):
+    """Test read_toml returns None when path is a symlink."""
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "outside"')
+    toml_link = isolated_filesystem / "pyproject.toml"
+    toml_link.symlink_to(outside_file)
+
+    result = read_toml(toml_link)
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_with_symlinked_parent(isolated_filesystem):
+    """Test read_toml returns None when a parent directory is a symlink."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "pyproject.toml").write_text('[project]\nname = "outside"')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_toml(output_dir / "pyproject.toml")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_with_symlinked_ancestor(isolated_filesystem):
+    """Test read_toml returns None below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    (outside_nested / "pyproject.toml").write_text('[project]\nname = "outside"')
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    result = read_toml(output_dir / "nested" / "pyproject.toml")
+
+    assert result is None
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_path_becomes_symlink_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_toml refuses content if the path becomes unsafe during read."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "outside"')
+    original_open = Path.open
+
+    def replace_toml_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            toml_file.unlink()
+            toml_file.symlink_to(outside_file)
+            return original_open(outside_file, *args, **kwargs)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_toml_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert toml_file.is_symlink()
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_path_is_replaced_during_read(
+    isolated_filesystem, monkeypatch
+):
+    """Test read_toml refuses content if the file identity changes during read."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    replacement_file = isolated_filesystem / "replacement.toml"
+    replacement_file.write_text('[project]\nname = "replacement"')
+    original_open = Path.open
+
+    def replace_toml_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            content = replacement_file.read_text()
+            toml_file.unlink()
+            with original_open(toml_file, "w", encoding="utf-8") as replacement:
+                replacement.write(content)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_toml_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert not toml_file.is_symlink()
+    assert 'name = "replacement"' in toml_file.read_text()
+
+
+@pytest.mark.unit
+def test_read_toml_returns_none_when_parent_is_replaced_during_read(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test read_toml refuses content if the parent identity changes during read."""
+    metadata_dir = isolated_filesystem / "metadata"
+    metadata_dir.mkdir()
+    toml_file = metadata_dir / "pyproject.toml"
+    toml_file.write_text('[project]\nname = "original"')
+    saved_metadata_dir = isolated_filesystem / "saved-metadata"
+    replacement_metadata_dir = isolated_filesystem / "replacement-metadata"
+    original_open = Path.open
+
+    def replace_parent_during_read(path, *args, **kwargs):
+        if path == toml_file:
+            metadata_dir.rename(saved_metadata_dir)
+            replacement_metadata_dir.mkdir()
+            (saved_metadata_dir / "pyproject.toml").rename(
+                replacement_metadata_dir / "pyproject.toml"
+            )
+            replacement_metadata_dir.rename(metadata_dir)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", replace_parent_during_read)
+
+    result = read_toml(toml_file)
+
+    assert result is None
+    assert not (saved_metadata_dir / "pyproject.toml").exists()
+    assert 'name = "original"' in toml_file.read_text()
+
+
+@pytest.mark.unit
 def test_read_toml_with_invalid_toml(isolated_filesystem):
     """Test read_toml with invalid TOML content."""
     invalid_toml_file = isolated_filesystem / "invalid.toml"
     invalid_toml_file.write_text("[ invalid toml content")
 
-    with pytest.raises(Exception):  # tomli raises various exceptions for invalid TOML
+    with pytest.raises(utils.tomllib.TOMLDecodeError):
         read_toml(invalid_toml_file)
+
+
+@pytest.mark.unit
+def test_read_toml_reports_read_errors(isolated_filesystem, monkeypatch):
+    """Test read_toml reports filesystem read failures with path context."""
+    toml_file = isolated_filesystem / "pyproject.toml"
+    toml_file.write_text("[project]\nname = 'test'\n")
+    original_open = Path.open
+
+    def fail_toml_open(path, *args, **kwargs):
+        if path == toml_file:
+            raise OSError("permission denied")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_toml_open)
+
+    with pytest.raises(OSError, match="Failed to read TOML file .*permission denied"):
+        read_toml(toml_file)
 
 
 @pytest.mark.unit
@@ -218,7 +646,7 @@ def test_read_toml_with_various_invalid_content(isolated_filesystem, invalid_con
     toml_file = isolated_filesystem / "invalid.toml"
     toml_file.write_text(invalid_content)
 
-    with pytest.raises(Exception):  # Various TOML parsing exceptions
+    with pytest.raises(utils.tomllib.TOMLDecodeError):
         read_toml(toml_file)
 
 
@@ -241,10 +669,8 @@ def test_read_json_with_permission_denied(isolated_filesystem):
         pass
     finally:
         # Restore permissions for cleanup
-        try:
+        with suppress(OSError, PermissionError):
             json_file.chmod(0o644)
-        except (OSError, PermissionError):
-            pass
 
 
 @pytest.mark.unit
@@ -265,10 +691,324 @@ def test_read_toml_with_permission_denied(isolated_filesystem):
         pass
     finally:
         # Restore permissions for cleanup
-        try:
+        with suppress(OSError, PermissionError):
             toml_file.chmod(0o644)
-        except (OSError, PermissionError):
-            pass
+
+
+# Atomic Write Tests
+@pytest.mark.unit
+def test_write_text_atomic_round_trip(isolated_filesystem):
+    """Test atomic text writes replace file contents."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+
+    write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "new"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_symlinked_output(isolated_filesystem):
+    """Test atomic text writes refuse symlinked output paths."""
+    outside_file = isolated_filesystem / "outside.txt"
+    outside_file.write_text("original")
+    output_path = isolated_filesystem / "output.txt"
+    output_path.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_text_atomic(output_path, "updated")
+
+    assert outside_file.read_text() == "original"
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_symlinked_parent(isolated_filesystem):
+    """Test atomic text writes refuse symlinked parent directories."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_text_atomic(output_dir / "metadata.txt", "updated")
+
+    assert not (outside_dir / "metadata.txt").exists()
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_swapped_temporary_file(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a temporary file changed before publish."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    outside_file = isolated_filesystem / "outside.txt"
+    outside_file.write_text("outside")
+    original_validate_write_path = utils.validate_write_path
+
+    def swap_temp_during_final_validation(path):
+        result = original_validate_write_path(path)
+        temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+        if path == output_path and temp_files:
+            temp_path = temp_files[0]
+            if temp_path.exists() and not temp_path.is_symlink():
+                temp_path.unlink()
+                temp_path.symlink_to(outside_file)
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", swap_temp_during_final_validation)
+
+    with pytest.raises(OSError, match="Refusing to promote changed temporary file"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "old"
+    assert outside_file.read_text() == "outside"
+    temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+    assert len(temp_files) == 1
+    assert temp_files[0].is_symlink()
+    assert temp_files[0].resolve() == outside_file
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_expected_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a target changed after snapshot."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    expected_identity = utils.get_read_path_identity(output_path)
+    assert expected_identity is not None
+    original_validate_write_path = utils.validate_write_path
+    validation_calls = 0
+
+    def change_target_before_promote(path):
+        nonlocal validation_calls
+        result = original_validate_write_path(path)
+        if path == output_path:
+            validation_calls += 1
+            if validation_calls == 2:
+                output_path.write_text("changed")
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", change_target_before_promote)
+
+    with pytest.raises(OSError, match="Refusing to promote through changed target"):
+        write_text_atomic(
+            output_path,
+            "new",
+            expected_existing_identity=expected_identity,
+        )
+
+    assert output_path.read_text() == "changed"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_created_target_when_missing_required(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse a target created after missing preflight."""
+    output_path = isolated_filesystem / "output.txt"
+    original_validate_write_path = utils.validate_write_path
+    validation_calls = 0
+
+    def create_target_before_promote(path):
+        nonlocal validation_calls
+        result = original_validate_write_path(path)
+        if path == output_path:
+            validation_calls += 1
+            if validation_calls == 2:
+                output_path.write_text("created")
+        return result
+
+    monkeypatch.setattr(utils, "validate_write_path", create_target_before_promote)
+
+    with pytest.raises(OSError, match="Refusing to promote over existing target"):
+        write_text_atomic(output_path, "new", require_missing=True)
+
+    assert output_path.read_text() == "created"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_parent_during_temp_creation(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes refuse an output parent changed before publish."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+    original_named_temporary_file = utils.tempfile.NamedTemporaryFile
+
+    def swap_parent_before_temp_file(*args, **kwargs):
+        if kwargs.get("dir") == output_dir:
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.rename(output_dir)
+        return original_named_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr(
+        utils.tempfile,
+        "NamedTemporaryFile",
+        swap_parent_before_temp_file,
+    )
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert (saved_output_dir / "metadata.txt").read_text() == "old"
+    assert not output_path.exists()
+    assert list(output_dir.glob(".metadata.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_temp_cleanup_path(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic write cleanup refuses a replaced temporary file path."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    replacement_output_dir.mkdir()
+    saved_temp = isolated_filesystem / "saved-temp.txt"
+    replacement_temp = isolated_filesystem / "replacement-temp.txt"
+    replacement_temp.write_text("replacement temp")
+
+    original_get_read_path_identity = utils.get_read_path_identity
+    temp_path: Path | None = None
+
+    def swap_temp_before_parent_recheck(path):
+        nonlocal temp_path
+        identity = original_get_read_path_identity(path)
+        if (
+            path.parent == output_dir
+            and path.name.startswith(".metadata.txt.")
+            and temp_path is None
+        ):
+            temp_path = path
+            path.rename(saved_temp)
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.rename(output_dir)
+            replacement_temp.replace(path)
+        return identity
+
+    monkeypatch.setattr(
+        utils, "get_read_path_identity", swap_temp_before_parent_recheck
+    )
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert temp_path is not None
+    assert temp_path.read_text() == "replacement temp"
+    assert saved_temp.exists()
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_temp_cleanup_content(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic write cleanup refuses a changed temporary file."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    original_validate_write_path = utils.validate_write_path
+    temp_path: Path | None = None
+    validation_calls = 0
+
+    def change_temp_before_validation_failure(path):
+        nonlocal temp_path, validation_calls
+        result = original_validate_write_path(path)
+        validation_calls += 1
+        if validation_calls == 2:
+            temp_files = list(isolated_filesystem.glob(".output.txt.*.tmp"))
+            assert len(temp_files) == 1
+            temp_path = temp_files[0]
+            temp_path.write_text("changed temp")
+            raise OSError("validation failed")
+        return result
+
+    monkeypatch.setattr(
+        utils, "validate_write_path", change_temp_before_validation_failure
+    )
+
+    with pytest.raises(OSError, match="validation failed"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "old"
+    assert temp_path is not None
+    assert temp_path.read_text() == "changed temp"
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_promoted_target(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes verify the promoted target identity."""
+    output_path = isolated_filesystem / "output.txt"
+    output_path.write_text("old")
+    replacement_path = isolated_filesystem / "replacement.txt"
+    replacement_path.write_text("replacement")
+    original_replace = Path.replace
+
+    def swap_target_after_replace(path, target):
+        result = original_replace(path, target)
+        if target == output_path and path != replacement_path:
+            output_path.unlink()
+            original_replace(replacement_path, output_path)
+        return result
+
+    monkeypatch.setattr(Path, "replace", swap_target_after_replace)
+
+    with pytest.raises(OSError, match="Failed to verify promoted temporary file"):
+        write_text_atomic(output_path, "new")
+
+    assert output_path.read_text() == "replacement"
+    assert list(isolated_filesystem.glob(".output.txt.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_text_atomic_rejects_changed_parent_after_promote(
+    isolated_filesystem,
+    monkeypatch,
+):
+    """Test atomic text writes verify the output parent after promotion."""
+    output_dir = isolated_filesystem / "output"
+    output_dir.mkdir()
+    output_path = output_dir / "metadata.txt"
+    output_path.write_text("old")
+    saved_output_dir = isolated_filesystem / "saved-output"
+    replacement_output_dir = isolated_filesystem / "replacement-output"
+    original_replace = Path.replace
+
+    def move_temp_under_replaced_parent(path, target):
+        if target == output_path:
+            output_dir.rename(saved_output_dir)
+            replacement_output_dir.mkdir()
+            (saved_output_dir / path.name).rename(replacement_output_dir / path.name)
+            replacement_output_dir.rename(output_dir)
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", move_temp_under_replaced_parent)
+
+    with pytest.raises(OSError, match="Refusing to promote through changed parent"):
+        write_text_atomic(output_path, "new")
+
+    assert (saved_output_dir / "metadata.txt").read_text() == "old"
+    assert output_path.read_text() == "new"
 
 
 # Write JSON Tests
@@ -282,6 +1022,104 @@ def test_write_json_round_trip(isolated_filesystem):
     result = read_json(json_file)
 
     assert result == data
+
+
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_output(isolated_filesystem):
+    """Test write_json refuses to write through a symlink."""
+    outside_file = isolated_filesystem / "outside.json"
+    outside_file.write_text('{"name": "original"}')
+    json_link = isolated_filesystem / "output.json"
+    json_link.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_json(json_link, {"name": "updated"})
+
+    assert outside_file.read_text() == '{"name": "original"}'
+
+
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_parent(isolated_filesystem):
+    """Test write_json refuses to write through a symlinked parent directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_json(output_dir / "metadata.json", {"name": "updated"})
+
+    assert not (outside_dir / "metadata.json").exists()
+
+
+@pytest.mark.unit
+def test_write_json_rejects_symlinked_ancestor(isolated_filesystem):
+    """Test write_json refuses to write below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_json(output_dir / "nested" / "metadata.json", {"name": "updated"})
+
+    assert not (outside_nested / "metadata.json").exists()
+
+
+@pytest.mark.unit
+def test_write_json_rejects_directory_output(isolated_filesystem):
+    """Test write_json refuses output paths that are directories."""
+    output_dir = isolated_filesystem / "metadata.json"
+    output_dir.mkdir()
+
+    with pytest.raises(OSError, match="Refusing to write non-file path"):
+        write_json(output_dir, {"name": "updated"})
+
+
+@pytest.mark.unit
+def test_write_json_rejects_non_directory_parent(isolated_filesystem):
+    """Test write_json refuses output paths below a file parent."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_json(output_parent / "metadata.json", {"name": "updated"})
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_write_json_rejects_non_directory_ancestor(isolated_filesystem):
+    """Test write_json refuses nested output paths below a file ancestor."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_json(output_parent / "nested" / "metadata.json", {"name": "updated"})
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_write_json_reports_write_errors(isolated_filesystem, monkeypatch):
+    """Test write_json reports filesystem write failures with path context."""
+    output_path = isolated_filesystem / "output.json"
+    output_path.write_text('{"name": "original"}')
+    original_replace = Path.replace
+
+    def fail_json_replace(path, target):
+        if target == output_path:
+            raise OSError("disk full")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_json_replace)
+
+    with pytest.raises(OSError, match="Failed to write JSON file .*disk full"):
+        write_json(output_path, {"name": "updated"})
+
+    assert output_path.read_text() == '{"name": "original"}'
+    assert list(isolated_filesystem.glob(".output.json.*.tmp")) == []
 
 
 # Write TOML Tests
@@ -298,3 +1136,107 @@ def test_write_toml_round_trip(isolated_filesystem):
     result = read_toml(toml_file)
 
     assert result == data
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_output(isolated_filesystem):
+    """Test write_toml refuses to write through a symlink."""
+    outside_file = isolated_filesystem / "outside.toml"
+    outside_file.write_text('[project]\nname = "original"\n')
+    toml_link = isolated_filesystem / "output.toml"
+    toml_link.symlink_to(outside_file)
+
+    with pytest.raises(OSError, match="Refusing to write through symlink"):
+        write_toml(toml_link, {"project": {"name": "updated"}})
+
+    assert outside_file.read_text() == '[project]\nname = "original"\n'
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_parent(isolated_filesystem):
+    """Test write_toml refuses to write through a symlinked parent directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_dir.mkdir()
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_toml(output_dir / "pyproject.toml", {"project": {"name": "updated"}})
+
+    assert not (outside_dir / "pyproject.toml").exists()
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_symlinked_ancestor(isolated_filesystem):
+    """Test write_toml refuses to write below a symlinked ancestor directory."""
+    outside_dir = isolated_filesystem / "outside"
+    outside_nested = outside_dir / "nested"
+    outside_nested.mkdir(parents=True)
+    output_dir = isolated_filesystem / "output"
+    output_dir.symlink_to(outside_dir)
+
+    with pytest.raises(OSError, match="Refusing to write through symlinked directory"):
+        write_toml(
+            output_dir / "nested" / "pyproject.toml",
+            {"project": {"name": "x"}},
+        )
+
+    assert not (outside_nested / "pyproject.toml").exists()
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_directory_output(isolated_filesystem):
+    """Test write_toml refuses output paths that are directories."""
+    output_dir = isolated_filesystem / "pyproject.toml"
+    output_dir.mkdir()
+
+    with pytest.raises(OSError, match="Refusing to write non-file path"):
+        write_toml(output_dir, {"project": {"name": "updated"}})
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_non_directory_parent(isolated_filesystem):
+    """Test write_toml refuses output paths below a file parent."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_toml(output_parent / "pyproject.toml", {"project": {"name": "updated"}})
+
+    assert output_parent.read_text() == "not a directory"
+
+
+@pytest.mark.unit
+def test_write_toml_reports_write_errors(isolated_filesystem, monkeypatch):
+    """Test write_toml reports filesystem write failures with path context."""
+    output_path = isolated_filesystem / "pyproject.toml"
+    output_path.write_text('[project]\nname = "original"\n')
+    original_replace = Path.replace
+
+    def fail_toml_replace(path, target):
+        if target == output_path:
+            raise OSError("disk full")
+        return original_replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", fail_toml_replace)
+
+    with pytest.raises(OSError, match="Failed to write TOML file .*disk full"):
+        write_toml(output_path, {"project": {"name": "updated"}})
+
+    assert output_path.read_text() == '[project]\nname = "original"\n'
+    assert list(isolated_filesystem.glob(".pyproject.toml.*.tmp")) == []
+
+
+@pytest.mark.unit
+def test_write_toml_rejects_non_directory_ancestor(isolated_filesystem):
+    """Test write_toml refuses nested output paths below a file ancestor."""
+    output_parent = isolated_filesystem / "output"
+    output_parent.write_text("not a directory")
+
+    with pytest.raises(OSError, match="Refusing to write through non-directory parent"):
+        write_toml(
+            output_parent / "nested" / "pyproject.toml",
+            {"project": {"name": "updated"}},
+        )
+
+    assert output_parent.read_text() == "not a directory"

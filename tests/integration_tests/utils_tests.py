@@ -18,7 +18,7 @@
 from datetime import date, datetime
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock, patch  # noqa: F401
 
 from superset.commands.database.exceptions import DatabaseInvalidError
@@ -453,9 +453,9 @@ class TestUtils(SupersetTestCase):
     def test_normalize_dttm_col(self):
         def normalize_col(
             df: pd.DataFrame,
-            timestamp_format: Optional[str],
+            timestamp_format: str | None,
             offset: int,
-            time_shift: Optional[str],
+            time_shift: str | None,
         ) -> pd.DataFrame:
             df = df.copy()
             normalize_dttm_col(

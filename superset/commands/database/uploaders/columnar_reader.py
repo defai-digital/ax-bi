@@ -18,7 +18,7 @@ import logging
 from collections.abc import Generator
 from io import BytesIO
 from pathlib import Path
-from typing import Any, IO, Optional
+from typing import Any, IO
 from zipfile import BadZipfile, is_zipfile, ZipFile
 
 import pandas as pd
@@ -48,7 +48,7 @@ class ColumnarReaderOptions(ReaderOptions, total=False):
 class ColumnarReader(BaseDataReader):
     def __init__(
         self,
-        options: Optional[ColumnarReaderOptions] = None,
+        options: ColumnarReaderOptions | None = None,
     ) -> None:
         options = options or {}
         super().__init__(

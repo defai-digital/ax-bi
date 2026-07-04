@@ -20,7 +20,7 @@ import re
 import sqlite3
 import tempfile
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from defusedxml import ElementTree
@@ -53,7 +53,7 @@ class StructuredReaderOptions(ReaderOptions, total=False):
 class StructuredReader(BaseDataReader):
     """Read structured single-table uploads into a DataFrame."""
 
-    def __init__(self, options: Optional[StructuredReaderOptions] = None) -> None:
+    def __init__(self, options: StructuredReaderOptions | None = None) -> None:
         options = options or {}
         super().__init__(options=dict(options))
 
@@ -69,7 +69,7 @@ class StructuredReader(BaseDataReader):
     def _read_file(
         self,
         file: FileStorage,
-        nrows: Optional[int] = None,
+        nrows: int | None = None,
     ) -> pd.DataFrame:
         extension = Path(file.filename or "").suffix.lower()
         try:
@@ -119,7 +119,7 @@ class StructuredReader(BaseDataReader):
             return pd.json_normalize(records)
         raise DatabaseUploadFailed(_("JSON file must contain an object or an array"))
 
-    def _read_json(self, file: FileStorage, nrows: Optional[int]) -> pd.DataFrame:
+    def _read_json(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         data = json.loads(self._decode_file(file))
         df = self._records_to_dataframe(data)
         return df.head(nrows) if nrows else df
@@ -127,7 +127,7 @@ class StructuredReader(BaseDataReader):
     def _read_json_lines(
         self,
         file: FileStorage,
-        nrows: Optional[int],
+        nrows: int | None,
     ) -> pd.DataFrame:
         records = []
         for line_number, line in enumerate(self._decode_file(file).splitlines(), 1):
@@ -149,7 +149,7 @@ class StructuredReader(BaseDataReader):
             raise DatabaseUploadFailed(_("JSON Lines file contains no records"))
         return pd.json_normalize(records)
 
-    def _read_xml(self, file: FileStorage, nrows: Optional[int]) -> pd.DataFrame:
+    def _read_xml(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         text = self._decode_file(file)
         root = ElementTree.fromstring(text)
         children = list(root)
@@ -178,7 +178,7 @@ class StructuredReader(BaseDataReader):
             raise DatabaseUploadFailed(_("XML file contains no tabular rows"))
         return pd.DataFrame(rows)
 
-    def _read_sqlite(self, file: FileStorage, nrows: Optional[int]) -> pd.DataFrame:
+    def _read_sqlite(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         file.seek(0)
         suffix = Path(file.filename or "upload.sqlite").suffix or ".sqlite"
         with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
@@ -221,7 +221,7 @@ class StructuredReader(BaseDataReader):
     def _quote_sqlite_identifier(identifier: str) -> str:
         return f'"{identifier.replace(chr(34), chr(34) * 2)}"'
 
-    def _read_sql_dump(self, file: FileStorage, nrows: Optional[int]) -> pd.DataFrame:
+    def _read_sql_dump(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         text = self._decode_file(file)
         df = self._parse_insert_dump(text)
         return df.head(nrows) if nrows else df

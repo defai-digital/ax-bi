@@ -26,7 +26,8 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Must redirect click output BEFORE importing anything that uses it
 import click

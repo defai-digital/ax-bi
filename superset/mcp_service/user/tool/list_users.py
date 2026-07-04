@@ -75,12 +75,13 @@ async def list_users(
     request = request_or_default(request, _DEFAULT_LIST_USERS_REQUEST)
 
     await ctx.info(
-        "Listing users: page=%s, page_size=%s, search=%s"
-        % (request.page, request.page_size, request.search)
+        f"Listing users: page={request.page}, page_size={request.page_size}, "
+        f"search={request.search}"
     )
     await ctx.debug(
-        "User listing parameters: filters=%s, order_column=%s, order_direction=%s"
-        % (request.filters, request.order_column, request.order_direction)
+        f"User listing parameters: filters={request.filters}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}"
     )
 
     try:
@@ -131,7 +132,8 @@ async def list_users(
 
     except Exception as e:
         await ctx.error(
-            "User listing failed: page=%s, page_size=%s, error=%s, error_type=%s"
-            % (request.page, request.page_size, str(e), type(e).__name__)
+            f"User listing failed: page={request.page}, "
+            f"page_size={request.page_size}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

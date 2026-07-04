@@ -206,12 +206,8 @@ async def explain_dashboard(
     ```
     """
     await ctx.info(
-        "Explaining dashboard: id=%s, scope=%s, question=%s"
-        % (
-            request.dashboard_id,
-            request.scope,
-            request.question[:50] if request.question else None,
-        )
+        f"Explaining dashboard: id={request.dashboard_id}, scope={request.scope}, "
+        f"question={request.question[:50] if request.question else None}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -295,8 +291,7 @@ async def explain_dashboard(
     follow_ups = _build_follow_up_suggestions(chart_summaries)
 
     await ctx.info(
-        "Dashboard explained: id=%s, charts=%d"
-        % (request.dashboard_id, len(chart_summaries))
+        f"Dashboard explained: id={request.dashboard_id}, charts={len(chart_summaries)}"
     )
 
     return ExplainDashboardResponse(

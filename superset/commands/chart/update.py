@@ -17,7 +17,7 @@
 import logging
 from datetime import datetime
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import g
 from flask_appbuilder.models.sqla import Model
@@ -61,7 +61,7 @@ class UpdateChartCommand(UpdateMixin, BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[Slice] = None
+        self._model: Slice | None = None
 
     @transaction(on_error=partial(on_error, reraise=ChartUpdateFailedError))
     def run(self) -> Model:
@@ -109,8 +109,8 @@ class UpdateChartCommand(UpdateMixin, BaseCommand):
     def validate(self) -> None:  # noqa: C901
         exceptions: list[ValidationError] = []
         dashboard_ids = self._properties.get("dashboards")
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
-        tag_ids: Optional[list[int]] = self._properties.get("tags")
+        owner_ids: list[int] | None = self._properties.get("owners")
+        tag_ids: list[int] | None = self._properties.get("tags")
 
         # Reject updates that set a removed legacy chart type. Partial updates
         # that don't touch ``viz_type`` are unaffected (migrated charts no

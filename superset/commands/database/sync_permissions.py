@@ -17,8 +17,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from functools import partial
-from typing import Iterable
 
 from flask import current_app as app, g
 

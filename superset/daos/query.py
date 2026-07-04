@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from datetime import datetime, timezone
-from typing import Any, Union
+from typing import Any
 
 from superset import sql_lab
 from superset.common.db_query_status import QueryStatus
@@ -46,7 +46,7 @@ class QueryDAO(BaseDAO[Query]):
         query.set_extra_json_key("columns", columns)
 
     @staticmethod
-    def get_queries_changed_after(last_updated_ms: Union[float, int]) -> list[Query]:
+    def get_queries_changed_after(last_updated_ms: float | int) -> list[Query]:
         # UTC date time, same that is stored in the DB.
         last_updated_dt = datetime.fromtimestamp(
             last_updated_ms / 1000, tz=timezone.utc

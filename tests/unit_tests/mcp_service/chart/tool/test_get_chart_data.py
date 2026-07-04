@@ -1607,6 +1607,6 @@ def test_bool_isinstance_check_before_int():
     data_type = "string"
     if all(isinstance(v, bool) for v in sample_values):
         data_type = "boolean"
-    elif all(isinstance(v, (int, float)) for v in sample_values):
+    elif all(isinstance(v, int | float) for v in sample_values):
         data_type = "numeric"
     assert data_type == "boolean"

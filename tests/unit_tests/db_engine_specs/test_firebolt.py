@@ -17,7 +17,6 @@
 
 
 from datetime import datetime
-from typing import Optional
 
 import pytest
 
@@ -42,7 +41,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.firebolt import (

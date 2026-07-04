@@ -215,7 +215,7 @@ The `tenant_id` claim could be used in future versions to:
 
 **Example Command**:
 ```bash
-superset mcp run --port 5008
+ax-bi mcp run --port 5008
 ```
 
 ### Multi-Process Deployment
@@ -250,7 +250,7 @@ gunicorn \
 **Docker**:
 ```dockerfile
 FROM apache/superset:latest
-CMD ["superset", "mcp", "run", "--port", "5008"]
+CMD ["ax-bi", "mcp", "run", "--port", "5008"]
 ```
 
 **Kubernetes Deployment**:
@@ -258,21 +258,21 @@ CMD ["superset", "mcp", "run", "--port", "5008"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: superset-mcp
+      app: ax-bi-mcp
   template:
     metadata:
       labels:
-        app: superset-mcp
+        app: ax-bi-mcp
     spec:
       containers:
       - name: mcp
         image: apache/superset:latest
-        command: ["superset", "mcp", "run", "--port", "5008"]
+        command: ["ax-bi", "mcp", "run", "--port", "5008"]
         ports:
         - containerPort: 5008
         env:
@@ -292,12 +292,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: superset-mcp-hpa
+  name: ax-bi-mcp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: superset-mcp
+    name: ax-bi-mcp
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -455,10 +455,10 @@ server {
 apiVersion: v1
 kind: Service
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
 spec:
   selector:
-    app: superset-mcp
+    app: ax-bi-mcp
   ports:
   - port: 5008
     targetPort: 5008

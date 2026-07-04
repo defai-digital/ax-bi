@@ -101,9 +101,7 @@ class DatabaseDAO(BaseDAO[Database]):
 
         column_name = id_column or cls.id_column_name
         if not hasattr(cls.model_cls, column_name):
-            raise AttributeError(
-                "{0} has no column {1}".format(cls.model_cls, column_name)
-            )
+            raise AttributeError(f"{cls.model_cls} has no column {column_name}")
 
         column = getattr(cls.model_cls, column_name)
         return query.filter(column == model_id).one_or_none()

@@ -114,8 +114,9 @@ async def create_dataset(
     catalog = request.catalog
 
     await ctx.info(
-        "Registering physical table as dataset: database_id=%s, table=%s"
-        % (request.database_id, f"{schema}.{table_name}" if schema else table_name)
+        "Registering physical table as dataset: "
+        f"database_id={request.database_id}, "
+        f"table={f'{schema}.{table_name}' if schema else table_name}"
     )
 
     try:
@@ -141,11 +142,8 @@ async def create_dataset(
             )
 
         await ctx.info(
-            "Dataset registered: id=%s, table=%s"
-            % (
-                dataset.id,
-                f"{schema}.{table_name}" if schema else table_name,
-            )
+            f"Dataset registered: id={dataset.id}, "
+            f"table={f'{schema}.{table_name}' if schema else table_name}"
         )
         return result
 
@@ -155,8 +153,8 @@ async def create_dataset(
         # Inspect the wrapped class names for a typed response.
         error_response = _classify_invalid_error(exc)
         await ctx.warning(
-            "Dataset validation failed (%s): %s"
-            % (error_response.error_type, error_response.error)
+            f"Dataset validation failed ({error_response.error_type}): "
+            f"{error_response.error}"
         )
         return error_response
     except DatasetCreateFailedError:
@@ -167,5 +165,5 @@ async def create_dataset(
         )
     except Exception as exc:
         logger.exception("Unexpected error in create_dataset")
-        await ctx.error("Unexpected error: %s" % (type(exc).__name__,))
+        await ctx.error(f"Unexpected error: {type(exc).__name__}")
         raise

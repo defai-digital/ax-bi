@@ -366,8 +366,8 @@ async def _list_annotation_layers_python(
     """Run the authoritative Python annotation layer list path."""
 
     await ctx.info(
-        "Listing annotation layers: page=%s, page_size=%s, search=%s"
-        % (request.page, request.page_size, request.search)
+        f"Listing annotation layers: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
 
     try:
@@ -403,20 +403,19 @@ async def _list_annotation_layers_python(
                 page_size=request.page_size,
             )
 
+        annotation_layer_count = (
+            len(result.annotation_layers) if hasattr(result, "annotation_layers") else 0
+        )
         await ctx.info(
-            "Annotation layers listed: count=%s, total_count=%s"
-            % (
-                len(result.annotation_layers)
-                if hasattr(result, "annotation_layers")
-                else 0,
-                getattr(result, "total_count", None),
-            )
+            "Annotation layers listed: "
+            f"count={annotation_layer_count}, "
+            f"total_count={getattr(result, 'total_count', None)}"
         )
         return result.model_dump(mode="json")
 
     except Exception as e:
         await ctx.error(
-            "Annotation layer listing failed: error=%s, error_type=%s"
-            % (str(e), type(e).__name__)
+            f"Annotation layer listing failed: error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

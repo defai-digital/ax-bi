@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from marshmallow import Schema
 from sqlalchemy.exc import MultipleResultsFound
@@ -171,7 +171,7 @@ class ImportExamplesCommand(ImportModelsCommand):
     def _import(  # pylint: disable=too-many-locals, too-many-branches  # noqa: C901
         configs: dict[str, Any],
         overwrite: bool = False,
-        contents: Optional[dict[str, Any]] = None,
+        contents: dict[str, Any] | None = None,
         force_data: bool = False,
     ) -> None:
         # import databases

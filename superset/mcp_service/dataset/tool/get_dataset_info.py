@@ -88,16 +88,11 @@ async def get_dataset_info(
     }
     ```
     """
-    await ctx.info(
-        "Retrieving dataset information: identifier=%s" % (request.identifier,)
-    )
+    await ctx.info(f"Retrieving dataset information: identifier={request.identifier}")
     await ctx.debug(
-        "Metadata cache settings: use_cache=%s refresh_metadata=%s force_refresh=%s"
-        % (
-            request.use_cache,
-            request.refresh_metadata,
-            request.force_refresh,
-        )
+        f"Metadata cache settings: use_cache={request.use_cache} "
+        f"refresh_metadata={request.refresh_metadata} "
+        f"force_refresh={request.force_refresh}"
     )
 
     # The decorator hides this tool from search; this check enforces direct calls.
@@ -137,17 +132,13 @@ async def get_dataset_info(
         if isinstance(result, DatasetInfo):
             await ctx.info(
                 "Dataset information retrieved successfully: "
-                "dataset_id=%s, table_name=%s, columns_count=%s, metrics_count=%s"
-                % (
-                    result.id,
-                    result.table_name,
-                    len(result.columns) if result.columns else 0,
-                    len(result.metrics) if result.metrics else 0,
-                )
+                f"dataset_id={result.id}, table_name={result.table_name}, "
+                f"columns_count={len(result.columns) if result.columns else 0}, "
+                f"metrics_count={len(result.metrics) if result.metrics else 0}"
             )
             await ctx.debug(
-                "Filtering response: select_columns=%s, column_fields=%s"
-                % (request.select_columns, request.column_fields)
+                f"Filtering response: select_columns={request.select_columns}, "
+                f"column_fields={request.column_fields}"
             )
             with mcp_event_log_context(action="mcp.get_dataset_info.serialization"):
                 return dump_model_with_select_columns(
@@ -158,21 +149,17 @@ async def get_dataset_info(
                 )
         else:
             await ctx.warning(
-                "Dataset retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Dataset retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Dataset information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Dataset information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return DatasetError.create(
             error=f"Failed to get dataset info: {str(e)}",

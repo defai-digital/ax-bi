@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import lazy_gettext as _
 from marshmallow import ValidationError
@@ -38,8 +38,8 @@ class ObjectNotFoundError(CommandException):
     def __init__(
         self,
         object_type: str,
-        object_id: Optional[str] = None,
-        exception: Optional[Exception] = None,
+        object_id: str | None = None,
+        exception: Exception | None = None,
     ) -> None:
         super().__init__(
             _(
@@ -59,7 +59,7 @@ class CommandInvalidError(CommandException):
     def __init__(
         self,
         message: str = "",
-        exceptions: Optional[list[ValidationError]] = None,
+        exceptions: list[ValidationError] | None = None,
     ) -> None:
         self._exceptions = exceptions or []
         super().__init__(message)

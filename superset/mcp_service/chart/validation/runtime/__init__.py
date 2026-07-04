@@ -21,7 +21,7 @@ Validates performance, compatibility, and user experience issues.
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from superset.mcp_service.chart.schemas import (
     ChartConfig,
@@ -37,7 +37,7 @@ class RuntimeValidator:
     @staticmethod
     def validate_runtime_issues(
         config: ChartConfig, dataset_id: int | str
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """
         Validate runtime issues that could affect chart rendering or performance.
 
@@ -53,8 +53,8 @@ class RuntimeValidator:
             - is_valid: Always True (warnings don't block generation)
             - warnings_metadata: Dict with warnings and suggestions, or None
         """
-        warnings: List[str] = []
-        suggestions: List[str] = []
+        warnings: list[str] = []
+        suggestions: list[str] = []
 
         # Only check XY charts for format and cardinality issues
         if isinstance(config, XYChartConfig):
@@ -98,9 +98,9 @@ class RuntimeValidator:
         return True, None
 
     @staticmethod
-    def _validate_format_compatibility(config: XYChartConfig) -> List[str]:
+    def _validate_format_compatibility(config: XYChartConfig) -> list[str]:
         """Validate format-type compatibility."""
-        warnings: List[str] = []
+        warnings: list[str] = []
 
         try:
             # Import here to avoid circular imports
@@ -121,10 +121,10 @@ class RuntimeValidator:
     @staticmethod
     def _validate_cardinality(
         config: XYChartConfig, dataset_id: int | str
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Validate cardinality issues."""
-        warnings: List[str] = []
-        suggestions: List[str] = []
+        warnings: list[str] = []
+        suggestions: list[str] = []
 
         try:
             # Import here to avoid circular imports
@@ -157,10 +157,10 @@ class RuntimeValidator:
     @staticmethod
     def _validate_chart_type(
         config: ChartConfig, dataset_id: int | str
-    ) -> Tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Validate chart type appropriateness."""
-        warnings: List[str] = []
-        suggestions: List[str] = []
+        warnings: list[str] = []
+        suggestions: list[str] = []
 
         try:
             # Import here to avoid circular imports

@@ -49,7 +49,7 @@ under the License.
 
 # under the License.
 
-# Superset CLI Tests
+# AX-BI Extensions CLI Tests
 
 This directory contains tests for the superset-extensions-cli package, focusing on the `init` command and other CLI functionality.
 

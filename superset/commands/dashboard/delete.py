@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -57,7 +56,7 @@ class DeleteEmbeddedDashboardCommand(BaseCommand):
 class DeleteDashboardCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[Dashboard]] = None
+        self._models: list[Dashboard] | None = None
 
     @transaction(on_error=partial(on_error, reraise=DashboardDeleteFailedError))
     def run(self) -> None:

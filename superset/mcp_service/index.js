@@ -18,7 +18,7 @@
  */
 
 /**
- * Apache Superset MCP Server
+ * AX-BI MCP Server
  *
  * Entry point for the MCP server when used as a Node.js module.
  */
@@ -26,7 +26,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-class SupersetMCPServer {
+class AXBIMCPServer {
     constructor(options = {}) {
         this.options = {
             transport: options.transport || 'http',
@@ -68,7 +68,7 @@ class SupersetMCPServer {
 
         this.process = spawn(
             process.execPath,
-            [path.join(__dirname, 'bin', 'superset-mcp.js'), ...args],
+            [path.join(__dirname, 'bin', 'ax-bi-mcp.js'), ...args],
             {
                 env,
                 cwd: this.options.supersetRoot || process.cwd(),
@@ -86,4 +86,4 @@ class SupersetMCPServer {
     }
 }
 
-module.exports = SupersetMCPServer;
+module.exports = AXBIMCPServer;

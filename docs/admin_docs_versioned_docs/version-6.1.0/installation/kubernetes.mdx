@@ -45,7 +45,7 @@ superset/superset       0.1.1           1.0             Apache Superset is a mod
 
 3. Configure your setting overrides
 
-Just like any typical Helm chart, you'll need to craft a `values.yaml` file that would define/override any of the values exposed into the default [values.yaml](https://github.com/apache/superset/tree/master/helm/superset/values.yaml), or from any of the dependent charts it depends on:
+Just like any typical Helm chart, you'll need to craft a `values.yaml` file that would define/override any of the values exposed into the default [values.yaml](https://github.com/defai-digital/ax-bi/tree/main/helm/superset/values.yaml), or from any of the dependent charts it depends on:
 
 - [bitnami/redis](https://artifacthub.io/packages/helm/bitnami/redis)
 - [bitnami/postgresql](https://artifacthub.io/packages/helm/bitnami/postgresql)
@@ -129,7 +129,7 @@ init:
     - -c
     - |
       . {{ .Values.configMountPath }}/superset_bootstrap.sh
-      superset re-encrypt-secrets
+      ax-bi re-encrypt-secrets
       . {{ .Values.configMountPath }}/superset_init.sh
 ```
 
@@ -151,7 +151,7 @@ dialect to be installed for each datastore you want to connect to.
 
 See [Install Database Drivers](/user-docs/databases#installing-database-drivers) for more information.
 It is recommended that you refer to versions listed in
-[pyproject.toml](https://github.com/apache/superset/blob/master/pyproject.toml)
+[pyproject.toml](https://github.com/defai-digital/ax-bi/blob/main/pyproject.toml)
 instead of hard-coding them in your bootstrap script, as seen below.
 
 :::

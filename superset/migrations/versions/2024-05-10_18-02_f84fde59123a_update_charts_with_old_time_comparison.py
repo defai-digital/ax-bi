@@ -202,7 +202,7 @@ def downgrade():
 
     for slc in paginated_update(
         session.query(Slice).filter(
-            Slice.viz_type == "pop_kpi" or Slice.viz_type == "table"
+            or_(Slice.viz_type == "pop_kpi", Slice.viz_type == "table")
         )
     ):
         try:

@@ -18,6 +18,6 @@
  */
 
 // Re-export the Button component as a default export
-import { Button } from '../../../superset-frontend/packages/superset-ui-core/src/components/Button';
+import { Button } from '../../../ax-bi-frontend/packages/superset-ui-core/src/components/Button';
 
 export default Button;

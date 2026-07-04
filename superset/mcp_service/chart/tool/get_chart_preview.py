@@ -20,7 +20,7 @@ MCP tool: get_chart_preview
 """
 
 import logging
-from typing import Any, Dict, List, Protocol
+from typing import Any, Protocol
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -174,7 +174,7 @@ class ChartLike(Protocol):
     uuid: Any
 
 
-def _build_query_columns(form_data: Dict[str, Any]) -> list[Column]:
+def _build_query_columns(form_data: dict[str, Any]) -> list[Column]:
     """Build query columns list from form_data, including both x_axis and groupby.
 
     Handles chart-type-specific keys:
@@ -220,7 +220,7 @@ def _build_query_columns(form_data: Dict[str, Any]) -> list[Column]:
     return columns
 
 
-def _build_query_metrics(form_data: Dict[str, Any]) -> list[Metric]:
+def _build_query_metrics(form_data: dict[str, Any]) -> list[Metric]:
     """Extract metrics from form_data, handling chart-type variations.
 
     Handles:
@@ -506,7 +506,7 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
                 error_type="VegaLiteGenerationError",
             )
 
-    def _create_vega_lite_spec(self, data: List[Any]) -> Dict[str, Any]:
+    def _create_vega_lite_spec(self, data: list[Any]) -> dict[str, Any]:
         """Create Vega-Lite specification from chart data."""
         if not data:
             return {"data": {"values": []}, "mark": "point"}
@@ -538,8 +538,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return spec
 
     def _get_chart_spec_for_type(
-        self, viz_type: str, fields: List[str], field_types: Dict[str, str]
-    ) -> Dict[str, Any]:
+        self, viz_type: str, fields: list[str], field_types: dict[str, str]
+    ) -> dict[str, Any]:
         """Get chart specification based on visualization type."""
         chart_type_mapping = {
             "line": [
@@ -580,10 +580,10 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return self._scatter_chart_spec(fields, field_types)
 
     def _analyze_field_types(
-        self, data: List[Any], fields: List[str]
-    ) -> Dict[str, str]:
+        self, data: list[Any], fields: list[str]
+    ) -> dict[str, str]:
         """Analyze data fields to determine appropriate Vega-Lite types."""
-        field_types: Dict[str, str] = {}
+        field_types: dict[str, str] = {}
 
         if not data or not fields:
             return field_types
@@ -619,8 +619,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return field_types
 
     def _get_sample_values(
-        self, data: List[Any], field: str, sample_size: int
-    ) -> List[Any]:
+        self, data: list[Any], field: str, sample_size: int
+    ) -> list[Any]:
         """Get sample values for a field from the data."""
         sample_values = []
         for row in data[:sample_size]:
@@ -630,7 +630,7 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
                     sample_values.append(val)
         return sample_values
 
-    def _determine_field_type(self, sample_values: List[Any]) -> str:
+    def _determine_field_type(self, sample_values: list[Any]) -> str:
         """Determine the field type based on sample values."""
         # Check for temporal fields (dates)
         if any(
@@ -638,17 +638,16 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         ):
             return "temporal"
         # Check for numeric fields
-        elif all(
-            isinstance(val, (int, float)) and not isinstance(val, bool)
+        if all(
+            isinstance(val, int | float) and not isinstance(val, bool)
             for val in sample_values
         ):
             return "quantitative"
         # Check for ordinal fields (limited unique values)
-        elif len({str(val) for val in sample_values}) <= 10:
+        if len({str(val) for val in sample_values}) <= 10:
             # Could be ordinal or nominal, default to nominal for safety
             return "nominal"
-        else:
-            return "nominal"
+        return "nominal"
 
     def _looks_like_date(self, value: str) -> bool:
         """Quick heuristic to detect date-like strings."""
@@ -686,8 +685,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         return any(indicator in value_lower for indicator in date_indicators)
 
     def _line_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create line chart specification."""
         field_types = field_types or {}
 
@@ -706,11 +705,14 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         # Better type detection for x-axis
         x_type = field_types.get(x_field, "nominal")
         # Override if we know it's the x_axis from form_data (likely temporal)
-        if form_data and x_field == form_data.get("x_axis"):
-            if any(
+        if (
+            form_data
+            and x_field == form_data.get("x_axis")
+            and any(
                 kw in x_field.lower() for kw in ["date", "time", "year", "month", "day"]
-            ):
-                x_type = "temporal"
+            )
+        ):
+            x_type = "temporal"
 
         y_type = field_types.get(y_field, "quantitative")
 
@@ -727,8 +729,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _bar_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create bar chart specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -750,8 +752,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _area_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create area chart specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -778,8 +780,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _scatter_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create scatter plot specification."""
         field_types = field_types or {}
         x_field = fields[0] if fields else "x"
@@ -801,8 +803,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _table_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create table-like visualization (using text marks)."""
         field_types = field_types or {}
         # For table data, create a simple dot plot
@@ -824,8 +826,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _pie_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create pie chart specification using arc marks."""
         field_types = field_types or {}
         category_field = fields[0] if fields else "category"
@@ -851,8 +853,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _big_number_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create big number visualization using text mark."""
         field_types = field_types or {}
         value_field = fields[0] if fields else "value"
@@ -880,8 +882,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _histogram_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create histogram using bar marks with binned data."""
         x_field = fields[0] if fields else "value"
 
@@ -900,8 +902,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _box_plot_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create box plot approximation using error bars."""
         x_field = fields[0] if fields else "category"
         y_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -916,8 +918,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _heatmap_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create heatmap using rect marks."""
         x_field = fields[0] if fields else "x"
         y_field = fields[1] if len(fields) > 1 else "y"
@@ -941,8 +943,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _funnel_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create funnel chart using horizontal bars."""
         stage_field = fields[0] if fields else "stage"
         value_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -971,8 +973,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _gauge_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create gauge chart using arc marks."""
         value_field = fields[0] if fields else "value"
 
@@ -999,8 +1001,8 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         }
 
     def _mixed_chart_spec(
-        self, fields: List[str], field_types: Dict[str, str] | None = None
-    ) -> Dict[str, Any]:
+        self, fields: list[str], field_types: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Create mixed timeseries using layered marks."""
         x_field = fields[0] if fields else "date"
         y_field = fields[1] if len(fields) > 1 else fields[0] if fields else "value"
@@ -1099,7 +1101,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                 ):
                     await ctx.info(
                         "No chart identifier - creating transient chart from "
-                        "form_data_key=%s" % (request.form_data_key,)
+                        f"form_data_key={request.form_data_key}"
                     )
                     from superset.commands.explore.form_data.get import (
                         GetFormDataCommand,
@@ -1116,7 +1118,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                             form_data = utils_json.loads(form_data_json)
 
                             class TransientChartFromKey:
-                                def __init__(self, fd: Dict[str, Any]):
+                                def __init__(self, fd: dict[str, Any]):
                                     self.id = 0
                                     self.slice_name = "Unsaved Chart Preview"
                                     self.viz_type = fd.get("viz_type", "table")
@@ -1156,9 +1158,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
 
             else:
-                await ctx.debug(
-                    "Looking up chart: identifier=%s" % (request.identifier,)
-                )
+                await ctx.debug(f"Looking up chart: identifier={request.identifier}")
                 if request.identifier is None:
                     return ChartError(
                         error="Chart identifier is required",
@@ -1200,7 +1200,7 @@ async def _get_chart_preview_internal(  # noqa: C901
 
                             # Create a transient chart object from form data
                             class TransientChart:
-                                def __init__(self, form_data: Dict[str, Any]):
+                                def __init__(self, form_data: dict[str, Any]):
                                     self.id = 0
                                     self.slice_name = "Unsaved Chart Preview"
                                     self.viz_type = form_data.get("viz_type", "table")
@@ -1226,7 +1226,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
 
         if not chart:
-            await ctx.warning("Chart not found: identifier=%s" % (request.identifier,))
+            await ctx.warning(f"Chart not found: identifier={request.identifier}")
             is_form_data_key = (
                 isinstance(request.identifier, str)
                 and len(request.identifier) > 8
@@ -1247,8 +1247,7 @@ async def _get_chart_preview_internal(  # noqa: C901
             )
 
         await ctx.info(
-            "Chart found successfully: chart_id=%s, chart_name=%s, viz_type=%s"
-            % (
+            "Chart found successfully: chart_id={}, chart_name={}, viz_type={}".format(
                 getattr(chart, "id", None),
                 getattr(chart, "slice_name", None),
                 getattr(chart, "viz_type", None),
@@ -1271,8 +1270,8 @@ async def _get_chart_preview_internal(  # noqa: C901
             validation_result = validate_chart_dataset(chart, check_access=True)
             if not validation_result.is_valid:
                 await ctx.warning(
-                    "Chart found but dataset is not accessible: %s"
-                    % (validation_result.error,)
+                    "Chart found but dataset is not accessible: "
+                    f"{validation_result.error}"
                 )
                 return ChartError(
                     error=validation_result.error
@@ -1281,7 +1280,7 @@ async def _get_chart_preview_internal(  # noqa: C901
                 )
             # Log any warnings (e.g., virtual dataset warnings)
             for warning in validation_result.warnings:
-                await ctx.warning("Dataset warning: %s" % (warning,))
+                await ctx.warning(f"Dataset warning: {warning}")
 
         # If form_data_key is provided, override chart.params with cached
         # form_data so the preview reflects what the user actually sees
@@ -1290,8 +1289,8 @@ async def _get_chart_preview_internal(  # noqa: C901
                 action="mcp.get_chart_preview.unsaved_state_override"
             ):
                 await ctx.info(
-                    "Retrieving unsaved chart state from cache: form_data_key=%s"
-                    % (request.form_data_key,)
+                    "Retrieving unsaved chart state from cache: "
+                    f"form_data_key={request.form_data_key}"
                 )
                 from superset.commands.explore.form_data.get import (
                     GetFormDataCommand,
@@ -1324,8 +1323,8 @@ async def _get_chart_preview_internal(  # noqa: C901
                         )
                 except (CommandException, ValueError, KeyError) as e:
                     await ctx.warning(
-                        "Failed to retrieve cached form_data: %s. "
-                        "Using saved chart configuration." % (str(e),)
+                        f"Failed to retrieve cached form_data: {str(e)}. "
+                        "Using saved chart configuration."
                     )
 
         import time
@@ -1334,15 +1333,9 @@ async def _get_chart_preview_internal(  # noqa: C901
 
         await ctx.report_progress(2, 3, f"Generating {request.format} preview")
         await ctx.debug(
-            "Preview generation parameters: chart_id=%s, viz_type=%s, "
-            "datasource_id=%s, width=%s, height=%s"
-            % (
-                chart.id,
-                chart.viz_type,
-                chart.datasource_id,
-                request.width,
-                request.height,
-            )
+            f"Preview generation parameters: chart_id={chart.id}, "
+            f"viz_type={chart.viz_type}, datasource_id={chart.datasource_id}, "
+            f"width={request.width}, height={request.height}"
         )
 
         # Handle different preview formats using strategy pattern
@@ -1352,14 +1345,10 @@ async def _get_chart_preview_internal(  # noqa: C901
 
         if isinstance(content, ChartError):
             await ctx.error(
-                "Preview generation failed: chart_id=%s, format=%s, error=%s, "
-                "error_type=%s"
-                % (
-                    chart.id,
-                    request.format,
-                    content.error,
-                    content.error_type,
-                )
+                "Preview generation failed: "
+                f"chart_id={chart.id}, format={request.format}, "
+                f"error={content.error}, "
+                f"error_type={content.error_type}"
             )
             return content
 
@@ -1381,11 +1370,8 @@ async def _get_chart_preview_internal(  # noqa: C901
             )
 
         await ctx.debug(
-            "Preview generation completed: execution_time_ms=%s, content_type=%s"
-            % (
-                execution_time,
-                type(content).__name__,
-            )
+            f"Preview generation completed: execution_time_ms={execution_time}, "
+            f"content_type={type(content).__name__}"
         )
 
         # Create backward-compatible response with enhanced metadata
@@ -1407,8 +1393,8 @@ async def _get_chart_preview_internal(  # noqa: C901
         # surface when the ORM session expires or commits mid-request.
         await ctx.error(
             "Chart preview failed due to database session error: "
-            "identifier=%s, error_type=%s, error=%s"
-            % (request.identifier, type(e).__name__, str(e))
+            f"identifier={request.identifier}, error_type={type(e).__name__}, "
+            f"error={str(e)}"
         )
         logger.exception("SQLAlchemy error in get_chart_preview: %s", e)
         return ChartError(
@@ -1425,14 +1411,10 @@ async def _get_chart_preview_internal(  # noqa: C901
         TypeError,
     ) as e:
         await ctx.error(
-            "Chart preview generation failed: identifier=%s, format=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                request.format,
-                str(e),
-                type(e).__name__,
-            )
+            "Chart preview generation failed: "
+            f"identifier={request.identifier}, format={request.format}, "
+            f"error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         logger.error("Error in get_chart_preview: %s", e)
         return ChartError(
@@ -1457,22 +1439,15 @@ async def get_chart_preview(
     Returns preview URL or formatted content (ascii, table, vega_lite).
     """
     await ctx.info(
-        "Starting chart preview generation: identifier=%s, format=%s, width=%s, "
-        "height=%s"
-        % (
-            request.identifier,
-            request.format,
-            request.width,
-            request.height,
-        )
+        "Starting chart preview generation: "
+        f"identifier={request.identifier}, format={request.format}, "
+        f"width={request.width}, "
+        f"height={request.height}"
     )
     await ctx.debug(
-        "Cache control settings: use_cache=%s, force_refresh=%s, cache_timeout=%s"
-        % (
-            request.use_cache,
-            request.force_refresh,
-            request.cache_timeout,
-        )
+        f"Cache control settings: use_cache={request.use_cache}, "
+        f"force_refresh={request.force_refresh}, "
+        f"cache_timeout={request.cache_timeout}"
     )
 
     try:
@@ -1480,9 +1455,8 @@ async def get_chart_preview(
 
         if isinstance(result, ChartPreview):
             await ctx.info(
-                "Chart preview generated successfully: chart_id=%s, format=%s, "
-                "has_preview_url=%s"
-                % (
+                "Chart preview generated successfully: chart_id={}, format={}, "
+                "has_preview_url={}".format(
                     getattr(result, "chart_id", None),
                     getattr(result.content, "type", None),
                     bool(getattr(result, "preview_url", None)),
@@ -1490,24 +1464,22 @@ async def get_chart_preview(
             )
         else:
             await ctx.warning(
-                "Chart preview generation failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                "Chart preview generation failed: "
+                f"error_type={result.error_type}, error={result.error}"
             )
 
         return result
     except OAuth2RedirectError as ex:
         await ctx.warning(
-            "Chart preview requires OAuth authentication: identifier=%s"
-            % request.identifier
+            "Chart preview requires OAuth authentication: "
+            f"identifier={request.identifier}"
         )
         return ChartError(
             error=build_oauth2_redirect_message(ex),
             error_type="OAUTH2_REDIRECT",
         )
     except OAuth2Error:
-        await ctx.error(
-            "OAuth2 configuration error: identifier=%s" % request.identifier
-        )
+        await ctx.error(f"OAuth2 configuration error: identifier={request.identifier}")
         return ChartError(
             error=OAUTH2_CONFIG_ERROR_MESSAGE,
             error_type="OAUTH2_REDIRECT_ERROR",
@@ -1522,12 +1494,9 @@ async def get_chart_preview(
         AttributeError,
     ) as e:
         await ctx.error(
-            "Chart preview generation failed: identifier=%s, error=%s, error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Chart preview generation failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return ChartError(
             error=f"Failed to generate chart preview: {str(e)}",

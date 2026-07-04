@@ -18,8 +18,9 @@ import copy
 import decimal
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -41,7 +42,7 @@ class DashboardEncoder(simplejson.JSONEncoder):
         super().__init__(*args, **kwargs)
         self.sort_keys = True
 
-    def default(self, o: Any) -> Union[dict[Any, Any], str]:  # type: ignore
+    def default(self, o: Any) -> dict[Any, Any] | str:  # type: ignore
         if isinstance(o, uuid.UUID):
             return str(o)
         try:
@@ -92,7 +93,7 @@ def base_json_conv(obj: Any) -> Any:  # noqa: C901
         return list(obj)
     if isinstance(obj, decimal.Decimal):
         return float(obj)
-    if isinstance(obj, (uuid.UUID, time, LazyString)):
+    if isinstance(obj, uuid.UUID | time | LazyString):
         return str(obj)
     if isinstance(obj, timedelta):
         return format_timedelta(obj)
@@ -124,7 +125,7 @@ def json_iso_dttm_ser(obj: Any, pessimistic: bool = False) -> Any:
     :raises TypeError: If the non-pessimistic object cannot be serialized
     """
 
-    if isinstance(obj, (datetime, date, pd.Timestamp)):
+    if isinstance(obj, datetime | date | pd.Timestamp):
         return obj.isoformat()
 
     try:
@@ -155,7 +156,7 @@ def json_int_dttm_ser(obj: Any) -> Any:
     :raises TypeError: If the object cannot be serialized
     """
 
-    if isinstance(obj, (datetime, pd.Timestamp)):
+    if isinstance(obj, datetime | pd.Timestamp):
         return datetime_to_epoch(obj)
 
     if isinstance(obj, date):
@@ -169,7 +170,7 @@ def json_dumps_w_dates(payload: dict[Any, Any], sort_keys: bool = False) -> str:
     return dumps(payload, default=json_int_dttm_ser, sort_keys=sort_keys)
 
 
-def validate_json(obj: Union[bytes, bytearray, str]) -> None:
+def validate_json(obj: bytes | bytearray | str) -> None:
     """
     A JSON Validator that validates an object of bytes, bytes array or string
     to be in valid JSON format
@@ -187,14 +188,14 @@ def validate_json(obj: Union[bytes, bytearray, str]) -> None:
 
 def dumps(  # pylint: disable=too-many-arguments
     obj: Any,
-    default: Optional[Callable[[Any], Any]] = json_iso_dttm_ser,
+    default: Callable[[Any], Any] | None = json_iso_dttm_ser,
     allow_nan: bool = False,
     ignore_nan: bool = True,
     sort_keys: bool = False,
-    indent: Union[str, int, None] = None,
-    separators: Union[tuple[str, str], None] = None,
-    cls: Union[type[simplejson.JSONEncoder], None] = None,
-    encoding: Optional[str] = "utf-8",
+    indent: str | int | None = None,
+    separators: tuple[str, str] | None = None,
+    cls: type[simplejson.JSONEncoder] | None = None,
+    encoding: str | None = "utf-8",
 ) -> str:
     """
     Dumps object to compatible JSON format
@@ -211,7 +212,7 @@ def dumps(  # pylint: disable=too-many-arguments
     """
 
     results_string = ""
-    dumps_kwargs: Dict[str, Any] = {
+    dumps_kwargs: dict[str, Any] = {
         "default": default,
         "allow_nan": allow_nan,
         "ignore_nan": ignore_nan,
@@ -230,10 +231,10 @@ def dumps(  # pylint: disable=too-many-arguments
 
 
 def loads(
-    obj: Union[bytes, bytearray, str],
-    encoding: Union[str, None] = None,
+    obj: bytes | bytearray | str,
+    encoding: str | None = None,
     allow_nan: bool = False,
-    object_hook: Union[Callable[[dict[Any, Any]], Any], None] = None,
+    object_hook: Callable[[dict[Any, Any]], Any] | None = None,
 ) -> Any:
     """
     deserializable instance to a Python object.

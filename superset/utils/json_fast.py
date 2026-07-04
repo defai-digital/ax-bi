@@ -63,7 +63,7 @@ def _orjson_default(obj: Any) -> Any:
       Decimal, set, memoryview, timedelta, LazyString, pd.DateOffset,
       np.int64, np.bool_, np.ndarray)
     """
-    if isinstance(obj, (datetime, pd.Timestamp)):
+    if isinstance(obj, datetime | pd.Timestamp):
         return datetime_to_epoch(obj)
 
     if isinstance(obj, date):
