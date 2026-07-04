@@ -125,15 +125,16 @@ class UpdateReportScheduleCommand(UpdateMixin, BaseReportScheduleCommand):
                 exceptions.append(ReportScheduleUserEmailNotFoundError())
 
         # Validate name/type uniqueness if either is changing
-        if name != self._model.name or report_type != self._model.type:
-            if not ReportScheduleDAO.validate_update_uniqueness(
+        if (name != self._model.name or report_type != self._model.type) and (
+            not ReportScheduleDAO.validate_update_uniqueness(
                 name, report_type, expect_id=self._model_id
-            ):
-                exceptions.append(
-                    ReportScheduleNameUniquenessValidationError(
-                        report_type=report_type, name=name
-                    )
+            )
+        ):
+            exceptions.append(
+                ReportScheduleNameUniquenessValidationError(
+                    report_type=report_type, name=name
                 )
+            )
 
         # Determine effective database state (payload overrides model)
         if "database" in self._properties:
