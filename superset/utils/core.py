@@ -37,7 +37,7 @@ import uuid
 import warnings
 import zlib
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from contextlib import closing, contextmanager
+from contextlib import closing, contextmanager, suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from email.mime.application import MIMEApplication
@@ -357,7 +357,7 @@ class ReservedUrlParameters(StrEnum):
     def is_standalone_mode() -> bool | None:
         standalone_param = request.args.get(ReservedUrlParameters.STANDALONE.value)
         standalone: bool | None = bool(
-            standalone_param and standalone_param != "false" and standalone_param != "0"
+            standalone_param and standalone_param not in ("false", "0")
         )
         return standalone
 
@@ -587,9 +587,7 @@ def sanitize_svg_content(svg_content: str) -> str:
     content = re.sub(
         r"<object[^>]*>.*?</object>", "", content, flags=re.IGNORECASE | re.DOTALL
     )
-    content = re.sub(r"<embed[^>]*>", "", content, flags=re.IGNORECASE)
-
-    return content
+    return re.sub(r"<embed[^>]*>", "", content, flags=re.IGNORECASE)
 
 
 def sanitize_url(url: str) -> str:
@@ -631,8 +629,7 @@ def sanitize_url(url: str) -> str:
 
 def readfile(file_path: str) -> str | None:
     with open(file_path) as f:
-        content = f.read()
-    return content
+        return f.read()
 
 
 def generic_find_constraint_name(
@@ -983,10 +980,8 @@ def send_mime_email(
         # Always release the socket; the new timeout means starttls/login/
         # sendmail can raise, and a skipped quit() would leak connections in
         # the long-lived worker process.
-        try:
+        with suppress(smtplib.SMTPException):
             smtp.quit()
-        except smtplib.SMTPException:
-            pass
 
 
 def recipients_string_to_list(address_string: str | None) -> list[str]:
