@@ -71,7 +71,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         return lambda: random.choice([0, 1])  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.INTEGER, sqlalchemy.sql.sqltypes.Integer)
+        sqltype, sqlalchemy.sql.sqltypes.INTEGER | sqlalchemy.sql.sqltypes.Integer
     ):
         return lambda: random.randrange(2147483647)  # noqa: S311
 
@@ -79,28 +79,26 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         return lambda: random.randrange(sys.maxsize)  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.VARCHAR, sqlalchemy.sql.sqltypes.String)
+        sqltype, sqlalchemy.sql.sqltypes.VARCHAR | sqlalchemy.sql.sqltypes.String
     ):
         length = random.randrange(sqltype.length or 255)  # noqa: S311
         length = max(8, length)  # for unique values
         length = min(100, length)  # for FAB perms
         return lambda: "".join(random.choices(string.ascii_letters, k=length))  # noqa: S311
 
-    if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.TEXT, sqlalchemy.sql.sqltypes.Text)
-    ):
+    if isinstance(sqltype, sqlalchemy.sql.sqltypes.TEXT | sqlalchemy.sql.sqltypes.Text):
         length = random.randrange(65535)  # noqa: S311
         # "practicality beats purity"
         length = max(length, 2048)
         return lambda: "".join(random.choices(string.ascii_letters, k=length))  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.BOOLEAN, sqlalchemy.sql.sqltypes.Boolean)
+        sqltype, sqlalchemy.sql.sqltypes.BOOLEAN | sqlalchemy.sql.sqltypes.Boolean
     ):
         return lambda: random.choice([True, False])  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.FLOAT, sqlalchemy.sql.sqltypes.REAL)
+        sqltype, sqlalchemy.sql.sqltypes.FLOAT | sqlalchemy.sql.sqltypes.REAL
     ):
         return lambda: random.uniform(-sys.maxsize, sys.maxsize)  # noqa: S311
 
@@ -116,11 +114,9 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
     if isinstance(
         sqltype,
-        (
-            sqlalchemy.sql.sqltypes.TIMESTAMP,
-            sqlalchemy.sql.sqltypes.DATETIME,
-            sqlalchemy.sql.sqltypes.DateTime,
-        ),
+        sqlalchemy.sql.sqltypes.TIMESTAMP
+        | sqlalchemy.sql.sqltypes.DATETIME
+        | sqlalchemy.sql.sqltypes.DateTime,
     ):
         return lambda: (
             datetime.fromordinal(MINIMUM_DATE.toordinal())
@@ -142,10 +138,8 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
     if isinstance(
         sqltype,
-        (
-            sqlalchemy.sql.sqltypes.BINARY,
-            sqlalchemy_utils.types.encrypted.encrypted_type.EncryptedType,
-        ),
+        sqlalchemy.sql.sqltypes.BINARY
+        | sqlalchemy_utils.types.encrypted.encrypted_type.EncryptedType,
     ):
         length = random.randrange(sqltype.length or 255)  # noqa: S311
         return lambda: os.urandom(length)
