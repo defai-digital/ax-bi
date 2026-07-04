@@ -37,9 +37,9 @@ export SUPERSET_CONFIG=${SUPERSET_CONFIG:-tests.integration_tests.superset_test_
 export SUPERSET_TESTENV=true
 echo "Superset config module: $SUPERSET_CONFIG"
 
-superset db upgrade
-superset init
-superset load-test-users
+ax-bi db upgrade
+ax-bi init
+ax-bi load-test-users
 
 echo "Running tests"
 

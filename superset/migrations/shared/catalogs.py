@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Type, Union
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -39,7 +39,7 @@ from superset.models.core import Database
 
 logger = logging.getLogger("alembic.env")
 
-Base: Type[Any] = declarative_base()
+Base: type[Any] = declarative_base()
 
 
 class SqlaTable(Base):
@@ -96,7 +96,7 @@ class Slice(Base):
     schema_perm = sa.Column(sa.String(1000))
 
 
-ModelType = Union[Type[Query], Type[SavedQuery], Type[TabState], Type[TableSchema]]
+ModelType = type[Query] | type[SavedQuery] | type[TabState] | type[TableSchema]
 
 MODELS: list[tuple[ModelType, str]] = [
     (Query, "database_id"),

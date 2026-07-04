@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app as app
 from flask_appbuilder.models.sqla import Model
@@ -122,11 +122,11 @@ class CreateDatabaseCommand(BaseCommand):
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
 
-        sqlalchemy_uri: Optional[str] = self._properties.get("sqlalchemy_uri")
+        sqlalchemy_uri: str | None = self._properties.get("sqlalchemy_uri")
         if not sqlalchemy_uri:
             exceptions.append(DatabaseRequiredFieldValidationError("sqlalchemy_uri"))
 
-        database_name: Optional[str] = self._properties.get("database_name")
+        database_name: str | None = self._properties.get("database_name")
         if not database_name:
             exceptions.append(DatabaseRequiredFieldValidationError("database_name"))
         else:

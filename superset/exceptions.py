@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as _
 from marshmallow import ValidationError
@@ -33,8 +33,8 @@ class SupersetException(Exception):  # noqa: N818
     def __init__(
         self,
         message: str = "",
-        exception: Optional[Exception] = None,
-        error_type: Optional[SupersetErrorType] = None,
+        exception: Exception | None = None,
+        error_type: SupersetErrorType | None = None,
     ) -> None:
         if message:
             self.message = message
@@ -43,11 +43,11 @@ class SupersetException(Exception):  # noqa: N818
         super().__init__(self.message)
 
     @property
-    def exception(self) -> Optional[Exception]:
+    def exception(self) -> Exception | None:
         return self._exception
 
     @property
-    def error_type(self) -> Optional[SupersetErrorType]:
+    def error_type(self) -> SupersetErrorType | None:
         return self._error_type
 
     def to_dict(self) -> dict[str, Any]:
@@ -64,7 +64,7 @@ class SupersetException(Exception):  # noqa: N818
 class SupersetErrorException(SupersetException):
     """Exceptions with a single SupersetErrorType associated with them"""
 
-    def __init__(self, error: SupersetError, status: Optional[int] = None) -> None:
+    def __init__(self, error: SupersetError, status: int | None = None) -> None:
         super().__init__(error.message)
         self.error = error
         if status is not None:
@@ -77,7 +77,7 @@ class SupersetErrorException(SupersetException):
 class SupersetGenericErrorException(SupersetErrorException):
     """Exceptions that are too generic to have their own type"""
 
-    def __init__(self, message: str, status: Optional[int] = None) -> None:
+    def __init__(self, message: str, status: int | None = None) -> None:
         super().__init__(
             SupersetError(
                 message=message,
@@ -97,7 +97,7 @@ class SupersetErrorFromParamsException(SupersetErrorException):
         error_type: SupersetErrorType,
         message: str,
         level: ErrorLevel,
-        extra: Optional[dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(
             SupersetError(
@@ -109,9 +109,7 @@ class SupersetErrorFromParamsException(SupersetErrorException):
 class SupersetErrorsException(SupersetException):
     """Exceptions with multiple SupersetErrorType associated with them"""
 
-    def __init__(
-        self, errors: list[SupersetError], status: Optional[int] = None
-    ) -> None:
+    def __init__(self, errors: list[SupersetError], status: int | None = None) -> None:
         super().__init__(str(errors))
         self.errors = errors
         if status is not None:
@@ -137,7 +135,7 @@ class SupersetGenericDBErrorException(SupersetErrorFromParamsException):
         self,
         message: str,
         level: ErrorLevel = ErrorLevel.ERROR,
-        extra: Optional[dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(
             SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
@@ -155,7 +153,7 @@ class SupersetTemplateParamsErrorException(SupersetErrorFromParamsException):
         message: str,
         error: SupersetErrorType,
         level: ErrorLevel = ErrorLevel.ERROR,
-        extra: Optional[dict[str, Any]] = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(
             error,
@@ -169,7 +167,7 @@ class SupersetSecurityException(SupersetErrorException):
     status = 403
 
     def __init__(
-        self, error: SupersetError, payload: Optional[dict[str, Any]] = None
+        self, error: SupersetError, payload: dict[str, Any] | None = None
     ) -> None:
         super().__init__(error)
         self.payload = payload
@@ -310,11 +308,11 @@ class SupersetParseError(SupersetErrorException):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         sql: str,
-        engine: Optional[str] = None,
-        message: Optional[str] = None,
-        highlight: Optional[str] = None,
-        line: Optional[int] = None,
-        column: Optional[int] = None,
+        engine: str | None = None,
+        message: str | None = None,
+        highlight: str | None = None,
+        line: int | None = None,
+        column: int | None = None,
     ):
         if message is None:
             parts = [_("Error parsing")]

@@ -18,7 +18,7 @@ import logging
 import time
 import unittest
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import patch
 
 from flask import current_app  # noqa: F401
@@ -115,12 +115,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):
@@ -154,12 +154,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):
@@ -204,12 +204,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from colorama import Fore, Style
 
@@ -80,7 +80,7 @@ try:
             host: str = "localhost",
             port: int = 8125,
             prefix: str = "superset",
-            statsd_client: Optional[StatsClient] = None,
+            statsd_client: StatsClient | None = None,
         ) -> None:
             """
             Initializes from either params or a supplied, pre-constructed statsd client.

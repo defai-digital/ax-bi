@@ -163,7 +163,7 @@ def _finalize_successful_query(
     original_sqls = [stmt.format() for stmt in original_script.statements]
 
     for orig_sql, (exec_sql, result_set, exec_time, rowcount) in zip(
-        original_sqls, execution_results, strict=True
+        original_sqls, execution_results, strict=False
     ):
         if result_set is not None:
             # SELECT statement

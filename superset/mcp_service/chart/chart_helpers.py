@@ -94,7 +94,7 @@ def get_cached_form_data(form_data_key: str) -> str | None:
 
 def resolve_datasource_engine(datasource_id: Any, datasource_type: str) -> str:
     """Return the datasource engine name, or ``"base"`` if it cannot be resolved."""
-    if not isinstance(datasource_id, (int, str)):
+    if not isinstance(datasource_id, int | str):
         return "base"
     try:
         # avoid circular import
@@ -644,11 +644,15 @@ def resolve_form_data_datasource(
     datasource_id = form_data.get("datasource_id")
     datasource_type = form_data.get("datasource_type")
 
-    if not datasource_id and (combined := form_data.get("datasource")):
-        if isinstance(combined, str) and "__" in combined:
-            parts = combined.split("__", 1)
-            datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
-            datasource_type = parts[1] if len(parts) > 1 else None
+    if (
+        not datasource_id
+        and (combined := form_data.get("datasource"))
+        and isinstance(combined, str)
+        and "__" in combined
+    ):
+        parts = combined.split("__", 1)
+        datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
+        datasource_type = parts[1] if len(parts) > 1 else None
 
     if not datasource_id and chart:
         datasource_id = getattr(chart, "datasource_id", None)
@@ -674,7 +678,7 @@ def build_query_context_from_form_data(
     from superset.common.query_context_factory import QueryContextFactory
 
     datasource_id, datasource_type = resolve_form_data_datasource(form_data, chart)
-    if not isinstance(datasource_id, (int, str)):
+    if not isinstance(datasource_id, int | str):
         raise ValueError(
             "Cannot determine datasource ID from form_data. "
             "Provide a chart identifier or ensure form_data contains "

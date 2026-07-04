@@ -52,11 +52,11 @@ A modern, enterprise-ready business intelligence web application.
 [**Why Superset?**](#why-superset) |
 [**Supported Databases**](#supported-databases) |
 [**Installation and Configuration**](#installation-and-configuration) |
-[**Release Notes**](https://github.com/apache/superset/blob/master/RELEASING/README.md#release-notes-for-recent-releases) |
+[**Releases**](https://github.com/defai-digital/ax-bi/releases) |
 [**Get Involved**](#get-involved) |
 [**Contributor Guide**](#contributor-guide) |
 [**Resources**](#resources) |
-[**Organizations Using Superset**](https://github.com/apache/superset/blob/master/RESOURCES/INTHEWILD.md)
+[**Organizations Using Superset**](https://superset.apache.org/inTheWild)
 
 ## Why Superset?
 
@@ -158,7 +158,7 @@ Try out Superset's [quickstart](https://superset.apache.org/user-docs/quickstart
 
 - Ask and answer questions on [StackOverflow](https://stackoverflow.com/questions/tagged/apache-superset) using the **apache-superset** tag
 - [Join our community's Slack](http://bit.ly/join-superset-slack)
-  and please read our [Slack Community Guidelines](https://github.com/apache/superset/blob/master/CODE_OF_CONDUCT.md#slack-community-guidelines)
+  and please read our [Slack Community Guidelines](https://github.com/defai-digital/ax-bi/blob/main/CODE_OF_CONDUCT.md#slack-community-guidelines)
 - [Join our dev@superset.apache.org Mailing list](https://lists.apache.org/list.html?dev@superset.apache.org). To join, simply send an email to [dev-subscribe@superset.apache.org](mailto:dev-subscribe@superset.apache.org)
 - If you want to help troubleshoot GitHub Issues involving the numerous database drivers that Superset supports, please consider adding your name and the databases you have access to on the [Superset Database Familiarity Rolodex](https://docs.google.com/spreadsheets/d/1U1qxiLvOX0kBTUGME1AHHi6Ywel6ECF8xk_Qy-V9R8c/edit#gid=0)
 - Join Superset's Town Hall and [Operational Model](https://preset.io/blog/the-superset-operational-model-wants-you/) recurring meetings. Meeting info is available on the [Superset Community Calendar](https://superset.apache.org/community)
@@ -172,9 +172,9 @@ how to set up a development environment.
 
 ## Resources
 
-- [Superset "In the Wild"](https://github.com/apache/superset/blob/master/RESOURCES/INTHEWILD.md) - open a PR to add your org to the list!
+- [Superset "In the Wild"](https://superset.apache.org/inTheWild) - see who's using Superset.
 - [Feature Flags](/user-docs/6.0.0/configuration/configuring-superset#feature-flags) - the status of Superset's Feature Flags.
-- [Standard Roles](https://github.com/apache/superset/blob/master/RESOURCES/STANDARD_ROLES.md) - How RBAC permissions map to roles.
+- [Security Roles](/user-docs/6.0.0/security/) - How built-in RBAC roles work.
 - [Superset Wiki](https://github.com/apache/superset/wiki) - Tons of additional community resources: best practices, community content and other information.
 - [Superset SIPs](https://github.com/orgs/apache/projects/170) - The status of Superset's SIPs (Superset Improvement Proposals) for both consensus and implementation status.
 
@@ -195,7 +195,7 @@ Understanding the Superset Points of View
 - Deploying Superset
 
   - [Official Docker image](https://hub.docker.com/r/apache/superset)
-  - [Helm Chart](https://github.com/apache/superset/tree/master/helm/superset)
+  - [Helm Chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset)
 
 - Recordings of Past [Superset Community Events](https://preset.io/events)
 

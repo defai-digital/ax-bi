@@ -16,7 +16,7 @@
 # under the License.
 
 from collections.abc import Iterable, Sequence
-from typing import Any, Union
+from typing import Any
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ def is_sequence(seq: Any) -> bool:
 def flatten(
     df: pd.DataFrame,
     reset_index: bool = True,
-    drop_levels: Union[Sequence[int], Sequence[str]] = (),
+    drop_levels: Sequence[int] | Sequence[str] = (),
 ) -> pd.DataFrame:
     """
     Convert N-dimensional DataFrame to a flat DataFrame

@@ -19,8 +19,9 @@ import logging
 import secrets
 import time
 from collections import defaultdict
+from collections.abc import Awaitable, Callable, Sequence
 from contextvars import ContextVar
-from typing import Any, Awaitable, Callable, Dict, Protocol, Sequence
+from typing import Any, Protocol
 
 import mcp.types as mt
 from fastmcp.exceptions import ToolError
@@ -146,11 +147,11 @@ def _sanitize_error_for_logging(error: Exception) -> str:
     error_str = re.sub(r"\b(\d+)\.\d+\.\d+\.\d+\b", r"\1.xxx.xxx.xxx", error_str)
 
     # For certain error types, provide generic messages
-    if isinstance(error, (OperationalError, TimeoutError)):
+    if isinstance(error, OperationalError | TimeoutError):
         return "Database operation failed"
-    elif isinstance(error, PermissionError):
+    if isinstance(error, PermissionError):
         return "Access denied"
-    elif isinstance(error, ValidationError):
+    if isinstance(error, ValidationError):
         return "Request validation failed"
 
     return error_str
@@ -677,7 +678,7 @@ class GlobalErrorHandlerMiddleware(Middleware):
             raise ToolError(
                 f"Validation error in {tool_name}: {'; '.join(validation_details)}"
             ) from error
-        elif isinstance(error, (OperationalError, TimeoutError)):
+        elif isinstance(error, OperationalError | TimeoutError):
             # Database errors
             raise ToolError(
                 f"Database error in {tool_name}: Service temporarily unavailable. "
@@ -702,12 +703,12 @@ class GlobalErrorHandlerMiddleware(Middleware):
             raise ToolError(
                 f"Invalid parameter in {tool_name}: {str(error)}"
             ) from error
-        elif isinstance(error, (ObjectNotFoundError, CommandInvalidError)):
+        elif isinstance(error, ObjectNotFoundError | CommandInvalidError):
             # Superset command: not found (404) or validation (422)
             raise ToolError(
                 f"Invalid request for {tool_name}: {_sanitize_error_for_logging(error)}"
             ) from error
-        elif isinstance(error, (ForbiddenError, SupersetSecurityException)):
+        elif isinstance(error, ForbiddenError | SupersetSecurityException):
             # Superset access denied — agent tried a tool it can't use
             raise ToolError(
                 f"Permission denied for {tool_name}: "
@@ -757,7 +758,7 @@ class InMemoryRateLimiter:
 
     def __init__(self) -> None:
         # Structure: {key: [(timestamp, count), ...]}
-        self._requests: Dict[str, list[tuple[float, int]]] = defaultdict(list)
+        self._requests: dict[str, list[tuple[float, int]]] = defaultdict(list)
         self._cleanup_interval = 300  # Clean up every 5 minutes
         self._last_cleanup = time.time()
 
@@ -923,7 +924,7 @@ class RedisRateLimiter:
         """Check if a request should be limited using a fixed window counter."""
         current_time = time.time()
         bucket = int(current_time // window)
-        full_key = "%s%s:%d" % (self._prefix, key, bucket)
+        full_key = f"{self._prefix}{key}:{bucket}"
         reset_time = (bucket + 1) * window
 
         try:
@@ -1148,10 +1149,9 @@ class RateLimitMiddleware(Middleware):
             )
 
             raise ToolError(
-                "Rate limit exceeded for %s. "
-                "Limit: %s requests per minute. "
-                "Try again in %s seconds."
-                % (tool_name, limit, rate_info["reset_time"] - int(time.time()))
+                f"Rate limit exceeded for {tool_name}. "
+                f"Limit: {limit} requests per minute. "
+                f"Try again in {rate_info['reset_time'] - int(time.time())} seconds."
             )
 
         # Log rate limit info for monitoring
@@ -1274,18 +1274,15 @@ class FieldPermissionsMiddleware(Middleware):
             # Pydantic model - convert to dict, filter, and return dict
             response_dict = response.model_dump()
             return filter_sensitive_data(response_dict, object_type, user)
-        elif isinstance(response, dict):
+        if isinstance(response, dict):
             # Dictionary response - filter directly
             return filter_sensitive_data(response, object_type, user)
-        elif isinstance(response, list):
+        if isinstance(response, list):
             # List response - filter each item
             return [filter_sensitive_data(item, object_type, user) for item in response]
-        else:
-            # Unknown response type, return as-is
-            logger.debug(
-                "Unknown response type for field filtering: %s", type(response)
-            )
-            return response
+        # Unknown response type, return as-is
+        logger.debug("Unknown response type for field filtering: %s", type(response))
+        return response
 
 
 class ResponseSizeGuardMiddleware(Middleware):

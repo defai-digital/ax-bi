@@ -17,7 +17,7 @@
 import logging
 import random
 import string
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import func
 
@@ -47,7 +47,7 @@ def get_mock_positions(dashboard: Dashboard) -> dict[str, Any]:
 
 
 def build_save_dash_parts(
-    dashboard_slug: Optional[str] = None, dashboard_to_edit: Optional[Dashboard] = None
+    dashboard_slug: str | None = None, dashboard_to_edit: Dashboard | None = None
 ) -> tuple[Dashboard, dict[str, Any], dict[str, Any]]:
     if not dashboard_to_edit:
         dashboard_slug = (

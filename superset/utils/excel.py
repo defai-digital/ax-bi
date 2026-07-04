@@ -95,7 +95,7 @@ def apply_column_types(
                 # Excel does not support numbers larger than 10^15
                 df[column] = df[column].apply(
                     lambda x: (
-                        str(x) if isinstance(x, (int, float)) and abs(x) > 10**15 else x
+                        str(x) if isinstance(x, int | float) and abs(x) > 10**15 else x
                     )
                 )
             except ValueError:

@@ -21,10 +21,10 @@ import inspect
 import logging
 import textwrap
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Any, Callable, cast, Literal
+from typing import Any, cast, Literal
 
 from flask import g, has_request_context, request
 from flask_appbuilder.const import API_URI_RIS_KEY

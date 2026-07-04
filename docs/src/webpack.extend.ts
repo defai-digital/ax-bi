@@ -38,7 +38,7 @@ export default function webpackExtendPlugin(): Plugin<void> {
       );
 
       // Stub out heavy third-party packages that are transitive dependencies of
-      // superset-frontend components. The barrel file (components/index.ts)
+      // ax-bi-frontend components. The barrel file (components/index.ts)
       // re-exports all components, so webpack must resolve their imports even
       // though these components are never rendered on the docs site.
       const nullModuleShim = path.resolve(__dirname, './shims/null-module.js');
@@ -48,7 +48,7 @@ export default function webpackExtendPlugin(): Plugin<void> {
         /^ace-builds(\/|$)/,
         /^react-js-cron(\/|$)/, // Cron picker + CSS
         // react-resize-detector: NOT shimmed — DropdownContainer needs it at runtime
-        // for overflow detection. Resolves from superset-frontend/node_modules.
+        // for overflow detection. Resolves from ax-bi-frontend/node_modules.
         /^react-window(\/|$)/,
         /^re-resizable(\/|$)/,
         /^react-draggable(\/|$)/,
@@ -67,11 +67,11 @@ export default function webpackExtendPlugin(): Plugin<void> {
         use: path.resolve(__dirname, './loaders/yaml-loader.cjs'),
       });
 
-      // Add swc-loader rule for superset-frontend files
+      // Add swc-loader rule for ax-bi-frontend files
       // SWC is a Rust-based transpiler that's significantly faster than babel
       const supersetFrontendPath = path.resolve(
         __dirname,
-        '../../superset-frontend',
+        '../../ax-bi-frontend',
       );
       config.module?.rules?.push({
         test: /\.(tsx?|jsx?)$/,
@@ -80,7 +80,7 @@ export default function webpackExtendPlugin(): Plugin<void> {
         use: {
           loader: 'swc-loader',
           options: {
-            // Ignore superset-frontend/.swcrc which references plugins not
+            // Ignore ax-bi-frontend/.swcrc which references plugins not
             // installed in the docs workspace (e.g. @swc/plugin-emotion)
             swcrc: false,
             jsc: {
@@ -117,18 +117,18 @@ export default function webpackExtendPlugin(): Plugin<void> {
           },
         }),
         resolve: {
-          // Add superset-frontend node_modules to module resolution
+          // Add ax-bi-frontend node_modules to module resolution
           modules: [
             ...(config.resolve?.modules || []),
-            path.resolve(__dirname, '../../superset-frontend/node_modules'),
+            path.resolve(__dirname, '../../ax-bi-frontend/node_modules'),
           ],
           alias: {
             ...config.resolve.alias,
             // Ensure single React instance across all modules (critical for hooks to work)
             react: path.resolve(__dirname, '../node_modules/react'),
             'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
-            // Allow importing from superset-frontend
-            src: path.resolve(__dirname, '../../superset-frontend/src'),
+            // Allow importing from ax-bi-frontend
+            src: path.resolve(__dirname, '../../ax-bi-frontend/src'),
             // Lightweight shim for @superset-ui/core that re-exports only the
             // utilities needed by components (ensureIsArray, usePrevious, etc.).
             // Avoids pulling in the full barrel which includes d3, color, query
@@ -142,12 +142,12 @@ export default function webpackExtendPlugin(): Plugin<void> {
             '@docs/components': path.resolve(__dirname, '../src/components'),
             '@superset/components': path.resolve(
               __dirname,
-              '../../superset-frontend/packages/superset-ui-core/src/components',
+              '../../ax-bi-frontend/packages/superset-ui-core/src/components',
             ),
             // Also alias the full package path for internal imports within components
             '@superset-ui/core/components': path.resolve(
               __dirname,
-              '../../superset-frontend/packages/superset-ui-core/src/components',
+              '../../ax-bi-frontend/packages/superset-ui-core/src/components',
             ),
             // Use a shim for react-table to handle CommonJS to ES module interop
             // react-table v7 is CommonJS, but Superset components import it with ES module syntax
@@ -158,15 +158,15 @@ export default function webpackExtendPlugin(): Plugin<void> {
             // longest prefix.
             '@apache-superset/core/components': path.resolve(
               __dirname,
-              '../../superset-frontend/packages/superset-core/src/components',
+              '../../ax-bi-frontend/packages/superset-core/src/components',
             ),
             '@apache-superset/core/api/core': path.resolve(
               __dirname,
-              '../../superset-frontend/packages/superset-core/src/api/core',
+              '../../ax-bi-frontend/packages/superset-core/src/api/core',
             ),
             '@apache-superset/core': path.resolve(
               __dirname,
-              '../../superset-frontend/packages/superset-core/src',
+              '../../ax-bi-frontend/packages/superset-core/src',
             ),
             // Add proper Storybook aliases
             '@storybook/blocks': path.resolve(

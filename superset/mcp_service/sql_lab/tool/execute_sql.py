@@ -73,9 +73,7 @@ async def _get_database_or_error(
             db.session.query(database_model).filter_by(id=request.database_id).first()
         )
         if not database:
-            await ctx.warning(
-                "Database not found: database_id=%s" % request.database_id
-            )
+            await ctx.warning(f"Database not found: database_id={request.database_id}")
             return None, ExecuteSqlResponse(
                 success=False,
                 error=(
@@ -86,7 +84,7 @@ async def _get_database_or_error(
             )
 
         if not current_user_can_access_database(database):
-            await ctx.warning("Access denied to database: %s" % database.database_name)
+            await ctx.warning(f"Access denied to database: {database.database_name}")
             return None, ExecuteSqlResponse(
                 success=False,
                 error=f"Access denied to database {database.database_name}",
@@ -119,7 +117,7 @@ async def _validate_non_destructive_sql(
 
             script = SQLScript(sql_to_check, database.db_engine_spec.engine)
             if script.has_destructive():
-                await ctx.error("Destructive DDL blocked: sql_preview=%r" % sql_preview)
+                await ctx.error(f"Destructive DDL blocked: sql_preview={sql_preview!r}")
                 return ExecuteSqlResponse(
                     success=False,
                     error=(
@@ -131,7 +129,7 @@ async def _validate_non_destructive_sql(
                 )
         except Exception as parse_err:
             await ctx.error(
-                "DDL pre-check failed to parse SQL, blocking query: %s" % str(parse_err)
+                f"DDL pre-check failed to parse SQL, blocking query: {str(parse_err)}"
             )
             return ExecuteSqlResponse(
                 success=False,
@@ -158,19 +156,17 @@ async def _validate_non_destructive_sql(
 async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlResponse:
     """Execute SQL query against database using the unified Database.execute() API."""
     await ctx.info(
-        "Starting SQL execution: database_id=%s, timeout=%s, limit=%s, schema=%s"
-        % (request.database_id, request.timeout, request.limit, request.schema_name)
+        f"Starting SQL execution: database_id={request.database_id}, "
+        f"timeout={request.timeout}, limit={request.limit}, "
+        f"schema={request.schema_name}"
     )
 
     # Log SQL query details (truncated for security)
     sql_preview = request.sql[:100] + "..." if len(request.sql) > 100 else request.sql
     await ctx.debug(
-        "SQL query details: sql_preview=%r, sql_length=%s, has_template_params=%s"
-        % (
-            sql_preview,
-            len(request.sql),
-            bool(request.template_params),
-        )
+        f"SQL query details: sql_preview={sql_preview!r}, "
+        f"sql_length={len(request.sql)}, "
+        f"has_template_params={bool(request.template_params)}"
     )
 
     logger.info("Executing SQL query on database ID: %s", request.database_id)
@@ -233,25 +229,21 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
         # Log successful execution
         if response.success:
             await ctx.info(
-                "SQL execution completed successfully: rows_returned=%s, "
-                "execution_time=%s"
-                % (
-                    response.row_count,
-                    response.execution_time,
-                )
+                "SQL execution completed successfully: "
+                f"rows_returned={response.row_count}, "
+                f"execution_time={response.execution_time}"
             )
         else:
             await ctx.info(
-                "SQL execution failed: error=%s, error_type=%s"
-                % (response.error, response.error_type)
+                f"SQL execution failed: error={response.error}, "
+                f"error_type={response.error_type}"
             )
 
         return response
 
     except OAuth2RedirectError as ex:
         await ctx.warning(
-            "Database requires OAuth authentication: database_id=%s"
-            % request.database_id
+            f"Database requires OAuth authentication: database_id={request.database_id}"
         )
         return ExecuteSqlResponse(
             success=False,
@@ -260,7 +252,7 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
         )
     except OAuth2Error:
         await ctx.error(
-            "OAuth2 configuration/flow error: database_id=%s" % request.database_id
+            f"OAuth2 configuration/flow error: database_id={request.database_id}"
         )
         return ExecuteSqlResponse(
             success=False,
@@ -269,11 +261,7 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
         )
     except Exception as e:
         await ctx.error(
-            "SQL execution failed: error=%s, database_id=%s"
-            % (
-                str(e),
-                request.database_id,
-            )
+            f"SQL execution failed: error={str(e)}, database_id={request.database_id}"
         )
         raise
 
@@ -282,7 +270,7 @@ def _sanitize_row_values(rows: list[dict[str, Any]]) -> None:
     """Sanitize non-serializable values in rows for JSON serialization."""
     for row in rows:
         for key, value in row.items():
-            if isinstance(value, (bytes, memoryview)):
+            if isinstance(value, bytes | memoryview):
                 raw = bytes(value) if isinstance(value, memoryview) else value
                 try:
                     row[key] = raw.decode("utf-8")
@@ -290,7 +278,9 @@ def _sanitize_row_values(rows: list[dict[str, Any]]) -> None:
                     row[key] = raw.hex()
             elif isinstance(value, Decimal):
                 row[key] = float(value)
-            elif not isinstance(value, (str, int, float, bool, type(None), list, dict)):
+            elif not isinstance(
+                value, str | int | float | bool | type(None) | list | dict
+            ):
                 row[key] = str(value)
 
 

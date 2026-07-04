@@ -8,14 +8,29 @@ This is the **AX-BI fork** of Apache Superset — a data visualization platform 
 
 - **MCP service** (`superset/mcp_service/`) — a Model Context Protocol server exposing Superset resources to LLM agents. Has its own [`ARCHITECTURE.md`](superset/mcp_service/ARCHITECTURE.md), [`SECURITY.md`](superset/mcp_service/SECURITY.md), and [`PRODUCTION.md`](superset/mcp_service/PRODUCTION.md). **Read those before touching `superset/mcp_service/`.**
 - **GenAI BI direction** — see [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for the product direction (prompt-to-dashboard, governed semantic layer, AI-ready metadata).
-- **Boundary-cleanup effort** — [`BOUNDARY_REPORT.md`](BOUNDARY_REPORT.md) tracks module-boundary findings and which are done vs. deferred. Bug write-ups live in `ax-internal/bugs/`. Consult these before large refactors.
+- **Boundary-cleanup effort** — [`BOUNDARY_REPORT.md`](BOUNDARY_REPORT.md) tracks module-boundary findings and which are done vs. deferred. Consult it before large refactors.
+- **Upstream Superset sync** — use the controlled merge process in [`docs/developer_docs/upstream-sync-policy.md`](docs/developer_docs/upstream-sync-policy.md). Do not merge upstream PRs blindly; compare against release branches/tags and produce a gap report.
 - **`superset-core`** (`superset-core/`) — local editable Python package (`apache-superset-core`) providing shared base classes: `BaseDAO`, `BaseCommand` mixins, `RestApi`, semantic layer types, task framework, and MCP decorators (`superset_core.*` namespace). Changes here propagate to the main app.
 - **`ax-services`** (`ax-services/`) — TypeScript sidecar (port 5010) for runtime modernization: health/readiness checks, MCP asset search proxy, and Superset connectivity. Has its own `jest.config.js` and contract schemas in `contracts/`.
 - **`superset-desktop`** (`superset-desktop/`) — thin Tauri v2 desktop shell that loads the web app. Rust backend in `src-tauri/`, TypeScript bridge in `src/`. Supports `axbi://` deep links, system tray, and cross-platform builds.
 - **`superset-extensions-cli`** (`superset-extensions-cli/`) — CLI tool (`superset-extensions init/build/bundle`) for scaffolding and packaging Superset extensions.
-- **`ax-internal/`** — internal design docs (`docs/`), reference implementations (`reference/evidence/`), and bug reports (`bugs/`). Read before starting features covered by existing ADRs/PRDs.
-
+- **`@defai/ax-sdk`** (`packages/ax-sdk/`) — TypeScript SDK providing typed REST + MCP access to AX-BI for downstream products (ax-studio, ax-code). Dual-protocol: REST CRUD for dashboards/charts/datasets/databases/queries, plus AI tool wrappers via MCP (prompt-to-dashboard, semantic search, SQL execution). See [`packages/ax-sdk/README.md`](packages/ax-sdk/README.md).
 The agent-instruction files (`CLAUDE.md`, `GEMINI.md`, `GPT.md`) are **symlinks to `AGENTS.md`**. Edit this file — all four update together.
+
+## Naming Policy
+
+AX-BI uses an external rename strategy. Public commands and local development
+paths use AX-BI names: `ax-bi`, `ax-bi-mcp`, and `ax-bi-frontend/`.
+
+Keep core Superset namespaces unless a task is explicitly scoped as a full
+compatibility migration. This includes `superset/`, `superset_config.py`,
+`superset-core/`, `superset-extensions-cli/`, `superset-embedded-sdk/`,
+`superset-websocket/`, `helm/superset`, `@superset-ui/*`,
+`@apache-superset/core`, and `apache-superset-*` package metadata. These names
+preserve upstream sync, imports, migrations, extension contracts, operator
+configs, and existing deployments. See
+[`docs/developer_docs/ax-bi-rename-policy.md`](docs/developer_docs/ax-bi-rename-policy.md)
+before renaming any remaining `superset*` surface.
 
 ## Development Commands
 
@@ -23,10 +38,10 @@ The agent-instruction files (`CLAUDE.md`, `GEMINI.md`, `GPT.md`) are **symlinks 
 
 ```bash
 # Run the development server (port 8088)
-superset run -p 8088 --with-threads --reload --debugger
+ax-bi run -p 8088 --with-threads --reload --debugger
 
 # Run the MCP service (port 5008, requires: pip install fastmcp)
-superset mcp run --port 5008
+ax-bi mcp run --port 5008
 
 # Run ALL backend tests
 pytest
@@ -41,19 +56,19 @@ pytest tests/unit_tests/path/to/test_file.py::TestClassName::test_method_name
 pytest tests/unit_tests/some_module/
 
 # Database migrations
-superset db upgrade              # Apply pending migrations
-superset db migrate -m "description"  # Create a new migration
+ax-bi db upgrade              # Apply pending migrations
+ax-bi db migrate -m "description"  # Create a new migration
 
 # Load examples
-superset load-examples
+ax-bi load-examples
 ```
 
 ### Frontend (TypeScript/React)
 
-All frontend commands run from `superset-frontend/`:
+All frontend commands run from `ax-bi-frontend/`:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Development server with hot reload (port 9000)
 npm run dev-server
@@ -123,6 +138,21 @@ npm run type           # TypeScript type checking
 npm run contracts:write  # Regenerate contract JSON schemas
 ```
 
+### AX SDK (`@defai/ax-sdk`)
+
+All commands run from `packages/ax-sdk/`:
+
+```bash
+cd packages/ax-sdk
+npm install
+npm run build       # ESM + CJS + type declarations
+npm run test        # Unit tests (Jest, 32 tests)
+npm run type        # TypeScript type checking
+npm run clean       # Remove dist/
+```
+
+The SDK has zero runtime dependencies (uses native `fetch`). It builds dual ESM/CJS outputs with full TypeScript declarations. When changing resource types or adding new AI tool wrappers, update the barrel exports in `src/index.ts`.
+
 ### Desktop (Tauri)
 
 ```bash
@@ -135,7 +165,7 @@ npm run build          # Release build with platform installers
 ### Playwright E2E Tests
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run playwright:test                              # All tests
 npm run playwright:ui                                # Interactive UI mode
 npx playwright test tests/auth/login.spec.ts         # Single file
@@ -206,7 +236,7 @@ Singletons initialized once at app startup, imported throughout the codebase:
 
 The MCP service runs as a **separate process** from the Superset web server with its own Flask app singleton (`superset/mcp_service/flask_singleton.py`). Key points:
 
-- Run via CLI: `superset mcp run` (see `superset/cli/mcp.py`)
+- Run via CLI: `ax-bi mcp run` (see `superset/cli/mcp.py`)
 - Each resource (chart, dashboard, dataset, etc.) has a subdirectory with `tool/`, `schemas.py`, and optional `validation/`
 - Tool functions decorated with `@mcp.tool` and `@mcp_auth_hook` (manages `g.user`, session lifecycle)
 - Shared utilities in `superset/mcp_service/utils/` — use `config_utils.py` for Flask config access, `logging_utils.py` for event logging, `permissions_utils.py` for RBAC checks, `response_utils.py` for serialization
@@ -216,7 +246,7 @@ The MCP service runs as a **separate process** from the Superset web server with
 ### Frontend Structure
 
 ```
-superset-frontend/
+ax-bi-frontend/
 ├── src/
 │   ├── features/           # Feature modules (charts, dashboards, datasets, etc.)
 │   ├── components/         # Shared reusable components
@@ -281,7 +311,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 
 **Python:** `SupersetTestCase` base class (`tests/integration_tests/base_tests.py`), `@with_config` / `@with_feature_flags` decorators, `login_as()` / `login_as_admin()` helpers, `create_dashboard()` / `create_slice()` utilities. Use `MagicMock()` for config objects; avoid `AsyncMock` for synchronous code. Test discovery uses `tests/` as root (`pytest.ini`). `asyncio_mode = auto` is set — async test functions run without explicit markers. SQLAlchemy 1.4→2.0 deprecation warnings are configured as errors in `pytest.ini` to prevent regression.
 
-**TypeScript:** Custom `render()` with providers at `superset-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
+**TypeScript:** Custom `render()` with providers at `ax-bi-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
 
 ## Pull Requests
 
@@ -299,7 +329,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 ## Environment
 
 - Python 3.10+ (see `pyproject.toml` classifiers)
-- Node.js (see `superset-frontend/package.json` `engines` field — currently ^24.16.0)
+- Node.js (see `ax-bi-frontend/package.json` `engines` field — currently ^24.16.0)
 - SQLAlchemy 1.4 (not 2.0)
 - Backend config: `superset/config.py` (large file — search for specific settings rather than reading entirely)
 - Health check: `curl -f http://localhost:8088/health`

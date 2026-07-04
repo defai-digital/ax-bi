@@ -88,7 +88,7 @@ class Datasource(BaseSupersetView):
     def save(self) -> FlaskResponse:
         data = request.form.get("data")
         if not isinstance(data, str):
-            return json_error_response(_("Request missing data field."), status=500)
+            return json_error_response(_("Request missing data field."), status=400)
 
         try:
             datasource_dict = json.loads(data)

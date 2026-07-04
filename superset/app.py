@@ -19,7 +19,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import cast, Iterable, Optional
+from collections.abc import Iterable
+from typing import cast
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -49,8 +50,8 @@ logger = logging.getLogger(__name__)
 
 
 def create_app(
-    superset_config_module: Optional[str] = None,
-    superset_app_root: Optional[str] = None,
+    superset_config_module: str | None = None,
+    superset_app_root: str | None = None,
 ) -> Flask:
     app = SupersetApp(__name__)
 
@@ -168,7 +169,7 @@ class SupersetApp(Flask):
 
             # Check if database is up-to-date with migrations
             if not self._is_database_up_to_date():
-                logger.info("Pending database migrations: run 'superset db upgrade'")
+                logger.info("Pending database migrations: run 'ax-bi db upgrade'")
                 return
 
             logger.info("Syncing configuration to database...")

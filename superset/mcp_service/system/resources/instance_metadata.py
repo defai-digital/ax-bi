@@ -46,7 +46,7 @@ def get_instance_metadata_resource() -> str:
     - Dashboard and chart statistics
     """
     try:
-        from typing import Any, cast, Type
+        from typing import Any, cast
 
         from superset.daos.base import BaseDAO
         from superset.daos.chart import ChartDAO
@@ -68,12 +68,12 @@ def get_instance_metadata_resource() -> str:
 
         instance_info_core = InstanceInfoCore(
             dao_classes={
-                "dashboards": cast(Type[BaseDAO[Any]], DashboardDAO),
-                "charts": cast(Type[BaseDAO[Any]], ChartDAO),
-                "datasets": cast(Type[BaseDAO[Any]], DatasetDAO),
-                "databases": cast(Type[BaseDAO[Any]], DatabaseDAO),
-                "users": cast(Type[BaseDAO[Any]], UserDAO),
-                "tags": cast(Type[BaseDAO[Any]], TagDAO),
+                "dashboards": cast(type[BaseDAO[Any]], DashboardDAO),
+                "charts": cast(type[BaseDAO[Any]], ChartDAO),
+                "datasets": cast(type[BaseDAO[Any]], DatasetDAO),
+                "databases": cast(type[BaseDAO[Any]], DatabaseDAO),
+                "users": cast(type[BaseDAO[Any]], UserDAO),
+                "tags": cast(type[BaseDAO[Any]], TagDAO),
             },
             output_schema=InstanceInfo,
             metric_calculators={

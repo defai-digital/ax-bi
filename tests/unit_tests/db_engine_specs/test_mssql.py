@@ -17,7 +17,7 @@
 import unittest.mock as mock
 from datetime import datetime
 from textwrap import dedent
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from sqlalchemy import column, table
@@ -53,7 +53,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -125,7 +125,7 @@ def test_time_exp_mixed_case_col_1y() -> None:
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813

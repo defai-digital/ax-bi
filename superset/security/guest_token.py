@@ -16,7 +16,7 @@
 # under the License.
 import hashlib
 import logging
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 from flask_appbuilder.security.sqla.models import Group, Role
 from flask_login import AnonymousUserMixin
@@ -34,8 +34,8 @@ def _dict_items(value: Any) -> list[dict[str, Any]]:
 
 
 def build_guest_token_audit_payload(
-    issuer_user_id: Optional[int],
-    source_ip: Optional[str],
+    issuer_user_id: int | None,
+    source_ip: str | None,
     body: dict[str, Any],
     token: str,
 ) -> dict[str, Any]:
@@ -131,14 +131,14 @@ class GuestTokenResourceType(StrEnum):
 
 class GuestTokenResource(TypedDict):
     type: GuestTokenResourceType
-    id: Union[str, int]
+    id: str | int
 
 
 GuestTokenResources = list[GuestTokenResource]
 
 
 class GuestTokenRlsRule(TypedDict):
-    dataset: Optional[str]
+    dataset: str | None
     clause: str
 
 

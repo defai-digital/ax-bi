@@ -35,7 +35,7 @@ from collections import defaultdict
 from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import sqlalchemy.dialects
 from flask import current_app as app
@@ -94,7 +94,7 @@ def load_engine_specs() -> list[type[BaseEngineSpec]]:
     return engine_specs
 
 
-def get_engine_spec(backend: str, driver: Optional[str] = None) -> type[BaseEngineSpec]:
+def get_engine_spec(backend: str, driver: str | None = None) -> type[BaseEngineSpec]:
     """
     Return the DB engine spec associated with a given SQLAlchemy URL.
 

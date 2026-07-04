@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -40,7 +39,7 @@ logger = logging.getLogger(__name__)
 class DeleteChartCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[Slice]] = None
+        self._models: list[Slice] | None = None
 
     @transaction(on_error=partial(on_error, reraise=ChartDeleteFailedError))
     def run(self) -> None:

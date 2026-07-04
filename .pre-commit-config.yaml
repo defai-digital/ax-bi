@@ -50,7 +50,7 @@ repos:
     hooks:
       - id: check-docstring-first
       - id: check-added-large-files
-        exclude: ^.*\.(geojson)$|^docs/static/img/screenshots/.*|^superset-frontend/CHANGELOG\.md$|^superset/examples/.*/data\.parquet$|^superset/translations/.*\.po$
+        exclude: ^.*\.(geojson)$|^docs/static/img/screenshots/.*|^ax-bi-frontend/CHANGELOG\.md$|^superset/examples/.*/data\.parquet$|^superset/translations/.*\.po$
       - id: check-yaml
         exclude: ^helm/superset/templates/
       - id: debug-statements
@@ -63,10 +63,10 @@ repos:
     hooks:
       - id: prettier-frontend
         name: prettier (frontend)
-        entry: bash -c 'cd superset-frontend && for file in "$@"; do npx prettier --write "${file#superset-frontend/}"; done'
+        entry: bash -c 'cd ax-bi-frontend && for file in "$@"; do npx prettier --write "${file#ax-bi-frontend/}"; done'
         language: system
         pass_filenames: true
-        files: ^superset-frontend/.*\.(js|jsx|ts|tsx|css|scss|sass|json)$
+        files: ^ax-bi-frontend/.*\.(js|jsx|ts|tsx|css|scss|sass|json)$
   - repo: local
     hooks:
       - id: oxlint-frontend
@@ -74,13 +74,13 @@ repos:
         entry: ./scripts/oxlint.sh
         language: system
         pass_filenames: true
-        files: ^superset-frontend/.*\.(js|jsx|ts|tsx)$
+        files: ^ax-bi-frontend/.*\.(js|jsx|ts|tsx)$
       - id: custom-rules-frontend
         name: custom rules (frontend)
         entry: ./scripts/check-custom-rules.sh
         language: system
         pass_filenames: true
-        files: ^superset-frontend/.*\.(js|jsx|ts|tsx)$
+        files: ^ax-bi-frontend/.*\.(js|jsx|ts|tsx)$
       - id: eslint-docs
         name: eslint (docs)
         entry: bash -c 'cd docs && FILES=$(printf "%s\n" "$@" | sed "s|^docs/||" | tr "\n" " ") && yarn eslint --fix --quiet $FILES'
@@ -89,10 +89,10 @@ repos:
         files: ^docs/.*\.(js|jsx|ts|tsx)$
       - id: type-checking-frontend
         name: Type-Checking (Frontend)
-        entry: ./scripts/check-type.js package=superset-frontend excludeDeclarationDir=cypress-base
+        entry: ./scripts/check-type.js package=ax-bi-frontend excludeDeclarationDir=cypress-base
         language: system
-        files: ^superset-frontend\/.*\.(js|jsx|ts|tsx)$
-        exclude: ^superset-frontend/cypress-base\/
+        files: ^ax-bi-frontend\/.*\.(js|jsx|ts|tsx)$
+        exclude: ^ax-bi-frontend/cypress-base\/
         require_serial: true
   # blacklist unsafe functions like make_url (see #19526)
   - repo: https://github.com/skorokithakis/blacklist-pre-commit-hook
@@ -127,7 +127,7 @@ repos:
         entry: bash
         language: system
         types: [python]
-        exclude: ^(tests/|superset/migrations/|scripts/|RELEASING/|docker/)
+        exclude: ^(tests/|superset/migrations/|scripts/|docker/)
         args:
           - -c
           - |

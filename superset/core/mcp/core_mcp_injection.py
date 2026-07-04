@@ -23,7 +23,8 @@ that replaces the abstract functions in superset-core during initialization.
 """
 
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 try:
     from mcp.types import ToolAnnotations
@@ -61,12 +62,12 @@ def _get_prefixed_id_with_context(base_id: str) -> tuple[str, str]:
 def create_tool_decorator(
     func_or_name: str | Callable[..., Any] | None = None,
     *,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    tags: Optional[list[str]] = None,
+    name: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
     protect: bool = True,
-    class_permission_name: Optional[str] = None,
-    method_permission_name: Optional[str] = None,
+    class_permission_name: str | None = None,
+    method_permission_name: str | None = None,
     annotations: ToolAnnotations | None = None,
 ) -> Callable[[F], F] | F:
     """
@@ -179,10 +180,10 @@ def create_tool_decorator(
 def create_prompt_decorator(
     func_or_name: str | Callable[..., Any] | None = None,
     *,
-    name: Optional[str] = None,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    tags: Optional[set[str]] = None,
+    name: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    tags: set[str] | None = None,
     protect: bool = True,
 ) -> Callable[[F], F] | F:
     """

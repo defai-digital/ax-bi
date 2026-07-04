@@ -146,14 +146,13 @@ def _resolve_effective_form_data(
     """
     from superset.utils import json as utils_json
 
-    if form_data_key:
-        if cached_raw := _get_cached_form_data(form_data_key):
-            try:
-                parsed = utils_json.loads(cached_raw)
-                if isinstance(parsed, dict):
-                    return parsed, True
-            except (TypeError, ValueError):
-                pass
+    if form_data_key and (cached_raw := _get_cached_form_data(form_data_key)):
+        try:
+            parsed = utils_json.loads(cached_raw)
+            if isinstance(parsed, dict):
+                return parsed, True
+        except (TypeError, ValueError):
+            pass
 
     try:
         saved = utils_json.loads(chart.params) if chart.params else {}
@@ -214,11 +213,15 @@ def _resolve_datasource_name(
     datasource_id = form_data.get("datasource_id")
     datasource_type = form_data.get("datasource_type", "table")
 
-    if not datasource_id and (combined := form_data.get("datasource")):
-        if isinstance(combined, str) and "__" in combined:
-            parts = combined.split("__", 1)
-            datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
-            datasource_type = parts[1] if len(parts) > 1 else "table"
+    if (
+        not datasource_id
+        and (combined := form_data.get("datasource"))
+        and isinstance(combined, str)
+        and "__" in combined
+    ):
+        parts = combined.split("__", 1)
+        datasource_id = int(parts[0]) if parts[0].isdigit() else parts[0]
+        datasource_type = parts[1] if len(parts) > 1 else "table"
 
     if not datasource_id:
         return None
@@ -362,8 +365,8 @@ async def get_chart_sql(
     Returns the SQL query string and metadata about the chart.
     """
     await ctx.info(
-        "Starting chart SQL retrieval: identifier=%s, form_data_key=%s"
-        % (request.identifier, request.form_data_key)
+        f"Starting chart SQL retrieval: identifier={request.identifier}, "
+        f"form_data_key={request.form_data_key}"
     )
 
     try:
@@ -406,22 +409,22 @@ async def _handle_chart_sql_request(
         )
 
     await ctx.info(
-        "Chart found: chart_id=%s, chart_name=%s, viz_type=%s"
-        % (chart.id, chart.slice_name, chart.viz_type)
+        f"Chart found: chart_id={chart.id}, chart_name={chart.slice_name}, "
+        f"viz_type={chart.viz_type}"
     )
 
     # Validate the chart's dataset is accessible
     validation_result = validate_chart_dataset(chart, check_access=True)
     if not validation_result.is_valid:
         await ctx.warning(
-            "Chart found but dataset is not accessible: %s" % (validation_result.error,)
+            f"Chart found but dataset is not accessible: {validation_result.error}"
         )
         return ChartError(
             error=validation_result.error or "Chart's dataset is not accessible.",
             error_type="DatasetNotAccessible",
         )
     for warning in validation_result.warnings:
-        await ctx.warning("Dataset warning: %s" % (warning,))
+        await ctx.warning(f"Dataset warning: {warning}")
 
     # Resolve effective form_data
     effective_form_data, using_unsaved_state = _resolve_effective_form_data(
@@ -443,9 +446,9 @@ async def _handle_chart_sql_request(
         try:
             return _sql_from_form_data(effective_form_data, chart)
         except (SupersetException, CommandException, ValueError) as e:
-            await ctx.warning("Failed to build SQL from form_data: %s" % str(e))
+            await ctx.warning(f"Failed to build SQL from form_data: {str(e)}")
             return ChartError(
-                error="Failed to generate SQL for chart %s: %s" % (chart.id, e),
+                error=f"Failed to generate SQL for chart {chart.id}: {e}",
                 error_type="QueryGenerationFailed",
             )
 
@@ -459,7 +462,7 @@ async def _handle_unsaved_chart_sql(
     with mcp_event_log_context(action="mcp.get_chart_sql.unsaved_chart_from_cache"):
         await ctx.info(
             "No chart identifier - getting SQL from unsaved chart cache: "
-            "form_data_key=%s" % (form_data_key,)
+            f"form_data_key={form_data_key}"
         )
         cached_form_data = _get_cached_form_data(form_data_key)
         if not cached_form_data:
@@ -484,8 +487,8 @@ async def _handle_unsaved_chart_sql(
         try:
             return _sql_from_form_data(form_data, chart=None)
         except (SupersetException, CommandException, ValueError) as e:
-            await ctx.warning("Failed to generate SQL from form_data: %s" % str(e))
+            await ctx.warning(f"Failed to generate SQL from form_data: {str(e)}")
             return ChartError(
-                error="Failed to generate SQL from cached form_data: %s" % str(e),
+                error=f"Failed to generate SQL from cached form_data: {str(e)}",
                 error_type="QueryGenerationFailed",
             )

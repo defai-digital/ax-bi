@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional, Union
 
 from superset.daos.base import BaseDAO
 from superset.extensions import db
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 class AnnotationDAO(BaseDAO[Annotation]):
     @staticmethod
     def validate_update_uniqueness(
-        layer_id: int, short_descr: str, annotation_id: Optional[int] = None
+        layer_id: int, short_descr: str, annotation_id: int | None = None
     ) -> bool:
         """
         Validate if this annotation short description is unique. `id` is optional
@@ -48,7 +47,7 @@ class AnnotationDAO(BaseDAO[Annotation]):
 
 class AnnotationLayerDAO(BaseDAO[AnnotationLayer]):
     @staticmethod
-    def has_annotations(model_id: Union[int, list[int]]) -> bool:
+    def has_annotations(model_id: int | list[int]) -> bool:
         if isinstance(model_id, list):
             return (
                 db.session.query(AnnotationLayer)
@@ -64,7 +63,7 @@ class AnnotationLayerDAO(BaseDAO[AnnotationLayer]):
         ) is not None
 
     @staticmethod
-    def validate_update_uniqueness(name: str, layer_id: Optional[int] = None) -> bool:
+    def validate_update_uniqueness(name: str, layer_id: int | None = None) -> bool:
         """
         Validate if this layer name is unique. `layer_id` is optional
         and serves for validating on updates

@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional
+from typing import Any
 
 from marshmallow import Schema
 from sqlalchemy.orm import Session  # noqa: F401
@@ -49,7 +49,7 @@ class ImportDatasetsCommand(ImportModelsCommand):
     def _import(
         configs: dict[str, Any],
         overwrite: bool = False,
-        contents: Optional[dict[str, Any]] = None,
+        contents: dict[str, Any] | None = None,
     ) -> None:
         if contents is None:
             contents = {}

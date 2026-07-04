@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional, Union
 
 import pandas as pd
 from flask_babel import gettext as _
@@ -27,9 +26,9 @@ from superset.utils.pandas_postprocessing.utils import validate_column_args
 @validate_column_args("columns")
 def rename(
     df: pd.DataFrame,
-    columns: dict[str, Union[str, None]],
+    columns: dict[str, str | None],
     inplace: bool = False,
-    level: Optional[Level] = None,
+    level: Level | None = None,
 ) -> pd.DataFrame:
     """
     Alter column name of DataFrame

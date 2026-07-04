@@ -385,7 +385,7 @@ def test_create_default_mcp_auth_factory_jwt_with_keys():
         "MCP_AUTH_ENABLED": True,
         "MCP_API_KEY_ENABLED": False,
         "FAB_API_KEY_ENABLED": False,
-        "MCP_JWT_AUDIENCE": "superset-mcp",
+        "MCP_JWT_AUDIENCE": "ax-bi-mcp",
         "MCP_JWT_SECRET": "shhh",
     }.get(key, default)
 
@@ -408,7 +408,7 @@ def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_returns_none()
         "MCP_AUTH_ENABLED": True,
         "MCP_API_KEY_ENABLED": False,
         "FAB_API_KEY_ENABLED": False,
-        "MCP_JWT_AUDIENCE": "superset-mcp",
+        "MCP_JWT_AUDIENCE": "ax-bi-mcp",
     }.get(key, default)
 
     with patch("superset.mcp_service.mcp_config.logger") as mock_logger:
@@ -427,7 +427,7 @@ def test_create_default_mcp_auth_factory_jwt_build_failure_returns_none():
         "MCP_AUTH_ENABLED": True,
         "MCP_API_KEY_ENABLED": False,
         "FAB_API_KEY_ENABLED": False,
-        "MCP_JWT_AUDIENCE": "superset-mcp",
+        "MCP_JWT_AUDIENCE": "ax-bi-mcp",
         "MCP_JWT_SECRET": "shhh",
     }.get(key, default)
 

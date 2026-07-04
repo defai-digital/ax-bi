@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app
 from flask_appbuilder.models.sqla import Model
@@ -69,8 +69,8 @@ class CreateDashboardCommand(CreateMixin, BaseCommand):
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
-        role_ids: Optional[list[int]] = self._properties.get("roles")
+        owner_ids: list[int] | None = self._properties.get("owners")
+        role_ids: list[int] | None = self._properties.get("roles")
         slug: str = self._properties.get("slug", "")
 
         for field_name in ("json_metadata", "position_json"):

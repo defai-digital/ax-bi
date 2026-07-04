@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask import current_app, g
 from flask_appbuilder.security.sqla.models import Role, User
@@ -116,7 +116,7 @@ def get_datasource_by_id(datasource_id: int, datasource_type: str) -> BaseDataso
 def validate_tags(
     object_type: ObjectType,
     current_tags: list[Tag],
-    new_tag_ids: Optional[list[int]],
+    new_tag_ids: list[int] | None,
 ) -> None:
     """
     Helper function for update commands, to validate the tags list. Users

@@ -100,7 +100,7 @@ npm link superset-plugin-chart-hello-world
 ```
 
 7. **Import and register in Superset**:
-Edit `superset-frontend/src/visualizations/presets/MainPreset.ts` to include your plugin.
+Edit `ax-bi-frontend/src/visualizations/presets/MainPreset.ts` to include your plugin.
 
 ## Testing
 
@@ -144,7 +144,7 @@ SQLALCHEMY_DATABASE_URI = 'presto://localhost:8080/hive/default'
 Run frontend tests using Jest:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Run all tests
 npm run test
@@ -169,7 +169,7 @@ Playwright is our new E2E testing framework, gradually replacing Cypress.
 
 ```bash
 # Navigate to frontend directory
-cd superset-frontend
+cd ax-bi-frontend
 
 # Run all Playwright tests
 npm run playwright:test
@@ -206,7 +206,7 @@ export CYPRESS_USERNAME=admin
 export CYPRESS_PASSWORD=admin
 
 # Navigate to Cypress directory
-cd superset-frontend/cypress-base
+cd ax-bi-frontend/cypress-base
 
 # Run interactively
 npm run cypress-debug
@@ -328,7 +328,7 @@ pybabel update -i superset/translations/messages.pot -d superset/translations
 
 ```bash
 # Frontend
-cd superset-frontend
+cd ax-bi-frontend
 npm run build-translation
 
 # Backend
@@ -411,7 +411,7 @@ Open the target `.po` file and search for `fuzzy`. For each generated entry:
 
 #### Running via npm
 
-From `superset-frontend/`:
+From `ax-bi-frontend/`:
 
 ```bash
 # Rebuild index
@@ -447,7 +447,7 @@ We use a hybrid linting approach combining OXC (Oxidation Compiler) for standard
 #### Quick Commands
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Run both OXC and custom rules
 npm run lint:full
@@ -550,7 +550,7 @@ docker compose up
 
 **Backend**: Use Flask debug mode:
 ```bash
-FLASK_ENV=development superset run -p 8088 --with-threads --reload
+FLASK_ENV=development ax-bi run -p 8088 --with-threads --reload
 ```
 
 ### Performance Profiling
@@ -569,13 +569,13 @@ For React profiling:
 
 ```bash
 # Create a new migration
-superset db migrate -m "Description of changes"
+ax-bi db migrate -m "Description of changes"
 
 # Apply migrations
-superset db upgrade
+ax-bi db upgrade
 
 # Downgrade
-superset db downgrade
+ax-bi db downgrade
 ```
 
 ### Useful Aliases
@@ -583,10 +583,10 @@ superset db downgrade
 Add to your shell profile:
 
 ```bash
-alias sdev='FLASK_ENV=development superset run -p 8088 --with-threads --reload'
+alias sdev='FLASK_ENV=development ax-bi run -p 8088 --with-threads --reload'
 alias stest='pytest tests/unit_tests'
 alias slint='pre-commit run --all-files'
-alias sfront='cd superset-frontend && npm run dev-server'
+alias sfront='cd ax-bi-frontend && npm run dev-server'
 ```
 
 ## Common Issues and Solutions
@@ -618,9 +618,9 @@ pip install -e .
 
 ```bash
 # Reset local database
-superset db downgrade -r base
-superset db upgrade
-superset init
+ax-bi db downgrade -r base
+ax-bi db upgrade
+ax-bi init
 ```
 
 ### Port Already in Use

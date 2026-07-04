@@ -28,8 +28,3 @@ The documentation covers:
 - [PyPI](https://superset.apache.org/docs/installation/pypi)
 - [Docker Builds](https://superset.apache.org/docs/installation/docker-builds)
 - [Architecture Overview](https://superset.apache.org/docs/installation/architecture)
-
-## Building from Source
-
-For building from a source release tarball, see the Dockerfile at:
-`RELEASING/Dockerfile.from_local_tarball`

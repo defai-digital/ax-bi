@@ -30,7 +30,8 @@ Usage:
         pass
 """
 
-from typing import Callable, TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from superset_core.rest_api.api import RestApi

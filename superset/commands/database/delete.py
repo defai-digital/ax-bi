@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 class DeleteDatabaseCommand(BaseCommand):
     def __init__(self, model_id: int):
         self._model_id = model_id
-        self._model: Optional[Database] = None
+        self._model: Database | None = None
 
     @transaction(on_error=partial(on_error, reraise=DatabaseDeleteFailedError))
     def run(self) -> None:

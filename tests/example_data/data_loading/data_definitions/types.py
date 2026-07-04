@@ -26,7 +26,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.types import TypeEngine
 
@@ -34,7 +34,7 @@ from sqlalchemy.types import TypeEngine
 @dataclass
 class TableMetaData:
     table_name: str
-    types: Optional[dict[str, TypeEngine]]
+    types: dict[str, TypeEngine] | None
 
 
 @dataclass
