@@ -177,7 +177,7 @@ def get_relative_base(unit: str, relative_start: str | None = None) -> str:
 
     if unit.lower() in granular_units:
         return "now"
-    elif unit.lower() in broad_units:
+    if unit.lower() in broad_units:
         return "today"
     raise ValueError(f"Unknown unit: {unit}")
 
@@ -288,18 +288,18 @@ def handle_nth_of(
     if subunit is None:
         # "first of the month" -> single date (first day of the unit)
         return start_of_unit
+
+    # "first week of the year" -> range
+    # Start: beginning of unit + (n-1) subunits
+    if n == 1:
+        range_start = start_of_unit
     else:
-        # "first week of the year" -> range
-        # Start: beginning of unit + (n-1) subunits
-        if n == 1:
-            range_start = start_of_unit
-        else:
-            range_start = f"DATEADD({start_of_unit}, {n - 1}, {subunit.lower()})"
+        range_start = f"DATEADD({start_of_unit}, {n - 1}, {subunit.lower()})"
 
-        # End: start + 1 subunit
-        range_end = f"DATEADD({range_start}, 1, {subunit.lower()})"
+    # End: start + 1 subunit
+    range_end = f"DATEADD({range_start}, 1, {subunit.lower()})"
 
-        return f"{range_start} : {range_end}"
+    return f"{range_start} : {range_end}"
 
 
 def handle_modifier_and_unit(
@@ -343,10 +343,9 @@ def handle_modifier_and_unit(
 
     if modifier.lower() in ["start of", "beginning of"]:
         return handle_start_of(base_expression, unit.lower())
-    elif modifier.lower() == "end of":
+    if modifier.lower() == "end of":
         return handle_end_of(base_expression, unit.lower())
-    else:
-        raise ValueError(f"Unknown modifier: {modifier}")
+    raise ValueError(f"Unknown modifier: {modifier}")
 
 
 def handle_scope_and_unit(scope: str, delta: str, unit: str, relative_base: str) -> str:
@@ -377,12 +376,11 @@ def handle_scope_and_unit(scope: str, delta: str, unit: str, relative_base: str)
     _delta = int(delta) if delta else 1
     if scope.lower() == "this":
         return f"DATETIME('{relative_base}')"
-    elif scope.lower() in ["last", "prior"]:
+    if scope.lower() in ["last", "prior"]:
         return f"DATEADD(DATETIME('{relative_base}'), -{_delta}, {unit})"
-    elif scope.lower() == "next":
+    if scope.lower() == "next":
         return f"DATEADD(DATETIME('{relative_base}'), {_delta}, {unit})"
-    else:
-        raise ValueError(f"Invalid scope: {scope}")
+    raise ValueError(f"Invalid scope: {scope}")
 
 
 def get_since_until(  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements  # noqa: C901
