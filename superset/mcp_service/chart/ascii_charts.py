@@ -193,10 +193,7 @@ def _generate_vertical_bar_chart(  # noqa: C901
             if chart_height > 1
             else max_val
         )
-        if abs(y_val) >= 1000:
-            y_label = f"{y_val:.0f}"
-        else:
-            y_label = f"{y_val:.1f}"
+        y_label = f"{y_val:.0f}" if abs(y_val) >= 1000 else f"{y_val:.1f}"
         lines.append(f"{y_label:>6} ┤ " + "".join(f"{cell:^3}" for cell in row_data))
 
     # Add X-axis
@@ -359,10 +356,7 @@ def _create_enhanced_line_chart(
             if chart_height > 1
             else max_val
         )
-        if abs(y_val) >= 1000:
-            y_label = f"{y_val:.0f}"
-        else:
-            y_label = f"{y_val:.1f}"
+        y_label = f"{y_val:.0f}" if abs(y_val) >= 1000 else f"{y_val:.1f}"
         lines.append(f"{y_label:>8} ┤ " + "".join(row))
 
     # Add X-axis
