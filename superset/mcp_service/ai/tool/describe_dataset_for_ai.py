@@ -188,8 +188,8 @@ async def describe_dataset_for_ai(
     ```
     """
     await ctx.info(
-        "Describing dataset for AI: dataset_id=%d, sample_values=%s"
-        % (request.dataset_id, request.include_sample_values)
+        f"Describing dataset for AI: dataset_id={request.dataset_id}, "
+        f"sample_values={request.include_sample_values}"
     )
 
     # Privacy check
@@ -222,7 +222,7 @@ async def describe_dataset_for_ai(
             )
 
         if not dataset:
-            await ctx.warning("Dataset not found: dataset_id=%d" % request.dataset_id)
+            await ctx.warning(f"Dataset not found: dataset_id={request.dataset_id}")
             return DatasetDescriptionResponse(
                 dataset=DatasetDescription(
                     id=request.dataset_id,
@@ -240,12 +240,8 @@ async def describe_dataset_for_ai(
             )
 
         await ctx.info(
-            "Dataset described successfully: name=%s, columns=%d, metrics=%d"
-            % (
-                description.name,
-                len(description.columns),
-                len(description.metrics),
-            )
+            f"Dataset described successfully: name={description.name}, "
+            f"columns={len(description.columns)}, metrics={len(description.metrics)}"
         )
 
         response = DatasetDescriptionResponse(dataset=description, warnings=[])
@@ -253,8 +249,8 @@ async def describe_dataset_for_ai(
 
     except Exception as e:
         await ctx.error(
-            "Dataset description failed: dataset_id=%d, error=%s, error_type=%s"
-            % (request.dataset_id, str(e), type(e).__name__)
+            f"Dataset description failed: dataset_id={request.dataset_id}, "
+            f"error={e}, error_type={type(e).__name__}"
         )
         return DatasetDescriptionResponse(
             dataset=DatasetDescription(
