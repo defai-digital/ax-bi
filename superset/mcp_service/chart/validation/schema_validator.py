@@ -582,7 +582,7 @@ class SchemaValidator:
                         ],
                         error_code="XY_VALIDATION_ERROR",
                     )
-                elif chart_type == "table":
+                if chart_type == "table":
                     return ChartGenerationError(
                         error_type="table_validation_error",
                         message="Table chart configuration validation failed",
@@ -598,7 +598,7 @@ class SchemaValidator:
                         ],
                         error_code="TABLE_VALIDATION_ERROR",
                     )
-                elif chart_type == "handlebars":
+                if chart_type == "handlebars":
                     return ChartGenerationError(
                         error_type="handlebars_validation_error",
                         message="Handlebars chart configuration validation failed",
@@ -616,7 +616,7 @@ class SchemaValidator:
                         ],
                         error_code="HANDLEBARS_VALIDATION_ERROR",
                     )
-                elif chart_type == "big_number":
+                if chart_type == "big_number":
                     return ChartGenerationError(
                         error_type="big_number_validation_error",
                         message="Big Number chart configuration validation failed",

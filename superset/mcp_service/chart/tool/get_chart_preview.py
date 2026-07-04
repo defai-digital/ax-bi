@@ -638,17 +638,16 @@ class VegaLitePreviewStrategy(PreviewFormatStrategy):
         ):
             return "temporal"
         # Check for numeric fields
-        elif all(
+        if all(
             isinstance(val, (int, float)) and not isinstance(val, bool)
             for val in sample_values
         ):
             return "quantitative"
         # Check for ordinal fields (limited unique values)
-        elif len({str(val) for val in sample_values}) <= 10:
+        if len({str(val) for val in sample_values}) <= 10:
             # Could be ordinal or nominal, default to nominal for safety
             return "nominal"
-        else:
-            return "nominal"
+        return "nominal"
 
     def _looks_like_date(self, value: str) -> bool:
         """Quick heuristic to detect date-like strings."""

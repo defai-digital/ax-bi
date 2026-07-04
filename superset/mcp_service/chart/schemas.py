@@ -22,6 +22,7 @@ Pydantic schemas for chart-related responses
 from __future__ import annotations
 
 import difflib
+from contextlib import suppress
 from datetime import datetime
 from typing import Annotated, Any, Literal, Protocol
 
@@ -536,10 +537,8 @@ def serialize_chart_object(chart: ChartLike | None) -> ChartInfo | None:
     chart_params = getattr(chart, "params", None)
     chart_form_data = None
     if chart_params and isinstance(chart_params, str):
-        try:
+        with suppress(TypeError, ValueError):
             chart_form_data = utils_json.loads(chart_params)
-        except (TypeError, ValueError):
-            pass
     elif isinstance(chart_params, dict):
         chart_form_data = chart_params
     if not isinstance(chart_form_data, dict):
