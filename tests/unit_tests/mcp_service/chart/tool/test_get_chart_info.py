@@ -199,8 +199,9 @@ class TestBuildAppliedDashboardFilters:
             },
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[native_filter]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[native_filter])
+            ),
             slice_ids=[1],
         )
 
@@ -238,8 +239,9 @@ class TestBuildAppliedDashboardFilters:
             },
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[native_filter]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[native_filter])
+            ),
             slice_ids=[1],
         )
 
@@ -265,8 +267,9 @@ class TestBuildAppliedDashboardFilters:
             "defaultDataMask": {},
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[native_filter]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[native_filter])
+            ),
             slice_ids=[1],
         )
 
@@ -289,8 +292,9 @@ class TestBuildAppliedDashboardFilters:
             "type": "DIVIDER",
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[divider]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[divider])
+            ),
             slice_ids=[1],
         )
 
@@ -370,8 +374,9 @@ class TestBuildAppliedDashboardFilters:
             },
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[native_filter]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[native_filter])
+            ),
             position_json="{bad json",
             slice_ids=[1],
         )
@@ -399,8 +404,9 @@ class TestBuildAppliedDashboardFilters:
             "defaultDataMask": {},
         }
         dashboard = self._make_dashboard(
-            json_metadata='{"native_filter_configuration": %s}'
-            % _json(native_filter_list=[native_filter]),
+            json_metadata='{{"native_filter_configuration": {}}}'.format(
+                _json(native_filter_list=[native_filter])
+            ),
             position_json="[]",
             slice_ids=[1],
         )
