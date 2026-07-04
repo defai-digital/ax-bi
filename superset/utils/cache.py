@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from flask import current_app as app, request
 from flask_caching import Cache

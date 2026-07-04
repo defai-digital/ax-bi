@@ -17,7 +17,7 @@
 # pylint: disable=too-few-public-methods
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from superset import security_manager
 from superset.commands.sql_lab.execute import CanAccessQueryValidator
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 class CanAccessQueryValidatorImpl(CanAccessQueryValidator):
     def validate(
-        self, query: Query, template_params: Optional[dict[str, Any]] = None
+        self, query: Query, template_params: dict[str, Any] | None = None
     ) -> None:
         security_manager.raise_for_access(
             query=query,

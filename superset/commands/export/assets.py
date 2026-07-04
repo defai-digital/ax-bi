@@ -15,9 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime, timezone
-from typing import Callable
 
 import yaml
 

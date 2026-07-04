@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from superset import security_manager
 from superset.commands.chart.exceptions import (
@@ -36,7 +35,7 @@ from superset.daos.query import QueryDAO
 from superset.utils.core import DatasourceType
 
 
-def check_dataset_access(dataset_id: int) -> Optional[bool]:
+def check_dataset_access(dataset_id: int) -> bool | None:
     if dataset_id:
         # Access checks below, no need to validate them twice as they can be expensive.
         dataset = DatasetDAO.find_by_id(dataset_id, skip_base_filter=True)
@@ -48,7 +47,7 @@ def check_dataset_access(dataset_id: int) -> Optional[bool]:
     raise DatasetNotFoundError()
 
 
-def check_query_access(query_id: int) -> Optional[bool]:
+def check_query_access(query_id: int) -> bool | None:
     if query_id:
         # Access checks below, no need to validate them twice as they can be expensive.
         query = QueryDAO.find_by_id(query_id, skip_base_filter=True)
@@ -66,7 +65,7 @@ ACCESS_FUNCTION_MAP = {
 
 def check_datasource_access(
     datasource_id: int, datasource_type: DatasourceType
-) -> Optional[bool]:
+) -> bool | None:
     if datasource_id:
         try:
             return ACCESS_FUNCTION_MAP[datasource_type](datasource_id)
@@ -77,9 +76,9 @@ def check_datasource_access(
 
 def check_access(
     datasource_id: int,
-    chart_id: Optional[int],
+    chart_id: int | None,
     datasource_type: DatasourceType,
-) -> Optional[bool]:
+) -> bool | None:
     check_datasource_access(datasource_id, datasource_type)
     if not chart_id:
         return True

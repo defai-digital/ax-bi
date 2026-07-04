@@ -86,7 +86,7 @@ The CLI scaffolds extensions with the following structure:
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/apache/superset/blob/master/LICENSE.txt) for details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/defai-digital/ax-bi/blob/main/LICENSE.txt) for details.
 
 ## 🔗 Links
 

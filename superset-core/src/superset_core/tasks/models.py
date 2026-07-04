@@ -120,7 +120,7 @@ class Task(CoreModel):
         """
         raise NotImplementedError("Property will be replaced during initialization")
 
-    def update_properties(self, updates: "TaskProperties") -> None:
+    def update_properties(self, updates: TaskProperties) -> None:
         """
         Update specific properties fields (merge semantics).
 

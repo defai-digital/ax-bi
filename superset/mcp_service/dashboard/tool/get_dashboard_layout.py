@@ -69,7 +69,7 @@ async def get_dashboard_layout(
     }
     ```
     """
-    await ctx.info("Retrieving dashboard layout: identifier=%s" % (request.identifier,))
+    await ctx.info(f"Retrieving dashboard layout: identifier={request.identifier}")
 
     try:
         from superset.daos.dashboard import DashboardDAO
@@ -89,27 +89,23 @@ async def get_dashboard_layout(
 
         if isinstance(result, DashboardLayout):
             await ctx.info(
-                "Dashboard layout retrieved: id=%s, tab_count=%s, chart_count=%s, "
-                "has_layout=%s"
-                % (
-                    result.id,
-                    len(result.tabs),
-                    len(result.charts),
-                    result.has_layout,
-                )
+                f"Dashboard layout retrieved: id={result.id}, "
+                f"tab_count={len(result.tabs)}, chart_count={len(result.charts)}, "
+                f"has_layout={result.has_layout}"
             )
         else:
             await ctx.warning(
-                "Dashboard layout retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Dashboard layout retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Dashboard layout retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s" % (request.identifier, str(e), type(e).__name__)
+            "Dashboard layout retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return DashboardError.create(
             error=f"Failed to get dashboard layout: {str(e)}",

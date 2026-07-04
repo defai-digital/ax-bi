@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 import pandas as pd
 from flask_babel import gettext as _
@@ -32,8 +31,8 @@ def compare(  # pylint: disable=too-many-arguments
     source_columns: list[str],
     compare_columns: list[str],
     compare_type: PandasPostprocessingCompare,
-    drop_original_columns: Optional[bool] = False,
-    precision: Optional[int] = 4,
+    drop_original_columns: bool | None = False,
+    precision: int | None = 4,
 ) -> DataFrame:
     """
     Calculate column-by-column changing for select columns.

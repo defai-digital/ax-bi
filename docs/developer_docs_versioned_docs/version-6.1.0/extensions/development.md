@@ -28,7 +28,7 @@ This guide covers everything you need to know about developing extensions for Su
 
 ## Project Structure
 
-The [apache-superset-extensions-cli](https://github.com/apache/superset/tree/master/superset-extensions-cli) package provides a command-line interface (CLI) that streamlines the extension development workflow. It offers the following commands:
+The [apache-superset-extensions-cli](https://github.com/defai-digital/ax-bi/tree/main/superset-extensions-cli) package provides a command-line interface (CLI) that streamlines the extension development workflow. It offers the following commands:
 
 ```
 superset-extensions init: Generates the initial folder structure and scaffolds a new extension project.
@@ -252,7 +252,7 @@ class DatasetReferencesAPI(RestApi):
 
 ### Automatic Context Detection
 
-The [`@api`](https://github.com/apache/superset/blob/master/superset-core/src/superset_core/rest_api/decorators.py) decorator automatically detects whether it's being used in host or extension code:
+The [`@api`](https://github.com/defai-digital/ax-bi/blob/main/superset-core/src/superset_core/rest_api/decorators.py) decorator automatically detects whether it's being used in host or extension code:
 
 - **Extension APIs**: Registered under `/extensions/{publisher}/{name}/` with IDs prefixed as `extensions.{publisher}.{name}.{id}`
 - **Host APIs**: Registered under `/api/v1/` with original IDs
@@ -290,7 +290,7 @@ Components in `@apache-superset/core` are automatically documented in the Develo
 
 ### Requirements
 
-1. **Location**: The component must be in `superset-frontend/packages/superset-core/src/ui/components/`
+1. **Location**: The component must be in `ax-bi-frontend/packages/superset-core/src/ui/components/`
 2. **Exported**: The component must be exported from the package's `index.ts`
 3. **Story**: The component must have a Storybook story
 

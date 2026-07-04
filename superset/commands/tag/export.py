@@ -17,7 +17,8 @@
 # isort:skip_file
 
 
-from typing import Any, Callable, List, Optional, Union
+from typing import Any
+from collections.abc import Callable
 from collections.abc import Iterator
 
 import yaml
@@ -39,8 +40,8 @@ class ExportTagsCommand:
 
     @staticmethod
     def _merge_tags(
-        dashboard_tags: List[dict[str, Any]], chart_tags: List[dict[str, Any]]
-    ) -> List[dict[str, Any]]:
+        dashboard_tags: list[dict[str, Any]], chart_tags: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         # Create a dictionary to prevent duplicates based on tag name
         tags_dict = {tag["tag_name"]: tag for tag in dashboard_tags}
 
@@ -54,8 +55,8 @@ class ExportTagsCommand:
 
     @staticmethod
     def _file_content(
-        dashboard_ids: Optional[Union[int, List[Union[int, str]]]] = None,
-        chart_ids: Optional[Union[int, List[Union[int, str]]]] = None,
+        dashboard_ids: int | list[int | str] | None = None,
+        chart_ids: int | list[int | str] | None = None,
     ) -> str:
         payload: dict[str, list[dict[str, Any]]] = {"tags": []}
 
@@ -119,8 +120,8 @@ class ExportTagsCommand:
 
     @staticmethod
     def export(
-        dashboard_ids: Optional[Union[int, List[Union[int, str]]]] = None,
-        chart_ids: Optional[Union[int, List[Union[int, str]]]] = None,
+        dashboard_ids: int | list[int | str] | None = None,
+        chart_ids: int | list[int | str] | None = None,
     ) -> Iterator[tuple[str, Callable[[], str]]]:
         if not feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
             return

@@ -17,7 +17,7 @@
 import contextlib
 import logging
 from abc import ABC
-from typing import Any, cast, Optional
+from typing import Any, cast
 
 from flask import current_app, request
 from flask_babel import lazy_gettext as _
@@ -83,7 +83,7 @@ class GetExploreCommand(BaseCommand, ABC):
         self._slice_id = params.slice_id
 
     # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    def run(self) -> Optional[dict[str, Any]]:  # noqa: C901
+    def run(self) -> dict[str, Any] | None:  # noqa: C901
         initial_form_data = {}
         permalink_chart_state = None
         if self._permalink_key is not None:
@@ -142,7 +142,7 @@ class GetExploreCommand(BaseCommand, ABC):
             # fallback unknown datasource to table type
             self._datasource_type = SqlaTable.type
 
-        datasource: Optional[BaseDatasource] = None
+        datasource: BaseDatasource | None = None
 
         if self._datasource_id is not None:
             with contextlib.suppress(DatasourceNotFound):

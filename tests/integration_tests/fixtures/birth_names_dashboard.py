@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import pytest
 
@@ -87,7 +87,7 @@ def _create_dashboards():
 def _create_table(
     table_name: str,
     database: "Database",
-    fetch_values_predicate: Optional[str] = None,
+    fetch_values_predicate: str | None = None,
 ):
     table = create_table_metadata(
         table_name=table_name,

@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 from dataclasses import dataclass
-from typing import Optional
 
 from superset.key_value.types import KeyValueCodec
 
@@ -23,7 +22,7 @@ from superset.key_value.types import KeyValueCodec
 @dataclass
 class CommandParameters:
     resource_id: int
-    codec: Optional[KeyValueCodec] = None
-    tab_id: Optional[int] = None
-    key: Optional[str] = None
-    value: Optional[str] = None
+    codec: KeyValueCodec | None = None
+    tab_id: int | None = None
+    key: str | None = None
+    value: str | None = None

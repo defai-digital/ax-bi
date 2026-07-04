@@ -20,7 +20,8 @@ import contextlib
 import logging
 import os
 import sys
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 import wtforms_json
 from colorama import Fore, Style

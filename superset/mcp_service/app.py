@@ -23,7 +23,8 @@ mcp from here and use @mcp.tool decorators.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Sequence, Set
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from fastmcp import FastMCP
 from fastmcp.server.middleware import Middleware
@@ -219,6 +220,8 @@ AI-Powered Tools (GenAI):
 - compose_dashboard: Create a dashboard from a plan + chart IDs (from create_chart_from_intent).
 - explain_dashboard: Summarize an existing dashboard or answer questions about it.
 - suggest_chart_improvements: Analyze a chart and suggest better visualizations.
+- validate_chart: Validate a chart configuration against a dataset before creating it.
+  Use to pre-flight chart intents from plan_dashboard.
 - search_business_assets: Semantic search across datasets, charts, dashboards, and metrics.
 - describe_dataset_for_ai: Get AI-ready dataset metadata (columns, metrics, types).
 
@@ -299,8 +302,9 @@ To create a dashboard from a prompt:
      "prompt": "Create an executive sales dashboard with revenue trends and top products"
    }}) -> returns a plan (no artifacts created)
 2. Review the plan's chart_intents and clarifying_questions
-3. For each chart_intent, call create_chart_from_intent to create the charts
-4. compose_dashboard(request={{
+3. (Optional) validate_chart for each chart_intent to pre-flight before creating
+4. For each chart_intent, call create_chart_from_intent to create the charts
+5. compose_dashboard(request={{
      "plan": <plan from step 1>,
      "chart_ids": [<ids from step 3>]
    }}) -> creates the dashboard
@@ -570,14 +574,14 @@ def _build_mcp_kwargs(
     instructions: str,
     auth: Any | None,
     lifespan: Callable[..., Any] | None,
-    tools: List[Any] | None,
-    include_tags: Set[str] | None,
-    exclude_tags: Set[str] | None,
+    tools: list[Any] | None,
+    include_tags: set[str] | None,
+    exclude_tags: set[str] | None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build FastMCP constructor arguments."""
-    mcp_kwargs: Dict[str, Any] = {
+    mcp_kwargs: dict[str, Any] = {
         "name": name,
         "instructions": instructions,
     }
@@ -601,7 +605,7 @@ def _build_mcp_kwargs(
     return mcp_kwargs
 
 
-def _apply_config(mcp_instance: FastMCP, config: Dict[str, Any] | None) -> None:
+def _apply_config(mcp_instance: FastMCP, config: dict[str, Any] | None) -> None:
     """Apply additional configuration to FastMCP instance."""
     if config:
         for key, value in config.items():
@@ -611,8 +615,8 @@ def _apply_config(mcp_instance: FastMCP, config: Dict[str, Any] | None) -> None:
 def _log_instance_creation(
     name: str,
     auth: Any | None,
-    include_tags: Set[str] | None,
-    exclude_tags: Set[str] | None,
+    include_tags: set[str] | None,
+    exclude_tags: set[str] | None,
 ) -> None:
     """Log FastMCP instance creation details."""
     logger.info("Created FastMCP instance: %s", name)
@@ -632,10 +636,10 @@ def create_mcp_app(
     branding: str | None = None,
     auth: Any | None = None,
     lifespan: Callable[..., Any] | None = None,
-    tools: List[Any] | None = None,
-    include_tags: Set[str] | None = None,
-    exclude_tags: Set[str] | None = None,
-    config: Dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
+    include_tags: set[str] | None = None,
+    exclude_tags: set[str] | None = None,
+    config: dict[str, Any] | None = None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
 ) -> FastMCP:
@@ -738,13 +742,18 @@ warnings.filterwarnings(
 # Prompts use @mcp.prompt decorators and resources use @mcp.resource decorators.
 # They register automatically on import, similar to tools.
 from superset.mcp_service.ai.tool import (  # noqa: F401, E402
+    ask_dashboard_question,
     compose_dashboard,
     create_chart_from_intent,
     describe_dataset_for_ai,
+    evaluate_ai_answer,
     explain_dashboard,
     plan_dashboard,
+    prompt_to_dashboard,
     search_business_assets,
     suggest_chart_improvements,
+    upload_and_plan,
+    validate_chart,
 )
 from superset.mcp_service.annotation_layer.tool import (  # noqa: F401, E402
     get_annotation_layer_info,
@@ -962,10 +971,10 @@ def init_fastmcp_server(
     instructions: str | None = None,
     auth: Any | None = None,
     lifespan: Callable[..., Any] | None = None,
-    tools: List[Any] | None = None,
-    include_tags: Set[str] | None = None,
-    exclude_tags: Set[str] | None = None,
-    config: Dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
+    include_tags: set[str] | None = None,
+    exclude_tags: set[str] | None = None,
+    config: dict[str, Any] | None = None,
     middleware: Sequence[Middleware] | None = None,
     **kwargs: Any,
 ) -> FastMCP:

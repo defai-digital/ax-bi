@@ -20,8 +20,9 @@ from __future__ import annotations
 import logging
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, Generic, List, Literal, Type, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from pydantic import BaseModel
@@ -102,7 +103,6 @@ class BaseCore(ABC):
 
         This method must be implemented by all subclasses.
         """
-        pass
 
     def _log_error(self, error: Exception, context: str = "") -> None:
         """Log an error at DEBUG level for stack-trace context.
@@ -146,21 +146,21 @@ class ModelListCore(BaseCore, Generic[L]):
     - Designed for use by LLM agents and API clients.
     """
 
-    output_list_schema: Type[L]
+    output_list_schema: type[L]
 
     def __init__(
         self,
-        dao_class: Type[BaseDAO[Any]],
-        output_schema: Type[S],
-        item_serializer: Callable[[T, List[str]], S | None],
-        filter_type: Type[F],
-        default_columns: List[str],
-        search_columns: List[str],
+        dao_class: type[BaseDAO[Any]],
+        output_schema: type[S],
+        item_serializer: Callable[[T, list[str]], S | None],
+        filter_type: type[F],
+        default_columns: list[str],
+        search_columns: list[str],
         list_field_name: str,
-        output_list_schema: Type[L],
+        output_list_schema: type[L],
         logger: logging.Logger | None = None,
-        all_columns: List[str] | None = None,
-        sortable_columns: List[str] | None = None,
+        all_columns: list[str] | None = None,
+        sortable_columns: list[str] | None = None,
         owner_filter_column: str = "owner",
     ) -> None:
         super().__init__(logger)
@@ -184,18 +184,18 @@ class ModelListCore(BaseCore, Generic[L]):
         self._owner_filter_column = owner_filter_column
 
     @property
-    def all_columns(self) -> List[str]:
+    def all_columns(self) -> list[str]:
         """Return a copy of all_columns to prevent external mutation."""
         return list(self._all_columns)
 
     @property
-    def sortable_columns(self) -> List[str]:
+    def sortable_columns(self) -> list[str]:
         """Return a copy of sortable_columns to prevent external mutation."""
         return list(self._sortable_columns)
 
     def _get_columns_to_load(
         self, select_columns: Any | None
-    ) -> tuple[List[str], List[str]]:
+    ) -> tuple[list[str], list[str]]:
         """Return requested and loaded columns after privacy filtering."""
         if not select_columns:
             return self.default_columns, list(self.default_columns)
@@ -281,8 +281,8 @@ class ModelListCore(BaseCore, Generic[L]):
         page: int,
         page_size: int,
         search: str | None,
-        columns_to_load: List[str],
-    ) -> tuple[List[Any], int]:
+        columns_to_load: list[str],
+    ) -> tuple[list[Any], int]:
         """Call the DAO list method.
 
         Subclasses may override to change the kwarg name used for filters.
@@ -339,7 +339,7 @@ class ModelListCore(BaseCore, Generic[L]):
         self._validate_order_column(order_column)
 
         # Query the DAO
-        items: List[Any]
+        items: list[Any]
         items, total_count = self._call_dao_list(
             filters=filters,
             order_column=order_column or "changed_on",
@@ -410,9 +410,9 @@ class ModelGetInfoCore(BaseCore):
 
     def __init__(
         self,
-        dao_class: Type[BaseDAO[Any]],
-        output_schema: Type[BaseModel],
-        error_schema: Type[BaseModel],
+        dao_class: type[BaseDAO[Any]],
+        output_schema: type[BaseModel],
+        error_schema: type[BaseModel],
         serializer: Callable[[T], BaseModel],
         supports_slug: bool = False,
         logger: logging.Logger | None = None,
@@ -620,10 +620,10 @@ class InstanceInfoCore(BaseCore):
 
     def __init__(
         self,
-        dao_classes: Dict[str, Type[BaseDAO[Any]]],
-        output_schema: Type[BaseModel],
-        metric_calculators: Dict[str, Callable[..., Any]],
-        time_windows: Dict[str, int] | None = None,
+        dao_classes: dict[str, type[BaseDAO[Any]]],
+        output_schema: type[BaseModel],
+        metric_calculators: dict[str, Callable[..., Any]],
+        time_windows: dict[str, int] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """
@@ -646,7 +646,7 @@ class InstanceInfoCore(BaseCore):
             "quarterly": 90,
         }
 
-    def _calculate_basic_counts(self) -> Dict[str, int]:
+    def _calculate_basic_counts(self) -> dict[str, int]:
         """Calculate basic entity counts using DAOs."""
         counts = {}
         for entity_name, dao_class in self.dao_classes.items():
@@ -658,8 +658,8 @@ class InstanceInfoCore(BaseCore):
         return counts
 
     def _calculate_time_based_metrics(
-        self, _base_counts: Dict[str, int]
-    ) -> Dict[str, Dict[str, int]]:
+        self, _base_counts: dict[str, int]
+    ) -> dict[str, dict[str, int]]:
         """Calculate time-based metrics for recent activity."""
         now = datetime.now(timezone.utc)
         time_metrics = {}
@@ -717,8 +717,8 @@ class InstanceInfoCore(BaseCore):
         return time_metrics
 
     def _calculate_custom_metrics(
-        self, base_counts: Dict[str, int], time_metrics: Dict[str, Dict[str, int]]
-    ) -> Dict[str, Any]:
+        self, base_counts: dict[str, int], time_metrics: dict[str, dict[str, int]]
+    ) -> dict[str, Any]:
         """Calculate custom metrics using provided calculators."""
         custom_metrics = {}
 
@@ -794,12 +794,12 @@ class ModelGetSchemaCore(BaseCore, Generic[S]):
     def __init__(
         self,
         model_type: ModelType,
-        dao_class: Type[BaseDAO[Any]],
-        output_schema: Type[S],
-        select_columns: List[Any],
-        sortable_columns: List[str],
-        default_columns: List[str],
-        search_columns: List[str],
+        dao_class: type[BaseDAO[Any]],
+        output_schema: type[S],
+        select_columns: list[Any],
+        sortable_columns: list[str],
+        default_columns: list[str],
+        search_columns: list[str],
         default_sort: str = "changed_on",
         default_sort_direction: Literal["asc", "desc"] = "desc",
         exclude_filter_columns: set[str] | None = None,
@@ -814,7 +814,7 @@ class ModelGetSchemaCore(BaseCore, Generic[S]):
             model_type: The type of model (chart, dataset, dashboard, database)
             dao_class: The DAO class to query for filter columns
             output_schema: Pydantic schema for the response (e.g., ModelSchemaInfo)
-            select_columns: Column metadata (List[ColumnMetadata] or similar)
+            select_columns: Column metadata (list[ColumnMetadata] or similar)
             sortable_columns: Column names that support sorting
             default_columns: Column names returned by default
             search_columns: Column names used for text search
@@ -852,7 +852,7 @@ class ModelGetSchemaCore(BaseCore, Generic[S]):
         self.filter_columns_override = filter_columns_override
         self.include_filter_columns = include_filter_columns
 
-    def _get_filter_columns(self) -> Dict[str, List[str]]:
+    def _get_filter_columns(self) -> dict[str, list[str]]:
         """Get filterable columns and operators from the DAO."""
         if self.filter_columns_override is not None:
             return self.filter_columns_override

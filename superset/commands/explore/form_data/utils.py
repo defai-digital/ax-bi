@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from superset.commands.chart.exceptions import (
     ChartAccessDeniedError,
@@ -34,7 +33,7 @@ from superset.utils.core import DatasourceType
 
 def check_access(
     datasource_id: int,
-    chart_id: Optional[int],
+    chart_id: int | None,
     datasource_type: DatasourceType,
 ) -> None:
     try:

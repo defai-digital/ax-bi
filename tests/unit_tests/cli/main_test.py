@@ -27,7 +27,7 @@ def test_top_level_help_does_not_load_app(mocker) -> None:
     result = CliRunner().invoke(superset, ["--help"])
 
     assert result.exit_code == 0
-    assert "The Apache Superset CLI" in result.output
+    assert "The AX-BI CLI" in result.output
     assert "mcp" in result.output
     assert "runtime-modernization" in result.output
     assert "version" in result.output

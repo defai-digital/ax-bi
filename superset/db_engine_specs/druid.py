@@ -194,7 +194,7 @@ class DruidEngineSpec(BaseEngineSpec):
 
         if isinstance(sqla_type, types.Date):
             return f"CAST(TIME_PARSE('{dttm.date().isoformat()}') AS DATE)"
-        if isinstance(sqla_type, (types.DateTime, types.TIMESTAMP)):
+        if isinstance(sqla_type, types.DateTime | types.TIMESTAMP):
             return f"""TIME_PARSE('{dttm.isoformat(timespec="seconds")}')"""
         return None
 

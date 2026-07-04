@@ -398,22 +398,14 @@ async def _list_reports_python(
     """Run the authoritative Python report list path."""
 
     await ctx.info(
-        "Listing reports: page=%s, page_size=%s, search=%s"
-        % (
-            request.page,
-            request.page_size,
-            request.search,
-        )
+        f"Listing reports: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
     await ctx.debug(
-        "Report listing parameters: filters=%s, order_column=%s, "
-        "order_direction=%s, select_columns=%s"
-        % (
-            request.filters,
-            request.order_column,
-            request.order_direction,
-            request.select_columns,
-        )
+        f"Report listing parameters: filters={request.filters}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}, "
+        f"select_columns={request.select_columns}"
     )
 
     try:
@@ -456,13 +448,9 @@ async def _list_reports_python(
 
     except Exception as e:  # noqa: BLE001
         await ctx.error(
-            "Report listing failed: page=%s, page_size=%s, error=%s, error_type=%s"
-            % (
-                request.page,
-                request.page_size,
-                str(e),
-                type(e).__name__,
-            )
+            f"Report listing failed: page={request.page}, "
+            f"page_size={request.page_size}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return ReportError.create(
             error=f"Failed to list reports: {str(e)}",

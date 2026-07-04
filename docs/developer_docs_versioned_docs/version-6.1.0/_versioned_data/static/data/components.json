@@ -25,7 +25,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/autocomplete",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/AutoComplete/AutoComplete.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/AutoComplete/AutoComplete.stories.tsx"
     },
     {
       "name": "Avatar",
@@ -40,7 +40,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/avatar",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Avatar/Avatar.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Avatar/Avatar.stories.tsx"
     },
     {
       "name": "Badge",
@@ -55,7 +55,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/badge",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Badge/Badge.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Badge/Badge.stories.tsx"
     },
     {
       "name": "Breadcrumb",
@@ -70,7 +70,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/breadcrumb",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Breadcrumb/Breadcrumb.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Breadcrumb/Breadcrumb.stories.tsx"
     },
     {
       "name": "Button",
@@ -85,7 +85,7 @@
       "hasGallery": true,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/button",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Button/Button.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Button/Button.stories.tsx"
     },
     {
       "name": "ButtonGroup",
@@ -100,7 +100,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/buttongroup",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/ButtonGroup/ButtonGroup.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/ButtonGroup/ButtonGroup.stories.tsx"
     },
     {
       "name": "CachedLabel",
@@ -115,7 +115,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/cachedlabel",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/CachedLabel/CachedLabel.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/CachedLabel/CachedLabel.stories.tsx"
     },
     {
       "name": "Card",
@@ -130,7 +130,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/card",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Card/Card.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Card/Card.stories.tsx"
     },
     {
       "name": "Checkbox",
@@ -145,7 +145,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/checkbox",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Checkbox/Checkbox.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Checkbox/Checkbox.stories.tsx"
     },
     {
       "name": "Collapse",
@@ -160,7 +160,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/collapse",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Collapse/Collapse.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Collapse/Collapse.stories.tsx"
     },
     {
       "name": "DatePicker",
@@ -175,7 +175,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/datepicker",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/DatePicker/DatePicker.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/DatePicker/DatePicker.stories.tsx"
     },
     {
       "name": "Divider",
@@ -190,7 +190,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/divider",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Divider/Divider.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Divider/Divider.stories.tsx"
     },
     {
       "name": "DropdownContainer",
@@ -205,7 +205,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/dropdowncontainer",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/DropdownContainer/DropdownContainer.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/DropdownContainer/DropdownContainer.stories.tsx"
     },
     {
       "name": "EditableTitle",
@@ -220,7 +220,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/editabletitle",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/EditableTitle/EditableTitle.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/EditableTitle/EditableTitle.stories.tsx"
     },
     {
       "name": "EmptyState",
@@ -235,7 +235,7 @@
       "hasGallery": true,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/emptystate",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/EmptyState/EmptyState.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/EmptyState/EmptyState.stories.tsx"
     },
     {
       "name": "FaveStar",
@@ -250,7 +250,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/favestar",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/FaveStar/FaveStar.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/FaveStar/FaveStar.stories.tsx"
     },
     {
       "name": "Flex",
@@ -265,7 +265,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/flex",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Flex/Flex.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Flex/Flex.stories.tsx"
     },
     {
       "name": "Grid",
@@ -280,7 +280,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/grid",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Grid/Grid.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Grid/Grid.stories.tsx"
     },
     {
       "name": "IconButton",
@@ -295,7 +295,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/iconbutton",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/IconButton/IconButton.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/IconButton/IconButton.stories.tsx"
     },
     {
       "name": "IconTooltip",
@@ -310,7 +310,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/icontooltip",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/IconTooltip/IconTooltip.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/IconTooltip/IconTooltip.stories.tsx"
     },
     {
       "name": "Icons",
@@ -325,7 +325,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/icons",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Icons/Icons.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Icons/Icons.stories.tsx"
     },
     {
       "name": "InfoTooltip",
@@ -340,7 +340,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/infotooltip",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/InfoTooltip/InfoTooltip.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/InfoTooltip/InfoTooltip.stories.tsx"
     },
     {
       "name": "Input",
@@ -355,7 +355,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/input",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Input/Input.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Input/Input.stories.tsx"
     },
     {
       "name": "Label",
@@ -370,7 +370,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/label",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Label/Label.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Label/Label.stories.tsx"
     },
     {
       "name": "Layout",
@@ -385,7 +385,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/layout",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Layout/Layout.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Layout/Layout.stories.tsx"
     },
     {
       "name": "List",
@@ -400,7 +400,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/list",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/List/List.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/List/List.stories.tsx"
     },
     {
       "name": "ListViewCard",
@@ -415,7 +415,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/listviewcard",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/ListViewCard/ListViewCard.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/ListViewCard/ListViewCard.stories.tsx"
     },
     {
       "name": "Loading",
@@ -430,7 +430,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/loading",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Loading/Loading.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Loading/Loading.stories.tsx"
     },
     {
       "name": "Menu",
@@ -445,7 +445,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/menu",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Menu/Menu.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Menu/Menu.stories.tsx"
     },
     {
       "name": "MetadataBar",
@@ -460,7 +460,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/metadatabar",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/MetadataBar/MetadataBar.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/MetadataBar/MetadataBar.stories.tsx"
     },
     {
       "name": "Modal",
@@ -475,7 +475,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/modal",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Modal/Modal.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Modal/Modal.stories.tsx"
     },
     {
       "name": "ModalTrigger",
@@ -490,7 +490,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/modaltrigger",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/ModalTrigger/ModalTrigger.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/ModalTrigger/ModalTrigger.stories.tsx"
     },
     {
       "name": "Popover",
@@ -505,7 +505,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/popover",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Popover/Popover.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Popover/Popover.stories.tsx"
     },
     {
       "name": "ProgressBar",
@@ -520,7 +520,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/progressbar",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/ProgressBar/ProgressBar.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/ProgressBar/ProgressBar.stories.tsx"
     },
     {
       "name": "Radio",
@@ -535,7 +535,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/radio",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Radio/Radio.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Radio/Radio.stories.tsx"
     },
     {
       "name": "SafeMarkdown",
@@ -550,7 +550,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/safemarkdown",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/SafeMarkdown/SafeMarkdown.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/SafeMarkdown/SafeMarkdown.stories.tsx"
     },
     {
       "name": "Select",
@@ -565,7 +565,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/select",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Select/Select.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Select/Select.stories.tsx"
     },
     {
       "name": "Skeleton",
@@ -580,7 +580,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/skeleton",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Skeleton/Skeleton.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Skeleton/Skeleton.stories.tsx"
     },
     {
       "name": "Slider",
@@ -595,7 +595,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/slider",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Slider/Slider.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Slider/Slider.stories.tsx"
     },
     {
       "name": "Space",
@@ -610,7 +610,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/space",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Space/Space.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Space/Space.stories.tsx"
     },
     {
       "name": "Steps",
@@ -625,7 +625,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/steps",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Steps/Steps.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Steps/Steps.stories.tsx"
     },
     {
       "name": "Switch",
@@ -640,7 +640,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/switch",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Switch/Switch.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Switch/Switch.stories.tsx"
     },
     {
       "name": "Table",
@@ -655,7 +655,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/design-system/table",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Table/Table.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Table/Table.stories.tsx"
     },
     {
       "name": "TableCollection",
@@ -670,7 +670,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/ui/tablecollection",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/TableCollection/TableCollection.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/TableCollection/TableCollection.stories.tsx"
     },
     {
       "name": "TableView",
@@ -685,7 +685,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/tableview",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/TableView/TableView.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/TableView/TableView.stories.tsx"
     },
     {
       "name": "Tabs",
@@ -700,7 +700,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/tabs",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Tabs/Tabs.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Tabs/Tabs.stories.tsx"
     },
     {
       "name": "Timer",
@@ -715,7 +715,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/timer",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Timer/Timer.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Timer/Timer.stories.tsx"
     },
     {
       "name": "Tooltip",
@@ -730,7 +730,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/tooltip",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Tooltip/Tooltip.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Tooltip/Tooltip.stories.tsx"
     },
     {
       "name": "Tree",
@@ -745,7 +745,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/tree",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Tree/Tree.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Tree/Tree.stories.tsx"
     },
     {
       "name": "TreeSelect",
@@ -760,7 +760,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/treeselect",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/TreeSelect/TreeSelect.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/TreeSelect/TreeSelect.stories.tsx"
     },
     {
       "name": "Typography",
@@ -775,7 +775,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/typography",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Typography/Typography.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Typography/Typography.stories.tsx"
     },
     {
       "name": "UnsavedChangesModal",
@@ -790,7 +790,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/unsavedchangesmodal",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/UnsavedChangesModal/UnsavedChangesModal.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/UnsavedChangesModal/UnsavedChangesModal.stories.tsx"
     },
     {
       "name": "Upload",
@@ -805,7 +805,7 @@
       "hasGallery": false,
       "hasLiveExample": true,
       "docPath": "developer-docs/components/ui/upload",
-      "storyFile": "superset-frontend/packages/superset-ui-core/src/components/Upload/Upload.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-ui-core/src/components/Upload/Upload.stories.tsx"
     },
     {
       "name": "Alert",
@@ -820,7 +820,7 @@
       "hasGallery": false,
       "hasLiveExample": false,
       "docPath": "developer-docs/components/extension/alert",
-      "storyFile": "superset-frontend/packages/superset-core/src/components/Alert/Alert.stories.tsx"
+      "storyFile": "ax-bi-frontend/packages/superset-core/src/components/Alert/Alert.stories.tsx"
     }
   ]
 }

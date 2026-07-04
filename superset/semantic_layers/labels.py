@@ -23,7 +23,7 @@ When the SEMANTIC_LAYERS feature flag is enabled the UI broadens
 that semantic views and semantic layers feel like first-class
 citizens alongside traditional datasets and database connections.
 
-Mirror of superset-frontend/src/features/semanticLayers/label.ts.
+Mirror of ax-bi-frontend/src/features/semanticLayers/label.ts.
 """
 
 from __future__ import annotations

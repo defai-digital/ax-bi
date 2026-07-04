@@ -20,7 +20,6 @@
 
 from datetime import datetime
 from io import BytesIO
-from typing import Optional
 from unittest.mock import Mock, patch
 from zipfile import is_zipfile, ZipFile
 
@@ -59,10 +58,10 @@ class TestSavedQueryApi(SupersetTestCase):
         self,
         label: str,
         sql: str,
-        db_id: Optional[int] = None,
+        db_id: int | None = None,
         created_by=None,
-        schema: Optional[str] = "",
-        description: Optional[str] = "",
+        schema: str | None = "",
+        description: str | None = "",
     ) -> SavedQuery:
         database = None
         if db_id:

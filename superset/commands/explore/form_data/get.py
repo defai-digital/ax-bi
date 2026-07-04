@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from abc import ABC
-from typing import Optional
 
 from flask import current_app as app
 from sqlalchemy.exc import SQLAlchemyError
@@ -39,7 +38,7 @@ class GetFormDataCommand(BaseCommand, ABC):
             "REFRESH_TIMEOUT_ON_RETRIEVAL"
         )
 
-    def run(self) -> Optional[str]:
+    def run(self) -> str | None:
         try:
             key = self._cmd_params.key
             state = cache_manager.explore_form_data_cache.get(key)

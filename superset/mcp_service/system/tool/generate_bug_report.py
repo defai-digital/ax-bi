@@ -30,7 +30,8 @@ import datetime
 import logging
 import platform
 import re
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import flask
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -136,8 +137,7 @@ def _sanitize_text(text: str, redactions: set[str]) -> str:
     text = _sub(_EMAIL_RE, "[REDACTED_EMAIL]", "email", text)
     text = _sub(_IPV6_RE, "[REDACTED_IP]", "ip_address", text)
     text = _sub(_IPV4_RE, "[REDACTED_IP]", "ip_address", text)
-    text = _sub(_LONG_HEX_RE, "[REDACTED_HEX]", "long_hex_token", text)
-    return text
+    return _sub(_LONG_HEX_RE, "[REDACTED_HEX]", "long_hex_token", text)
 
 
 def _safe_str(value: Any) -> str:

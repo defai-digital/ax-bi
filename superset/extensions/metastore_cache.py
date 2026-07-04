@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID, uuid3
 
 from flask import current_app, Flask, has_app_context
@@ -71,13 +71,13 @@ class SupersetMetastoreCache(BaseCache):
     def get_key(self, key: str) -> UUID:
         return uuid3(self.namespace, key)
 
-    def _get_expiry(self, timeout: Optional[int]) -> Optional[datetime]:
+    def _get_expiry(self, timeout: int | None) -> datetime | None:
         timeout = self._normalize_timeout(timeout)
         if timeout is not None and timeout > 0:
             return datetime.now() + timedelta(seconds=timeout)
         return None
 
-    def set(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, timeout: int | None = None) -> bool:
         # pylint: disable=import-outside-toplevel
         from superset.daos.key_value import KeyValueDAO
 
@@ -91,7 +91,7 @@ class SupersetMetastoreCache(BaseCache):
         db.session.commit()  # pylint: disable=consider-using-transaction
         return True
 
-    def add(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
+    def add(self, key: str, value: Any, timeout: int | None = None) -> bool:
         # pylint: disable=import-outside-toplevel
         from superset.daos.key_value import KeyValueDAO
 

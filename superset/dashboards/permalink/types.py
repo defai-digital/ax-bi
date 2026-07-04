@@ -15,18 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 from collections.abc import Sequence
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 
 class DashboardPermalinkState(TypedDict, total=False):
-    dataMask: Optional[dict[str, Any]]
-    activeTabs: Optional[list[str]]
-    anchor: Optional[str]
+    dataMask: dict[str, Any] | None
+    activeTabs: list[str] | None
+    anchor: str | None
     # urlParams items are stored/transmitted as JSON arrays, so they
     # arrive at runtime as ``list[str]``; ``Sequence[str]`` keeps the
     # annotation permissive of both list and tuple shapes.
-    urlParams: Optional[list[Sequence[str]]]
-    chartStates: Optional[dict[str, Any]]
+    urlParams: list[Sequence[str]] | None
+    chartStates: dict[str, Any] | None
 
 
 class DashboardPermalinkValue(TypedDict):

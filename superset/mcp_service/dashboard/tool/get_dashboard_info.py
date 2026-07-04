@@ -142,12 +142,13 @@ async def get_dashboard_info(
     ```
     """
     await ctx.info(
-        "Retrieving dashboard information: identifier=%s, permalink_key=%s"
-        % (request.identifier, request.permalink_key)
+        f"Retrieving dashboard information: identifier={request.identifier}, "
+        f"permalink_key={request.permalink_key}"
     )
     await ctx.debug(
-        "Metadata cache settings: use_cache=%s, refresh_metadata=%s, force_refresh=%s"
-        % (request.use_cache, request.refresh_metadata, request.force_refresh)
+        f"Metadata cache settings: use_cache={request.use_cache}, "
+        f"refresh_metadata={request.refresh_metadata}, "
+        f"force_refresh={request.force_refresh}"
     )
 
     try:
@@ -178,8 +179,8 @@ async def get_dashboard_info(
             # If permalink_key is provided, retrieve filter state
             if request.permalink_key:
                 await ctx.info(
-                    "Retrieving filter state from permalink: permalink_key=%s"
-                    % (request.permalink_key,)
+                    "Retrieving filter state from permalink: "
+                    f"permalink_key={request.permalink_key}"
                 )
                 _refresh_request_user_for_permalink_access()
                 permalink_value = _get_permalink_state(request.permalink_key)
@@ -202,9 +203,9 @@ async def get_dashboard_info(
                         and permalink_dashboard_id_int != result.id
                     ):
                         await ctx.warning(
-                            "permalink_key dashboardId (%s) does not match "
-                            "requested dashboard id (%s); ignoring permalink "
-                            "filter state." % (permalink_dashboard_id, result.id)
+                            f"permalink_key dashboardId ({permalink_dashboard_id}) "
+                            f"does not match requested dashboard id ({result.id}); "
+                            "ignoring permalink filter state."
                         )
                     else:
                         # Extract the state from permalink value
@@ -225,12 +226,9 @@ async def get_dashboard_info(
 
                         await ctx.info(
                             "Filter state retrieved from permalink: "
-                            "has_dataMask=%s, has_chartStates=%s, has_activeTabs=%s"
-                            % (
-                                "dataMask" in permalink_state,
-                                "chartStates" in permalink_state,
-                                "activeTabs" in permalink_state,
-                            )
+                            f"has_dataMask={'dataMask' in permalink_state}, "
+                            f"has_chartStates={'chartStates' in permalink_state}, "
+                            f"has_activeTabs={'activeTabs' in permalink_state}"
                         )
                 else:
                     await ctx.warning(
@@ -239,15 +237,10 @@ async def get_dashboard_info(
                     )
 
             await ctx.info(
-                "Dashboard information retrieved successfully: id=%s, title=%s, "
-                "chart_count=%s, published=%s, is_permalink_state=%s"
-                % (
-                    result.id,
-                    result.dashboard_title,
-                    result.chart_count,
-                    result.published,
-                    result.is_permalink_state,
-                )
+                "Dashboard information retrieved successfully: "
+                f"id={result.id}, title={result.dashboard_title}, "
+                f"chart_count={result.chart_count}, published={result.published}, "
+                f"is_permalink_state={result.is_permalink_state}"
             )
             # When permalink_key is supplied and the caller did not explicitly
             # override select_columns, ensure filter_state is present so the
@@ -259,18 +252,19 @@ async def get_dashboard_info(
                 effective_select_columns.append("filter_state")
 
             return dump_model_with_select_columns(result, effective_select_columns)
-        else:
-            await ctx.warning(
-                "Dashboard retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
-            )
+
+        await ctx.warning(
+            f"Dashboard retrieval failed: error_type={result.error_type}, "
+            f"error={result.error}"
+        )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Dashboard information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s" % (request.identifier, str(e), type(e).__name__)
+            "Dashboard information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return DashboardError.create(
             error=f"Failed to get dashboard info: {str(e)}",

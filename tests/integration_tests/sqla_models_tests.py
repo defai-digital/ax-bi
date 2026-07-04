@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Any, cast, Literal, NamedTuple, Optional, Union
+from typing import Any, cast, Literal, NamedTuple
 from re import Pattern
 from unittest.mock import Mock, patch
 import pytest
@@ -76,8 +76,8 @@ VIRTUAL_TABLE_STRING_TYPES: dict[str, Pattern[str]] = {
 class FilterTestCase(NamedTuple):
     column: str
     operator: str
-    value: Union[float, int, list[Any], str]
-    expected: Union[str, list[str]]
+    value: float | int | list[Any] | str
+    expected: str | list[str]
 
 
 class TestDatabaseModel(SupersetTestCase):
@@ -1059,8 +1059,8 @@ def test__normalize_prequery_result_type(
     result: Any,
 ) -> None:
     def _convert_dttm(
-        target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         if target_type.upper() == "TIMESTAMP":
             return f"""TIME_PARSE('{dttm.isoformat(timespec="seconds")}')"""
 

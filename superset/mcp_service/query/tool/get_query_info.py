@@ -67,9 +67,7 @@ async def get_query_info(
     }
     ```
     """
-    await ctx.info(
-        "Retrieving query information: identifier=%s" % (request.identifier,)
-    )
+    await ctx.info(f"Retrieving query information: identifier={request.identifier}")
 
     try:
         from superset.daos.query import QueryDAO
@@ -89,30 +87,22 @@ async def get_query_info(
         if isinstance(result, QueryInfo):
             await ctx.info(
                 "Query information retrieved successfully: "
-                "query_id=%s, status=%s, database_id=%s"
-                % (
-                    result.id,
-                    result.status,
-                    result.database_id,
-                )
+                f"query_id={result.id}, status={result.status}, "
+                f"database_id={result.database_id}"
             )
         else:
             await ctx.warning(
-                "Query retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Query retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Query information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Query information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return QueryError.create(
             error="Failed to get query info",

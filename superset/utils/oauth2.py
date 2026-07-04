@@ -21,9 +21,10 @@ import base64
 import hashlib
 import logging
 import secrets
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Iterator, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import backoff
 import jwt

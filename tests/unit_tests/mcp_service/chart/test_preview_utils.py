@@ -52,7 +52,7 @@ def test_preview_utils_does_not_top_level_import_chart_data_command():
     source = Path(source_path).read_text(encoding="utf-8")
     tree = ast.parse(source)
     top_level_imports = [
-        node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))
+        node for node in tree.body if isinstance(node, ast.Import | ast.ImportFrom)
     ]
 
     assert preview_utils.SUPPORTED_FORM_DATA_PREVIEW_FORMATS == frozenset(

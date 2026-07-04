@@ -20,9 +20,9 @@ import os
 import random
 import string
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import date, datetime, time, timedelta
-from typing import Any, Callable, cast, Optional, TypedDict
+from typing import Any, cast, TypedDict
 from uuid import uuid4
 
 import sqlalchemy.sql.sqltypes
@@ -44,7 +44,7 @@ class ColumnInfo(TypedDict):
     name: str
     type: TypeEngine[Any]
     nullable: bool
-    default: Optional[Any]
+    default: Any | None
     autoincrement: str
     primary_key: int
 
@@ -71,7 +71,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         return lambda: random.choice([0, 1])  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.INTEGER, sqlalchemy.sql.sqltypes.Integer)
+        sqltype, sqlalchemy.sql.sqltypes.INTEGER | sqlalchemy.sql.sqltypes.Integer
     ):
         return lambda: random.randrange(2147483647)  # noqa: S311
 
@@ -79,28 +79,26 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         return lambda: random.randrange(sys.maxsize)  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.VARCHAR, sqlalchemy.sql.sqltypes.String)
+        sqltype, sqlalchemy.sql.sqltypes.VARCHAR | sqlalchemy.sql.sqltypes.String
     ):
         length = random.randrange(sqltype.length or 255)  # noqa: S311
         length = max(8, length)  # for unique values
         length = min(100, length)  # for FAB perms
         return lambda: "".join(random.choices(string.ascii_letters, k=length))  # noqa: S311
 
-    if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.TEXT, sqlalchemy.sql.sqltypes.Text)
-    ):
+    if isinstance(sqltype, sqlalchemy.sql.sqltypes.TEXT | sqlalchemy.sql.sqltypes.Text):
         length = random.randrange(65535)  # noqa: S311
         # "practicality beats purity"
         length = max(length, 2048)
         return lambda: "".join(random.choices(string.ascii_letters, k=length))  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.BOOLEAN, sqlalchemy.sql.sqltypes.Boolean)
+        sqltype, sqlalchemy.sql.sqltypes.BOOLEAN | sqlalchemy.sql.sqltypes.Boolean
     ):
         return lambda: random.choice([True, False])  # noqa: S311
 
     if isinstance(
-        sqltype, (sqlalchemy.sql.sqltypes.FLOAT, sqlalchemy.sql.sqltypes.REAL)
+        sqltype, sqlalchemy.sql.sqltypes.FLOAT | sqlalchemy.sql.sqltypes.REAL
     ):
         return lambda: random.uniform(-sys.maxsize, sys.maxsize)  # noqa: S311
 
@@ -116,11 +114,9 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
     if isinstance(
         sqltype,
-        (
-            sqlalchemy.sql.sqltypes.TIMESTAMP,
-            sqlalchemy.sql.sqltypes.DATETIME,
-            sqlalchemy.sql.sqltypes.DateTime,
-        ),
+        sqlalchemy.sql.sqltypes.TIMESTAMP
+        | sqlalchemy.sql.sqltypes.DATETIME
+        | sqlalchemy.sql.sqltypes.DateTime,
     ):
         return lambda: (
             datetime.fromordinal(MINIMUM_DATE.toordinal())
@@ -142,10 +138,8 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
     if isinstance(
         sqltype,
-        (
-            sqlalchemy.sql.sqltypes.BINARY,
-            sqlalchemy_utils.types.encrypted.encrypted_type.EncryptedType,
-        ),
+        sqlalchemy.sql.sqltypes.BINARY
+        | sqlalchemy_utils.types.encrypted.encrypted_type.EncryptedType,
     ):
         length = random.randrange(sqltype.length or 255)  # noqa: S311
         return lambda: os.urandom(length)
@@ -167,7 +161,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
 
 def add_data(
-    columns: Optional[list[ColumnInfo]],
+    columns: list[ColumnInfo] | None,
     num_rows: int,
     table_name: str,
     append: bool = True,
@@ -177,7 +171,8 @@ def add_data(
 
     If the table already exists `columns` can be `None`.
 
-    :param Optional[List[ColumnInfo]] columns: list of column names and types to create
+    :param columns: list of column names and types to create, or None for an
+        existing table
     :param int num_rows: how many rows to generate and insert
     :param str table_name: name of table, will be created if it doesn't exist
     :param bool append: if the table already exists, append data or replace?
@@ -250,7 +245,7 @@ def add_sample_rows(model: type[Model], count: int) -> Iterator[Model]:
     relationships = inspector.relationships.items()
     samples = db.session.query(model).limit(count).all() if relationships else []
 
-    max_primary_key: Optional[int] = None
+    max_primary_key: int | None = None
     for i in range(count):
         sample = samples[i % len(samples)] if samples else None
         kwargs = {}

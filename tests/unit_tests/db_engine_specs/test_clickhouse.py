@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Any, cast, Optional
+from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -53,7 +53,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.clickhouse import (
@@ -87,7 +87,7 @@ def test_execute_connection_error() -> None:
 )
 def test_connect_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.clickhouse import (
@@ -202,7 +202,7 @@ def test_connect_convert_dttm(
 def test_connect_get_column_spec(
     native_type: str,
     sqla_type: type[TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:

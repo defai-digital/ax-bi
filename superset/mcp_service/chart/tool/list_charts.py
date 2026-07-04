@@ -457,20 +457,13 @@ async def _list_charts_python(
     """Run the authoritative Python chart list path."""
 
     await ctx.info(
-        "Listing charts: page=%s, page_size=%s, search=%s"
-        % (
-            request.page,
-            request.page_size,
-            request.search,
-        )
+        f"Listing charts: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
     await ctx.debug(
-        "Chart listing filters: filters=%s, order_column=%s, order_direction=%s"
-        % (
-            len(request.filters),
-            request.order_column,
-            request.order_direction,
-        )
+        f"Chart listing filters: filters={len(request.filters)}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}"
     )
 
     from superset.daos.chart import ChartDAO
@@ -527,5 +520,5 @@ async def _list_charts_python(
             )
         return await finalize_list_response(result, "charts", "Charts", ctx)
     except Exception as e:
-        await ctx.error("Failed to list charts: %s" % (str(e),))
+        await ctx.error(f"Failed to list charts: {str(e)}")
         raise

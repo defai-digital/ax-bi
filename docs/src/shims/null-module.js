@@ -18,7 +18,7 @@
  */
 
 // Null module shim for packages not available in the docs build.
-// These are transitive dependencies of superset-frontend components that exist
+// These are transitive dependencies of ax-bi-frontend components that exist
 // in the barrel file but are never rendered on the docs site.
 // webpack needs these to resolve at build time even though the code paths
 // that use them are never executed at runtime.
