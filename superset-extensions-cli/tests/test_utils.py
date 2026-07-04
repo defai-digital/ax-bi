@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from pathlib import Path
 
 import pytest
@@ -668,10 +669,8 @@ def test_read_json_with_permission_denied(isolated_filesystem):
         pass
     finally:
         # Restore permissions for cleanup
-        try:
+        with suppress(OSError, PermissionError):
             json_file.chmod(0o644)
-        except (OSError, PermissionError):
-            pass
 
 
 @pytest.mark.unit
@@ -692,10 +691,8 @@ def test_read_toml_with_permission_denied(isolated_filesystem):
         pass
     finally:
         # Restore permissions for cleanup
-        try:
+        with suppress(OSError, PermissionError):
             toml_file.chmod(0o644)
-        except (OSError, PermissionError):
-            pass
 
 
 # Atomic Write Tests

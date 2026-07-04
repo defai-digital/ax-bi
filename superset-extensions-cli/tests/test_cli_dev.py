@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from contextlib import suppress
 from unittest.mock import Mock, patch
 
 import pytest
@@ -67,10 +68,8 @@ def test_dev_command_starts_watchers(
 
     # Run dev command in a thread since it's blocking
     def run_dev():
-        try:
+        with suppress(KeyboardInterrupt):
             cli_runner.invoke(app, ["dev"], catch_exceptions=False)
-        except KeyboardInterrupt:
-            pass
 
     dev_thread = threading.Thread(target=run_dev)
     dev_thread.daemon = True
@@ -127,11 +126,11 @@ def test_dev_command_initial_build(
         mock_observer = Mock()
         mock_observer_class.return_value = mock_observer
 
-        with patch("time.sleep", side_effect=KeyboardInterrupt):
-            try:
-                cli_runner.invoke(app, ["dev"], catch_exceptions=False)
-            except KeyboardInterrupt:
-                pass
+        with (
+            patch("time.sleep", side_effect=KeyboardInterrupt),
+            suppress(KeyboardInterrupt),
+        ):
+            cli_runner.invoke(app, ["dev"], catch_exceptions=False)
 
     # Verify initial build steps
     frontend_dir = isolated_filesystem / "frontend"
@@ -447,28 +446,28 @@ def test_frontend_watcher_function_coverage(isolated_filesystem):
         displayName="Test Extension",
         version="1.0.0",
     )
-    with patch("superset_extensions_cli.cli.rebuild_frontend") as mock_rebuild:
-        with patch("superset_extensions_cli.cli.build_manifest") as mock_build:
-            with patch("superset_extensions_cli.cli.write_manifest") as mock_write:
-                mock_rebuild.return_value = "remoteEntry.abc123.js"
-                mock_build.return_value = mock_manifest
+    with (
+        patch("superset_extensions_cli.cli.rebuild_frontend") as mock_rebuild,
+        patch("superset_extensions_cli.cli.build_manifest") as mock_build,
+        patch("superset_extensions_cli.cli.write_manifest") as mock_write,
+    ):
+        mock_rebuild.return_value = "remoteEntry.abc123.js"
+        mock_build.return_value = mock_manifest
 
-                # Simulate frontend watcher function logic
-                frontend_dir = isolated_filesystem / "frontend"
-                frontend_dir.mkdir()
+        # Simulate frontend watcher function logic
+        frontend_dir = isolated_filesystem / "frontend"
+        frontend_dir.mkdir()
 
-                # Actually call the functions to simulate the frontend_watcher
-                if (
-                    remote_entry := mock_rebuild(isolated_filesystem, frontend_dir)
-                ) is not None:
-                    manifest = mock_build(isolated_filesystem, remote_entry)
-                    mock_write(isolated_filesystem, manifest)
+        # Actually call the functions to simulate the frontend_watcher
+        if (
+            remote_entry := mock_rebuild(isolated_filesystem, frontend_dir)
+        ) is not None:
+            manifest = mock_build(isolated_filesystem, remote_entry)
+            mock_write(isolated_filesystem, manifest)
 
-                mock_rebuild.assert_called_once_with(isolated_filesystem, frontend_dir)
-                mock_build.assert_called_once_with(
-                    isolated_filesystem, "remoteEntry.abc123.js"
-                )
-                mock_write.assert_called_once_with(isolated_filesystem, mock_manifest)
+        mock_rebuild.assert_called_once_with(isolated_filesystem, frontend_dir)
+        mock_build.assert_called_once_with(isolated_filesystem, "remoteEntry.abc123.js")
+        mock_write.assert_called_once_with(isolated_filesystem, mock_manifest)
 
 
 @pytest.mark.unit

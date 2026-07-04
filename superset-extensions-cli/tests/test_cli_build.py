@@ -4253,15 +4253,17 @@ exclude = []
     existing_output.parent.mkdir(parents=True)
     existing_output.write_text("# existing")
 
-    with patch(
-        "superset_extensions_cli.cli.shutil.copy2",
-        side_effect=OSError("disk full"),
-    ):
-        with pytest.raises(
+    with (
+        patch(
+            "superset_extensions_cli.cli.shutil.copy2",
+            side_effect=OSError("disk full"),
+        ),
+        pytest.raises(
             click.ClickException,
             match="Failed to copy backend file .*__init__\\.py: disk full",
-        ):
-            copy_backend_files(isolated_filesystem)
+        ),
+    ):
+        copy_backend_files(isolated_filesystem)
 
     assert existing_output.read_text() == "# existing"
     assert list((isolated_filesystem / "dist").glob(".backend.*.tmp")) == []
@@ -5057,15 +5059,17 @@ def test_copy_frontend_dist_reports_copy_failures(isolated_filesystem):
     existing_output.parent.mkdir(parents=True)
     existing_output.write_text("old content")
 
-    with patch(
-        "superset_extensions_cli.cli.shutil.copy2",
-        side_effect=OSError("disk full"),
-    ):
-        with pytest.raises(
+    with (
+        patch(
+            "superset_extensions_cli.cli.shutil.copy2",
+            side_effect=OSError("disk full"),
+        ),
+        pytest.raises(
             click.ClickException,
             match="Failed to copy frontend asset remoteEntry\\.abc123\\.js: disk full",
-        ):
-            copy_frontend_dist(isolated_filesystem)
+        ),
+    ):
+        copy_frontend_dist(isolated_filesystem)
 
     assert existing_output.read_text() == "old content"
     assert list((isolated_filesystem / "dist").glob(".frontend*.tmp")) == []
