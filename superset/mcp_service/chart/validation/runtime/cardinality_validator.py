@@ -187,9 +187,8 @@ class CardinalityValidator:
         """Suggest appropriate chart types based on cardinality."""
         if cardinality <= 10:
             return ["bar", "pie", "donut", "area"]
-        elif cardinality <= 30:
+        if cardinality <= 30:
             return ["bar", "line", "area"]
-        elif cardinality <= 100:
+        if cardinality <= 100:
             return ["line", "scatter"]
-        else:
-            return ["table", "pivot_table", "heatmap"]
+        return ["table", "pivot_table", "heatmap"]

@@ -53,10 +53,9 @@ class ChartTypeSuggester:
         try:
             if isinstance(config, XYChartConfig):
                 return ChartTypeSuggester._analyze_xy_chart(config)
-            elif isinstance(config, TableChartConfig):
+            if isinstance(config, TableChartConfig):
                 return ChartTypeSuggester._analyze_table_chart(config)
-            else:
-                return True, None
+            return True, None
         except Exception as e:
             logger.warning("Chart type analysis failed: %s", e)
             return True, None  # Don't block on suggestion failures

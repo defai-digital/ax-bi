@@ -343,7 +343,7 @@ async def get_chart_info(
                 return error
 
         return dump_model_with_select_columns(result, request.select_columns)
-    else:
-        await ctx.warning("Chart retrieval failed: error=%s" % (str(result),))
+
+    await ctx.warning("Chart retrieval failed: error=%s" % (str(result),))
 
     return result

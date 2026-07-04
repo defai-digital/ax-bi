@@ -539,26 +539,25 @@ class DatasetValidator:
                 return ChartErrorBuilder.column_not_found_error(
                     col_name, [s.name for s in suggestions]
                 )
-            else:
-                return ChartErrorBuilder.column_not_found_error(col_name)
-        else:
-            # Multiple invalid columns
-            invalid_names: list[str] = [col.name for col in invalid_columns if col.name]
-            return ChartErrorBuilder.build_error(
-                error_type="multiple_invalid_columns",
-                template_key="column_not_found",
-                template_vars={
-                    "column": ", ".join(invalid_names[:3])
-                    + ("..." if len(invalid_names) > 3 else ""),
-                    "suggestions": "Use get_dataset_info to see all available columns",
-                },
-                custom_suggestions=[
-                    f"Invalid columns: {', '.join(invalid_names)}",
-                    "Check spelling and case sensitivity",
-                    "Use get_dataset_info to list available columns",
-                ],
-                error_code="MULTIPLE_INVALID_COLUMNS",
-            )
+            return ChartErrorBuilder.column_not_found_error(col_name)
+
+        # Multiple invalid columns
+        invalid_names: list[str] = [col.name for col in invalid_columns if col.name]
+        return ChartErrorBuilder.build_error(
+            error_type="multiple_invalid_columns",
+            template_key="column_not_found",
+            template_vars={
+                "column": ", ".join(invalid_names[:3])
+                + ("..." if len(invalid_names) > 3 else ""),
+                "suggestions": "Use get_dataset_info to see all available columns",
+            },
+            custom_suggestions=[
+                f"Invalid columns: {', '.join(invalid_names)}",
+                "Check spelling and case sensitivity",
+                "Use get_dataset_info to list available columns",
+            ],
+            error_code="MULTIPLE_INVALID_COLUMNS",
+        )
 
     @staticmethod
     def _validate_saved_metrics(

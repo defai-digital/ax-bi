@@ -315,7 +315,7 @@ def update_chart_preview(  # noqa: C901
                 logger.warning("Preview generation failed: %s", e)
 
         # Return enhanced data
-        result = {
+        return {
             "chart": {
                 "id": None,
                 "slice_name": chart_name,
@@ -341,7 +341,6 @@ def update_chart_preview(  # noqa: C901
             "schema_version": "2.0",
             "api_version": "v1",
         }
-        return result
 
     except OAuth2RedirectError as ex:
         logger.warning(
