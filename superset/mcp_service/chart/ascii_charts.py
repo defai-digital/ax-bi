@@ -49,15 +49,12 @@ def generate_ascii_chart(
 
         if chart_type in ["bar", "column", "echarts_timeseries_bar"]:
             return _generate_ascii_bar_chart(data, width, height)
-        elif chart_type in ["line", "echarts_timeseries_line"]:
+        if chart_type in ["line", "echarts_timeseries_line"]:
             return _generate_ascii_line_chart(data, width, height)
-        elif chart_type in ["scatter", "echarts_timeseries_scatter"]:
+        if chart_type in ["scatter", "echarts_timeseries_scatter"]:
             return _generate_ascii_scatter_chart(data, width, height)
-        else:
-            logger.debug(
-                "Unsupported chart type '%s', falling back to table", chart_type
-            )
-            return generate_ascii_table(data, width)
+        logger.debug("Unsupported chart type '%s', falling back to table", chart_type)
+        return generate_ascii_table(data, width)
     except (TypeError, ValueError, KeyError, IndexError) as e:
         logger.error("ASCII chart generation failed: %s", e, exc_info=True)
         return "ASCII chart generation failed"
@@ -102,8 +99,7 @@ def _generate_ascii_bar_chart(data: list[Any], width: int, height: int) -> str:
 
     if use_horizontal:
         return _generate_horizontal_bar_chart(values, labels, width)
-    else:
-        return _generate_vertical_bar_chart(values, labels, width, height)
+    return _generate_vertical_bar_chart(values, labels, width, height)
 
 
 def _generate_horizontal_bar_chart(
@@ -227,18 +223,17 @@ def _create_gradient_bar(length: int, value: float, max_val: float) -> str:
     if intensity > 0.8:
         # High values - solid bars
         return "█" * length
-    elif intensity > 0.6:
+    if intensity > 0.6:
         # Medium-high values - mostly solid with some texture
         return "█" * (length - 1) + "▉" if length > 1 else "█"
-    elif intensity > 0.4:
+    if intensity > 0.4:
         # Medium values - mixed texture
         return "▊" * length
-    elif intensity > 0.2:
+    if intensity > 0.2:
         # Low-medium values - lighter texture
         return "▋" * length
-    else:
-        # Low values - lightest texture
-        return "▌" * length
+    # Low values - lightest texture
+    return "▌" * length
 
 
 def _generate_ascii_line_chart(data: list[Any], width: int, height: int) -> str:
@@ -496,8 +491,7 @@ def _create_sparkline(values: list[float]) -> list[str]:
     # Safe formatting to avoid NaN display
     if _is_nan_value(min_val) or _is_nan_value(max_val):
         return ["Range: Unable to calculate from data", sparkline]
-    else:
-        return [f"Range: {min_val:.2f} to {max_val:.2f}", sparkline]
+    return [f"Range: {min_val:.2f} to {max_val:.2f}", sparkline]
 
 
 def _is_nan_value(value: Any) -> bool:

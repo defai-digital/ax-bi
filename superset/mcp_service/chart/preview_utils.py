@@ -142,15 +142,14 @@ def generate_preview_from_form_data(
         # Generate preview based on format
         if preview_format == "ascii":
             return _generate_ascii_preview_from_data(data, form_data)
-        elif preview_format == "table":
+        if preview_format == "table":
             return _generate_table_preview_from_data(data, form_data)
-        elif preview_format == "vega_lite":
+        if preview_format == "vega_lite":
             return _generate_vega_lite_preview_from_data(data, form_data)
-        else:
-            return ChartError(
-                error=f"Unsupported preview format: {preview_format}",
-                error_type="UnsupportedFormat",
-            )
+        return ChartError(
+            error=f"Unsupported preview format: {preview_format}",
+            error_type="UnsupportedFormat",
+        )
 
     except Exception as e:
         logger.error("Preview generation from form data failed: %s", e)
@@ -373,8 +372,7 @@ def _format_range_display(values: list[float]) -> str:
 
     if _is_nan(min_val) or _is_nan(max_val):
         return "Range: Unable to calculate"
-    else:
-        return f"Range: {min_val:.2f} to {max_val:.2f}"
+    return f"Range: {min_val:.2f} to {max_val:.2f}"
 
 
 def _generate_sparkline_safe(values: list[float]) -> str:
@@ -399,8 +397,7 @@ def _generate_sparkline_safe(values: list[float]) -> str:
             else:
                 sparkline += "█"
         return sparkline
-    else:
-        return "─" * len(values)  # Flat line if all values are same
+    return "─" * len(values)  # Flat line if all values are same
 
 
 def _generate_safe_ascii_pie_chart(data: list[dict[str, Any]]) -> str:
