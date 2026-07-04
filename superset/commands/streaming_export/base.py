@@ -134,7 +134,7 @@ class BaseStreamingCSVExportCommand(BaseCommand):
             # as numbers in CSV output.
             if isinstance(value, bool):
                 formatted.append(value)
-            elif isinstance(value, (float, Decimal, Real)):
+            elif isinstance(value, float | Decimal | Real):
                 # Format numeric values with custom decimal separator
                 formatted.append(str(value).replace(".", decimal_separator))
             else:

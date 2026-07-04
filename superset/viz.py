@@ -1034,7 +1034,7 @@ class NVD3TimeSeriesViz(NVD3Viz):
             else:
                 series_title = str(name)
             if (
-                isinstance(series_title, (list, tuple))
+                isinstance(series_title, list | tuple)
                 and len(series_title) > 1
                 and len(self.metric_labels) == 1
             ):
@@ -2013,7 +2013,7 @@ class BaseDeckGLViz(BaseViz):
     @staticmethod
     @deprecated(deprecated_in="3.0")
     def reverse_latlong(df: pd.DataFrame, key: str) -> None:
-        df[key] = [tuple(reversed(o)) for o in df[key] if isinstance(o, (list, tuple))]
+        df[key] = [tuple(reversed(o)) for o in df[key] if isinstance(o, list | tuple)]
 
     @deprecated(deprecated_in="3.0")
     def process_spatial_data_obj(self, key: str, df: pd.DataFrame) -> pd.DataFrame:

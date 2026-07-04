@@ -433,7 +433,7 @@ class BaseReportState:
         for param in existing or []:
             if (
                 isinstance(param, Sequence)
-                and not isinstance(param, (str, bytes))
+                and not isinstance(param, str | bytes)
                 and param
                 and param[0] != "native_filters"
             ):
