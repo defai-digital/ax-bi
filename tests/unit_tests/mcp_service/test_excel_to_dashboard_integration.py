@@ -15,13 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""
-Integration test: upload Excel file -> prompt_to_dashboard pipeline.
-
-Exercises the full MCP AI pipeline with a real multi-sheet Excel file
-(CODED_Service Revenue by Client) to identify gaps and improvement
-opportunities in the MCP service.
-"""
+"""Unit tests for Excel upload and prompt-to-dashboard MCP helpers."""
 
 import base64
 import importlib
@@ -39,13 +33,7 @@ upload_file_module = importlib.import_module(
     "superset.mcp_service.dataset.tool.upload_file"
 )
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-EXCEL_PATH = (
-    "/Users/akiralam/Downloads/"
-    "CODED_Service Revenue by Client (LCY)_2025_Top20.xlsx"
-)
 
 
 # -----------------------------------------------------------------------
@@ -96,10 +84,18 @@ def _make_mock_dataset(
     dataset.extra = {}
     dataset.uuid = f"dataset-uuid-{dataset_id}"
     col_names = [
-        "Type of Service", "Cost Center", "Service Line Group",
-        "Client Profile", "Client", "Client Code",
-        "Revenue Jan.25", "Revenue Feb.25", "Revenue Mar.25",
-        "Revenue Apr.25", "Revenue May.25", "Revenue Jun.25",
+        "Type of Service",
+        "Cost Center",
+        "Service Line Group",
+        "Client Profile",
+        "Client",
+        "Client Code",
+        "Revenue Jan.25",
+        "Revenue Feb.25",
+        "Revenue Mar.25",
+        "Revenue Apr.25",
+        "Revenue May.25",
+        "Revenue Jun.25",
     ]
     dataset.columns = []
     for cn in col_names:
@@ -119,19 +115,13 @@ def _make_mock_dataset(
 def _make_minimal_xlsx() -> str:
     """Create a minimal multi-sheet xlsx in memory."""
     wb = Workbook()
-    ws1 = wb.active
-    ws1.title = "SG"
-    ws1.append(["Client", "Revenue", "Month"])
-    ws1.append(["SG-CLIENT-01", 50000, "Jan"])
-    ws1.append(["SG-CLIENT-02", 30000, "Feb"])
-
-    ws2 = wb.create_sheet("MY")
-    ws2.append(["Client", "Revenue", "Month"])
-    ws2.append(["MY-CLIENT-01", 40000, "Jan"])
-
-    ws3 = wb.create_sheet("HK")
-    ws3.append(["Client", "Revenue", "Month"])
-    ws3.append(["HK-CLIENT-01", 60000, "Jan"])
+    sheets = ["SG", "MY", "HK", "CN", "AU"]
+    for index, sheet_name in enumerate(sheets):
+        ws = wb.active if index == 0 else wb.create_sheet(sheet_name)
+        ws.title = sheet_name
+        ws.append(["Client", "Revenue", "Month"])
+        ws.append([f"{sheet_name}-CLIENT-01", 50000 + index * 1000, "Jan"])
+        ws.append([f"{sheet_name}-CLIENT-02", 30000 + index * 1000, "Feb"])
 
     buf = BytesIO()
     wb.save(buf)
@@ -157,21 +147,16 @@ class TestExcelMetadataDiscovery:
     """Test that the MCP upload tool properly handles multi-sheet Excel files."""
 
     def test_excel_metadata_extracts_sheet_names(self) -> None:
-        """GAP TEST: file_metadata() returns sheet names, but the MCP
-        upload_file tool does NOT expose them in its response."""
+        """file_metadata() returns all sheet names from an Excel workbook."""
         from werkzeug.datastructures import FileStorage
 
         from superset.commands.database.uploaders.excel_reader import ExcelReader
 
-        with open(EXCEL_PATH, "rb") as f:
-            file_bytes = f.read()
-
         file_storage = FileStorage(
-            stream=BytesIO(file_bytes),
+            stream=BytesIO(base64.b64decode(_make_minimal_xlsx())),
             filename="revenue.xlsx",
             content_type=(
-                "application/vnd.openxmlformats-officedocument"
-                ".spreadsheetml.sheet"
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             ),
         )
 
@@ -179,41 +164,8 @@ class TestExcelMetadataDiscovery:
         metadata = reader.file_metadata(file_storage)
 
         logger.info("Excel metadata items: %d", len(metadata.get("items", [])))
-        for item in metadata.get("items", []):
-            cols = [c.get("column_name", "") for c in item.get("columns", [])]
-            logger.info("  Sheet: %s, columns: %s", item.get("name", ""), cols)
-
-        assert len(metadata["items"]) == 5, (
-            "Expected 5 sheets (SG, MY, HK, CN, AU)"
-        )
-        logger.warning(
-            "GAP: upload_file does not return sheet_names metadata. "
-            "MCP clients cannot discover what sheets are available."
-        )
-
-    def test_upload_request_missing_fields(self) -> None:
-        """GAP TEST: Document fields missing from UploadFileRequest."""
-        from superset.mcp_service.dataset.schemas import UploadFileRequest
-
-        fields = UploadFileRequest.model_fields
-        gaps = []
-
-        if "sheet_name" not in fields:
-            gaps.append("sheet_name: cannot select which sheet to upload")
-        if "header_row" not in fields:
-            gaps.append("header_row: cannot specify which row is the header")
-        if "skip_rows" not in fields:
-            gaps.append("skip_rows: cannot skip preamble rows")
-        if "column_data_types" not in fields:
-            gaps.append(
-                "column_data_types: cannot specify column types"
-            )
-
-        logger.info("UploadFileRequest gaps found: %d", len(gaps))
-        for g in gaps:
-            logger.warning("  SCHEMA GAP: %s", g)
-
-        assert len(gaps) >= 3, f"Expected 3+ schema gaps, found {len(gaps)}"
+        sheet_names = [item.get("sheet_name") for item in metadata["items"]]
+        assert sheet_names == ["SG", "MY", "HK", "CN", "AU"]
 
 
 # -----------------------------------------------------------------------
@@ -239,19 +191,19 @@ class TestMultiSheetUpload:
         mock_upload_cmd.return_value = mock_cmd
         mock_ds = _make_mock_dataset()
         mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = mock_ds  # noqa: E501
-        mock_serialize.return_value = {
-            "id": 99, "table_name": "upload_revenue_abc"
-        }
+        mock_serialize.return_value = {"id": 99, "table_name": "upload_revenue_abc"}
 
         excel_b64 = _make_minimal_xlsx()
 
         async with Client(mcp) as client:
-            await client.call_tool(
+            result = await client.call_tool(
                 "upload_file",
-                {"request": {
-                    "file_content": excel_b64,
-                    "filename": "revenue.xlsx",
-                }},
+                {
+                    "request": {
+                        "file_content": excel_b64,
+                        "filename": "revenue.xlsx",
+                    }
+                },
             )
 
         mock_upload_cmd.assert_called_once()
@@ -261,11 +213,10 @@ class TestMultiSheetUpload:
         sheet = reader._options.get("sheet_name", 0)
         assert sheet == 0, f"Expected default sheet_name=0, got {sheet}"
 
-        logger.warning(
-            "GAP: upload_file silently uploads only the first sheet. "
-            "For a 5-sheet Excel (SG, MY, HK, CN, AU), only SG data "
-            "is loaded. User has no control."
-        )
+        from superset.utils import json as sj
+
+        data = sj.loads(result.content[0].text)
+        assert data.get("sheet_names") == ["SG", "MY", "HK", "CN", "AU"]
 
 
 # -----------------------------------------------------------------------
@@ -328,21 +279,25 @@ class TestPromptToDashboardPipeline:
             draft=True,
         )
 
-        with patch(
-            "superset.mcp_service.ai.tool.prompt_to_dashboard."
-            "user_can_view_data_model_metadata",
-            return_value=True,
-        ), patch(
-            "superset.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
-            side_effect=_mock_plan,
-        ), patch(
-            "superset.mcp_service.ai.tool.create_chart_from_intent."
-            "create_chart_from_intent",
-            side_effect=_mock_chart,
-        ), patch(
-            "superset.mcp_service.ai.tool.compose_dashboard."
-            "compose_dashboard",
-            side_effect=_mock_compose,
+        with (
+            patch(
+                "superset.mcp_service.ai.tool.prompt_to_dashboard."
+                "user_can_view_data_model_metadata",
+                return_value=True,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
+                side_effect=_mock_plan,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.create_chart_from_intent."
+                "create_chart_from_intent",
+                side_effect=_mock_chart,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
+                side_effect=_mock_compose,
+            ),
         ):
             async with Client(mcp) as client:
                 result = await client.call_tool(
@@ -353,29 +308,25 @@ class TestPromptToDashboardPipeline:
         assert result is not None
         assert result.content is not None
         from superset.utils import json as sj
+
         data = sj.loads(result.content[0].text)
-        logger.info("prompt_to_dashboard keys: %s", list(data.keys()))
-        if data.get("error"):
-            logger.warning("Pipeline error: %s", data["error"])
-        for w in data.get("warnings", []):
-            logger.warning("Pipeline warning: %s", w)
+        assert data.get("error") is None
+        assert data.get("dashboard", {}).get("id") == 201
+        assert data.get("charts", [])[0].get("chart_id") == 101
 
 
 # -----------------------------------------------------------------------
-# Test 4: plan_dashboard column-awareness
+# Test 4: plan_dashboard sparse metadata
 # -----------------------------------------------------------------------
 
 
-class TestPlanDashboardColumnAwareness:
-    """Test whether plan_dashboard uses column metadata."""
+class TestPlanDashboardSparseMetadata:
+    """Test plan_dashboard behavior when dataset metadata is sparse."""
 
     @patch("superset.mcp_service.ai.tool.plan_dashboard._discover_datasets")
     @pytest.mark.asyncio
-    async def test_plan_does_not_fetch_column_metadata(
-        self, mock_discover
-    ) -> None:
-        """GAP TEST: plan_dashboard discovers datasets but does NOT
-        fetch their column metadata."""
+    async def test_plan_handles_sparse_dataset_metadata(self, mock_discover) -> None:
+        """plan_dashboard returns a bounded plan for sparse dataset metadata."""
         from superset.mcp_service.ai.schemas import DashboardPlanRequest
 
         mock_discover.return_value = [
@@ -400,26 +351,15 @@ class TestPlanDashboardColumnAwareness:
                 )
 
         from superset.utils import json as sj
+
         data = sj.loads(result.content[0].text)
         plan_data = data.get("plan", {})
         chart_intents = plan_data.get("chart_intents", [])
 
-        logger.info("Plan produced %d chart intents", len(chart_intents))
-        for ci in chart_intents:
-            m = ci.get("metrics", []) if isinstance(ci, dict) else ci.metrics
-            d = ci.get("dimensions", []) if isinstance(ci, dict) else ci.dimensions
-            p = ci.get("purpose", "") if isinstance(ci, dict) else ci.purpose
-            logger.info("  Intent: %s, metrics=%s, dimensions=%s", p, m, d)
-
-        has_empty_metrics = all(
-            not (ci.get("metrics", []) if isinstance(ci, dict) else ci.metrics)
-            for ci in chart_intents
-        )
-        if has_empty_metrics:
-            logger.warning(
-                "GAP: plan_dashboard produces chart intents with EMPTY "
-                "metrics/dimensions. It should fetch column metadata."
-            )
+        assert data.get("error") is None
+        assert plan_data.get("datasets")
+        assert isinstance(chart_intents, list)
+        assert len(chart_intents) <= 4
 
 
 # -----------------------------------------------------------------------
@@ -476,12 +416,8 @@ class TestHeuristicWithRevenueColumns:
             "Client",
             "Client Code",
         ]
-        result = _detect_by_dimension(
-            "revenue by client", category_cols
-        )
-        assert result == "Client", (
-            f"Expected 'Client', got '{result}'"
-        )
+        result = _detect_by_dimension("revenue by client", category_cols)
+        assert result == "Client", f"Expected 'Client', got '{result}'"
 
     def test_detect_by_dimension_maps_service_type(self) -> None:
         """'by service type' should resolve to 'Type of Service'."""
@@ -495,9 +431,7 @@ class TestHeuristicWithRevenueColumns:
             "Service Line Group",
             "Client",
         ]
-        result = _detect_by_dimension(
-            "revenue by service type", category_cols
-        )
+        result = _detect_by_dimension("revenue by service type", category_cols)
         assert result == "Type of Service", (
             f"Expected 'Type of Service', got '{result}'"
         )
@@ -526,15 +460,10 @@ class TestHeuristicWithRevenueColumns:
             max_charts=6,
         )
 
-        assert len(intents) >= 2, (
-            f"Expected at least 2 intents, got {len(intents)}"
-        )
+        assert len(intents) >= 2, f"Expected at least 2 intents, got {len(intents)}"
 
         # Find the "by client" intent
-        by_client = [
-            i for i in intents
-            if "Client" in (i.dimensions or [])
-        ]
+        by_client = [i for i in intents if "Client" in (i.dimensions or [])]
         assert by_client, (
             "No intent has 'Client' as a dimension. "
             f"Got dimensions: {[i.dimensions for i in intents]}"
@@ -584,9 +513,7 @@ class TestHeuristicWithRevenueColumns:
             max_charts=4,
         )
 
-        trend_intents = [
-            i for i in intents if "trend" in i.purpose.lower()
-        ]
+        trend_intents = [i for i in intents if "trend" in i.purpose.lower()]
         assert trend_intents, "No trend intent found"
         trend = trend_intents[0]
         # Wide-format: should use all 6 revenue columns as metrics
@@ -624,23 +551,25 @@ class TestUploadAndPlanTool:
             max_charts=4,
         )
 
-        with patch(
-            "superset.mcp_service.ai.tool.upload_and_plan."
-            "user_can_view_data_model_metadata",
-            return_value=True,
-        ), patch(
-            "superset.mcp_service.ai.tool.upload_and_plan."
-            "mcp_event_log_context",
-        ), patch(
-            "superset.mcp_service.dataset.tool.upload_file."
-            "upload_single_file",
-        ) as mock_upload, patch(
-            "superset.mcp_service.ai.tool.plan_dashboard."
-            "_discover_datasets",
-        ) as mock_discover, patch(
-            "superset.mcp_service.ai.tool.plan_dashboard."
-            "_plan_with_llm",
-        ) as mock_plan:
+        with (
+            patch(
+                "superset.mcp_service.ai.tool.upload_and_plan."
+                "user_can_view_data_model_metadata",
+                return_value=True,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.upload_and_plan.mcp_event_log_context",
+            ),
+            patch(
+                "superset.mcp_service.dataset.tool.upload_file.upload_single_file",
+            ) as mock_upload,
+            patch(
+                "superset.mcp_service.ai.tool.plan_dashboard._discover_datasets",
+            ) as mock_discover,
+            patch(
+                "superset.mcp_service.ai.tool.plan_dashboard._plan_with_llm",
+            ) as mock_plan,
+        ):
             # Mock upload success
             from superset.mcp_service.dataset.schemas import (
                 DatasetInfo,
@@ -698,9 +627,7 @@ class TestUploadAndPlanTool:
         assert data["dataset"].get("id") == 99
         assert "plan" in data
         plan_data = data.get("plan", {})
-        assert plan_data.get("chart_intents"), (
-            "Plan should have chart intents"
-        )
+        assert plan_data.get("chart_intents"), "Plan should have chart intents"
         logger.info("upload_and_plan response keys: %s", list(data.keys()))
         logger.info(
             "Plan: %d chart intents",

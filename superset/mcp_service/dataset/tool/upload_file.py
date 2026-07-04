@@ -309,7 +309,7 @@ def upload_single_file(  # noqa: C901
         if file_type == UploadFileType.EXCEL and excel_metadata:
             sheet_names: list[str] = []
             for item in excel_metadata.get("items", []):
-                name = item.get("name")
+                name = item.get("sheet_name")
                 if isinstance(name, str) and name:
                     sheet_names.append(name)
             if sheet_names and hasattr(result, "model_dump"):
