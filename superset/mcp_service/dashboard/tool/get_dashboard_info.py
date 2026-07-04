@@ -259,11 +259,11 @@ async def get_dashboard_info(
                 effective_select_columns.append("filter_state")
 
             return dump_model_with_select_columns(result, effective_select_columns)
-        else:
-            await ctx.warning(
-                "Dashboard retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
-            )
+
+        await ctx.warning(
+            "Dashboard retrieval failed: error_type=%s, error=%s"
+            % (result.error_type, result.error)
+        )
 
         return result
 
