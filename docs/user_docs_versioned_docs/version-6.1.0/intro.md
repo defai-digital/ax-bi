@@ -206,9 +206,9 @@ how to set up a development environment.
 
 ## Resources
 
-- [Superset "In the Wild"](https://superset.apache.org/inTheWild) - see who's using Superset, and [add your organization](https://github.com/apache/superset/edit/master/RESOURCES/INTHEWILD.yaml) to the list!
+- [Superset "In the Wild"](https://superset.apache.org/inTheWild) - see who's using Superset.
 - [Feature Flags](https://superset.apache.org/admin-docs/configuration/feature-flags) - the status of Superset's Feature Flags.
-- [Standard Roles](https://github.com/apache/superset/blob/master/RESOURCES/STANDARD_ROLES.md) - How RBAC permissions map to roles.
+- [Security Roles](https://superset.apache.org/admin-docs/security/) - How built-in RBAC roles work.
 - [Superset Wiki](https://github.com/apache/superset/wiki) - Tons of additional community resources: best practices, community content and other information.
 - [Superset SIPs](https://github.com/orgs/apache/projects/170) - The status of Superset's SIPs (Superset Improvement Proposals) for both consensus and implementation status.
 

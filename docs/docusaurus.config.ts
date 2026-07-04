@@ -930,10 +930,6 @@ const config: Config = {
               label: 'Community Calendar',
               to: '/community',
             },
-            {
-              label: 'In the Wild',
-              href: '/inTheWild',
-            },
           ],
         },
         {

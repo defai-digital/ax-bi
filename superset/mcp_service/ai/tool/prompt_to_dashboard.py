@@ -1,0 +1,462 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+"""MCP tool: prompt_to_dashboard
+
+Single-call orchestrator that chains the full prompt-to-dashboard pipeline:
+plan_dashboard -> create_chart_from_intent (per chart) -> compose_dashboard.
+
+This is the primary entry point for MCP clients that want to go from a
+natural language prompt to a complete dashboard in one call, without
+manually chaining 5+ tool invocations.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+import uuid
+from typing import Any
+
+from superset_core.mcp.decorators import tool, ToolAnnotations
+
+try:
+    from fastmcp import Context
+except ModuleNotFoundError:
+    Context = Any
+
+from superset.mcp_service.ai.schemas import (
+    ComposeDashboardRequest,
+    CreateChartFromIntentRequest,
+    DashboardPlanFull,
+    DashboardPlanRequest,
+    PromptToDashboardChartSummary,
+    PromptToDashboardRequest,
+    PromptToDashboardResponse,
+)
+from superset.mcp_service.privacy import (
+    requires_data_model_metadata_access,
+    user_can_view_data_model_metadata,
+)
+from superset.mcp_service.utils.logging_utils import mcp_event_log_context
+
+logger = logging.getLogger(__name__)
+
+
+def _record_artifact(
+    artifact_type: str,
+    artifact_id: int,
+    prompt: str,
+    plan_id: str | None,
+    tool_chain: list[str],
+    source_dataset_ids: list[int],
+    confidence: float,
+    validation_summary: str = "",
+) -> None:
+    """Record an AI-generated artifact for audit trail.
+
+    Silently degrades if the model table is unavailable so the main
+    flow never depends on the audit table existing.
+    """
+    try:
+        from flask import g
+
+        from superset import db
+        from superset.models.ai import AIGeneratedArtifact
+        from superset.utils import json as superset_json
+
+        record = AIGeneratedArtifact()
+        record.uuid = uuid.uuid4()
+        record.artifact_type = artifact_type
+        record.artifact_id = artifact_id
+        record.principal_user_id = getattr(g.user, "id", None)
+        record.source_prompt = prompt[:2000]
+        # Store plan_id and intent summary as JSON in normalized_intent
+        record.normalized_intent = superset_json.dumps(
+            {"prompt_excerpt": prompt[:200], "plan_id": plan_id or ""}
+        )
+        record.llm_provider = ""
+        record.llm_model = ""
+        record.tool_chain = superset_json.dumps(tool_chain)
+        record.source_asset_refs = superset_json.dumps(source_dataset_ids)
+        record.validation_summary = validation_summary
+        record.confidence_score = confidence
+
+        db.session.add(record)
+        db.session.commit()  # pylint: disable=consider-using-transaction
+    except Exception:
+        logger.debug("AI artifact audit recording unavailable", exc_info=True)
+
+
+@tool(
+    tags=["mutate", "ai"],
+    class_permission_name="Dashboard",
+    annotations=ToolAnnotations(
+        title="Prompt to dashboard",
+        readOnlyHint=False,
+        destructiveHint=False,
+    ),
+)
+@requires_data_model_metadata_access
+async def prompt_to_dashboard(  # noqa: C901
+    request: PromptToDashboardRequest, ctx: Context
+) -> dict[str, Any]:
+    """Create a complete dashboard from a natural language prompt in one call.
+
+    This is the single-call orchestrator for the prompt-to-dashboard pipeline.
+    It chains three steps internally:
+    1. plan_dashboard - discover datasets and build a chart plan
+    2. create_chart_from_intent - generate each chart from the plan
+    3. compose_dashboard - assemble charts into a dashboard with layout
+
+    IMPORTANT FOR LLM CLIENTS:
+    - This is the simplest way to create a dashboard from a prompt
+    - Dashboard is created as draft by default (draft=True)
+    - Charts are saved permanently by default (save_charts=True)
+    - Returns the dashboard URL, plan, chart summaries, and lineage
+
+    Example usage:
+    ```json
+    {
+        "prompt": "Create an executive sales dashboard with revenue trends",
+        "max_charts": 6,
+        "draft": true
+    }
+    ```
+
+    Pin to specific datasets:
+    ```json
+    {
+        "prompt": "Show customer retention and churn analysis",
+        "dataset_ids": [42, 55],
+        "max_charts": 4
+    }
+    ```
+    """
+    start_time = time.time()
+    await ctx.info(
+        "Prompt-to-dashboard: prompt='%s', datasets=%s, max_charts=%d"
+        % (request.prompt[:80], request.dataset_ids, request.max_charts)
+    )
+
+    if not user_can_view_data_model_metadata():
+        await ctx.warning("Prompt-to-dashboard blocked by privacy controls")
+        return PromptToDashboardResponse(
+            error="You don't have permission to access dataset metadata.",
+        ).model_dump()
+
+    all_warnings: list[str] = []
+    chart_summaries: list[PromptToDashboardChartSummary] = []
+    chart_ids: list[int] = []
+    tool_chain = ["prompt_to_dashboard"]
+
+    # ------------------------------------------------------------------
+    # Step 1: Plan the dashboard
+    # ------------------------------------------------------------------
+    await ctx.report_progress(1, 4, "Planning dashboard")
+    with mcp_event_log_context(action="mcp.prompt_to_dashboard.plan"):
+        from superset.mcp_service.ai.tool.plan_dashboard import plan_dashboard
+
+        plan_request = DashboardPlanRequest(
+            prompt=request.prompt,
+            dataset_candidates=request.dataset_ids,
+            constraints={"max_charts": request.max_charts},
+        )
+        plan_result = await plan_dashboard(plan_request, ctx)
+
+    if isinstance(plan_result, str):
+        from superset.utils import json as superset_json
+
+        plan_result = superset_json.loads(plan_result)
+
+    plan_data = plan_result.get("plan", {})
+    plan_warnings = plan_result.get("warnings", [])
+    all_warnings.extend(plan_warnings)
+
+    if not plan_data:
+        duration = int((time.time() - start_time) * 1000)
+        return PromptToDashboardResponse(
+            error="Dashboard planning failed. No plan produced.",
+            warnings=all_warnings,
+            total_duration_ms=duration,
+        ).model_dump()
+
+    # Reconstruct plan into DashboardPlanFull for compose_dashboard
+    try:
+        plan_full = DashboardPlanFull.model_validate(plan_data)
+    except Exception:
+        logger.warning("Plan validation failed; building minimal plan", exc_info=True)
+        plan_full = DashboardPlanFull(
+            plan_id=plan_data.get("plan_id", str(uuid.uuid4())),
+            title=plan_data.get("title", "Dashboard"),
+            description=request.prompt[:200],
+            datasets=plan_data.get("datasets", []),
+            chart_intents=plan_data.get("chart_intents", []),
+            global_filters=plan_data.get("global_filters", []),
+            assumptions=plan_data.get("assumptions", []),
+            clarifying_questions=plan_data.get("clarifying_questions", []),
+            confidence=plan_data.get("confidence", 0.0),
+        )
+
+    tool_chain.append("plan_dashboard")
+    await ctx.info(
+        "Plan ready: title='%s', charts=%d, confidence=%.2f"
+        % (plan_full.title, len(plan_full.chart_intents), plan_full.confidence)
+    )
+
+    # ------------------------------------------------------------------
+    # Step 2: Generate each chart from its intent
+    # ------------------------------------------------------------------
+    await ctx.report_progress(2, 4, "Generating charts from intents")
+    source_dataset_ids: set[int] = set()
+
+    for idx, intent in enumerate(plan_full.chart_intents):
+        chart_purpose = intent.purpose or f"Chart {idx + 1}"
+        await ctx.report_progress(
+            2,
+            4,
+            f"Generating chart {idx + 1}/{len(plan_full.chart_intents)}: "
+            f"{chart_purpose}",
+        )
+
+        # Build prompt from the chart intent
+        intent_prompt = _build_intent_prompt(intent, request.prompt)
+        dataset_id = intent.dataset_id or None
+
+        if dataset_id is not None:
+            source_dataset_ids.add(
+                int(dataset_id) if isinstance(dataset_id, int) else 0
+            )
+
+        try:
+            from superset.mcp_service.ai.tool.create_chart_from_intent import (
+                create_chart_from_intent,
+            )
+
+            chart_req = CreateChartFromIntentRequest(
+                prompt=intent_prompt,
+                dataset_id=dataset_id,
+                save_chart=request.save_charts,
+            )
+            chart_result = await create_chart_from_intent(chart_req, ctx)
+
+            if isinstance(chart_result, str):
+                from superset.utils import json as superset_json
+
+                chart_result = superset_json.loads(chart_result)
+
+            chart_data = chart_result.get("chart")
+            chart_id = chart_data.get("id") if chart_data else None
+            chart_name = chart_data.get("slice_name", "") if chart_data else ""
+            chart_type = chart_result.get("chart_type_selected", "")
+            chart_confidence = chart_result.get("confidence", 0.0)
+            chart_preview = chart_result.get("preview_url")
+            chart_warnings = chart_result.get("warnings", [])
+
+            chart_summaries.append(
+                PromptToDashboardChartSummary(
+                    chart_id=chart_id,
+                    chart_name=chart_name,
+                    chart_type=chart_type,
+                    purpose=chart_purpose,
+                    confidence=chart_confidence,
+                    preview_url=chart_preview,
+                    warnings=chart_warnings,
+                )
+            )
+
+            if chart_id:
+                chart_ids.append(chart_id)
+                tool_chain.append(f"create_chart_from_intent[{chart_id}]")
+            else:
+                all_warnings.append(
+                    f"Chart '{chart_purpose}' could not be generated: "
+                    + "; ".join(chart_warnings[:2])
+                )
+
+        except Exception as e:
+            logger.warning(
+                "Chart generation failed for intent '%s': %s",
+                chart_purpose,
+                e,
+                exc_info=True,
+            )
+            all_warnings.append(f"Chart '{chart_purpose}' failed: {e}")
+            chart_summaries.append(
+                PromptToDashboardChartSummary(
+                    chart_name="",
+                    chart_type="",
+                    purpose=chart_purpose,
+                    confidence=0.0,
+                    warnings=[f"Generation failed: {e}"],
+                )
+            )
+
+    if not chart_ids:
+        duration = int((time.time() - start_time) * 1000)
+        return PromptToDashboardResponse(
+            plan=_safe_plan_for_response(plan_full),
+            charts=chart_summaries,
+            error="No charts were successfully generated. "
+            "Try rephrasing the prompt or specifying dataset_ids.",
+            warnings=all_warnings,
+            total_duration_ms=duration,
+        ).model_dump()
+
+    # ------------------------------------------------------------------
+    # Step 3: Compose the dashboard
+    # ------------------------------------------------------------------
+    await ctx.report_progress(3, 4, "Composing dashboard")
+    tool_chain.append("compose_dashboard")
+
+    with mcp_event_log_context(action="mcp.prompt_to_dashboard.compose"):
+        from superset.mcp_service.ai.tool.compose_dashboard import compose_dashboard
+
+        compose_req = ComposeDashboardRequest(
+            plan=plan_full,
+            chart_ids=chart_ids,
+            draft=request.draft,
+        )
+        compose_result = await compose_dashboard(compose_req, ctx)
+
+    if isinstance(compose_result, str):
+        from superset.utils import json as superset_json
+
+        compose_result = superset_json.loads(compose_result)
+
+    compose_error = compose_result.get("error")
+    dashboard_data = compose_result.get("dashboard")
+    dashboard_url = compose_result.get("dashboard_url")
+    layout_summary = compose_result.get("layout_summary", "")
+    lineage = compose_result.get("lineage")
+
+    if compose_error:
+        duration = int((time.time() - start_time) * 1000)
+        return PromptToDashboardResponse(
+            plan=_safe_plan_for_response(plan_full),
+            charts=chart_summaries,
+            error=f"Dashboard composition failed: {compose_error}",
+            warnings=all_warnings,
+            total_duration_ms=duration,
+        ).model_dump()
+
+    # ------------------------------------------------------------------
+    # Step 4: Record audit trail and build response
+    # ------------------------------------------------------------------
+    await ctx.report_progress(4, 4, "Recording audit trail")
+
+    if dashboard_data and dashboard_data.get("id"):
+        _record_artifact(
+            artifact_type="dashboard",
+            artifact_id=dashboard_data["id"],
+            prompt=request.prompt,
+            plan_id=plan_full.plan_id,
+            tool_chain=tool_chain,
+            source_dataset_ids=list(source_dataset_ids),
+            confidence=plan_full.confidence,
+            validation_summary=f"{len(chart_ids)} charts generated",
+        )
+
+    duration = int((time.time() - start_time) * 1000)
+
+    await ctx.info(
+        "Prompt-to-dashboard complete: dashboard_id=%s, charts=%d, duration=%dms"
+        % (
+            dashboard_data.get("id") if dashboard_data else None,
+            len(chart_ids),
+            duration,
+        )
+    )
+
+    return PromptToDashboardResponse(
+        dashboard=dashboard_data,
+        dashboard_url=dashboard_url,
+        plan=_safe_plan_for_response(plan_full),
+        charts=chart_summaries,
+        layout_summary=layout_summary,
+        lineage=lineage,
+        warnings=all_warnings,
+        error=None,
+        total_duration_ms=duration,
+    ).model_dump()
+
+
+def _build_intent_prompt(  # noqa: C901
+    intent: Any, dashboard_prompt: str
+) -> str:
+    """Build a create_chart_from_intent prompt from a chart intent.
+
+    Combines the intent's purpose, metrics, dimensions, filters, and
+    time range into a natural language prompt that the intent mapper
+    can resolve.
+    """
+    parts: list[str] = []
+
+    if purpose := getattr(intent, "purpose", "") or "":
+        parts.append(purpose)
+
+    if metrics := getattr(intent, "metrics", []) or []:
+        parts.append(f"using metrics: {', '.join(str(m) for m in metrics)}")
+
+    if dimensions := getattr(intent, "dimensions", []) or []:
+        parts.append(f"broken down by {', '.join(str(d) for d in dimensions)}")
+
+    if time_range := getattr(intent, "time_range", None):
+        parts.append(f"for {time_range}")
+
+    if filters := getattr(intent, "filters", []) or []:
+        filter_parts = []
+        for f in filters:
+            if isinstance(f, dict):
+                col = f.get("column", "")
+                val = f.get("value", "")
+                op = f.get("operator", "eq")
+                filter_parts.append(f"{col} {op} {val}")
+        if filter_parts:
+            parts.append(f"filtered by {', '.join(filter_parts)}")
+
+    if chart_type := getattr(intent, "chart_type", ""):
+        parts.append(f"as a {chart_type} chart")
+
+    if parts:
+        return ". ".join(parts)
+
+    # Fallback: use the dashboard prompt
+    return dashboard_prompt
+
+
+def _safe_plan_for_response(plan_full: DashboardPlanFull) -> Any:
+    """Build a DashboardPlan suitable for the response (without forward refs)."""
+    from superset.mcp_service.ai.schemas import DashboardPlan, DashboardPlanSection
+
+    return DashboardPlan(
+        plan_id=plan_full.plan_id,
+        title=plan_full.title,
+        description=plan_full.description,
+        datasets=plan_full.datasets,
+        chart_intents=plan_full.chart_intents,
+        global_filters=plan_full.global_filters,
+        sections=[
+            DashboardPlanSection(
+                title="Charts",
+                chart_intents=[ci.model_dump() for ci in plan_full.chart_intents],
+            )
+        ],
+        layout_hints=plan_full.layout_hints,
+        assumptions=plan_full.assumptions,
+        clarifying_questions=plan_full.clarifying_questions,
+        confidence=plan_full.confidence,
+    )
