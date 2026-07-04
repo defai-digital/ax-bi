@@ -541,7 +541,7 @@ def test_read_toml_with_invalid_toml(isolated_filesystem):
     invalid_toml_file = isolated_filesystem / "invalid.toml"
     invalid_toml_file.write_text("[ invalid toml content")
 
-    with pytest.raises(Exception):  # tomli raises various exceptions for invalid TOML
+    with pytest.raises(utils.tomllib.TOMLDecodeError):
         read_toml(invalid_toml_file)
 
 
@@ -646,7 +646,7 @@ def test_read_toml_with_various_invalid_content(isolated_filesystem, invalid_con
     toml_file = isolated_filesystem / "invalid.toml"
     toml_file.write_text(invalid_content)
 
-    with pytest.raises(Exception):  # Various TOML parsing exceptions
+    with pytest.raises(utils.tomllib.TOMLDecodeError):
         read_toml(toml_file)
 
 
