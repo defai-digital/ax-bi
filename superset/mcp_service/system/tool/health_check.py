@@ -72,7 +72,7 @@ def _build_health_response(service_name: str) -> HealthCheckResponse:
     except Exception as e:
         logger.error("Health check failed: %s", e)
         # Return error status but don't raise to keep tool working
-        response = HealthCheckResponse(
+        return HealthCheckResponse(
             status="error",
             timestamp=mcp_error_timestamp().isoformat(),
             service=service_name,
@@ -80,7 +80,6 @@ def _build_health_response(service_name: str) -> HealthCheckResponse:
             python_version=platform.python_version(),
             platform=platform.system(),
         )
-        return response
 
 
 def _ax_services_health_candidate() -> AxServicesResponse:
