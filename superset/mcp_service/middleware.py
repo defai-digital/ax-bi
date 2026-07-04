@@ -924,7 +924,7 @@ class RedisRateLimiter:
         """Check if a request should be limited using a fixed window counter."""
         current_time = time.time()
         bucket = int(current_time // window)
-        full_key = "%s%s:%d" % (self._prefix, key, bucket)
+        full_key = f"{self._prefix}{key}:{bucket}"
         reset_time = (bucket + 1) * window
 
         try:
@@ -1149,10 +1149,9 @@ class RateLimitMiddleware(Middleware):
             )
 
             raise ToolError(
-                "Rate limit exceeded for %s. "
-                "Limit: %s requests per minute. "
-                "Try again in %s seconds."
-                % (tool_name, limit, rate_info["reset_time"] - int(time.time()))
+                f"Rate limit exceeded for {tool_name}. "
+                f"Limit: {limit} requests per minute. "
+                f"Try again in {rate_info['reset_time'] - int(time.time())} seconds."
             )
 
         # Log rate limit info for monitoring
