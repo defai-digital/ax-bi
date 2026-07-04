@@ -81,29 +81,35 @@ def get_executor(  # noqa: C901
             raise InvalidExecutorError()
         if executor == ExecutorType.CURRENT_USER and current_user:
             return executor, current_user
-        if executor == ExecutorType.CREATOR_OWNER:
-            if (user := model.created_by) and (owner := owner_dict.get(user.id)):
-                return executor, owner.username
-        if executor == ExecutorType.CREATOR:
-            if user := model.created_by:
-                return executor, user.username
-        if executor == ExecutorType.MODIFIER_OWNER:
-            if (user := model.changed_by) and (owner := owner_dict.get(user.id)):
-                return executor, owner.username
-        if executor == ExecutorType.MODIFIER:
-            if user := model.changed_by:
-                return executor, user.username
+        if (
+            executor == ExecutorType.CREATOR_OWNER
+            and (user := model.created_by)
+            and (owner := owner_dict.get(user.id))
+        ):
+            return executor, owner.username
+        if executor == ExecutorType.CREATOR and (user := model.created_by):
+            return executor, user.username
+        if (
+            executor == ExecutorType.MODIFIER_OWNER
+            and (user := model.changed_by)
+            and (owner := owner_dict.get(user.id))
+        ):
+            return executor, owner.username
+        if executor == ExecutorType.MODIFIER and (user := model.changed_by):
+            return executor, user.username
         if executor == ExecutorType.OWNER:
             owners = model.owners
             if len(owners) == 1:
                 return executor, owners[0].username
             if len(owners) > 1:
-                if modifier := model.changed_by:
-                    if modifier and (user := owner_dict.get(modifier.id)):
-                        return executor, user.username
-                if creator := model.created_by:
-                    if creator and (user := owner_dict.get(creator.id)):
-                        return executor, user.username
+                if (modifier := model.changed_by) and (
+                    user := owner_dict.get(modifier.id)
+                ):
+                    return executor, user.username
+                if (creator := model.created_by) and (
+                    user := owner_dict.get(creator.id)
+                ):
+                    return executor, user.username
                 return executor, owners[0].username
 
     raise ExecutorNotFoundError()
