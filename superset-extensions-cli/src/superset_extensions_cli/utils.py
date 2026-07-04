@@ -377,9 +377,7 @@ def _normalize_for_identifiers(name: str) -> str:
     normalized = re.sub(r"[^a-z0-9\s]", "", normalized)
 
     # Normalize whitespace (collapse multiple spaces, strip)
-    normalized = " ".join(normalized.split())
-
-    return normalized
+    return " ".join(normalized.split())
 
 
 def _normalized_to_kebab(normalized: str) -> str:
