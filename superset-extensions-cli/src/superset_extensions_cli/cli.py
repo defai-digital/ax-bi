@@ -864,40 +864,31 @@ def publish_staged_output_directory(
                 f"Refusing to back up {label}: backup root path is unsafe."
             )
         if get_directory_path_identity(target_path) != target_identity:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup directory",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup directory",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: path changed.")
         try:
             target_path.replace(backup_path)
         except OSError as ex:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup directory",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup directory",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: {ex}") from ex
         backup_identity = get_directory_path_identity(backup_path)
         if backup_identity != target_identity:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup directory",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup directory",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
             raise click.ClickException(f"Failed to back up {label}: path changed.")
 
     target_replaced = False
@@ -933,15 +924,12 @@ def publish_staged_output_directory(
         publish_error = ex
     else:
         if backup_root is not None:
-            try:
-                remove_output_directory(
-                    backup_root,
-                    f"temporary {label} backup directory",
-                    backup_root_identity,
-                    expected_parent_identity=target_parent_identity,
-                )
-            except click.ClickException:
-                pass
+            remove_output_directory_best_effort(
+                backup_root,
+                f"temporary {label} backup directory",
+                backup_root_identity,
+                expected_parent_identity=target_parent_identity,
+            )
         return
 
     if target_replaced:
@@ -988,15 +976,12 @@ def publish_staged_output_directory(
                 f"{publish_error.message}; also failed to restore previous "
                 f"{label}: {restore_ex}"
             ) from restore_ex
-        try:
-            remove_output_directory(
-                backup_root,
-                f"temporary {label} backup directory",
-                backup_root_identity,
-                expected_parent_identity=target_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            f"temporary {label} backup directory",
+            backup_root_identity,
+            expected_parent_identity=target_parent_identity,
+        )
 
     raise publish_error
 
