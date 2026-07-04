@@ -51,7 +51,7 @@ def _quote_sql_literal(value: Any) -> str | None:
     """
     if isinstance(value, bool):
         return "TRUE" if value else "FALSE"
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return str(value)
     if isinstance(value, str):
         return "'" + value.replace("'", "''") + "'"

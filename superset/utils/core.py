@@ -441,7 +441,7 @@ def cast_to_num(value: float | int | str | None) -> float | int | None:
     """
     if value is None:
         return None
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value
     if value.isdigit():
         return int(value)
@@ -476,7 +476,7 @@ def cast_to_boolean(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value != 0
     if isinstance(value, str):
         return value.strip().lower() == "true"
