@@ -159,14 +159,13 @@ async def finalize_list_response(
     count = len(getattr(result, items_attr, []))
     total_pages = getattr(result, "total_pages", None)
     await ctx.info(
-        "%s listed successfully: count=%s, total_pages=%s"
-        % (resource_name, count, total_pages)
+        f"{resource_name} listed successfully: count={count}, total_pages={total_pages}"
     )
 
     columns_to_filter = result.columns_requested
     await ctx.debug(
-        "Applying field filtering via serialization context: columns=%s"
-        % (columns_to_filter,)
+        "Applying field filtering via serialization context: "
+        f"columns={columns_to_filter}"
     )
 
     with mcp_list_serialization_log_context(resource_name):
