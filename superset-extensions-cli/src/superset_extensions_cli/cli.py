@@ -24,6 +24,7 @@ import tempfile
 import time
 import zipfile
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any
@@ -312,41 +313,32 @@ def start_dist_replacement(
             "Refusing to back up dist directory: backup root parent is unsafe."
         )
     if get_directory_path_identity(dist_dir) != dist_identity:
-        try:
-            remove_output_directory(
-                backup_root,
-                "temporary dist backup directory",
-                backup_root_identity,
-                expected_parent_identity=backup_root_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            "temporary dist backup directory",
+            backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
+        )
         raise click.ClickException("Failed to back up dist directory: path changed.")
     try:
         dist_dir.replace(backup_path)
     except OSError as ex:
-        try:
-            remove_output_directory(
-                backup_root,
-                "temporary dist backup directory",
-                backup_root_identity,
-                expected_parent_identity=backup_root_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            "temporary dist backup directory",
+            backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
+        )
         raise click.ClickException(f"Failed to back up dist directory: {ex}") from ex
 
     backup_identity = get_directory_path_identity(backup_path)
     if backup_identity != dist_identity:
-        try:
-            remove_output_directory(
-                backup_root,
-                "temporary dist backup directory",
-                backup_root_identity,
-                expected_parent_identity=backup_root_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            "temporary dist backup directory",
+            backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
+        )
         raise click.ClickException("Failed to back up dist directory: path changed.")
 
     try:
@@ -363,15 +355,12 @@ def start_dist_replacement(
                 f"{ex.message}; also failed to restore previous dist directory: "
                 f"{restore_ex}"
             ) from ex
-        try:
-            remove_output_directory(
-                backup_root,
-                "temporary dist backup directory",
-                backup_root_identity,
-                expected_parent_identity=backup_root_parent_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            backup_root,
+            "temporary dist backup directory",
+            backup_root_identity,
+            expected_parent_identity=backup_root_parent_identity,
+        )
         raise
     replacement_identity = get_directory_path_identity(dist_dir)
     if replacement_identity is None:
@@ -423,15 +412,12 @@ def rollback_dist_replacement(
         raise click.ClickException(
             f"Failed to restore previous dist directory: {ex}"
         ) from ex
-    try:
-        remove_output_directory(
-            backup_root,
-            "temporary dist backup directory",
-            backup_root_identity,
-            expected_parent_identity=backup_root_parent_identity,
-        )
-    except click.ClickException:
-        pass
+    remove_output_directory_best_effort(
+        backup_root,
+        "temporary dist backup directory",
+        backup_root_identity,
+        expected_parent_identity=backup_root_parent_identity,
+    )
 
 
 def cleanup_dist_replacement_backup(
@@ -442,15 +428,12 @@ def cleanup_dist_replacement_backup(
     """Remove a full-build dist backup after a successful publish."""
     if backup_root is None:
         return
-    try:
-        remove_output_directory(
-            backup_root,
-            "temporary dist backup directory",
-            backup_root_identity,
-            expected_parent_identity=backup_root_parent_identity,
-        )
-    except click.ClickException:
-        pass
+    remove_output_directory_best_effort(
+        backup_root,
+        "temporary dist backup directory",
+        backup_root_identity,
+        expected_parent_identity=backup_root_parent_identity,
+    )
 
 
 def ensure_output_directory(path: Path, label: str) -> None:
@@ -744,6 +727,25 @@ def remove_output_directory(
         raise
     except OSError as ex:
         raise click.ClickException(f"Failed to clean {label}: {ex}") from ex
+
+
+def remove_output_directory_best_effort(
+    path: Path,
+    label: str,
+    expected_identity: PathIdentity | None = None,
+    *,
+    allow_content_changes: bool = True,
+    expected_parent_identity: NodeIdentity | None = None,
+) -> None:
+    """Best-effort cleanup for temporary output directories."""
+    with suppress(click.ClickException):
+        remove_output_directory(
+            path,
+            label,
+            expected_identity,
+            allow_content_changes=allow_content_changes,
+            expected_parent_identity=expected_parent_identity,
+        )
 
 
 def remove_output_file(
