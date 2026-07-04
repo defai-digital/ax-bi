@@ -113,10 +113,10 @@ class CSVReader(BaseDataReader):
                 # Pandas has built-in pyarrow, safer to use c engine
                 logger.info("Pandas has built-in pyarrow support, using 'c' engine")
                 return "c"
-            else:
-                # External pyarrow available, can safely use it
-                logger.info("Using 'pyarrow' engine for CSV parsing")
-                return "pyarrow"
+
+            # External pyarrow available, can safely use it
+            logger.info("Using 'pyarrow' engine for CSV parsing")
+            return "pyarrow"
 
         except ImportError:
             # PyArrow import failed, fall back to c engine
@@ -288,10 +288,8 @@ class CSVReader(BaseDataReader):
                 remaining = total_errors - MAX_DISPLAYED_ERRORS
                 additional_msg = f"\n  ... and {remaining} more error(s)"
                 return f"{base_msg}\n{detailed_errors}{additional_msg}"
-            else:
-                return f"{base_msg}\n{detailed_errors}"
-        else:
-            return f"Cannot convert column '{column}' to {dtype}. {str(original_error)}"
+            return f"{base_msg}\n{detailed_errors}"
+        return f"Cannot convert column '{column}' to {dtype}. {str(original_error)}"
 
     @staticmethod
     def _cast_single_column(
