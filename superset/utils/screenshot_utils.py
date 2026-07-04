@@ -85,7 +85,7 @@ def combine_screenshot_tiles(screenshot_tiles: list[bytes]) -> bytes:
 
 
 def take_tiled_screenshot(
-    page: "Page",
+    page: Page,
     element_name: str,
     tile_height: int,
     load_wait: int = 60,

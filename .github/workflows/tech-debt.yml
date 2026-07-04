@@ -39,11 +39,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version-file: "./superset-frontend/.nvmrc"
+          node-version-file: "./ax-bi-frontend/.nvmrc"
 
       - name: Install Dependencies
         run: npm ci
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend
 
       - name: Run Script
         env:
@@ -51,4 +51,4 @@ jobs:
           SERVICE_ACCOUNT_KEY: ${{ secrets.GSHEET_KEY }}
         run: npm run lint-stats
         continue-on-error: true
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend

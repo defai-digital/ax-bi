@@ -35,7 +35,7 @@ pip-upgrade() {
 
 # prepare (lint and build) frontend code
 npm-install() {
-  cd "$GITHUB_WORKSPACE/superset-frontend"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend"
 
   # cache-restore npm
   say "::group::Install npm packages"
@@ -48,7 +48,7 @@ npm-install() {
 }
 
 build-assets() {
-  cd "$GITHUB_WORKSPACE/superset-frontend"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend"
 
   say "::group::Build static assets"
   npm run build
@@ -65,7 +65,7 @@ build-embedded-sdk() {
 }
 
 build-instrumented-assets() {
-  cd "$GITHUB_WORKSPACE/superset-frontend"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend"
 
   say "::group::Build static assets with JS instrumented for test coverage"
   cache-restore instrumented-assets
@@ -115,10 +115,10 @@ testdata() {
   # must specify PYTHONPATH to make `tests.superset_test_config` importable
   export PYTHONPATH="$GITHUB_WORKSPACE"
   uv pip install --system -e .
-  superset db upgrade
-  superset load_test_users
-  superset load_examples --load-test-data
-  superset init
+  ax-bi db upgrade
+  ax-bi load_test_users
+  ax-bi load_examples --load-test-data
+  ax-bi init
   say "::endgroup::"
 }
 
@@ -128,13 +128,13 @@ playwright_testdata() {
   # must specify PYTHONPATH to make `tests.superset_test_config` importable
   export PYTHONPATH="$GITHUB_WORKSPACE"
   uv pip install --system -e .
-  superset db upgrade
-  superset load_test_users
-  superset load_examples
-  superset init
+  ax-bi db upgrade
+  ax-bi load_test_users
+  ax-bi load_examples
+  ax-bi init
   # Enable DML on the examples database so Playwright tests can create/drop
   # temporary tables via SQL Lab without depending on external data sources.
-  superset shell <<'PYEOF'
+  ax-bi shell <<'PYEOF'
 import sys
 from superset.extensions import db
 from superset.models.core import Database
@@ -164,7 +164,7 @@ celery-worker() {
 }
 
 cypress-install() {
-  cd "$GITHUB_WORKSPACE/superset-frontend/cypress-base"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend/cypress-base"
 
   cache-restore cypress
 
@@ -178,7 +178,7 @@ cypress-install() {
 cypress-run-all() {
   local USE_DASHBOARD=$1
   local APP_ROOT=$2
-  cd "$GITHUB_WORKSPACE/superset-frontend/cypress-base"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend/cypress-base"
 
   # Start the Superset backend via gunicorn (not `flask run`). The Flask
   # development server is single-threaded and has no crash-recovery, so
@@ -261,7 +261,7 @@ cypress-run-all() {
 }
 
 playwright-install() {
-  cd "$GITHUB_WORKSPACE/superset-frontend"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend"
 
   say "::group::Install Playwright browsers"
   npx playwright install --with-deps chromium
@@ -339,7 +339,7 @@ playwright-run() {
   fi
 
   # Change to frontend directory for Playwright execution
-  cd "$GITHUB_WORKSPACE/superset-frontend"
+  cd "$GITHUB_WORKSPACE/ax-bi-frontend"
 
   say "::group::Run Playwright tests"
   echo "Running Playwright with baseURL: ${PLAYWRIGHT_BASE_URL}"

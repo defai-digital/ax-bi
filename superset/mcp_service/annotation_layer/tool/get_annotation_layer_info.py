@@ -56,7 +56,7 @@ async def get_annotation_layer_info(
     {"id": 1}
     ```
     """
-    await ctx.info("Retrieving annotation layer: id=%s" % (request.id,))
+    await ctx.info(f"Retrieving annotation layer: id={request.id}")
 
     try:
         from superset.daos.annotation_layer import AnnotationLayerDAO
@@ -74,20 +74,20 @@ async def get_annotation_layer_info(
 
         if isinstance(result, AnnotationLayerInfo):
             await ctx.info(
-                "Annotation layer retrieved: id=%s, name=%s" % (result.id, result.name)
+                f"Annotation layer retrieved: id={result.id}, name={result.name}"
             )
         else:
             await ctx.warning(
-                "Annotation layer not found: id=%s, error_type=%s"
-                % (request.id, result.error_type)
+                f"Annotation layer not found: id={request.id}, "
+                f"error_type={result.error_type}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Annotation layer lookup failed: id=%s, error=%s, error_type=%s"
-            % (request.id, str(e), type(e).__name__)
+            f"Annotation layer lookup failed: id={request.id}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return AnnotationLayerError.create(
             error=f"Failed to get annotation layer info: {str(e)}",

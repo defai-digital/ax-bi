@@ -52,7 +52,7 @@ jobs:
         if: env.HAS_TAGS
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version-file: "./superset-frontend/.nvmrc"
+          node-version-file: "./ax-bi-frontend/.nvmrc"
 
       - name: Cache npm
         if: env.HAS_TAGS
@@ -80,15 +80,15 @@ jobs:
 
       - name: Install dependencies
         if: env.HAS_TAGS
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend
         run: npm ci
       - name: Run unit tests
         if: env.HAS_TAGS
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend
         run: npm run test -- plugins packages
       - name: Build packages
         if: env.HAS_TAGS
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend
         run: npm run plugins:build
 
       - name: Configure npm and git
@@ -106,7 +106,7 @@ jobs:
 
       - name: Bump version and publish package(s)
         if: env.HAS_TAGS
-        working-directory: ./superset-frontend
+        working-directory: ./ax-bi-frontend
         run: |
           git tag -d `git tag | grep -E '^trigger-'`
           npm run plugins:release-from-tag

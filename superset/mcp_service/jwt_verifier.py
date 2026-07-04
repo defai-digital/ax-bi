@@ -609,7 +609,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             # rejected here with a precise reason rather than escaping as a
             # generic failure (or, for the overflow, an uncaught 500).
             if (
-                not isinstance(exp, (int, float))
+                not isinstance(exp, int | float)
                 or isinstance(exp, bool)
                 or not math.isfinite(exp)
             ):
@@ -636,7 +636,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             nbf = claims.get("nbf")
             if nbf is not None:
                 if (
-                    not isinstance(nbf, (int, float))
+                    not isinstance(nbf, int | float)
                     or isinstance(nbf, bool)
                     or not math.isfinite(nbf)
                 ):

@@ -16,21 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  listColumnSchema,
+  listCountSchema,
+  listFilterSchema,
+  listOrderColumnSchema,
+  listPageSchema,
+  listPageSizeSchema,
+  listSearchSchema,
+  listTotalPagesSchema,
+  warningSchema,
+} from './listColumn';
+
 export const CHART_LIST_CONTRACT_VERSION = 'chart-list.v1';
 
-export type ChartFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type ChartFilterValue = SharedListFilterValue;
 
-export interface ChartListFilter {
-  col: string;
-  opr: string;
-  value: ChartFilterValue;
-}
+export type ChartListFilter = SharedListFilter;
 
 export interface ChartListRequest {
   contractVersion: typeof CHART_LIST_CONTRACT_VERSION;
@@ -73,32 +77,12 @@ export interface ChartListResponse {
   warnings: string[];
 }
 
-const chartFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
-
 const chartListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     sliceName: { type: 'string' },
     vizType: { type: 'string' },
     description: { type: 'string' },
@@ -129,17 +113,14 @@ export const chartListRequestSchema = {
     contractVersion: { const: CHART_LIST_CONTRACT_VERSION },
     filters: {
       type: 'array',
-      items: chartFilterSchema,
+      items: listFilterSchema,
     },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
+    selectColumns: listColumnSchema,
+    search: listSearchSchema,
+    orderColumn: listOrderColumnSchema,
     orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
     createdByMe: { type: 'boolean' },
     ownedByMe: { type: 'boolean' },
   },
@@ -169,25 +150,16 @@ export const chartListResponseSchema = {
       type: 'array',
       items: chartListItemSchema,
     },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
+    count: listCountSchema,
+    totalCount: listCountSchema,
+    page: listPageSchema,
+    pageSize: listPageSizeSchema,
+    totalPages: listTotalPagesSchema,
     hasNext: { type: 'boolean' },
     hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    columnsRequested: listColumnSchema,
+    columnsLoaded: listColumnSchema,
+    warnings: warningSchema,
   },
 } as const;
 

@@ -60,7 +60,7 @@ MCP_AUTH_ENABLED = True
 
 # JWT validation settings
 MCP_JWT_ISSUER = "https://auth.yourcompany.com"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWT_ALGORITHM = "RS256"  # or "HS256" for shared secrets
 
 # Option A: Use JWKS endpoint (recommended for RS256)
@@ -87,14 +87,14 @@ MCP_DEV_USERNAME = None
 **Auth0**:
 ```python
 MCP_JWT_ISSUER = "https://your-tenant.auth0.com/"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWKS_URI = "https://your-tenant.auth0.com/.well-known/jwks.json"
 ```
 
 **Okta**:
 ```python
 MCP_JWT_ISSUER = "https://your-domain.okta.com/oauth2/default"
-MCP_JWT_AUDIENCE = "api://superset-mcp"
+MCP_JWT_AUDIENCE = "api://ax-bi-mcp"
 MCP_JWKS_URI = "https://your-domain.okta.com/oauth2/default/v1/keys"
 ```
 
@@ -108,7 +108,7 @@ MCP_JWKS_URI = "https://cognito-idp.us-east-1.amazonaws.com/your-pool-id/.well-k
 **Self-Hosted (Using Keycloak)**:
 ```python
 MCP_JWT_ISSUER = "https://keycloak.yourcompany.com/realms/superset"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWKS_URI = "https://keycloak.yourcompany.com/realms/superset/protocol/openid-connect/certs"
 ```
 
@@ -471,8 +471,8 @@ pip install -r requirements/production.txt
 **Verify Installation**:
 
 ```bash
-superset version
-superset mcp --help
+ax-bi version
+ax-bi mcp --help
 ```
 
 ### Configuration
@@ -491,7 +491,7 @@ SECRET_KEY = "your-secret-key-here"
 # MCP Service Configuration
 MCP_AUTH_ENABLED = True
 MCP_JWT_ISSUER = "https://auth.yourcompany.com"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWKS_URI = "https://auth.yourcompany.com/.well-known/jwks.json"
 MCP_DEV_USERNAME = None  # Disable dev auth
 
@@ -535,7 +535,7 @@ export FLASK_APP=superset
 **Service File**:
 
 ```ini
-# /etc/systemd/system/superset-mcp.service
+# /etc/systemd/system/ax-bi-mcp.service
 [Unit]
 Description=Superset MCP Service
 After=network.target postgresql.service redis.service
@@ -550,7 +550,7 @@ WorkingDirectory=/opt/superset
 Environment="SUPERSET_CONFIG_PATH=/opt/superset/superset_config.py"
 Environment="FLASK_APP=superset"
 
-ExecStart=/opt/superset/venv/bin/superset mcp run --port 5008
+ExecStart=/opt/superset/venv/bin/ax-bi mcp run --port 5008
 
 # Restart policy
 Restart=always
@@ -563,7 +563,7 @@ MemoryLimit=2G
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=superset-mcp
+SyslogIdentifier=ax-bi-mcp
 
 [Install]
 WantedBy=multi-user.target
@@ -576,16 +576,16 @@ WantedBy=multi-user.target
 systemctl daemon-reload
 
 # Enable service to start on boot
-systemctl enable superset-mcp
+systemctl enable ax-bi-mcp
 
 # Start service
-systemctl start superset-mcp
+systemctl start ax-bi-mcp
 
 # Check status
-systemctl status superset-mcp
+systemctl status ax-bi-mcp
 
 # View logs
-journalctl -u superset-mcp -f
+journalctl -u ax-bi-mcp -f
 ```
 
 #### Supervisord
@@ -593,9 +593,9 @@ journalctl -u superset-mcp -f
 **Configuration**:
 
 ```ini
-# /etc/supervisor/conf.d/superset-mcp.conf
-[program:superset-mcp]
-command=/opt/superset/venv/bin/superset mcp run --port 5008
+# /etc/supervisor/conf.d/ax-bi-mcp.conf
+[program:ax-bi-mcp]
+command=/opt/superset/venv/bin/ax-bi mcp run --port 5008
 directory=/opt/superset
 user=superset
 autostart=true
@@ -612,8 +612,8 @@ environment=SUPERSET_CONFIG_PATH="/opt/superset/superset_config.py",FLASK_APP="s
 ```bash
 supervisorctl reread
 supervisorctl update
-supervisorctl start superset-mcp
-supervisorctl status superset-mcp
+supervisorctl start ax-bi-mcp
+supervisorctl status ax-bi-mcp
 ```
 
 #### Docker
@@ -633,25 +633,25 @@ COPY superset_config.py /app/pythonpath/
 EXPOSE 5008
 
 # Run MCP service
-CMD ["superset", "mcp", "run", "--port", "5008"]
+CMD ["ax-bi", "mcp", "run", "--port", "5008"]
 ```
 
 **Build and Run**:
 
 ```bash
 # Build image
-docker build -t superset-mcp:latest .
+docker build -t ax-bi-mcp:latest .
 
 # Run container
 docker run -d \
-  --name superset-mcp \
+  --name ax-bi-mcp \
   -p 5008:5008 \
   -v /opt/superset/superset_config.py:/app/pythonpath/superset_config.py:ro \
   -e SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py \
-  superset-mcp:latest
+  ax-bi-mcp:latest
 
 # View logs
-docker logs -f superset-mcp
+docker logs -f ax-bi-mcp
 ```
 
 #### Kubernetes
@@ -659,27 +659,27 @@ docker logs -f superset-mcp
 **Deployment**:
 
 ```yaml
-# superset-mcp-deployment.yaml
+# ax-bi-mcp-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
   labels:
-    app: superset-mcp
+    app: ax-bi-mcp
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: superset-mcp
+      app: ax-bi-mcp
   template:
     metadata:
       labels:
-        app: superset-mcp
+        app: ax-bi-mcp
     spec:
       containers:
       - name: mcp
         image: apache/superset:latest
-        command: ["superset", "mcp", "run", "--port", "5008"]
+        command: ["ax-bi", "mcp", "run", "--port", "5008"]
         ports:
         - containerPort: 5008
           name: mcp
@@ -719,10 +719,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
 spec:
   selector:
-    app: superset-mcp
+    app: ax-bi-mcp
   ports:
   - port: 5008
     targetPort: 5008
@@ -732,12 +732,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: superset-mcp-hpa
+  name: ax-bi-mcp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: superset-mcp
+    name: ax-bi-mcp
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -763,11 +763,11 @@ kubectl create configmap superset-config \
   --from-file=superset_config.py=/opt/superset/superset_config.py
 
 # Apply deployment
-kubectl apply -f superset-mcp-deployment.yaml
+kubectl apply -f ax-bi-mcp-deployment.yaml
 
 # Check status
-kubectl get pods -l app=superset-mcp
-kubectl logs -l app=superset-mcp -f
+kubectl get pods -l app=ax-bi-mcp
+kubectl logs -l app=ax-bi-mcp -f
 ```
 
 ### Reverse Proxy Configuration
@@ -923,7 +923,7 @@ curl https://mcp.yourcompany.com/health
 ```yaml
 # /etc/prometheus/prometheus.yml
 scrape_configs:
-  - job_name: 'superset-mcp'
+  - job_name: 'ax-bi-mcp'
     scrape_interval: 15s
     static_configs:
       - targets: ['mcp-1:5008', 'mcp-2:5008', 'mcp-3:5008']
@@ -968,7 +968,7 @@ groups:
           description: "P95 latency is {{ $value }} seconds"
 
       - alert: MCPServiceDown
-        expr: up{job="superset-mcp"} == 0
+        expr: up{job="ax-bi-mcp"} == 0
         for: 1m
         labels:
           severity: critical
@@ -1128,13 +1128,13 @@ wait
 
 ```bash
 # Systemd
-journalctl -u superset-mcp -f
+journalctl -u ax-bi-mcp -f
 
 # Docker
-docker logs -f superset-mcp
+docker logs -f ax-bi-mcp
 
 # Kubernetes
-kubectl logs -l app=superset-mcp -f
+kubectl logs -l app=ax-bi-mcp -f
 ```
 
 ### Rollback Plan
@@ -1144,13 +1144,13 @@ kubectl logs -l app=superset-mcp -f
 1. **Immediate Rollback**:
    ```bash
    # Systemd
-   systemctl stop superset-mcp
+   systemctl stop ax-bi-mcp
    # Restore previous configuration
    cp /opt/superset/superset_config.py.backup /opt/superset/superset_config.py
-   systemctl start superset-mcp
+   systemctl start ax-bi-mcp
 
    # Kubernetes
-   kubectl rollout undo deployment/superset-mcp
+   kubectl rollout undo deployment/ax-bi-mcp
    ```
 
 2. **Partial Rollback** (rollback auth only):
@@ -1194,11 +1194,11 @@ echo "YOUR_JWT_TOKEN" | cut -d'.' -f2 | base64 -d | jq .
 **Diagnosis**:
 ```bash
 # Check if user exists in Superset
-superset fab list-users | grep username
+ax-bi fab list-users | grep username
 ```
 
 **Solution**:
-- Create user in Superset: `superset fab create-user`
+- Create user in Superset: `ax-bi fab create-user`
 - Ensure JWT `sub` claim matches Superset username
 - Or configure user auto-provisioning (future feature)
 
@@ -1210,7 +1210,7 @@ superset fab list-users | grep username
 ```bash
 # Check database connection pool
 # Look for "QueuePool limit" errors in logs
-journalctl -u superset-mcp | grep -i pool
+journalctl -u ax-bi-mcp | grep -i pool
 
 # Check database performance
 # Monitor slow queries in database logs
@@ -1229,7 +1229,7 @@ journalctl -u superset-mcp | grep -i pool
 **Diagnosis**:
 ```bash
 # Check logs
-journalctl -u superset-mcp -n 100
+journalctl -u ax-bi-mcp -n 100
 
 # Common causes:
 # - Missing configuration
@@ -1239,7 +1239,7 @@ journalctl -u superset-mcp -n 100
 
 **Solution**:
 - Verify all required config keys present
-- Test database connection: `superset db upgrade`
+- Test database connection: `ax-bi db upgrade`
 - Check port availability: `netstat -tuln | grep 5008`
 
 ---
@@ -1249,7 +1249,7 @@ journalctl -u superset-mcp -n 100
 **Diagnosis**:
 ```bash
 # Check user's roles
-superset fab list-users | grep -A 5 username
+ax-bi fab list-users | grep -A 5 username
 
 # Check role permissions in Superset UI
 # Security → List Roles → [Role Name] → Permissions

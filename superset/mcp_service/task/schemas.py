@@ -193,7 +193,7 @@ class ListTasksRequest(BaseModel):
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListTasksRequest":
+    def validate_search_and_filters(self) -> ListTasksRequest:
         ensure_search_and_filters_not_combined(
             self.search,
             self.filters,

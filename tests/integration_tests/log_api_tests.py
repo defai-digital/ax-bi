@@ -18,7 +18,6 @@
 """Unit tests for Superset"""
 
 from datetime import datetime, timedelta
-from typing import Optional
 from unittest.mock import ANY
 
 from flask_appbuilder.security.sqla.models import User
@@ -57,10 +56,10 @@ class TestLogApi(SupersetTestCase):
         self,
         action: str,
         user: "User",
-        dashboard_id: Optional[int] = 0,
-        slice_id: Optional[int] = 0,
-        json: Optional[str] = "",
-        duration_ms: Optional[int] = 0,
+        dashboard_id: int | None = 0,
+        slice_id: int | None = 0,
+        json: str | None = "",
+        duration_ms: int | None = 0,
     ):
         log = Log(
             action=action,

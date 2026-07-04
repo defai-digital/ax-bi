@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import re
-from typing import Any, Optional, Union
+from typing import Any
 
 from croniter import croniter
 from flask import current_app
@@ -108,7 +108,7 @@ creation_method_description = (
 )
 
 
-def validate_crontab(value: Union[bytes, bytearray, str]) -> None:
+def validate_crontab(value: bytes | bytearray | str) -> None:
     if not croniter.is_valid(str(value)):
         raise ValidationError("Cron expression is not valid")
 
@@ -276,7 +276,7 @@ class ReportSchedulePostSchema(Schema):
     @validates("custom_width")
     def validate_custom_width(
         self,
-        value: Optional[int],
+        value: int | None,
         **kwargs: Any,
     ) -> None:
         if value is None:
@@ -439,7 +439,7 @@ class ReportSchedulePutSchema(Schema):
     @validates("custom_width")
     def validate_custom_width(
         self,
-        value: Optional[int],
+        value: int | None,
         **kwargs: Any,
     ) -> None:
         if value is None:

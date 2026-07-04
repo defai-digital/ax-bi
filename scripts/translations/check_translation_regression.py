@@ -78,7 +78,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 DEFAULT_TRANSLATIONS_DIR = (
     Path(__file__).resolve().parent.parent.parent / "superset" / "translations"
@@ -129,7 +128,7 @@ def count_stats(po_file: Path) -> dict[str, int]:
 
 def get_counts(
     translations_dir: Path,
-    failures: Optional[set[str]] = None,
+    failures: set[str] | None = None,
 ) -> dict[str, dict[str, int]]:
     """Count translated/fuzzy entries for every ``.po`` file in a directory.
 
@@ -234,7 +233,7 @@ def cmd_count(translations_dir: Path) -> None:
 def cmd_compare(
     before_path: str,
     translations_dir: Path,
-    report_path: Optional[str] = None,
+    report_path: str | None = None,
 ) -> None:
     with open(before_path) as f:
         before_raw: dict[str, object] = json.load(f)

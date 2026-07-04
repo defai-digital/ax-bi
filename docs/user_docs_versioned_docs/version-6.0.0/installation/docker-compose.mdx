@@ -90,7 +90,7 @@ like to try out Superset without making any code changes follow the steps docume
 :::
 
 :::tip
-By default, we mount the local superset-frontend folder here and run `npm install` as well
+By default, we mount the local ax-bi-frontend folder here and run `npm install` as well
 as `npm run dev` which triggers webpack to compile/bundle the frontend code. Depending
 on your local setup, especially if you have less than 16GB of memory,  it may be very slow to
 perform those operations. In this case, we recommend you set the env var
@@ -100,7 +100,7 @@ Simply trigger `npm i && npm run dev`, this should be MUCH faster.
 
 :::tip
 Sometimes, your npm-related state can get out-of-wack, running `npm run prune` from
-the `superset-frontend/` folder will nuke the various' packages `node_module/` folders
+the `ax-bi-frontend/` folder will nuke the various' packages `node_module/` folders
 and help you start fresh. In the context of `docker compose` setting
 `export NPM_RUN_PRUNE=true` prior to running `docker compose up` will trigger that
 from within docker. This will slow down the startup, but will fix various npm-related issues.
@@ -183,7 +183,7 @@ The following is for users who want to configure how Superset runs in Docker Com
 can skip to the next section.
 
 You can install additional python packages and apply config overrides by following the steps
-mentioned in [docker/README.md](https://github.com/apache/superset/tree/master/docker#configuration)
+mentioned in [docker/README.md](https://github.com/defai-digital/ax-bi/tree/main/docker#configuration)
 
 Note that `docker/.env` sets the default environment variables for all the docker images
 used by `docker compose`, and that `docker/.env-local` can be used to override those defaults.

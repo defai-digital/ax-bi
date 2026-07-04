@@ -87,8 +87,8 @@ class Database(CoreModel):
     def execute(
         self,
         sql: str,
-        options: "QueryOptions | None" = None,
-    ) -> "QueryResult":
+        options: QueryOptions | None = None,
+    ) -> QueryResult:
         """
         Execute SQL synchronously.
 
@@ -135,8 +135,8 @@ class Database(CoreModel):
     def execute_async(
         self,
         sql: str,
-        options: "QueryOptions | None" = None,
-    ) -> "AsyncQueryHandle":
+        options: QueryOptions | None = None,
+    ) -> AsyncQueryHandle:
         """
         Execute SQL asynchronously.
 

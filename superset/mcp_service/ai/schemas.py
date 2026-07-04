@@ -23,6 +23,7 @@ and documentation for the tool interfaces.
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, cast, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -221,12 +222,41 @@ class DashboardPlanSection(BaseModel):
 
 
 class DashboardPlan(BaseModel):
-    """Structured dashboard plan from the planner."""
+    """Structured dashboard plan from the planner.
 
+    Carries the full planning context including chart intents, datasets,
+    confidence, assumptions, and clarifying questions so downstream tools
+    (compose_dashboard, validate_chart) can reason about the plan.
+    """
+
+    plan_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique plan session ID for lineage tracking",
+    )
     title: str
-    business_goal: str | None = None
-    global_filters: list[dict[str, Any]] = Field(default_factory=list)
+    description: str = Field(
+        default="", description="Dashboard description / business goal"
+    )
+    datasets: list[dict[str, Any]] = Field(
+        default_factory=list, description="Datasets discovered"
+    )
     sections: list[DashboardPlanSection] = Field(default_factory=list)
+    chart_intents: list[ChartIntentDetail] = Field(
+        default_factory=list, description="Chart specifications"
+    )
+    global_filters: list[dict[str, Any]] = Field(
+        default_factory=list, description="Global filter specs"
+    )
+    layout_hints: dict[str, Any] = Field(
+        default_factory=dict, description="Layout suggestions"
+    )
+    assumptions: list[str] = Field(default_factory=list, description="Assumptions made")
+    clarifying_questions: list[str] = Field(
+        default_factory=list, description="Questions for the user"
+    )
+    confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Overall confidence score"
+    )
 
 
 class ChartIntentDetail(BaseModel):
@@ -251,9 +281,19 @@ class ChartIntentDetail(BaseModel):
     )
 
 
-class DashboardPlanFull(BaseModel):
-    """Full dashboard plan from the planner."""
+# Resolve forward references: DashboardPlan references ChartIntentDetail
+# which is defined above, but the annotation was a string under
+# ``from __future__ import annotations``. Rebuild after both are defined.
+DashboardPlan.model_rebuild()
 
+
+class DashboardPlanFull(BaseModel):
+    """Full dashboard plan from the planner (internal LLM working model)."""
+
+    plan_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique plan session ID for lineage tracking",
+    )
     title: str = Field(description="Dashboard title")
     description: str = Field(
         default="", description="Dashboard description / business goal"
@@ -406,6 +446,12 @@ class ComposeDashboardResponse(BaseModel):
         default="",
         description="Human-readable summary of the dashboard layout",
     )
+    lineage: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "AI lineage metadata (plan_id, tool_chain, source_datasets, confidence)"
+        ),
+    )
     warnings: list[str] = Field(default_factory=list)
     error: str | None = Field(default=None)
 
@@ -506,3 +552,210 @@ class SuggestChartImprovementsResponse(BaseModel):
         description="Improvement suggestions ranked by impact",
     )
     warnings: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# validate_chart
+# ---------------------------------------------------------------------------
+
+
+class ValidateChartRequest(BaseModel):
+    """Request schema for validate_chart."""
+
+    dataset_id: int = Field(description="Dataset ID to validate the config against")
+    config: dict[str, Any] = Field(
+        description=(
+            "Chart configuration dict (same shape as GenerateChartRequest.config)"
+        ),
+    )
+
+
+class ValidateChartResponse(BaseModel):
+    """Response schema for validate_chart."""
+
+    is_valid: bool = Field(description="Whether the chart config is valid")
+    errors: list[str] = Field(
+        default_factory=list, description="Validation error messages"
+    )
+    warnings: list[str] = Field(
+        default_factory=list, description="Non-blocking warnings"
+    )
+    normalized_config: dict[str, Any] | None = Field(
+        default=None,
+        description="Normalized config after column name correction (if valid)",
+    )
+
+
+# ---------------------------------------------------------------------------
+# prompt_to_dashboard (single-call orchestrator)
+# ---------------------------------------------------------------------------
+
+
+class PromptToDashboardRequest(BaseModel):
+    """Request schema for prompt_to_dashboard single-call orchestrator."""
+
+    prompt: str = Field(
+        description="Natural language description of the dashboard to create. "
+        "Example: 'Create an executive sales dashboard with revenue trends "
+        "by region, top products, and quarterly KPIs.'"
+    )
+    dataset_ids: list[int] = Field(
+        default_factory=list,
+        description="Optional: pin to specific dataset IDs. "
+        "When empty, datasets are auto-discovered from the prompt.",
+    )
+    max_charts: int = Field(
+        default=6,
+        ge=1,
+        le=12,
+        description="Maximum number of charts to generate.",
+    )
+    draft: bool = Field(
+        default=True,
+        description="Create as draft (unpublished). Set False to publish.",
+    )
+    save_charts: bool = Field(
+        default=True,
+        description="Save individual charts permanently.",
+    )
+
+
+class PromptToDashboardChartSummary(BaseModel):
+    """Summary of a single chart generated by the orchestrator."""
+
+    chart_id: int | None = None
+    chart_name: str = ""
+    chart_type: str = ""
+    purpose: str = ""
+    confidence: float = 0.0
+    preview_url: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class PromptToDashboardResponse(BaseModel):
+    """Response schema for prompt_to_dashboard single-call orchestrator."""
+
+    dashboard: dict[str, Any] | None = Field(
+        default=None,
+        description="Created dashboard metadata (id, title, url)",
+    )
+    dashboard_url: str | None = None
+    plan: DashboardPlan | None = Field(
+        default=None,
+        description="The dashboard plan that was generated",
+    )
+    charts: list[PromptToDashboardChartSummary] = Field(
+        default_factory=list,
+        description="Individual chart summaries",
+    )
+    layout_summary: str = Field(
+        default="",
+        description="Human-readable summary of the dashboard layout",
+    )
+    lineage: dict[str, Any] | None = Field(
+        default=None,
+        description="AI lineage metadata for audit trail",
+    )
+    warnings: list[str] = Field(default_factory=list)
+    error: str | None = Field(default=None)
+    total_duration_ms: int = Field(
+        default=0,
+        description="Total orchestration time in milliseconds",
+    )
+
+
+# ---------------------------------------------------------------------------
+# ask_dashboard_question (dashboard-scoped follow-up Q&A)
+# ---------------------------------------------------------------------------
+
+
+class AskDashboardQuestionRequest(BaseModel):
+    """Request schema for ask_dashboard_question."""
+
+    dashboard_id: int | str = Field(
+        description="Dashboard ID, UUID, or slug to query.",
+    )
+    question: str = Field(
+        description="Natural language question about the dashboard's data. "
+        "Example: 'What was the top-performing region last quarter?'"
+    )
+    chart_ids: list[int] = Field(
+        default_factory=list,
+        description="Optional: scope the question to specific charts.",
+    )
+    generate_follow_up_chart: bool = Field(
+        default=False,
+        description="When True, attempt to create a chart answering the question.",
+    )
+
+
+class AskDashboardQuestionResponse(BaseModel):
+    """Response schema for ask_dashboard_question."""
+
+    answer: str = Field(
+        default="",
+        description="Answer to the question grounded in dashboard data.",
+    )
+    confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in the answer.",
+    )
+    sources: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Charts/datasets used to answer the question.",
+    )
+    follow_up_chart: dict[str, Any] | None = Field(
+        default=None,
+        description="Generated follow-up chart if requested.",
+    )
+    caveats: list[str] = Field(
+        default_factory=list,
+        description="Caveats or limitations of the answer.",
+    )
+    suggested_next_questions: list[str] = Field(
+        default_factory=list,
+        description="Suggested follow-up questions.",
+    )
+    warnings: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# AIGeneratedArtifact (audit trail)
+# ---------------------------------------------------------------------------
+
+
+class AIGeneratedArtifactRecord(BaseModel):
+    """Audit record for an AI-generated artifact."""
+
+    uuid: str = ""
+    artifact_type: str = Field(
+        description="Type: chart, dashboard, dataset, report"
+    )
+    artifact_id: int = Field(description="ID of the generated artifact")
+    principal_user_id: int | None = Field(
+        default=None, description="User who triggered generation"
+    )
+    source_prompt: str = Field(default="", description="Original user prompt")
+    normalized_intent: str = Field(
+        default="", description="Normalized intent summary"
+    )
+    llm_provider: str = Field(default="", description="LLM provider used")
+    llm_model: str = Field(default="", description="LLM model used")
+    tool_chain: list[str] = Field(
+        default_factory=list, description="Sequence of tools called"
+    )
+    source_asset_refs: list[int] = Field(
+        default_factory=list, description="Dataset IDs used"
+    )
+    validation_summary: str = Field(
+        default="", description="Summary of validation results"
+    )
+    confidence_score: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Overall confidence"
+    )
+    plan_id: str | None = Field(
+        default=None, description="Dashboard plan session ID"
+    )
+    created_on: str | None = None

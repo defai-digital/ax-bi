@@ -32,7 +32,7 @@ updates:
       # and confirm the issue https://github.com/apache/superset/issues/39600 is fixed
       - dependency-name: "react-checkbox-tree"
         update-types: ["version-update:semver-major"]
-    directory: "/superset-frontend/"
+    directory: "/ax-bi-frontend/"
     schedule:
       interval: "weekly"
     labels:

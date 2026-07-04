@@ -22,7 +22,7 @@ Pydantic schemas for report (alerts & reports) related responses.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -81,7 +81,7 @@ class ReportFilter(ColumnOperator):
         description="Operator to use. Use get_schema(model_type='report') for "
         "available operators.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
@@ -109,7 +109,7 @@ class ReportInfo(BaseModel):
     creation_method: str | None = Field(
         None, description="How the report/alert was created"
     )
-    owners: List[Dict[str, Any]] | None = Field(
+    owners: list[dict[str, Any]] | None = Field(
         None, description="List of owners (always empty; excluded by privacy policy)"
     )
     changed_on: str | datetime | None = Field(
@@ -129,12 +129,12 @@ class ReportInfo(BaseModel):
     )
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
 
 
 class ReportList(BaseModel):
-    reports: List[ReportInfo]
+    reports: list[ReportInfo]
     count: int
     total_count: int
     page: int
@@ -142,23 +142,23 @@ class ReportList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each report",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[ReportFilter] = Field(
+    filters_applied: list[ReportFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -171,7 +171,7 @@ class ListReportsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl)
     """Request schema for list_reports."""
 
     filters: Annotated[
-        List[ReportFilter],
+        list[ReportFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -180,7 +180,7 @@ class ListReportsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl)
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns if not "
@@ -220,18 +220,18 @@ class ListReportsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl)
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[ReportFilter]:
+    def parse_filters(cls, v: Any) -> list[ReportFilter]:
         """Accept both JSON string and list of objects."""
         return parse_filters(v, ReportFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_columns(cls, v: Any) -> List[str]:
+    def parse_columns(cls, v: Any) -> list[str]:
         """Accept JSON array, list, or comma-separated string."""
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListReportsRequest":
+    def validate_search_and_filters(self) -> ListReportsRequest:
         """Prevent using both search and filters simultaneously."""
         ensure_search_and_filters_not_combined(
             self.search,

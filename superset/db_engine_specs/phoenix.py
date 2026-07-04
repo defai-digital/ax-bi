@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import types
 
@@ -74,13 +74,13 @@ class PhoenixEngineSpec(BaseEngineSpec):  # pylint: disable=abstract-method
         cls,
         target_type: str,
         dttm: datetime,
-        db_extra: Optional[dict[str, Any]] = None,
-    ) -> Optional[str]:
+        db_extra: dict[str, Any] | None = None,
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(sqla_type, types.Date):
             return f"TO_DATE('{dttm.date().isoformat()}', 'yyyy-MM-dd')"
-        if isinstance(sqla_type, (types.DateTime, types.TIMESTAMP)):
+        if isinstance(sqla_type, types.DateTime | types.TIMESTAMP):
             datetime_formatted = dttm.isoformat(sep=" ", timespec="seconds")
             return f"TO_TIMESTAMP('{datetime_formatted}', 'yyyy-MM-dd HH:mm:ss')"
         return None

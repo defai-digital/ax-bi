@@ -23,10 +23,11 @@ import logging
 import signal
 import threading
 import time
-from contextlib import contextmanager
+from collections.abc import Generator
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from queue import Empty, Full, Queue
-from typing import Any, Dict, Generator
+from typing import Any
 
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -94,7 +95,7 @@ class WebDriverPool:
 
         # Thread-safe pool management
         self._pool: Queue[PooledWebDriver] = Queue(maxsize=max_pool_size)
-        self._active_drivers: Dict[int, PooledWebDriver] = {}
+        self._active_drivers: dict[int, PooledWebDriver] = {}
         self._lock = threading.RLock()
         self._last_health_check = time.time()
 
@@ -108,7 +109,7 @@ class WebDriverPool:
             "evictions": 0,
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get pool statistics for monitoring"""
         with self._lock:
             return {
@@ -231,10 +232,8 @@ class WebDriverPool:
     def _destroy_driver(self, pooled_driver: PooledWebDriver) -> None:
         """Safely destroy a WebDriver instance"""
         try:
-            try:
+            with suppress(Exception):
                 pooled_driver.driver.close()
-            except Exception:  # pylint: disable=broad-except  # noqa: S110
-                pass
             pooled_driver.driver.quit()
             self._stats["destroyed"] += 1
             logger.debug("Destroyed WebDriver instance")

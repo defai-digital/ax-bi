@@ -16,7 +16,6 @@
 # under the License.
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 from unittest.mock import call, Mock, patch
 from uuid import uuid4
 
@@ -148,7 +147,7 @@ def get_notification_error_sent_count(report_schedule: ReportSchedule) -> int:
     return len(notification_sent_logs)
 
 
-def assert_log(state: str, error_message: Optional[str] = None):
+def assert_log(state: str, error_message: str | None = None):
     db.session.commit()
     logs = db.session.query(ReportExecutionLog).all()
 
@@ -791,7 +790,7 @@ def test_email_chart_report_schedule_alpha_owner(
     # setup screenshot mock
     username = ""
 
-    def _screenshot_side_effect(user: User) -> Optional[bytes]:
+    def _screenshot_side_effect(user: User) -> bytes | None:
         nonlocal username
         username = user.username
 

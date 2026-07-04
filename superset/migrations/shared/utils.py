@@ -17,8 +17,8 @@
 import logging
 import os
 import time
-from collections.abc import Iterator
-from typing import Any, Callable, Optional, Union
+from collections.abc import Callable, Iterator
+from typing import Any
 from uuid import uuid4
 
 from alembic import op
@@ -57,7 +57,7 @@ DEFAULT_BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 1000))
 def get_table_column(
     table_name: str,
     column_name: str,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Get the specified column.
 
@@ -150,7 +150,7 @@ def assign_uuids(
 
 def paginated_update(
     query: Query,
-    print_page_progress: Optional[Union[Callable[[int, int], None], bool]] = None,
+    print_page_progress: Callable[[int, int], None] | bool | None = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> Iterator[Any]:
     """
@@ -183,7 +183,7 @@ def paginated_update(
             print_page_progress(processed, total)
 
 
-def try_load_json(data: Optional[str]) -> dict[str, Any]:
+def try_load_json(data: str | None) -> dict[str, Any]:
     return data and json.loads(data) or {}
 
 
@@ -325,13 +325,13 @@ def batch_operation(
         percentage = (offset / count) * 100 if count else 0
         logger.info(
             "Progress: %s/%s (%.2f%%)",
-            "{:,}".format(offset),
-            "{:,}".format(count),
+            f"{offset:,}",
+            f"{count:,}",
             percentage,
         )
         callable(offset, min(offset + batch_size, count))
 
-    logger.info("Progress: %s/%s (100%%)", "{:,}".format(count), "{:,}".format(count))
+    logger.info("Progress: %s/%s (100%%)", f"{count:,}", f"{count:,}")
     logger.info(
         "End: %s%s%s batch operation %ssuccessfully%s executed.",  # noqa: E501
         GREEN,
@@ -513,7 +513,7 @@ def create_fks_for_table(
     referenced_table: str,
     local_cols: list[str],
     remote_cols: list[str],
-    ondelete: Optional[str] = None,
+    ondelete: str | None = None,
 ) -> None:
     """
     Create a foreign key constraint for a table, ensuring compatibility with sqlite.

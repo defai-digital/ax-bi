@@ -32,11 +32,12 @@ import os
 import re
 import sys
 from collections import OrderedDict
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from importlib.resources import files
-from typing import Any, Callable, Iterator, Literal, Optional, TYPE_CHECKING, TypedDict
+from typing import Any, Literal, TYPE_CHECKING, TypedDict
 
 import click
 from celery.schedules import crontab
@@ -87,7 +88,7 @@ STATS_LOGGER = DummyStatsLogger()
 # By default will log events to the metadata database with `DBEventLogger`
 # Note that you can use `StdOutEventLogger` for debugging
 # Note that you can write your own event logger by extending `AbstractEventLogger`
-# https://github.com/apache/superset/blob/master/superset/utils/log.py
+# https://github.com/defai-digital/ax-bi/blob/main/superset/utils/log.py
 EVENT_LOGGER = DBEventLogger()
 
 SUPERSET_LOG_VIEW = True
@@ -1178,12 +1179,10 @@ _THEME_DARK_BASE: Theme = {
     "algorithm": "dark",
 }
 
-THEME_DARK: Optional[Theme] = _THEME_DARK_BASE
+THEME_DARK: Theme | None = _THEME_DARK_BASE
 
 
-def sync_theme_logo_href(
-    theme: Optional[Theme], logo_target_path: Optional[str]
-) -> None:
+def sync_theme_logo_href(theme: Theme | None, logo_target_path: str | None) -> None:
     """
     Apply ``LOGO_TARGET_PATH`` to a theme's ``brandLogoHref`` token.
 
@@ -2738,7 +2737,7 @@ GUEST_TOKEN_VALIDATOR_HOOK = None
 # When True, every minted guest token carries a revocation version, and tokens
 # whose version is below the current expected version (stored in the metadata
 # database) are rejected at validation time. Bump the expected version with the
-# `superset revoke-guest-tokens` CLI command to invalidate all outstanding guest
+# `ax-bi revoke-guest-tokens` CLI command to invalidate all outstanding guest
 # tokens (e.g. after a token leak, or when a user's access or RLS rules change).
 #
 # This is opt-in and backward compatible: the default expected version is 0 and

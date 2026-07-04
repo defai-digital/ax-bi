@@ -14,11 +14,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 
-def _fake_app(config: Optional[dict[str, Any]] = None) -> mock.MagicMock:
+def _fake_app(config: dict[str, Any] | None = None) -> mock.MagicMock:
     """Build a stand-in for ``current_app`` with a controllable config dict."""
     base: dict[str, Any] = {"WEBDRIVER_TYPE": "chrome"}
     if config:

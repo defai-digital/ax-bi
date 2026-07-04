@@ -18,7 +18,7 @@
 import logging
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from urllib import parse
 
 from flask import current_app as app
@@ -504,8 +504,8 @@ class SingleStoreSpec(BasicParametersMixin, BaseEngineSpec):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(sqla_type, types.Date):
@@ -524,8 +524,8 @@ class SingleStoreSpec(BasicParametersMixin, BaseEngineSpec):
         cls,
         uri: URL,
         connect_args: dict[str, Any],
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> tuple[URL, dict[str, Any]]:
         if schema:
             uri = uri.set(database=parse.quote(schema, safe=""))
@@ -545,7 +545,7 @@ class SingleStoreSpec(BasicParametersMixin, BaseEngineSpec):
         cls,
         sqlalchemy_uri: URL,
         connect_args: dict[str, Any],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the configured schema.
 
@@ -554,7 +554,7 @@ class SingleStoreSpec(BasicParametersMixin, BaseEngineSpec):
         return parse.unquote(sqlalchemy_uri.database)
 
     @classmethod
-    def get_cancel_query_id(cls, cursor: Any, query: Query) -> Optional[str]:
+    def get_cancel_query_id(cls, cursor: Any, query: Query) -> str | None:
         """
         Get SingleStore connection ID and aggregator ID that will be used to cancel all
         other running queries in the same connection.

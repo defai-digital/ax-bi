@@ -17,7 +17,7 @@
 """This module contains data related to countries and is used for geo mapping"""
 
 # pylint: disable=too-many-lines
-from typing import Any, Optional
+from typing import Any
 
 countries: list[dict[str, Any]] = [
     {
@@ -2500,7 +2500,7 @@ for lookup in lookups:
         all_lookups[lookup][country[lookup].lower()] = country
 
 
-def get(field: str, symbol: str) -> Optional[dict[str, Any]]:
+def get(field: str, symbol: str) -> dict[str, Any] | None:
     """
     Get country data based on a standard code and a symbol
     """

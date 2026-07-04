@@ -17,7 +17,6 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Optional
 
 from superset.commands.base import BaseCommand
 from superset.commands.temporary_cache.exceptions import TemporaryCacheUpdateFailedError
@@ -35,7 +34,7 @@ class UpdateTemporaryCacheCommand(BaseCommand, ABC):
         self._parameters = cmd_params
 
     @transaction(on_error=partial(on_error, reraise=TemporaryCacheUpdateFailedError))
-    def run(self) -> Optional[str]:
+    def run(self) -> str | None:
         self.validate()
         return self.update(self._parameters)
 
@@ -43,4 +42,4 @@ class UpdateTemporaryCacheCommand(BaseCommand, ABC):
         pass
 
     @abstractmethod
-    def update(self, cmd_params: CommandParameters) -> Optional[str]: ...
+    def update(self, cmd_params: CommandParameters) -> str | None: ...

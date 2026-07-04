@@ -18,7 +18,7 @@ import logging
 import time
 from copy import copy
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import lazy_gettext as _
 from sqlalchemy.orm import make_transient
@@ -43,8 +43,8 @@ logger = logging.getLogger(__name__)
 
 def import_chart(
     slc_to_import: Slice,
-    slc_to_override: Optional[Slice],
-    import_time: Optional[int] = None,
+    slc_to_override: Slice | None,
+    import_time: int | None = None,
 ) -> int:
     """Inserts or overrides slc in the database.
 
@@ -84,8 +84,8 @@ def import_chart(
 def import_dashboard(  # noqa: C901
     # pylint: disable=too-many-locals,too-many-statements
     dashboard_to_import: Dashboard,
-    dataset_id_mapping: Optional[dict[int, int]] = None,
-    import_time: Optional[int] = None,
+    dataset_id_mapping: dict[int, int] | None = None,
+    import_time: int | None = None,
 ) -> int:
     """Imports the dashboard from the object to the database.
 
@@ -413,8 +413,8 @@ def _load_datasource_remote_id(datasource: Any, index: int) -> Any:
 
 def import_dashboards(
     content: str,
-    database_id: Optional[int] = None,
-    import_time: Optional[int] = None,
+    database_id: int | None = None,
+    import_time: int | None = None,
 ) -> None:
     """Imports dashboards from a stream to databases"""
     current_tt = int(time.time())
@@ -439,7 +439,7 @@ class ImportDashboardsCommand(BaseCommand):
 
     # pylint: disable=unused-argument
     def __init__(
-        self, contents: dict[str, str], database_id: Optional[int] = None, **kwargs: Any
+        self, contents: dict[str, str], database_id: int | None = None, **kwargs: Any
     ):
         self.contents = contents
         self.database_id = database_id

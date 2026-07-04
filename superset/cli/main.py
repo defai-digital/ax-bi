@@ -66,12 +66,13 @@ def create_app() -> Any:
 
 
 @click.group(
+    name="ax-bi",
     cls=SupersetFlaskGroup,
     create_app=create_app,
     context_settings={"token_normalize_func": normalize_token},
 )
 def superset() -> None:
-    """\033[1;37mThe Apache Superset CLI\033[0m"""
+    """\033[1;37mThe AX-BI CLI\033[0m"""
     # NOTE: codes above are ANSI color codes for bold white in CLI header ^^^
 
 
@@ -81,7 +82,7 @@ for load, module_name, is_pkg in pkgutil.walk_packages(  # noqa: B007
 ):
     module = importlib.import_module(module_name)
     for attribute in module.__dict__.values():
-        if isinstance(attribute, (click.core.Command, click.core.Group)):
+        if isinstance(attribute, click.core.Command | click.core.Group):
             superset.add_command(attribute)
 
             if isinstance(attribute, click.core.Group):
@@ -106,7 +107,7 @@ def version(verbose: bool) -> None:
     print(Fore.BLUE + "-=" * 15)
     print(
         Fore.YELLOW
-        + "Superset "
+        + "AX-BI "
         + Fore.CYAN
         + f"{current_app.config['VERSION_STRING']}"
     )

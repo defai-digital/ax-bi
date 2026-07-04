@@ -10,7 +10,7 @@ version: 1
 ## superset_config.py
 
 Superset exposes hundreds of configurable parameters through its
-[config.py module](https://github.com/apache/superset/blob/master/superset/config.py). The
+[config.py module](https://github.com/defai-digital/ax-bi/blob/main/superset/config.py). The
 variables and objects exposed act as a public interface of the bulk of what you may want
 to configure, alter and interface with. In this python module, you'll find all these
 parameters, sensible defaults, as well as rich documentation in the form of comments
@@ -77,12 +77,12 @@ MAPBOX_API_KEY = ''
 
 :::tip
 Note that it is typical to copy and paste [only] the portions of the
-core [superset/config.py](https://github.com/apache/superset/blob/master/superset/config.py) that
+core [superset/config.py](https://github.com/defai-digital/ax-bi/blob/main/superset/config.py) that
 you want to alter, along with the related comments into your own `superset_config.py` file.
 :::
 
 All the parameters and default values defined
-in [superset/config.py](https://github.com/apache/superset/blob/master/superset/config.py)
+in [superset/config.py](https://github.com/defai-digital/ax-bi/blob/main/superset/config.py)
 can be altered in your local `superset_config.py`. Administrators will want to read through the file
 to understand what can be configured locally as well as the default values in place.
 
@@ -129,11 +129,11 @@ If you wish to change your existing SECRET_KEY, add the existing SECRET_KEY to y
 commands - if running Superset with Docker, execute from within the Superset application container:
 
 ```python
-superset shell
+ax-bi shell
 from flask import current_app; print(current_app.config["SECRET_KEY"])
 ```
 
-Save your `superset_config.py` with these values and then run `superset re-encrypt-secrets`.
+Save your `superset_config.py` with these values and then run `ax-bi re-encrypt-secrets`.
 
 ## Setting up a production metadata database
 
@@ -191,7 +191,7 @@ well in your environment. Here’s an async setup known to work well in producti
 ```
 
 Refer to the [Gunicorn documentation](https://docs.gunicorn.org/en/stable/design.html) for more
-information. _Note that the development web server (`superset run` or `flask run`) is not intended
+information. _Note that the development web server (`ax-bi run` or `flask run`) is not intended
 for production use._
 
 If you're not using Gunicorn, you may want to disable the use of `flask-compress` by setting
@@ -231,7 +231,7 @@ Superset supports running the application under a non-root path. The root path
 prefix can be specified in one of two ways:
 
 - Setting the `SUPERSET_APP_ROOT` environment variable to the desired prefix.
-- Customizing the [Flask entrypoint](https://github.com/apache/superset/blob/master/superset/app.py#L29)
+- Customizing the [Flask entrypoint](https://github.com/defai-digital/ax-bi/blob/main/superset/app.py#L29)
   by passing the `superset_app_root` variable.
 
 Note, the prefix should start with a `/`.
@@ -256,7 +256,7 @@ flask --app "superset.app:create_app(superset_app_root='/analytics')"
 
 The [docker compose](/user-docs/6.0.0/installation/docker-compose#configuring-further) developer
 configuration includes an additional environmental variable,
-[`SUPERSET_APP_ROOT`](https://github.com/apache/superset/blob/master/docker/.env),
+[`SUPERSET_APP_ROOT`](https://github.com/defai-digital/ax-bi/blob/main/docker/.env),
 to simplify the process of setting up a non-default root path across the services.
 
 In `docker/.env-local` set `SUPERSET_APP_ROOT` to the desired prefix and then bring the
@@ -314,9 +314,9 @@ In case you want to assign the `Admin` role on new user registration, it can be 
 ```python
 AUTH_USER_REGISTRATION_ROLE = "Admin"
 ```
-If you encounter the [issue](https://github.com/apache/superset/issues/13243) of not being able to list users from the Superset main page settings, although a newly registered user has an `Admin` role, please re-run `superset init` to sync the required permissions. Below is the command to re-run `superset init` using docker compose.
+If you encounter the [issue](https://github.com/apache/superset/issues/13243) of not being able to list users from the Superset main page settings, although a newly registered user has an `Admin` role, please re-run `ax-bi init` to sync the required permissions. Below is the command to re-run `ax-bi init` using docker compose.
 ```
-docker-compose exec superset superset init
+docker-compose exec superset ax-bi init
 ```
 
 Then, create a `CustomSsoSecurityManager` that extends `SupersetSecurityManager` and overrides

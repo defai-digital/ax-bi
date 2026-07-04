@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime
-from typing import Optional
 
 import pytest
 
@@ -42,7 +41,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     """Test datetime conversion for various MongoDB column types."""
@@ -101,7 +100,7 @@ def test_epoch_to_dttm() -> None:
     ],
 )
 def test_time_grain_expressions(
-    grain: Optional[TimeGrain],
+    grain: TimeGrain | None,
     expected_expression: str,
 ) -> None:
     """Test time grain expressions for MongoDB."""

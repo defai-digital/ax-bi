@@ -15,13 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class CommandParameters:
-    permalink_key: Optional[str]
-    form_data_key: Optional[str]
-    datasource_id: Optional[int]
-    datasource_type: Optional[str]
-    slice_id: Optional[int]
+    permalink_key: str | None
+    form_data_key: str | None
+    datasource_id: int | None
+    datasource_type: str | None
+    slice_id: int | None

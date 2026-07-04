@@ -31,7 +31,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
 from inspect import signature
-from typing import Any, Callable, cast, Optional, TYPE_CHECKING
+from typing import Any, Callable, cast, TYPE_CHECKING
 
 import numpy
 import pandas as pd
@@ -694,7 +694,7 @@ class Database(CoreDatabase, AuditMixinNullable, ImportExportMixin):  # pylint: 
         return self.db_engine_spec.get_default_schema(self, catalog)
 
     def get_default_schema_for_query(
-        self, query: Query, template_params: Optional[dict[str, Any]] = None
+        self, query: Query, template_params: dict[str, Any] | None = None
     ) -> str | None:
         """
         Return the default schema for a given query.

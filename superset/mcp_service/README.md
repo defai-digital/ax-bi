@@ -80,7 +80,7 @@ source venv/bin/activate
 
 # 3. Install dependencies
 pip install -e .[development,fastmcp]
-cd superset-frontend && npm ci && npm run build && cd ..
+cd ax-bi-frontend && npm ci && npm run build && cd ..
 
 # 4. Configure Superset manually
 # Create superset_config.py in your current directory:
@@ -113,11 +113,11 @@ EOF
 
 # 5. Initialize database
 export FLASK_APP=superset
-superset db upgrade
-superset init
+ax-bi db upgrade
+ax-bi init
 
 # 6. Create admin user
-superset fab create-admin \
+ax-bi fab create-admin \
   --username admin \
   --firstname Admin \
   --lastname Admin \
@@ -125,14 +125,14 @@ superset fab create-admin \
   --password admin
 
 # 7. Start Superset (in one terminal)
-superset run -p 9001 --with-threads --reload --debugger
+ax-bi run -p 9001 --with-threads --reload --debugger
 
 # 8. Start frontend (in another terminal)
-cd superset-frontend && npm run dev
+cd ax-bi-frontend && npm run dev
 
 # 9. Start MCP service (in another terminal, only if you want MCP features)
 source venv/bin/activate
-superset mcp run --port 5008 --debug
+ax-bi mcp run --port 5008 --debug
 ```
 
 Access Superset at http://localhost:9001 (login: admin/admin)
@@ -354,7 +354,7 @@ supersetNode:
         - "-c"
         - |
           pip install fastmcp && \
-          superset mcp run --host 0.0.0.0 --port 5008
+          ax-bi mcp run --host 0.0.0.0 --port 5008
       ports:
         - name: mcp
           containerPort: 5008
@@ -453,20 +453,20 @@ Create `mcp-deployment.yaml`:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
   namespace: superset
   labels:
-    app: superset-mcp
+    app: ax-bi-mcp
     component: mcp-service
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: superset-mcp
+      app: ax-bi-mcp
   template:
     metadata:
       labels:
-        app: superset-mcp
+        app: ax-bi-mcp
         component: mcp-service
     spec:
       containers:
@@ -478,7 +478,7 @@ spec:
             - "-c"
             - |
               pip install fastmcp && \
-              superset mcp run --host 0.0.0.0 --port 5008
+              ax-bi mcp run --host 0.0.0.0 --port 5008
           ports:
             - name: mcp
               containerPort: 5008
@@ -542,10 +542,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: superset-mcp
+  name: ax-bi-mcp
   namespace: superset
   labels:
-    app: superset-mcp
+    app: ax-bi-mcp
 spec:
   type: ClusterIP
   ports:
@@ -554,18 +554,18 @@ spec:
       protocol: TCP
       name: mcp
   selector:
-    app: superset-mcp
+    app: ax-bi-mcp
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: superset-mcp-hpa
+  name: ax-bi-mcp-hpa
   namespace: superset
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: superset-mcp
+    name: ax-bi-mcp
   minReplicas: 2
   maxReplicas: 5
   metrics:
@@ -585,13 +585,13 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: superset-mcp-pdb
+  name: ax-bi-mcp-pdb
   namespace: superset
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: superset-mcp
+      app: ax-bi-mcp
 ```
 
 #### Step 2: Create Ingress for Routing
@@ -624,7 +624,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: superset-mcp
+                name: ax-bi-mcp
                 port:
                   number: 5008
           # Route all other requests to Superset
@@ -651,7 +651,7 @@ kubectl apply -f mcp-deployment.yaml
 kubectl apply -f mcp-ingress.yaml
 
 # Verify
-kubectl get pods -n superset -l app=superset-mcp
+kubectl get pods -n superset -l app=ax-bi-mcp
 kubectl get svc -n superset
 kubectl get ingress -n superset
 ```
@@ -709,7 +709,7 @@ WEBDRIVER_OPTION_ARGS = ['--headless', '--no-sandbox']
    spec:
      podSelector:
        matchLabels:
-         app: superset-mcp
+         app: ax-bi-mcp
      policyTypes:
        - Ingress
        - Egress
@@ -764,14 +764,14 @@ metadata:
 #### Check MCP Service Logs
 
 ```bash
-kubectl logs -n superset -l app=superset-mcp -f
+kubectl logs -n superset -l app=ax-bi-mcp -f
 ```
 
 #### Verify Service Connectivity
 
 ```bash
 # Port-forward to test locally
-kubectl port-forward -n superset svc/superset-mcp 5008:5008
+kubectl port-forward -n superset svc/ax-bi-mcp 5008:5008
 
 # Test health endpoint
 curl http://localhost:5008/health

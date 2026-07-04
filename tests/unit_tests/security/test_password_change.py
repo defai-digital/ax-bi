@@ -16,7 +16,6 @@
 # under the License.
 
 from collections.abc import Iterator
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -51,7 +50,7 @@ from superset.security.password_change import (
         ("UserInfoFancyView.show", False),
     ],
 )
-def test_is_exempt_endpoint(endpoint: Optional[str], expected: bool) -> None:
+def test_is_exempt_endpoint(endpoint: str | None, expected: bool) -> None:
     """Exempt-endpoint matching is exact per view class, never substring."""
     # The password-reset / auth / static endpoints must stay reachable to avoid
     # a redirect loop while a change is pending.

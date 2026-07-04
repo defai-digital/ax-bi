@@ -18,8 +18,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import Any, Callable
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any
 
 try:
     from ax_genai import rank_assets as _imported_rust_rank_assets

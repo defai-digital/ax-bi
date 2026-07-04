@@ -29,7 +29,7 @@ still forced to change the temporary password at next login.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app, flash, g, redirect, request, url_for
 from flask_babel import gettext as __
@@ -65,7 +65,7 @@ _EXEMPT_VIEW_CLASSES = frozenset(
 _EXEMPT_ENDPOINTS = frozenset({"static", "appbuilder.static", "health", "healthcheck"})
 
 
-def _get_user_attribute(user_id: int) -> Optional[Any]:
+def _get_user_attribute(user_id: int) -> Any | None:
     # Imported lazily to avoid import cycles at app-init time.
     from superset.extensions import db
     from superset.models.user_attributes import UserAttribute
@@ -130,7 +130,7 @@ def clear_password_must_change(user_id: int) -> None:
         attr.password_must_change = False
 
 
-def _is_exempt_endpoint(endpoint: Optional[str]) -> bool:
+def _is_exempt_endpoint(endpoint: str | None) -> bool:
     # A missing endpoint (e.g. an unmatched URL) is left to normal 404 handling.
     if not endpoint:
         return True

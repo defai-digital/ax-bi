@@ -119,15 +119,15 @@ fi
 # Always run database migrations to ensure schema is up to date
 echo "Running database migrations..."
 cd /app
-superset db upgrade
+ax-bi db upgrade
 
 # Initialize test environment if needed
 if [ "${FORCE_RELOAD}" = "true" ] || [ ! -f "/app/superset_home/.test_initialized" ]; then
   echo "Initializing test environment..."
   # Run initialization commands
-  superset init
+  ax-bi init
   echo "Loading test users..."
-  superset load-test-users
+  ax-bi load-test-users
 
   # Mark as initialized
   touch /app/superset_home/.test_initialized

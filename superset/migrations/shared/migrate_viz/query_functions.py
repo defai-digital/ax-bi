@@ -17,7 +17,7 @@
 import json  # noqa: TID251
 import math
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class RollingType(Enum):
@@ -118,7 +118,7 @@ EXTRA_FORM_DATA_OVERRIDE_KEYS = (
 )
 
 
-def ensure_is_array(value: Optional[Union[List[Any], Any]] = None) -> List[Any]:
+def ensure_is_array(value: list[Any] | Any | None = None) -> list[Any]:
     """
     Ensure a nullable value input is a list. Useful when consolidating
     input format from a select control.
@@ -135,7 +135,7 @@ def is_empty(value: Any) -> bool:
     """
     if value is None:
         return True
-    if isinstance(value, (list, dict, str, tuple, set)):
+    if isinstance(value, list | dict | str | tuple | set):
         return len(value) == 0
     return False
 
@@ -194,15 +194,15 @@ def get_metric_label(metric: Any | dict[str, Any]) -> Any | dict[str, Any]:
     return metric["sqlExpression"]
 
 
-def extract_extra_metrics(form_data: Dict[str, Any]) -> List[Any]:
+def extract_extra_metrics(form_data: dict[str, Any]) -> list[Any]:
     """
     Extract extra metrics from the form data.
 
     Args:
-        form_data (Dict[str, Any]): The query form data.
+        form_data (dict[str, Any]): The query form data.
 
     Returns:
-        List[Any]: A list of extra metrics.
+        list[Any]: A list of extra metrics.
     """
     groupby = form_data.get("groupby", [])
     timeseries_limit_metric = form_data.get("timeseries_limit_metric")
@@ -226,17 +226,17 @@ def extract_extra_metrics(form_data: Dict[str, Any]) -> List[Any]:
 
 
 def get_metric_offsets_map(
-    form_data: dict[str, List[str]], query_object: dict[str, List[str]]
+    form_data: dict[str, list[str]], query_object: dict[str, list[str]]
 ) -> dict[str, Any]:
     """
     Return a dictionary mapping metric offset-labels to metric-labels.
 
     Args:
-        form_data (Dict[str, List[str]]): The form data containing time comparisons.
-        query_object (Dict[str, List[str]]): The query object containing metrics.
+        form_data (dict[str, list[str]]): The form data containing time comparisons.
+        query_object (dict[str, list[str]]): The query object containing metrics.
 
     Returns:
-        Dict[str, str]: A dictionary with offset-labels as keys and metric-labels
+        dict[str, str]: A dictionary with offset-labels as keys and metric-labels
         as values.
     """
     query_metrics = ensure_is_array(query_object.get("metrics", []))
@@ -314,7 +314,7 @@ def is_x_axis_set(form_data: dict[str, Any]) -> bool:
     return is_query_form_column(form_data.get("x_axis"))
 
 
-def get_x_axis_column(form_data: dict[str, Any]) -> Optional[Any]:
+def get_x_axis_column(form_data: dict[str, Any]) -> Any | None:
     """Return x_axis column."""
     if not (form_data.get("granularity_sqla") or form_data.get("x_axis")):
         return None
@@ -325,7 +325,7 @@ def get_x_axis_column(form_data: dict[str, Any]) -> Optional[Any]:
     return DTTM_ALIAS
 
 
-def get_column_label(column: Any) -> Optional[str]:
+def get_column_label(column: Any) -> str | None:
     """Return the string label for a column."""
     if is_physical_column(column):
         return column
@@ -334,7 +334,7 @@ def get_column_label(column: Any) -> Optional[str]:
     return column.get("sqlExpression", None)
 
 
-def get_x_axis_label(form_data: dict[str, Any]) -> Optional[str]:
+def get_x_axis_label(form_data: dict[str, Any]) -> str | None:
     """Return the x_axis label from form_data."""
     if col := get_x_axis_column(form_data):
         return get_column_label(col)
@@ -343,7 +343,7 @@ def get_x_axis_label(form_data: dict[str, Any]) -> Optional[str]:
 
 def time_compare_pivot_operator(
     form_data: dict[str, Any], query_object: dict[str, Any]
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     A post-processing factory function for pivot operations.
 
@@ -385,7 +385,7 @@ def time_compare_pivot_operator(
 
 def pivot_operator(
     form_data: dict[str, Any], query_object: dict[str, Any]
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Construct a pivot operator configuration for post-processing.
 
@@ -573,7 +573,7 @@ def extract_fields_from_form_data(
 
 def extract_query_fields(
     form_data: dict[Any, Any], aliases: Any = None
-) -> Union[dict[str, Any]]:
+) -> dict[str, Any]:
     """
     Extract query fields from form data.
 
@@ -924,7 +924,7 @@ def build_query_object(
     }
     extras_and_filters = process_filters({**form_data, **extras, **filter_form_data})
 
-    def normalize_series_limit_metric(metric: Any) -> Optional[Any]:
+    def normalize_series_limit_metric(metric: Any) -> Any | None:
         if is_query_form_metric(metric):
             return metric
         return None
@@ -1089,7 +1089,7 @@ def build_query_context(
 
 def rolling_window_operator(
     form_data: dict[str, Any], query_object: dict[str, Any]
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Builds a post-processing configuration for a rolling window.
 
@@ -1144,8 +1144,8 @@ def rolling_window_operator(
 
 
 def time_compare_operator(
-    form_data: Dict[str, Any], query_object: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    form_data: dict[str, Any], query_object: dict[str, Any]
+) -> dict[str, Any] | None:
     """
     Returns a post-processing configuration for time comparison if applicable.
 
@@ -1198,7 +1198,7 @@ def resample_operator(
 
 def rename_operator(
     form_data: dict[str, Any], query_object: dict[str, Any]
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Produces a post-processing configuration to rename columns based on the criteria:
       1) Only one metric exists.
@@ -1268,7 +1268,7 @@ def rename_operator(
 
 def contribution_operator(
     form_data: dict[str, Any], query_object: dict[str, Any], time_shifts: Any
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Returns a post-processing configuration for contribution if
     form_data.contributionMode is truthy.
@@ -1285,8 +1285,8 @@ def contribution_operator(
 
 
 def sort_operator(
-    form_data: Dict[str, Any], query_object: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    form_data: dict[str, Any], query_object: dict[str, Any]
+) -> dict[str, Any] | None:
     """
     Build a sort post-processing configuration if the conditions are met.
 

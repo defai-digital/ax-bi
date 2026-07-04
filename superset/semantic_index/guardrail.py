@@ -62,7 +62,7 @@ def _collect_names(value: Any, names: set[str]) -> None:
         name = value.get("name")
         if isinstance(name, str) and name.strip():
             names.add(name.strip())
-    elif isinstance(value, (list, tuple)):
+    elif isinstance(value, list | tuple):
         for item in value:
             _collect_names(item, names)
 
@@ -115,7 +115,7 @@ def _config_pinned_dimensions(config: dict[str, Any]) -> set[str]:
         value = filter_spec.get("value")
         if operator in _EQUALITY_OPERATORS:
             pinned.add(column.strip())
-        elif operator == "in" and isinstance(value, (list, tuple)) and len(value) == 1:
+        elif operator == "in" and isinstance(value, list | tuple) and len(value) == 1:
             pinned.add(column.strip())
     return pinned
 

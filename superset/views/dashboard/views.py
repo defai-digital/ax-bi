@@ -15,7 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 import builtins
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Union
 
 from flask import g, redirect, Response, url_for
 from flask_appbuilder import expose

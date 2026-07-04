@@ -70,7 +70,7 @@ extraEnv: {}
   # Different gunicorn settings, refer to the gunicorn documentation
   # https://docs.gunicorn.org/en/stable/settings.html#
   # These variables are used as Flags at the gunicorn startup
-  # https://github.com/apache/superset/blob/master/docker/run-server.sh#L22
+  # https://github.com/defai-digital/ax-bi/blob/main/docker/run-server.sh#L22
   # Extend timeout to allow long running queries.
   # GUNICORN_TIMEOUT: 300
   # Increase the gunicorn worker amount, can improve performance drastically
@@ -722,8 +722,8 @@ supersetWebsockets:
     repository: oneacrefund/superset-websocket
     tag: latest
     pullPolicy: IfNotPresent
-  # -- The config.json to pass to the server, see https://github.com/apache/superset/tree/master/superset-websocket
-  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/apache/superset/blob/master/superset-websocket/src/config.ts for a list of supported variables
+  # -- The config.json to pass to the server, see https://github.com/defai-digital/ax-bi/tree/main/superset-websocket
+  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/defai-digital/ax-bi/blob/main/superset-websocket/src/config.ts for a list of supported variables
   # @default -- see `values.yaml`
   config:
     {
@@ -863,12 +863,12 @@ init:
     #!/bin/sh
     set -eu
     echo "Upgrading DB schema..."
-    superset db upgrade
+    ax-bi db upgrade
     echo "Initializing roles..."
-    superset init
+    ax-bi init
     {{ if .Values.init.createAdmin }}
     echo "Creating admin user..."
-    superset fab create-admin \
+    ax-bi fab create-admin \
                     --username {{ .Values.init.adminUser.username }} \
                     --firstname {{ .Values.init.adminUser.firstname }} \
                     --lastname {{ .Values.init.adminUser.lastname }} \
@@ -878,11 +878,11 @@ init:
     {{- end }}
     {{ if .Values.init.loadExamples }}
     echo "Loading examples..."
-    superset load_examples
+    ax-bi load_examples
     {{- end }}
     if [ -f "{{ .Values.extraConfigMountPath }}/import_datasources.yaml" ]; then
       echo "Importing database connections.... "
-      superset import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
+      ax-bi import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
     fi
   # -- Launch additional containers into init job pod
   extraContainers: []

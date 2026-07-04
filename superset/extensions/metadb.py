@@ -41,9 +41,9 @@ import datetime
 import decimal
 import operator
 import urllib.parse
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from functools import partial, wraps
-from typing import Any, Callable, cast, TypeVar
+from typing import Any, cast, TypeVar
 
 from flask import current_app
 from shillelagh.adapters.base import Adapter

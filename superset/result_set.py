@@ -18,7 +18,7 @@
 
 import datetime
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -74,7 +74,7 @@ def stringify_values(array: NDArray[Any]) -> NDArray[Any]:
             else:
                 try:
                     val = obj.item()
-                    if isinstance(val, (dict, list)):
+                    if isinstance(val, dict | list):
                         try:
                             # Use json.dumps for valid double-quoted JSON.
                             # str() gives single-quoted repr like {'a': 1}
@@ -233,9 +233,7 @@ class SupersetResultSet:
                 # to detect via pa.types.is_nested().
                 original_values = columns[column].tolist()
                 if any(
-                    isinstance(v, (list, dict))
-                    for v in original_values
-                    if v is not None
+                    isinstance(v, list | dict) for v in original_values if v is not None
                 ):
                     self._nested_columns[column] = original_values
                 # attempt serialization of values as strings
@@ -295,7 +293,7 @@ class SupersetResultSet:
             logger.exception(ex)
 
     @staticmethod
-    def convert_pa_dtype(pa_dtype: pa.DataType) -> Optional[str]:
+    def convert_pa_dtype(pa_dtype: pa.DataType) -> str | None:
         if pa.types.is_boolean(pa_dtype):
             return "BOOL"
         if pa.types.is_integer(pa_dtype):
@@ -319,15 +317,13 @@ class SupersetResultSet:
     def first_nonempty(items: NDArray[Any]) -> Any:
         return next((i for i in items if i), None)
 
-    def is_temporal(self, db_type_str: Optional[str]) -> bool:
+    def is_temporal(self, db_type_str: str | None) -> bool:
         column_spec = self.db_engine_spec.get_column_spec(db_type_str)
         if column_spec is None:
             return False
         return column_spec.is_dttm
 
-    def type_generic(
-        self, db_type_str: Optional[str]
-    ) -> Optional[utils.GenericDataType]:
+    def type_generic(self, db_type_str: str | None) -> utils.GenericDataType | None:
         column_spec = self.db_engine_spec.get_column_spec(db_type_str)
         if column_spec is None:
             return None
@@ -337,7 +333,7 @@ class SupersetResultSet:
 
         return column_spec.generic_type
 
-    def data_type(self, col_name: str, pa_dtype: pa.DataType) -> Optional[str]:
+    def data_type(self, col_name: str, pa_dtype: pa.DataType) -> str | None:
         """Given a pyarrow data type, Returns a generic database type"""
         set_type = self._type_dict.get(col_name)
         pa_mapped = self.convert_pa_dtype(pa_dtype)

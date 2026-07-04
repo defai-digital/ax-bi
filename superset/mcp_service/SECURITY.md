@@ -58,7 +58,7 @@ For production deployments, the MCP service supports JWT (JSON Web Token) authen
 # superset_config.py
 MCP_AUTH_ENABLED = True
 MCP_JWT_ISSUER = "https://your-auth-provider.com"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWT_ALGORITHM = "RS256"  # or "HS256" for symmetric keys
 
 # Option 1: Use JWKS endpoint (recommended for RS256)
@@ -80,7 +80,7 @@ MCP_JWT_SECRET = "your-shared-secret-key"
 {
   "iss": "https://your-auth-provider.com",
   "sub": "user@company.com",
-  "aud": "superset-mcp",
+  "aud": "ax-bi-mcp",
   "exp": 1735689600,
   "iat": 1735686000,
   "email": "user@company.com",
@@ -178,7 +178,7 @@ For automation and batch jobs, use service accounts instead of user credentials:
 {
   "iss": "https://your-auth-provider.com",
   "sub": "service-account@automation.company.com",
-  "aud": "superset-mcp",
+  "aud": "ax-bi-mcp",
   "exp": 1735689600,
   "client_id": "superset-automation",
   "scopes": ["superset:read", "superset:chart:create"]
@@ -197,7 +197,7 @@ For automation and batch jobs, use service accounts instead of user credentials:
 
 ```bash
 # Create service account user in Superset
-superset fab create-user \
+ax-bi fab create-user \
   --role Alpha \
   --username automation-service \
   --firstname Automation \

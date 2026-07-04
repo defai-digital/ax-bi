@@ -14,14 +14,14 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 
 class SqlLabPermalinkValue(TypedDict):
-    catalog: Optional[str]
+    catalog: str | None
     dbId: int
     name: str
-    schema: Optional[str]
+    schema: str | None
     sql: str
     autorun: bool
-    templateParams: Optional[str]
+    templateParams: str | None

@@ -21,7 +21,7 @@ Describe how the feature will be implemented, or the problem will be solved. If 
 
 ### New or Changed Public Interfaces
 
-Describe any new additions to the model, views or `REST` endpoints. Describe any changes to existing visualizations, dashboards and React components. Describe changes that affect the Superset CLI and how Superset is deployed.
+Describe any new additions to the model, views or `REST` endpoints. Describe any changes to existing visualizations, dashboards and React components. Describe changes that affect the AX-BI CLI and how Superset is deployed.
 
 ### New dependencies
 

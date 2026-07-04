@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Any, cast, Optional, Union
+from typing import Any, cast
 
 import pytest
 from sqlalchemy import types
@@ -60,7 +60,7 @@ def test_epoch_ms_to_dttm() -> None:
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.couchbase import (
@@ -120,7 +120,7 @@ def test_get_parameters_from_uri_handles_repeated_ssl_query_param(
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Union[dict[str, Any], None],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:

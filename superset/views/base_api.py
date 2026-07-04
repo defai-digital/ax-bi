@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, Callable, cast, Optional
+from collections.abc import Callable
+from typing import Any, cast
 
 from flask import request, Response
 from flask_appbuilder import Model, ModelRestApi
@@ -585,7 +586,7 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
         self.send_stats_metrics(response, self.delete.__name__, duration)
         return response
 
-    def ensure_owners_write_access(self, column_name: str) -> Optional[Response]:
+    def ensure_owners_write_access(self, column_name: str) -> Response | None:
         """Restrict the owners related field to users with write access."""
         if column_name == "owners" and not security_manager.can_access(
             "can_write", self.class_permission_name
@@ -716,7 +717,7 @@ class BaseSupersetModelRestApi(BaseSupersetApiMixin, ModelRestApi):
               $ref: '#/components/responses/500'
         """
         if column_name not in self.allowed_distinct_fields:
-            self.incr_stats("error", self.related.__name__)
+            self.incr_stats("error", self.datamodel.obj.__name__)
             return self.response_404()
         args = kwargs.get("rison", {})
         # handle pagination
