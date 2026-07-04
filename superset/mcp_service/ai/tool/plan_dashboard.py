@@ -114,13 +114,28 @@ def _discover_datasets(
     return results
 
 
-_NUMERIC_TYPES = frozenset({
-    "INT", "INTEGER", "BIGINT", "SMALLINT", "TINYINT",
-    "FLOAT", "DOUBLE", "DOUBLE PRECISION", "REAL",
-    "DECIMAL", "NUMERIC", "NUMBER",
-    "INT64", "INT32", "INT16", "INT8",
-    "FLOAT64", "FLOAT32",
-})
+_NUMERIC_TYPES = frozenset(
+    {
+        "INT",
+        "INTEGER",
+        "BIGINT",
+        "SMALLINT",
+        "TINYINT",
+        "FLOAT",
+        "DOUBLE",
+        "DOUBLE PRECISION",
+        "REAL",
+        "DECIMAL",
+        "NUMERIC",
+        "NUMBER",
+        "INT64",
+        "INT32",
+        "INT16",
+        "INT8",
+        "FLOAT64",
+        "FLOAT32",
+    }
+)
 
 
 def _extract_columns(ds: Any | None) -> list[dict[str, Any]]:
@@ -150,18 +165,18 @@ def _extract_columns(ds: Any | None) -> list[dict[str, Any]]:
             or "DATE" in col_type
             or "TIME" in col_type
         )
-        columns.append({
-            "name": col_name,
-            "type": col_type or "VARCHAR",
-            "is_numeric": is_numeric,
-            "is_dttm": is_dttm,
-        })
+        columns.append(
+            {
+                "name": col_name,
+                "type": col_type or "VARCHAR",
+                "is_numeric": is_numeric,
+                "is_dttm": is_dttm,
+            }
+        )
     return columns
 
 
-def _detect_by_dimension(
-    prompt: str, category_cols: list[str]
-) -> str:
+def _detect_by_dimension(prompt: str, category_cols: list[str]) -> str:
     """Detect a 'by <category>' grouping from the prompt.
 
     Returns the matched category column name, or empty string.
@@ -174,9 +189,7 @@ def _detect_by_dimension(
     """
     import re
 
-    by_match = re.search(
-        r"\bby\s+(\w+(?:\s+\w+)?)", prompt, re.IGNORECASE
-    )
+    by_match = re.search(r"\bby\s+(\w+(?:\s+\w+)?)", prompt, re.IGNORECASE)
     if not by_match:
         return ""
     keyword = by_match.group(1).strip().lower()
@@ -234,8 +247,7 @@ def _build_chart_intents_heuristic(
     numeric_cols = [c["name"] for c in columns if c.get("is_numeric")]
     dttm_cols = [c["name"] for c in columns if c.get("is_dttm")]
     category_cols = [
-        c["name"] for c in columns
-        if not c.get("is_numeric") and not c.get("is_dttm")
+        c["name"] for c in columns if not c.get("is_numeric") and not c.get("is_dttm")
     ]
 
     # Pick the best metric column (first numeric found)
@@ -249,9 +261,7 @@ def _build_chart_intents_heuristic(
     by_dimension = _detect_by_dimension(prompt, category_cols)
 
     if by_dimension:
-        metrics = (
-            numeric_cols[:3] if len(numeric_cols) <= 6 else [default_metric]
-        )
+        metrics = numeric_cols[:3] if len(numeric_cols) <= 6 else [default_metric]
         intents.append(
             ChartIntentDetail(
                 purpose=f"Show metrics grouped by {by_dimension}",
@@ -311,9 +321,11 @@ def _build_chart_intents_heuristic(
         re.IGNORECASE,
     ):
         metrics = [default_metric] if default_metric else []
-        dims = [
-            by_dimension or default_dimension
-        ] if (by_dimension or default_dimension) else []
+        dims = (
+            [by_dimension or default_dimension]
+            if (by_dimension or default_dimension)
+            else []
+        )
         intents.append(
             ChartIntentDetail(
                 purpose="Show breakdown by category",
@@ -366,9 +378,7 @@ def _build_chart_intents_heuristic(
                 chart_type="xy",
                 dataset_id=primary_ds["id"],
                 metrics=[default_metric] if default_metric else [],
-                dimensions=(
-                    [default_dimension] if default_dimension else []
-                ),
+                dimensions=([default_dimension] if default_dimension else []),
             ),
             ChartIntentDetail(
                 purpose="Detailed data",
@@ -488,8 +498,8 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
     ```
     """
     await ctx.info(
-        "Planning dashboard: prompt='%s', datasets=%s"
-        % (request.prompt[:80], request.dataset_candidates)
+        f"Planning dashboard: prompt='{request.prompt[:80]}', "
+        f"datasets={request.dataset_candidates}"
     )
 
     # Generate a unique plan session ID for lineage tracking
@@ -578,8 +588,8 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
     )
 
     await ctx.info(
-        "Dashboard plan created: title='%s', charts=%d, confidence=%.2f"
-        % (plan.title, len(plan.chart_intents), plan.confidence)
+        f"Dashboard plan created: title='{plan.title}', "
+        f"charts={len(plan.chart_intents)}, confidence={plan.confidence:.2f}"
     )
 
     return DashboardPlanResponse(
