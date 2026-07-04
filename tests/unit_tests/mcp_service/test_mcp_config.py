@@ -291,7 +291,7 @@ def test_get_mcp_api_key_enabled_explicit_false():
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
-        False if key == "MCP_API_KEY_ENABLED" else True
+        key != "MCP_API_KEY_ENABLED"
     )
 
     assert get_mcp_api_key_enabled(mock_app) is False

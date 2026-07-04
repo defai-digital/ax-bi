@@ -209,7 +209,7 @@ def get_channels_with_search(
     except SlackClientError as ex:
         raise SupersetException(f"Failed to list channels: {ex}") from ex
 
-    if types and not len(types) == len(SlackChannelTypes):
+    if types and len(types) != len(SlackChannelTypes):
         conditions: list[Callable[[SlackChannelSchema], bool]] = []
         if SlackChannelTypes.PUBLIC in types:
             conditions.append(
