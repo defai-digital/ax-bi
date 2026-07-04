@@ -149,9 +149,9 @@ def _sanitize_error_for_logging(error: Exception) -> str:
     # For certain error types, provide generic messages
     if isinstance(error, (OperationalError, TimeoutError)):
         return "Database operation failed"
-    elif isinstance(error, PermissionError):
+    if isinstance(error, PermissionError):
         return "Access denied"
-    elif isinstance(error, ValidationError):
+    if isinstance(error, ValidationError):
         return "Request validation failed"
 
     return error_str
@@ -1275,18 +1275,15 @@ class FieldPermissionsMiddleware(Middleware):
             # Pydantic model - convert to dict, filter, and return dict
             response_dict = response.model_dump()
             return filter_sensitive_data(response_dict, object_type, user)
-        elif isinstance(response, dict):
+        if isinstance(response, dict):
             # Dictionary response - filter directly
             return filter_sensitive_data(response, object_type, user)
-        elif isinstance(response, list):
+        if isinstance(response, list):
             # List response - filter each item
             return [filter_sensitive_data(item, object_type, user) for item in response]
-        else:
-            # Unknown response type, return as-is
-            logger.debug(
-                "Unknown response type for field filtering: %s", type(response)
-            )
-            return response
+        # Unknown response type, return as-is
+        logger.debug("Unknown response type for field filtering: %s", type(response))
+        return response
 
 
 class ResponseSizeGuardMiddleware(Middleware):

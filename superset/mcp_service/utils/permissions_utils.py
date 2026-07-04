@@ -127,11 +127,11 @@ def user_has_permission(
 
         if resource:
             return security_manager.has_access(permission, resource, user)
-        else:
-            # Check if user has permission on any resource
-            for pvm in user.get_permissions():
-                if pvm.permission.name == permission:
-                    return True
+
+        # Check if user has permission on any resource
+        for pvm in user.get_permissions():
+            if pvm.permission.name == permission:
+                return True
 
         return False
     except Exception as e:
@@ -168,9 +168,8 @@ def get_allowed_fields(
     if not user:
         if requested_fields:
             return set(requested_fields) - sensitive_fields
-        else:
-            # Return empty set - caller should use default safe fields
-            return set()
+        # Return empty set - caller should use default safe fields
+        return set()
 
     # Check permissions for sensitive fields
     allowed_fields = set()
@@ -235,11 +234,8 @@ def filter_sensitive_data(
     if isinstance(data, BaseModel):
         # Convert Pydantic model to dict for filtering
         data_dict = data.model_dump()
-        filtered_dict = filter_sensitive_data(
-            data_dict, object_type, user, allowed_fields
-        )
         # Return as dict since we can't easily reconstruct the Pydantic model
-        return filtered_dict
+        return filter_sensitive_data(data_dict, object_type, user, allowed_fields)
 
     if not isinstance(data, dict):
         # Not a dict-like object, return as-is

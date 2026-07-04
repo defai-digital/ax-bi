@@ -24,7 +24,7 @@ import signal
 import threading
 import time
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from queue import Empty, Full, Queue
 from typing import Any
@@ -232,10 +232,8 @@ class WebDriverPool:
     def _destroy_driver(self, pooled_driver: PooledWebDriver) -> None:
         """Safely destroy a WebDriver instance"""
         try:
-            try:
+            with suppress(Exception):
                 pooled_driver.driver.close()
-            except Exception:  # pylint: disable=broad-except  # noqa: S110
-                pass
             pooled_driver.driver.quit()
             self._stats["destroyed"] += 1
             logger.debug("Destroyed WebDriver instance")

@@ -998,8 +998,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         user.username,
                         tool_func.__name__,
                     )
-                    result = await tool_func(*args, **_inject_ctx(kwargs))
-                    return result
+                    return await tool_func(*args, **_inject_ctx(kwargs))
                 except Exception:
                     _cleanup_session_on_error()
                     raise
@@ -1045,8 +1044,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         user.username,
                         tool_func.__name__,
                     )
-                    result = tool_func(*args, **_inject_ctx(kwargs))
-                    return result
+                    return tool_func(*args, **_inject_ctx(kwargs))
                 except Exception:
                     _cleanup_session_on_error()
                     raise
