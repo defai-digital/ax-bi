@@ -540,16 +540,12 @@ def _generate_vega_lite_preview_from_data(  # noqa: C901
     if metrics and data:
         # Find the first metric column in the data
         metric_col = None
-        for col in data[0].keys():
+        for col in data[0]:
             # Check if this is a metric column (usually has aggregation in name)
             if any(
                 agg in str(col).upper()
                 for agg in ["SUM", "AVG", "COUNT", "MIN", "MAX", "TOTAL"]
-            ):
-                metric_col = col
-                break
-            # Or check if it's numeric
-            elif isinstance(data[0].get(col), (int, float)):
+            ) or isinstance(data[0].get(col), (int, float)):
                 metric_col = col
                 break
 
