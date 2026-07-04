@@ -93,7 +93,7 @@ def base_json_conv(obj: Any) -> Any:  # noqa: C901
         return list(obj)
     if isinstance(obj, decimal.Decimal):
         return float(obj)
-    if isinstance(obj, (uuid.UUID, time, LazyString)):
+    if isinstance(obj, uuid.UUID | time | LazyString):
         return str(obj)
     if isinstance(obj, timedelta):
         return format_timedelta(obj)
@@ -125,7 +125,7 @@ def json_iso_dttm_ser(obj: Any, pessimistic: bool = False) -> Any:
     :raises TypeError: If the non-pessimistic object cannot be serialized
     """
 
-    if isinstance(obj, (datetime, date, pd.Timestamp)):
+    if isinstance(obj, datetime | date | pd.Timestamp):
         return obj.isoformat()
 
     try:
@@ -156,7 +156,7 @@ def json_int_dttm_ser(obj: Any) -> Any:
     :raises TypeError: If the object cannot be serialized
     """
 
-    if isinstance(obj, (datetime, pd.Timestamp)):
+    if isinstance(obj, datetime | pd.Timestamp):
         return datetime_to_epoch(obj)
 
     if isinstance(obj, date):

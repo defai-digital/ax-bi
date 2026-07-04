@@ -74,7 +74,7 @@ def stringify_values(array: NDArray[Any]) -> NDArray[Any]:
             else:
                 try:
                     val = obj.item()
-                    if isinstance(val, (dict, list)):
+                    if isinstance(val, dict | list):
                         try:
                             # Use json.dumps for valid double-quoted JSON.
                             # str() gives single-quoted repr like {'a': 1}
@@ -233,9 +233,7 @@ class SupersetResultSet:
                 # to detect via pa.types.is_nested().
                 original_values = columns[column].tolist()
                 if any(
-                    isinstance(v, (list, dict))
-                    for v in original_values
-                    if v is not None
+                    isinstance(v, list | dict) for v in original_values if v is not None
                 ):
                     self._nested_columns[column] = original_values
                 # attempt serialization of values as strings
