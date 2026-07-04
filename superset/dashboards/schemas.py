@@ -154,7 +154,7 @@ def validate_css(value: bytes | bytearray | str | None) -> None:
     """
     if not value:
         return
-    if isinstance(value, (bytes, bytearray)):
+    if isinstance(value, bytes | bytearray):
         text = value.decode("utf-8", errors="ignore")
     else:
         text = value
