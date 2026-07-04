@@ -44,8 +44,6 @@ logger = logging.getLogger(__name__)
 class WebDriverCreationError(Exception):
     """Exception raised when WebDriver creation times out"""
 
-    pass
-
 
 def _timeout_handler(signum: int, frame: Any) -> None:
     """Signal handler for WebDriver creation timeout"""

@@ -948,7 +948,6 @@ class RedisRateLimiter:
 
     def cleanup(self) -> None:
         """No cleanup needed for Redis - TTL handles expiration."""
-        pass
 
 
 def create_rate_limiter() -> RateLimiterProtocol:
