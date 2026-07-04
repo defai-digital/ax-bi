@@ -19,7 +19,7 @@
 import logging
 import secrets
 from collections.abc import Sequence
-from typing import Any, Optional
+from typing import Any
 
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 from flask import Flask
@@ -411,7 +411,7 @@ def get_mcp_api_key_enabled(app: Flask, *, startup_warning: bool = False) -> boo
     return fab_enabled
 
 
-def create_default_mcp_auth_factory(app: Flask) -> Optional[Any]:
+def create_default_mcp_auth_factory(app: Flask) -> Any | None:
     """Default MCP auth factory using app.config values.
 
     Returns an auth provider when ``MCP_AUTH_ENABLED=True`` (JWT verifier,
@@ -510,9 +510,9 @@ def _build_composite_verifier(app: Flask, jwt_verifier: Any) -> CompositeTokenVe
 
 def _build_jwt_verifier(
     app: Flask,
-    jwks_uri: Optional[str],
-    public_key: Optional[str],
-    secret: Optional[str],
+    jwks_uri: str | None,
+    public_key: str | None,
+    secret: str | None,
 ) -> JWTVerifier:
     """Construct the JWT verifier from configured keys/secret."""
     debug_errors = get_mcp_jwt_debug_errors(app.config)
