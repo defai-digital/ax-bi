@@ -19,7 +19,7 @@ set -e
 
 script_dir="$(dirname "$(realpath "$0")")"
 root_dir="$(dirname "$script_dir")"
-frontend_dir=superset-frontend
+frontend_dir=ax-bi-frontend
 
 if [[ ! -d "$root_dir/$frontend_dir" ]]; then
   echo "Error: $frontend_dir directory not found in $root_dir" >&2
@@ -31,7 +31,7 @@ cd "$root_dir/$frontend_dir"
 # Filter files to only include JS/TS files and remove the frontend dir prefix
 js_ts_files=()
 for file in "$@"; do
-  # Remove superset-frontend/ prefix if present
+  # Remove ax-bi-frontend/ prefix if present
   cleaned_file="${file#$frontend_dir/}"
 
   # Only include JS/TS files

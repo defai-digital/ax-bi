@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Optional, Union
+from typing import Any
 
 import prison
 from flask import has_request_context, request
@@ -36,13 +36,13 @@ logger = logging.getLogger(__name__)
 _SAFE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$")
 
 
-def _safe_identifier(name: Any) -> Optional[str]:
+def _safe_identifier(name: Any) -> str | None:
     if isinstance(name, str) and _SAFE_IDENTIFIER_RE.match(name):
         return name
     return None
 
 
-def _quote_sql_literal(value: Any) -> Optional[str]:
+def _quote_sql_literal(value: Any) -> str | None:
     """Quote a scalar value safely for SQL string interpolation.
 
     - Strings: single-quoted with `'` escaped as `''` (SQL standard).
@@ -51,7 +51,7 @@ def _quote_sql_literal(value: Any) -> Optional[str]:
     """
     if isinstance(value, bool):
         return "TRUE" if value else "FALSE"
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return str(value)
     if isinstance(value, str):
         return "'" + value.replace("'", "''") + "'"
@@ -84,7 +84,7 @@ class RisonFilterParser:
         "eq": "==",
     }
 
-    def parse(self, filter_string: Optional[str] = None) -> list[dict[str, Any]]:
+    def parse(self, filter_string: str | None = None) -> list[dict[str, Any]]:
         """
         Parse Rison filter string and convert to adhoc_filters format.
 
@@ -113,9 +113,7 @@ class RisonFilterParser:
             )
             return []
 
-    def _convert_to_adhoc_filters(
-        self, filters_obj: Union[dict[str, Any], list[Any], Any]
-    ) -> list[dict[str, Any]]:
+    def _convert_to_adhoc_filters(self, filters_obj: Any) -> list[dict[str, Any]]:
         if not isinstance(filters_obj, dict):
             return []
 
@@ -135,7 +133,7 @@ class RisonFilterParser:
 
     def _create_filter(
         self, column: str, value: Any, negate: bool = False
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         filter_dict: dict[str, Any] = {
             "expressionType": "SIMPLE",
             "clause": "WHERE",
@@ -163,9 +161,7 @@ class RisonFilterParser:
 
         return filter_dict
 
-    def _parse_operator_dict(
-        self, op_dict: dict[str, Any]
-    ) -> Optional[tuple[str, Any]]:
+    def _parse_operator_dict(self, op_dict: dict[str, Any]) -> tuple[str, Any] | None:
         if not op_dict:
             return None
 
@@ -211,7 +207,7 @@ class RisonFilterParser:
 
         return []
 
-    def _build_sql_condition(self, column: str, value: Any) -> Optional[str]:
+    def _build_sql_condition(self, column: str, value: Any) -> str | None:
         # URL-supplied columns flow directly into a raw SQL expression in the
         # OR path, so the identifier must match a strict whitelist or we drop
         # the whole condition. Likewise, string literals get `'` escaped to

@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { warningSchema } from './listColumn';
+
 export const ASSET_SEARCH_CONTRACT_VERSION = 'asset-search.v1';
 
 export type AssetType = 'chart' | 'dashboard' | 'dataset' | 'metric';
@@ -47,6 +49,25 @@ export interface AssetSearchResponse {
   warnings: string[];
 }
 
+const cleanAssetStringSchema = {
+  type: 'string',
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+} as const;
+
+const cleanAssetDescriptionSchema = {
+  type: 'string',
+  maxLength: 1024,
+  pattern: '^[^\\u0000-\\u001F\\u007F]*$',
+} as const;
+
+const cleanAssetListStringSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 128,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
 const assetSearchResultSchema = {
   type: 'object',
   required: [
@@ -62,20 +83,20 @@ const assetSearchResultSchema = {
   additionalProperties: false,
   properties: {
     assetType: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
-    id: { type: 'number' },
-    uuid: { type: 'string' },
-    name: { type: 'string' },
-    description: { type: 'string' },
+    id: { type: 'integer', minimum: 0 },
+    uuid: cleanAssetStringSchema,
+    name: cleanAssetStringSchema,
+    description: cleanAssetDescriptionSchema,
     certified: { type: 'boolean' },
-    relevanceScore: { type: 'number' },
-    relevanceReason: { type: 'string' },
+    relevanceScore: { type: 'number', minimum: 0, maximum: 2 },
+    relevanceReason: cleanAssetStringSchema,
     owners: {
       type: 'array',
-      items: { type: 'string' },
+      items: cleanAssetListStringSchema,
     },
     tags: {
       type: 'array',
-      items: { type: 'string' },
+      items: cleanAssetListStringSchema,
     },
   },
 } as const;
@@ -93,13 +114,17 @@ export const assetSearchRequestSchema = {
   additionalProperties: false,
   properties: {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
-    query: { type: 'string' },
+    query: {
+      type: 'string',
+      maxLength: 256,
+      pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+    },
     assetTypes: {
       type: 'array',
       items: { enum: ['chart', 'dashboard', 'dataset', 'metric'] },
     },
     includeCertifiedOnly: { type: 'boolean' },
-    limit: { type: 'number', minimum: 1, maximum: 100 },
+    limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
 } as const;
 
@@ -112,12 +137,10 @@ export const assetSearchResponseSchema = {
     contractVersion: { const: ASSET_SEARCH_CONTRACT_VERSION },
     assets: {
       type: 'array',
+      maxItems: 100,
       items: assetSearchResultSchema,
     },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+    warnings: warningSchema,
   },
 } as const;
 

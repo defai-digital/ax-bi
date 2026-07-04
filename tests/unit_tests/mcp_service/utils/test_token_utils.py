@@ -20,7 +20,7 @@ Unit tests for MCP service token utilities.
 """
 
 from math import ceil
-from typing import Any, List
+from typing import Any
 from unittest.mock import patch
 
 from pydantic import BaseModel
@@ -123,7 +123,7 @@ class TestEstimateResponseTokens:
 
         name: str
         value: int
-        items: List[Any]
+        items: list[Any]
 
     def test_estimate_pydantic_model(self) -> None:
         """Should estimate tokens for Pydantic model."""

@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask import current_app as app
 
@@ -33,7 +32,7 @@ class GetFilterStateCommand(GetTemporaryCacheCommand):
             "REFRESH_TIMEOUT_ON_RETRIEVAL"
         )
 
-    def get(self, cmd_params: CommandParameters) -> Optional[str]:
+    def get(self, cmd_params: CommandParameters) -> str | None:
         resource_id = cmd_params.resource_id
         key = cache_key(resource_id, cmd_params.key)
         check_access(resource_id)

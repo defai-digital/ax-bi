@@ -134,7 +134,7 @@ Embedded guest tokens can be coarsely revoked at runtime via a new opt-in mechan
 Bump the expected version with the new CLI command to invalidate all outstanding guest tokens:
 
 ```bash
-superset revoke-guest-tokens
+ax-bi revoke-guest-tokens
 ```
 
 This change is backward compatible. The feature is off by default, and even when enabled nothing is revoked until an admin explicitly bumps the version: the expected version starts at `0`, and tokens minted before this change (which carry no version claim) are treated as version `0`. No database migration is required.
@@ -192,13 +192,13 @@ SQLALCHEMY_ENCRYPTED_FIELD_ENGINE = "aes"
 1. Take a metadata-DB backup.
 2. Re-encrypt existing secrets into the new engine (the `SECRET_KEY` is unchanged):
    ```bash
-   superset re-encrypt-secrets --engine aes-gcm
+   ax-bi re-encrypt-secrets --engine aes-gcm
    ```
 3. Set `SQLALCHEMY_ENCRYPTED_FIELD_ENGINE = "aes-gcm"` in your config.
 4. Restart Superset.
 5. Re-run the migrator once more after the restart:
    ```bash
-   superset re-encrypt-secrets --engine aes-gcm
+   ax-bi re-encrypt-secrets --engine aes-gcm
    ```
    A live instance keeps writing *new* secrets as AES-CBC during the window between step 2 and the restart in step 4; this second pass sweeps those up (it is idempotent, so already-migrated values are skipped).
 
@@ -376,7 +376,7 @@ MCP_SERVICE_PORT = 5008
 # superset_config.py
 MCP_AUTH_ENABLED = True
 MCP_JWT_ISSUER = "https://your-auth-provider.com"
-MCP_JWT_AUDIENCE = "superset-mcp"
+MCP_JWT_AUDIENCE = "ax-bi-mcp"
 MCP_JWT_ALGORITHM = "RS256"  # or "HS256" for shared secrets
 
 # Option 1: Use JWKS endpoint (recommended for RS256)
@@ -403,13 +403,13 @@ MCP_SESSION_CONFIG = {
 
 ```bash
 # Development
-superset mcp run --port 5008 --debug
+ax-bi mcp run --port 5008 --debug
 
 # Production
-superset mcp run --port 5008
+ax-bi mcp run --port 5008
 
 # With factory config
-superset mcp run --port 5008 --use-factory-config
+ax-bi mcp run --port 5008 --use-factory-config
 ```
 
 #### Deployment Considerations
@@ -514,7 +514,7 @@ Note: Pillow is now a required dependency (previously optional) to support image
   There's a migration added that can potentially affect a significant number of existing charts.
 - [32317](https://github.com/apache/superset/pull/32317) The horizontal filter bar feature is now out of testing/beta development and its feature flag `HORIZONTAL_FILTER_BAR` has been removed.
 - [31590](https://github.com/apache/superset/pull/31590) Marks the beginning of intricate work around supporting dynamic Theming, and breaks support for [THEME_OVERRIDES](https://github.com/apache/superset/blob/732de4ac7fae88e29b7f123b6cbb2d7cd411b0e4/superset/config.py#L671) in favor of a new theming system based on AntD V5. Likely this will be in disrepair until settling over the 5.x lifecycle.
-- [32432](https://github.com/apache/superset/pull/32432) Moves the List Roles FAB view to the frontend and requires `FAB_ADD_SECURITY_API` to be enabled in the configuration and `superset init` to be executed.
+- [32432](https://github.com/apache/superset/pull/32432) Moves the List Roles FAB view to the frontend and requires `FAB_ADD_SECURITY_API` to be enabled in the configuration and `ax-bi init` to be executed.
 - [34319](https://github.com/apache/superset/pull/34319) Drill to Detail and Drill By is now supported in Embedded mode, and also with the `DASHBOARD_RBAC` FF. If you don't want to expose these features in Embedded / `DASHBOARD_RBAC`, make sure the roles used for Embedded / `DASHBOARD_RBAC`don't have the required permissions to perform D2D actions.
 
 ## 5.0.0
@@ -786,13 +786,13 @@ Note: Pillow is now a required dependency (previously optional) to support image
 - [18976](https://github.com/apache/superset/pull/18976): When running the app in debug mode, the app will default to use `SimpleCache` for `FILTER_STATE_CACHE_CONFIG` and `EXPLORE_FORM_DATA_CACHE_CONFIG`. When running in non-debug mode, a cache backend will need to be defined, otherwise the application will fail to start. For installations using Redis or other caching backends, it is recommended to use the same backend for both cache configs.
 - [17881](https://github.com/apache/superset/pull/17881): Previously simple adhoc filter values on string columns were stripped of enclosing single and double quotes. To fully support literal quotes in filters, both single and double quotes will no longer be removed from filter values.
 - [17556](https://github.com/apache/superset/pull/17556): Bumps `mysqlclient` from v1 to v2.
-- [17539](https://github.com/apache/superset/pull/17539): All Superset CLI commands, e.g. `init`, `load_examples`, etc. require setting the `FLASK_APP` environment variable (which is set by default when `.flaskenv` is loaded).
+- [17539](https://github.com/apache/superset/pull/17539): All AX-BI CLI commands, e.g. `init`, `load_examples`, etc. require setting the `FLASK_APP` environment variable (which is set by default when `.flaskenv` is loaded).
 - [15254](https://github.com/apache/superset/pull/15254): The `QUERY_COST_FORMATTERS_BY_ENGINE`, `SQL_VALIDATORS_BY_ENGINE` and `SCHEDULED_QUERIES` feature flags are now defined as config keys given that feature flags are reserved for boolean only values.
 
 ### Potential Downtime
 
 - [16756](https://github.com/apache/incubator-superset/pull/16756): a change which renames the `dbs.allow_csv_upload` column to `dbs.allow_file_upload` via a (potentially locking) DDL operation.
-- [17539](https://github.com/apache/superset/pull/17539): all Superset CLI commands
+- [17539](https://github.com/apache/superset/pull/17539): all AX-BI CLI commands
   (init, load_examples and etc) require setting the FLASK_APP environment variable
   (which is set by default when .flaskenv is loaded)
 - [17360](https://github.com/apache/superset/pull/17360): changes the column type from `VARCHAR(32)` to `TEXT` in table `table_columns`, potentially requiring a table lock on MySQL dbs or taking some time to complete on large deployments.
@@ -812,7 +812,7 @@ Note: Pillow is now a required dependency (previously optional) to support image
 
 ### Breaking Changes
 
-- [17984](https://github.com/apache/superset/pull/17984): Default Flask SECRET_KEY has changed for security reasons. You should always override with your own secret. Set `PREVIOUS_SECRET_KEY` (ex: PREVIOUS_SECRET_KEY = "\2\1thisismyscretkey\1\2\\e\\y\\y\\h") with your previous key and use `superset re-encrypt-secrets` to rotate you current secrets
+- [17984](https://github.com/apache/superset/pull/17984): Default Flask SECRET_KEY has changed for security reasons. You should always override with your own secret. Set `PREVIOUS_SECRET_KEY` (ex: PREVIOUS_SECRET_KEY = "\2\1thisismyscretkey\1\2\\e\\y\\y\\h") with your previous key and use `ax-bi re-encrypt-secrets` to rotate you current secrets
 
 ### Potential Downtime
 
@@ -861,7 +861,7 @@ Note: Pillow is now a required dependency (previously optional) to support image
 
 ### Other
 
-- [13772](https://github.com/apache/superset/pull/13772): Row level security (RLS) is now enabled by default. To activate the feature, please run `superset init` to expose the RLS menus to Admin users.
+- [13772](https://github.com/apache/superset/pull/13772): Row level security (RLS) is now enabled by default. To activate the feature, please run `ax-bi init` to expose the RLS menus to Admin users.
 - [13980](https://github.com/apache/superset/pull/13980): Data health checks no longer use the metadata database as an interim cache. Though non-breaking, deployments which implement complex logic should likely memoize the callback function. Refer to documentation in the config.py file for more detail.
 - [14255](https://github.com/apache/superset/pull/14255): The default `CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC` callable logic has been updated to leverage the specified database and schema to ensure the upload S3 key prefix is unique. Previously tables generated via upload from CSV with the same name but differ schema and/or cluster would use the same S3 key prefix. Note this change does not impact previously imported tables.
 
@@ -1014,7 +1014,7 @@ Note: Pillow is now a required dependency (previously optional) to support image
   `filter_immune_filter_fields` to favor dashboard scoped filter metadata `filter_scopes`.
 
 - [9046](https://github.com/apache/superset/pull/9046): Replaces `can_only_access_owned_queries` by
-  `all_query_access` favoring a white list approach. Since a new permission is introduced use `superset init`
+  `all_query_access` favoring a white list approach. Since a new permission is introduced use `ax-bi init`
   to create and associate it by default to the `Admin` role. Note that, by default, all non `Admin` users will
   not be able to access queries they do not own.
 
@@ -1029,7 +1029,7 @@ Note: Pillow is now a required dependency (previously optional) to support image
   accessed through the `Security` menu, or when editing a table.
 
 - [8732](https://github.com/apache/superset/pull/8732): Swagger user interface is now enabled by default.
-  A new permission `show on SwaggerView` is created by `superset init` and given to the `Admin` Role. To disable the UI,
+  A new permission `show on SwaggerView` is created by `ax-bi init` and given to the `Admin` Role. To disable the UI,
   set `FAB_API_SWAGGER_UI = False` on config.
 
 - [8721](https://github.com/apache/superset/pull/8721): When using the cache

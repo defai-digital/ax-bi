@@ -85,7 +85,7 @@ gains an **engine migration** mode that:
    safely repeated or resumed.
 
 Exposed via a new `--engine` option on the existing CLI command:
-`superset re-encrypt-secrets --engine aes-gcm`, runnable by operators with a DB
+`ax-bi re-encrypt-secrets --engine aes-gcm`, runnable by operators with a DB
 backup in hand. The `SECRET_KEY` is unchanged; an engine change and a key
 rotation can also be combined (pass `--previous_secret_key` as well).
 
@@ -98,7 +98,7 @@ Once the migrator and docs are in place, change the default to `"aes-gcm"` for
 ## New or changed public interfaces
 
 - New config: `SQLALCHEMY_ENCRYPTED_FIELD_ENGINE: Literal["aes", "aes-gcm"]`.
-- New (Phase 2) CLI: `superset re-encrypt-secrets --engine <name>`.
+- New (Phase 2) CLI: `ax-bi re-encrypt-secrets --engine <name>`.
 - No schema changes; ciphertext format changes per migrated column.
 
 ## Migration plan and compatibility

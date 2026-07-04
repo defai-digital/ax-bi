@@ -18,7 +18,7 @@
 
 import logging
 from collections.abc import Iterator
-from typing import Callable
+from collections.abc import Callable
 
 import yaml
 

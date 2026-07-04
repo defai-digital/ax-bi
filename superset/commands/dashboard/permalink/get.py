@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -39,7 +38,7 @@ class GetDashboardPermalinkCommand(BaseDashboardPermalinkCommand):
     def __init__(self, key: str):
         self.key = key
 
-    def run(self) -> Optional[DashboardPermalinkValue]:
+    def run(self) -> DashboardPermalinkValue | None:
         self.validate()
         try:
             key = decode_permalink_id(self.key, salt=self.salt)

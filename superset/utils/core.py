@@ -36,7 +36,7 @@ import traceback
 import uuid
 import warnings
 import zlib
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import timedelta
@@ -51,12 +51,11 @@ from timeit import default_timer
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
     cast,
     NamedTuple,
-    Optional,
     TYPE_CHECKING,
     TypedDict,
+    TypeGuard,
     TypeVar,
 )
 from urllib.parse import unquote_plus
@@ -81,7 +80,6 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.sql.type_api import Variant
 from sqlalchemy.types import TypeEngine
-from typing_extensions import TypeGuard
 
 from superset.constants import (
     DEFAULT_USER_AGENT,
@@ -443,7 +441,7 @@ def cast_to_num(value: float | int | str | None) -> float | int | None:
     """
     if value is None:
         return None
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value
     if value.isdigit():
         return int(value)
@@ -478,7 +476,7 @@ def cast_to_boolean(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value != 0
     if isinstance(value, str):
         return value.strip().lower() == "true"
@@ -1825,7 +1823,7 @@ def get_column_names_from_metrics(metrics: list[Metric]) -> list[str]:
     return [col for col in map(get_column_name_from_metric, metrics) if col]
 
 
-def map_sql_type_to_inferred_type(sql_type: Optional[str]) -> str:
+def map_sql_type_to_inferred_type(sql_type: str | None) -> str:
     """
     Map a SQL type to a type string recognized by pandas' `infer_objects` method.
 
@@ -2075,7 +2073,7 @@ class DateColumn:
         return hash(self.col_label)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, DateColumn) and hash(self) == hash(other)
+        return isinstance(other, DateColumn) and self.col_label == other.col_label
 
     @classmethod
     def get_legacy_time_column(

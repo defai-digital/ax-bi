@@ -2133,6 +2133,23 @@ def test_check_disallowed_functions_no_config(
     assert result is None
 
 
+def test_check_disallowed_functions_none_config(
+    mocker: MockerFixture, database: Database, app_context: None
+) -> None:
+    """Disallowed functions/tables check must not crash when config is None."""
+    from superset.sql.execution.executor import SQLExecutor
+
+    mocker.patch.dict(
+        current_app.config,
+        {"DISALLOWED_SQL_FUNCTIONS": None, "DISALLOWED_SQL_TABLES": None},
+    )
+
+    executor = SQLExecutor(database)
+    script = MagicMock()
+    assert executor._check_disallowed_functions(script) is None
+    assert executor._check_disallowed_tables(script) is None
+
+
 def test_try_get_cached_result_with_mutation(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:

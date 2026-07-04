@@ -21,9 +21,9 @@ import functools
 import logging
 import os
 import traceback
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from flask import (
     abort,
@@ -475,7 +475,7 @@ def get_default_spinner_svg() -> str | None:
     )
 
     try:
-        with open(svg_path, "r", encoding="utf-8") as f:
+        with open(svg_path, encoding="utf-8") as f:
             return f.read().strip()
     except (OSError, UnicodeDecodeError) as e:
         logger.warning("Could not load default spinner SVG: %s", e)

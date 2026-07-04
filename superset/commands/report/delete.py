@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from superset import security_manager
 from superset.commands.base import BaseCommand
@@ -36,7 +35,7 @@ logger = logging.getLogger(__name__)
 class DeleteReportScheduleCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[ReportSchedule]] = None
+        self._models: list[ReportSchedule] | None = None
 
     @transaction(on_error=partial(on_error, reraise=ReportScheduleDeleteFailedError))
     def run(self) -> None:

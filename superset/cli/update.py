@@ -18,7 +18,6 @@ import json
 import logging
 import os
 import sys
-from typing import Optional
 
 import click
 from apispec import APISpec
@@ -122,8 +121,8 @@ def update_api_docs() -> None:
     "SQLALCHEMY_ENCRYPTED_FIELD_ENGINE to the same value and restart.",
 )
 def re_encrypt_secrets(
-    previous_secret_key: Optional[str] = None,
-    target_engine_name: Optional[str] = None,
+    previous_secret_key: str | None = None,
+    target_engine_name: str | None = None,
 ) -> None:
     """Re-encrypt every app-encrypted field via :class:`SecretsMigrator`.
 

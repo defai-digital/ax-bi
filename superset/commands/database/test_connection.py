@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as _
 from sqlalchemy.exc import DBAPIError, NoSuchModuleError
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_log_connection_action(
-    action: str, ssh_tunnel: Optional[Any], exc: Optional[Exception] = None
+    action: str, ssh_tunnel: Any | None, exc: Exception | None = None
 ) -> str:
     action_modified = action
     if exc:
@@ -62,7 +62,7 @@ def get_log_connection_action(
 
 class TestConnectionDatabaseCommand(BaseCommand):
     __test__ = False
-    _model: Optional[Database] = None
+    _model: Database | None = None
     _context: dict[str, Any]
     _uri: str
 

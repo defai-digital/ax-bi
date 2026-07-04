@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.models.sqla import Model
 from marshmallow import ValidationError
@@ -58,7 +58,7 @@ class CreateDatasetCommand(CreateMixin, BaseCommand):
         schema = self._properties.get("schema")
         table_name = self._properties["table_name"]
         sql = self._properties.get("sql")
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
+        owner_ids: list[int] | None = self._properties.get("owners")
 
         # Validate/Populate database
         database = DatasetDAO.get_database_by_id(database_id)

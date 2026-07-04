@@ -42,6 +42,7 @@ from superset import db, is_feature_enabled
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
     build_type_preserving_upload_options,
+    FileMetadata,
     UploadCommand,
     UploadFileType,
 )
@@ -178,6 +179,7 @@ def upload_single_file(  # noqa: C901
     file_content: str,
     filename: str,
     table_name: str | None = None,
+    sheet_name: str | None = None,
 ) -> DatasetInfo | DatasetError:
     """Upload a single file and return DatasetInfo or DatasetError.
 
@@ -239,6 +241,7 @@ def upload_single_file(  # noqa: C901
         local_db = get_or_create_local_db()
 
         reader: BaseDataReader
+        excel_metadata: FileMetadata | None = None
         if file_type == UploadFileType.CSV:
             csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
             csv_metadata = CSVReader(csv_reader_options).file_metadata(file_storage)
@@ -248,6 +251,8 @@ def upload_single_file(  # noqa: C901
             reader = CSVReader(csv_reader_options)
         elif file_type == UploadFileType.EXCEL:
             excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+            if sheet_name:
+                excel_reader_options["sheet_name"] = sheet_name
             excel_metadata = ExcelReader(excel_reader_options).file_metadata(
                 file_storage
             )
@@ -299,12 +304,25 @@ def upload_single_file(  # noqa: C901
                 error="Dataset was created but could not be serialized",
                 error_type="SerializationError",
             )
+
+        # For Excel files, include sheet names from metadata in the response
+        if file_type == UploadFileType.EXCEL and excel_metadata:
+            sheet_names: list[str] = []
+            for item in excel_metadata.get("items", []):
+                name = item.get("sheet_name")
+                if isinstance(name, str) and name:
+                    sheet_names.append(name)
+            if sheet_names and hasattr(result, "model_dump"):
+                result.sheet_names = sheet_names
+            elif sheet_names and isinstance(result, dict):
+                result["sheet_names"] = sheet_names
+
         return result
 
     except Exception as exc:
         logger.exception("upload_single_file failed for '%s'", filename)
         return DatasetError.create(
-            error="Upload failed: %s" % str(exc),
+            error=f"Upload failed: {str(exc)}",
             error_type="UploadFailedError",
         )
 
@@ -350,17 +368,18 @@ async def upload_file(
     For multiple files, use the upload_files tool instead.
     """
     await ctx.info(
-        "Uploading file '%s' (%d bytes)" % (request.filename, len(request.file_content))
+        f"Uploading file '{request.filename}' ({len(request.file_content)} bytes)"
     )
 
     result = upload_single_file(
         file_content=request.file_content,
         filename=request.filename,
         table_name=request.table_name,
+        sheet_name=request.sheet_name,
     )
 
     if isinstance(result, DatasetError):
-        await ctx.error("Upload failed for '%s'" % request.filename)
+        await ctx.error(f"Upload failed for '{request.filename}'")
     else:
-        await ctx.info("Dataset created from uploaded file '%s'" % request.filename)
+        await ctx.info(f"Dataset created from uploaded file '{request.filename}'")
     return result

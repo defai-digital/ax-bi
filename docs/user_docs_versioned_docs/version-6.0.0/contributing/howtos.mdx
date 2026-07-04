@@ -40,8 +40,8 @@ Commits to `master` trigger a rebuild and redeploy of the documentation site. Su
 
 Visualizations in Superset are implemented in JavaScript or TypeScript. Superset
 comes preinstalled with several visualizations types (hereafter "viz plugins") that
-can be found under the `superset-frontend/plugins` directory. Viz plugins are added to
-the application in the `superset-frontend/src/visualizations/presets/MainPreset.js`.
+can be found under the `ax-bi-frontend/plugins` directory. Viz plugins are added to
+the application in the `ax-bi-frontend/src/visualizations/presets/MainPreset.js`.
 The Superset project is always happy to review proposals for new high quality viz
 plugins. However, for highly custom viz types it is recommended to maintain a fork
 of Superset, and add the custom built viz plugins by hand.
@@ -67,7 +67,7 @@ can be installed by doing the following:
 
 ```bash
 npm i -g yo
-cd superset-frontend/packages/generator-superset
+cd ax-bi-frontend/packages/generator-superset
 npm i
 npm link
 ```
@@ -137,7 +137,7 @@ are made), start the dev server with the following command:
 npm run dev
 ```
 
-To add the package to Superset, go to the `superset-frontend` subdirectory in your
+To add the package to Superset, go to the `ax-bi-frontend` subdirectory in your
 Superset source folder run
 
 ```bash
@@ -145,7 +145,7 @@ npm i -S /tmp/superset-plugin-chart-hello-world
 ```
 
 If you publish your package to npm, you can naturally install directly from there, too.
-After this edit the `superset-frontend/src/visualizations/presets/MainPreset.js`
+After this edit the `ax-bi-frontend/src/visualizations/presets/MainPreset.js`
 and make the following changes:
 
 ```js
@@ -180,7 +180,7 @@ SQLite databases which will be cleared each time before the group of test
 commands are invoked.
 
 There is also a utility script included in the Superset codebase to run python integration tests. The [readme can be
-found here](https://github.com/apache/superset/tree/master/scripts/tests)
+found here](https://github.com/defai-digital/ax-bi/tree/main/scripts/tests)
 
 To run all integration tests for example, run this script from the root directory:
 
@@ -213,7 +213,7 @@ export SUPERSET__SQLALCHEMY_EXAMPLES_URI=presto://localhost:15433/memory/default
 We use [Jest](https://jestjs.io/) and [Enzyme](https://airbnb.io/enzyme/) to test TypeScript/JavaScript. Tests can be run with:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run test
 ```
 
@@ -244,9 +244,9 @@ CYPRESS_BASE_URL=http://localhost:8081
 ```
 
 ```bash
-# superset-frontend/cypress-base is the base folder for everything Cypress-related
+# ax-bi-frontend/cypress-base is the base folder for everything Cypress-related
 # It's essentially its own npm app, with its own dependencies, configurations and utilities
-cd superset-frontend/cypress-base
+cd ax-bi-frontend/cypress-base
 npm install
 
 # use interactive mode to run tests, while keeping memory usage contained
@@ -269,7 +269,7 @@ npm run cypress-debug
 
 ```
 
-See [`superset-frontend/cypress_build.sh`](https://github.com/apache/superset/blob/master/superset-frontend/cypress_build.sh).
+See [`ax-bi-frontend/cypress_build.sh`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/cypress_build.sh).
 
 As an alternative you can use docker compose environment for testing:
 
@@ -426,7 +426,7 @@ You can now launch your VSCode debugger with the same config as above. VSCode wi
 Superset includes a [Storybook](https://storybook.js.org/) to preview the layout/styling of various Superset components, and variations thereof. To open and view the Storybook:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run storybook
 ```
 
@@ -554,7 +554,7 @@ the `build-translation` script
 
 ```bash
 # Install dependencies if you haven't already
-cd superset-frontend/ && npm ci
+cd ax-bi-frontend/ && npm ci
 # Compile translations for the frontend
 npm run build-translation
 ```
@@ -585,7 +585,7 @@ ruff check --fix
 ```
 
 Ruff configuration is located in our
-(pyproject.toml)[https://github.com/apache/superset/blob/master/pyproject.toml] file
+(pyproject.toml)[https://github.com/defai-digital/ax-bi/blob/main/pyproject.toml] file
 
 All this is configured to run in pre-commit hooks, which we encourage you to setup
 with `pre-commit install`
@@ -593,7 +593,7 @@ with `pre-commit install`
 ### TypeScript
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm ci
 # run linting checks
 npm run lint
@@ -605,7 +605,7 @@ If using the eslint extension with vscode, put the following in your workspace `
 
 ```json
 "eslint.workingDirectories": [
-  "superset-frontend"
+  "ax-bi-frontend"
 ]
 ```
 

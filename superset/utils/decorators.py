@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
 
 from flask import current_app as app, g, Response

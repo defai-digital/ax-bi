@@ -120,7 +120,7 @@ def load_json_file(path: Path) -> dict[str, Any]:
         content = json.loads(path.read_text())
         return content
     except json.JSONDecodeError as e:
-        raise AssertionError(f"File {path} contains invalid JSON: {e}")
+        raise AssertionError(f"File {path} contains invalid JSON: {e}") from e
 
 
 def assert_json_content(path: Path, expected_values: dict[str, Any]) -> None:

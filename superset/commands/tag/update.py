@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.models.sqla import Model
 
@@ -34,7 +34,7 @@ class UpdateTagCommand(UpdateMixin, BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[Tag] = None
+        self._model: Tag | None = None
 
     @transaction()
     def run(self) -> Model:

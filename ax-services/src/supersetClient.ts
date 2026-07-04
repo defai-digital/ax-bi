@@ -18,14 +18,12 @@
  */
 import {
   ANNOTATION_LIST_CONTRACT_VERSION,
-  AnnotationFilterValue,
   AnnotationListItem,
   AnnotationListRequest,
   AnnotationListResponse,
 } from './contracts/annotationList';
 import {
   ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
-  AnnotationLayerFilterValue,
   AnnotationLayerListItem,
   AnnotationLayerListRequest,
   AnnotationLayerListResponse,
@@ -39,7 +37,6 @@ import {
 } from './contracts/assetSearch';
 import {
   CHART_LIST_CONTRACT_VERSION,
-  ChartFilterValue,
   ChartListItem,
   ChartListRequest,
   ChartListResponse,
@@ -49,25 +46,21 @@ import {
   DashboardListItem,
   DashboardListRequest,
   DashboardListResponse,
-  DashboardFilterValue,
 } from './contracts/dashboardList';
 import {
   DATABASE_LIST_CONTRACT_VERSION,
-  DatabaseFilterValue,
   DatabaseListItem,
   DatabaseListRequest,
   DatabaseListResponse,
 } from './contracts/databaseList';
 import {
   DATASET_LIST_CONTRACT_VERSION,
-  DatasetFilterValue,
   DatasetListItem,
   DatasetListRequest,
   DatasetListResponse,
 } from './contracts/datasetList';
 import {
   QUERY_LIST_CONTRACT_VERSION,
-  QueryFilterValue,
   QueryListItem,
   QueryListRequest,
   QueryListResponse,
@@ -79,21 +72,18 @@ import {
 } from './contracts/authorization';
 import {
   REPORT_LIST_CONTRACT_VERSION,
-  ReportFilterValue,
   ReportListItem,
   ReportListRequest,
   ReportListResponse,
 } from './contracts/reportList';
 import {
   ROLE_LIST_CONTRACT_VERSION,
-  RoleFilterValue,
   RoleListItem,
   RoleListRequest,
   RoleListResponse,
 } from './contracts/roleList';
 import {
   RLS_LIST_CONTRACT_VERSION,
-  RlsFilterValue,
   RlsListItem,
   RlsListRequest,
   RlsListResponse,
@@ -102,26 +92,25 @@ import {
 } from './contracts/rlsList';
 import {
   SAVED_QUERY_LIST_CONTRACT_VERSION,
-  SavedQueryFilterValue,
   SavedQueryListItem,
   SavedQueryListRequest,
   SavedQueryListResponse,
 } from './contracts/savedQueryList';
 import {
   TAG_LIST_CONTRACT_VERSION,
-  TagFilterValue,
   TagListItem,
   TagListRequest,
   TagListResponse,
 } from './contracts/tagList';
 import {
   TASK_LIST_CONTRACT_VERSION,
-  TaskFilterValue,
   TaskListItem,
   TaskListRequest,
   TaskListResponse,
 } from './contracts/taskList';
+import { type ListFilter, type ListFilterValue } from './contracts/listColumn';
 import { ServiceConfig } from './config';
+import { normalizeRequestId } from './requestId';
 
 export interface DependencyHealth {
   ok: boolean;
@@ -148,6 +137,13 @@ export interface SupersetAssetSearchClient {
     request: AssetSearchRequest,
     correlationId?: string,
   ): Promise<AssetSearchResponse>;
+}
+
+export interface SupersetPermissionClient {
+  checkPermission(
+    request: PermissionCheckRequest,
+    correlationId?: string,
+  ): Promise<PermissionCheckResult>;
 }
 
 export interface SupersetAnnotationListClient {
@@ -241,6 +237,14 @@ export interface SupersetTaskListClient {
   ): Promise<TaskListResponse>;
 }
 
+const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
+const MAX_ASSET_TEXT_LENGTH = 256;
+const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
+const MAX_ASSET_LIST_VALUE_LENGTH = 128;
+const MAX_METADATA_KEYS = 100;
+const MAX_METADATA_KEY_LENGTH = 128;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
+
 export class SupersetClient
   implements
     SupersetHealthClient,
@@ -248,6 +252,7 @@ export class SupersetClient
     SupersetAnnotationListClient,
     SupersetAnnotationLayerListClient,
     SupersetAssetSearchClient,
+    SupersetPermissionClient,
     SupersetDashboardListClient,
     SupersetChartListClient,
     SupersetDatabaseListClient,
@@ -275,9 +280,10 @@ export class SupersetClient
     contentType?: string,
   ): HeadersInit {
     const headers: Record<string, string> = {};
+    const safeCorrelationId = normalizeRequestId(correlationId);
 
-    if (correlationId !== undefined) {
-      headers['x-request-id'] = correlationId;
+    if (safeCorrelationId !== undefined) {
+      headers['x-request-id'] = safeCorrelationId;
     }
 
     if (contentType !== undefined) {
@@ -285,7 +291,7 @@ export class SupersetClient
     }
 
     if (this.config.supersetInternalToken !== undefined) {
-      headers.authorization = `Bearer ${this.config.supersetInternalToken}`;
+      headers['authorization'] = `Bearer ${this.config.supersetInternalToken}`;
     }
 
     return headers;
@@ -306,7 +312,7 @@ export class SupersetClient
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
         url: this.healthUrl,
       };
     }
@@ -330,6 +336,16 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
+      if (!isRecord(payload)) {
+        return {
+          ok: false,
+          statusCode: response.status,
+          error: 'metadata response must be a JSON object',
+          url: this.metadataUrl,
+          keyCount: 0,
+          keys: [],
+        };
+      }
       const keys = extractObjectKeys(payload);
 
       return {
@@ -342,7 +358,7 @@ export class SupersetClient
     } catch (error) {
       return {
         ok: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
         url: this.metadataUrl,
       };
     }
@@ -352,6 +368,16 @@ export class SupersetClient
     request: AnnotationLayerListRequest,
     correlationId?: string,
   ): Promise<AnnotationLayerListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'annotation layer',
+      ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+      emptyAnnotationLayerListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildAnnotationLayerListUrl(request);
 
     try {
@@ -371,26 +397,23 @@ export class SupersetClient
         .map(toAnnotationLayerListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, annotationLayers.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
         annotationLayers,
-        count: annotationLayers.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedAnnotationLayerColumns(request),
-        columnsLoaded: annotationLayerColumnsLoaded(annotationLayers),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          annotationLayers.length,
+          totalCount,
+          requestedAnnotationLayerColumns(request),
+          annotationLayerColumnsLoaded(annotationLayers),
+          [],
+        ),
       };
     } catch (error) {
       return emptyAnnotationLayerListResponse(request, [
         `annotation layer list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -400,6 +423,23 @@ export class SupersetClient
     request: AnnotationListRequest,
     correlationId?: string,
   ): Promise<AnnotationListResponse> {
+    if (!hasValidAnnotationLayerId(request)) {
+      return emptyAnnotationListResponse(
+        withFallbackAnnotationLayerId(request),
+        ['annotation list request contains invalid layer id'],
+      );
+    }
+
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'annotation',
+      ANNOTATION_LIST_CONTRACT_VERSION,
+      emptyAnnotationListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildAnnotationListUrl(request);
 
     try {
@@ -419,27 +459,24 @@ export class SupersetClient
         .map(item => toAnnotationListItem(item, request.layerId))
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, annotations.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
         annotations,
-        count: annotations.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
         layerId: request.layerId,
-        columnsRequested: requestedAnnotationColumns(request),
-        columnsLoaded: annotationColumnsLoaded(annotations),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          annotations.length,
+          totalCount,
+          requestedAnnotationColumns(request),
+          annotationColumnsLoaded(annotations),
+          [],
+        ),
       };
     } catch (error) {
       return emptyAnnotationListResponse(request, [
         `annotation list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -449,12 +486,38 @@ export class SupersetClient
     request: AssetSearchRequest,
     correlationId?: string,
   ): Promise<AssetSearchResponse> {
+    if (!hasValidAssetSearchRequestShape(request)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid request shape'],
+      };
+    }
+
+    if (!hasValidAssetSearchQuery(request.query)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid query'],
+      };
+    }
+
+    if (!isAssetSearchLimit(request.limit)) {
+      return {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        assets: [],
+        warnings: ['asset search request contains invalid limit'],
+      };
+    }
+
     const warnings: string[] = [];
     const requestedTypes =
       request.assetTypes.length > 0
         ? request.assetTypes
         : (['chart', 'dashboard', 'dataset'] satisfies AssetType[]);
-    const supportedTypes = requestedTypes.filter(isSupportedSearchType);
+    const supportedTypes = [
+      ...new Set(requestedTypes.filter(isSupportedSearchType)),
+    ];
 
     if (requestedTypes.includes('metric')) {
       warnings.push('Metric search is not supported by the TypeScript path.');
@@ -483,6 +546,22 @@ export class SupersetClient
     request: PermissionCheckRequest,
     correlationId?: string,
   ): Promise<PermissionCheckResult> {
+    if (!hasValidAuthorizationRequestShape(request)) {
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        error: 'authorization request contains invalid request shape',
+      };
+    }
+
+    if (!hasValidAuthorizationIds(request)) {
+      return {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        error: 'authorization request contains invalid numeric identifier',
+      };
+    }
+
     try {
       const response = await fetch(this.permissionUrl, {
         method: 'POST',
@@ -499,19 +578,42 @@ export class SupersetClient
         };
       }
 
-      const payload = (await response.json()) as Partial<PermissionCheckResult>;
+      const payload = (await response.json()) as unknown;
+      if (
+        !isRecord(payload) ||
+        payload['contractVersion'] !== AUTHORIZATION_CONTRACT_VERSION
+      ) {
+        return {
+          contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+          allowed: false,
+          error: 'authorization response contract version mismatch',
+          statusCode: response.status,
+        };
+      }
+      if (typeof payload['allowed'] !== 'boolean') {
+        return {
+          contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+          allowed: false,
+          error: 'authorization response allowed field must be boolean',
+          statusCode: response.status,
+        };
+      }
 
-      return {
+      const result: PermissionCheckResult = {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
-        allowed: payload.allowed === true,
-        reason: typeof payload.reason === 'string' ? payload.reason : undefined,
+        allowed: payload['allowed'],
         statusCode: response.status,
       };
+      const reason = optionalExternalMessage(payload['reason']);
+      if (reason !== undefined) {
+        result.reason = reason;
+      }
+      return result;
     } catch (error) {
       return {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
         allowed: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: externalErrorMessage(error),
       };
     }
   }
@@ -520,6 +622,17 @@ export class SupersetClient
     request: DashboardListRequest,
     correlationId?: string,
   ): Promise<DashboardListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'dashboard',
+      DASHBOARD_LIST_CONTRACT_VERSION,
+      emptyDashboardListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildDashboardListUrl(request);
 
     try {
@@ -539,26 +652,23 @@ export class SupersetClient
         .map(toDashboardListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, dashboards.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
         dashboards,
-        count: dashboards.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDashboardColumns(request),
-        columnsLoaded: dashboardColumnsLoaded(dashboards),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          dashboards.length,
+          totalCount,
+          requestedDashboardColumns(request),
+          dashboardColumnsLoaded(dashboards),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDashboardListResponse(request, [
         `dashboard list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -568,6 +678,17 @@ export class SupersetClient
     request: ChartListRequest,
     correlationId?: string,
   ): Promise<ChartListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'chart',
+      CHART_LIST_CONTRACT_VERSION,
+      emptyChartListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildChartListUrl(request);
 
     try {
@@ -587,26 +708,23 @@ export class SupersetClient
         .map(toChartListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, charts.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: CHART_LIST_CONTRACT_VERSION,
         charts,
-        count: charts.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedChartColumns(request),
-        columnsLoaded: chartColumnsLoaded(charts),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          charts.length,
+          totalCount,
+          requestedChartColumns(request),
+          chartColumnsLoaded(charts),
+          [],
+        ),
       };
     } catch (error) {
       return emptyChartListResponse(request, [
         `chart list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -616,6 +734,17 @@ export class SupersetClient
     request: DatasetListRequest,
     correlationId?: string,
   ): Promise<DatasetListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'dataset',
+      DATASET_LIST_CONTRACT_VERSION,
+      emptyDatasetListResponse,
+      { requiresOwnedByMeFlag: true },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildDatasetListUrl(request);
 
     try {
@@ -635,26 +764,23 @@ export class SupersetClient
         .map(toDatasetListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, datasets.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DATASET_LIST_CONTRACT_VERSION,
         datasets,
-        count: datasets.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDatasetColumns(request),
-        columnsLoaded: datasetColumnsLoaded(datasets),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          datasets.length,
+          totalCount,
+          requestedDatasetColumns(request),
+          datasetColumnsLoaded(datasets),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDatasetListResponse(request, [
         `dataset list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -664,6 +790,17 @@ export class SupersetClient
     request: DatabaseListRequest,
     correlationId?: string,
   ): Promise<DatabaseListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'database',
+      DATABASE_LIST_CONTRACT_VERSION,
+      emptyDatabaseListResponse,
+      { requiresOwnedByMeFlag: false },
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildDatabaseListUrl(request);
 
     try {
@@ -683,26 +820,23 @@ export class SupersetClient
         .map(toDatabaseListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, databases.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: DATABASE_LIST_CONTRACT_VERSION,
         databases,
-        count: databases.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedDatabaseColumns(request),
-        columnsLoaded: databaseColumnsLoaded(databases),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          databases.length,
+          totalCount,
+          requestedDatabaseColumns(request),
+          databaseColumnsLoaded(databases),
+          [],
+        ),
       };
     } catch (error) {
       return emptyDatabaseListResponse(request, [
         `database list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -712,6 +846,16 @@ export class SupersetClient
     request: QueryListRequest,
     correlationId?: string,
   ): Promise<QueryListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'query',
+      QUERY_LIST_CONTRACT_VERSION,
+      emptyQueryListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildQueryListUrl(request);
 
     try {
@@ -731,26 +875,23 @@ export class SupersetClient
         .map(toQueryListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, queries.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: QUERY_LIST_CONTRACT_VERSION,
         queries,
-        count: queries.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedQueryColumns(request),
-        columnsLoaded: queryColumnsLoaded(queries),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          queries.length,
+          totalCount,
+          requestedQueryColumns(request),
+          queryColumnsLoaded(queries),
+          [],
+        ),
       };
     } catch (error) {
       return emptyQueryListResponse(request, [
         `query list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -760,6 +901,16 @@ export class SupersetClient
     request: SavedQueryListRequest,
     correlationId?: string,
   ): Promise<SavedQueryListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'saved query',
+      SAVED_QUERY_LIST_CONTRACT_VERSION,
+      emptySavedQueryListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildSavedQueryListUrl(request);
 
     try {
@@ -779,26 +930,23 @@ export class SupersetClient
         .map(toSavedQueryListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, savedQueries.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
         savedQueries,
-        count: savedQueries.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedSavedQueryColumns(request),
-        columnsLoaded: savedQueryColumnsLoaded(savedQueries),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          savedQueries.length,
+          totalCount,
+          requestedSavedQueryColumns(request),
+          savedQueryColumnsLoaded(savedQueries),
+          [],
+        ),
       };
     } catch (error) {
       return emptySavedQueryListResponse(request, [
         `saved query list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -808,6 +956,16 @@ export class SupersetClient
     request: ReportListRequest,
     correlationId?: string,
   ): Promise<ReportListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'report',
+      REPORT_LIST_CONTRACT_VERSION,
+      emptyReportListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildReportListUrl(request);
 
     try {
@@ -827,26 +985,23 @@ export class SupersetClient
         .map(toReportListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, reports.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: REPORT_LIST_CONTRACT_VERSION,
         reports,
-        count: reports.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedReportColumns(request),
-        columnsLoaded: reportColumnsLoaded(reports),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          reports.length,
+          totalCount,
+          requestedReportColumns(request),
+          reportColumnsLoaded(reports),
+          [],
+        ),
       };
     } catch (error) {
       return emptyReportListResponse(request, [
         `report list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -856,6 +1011,16 @@ export class SupersetClient
     request: RoleListRequest,
     correlationId?: string,
   ): Promise<RoleListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'role',
+      ROLE_LIST_CONTRACT_VERSION,
+      emptyRoleListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildRoleListUrl(request);
 
     try {
@@ -871,28 +1036,27 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
-      const roles = extractSupersetResults(payload).map(toRoleListItem).filter(isDefined);
+      const roles = extractSupersetResults(payload)
+        .map(toRoleListItem)
+        .filter(isDefined);
       const totalCount = extractSupersetCount(payload, roles.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: ROLE_LIST_CONTRACT_VERSION,
         roles,
-        count: roles.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedRoleColumns(request),
-        columnsLoaded: roleColumnsLoaded(roles),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          roles.length,
+          totalCount,
+          requestedRoleColumns(request),
+          roleColumnsLoaded(roles),
+          [],
+        ),
       };
     } catch (error) {
       return emptyRoleListResponse(request, [
         `role list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -902,6 +1066,16 @@ export class SupersetClient
     request: RlsListRequest,
     correlationId?: string,
   ): Promise<RlsListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'RLS filter',
+      RLS_LIST_CONTRACT_VERSION,
+      emptyRlsListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildRlsListUrl(request);
 
     try {
@@ -921,26 +1095,23 @@ export class SupersetClient
         .map(toRlsListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, rlsFilters.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: RLS_LIST_CONTRACT_VERSION,
         rlsFilters,
-        count: rlsFilters.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedRlsColumns(request),
-        columnsLoaded: rlsColumnsLoaded(rlsFilters),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          rlsFilters.length,
+          totalCount,
+          requestedRlsColumns(request),
+          rlsColumnsLoaded(rlsFilters),
+          [],
+        ),
       };
     } catch (error) {
       return emptyRlsListResponse(request, [
         `RLS filter list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -950,6 +1121,16 @@ export class SupersetClient
     request: TagListRequest,
     correlationId?: string,
   ): Promise<TagListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'tag',
+      TAG_LIST_CONTRACT_VERSION,
+      emptyTagListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildTagListUrl(request);
 
     try {
@@ -965,28 +1146,27 @@ export class SupersetClient
       }
 
       const payload = (await response.json()) as unknown;
-      const tags = extractSupersetResults(payload).map(toTagListItem).filter(isDefined);
+      const tags = extractSupersetResults(payload)
+        .map(toTagListItem)
+        .filter(isDefined);
       const totalCount = extractSupersetCount(payload, tags.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: TAG_LIST_CONTRACT_VERSION,
         tags,
-        count: tags.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedTagColumns(request),
-        columnsLoaded: tagColumnsLoaded(tags),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          tags.length,
+          totalCount,
+          requestedTagColumns(request),
+          tagColumnsLoaded(tags),
+          [],
+        ),
       };
     } catch (error) {
       return emptyTagListResponse(request, [
         `tag list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -996,6 +1176,16 @@ export class SupersetClient
     request: TaskListRequest,
     correlationId?: string,
   ): Promise<TaskListResponse> {
+    const invalidRequestResponse = invalidListRequestResponse(
+      request,
+      'task',
+      TASK_LIST_CONTRACT_VERSION,
+      emptyTaskListResponse,
+    );
+    if (invalidRequestResponse !== undefined) {
+      return invalidRequestResponse;
+    }
+
     const url = this.buildTaskListUrl(request);
 
     try {
@@ -1015,26 +1205,23 @@ export class SupersetClient
         .map(toTaskListItem)
         .filter(isDefined);
       const totalCount = extractSupersetCount(payload, tasks.length);
-      const totalPages = Math.ceil(totalCount / request.pageSize);
 
       return {
         contractVersion: TASK_LIST_CONTRACT_VERSION,
         tasks,
-        count: tasks.length,
-        totalCount,
-        page: request.page,
-        pageSize: request.pageSize,
-        totalPages,
-        hasNext: request.page < totalPages,
-        hasPrevious: request.page > 1,
-        columnsRequested: requestedTaskColumns(request),
-        columnsLoaded: taskColumnsLoaded(tasks),
-        warnings: [],
+        ...listResponseMetadata(
+          request,
+          tasks.length,
+          totalCount,
+          requestedTaskColumns(request),
+          taskColumnsLoaded(tasks),
+          [],
+        ),
       };
     } catch (error) {
       return emptyTaskListResponse(request, [
         `task list failed: ${
-          error instanceof Error ? error.message : String(error)
+          externalErrorMessage(error)
         }`,
       ]);
     }
@@ -1075,7 +1262,7 @@ export class SupersetClient
         assets: [],
         warnings: [
           `${assetType} search failed: ${
-            error instanceof Error ? error.message : String(error)
+            externalErrorMessage(error)
           }`,
         ],
       };
@@ -1094,19 +1281,16 @@ export class SupersetClient
       request.limit,
       request.includeCertifiedOnly,
     );
-    const url = new URL(`${this.config.supersetBaseUrl}${path}`);
-    url.searchParams.set('q', query);
-    return url.toString();
+    return this.buildSupersetQueryUrl(path, query);
   }
 
   private buildAnnotationLayerListUrl(
     request: AnnotationLayerListRequest,
   ): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.annotationLayer}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.annotationLayer,
+      buildAnnotationLayerListQuery(request),
     );
-    url.searchParams.set('q', buildAnnotationLayerListQuery(request));
-    return url.toString();
   }
 
   private buildAnnotationListUrl(request: AnnotationListRequest): string {
@@ -1114,98 +1298,92 @@ export class SupersetClient
       /\/$/,
       '',
     );
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${basePath}/${request.layerId}/annotation/`,
+    return this.buildSupersetQueryUrl(
+      `${basePath}/${request.layerId}/annotation/`,
+      buildAnnotationListQuery(request),
     );
-    url.searchParams.set('q', buildAnnotationListQuery(request));
-    return url.toString();
   }
 
   private buildDashboardListUrl(request: DashboardListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dashboard}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.dashboard,
+      buildDashboardListQuery(request),
     );
-    url.searchParams.set('q', buildDashboardListQuery(request));
-    return url.toString();
   }
 
   private buildChartListUrl(request: ChartListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.chart}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.chart,
+      buildChartListQuery(request),
     );
-    url.searchParams.set('q', buildChartListQuery(request));
-    return url.toString();
   }
 
   private buildDatasetListUrl(request: DatasetListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.dataset}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.dataset,
+      buildDatasetListQuery(request),
     );
-    url.searchParams.set('q', buildDatasetListQuery(request));
-    return url.toString();
   }
 
   private buildDatabaseListUrl(request: DatabaseListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.database}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.database,
+      buildDatabaseListQuery(request),
     );
-    url.searchParams.set('q', buildDatabaseListQuery(request));
-    return url.toString();
   }
 
   private buildQueryListUrl(request: QueryListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.query}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.query,
+      buildQueryListQuery(request),
     );
-    url.searchParams.set('q', buildQueryListQuery(request));
-    return url.toString();
   }
 
   private buildSavedQueryListUrl(request: SavedQueryListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.savedQuery}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.savedQuery,
+      buildSavedQueryListQuery(request),
     );
-    url.searchParams.set('q', buildSavedQueryListQuery(request));
-    return url.toString();
   }
 
   private buildReportListUrl(request: ReportListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.report}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.report,
+      buildReportListQuery(request),
     );
-    url.searchParams.set('q', buildReportListQuery(request));
-    return url.toString();
   }
 
   private buildRoleListUrl(request: RoleListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.role}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.role,
+      buildRoleListQuery(request),
     );
-    url.searchParams.set('q', buildRoleListQuery(request));
-    return url.toString();
   }
 
   private buildRlsListUrl(request: RlsListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.rls}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.rls,
+      buildRlsListQuery(request),
     );
-    url.searchParams.set('q', buildRlsListQuery(request));
-    return url.toString();
   }
 
   private buildTagListUrl(request: TagListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.tag}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.tag,
+      buildTagListQuery(request),
     );
-    url.searchParams.set('q', buildTagListQuery(request));
-    return url.toString();
   }
 
   private buildTaskListUrl(request: TaskListRequest): string {
-    const url = new URL(
-      `${this.config.supersetBaseUrl}${this.config.supersetAssetSearchPaths.task}`,
+    return this.buildSupersetQueryUrl(
+      this.config.supersetAssetSearchPaths.task,
+      buildTaskListQuery(request),
     );
-    url.searchParams.set('q', buildTaskListQuery(request));
+  }
+
+  private buildSupersetQueryUrl(path: string, query: string): string {
+    const url = new URL(`${this.config.supersetBaseUrl}${path}`);
+    url.searchParams.set('q', query);
     return url.toString();
   }
 }
@@ -1215,10 +1393,69 @@ function extractObjectKeys(payload: unknown): string[] {
     return [];
   }
 
-  return Object.keys(payload).sort();
+  return [
+    ...new Set(
+      Object.keys(payload)
+        .map(key => cleanMetadataKey(key))
+        .filter((key): key is string => key !== undefined),
+    ),
+  ]
+    .sort()
+    .slice(0, MAX_METADATA_KEYS);
 }
 
 type SearchableAssetType = Exclude<AssetType, 'metric'>;
+
+interface ListPaginationRequest {
+  page: number;
+  pageSize: number;
+}
+
+interface ListResponseMetadata {
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+}
+
+interface ListOrderingRequest {
+  orderColumn?: unknown;
+  orderDirection: unknown;
+}
+
+interface ListFilterRequest {
+  filters: unknown;
+}
+
+interface SupersetListQueryRequest extends ListPaginationRequest {
+  filters: ListFilter[];
+  search?: string;
+  orderColumn?: string;
+  orderDirection: string;
+}
+
+interface ListColumnRequest {
+  selectColumns?: unknown;
+}
+
+type LoadedColumnName = string | readonly string[];
+
+type LoadedColumnSpec<T> = readonly [keyof T, LoadedColumnName];
+
+type EmptyListResponseFactory<
+  TRequest extends ListPaginationRequest,
+  TResponse,
+> = (request: TRequest, warnings: string[]) => TResponse;
+
+interface ListRequestValidationOptions {
+  requiresOwnedByMeFlag?: boolean;
+}
 
 interface SupersetListItem {
   id?: number;
@@ -1347,298 +1584,65 @@ function buildSupersetListQuery(
 function buildAnnotationLayerListQuery(
   request: AnnotationLayerListRequest,
 ): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatAnnotationLayerFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildAnnotationListQuery(request: AnnotationListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'short_descr',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatAnnotationFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'short_descr');
 }
 
 function buildDashboardListQuery(request: DashboardListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'dashboard_title',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDashboardFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'dashboard_title');
 }
 
 function buildChartListQuery(request: ChartListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'slice_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatChartFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'slice_name');
 }
 
 function buildDatasetListQuery(request: DatasetListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'table_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDatasetFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'table_name');
 }
 
 function buildDatabaseListQuery(request: DatabaseListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'database_name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatDatabaseFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'database_name');
 }
 
 function buildQueryListQuery(request: QueryListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'sql',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatQueryFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'sql');
 }
 
 function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'label',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatSavedQueryFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'label');
 }
 
 function buildReportListQuery(request: ReportListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatReportFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildRoleListQuery(request: RoleListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatRoleFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildRlsListQuery(request: RlsListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatRlsFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildTagListQuery(request: TagListRequest): string {
-  const filters = [...request.filters];
-  if (request.search !== undefined && request.search !== '') {
-    filters.push({
-      col: 'name',
-      opr: 'ct',
-      value: request.search,
-    });
-  }
-
-  const parts = [
-    `page:${request.page - 1}`,
-    `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatTagFilter).join(',')})`,
-  ];
-
-  if (request.orderColumn !== undefined && request.orderColumn !== '') {
-    parts.push(`order_column:${request.orderColumn}`);
-    parts.push(`order_direction:${request.orderDirection}`);
-  }
-
-  return `(${parts.join(',')})`;
+  return buildSupersetPagedListQuery(request, 'name');
 }
 
 function buildTaskListQuery(request: TaskListRequest): string {
+  return buildSupersetPagedListQuery(request, 'task_name');
+}
+
+function buildSupersetPagedListQuery(
+  request: SupersetListQueryRequest,
+  searchColumn: string,
+): string {
   const filters = [...request.filters];
   if (request.search !== undefined && request.search !== '') {
     filters.push({
-      col: 'task_name',
+      col: searchColumn,
       opr: 'ct',
       value: request.search,
     });
@@ -1647,7 +1651,7 @@ function buildTaskListQuery(request: TaskListRequest): string {
   const parts = [
     `page:${request.page - 1}`,
     `page_size:${request.pageSize}`,
-    `filters:!(${filters.map(formatTaskFilter).join(',')})`,
+    `filters:!(${filters.map(formatListFilter).join(',')})`,
   ];
 
   if (request.orderColumn !== undefined && request.orderColumn !== '') {
@@ -1658,223 +1662,13 @@ function buildTaskListQuery(request: TaskListRequest): string {
   return `(${parts.join(',')})`;
 }
 
-function formatDashboardFilter(filter: {
-  col: string;
-  opr: string;
-  value: DashboardFilterValue;
-}): string {
+function formatListFilter(filter: ListFilter): string {
   return `(col:${filter.col},opr:${filter.opr},value:${formatRisonValue(
     filter.value,
   )})`;
 }
 
-function formatAnnotationLayerFilter(filter: {
-  col: string;
-  opr: string;
-  value: AnnotationLayerFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationLayerRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatAnnotationFilter(filter: {
-  col: string;
-  opr: string;
-  value: AnnotationFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatAnnotationRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatChartFilter(filter: {
-  col: string;
-  opr: string;
-  value: ChartFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatChartRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatDatasetFilter(filter: {
-  col: string;
-  opr: string;
-  value: DatasetFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatDatasetRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatDatabaseFilter(filter: {
-  col: string;
-  opr: string;
-  value: DatabaseFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatDatabaseRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatQueryFilter(filter: {
-  col: string;
-  opr: string;
-  value: QueryFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatQueryRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatSavedQueryFilter(filter: {
-  col: string;
-  opr: string;
-  value: SavedQueryFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatSavedQueryRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatReportFilter(filter: {
-  col: string;
-  opr: string;
-  value: ReportFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatReportRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRoleFilter(filter: {
-  col: string;
-  opr: string;
-  value: RoleFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatRoleRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRlsFilter(filter: {
-  col: string;
-  opr: string;
-  value: RlsFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatRlsRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatTagFilter(filter: {
-  col: string;
-  opr: string;
-  value: TagFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatTagRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatTaskFilter(filter: {
-  col: string;
-  opr: string;
-  value: TaskFilterValue;
-}): string {
-  return `(col:${filter.col},opr:${filter.opr},value:${formatTaskRisonValue(
-    filter.value,
-  )})`;
-}
-
-function formatRisonValue(value: DashboardFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatAnnotationLayerRisonValue(
-  value: AnnotationLayerFilterValue,
-): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatAnnotationRisonValue(value: AnnotationFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatChartRisonValue(value: ChartFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatDatasetRisonValue(value: DatasetFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatDatabaseRisonValue(value: DatabaseFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatQueryRisonValue(value: QueryFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatSavedQueryRisonValue(value: SavedQueryFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatReportRisonValue(value: ReportFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatRoleRisonValue(value: RoleFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatRlsRisonValue(value: RlsFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatTagRisonValue(value: TagFilterValue): string {
-  if (Array.isArray(value)) {
-    return `!(${value.map(formatScalarRisonValue).join(',')})`;
-  }
-  return formatScalarRisonValue(value);
-}
-
-function formatTaskRisonValue(value: TaskFilterValue): string {
+function formatRisonValue(value: ListFilterValue): string {
   if (Array.isArray(value)) {
     return `!(${value.map(formatScalarRisonValue).join(',')})`;
   }
@@ -1893,28 +1687,35 @@ function escapeRisonString(value: string): string {
 }
 
 function extractSupersetResults(payload: unknown): SupersetListItem[] {
-  if (!isRecord(payload) || !Array.isArray(payload.result)) {
-    return [];
+  if (!isRecord(payload) || !Array.isArray(payload['result'])) {
+    throw new Error('Superset list response must include a result array');
   }
 
-  return payload.result.filter(isRecord).map(item => item as SupersetListItem);
+  return payload['result']
+    .filter(isRecord)
+    .map(item => item as SupersetListItem);
 }
 
 function extractSupersetCount(payload: unknown, fallback: number): number {
-  if (!isRecord(payload) || typeof payload.count !== 'number') {
+  if (
+    !isRecord(payload) ||
+    typeof payload['count'] !== 'number' ||
+    !Number.isSafeInteger(payload['count']) ||
+    payload['count'] < fallback
+  ) {
     return fallback;
   }
-  return payload.count;
+  return payload['count'];
 }
 
 function toDashboardListItem(
   item: SupersetListItem,
 ): DashboardListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<DashboardListItem>({
     id: item.id,
     dashboardTitle:
       typeof item.dashboard_title === 'string' ? item.dashboard_title : undefined,
@@ -1935,15 +1736,15 @@ function toDashboardListItem(
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<ChartListItem>({
     id: item.id,
     sliceName: typeof item.slice_name === 'string' ? item.slice_name : undefined,
     vizType: typeof item.viz_type === 'string' ? item.viz_type : undefined,
@@ -1962,15 +1763,15 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<DatasetListItem>({
     id: item.id,
     tableName: typeof item.table_name === 'string' ? item.table_name : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
@@ -1993,22 +1794,22 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
         ? item.is_virtual
         : item.type === 'virtual',
     databaseId:
-      typeof item.database_id === 'number'
+      isSupersetId(item.database_id)
         ? item.database_id
-        : typeof item.database?.id === 'number'
+        : isSupersetId(item.database?.id)
           ? item.database.id
           : undefined,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     url: typeof item.url === 'string' ? item.url : undefined,
-  };
+  });
 }
 
 function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<DatabaseListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     databaseName:
@@ -2031,8 +1832,9 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
       typeof item.allow_run_async === 'boolean'
         ? item.allow_run_async
         : undefined,
-    cacheTimeout:
-      typeof item.cache_timeout === 'number' ? item.cache_timeout : undefined,
+    cacheTimeout: isCacheTimeout(item.cache_timeout)
+      ? item.cache_timeout
+      : undefined,
     configurationMethod:
       typeof item.configuration_method === 'string'
         ? item.configuration_method
@@ -2062,22 +1864,22 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toSavedQueryListItem(
   item: SupersetListItem,
 ): SavedQueryListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<SavedQueryListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     label: typeof item.label === 'string' ? item.label : undefined,
     sql: typeof item.sql === 'string' ? item.sql : undefined,
-    dbId: typeof item.db_id === 'number' ? item.db_id : undefined,
+    dbId: isSupersetId(item.db_id) ? item.db_id : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
     catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
     description:
@@ -2085,34 +1887,34 @@ function toSavedQueryListItem(
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
     lastRun: typeof item.last_run === 'string' ? item.last_run : undefined,
-  };
+  });
 }
 
 function toAnnotationLayerListItem(
   item: SupersetListItem,
 ): AnnotationLayerListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<AnnotationLayerListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     descr: typeof item.descr === 'string' ? item.descr : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
-  };
+  });
 }
 
 function toAnnotationListItem(
   item: SupersetListItem,
   fallbackLayerId: number,
 ): AnnotationListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<AnnotationListItem>({
     id: item.id,
     shortDescr:
       typeof item.short_descr === 'string' ? item.short_descr : undefined,
@@ -2121,47 +1923,59 @@ function toAnnotationListItem(
     endDttm: typeof item.end_dttm === 'string' ? item.end_dttm : undefined,
     jsonMetadata:
       typeof item.json_metadata === 'string' ? item.json_metadata : undefined,
-    layerId: typeof item.layer_id === 'number' ? item.layer_id : fallbackLayerId,
-  };
+    layerId: isSupersetId(item.layer_id) ? item.layer_id : fallbackLayerId,
+  });
 }
 
 function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<QueryListItem>({
     id: item.id,
     sql: typeof item.sql === 'string' ? item.sql : undefined,
     executedSql:
       typeof item.executed_sql === 'string' ? item.executed_sql : undefined,
     status: typeof item.status === 'string' ? item.status : undefined,
-    startTime: typeof item.start_time === 'number' ? item.start_time : undefined,
-    endTime: typeof item.end_time === 'number' ? item.end_time : undefined,
-    rows: typeof item.rows === 'number' ? item.rows : undefined,
+    startTime: isNonNegativeFiniteNumber(item.start_time)
+      ? item.start_time
+      : undefined,
+    endTime: isNonNegativeFiniteNumber(item.end_time)
+      ? item.end_time
+      : undefined,
+    rows: isNonNegativeInteger(item.rows) ? item.rows : undefined,
     databaseId:
-      typeof item.database_id === 'number'
+      isSupersetId(item.database_id)
         ? item.database_id
-        : item.database?.id,
+        : isSupersetId(item.database?.id)
+          ? item.database.id
+          : undefined,
     schema: typeof item.schema === 'string' ? item.schema : undefined,
     catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
     tabName: typeof item.tab_name === 'string' ? item.tab_name : undefined,
     errorMessage:
       typeof item.error_message === 'string' ? item.error_message : undefined,
     clientId: typeof item.client_id === 'string' ? item.client_id : undefined,
-    limit: typeof item.limit === 'number' ? item.limit : undefined,
-    progress: typeof item.progress === 'number' ? item.progress : undefined,
+    limit: isNonNegativeInteger(item.limit) ? item.limit : undefined,
+    progress: isNonNegativeFiniteNumber(item.progress)
+      ? item.progress
+      : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
-    userId: typeof item.user_id === 'number' ? item.user_id : item.user?.id,
-  };
+    userId: isSupersetId(item.user_id)
+      ? item.user_id
+      : isSupersetId(item.user?.id)
+        ? item.user.id
+        : undefined,
+  });
 }
 
 function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<ReportListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     description:
@@ -2170,8 +1984,8 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
     active: typeof item.active === 'boolean' ? item.active : undefined,
     crontab: typeof item.crontab === 'string' ? item.crontab : undefined,
     dashboardId:
-      typeof item.dashboard_id === 'number' ? item.dashboard_id : undefined,
-    chartId: typeof item.chart_id === 'number' ? item.chart_id : undefined,
+      isSupersetId(item.dashboard_id) ? item.dashboard_id : undefined,
+    chartId: isSupersetId(item.chart_id) ? item.chart_id : undefined,
     lastEvalDttm:
       typeof item.last_eval_dttm === 'string' ? item.last_eval_dttm : undefined,
     lastEvalDttmHumanized:
@@ -2194,32 +2008,32 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<RoleListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
-  };
+  });
 }
 
 function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<RlsListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     filterType:
       typeof item.filter_type === 'string' ? item.filter_type : undefined,
-    tables: item.tables?.map(toRlsTableRef).filter(isDefined),
-    roles: item.roles?.map(toRlsRoleRef).filter(isDefined),
+    tables: mapRlsRefs(item.tables, toRlsTableRef),
+    roles: mapRlsRefs(item.roles, toRlsRoleRef),
     clause: typeof item.clause === 'string' ? item.clause : undefined,
     groupKey: typeof item.group_key === 'string' ? item.group_key : undefined,
     changedOn:
@@ -2228,7 +2042,18 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
         : typeof item.changed_on_delta_humanized === 'string'
           ? item.changed_on_delta_humanized
           : undefined,
-  };
+  });
+}
+
+function mapRlsRefs<T>(
+  value: unknown,
+  mapper: (value: unknown) => T | undefined,
+): T[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value.map(mapper).filter(isDefined);
 }
 
 function toRlsTableRef(value: unknown): RlsTableRef | undefined {
@@ -2237,11 +2062,11 @@ function toRlsTableRef(value: unknown): RlsTableRef | undefined {
   }
 
   const ref: RlsTableRef = {};
-  if (typeof value.id === 'number') {
-    ref.id = value.id;
+  if (isSupersetId(value['id'])) {
+    ref.id = value['id'];
   }
-  if (typeof value.table_name === 'string') {
-    ref.tableName = value.table_name;
+  if (typeof value['table_name'] === 'string') {
+    ref.tableName = value['table_name'];
   }
   return Object.keys(ref).length > 0 ? ref : undefined;
 }
@@ -2252,21 +2077,21 @@ function toRlsRoleRef(value: unknown): RlsRoleRef | undefined {
   }
 
   const ref: RlsRoleRef = {};
-  if (typeof value.id === 'number') {
-    ref.id = value.id;
+  if (isSupersetId(value['id'])) {
+    ref.id = value['id'];
   }
-  if (typeof value.name === 'string') {
-    ref.name = value.name;
+  if (typeof value['name'] === 'string') {
+    ref.name = value['name'];
   }
   return Object.keys(ref).length > 0 ? ref : undefined;
 }
 
 function toTagListItem(item: SupersetListItem): TagListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<TagListItem>({
     id: item.id,
     name: typeof item.name === 'string' ? item.name : undefined,
     type: typeof item.type === 'string' ? item.type : undefined,
@@ -2282,15 +2107,15 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
         : undefined,
-  };
+  });
 }
 
 function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
-  return {
+  return omitUndefined<TaskListItem>({
     id: item.id,
     uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
     taskType: typeof item.task_type === 'string' ? item.task_type : undefined,
@@ -2300,7 +2125,15 @@ function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
     scope: typeof item.scope === 'string' ? item.scope : undefined,
     changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
     createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
-  };
+  });
+}
+
+function omitUndefined<T extends object>(
+  value: Record<string, unknown>,
+): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as T;
 }
 
 function extractDatabaseName(item: SupersetListItem): string | undefined {
@@ -2313,368 +2146,353 @@ function extractDatabaseName(item: SupersetListItem): string | undefined {
 }
 
 function requestedDashboardColumns(request: DashboardListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'dashboard_title',
-        'slug',
-        'description',
-        'certified_by',
-        'certification_details',
-        'url',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'dashboard_title',
+    'slug',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedAnnotationLayerColumns(
   request: AnnotationLayerListRequest,
 ): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'descr'];
+  return requestedColumnsOrDefault(request, ['id', 'name', 'descr']);
 }
 
 function requestedAnnotationColumns(request: AnnotationListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'short_descr',
+    'start_dttm',
+    'end_dttm',
+    'layer_id',
+  ]);
 }
 
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const dashboard of dashboards) {
-    if (dashboard.dashboardTitle !== undefined) loaded.add('dashboard_title');
-    if (dashboard.slug !== undefined) loaded.add('slug');
-    if (dashboard.description !== undefined) loaded.add('description');
-    if (dashboard.certifiedBy !== undefined) loaded.add('certified_by');
-    if (dashboard.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (dashboard.published !== undefined) loaded.add('published');
-    if (dashboard.uuid !== undefined) loaded.add('uuid');
-    if (dashboard.url !== undefined) loaded.add('url');
-    if (dashboard.changedOn !== undefined) loaded.add('changed_on');
-    if (dashboard.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(dashboards, [
+    ['dashboardTitle', 'dashboard_title'],
+    ['slug', 'slug'],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['published', 'published'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+  ]);
 }
 
 function requestedChartColumns(request: ChartListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'slice_name',
-        'viz_type',
-        'description',
-        'certified_by',
-        'certification_details',
-        'url',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'slice_name',
+    'viz_type',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function chartColumnsLoaded(charts: ChartListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const chart of charts) {
-    if (chart.sliceName !== undefined) loaded.add('slice_name');
-    if (chart.vizType !== undefined) loaded.add('viz_type');
-    if (chart.description !== undefined) loaded.add('description');
-    if (chart.certifiedBy !== undefined) loaded.add('certified_by');
-    if (chart.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (chart.uuid !== undefined) loaded.add('uuid');
-    if (chart.url !== undefined) loaded.add('url');
-    if (chart.changedOn !== undefined) loaded.add('changed_on');
-    if (chart.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(charts, [
+    ['sliceName', 'slice_name'],
+    ['vizType', 'viz_type'],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+  ]);
 }
 
 function requestedDatasetColumns(request: DatasetListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'table_name',
-        'schema',
-        'database_name',
-        'database',
-        'description',
-        'certified_by',
-        'certification_details',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'table_name',
+    'schema',
+    'database_name',
+    'database',
+    'description',
+    'certified_by',
+    'certification_details',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedDatabaseColumns(request: DatabaseListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : [
-        'id',
-        'uuid',
-        'database_name',
-        'backend',
-        'expose_in_sqllab',
-        'allow_file_upload',
-        'changed_on',
-        'changed_on_humanized',
-      ];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'uuid',
+    'database_name',
+    'backend',
+    'expose_in_sqllab',
+    'allow_file_upload',
+    'changed_on',
+    'changed_on_humanized',
+  ]);
 }
 
 function requestedQueryColumns(request: QueryListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'status', 'start_time', 'database_id', 'schema'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'status',
+    'start_time',
+    'database_id',
+    'schema',
+  ]);
 }
 
 function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'label', 'db_id', 'schema', 'uuid'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'label',
+    'db_id',
+    'schema',
+    'uuid',
+  ]);
 }
 
 function requestedReportColumns(request: ReportListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'type', 'active', 'crontab'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'name',
+    'type',
+    'active',
+    'crontab',
+  ]);
 }
 
 function requestedRoleColumns(request: RoleListRequest): string[] {
-  return request.selectColumns.length > 0 ? request.selectColumns : ['id', 'name'];
+  return requestedColumnsOrDefault(request, ['id', 'name']);
 }
 
 function requestedRlsColumns(request: RlsListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'filter_type', 'clause'];
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'name',
+    'filter_type',
+    'clause',
+  ]);
 }
 
 function requestedTagColumns(request: TagListRequest): string[] {
-  return request.selectColumns.length > 0
-    ? request.selectColumns
-    : ['id', 'name', 'type'];
+  return requestedColumnsOrDefault(request, ['id', 'name', 'type']);
 }
 
 function requestedTaskColumns(request: TaskListRequest): string[] {
-  return request.selectColumns.length > 0
+  return requestedColumnsOrDefault(request, [
+    'id',
+    'uuid',
+    'task_type',
+    'status',
+    'changed_on',
+  ]);
+}
+
+function requestedColumnsOrDefault(
+  request: ListColumnRequest,
+  defaultColumns: string[],
+): string[] {
+  return isListColumnArray(request.selectColumns) &&
+    request.selectColumns.length > 0
     ? request.selectColumns
-    : ['id', 'uuid', 'task_type', 'status', 'changed_on'];
+    : defaultColumns;
+}
+
+function loadedColumns<T extends object>(
+  items: T[],
+  specs: readonly LoadedColumnSpec<T>[],
+): string[] {
+  const loaded = new Set<string>(['id']);
+  for (const item of items) {
+    for (const [field, columnNames] of specs) {
+      if (item[field] !== undefined) {
+        for (const columnName of arrayColumnNames(columnNames)) {
+          loaded.add(columnName);
+        }
+      }
+    }
+  }
+  return [...loaded];
+}
+
+function arrayColumnNames(columnNames: LoadedColumnName): readonly string[] {
+  return typeof columnNames === 'string' ? [columnNames] : columnNames;
 }
 
 function datasetColumnsLoaded(datasets: DatasetListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const dataset of datasets) {
-    if (dataset.tableName !== undefined) loaded.add('table_name');
-    if (dataset.schema !== undefined) loaded.add('schema');
-    if (dataset.databaseName !== undefined) {
-      loaded.add('database_name');
-      loaded.add('database');
-    }
-    if (dataset.description !== undefined) loaded.add('description');
-    if (dataset.certifiedBy !== undefined) loaded.add('certified_by');
-    if (dataset.certificationDetails !== undefined) {
-      loaded.add('certification_details');
-    }
-    if (dataset.changedOn !== undefined) loaded.add('changed_on');
-    if (dataset.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (dataset.isVirtual !== undefined) loaded.add('is_virtual');
-    if (dataset.databaseId !== undefined) loaded.add('database_id');
-    if (dataset.uuid !== undefined) loaded.add('uuid');
-    if (dataset.url !== undefined) loaded.add('url');
-  }
-  return [...loaded];
+  return loadedColumns(datasets, [
+    ['tableName', 'table_name'],
+    ['schema', 'schema'],
+    ['databaseName', ['database_name', 'database']],
+    ['description', 'description'],
+    ['certifiedBy', 'certified_by'],
+    ['certificationDetails', 'certification_details'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['isVirtual', 'is_virtual'],
+    ['databaseId', 'database_id'],
+    ['uuid', 'uuid'],
+    ['url', 'url'],
+  ]);
 }
 
 function databaseColumnsLoaded(databases: DatabaseListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const database of databases) {
-    if (database.uuid !== undefined) loaded.add('uuid');
-    if (database.databaseName !== undefined) loaded.add('database_name');
-    if (database.backend !== undefined) loaded.add('backend');
-    if (database.exposeInSqllab !== undefined) loaded.add('expose_in_sqllab');
-    if (database.allowCtas !== undefined) loaded.add('allow_ctas');
-    if (database.allowCvas !== undefined) loaded.add('allow_cvas');
-    if (database.allowDml !== undefined) loaded.add('allow_dml');
-    if (database.allowFileUpload !== undefined) loaded.add('allow_file_upload');
-    if (database.allowRunAsync !== undefined) loaded.add('allow_run_async');
-    if (database.cacheTimeout !== undefined) loaded.add('cache_timeout');
-    if (database.configurationMethod !== undefined) {
-      loaded.add('configuration_method');
-    }
-    if (database.forceCtasSchema !== undefined) loaded.add('force_ctas_schema');
-    if (database.impersonateUser !== undefined) loaded.add('impersonate_user');
-    if (database.isManagedExternally !== undefined) {
-      loaded.add('is_managed_externally');
-    }
-    if (database.externalUrl !== undefined) loaded.add('external_url');
-    if (database.extra !== undefined) loaded.add('extra');
-    if (database.changedOn !== undefined) loaded.add('changed_on');
-    if (database.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (database.createdOn !== undefined) loaded.add('created_on');
-    if (database.createdOnHumanized !== undefined) {
-      loaded.add('created_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(databases, [
+    ['uuid', 'uuid'],
+    ['databaseName', 'database_name'],
+    ['backend', 'backend'],
+    ['exposeInSqllab', 'expose_in_sqllab'],
+    ['allowCtas', 'allow_ctas'],
+    ['allowCvas', 'allow_cvas'],
+    ['allowDml', 'allow_dml'],
+    ['allowFileUpload', 'allow_file_upload'],
+    ['allowRunAsync', 'allow_run_async'],
+    ['cacheTimeout', 'cache_timeout'],
+    ['configurationMethod', 'configuration_method'],
+    ['forceCtasSchema', 'force_ctas_schema'],
+    ['impersonateUser', 'impersonate_user'],
+    ['isManagedExternally', 'is_managed_externally'],
+    ['externalUrl', 'external_url'],
+    ['extra', 'extra'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function queryColumnsLoaded(queries: QueryListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const query of queries) {
-    if (query.sql !== undefined) loaded.add('sql');
-    if (query.executedSql !== undefined) loaded.add('executed_sql');
-    if (query.status !== undefined) loaded.add('status');
-    if (query.startTime !== undefined) loaded.add('start_time');
-    if (query.endTime !== undefined) loaded.add('end_time');
-    if (query.rows !== undefined) loaded.add('rows');
-    if (query.databaseId !== undefined) loaded.add('database_id');
-    if (query.schema !== undefined) loaded.add('schema');
-    if (query.catalog !== undefined) loaded.add('catalog');
-    if (query.tabName !== undefined) loaded.add('tab_name');
-    if (query.errorMessage !== undefined) loaded.add('error_message');
-    if (query.clientId !== undefined) loaded.add('client_id');
-    if (query.limit !== undefined) loaded.add('limit');
-    if (query.progress !== undefined) loaded.add('progress');
-    if (query.changedOn !== undefined) loaded.add('changed_on');
-    if (query.userId !== undefined) loaded.add('user_id');
-  }
-  return [...loaded];
+  return loadedColumns(queries, [
+    ['sql', 'sql'],
+    ['executedSql', 'executed_sql'],
+    ['status', 'status'],
+    ['startTime', 'start_time'],
+    ['endTime', 'end_time'],
+    ['rows', 'rows'],
+    ['databaseId', 'database_id'],
+    ['schema', 'schema'],
+    ['catalog', 'catalog'],
+    ['tabName', 'tab_name'],
+    ['errorMessage', 'error_message'],
+    ['clientId', 'client_id'],
+    ['limit', 'limit'],
+    ['progress', 'progress'],
+    ['changedOn', 'changed_on'],
+    ['userId', 'user_id'],
+  ]);
 }
 
 function savedQueryColumnsLoaded(savedQueries: SavedQueryListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const savedQuery of savedQueries) {
-    if (savedQuery.uuid !== undefined) loaded.add('uuid');
-    if (savedQuery.label !== undefined) loaded.add('label');
-    if (savedQuery.sql !== undefined) loaded.add('sql');
-    if (savedQuery.dbId !== undefined) loaded.add('db_id');
-    if (savedQuery.schema !== undefined) loaded.add('schema');
-    if (savedQuery.catalog !== undefined) loaded.add('catalog');
-    if (savedQuery.description !== undefined) loaded.add('description');
-    if (savedQuery.changedOn !== undefined) loaded.add('changed_on');
-    if (savedQuery.createdOn !== undefined) loaded.add('created_on');
-    if (savedQuery.lastRun !== undefined) loaded.add('last_run');
-  }
-  return [...loaded];
+  return loadedColumns(savedQueries, [
+    ['uuid', 'uuid'],
+    ['label', 'label'],
+    ['sql', 'sql'],
+    ['dbId', 'db_id'],
+    ['schema', 'schema'],
+    ['catalog', 'catalog'],
+    ['description', 'description'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+    ['lastRun', 'last_run'],
+  ]);
 }
 
 function annotationLayerColumnsLoaded(
   annotationLayers: AnnotationLayerListItem[],
 ): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const annotationLayer of annotationLayers) {
-    if (annotationLayer.name !== undefined) loaded.add('name');
-    if (annotationLayer.descr !== undefined) loaded.add('descr');
-    if (annotationLayer.changedOn !== undefined) loaded.add('changed_on');
-    if (annotationLayer.createdOn !== undefined) loaded.add('created_on');
-  }
-  return [...loaded];
+  return loadedColumns(annotationLayers, [
+    ['name', 'name'],
+    ['descr', 'descr'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+  ]);
 }
 
 function annotationColumnsLoaded(annotations: AnnotationListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const annotation of annotations) {
-    if (annotation.shortDescr !== undefined) loaded.add('short_descr');
-    if (annotation.longDescr !== undefined) loaded.add('long_descr');
-    if (annotation.startDttm !== undefined) loaded.add('start_dttm');
-    if (annotation.endDttm !== undefined) loaded.add('end_dttm');
-    if (annotation.jsonMetadata !== undefined) loaded.add('json_metadata');
-    if (annotation.layerId !== undefined) loaded.add('layer_id');
-  }
-  return [...loaded];
+  return loadedColumns(annotations, [
+    ['shortDescr', 'short_descr'],
+    ['longDescr', 'long_descr'],
+    ['startDttm', 'start_dttm'],
+    ['endDttm', 'end_dttm'],
+    ['jsonMetadata', 'json_metadata'],
+    ['layerId', 'layer_id'],
+  ]);
 }
 
 function reportColumnsLoaded(reports: ReportListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const report of reports) {
-    if (report.name !== undefined) loaded.add('name');
-    if (report.description !== undefined) loaded.add('description');
-    if (report.type !== undefined) loaded.add('type');
-    if (report.active !== undefined) loaded.add('active');
-    if (report.crontab !== undefined) loaded.add('crontab');
-    if (report.dashboardId !== undefined) loaded.add('dashboard_id');
-    if (report.chartId !== undefined) loaded.add('chart_id');
-    if (report.lastEvalDttm !== undefined) loaded.add('last_eval_dttm');
-    if (report.lastEvalDttmHumanized !== undefined) {
-      loaded.add('last_eval_dttm_humanized');
-    }
-    if (report.lastState !== undefined) loaded.add('last_state');
-    if (report.creationMethod !== undefined) loaded.add('creation_method');
-    if (report.changedOn !== undefined) loaded.add('changed_on');
-    if (report.changedOnHumanized !== undefined) {
-      loaded.add('changed_on_humanized');
-    }
-    if (report.createdOn !== undefined) loaded.add('created_on');
-    if (report.createdOnHumanized !== undefined) {
-      loaded.add('created_on_humanized');
-    }
-  }
-  return [...loaded];
+  return loadedColumns(reports, [
+    ['name', 'name'],
+    ['description', 'description'],
+    ['type', 'type'],
+    ['active', 'active'],
+    ['crontab', 'crontab'],
+    ['dashboardId', 'dashboard_id'],
+    ['chartId', 'chart_id'],
+    ['lastEvalDttm', 'last_eval_dttm'],
+    ['lastEvalDttmHumanized', 'last_eval_dttm_humanized'],
+    ['lastState', 'last_state'],
+    ['creationMethod', 'creation_method'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function roleColumnsLoaded(roles: RoleListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const role of roles) {
-    if (role.name !== undefined) loaded.add('name');
-  }
-  return [...loaded];
+  return loadedColumns(roles, [['name', 'name']]);
 }
 
 function rlsColumnsLoaded(rlsFilters: RlsListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const rlsFilter of rlsFilters) {
-    if (rlsFilter.name !== undefined) loaded.add('name');
-    if (rlsFilter.filterType !== undefined) loaded.add('filter_type');
-    if (rlsFilter.tables !== undefined) loaded.add('tables');
-    if (rlsFilter.roles !== undefined) loaded.add('roles');
-    if (rlsFilter.clause !== undefined) loaded.add('clause');
-    if (rlsFilter.groupKey !== undefined) loaded.add('group_key');
-    if (rlsFilter.changedOn !== undefined) loaded.add('changed_on');
-  }
-  return [...loaded];
+  return loadedColumns(rlsFilters, [
+    ['name', 'name'],
+    ['filterType', 'filter_type'],
+    ['tables', 'tables'],
+    ['roles', 'roles'],
+    ['clause', 'clause'],
+    ['groupKey', 'group_key'],
+    ['changedOn', 'changed_on'],
+  ]);
 }
 
 function tagColumnsLoaded(tags: TagListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const tag of tags) {
-    if (tag.name !== undefined) loaded.add('name');
-    if (tag.type !== undefined) loaded.add('type');
-    if (tag.description !== undefined) loaded.add('description');
-    if (tag.changedOn !== undefined) loaded.add('changed_on');
-    if (tag.changedOnHumanized !== undefined) loaded.add('changed_on_humanized');
-    if (tag.createdOn !== undefined) loaded.add('created_on');
-    if (tag.createdOnHumanized !== undefined) loaded.add('created_on_humanized');
-  }
-  return [...loaded];
+  return loadedColumns(tags, [
+    ['name', 'name'],
+    ['type', 'type'],
+    ['description', 'description'],
+    ['changedOn', 'changed_on'],
+    ['changedOnHumanized', 'changed_on_humanized'],
+    ['createdOn', 'created_on'],
+    ['createdOnHumanized', 'created_on_humanized'],
+  ]);
 }
 
 function taskColumnsLoaded(tasks: TaskListItem[]): string[] {
-  const loaded = new Set<string>(['id']);
-  for (const task of tasks) {
-    if (task.uuid !== undefined) loaded.add('uuid');
-    if (task.taskType !== undefined) loaded.add('task_type');
-    if (task.taskKey !== undefined) loaded.add('task_key');
-    if (task.taskName !== undefined) loaded.add('task_name');
-    if (task.status !== undefined) loaded.add('status');
-    if (task.scope !== undefined) loaded.add('scope');
-    if (task.changedOn !== undefined) loaded.add('changed_on');
-    if (task.createdOn !== undefined) loaded.add('created_on');
-  }
-  return [...loaded];
+  return loadedColumns(tasks, [
+    ['uuid', 'uuid'],
+    ['taskType', 'task_type'],
+    ['taskKey', 'task_key'],
+    ['taskName', 'task_name'],
+    ['status', 'status'],
+    ['scope', 'scope'],
+    ['changedOn', 'changed_on'],
+    ['createdOn', 'created_on'],
+  ]);
 }
 
 function emptyDashboardListResponse(
@@ -2684,16 +2502,11 @@ function emptyDashboardListResponse(
   return {
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
     dashboards: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDashboardColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDashboardColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2704,16 +2517,11 @@ function emptyAnnotationLayerListResponse(
   return {
     contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
     annotationLayers: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedAnnotationLayerColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedAnnotationLayerColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2724,17 +2532,12 @@ function emptyAnnotationListResponse(
   return {
     contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
     annotations: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
     layerId: request.layerId,
-    columnsRequested: requestedAnnotationColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedAnnotationColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2745,16 +2548,11 @@ function emptyChartListResponse(
   return {
     contractVersion: CHART_LIST_CONTRACT_VERSION,
     charts: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedChartColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedChartColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2765,16 +2563,11 @@ function emptyDatasetListResponse(
   return {
     contractVersion: DATASET_LIST_CONTRACT_VERSION,
     datasets: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDatasetColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDatasetColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2785,16 +2578,11 @@ function emptyDatabaseListResponse(
   return {
     contractVersion: DATABASE_LIST_CONTRACT_VERSION,
     databases: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedDatabaseColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedDatabaseColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2805,16 +2593,11 @@ function emptyQueryListResponse(
   return {
     contractVersion: QUERY_LIST_CONTRACT_VERSION,
     queries: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedQueryColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedQueryColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2825,16 +2608,11 @@ function emptySavedQueryListResponse(
   return {
     contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
     savedQueries: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedSavedQueryColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedSavedQueryColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2845,16 +2623,11 @@ function emptyReportListResponse(
   return {
     contractVersion: REPORT_LIST_CONTRACT_VERSION,
     reports: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedReportColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedReportColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2865,16 +2638,11 @@ function emptyRoleListResponse(
   return {
     contractVersion: ROLE_LIST_CONTRACT_VERSION,
     roles: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedRoleColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedRoleColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2885,16 +2653,11 @@ function emptyRlsListResponse(
   return {
     contractVersion: RLS_LIST_CONTRACT_VERSION,
     rlsFilters: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedRlsColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedRlsColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2905,16 +2668,11 @@ function emptyTagListResponse(
   return {
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
-    count: 0,
-    totalCount: 0,
-    page: request.page,
-    pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: request.page > 1,
-    columnsRequested: requestedTagColumns(request),
-    columnsLoaded: [],
-    warnings,
+    ...emptyListResponseMetadata(
+      request,
+      requestedTagColumns(request),
+      warnings,
+    ),
   };
 }
 
@@ -2925,15 +2683,42 @@ function emptyTaskListResponse(
   return {
     contractVersion: TASK_LIST_CONTRACT_VERSION,
     tasks: [],
-    count: 0,
-    totalCount: 0,
+    ...emptyListResponseMetadata(
+      request,
+      requestedTaskColumns(request),
+      warnings,
+    ),
+  };
+}
+
+function emptyListResponseMetadata(
+  request: ListPaginationRequest,
+  columnsRequested: string[],
+  warnings: string[],
+): ListResponseMetadata {
+  return listResponseMetadata(request, 0, 0, columnsRequested, [], warnings);
+}
+
+function listResponseMetadata(
+  request: ListPaginationRequest,
+  count: number,
+  totalCount: number,
+  columnsRequested: string[],
+  columnsLoaded: string[],
+  warnings: string[],
+): ListResponseMetadata {
+  const totalPages = Math.ceil(totalCount / request.pageSize);
+
+  return {
+    count,
+    totalCount,
     page: request.page,
     pageSize: request.pageSize,
-    totalPages: 0,
-    hasNext: false,
+    totalPages,
+    hasNext: request.page < totalPages,
     hasPrevious: request.page > 1,
-    columnsRequested: requestedTaskColumns(request),
-    columnsLoaded: [],
+    columnsRequested,
+    columnsLoaded,
     warnings,
   };
 }
@@ -2943,23 +2728,29 @@ function toAssetSearchResult(
   item: SupersetListItem,
   query: string,
 ): AssetSearchResult | undefined {
-  if (typeof item.id !== 'number') {
+  if (!isSupersetId(item.id)) {
     return undefined;
   }
 
   const name = extractAssetName(assetType, item);
-  const description = typeof item.description === 'string' ? item.description : '';
-  const certified = Boolean(item.certified_by);
+  const description = cleanAssetText(
+    item.description,
+    MAX_ASSET_DESCRIPTION_LENGTH,
+  );
+  const certified = hasCertification(item.certified_by);
 
   return {
     assetType,
     id: item.id,
-    uuid: typeof item.uuid === 'string' ? item.uuid : '',
+    uuid: cleanAssetText(item.uuid, MAX_ASSET_TEXT_LENGTH),
     name,
     description,
     certified,
     relevanceScore: scoreAsset(name, description, query) + (certified ? 0.2 : 0),
-    relevanceReason: buildRelevanceReason(name, description, query),
+    relevanceReason: cleanAssetText(
+      buildRelevanceReason(name, description, query),
+      MAX_ASSET_TEXT_LENGTH,
+    ),
     owners: extractNameList(item.owners),
     tags: extractNameList(item.tags),
   };
@@ -2970,15 +2761,19 @@ function extractAssetName(
   item: SupersetListItem,
 ): string {
   if (assetType === 'chart' && typeof item.slice_name === 'string') {
-    return item.slice_name;
+    return cleanAssetText(item.slice_name, MAX_ASSET_TEXT_LENGTH);
   }
   if (assetType === 'dashboard' && typeof item.dashboard_title === 'string') {
-    return item.dashboard_title;
+    return cleanAssetText(item.dashboard_title, MAX_ASSET_TEXT_LENGTH);
   }
   if (assetType === 'dataset' && typeof item.table_name === 'string') {
-    return item.table_name;
+    return cleanAssetText(item.table_name, MAX_ASSET_TEXT_LENGTH);
   }
-  return typeof item.name === 'string' ? item.name : '';
+  return cleanAssetText(item.name, MAX_ASSET_TEXT_LENGTH);
+}
+
+function hasCertification(value: unknown): boolean {
+  return typeof value === 'string' && value.trim() !== '';
 }
 
 function scoreAsset(name: string, description: string, query: string): number {
@@ -3011,25 +2806,450 @@ function buildRelevanceReason(
   return reasons.length > 0 ? reasons.join(', ') : 'metadata match';
 }
 
-function extractNameList(values: unknown[] | undefined): string[] {
-  if (!values) {
+function extractNameList(values: unknown): string[] {
+  if (!Array.isArray(values)) {
     return [];
   }
 
   return values.flatMap(value => {
-    if (typeof value === 'string') {
-      return [value];
-    }
-    if (isRecord(value)) {
-      const name = value.name ?? value.username ?? value.first_name;
-      return typeof name === 'string' ? [name] : [];
-    }
-    return [];
+    const name = extractCleanName(value);
+    return name === undefined ? [] : [name];
   });
+}
+
+function extractCleanName(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return normalizeName(value);
+  }
+  if (isRecord(value)) {
+    return normalizeName(
+      value['name'] ?? value['username'] ?? value['first_name'],
+    );
+  }
+  return undefined;
+}
+
+function normalizeName(value: unknown): string | undefined {
+  if (!isCleanString(value)) {
+    return undefined;
+  }
+  return cleanAssetText(value, MAX_ASSET_LIST_VALUE_LENGTH);
 }
 
 function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
+}
+
+function isSupersetId(value: unknown): value is number {
+  return isNonNegativeInteger(value);
+}
+
+function hasValidAuthorizationIds(request: unknown): boolean {
+  if (!isRecord(request)) {
+    return false;
+  }
+
+  const { principal, resource } = request;
+  if (!isRecord(principal) || !isRecord(resource)) {
+    return false;
+  }
+
+  return (
+    isOptionalSupersetId(principal['userId']) &&
+    isOptionalSupersetId(resource['id'])
+  );
+}
+
+function hasValidAuthorizationRequestShape(
+  request: unknown,
+): request is PermissionCheckRequest {
+  if (!isRecord(request)) {
+    return false;
+  }
+
+  const { principal, resource } = request;
+  return (
+    hasOnlyKeys(request, [
+      'contractVersion',
+      'principal',
+      'resource',
+      'action',
+    ]) &&
+    request['contractVersion'] === AUTHORIZATION_CONTRACT_VERSION &&
+    isRecord(principal) &&
+    hasOnlyKeys(principal, ['type', 'userId', 'username', 'roles']) &&
+    isRecord(resource) &&
+    hasOnlyKeys(resource, ['type', 'id', 'uuid']) &&
+    isPrincipalType(principal['type']) &&
+    isOptionalCleanString(principal['username']) &&
+    isOptionalCleanStringArray(principal['roles']) &&
+    isResourceType(resource['type']) &&
+    isOptionalCleanString(resource['uuid']) &&
+    isPermissionAction(request['action'])
+  );
+}
+
+function isPrincipalType(value: unknown): boolean {
+  return value === 'user' || value === 'guest' || value === 'service';
+}
+
+function isResourceType(value: unknown): boolean {
+  return (
+    value === 'chart' ||
+    value === 'dashboard' ||
+    value === 'database' ||
+    value === 'dataset' ||
+    value === 'query'
+  );
+}
+
+function isPermissionAction(value: unknown): boolean {
+  return (
+    value === 'create' ||
+    value === 'delete' ||
+    value === 'read' ||
+    value === 'write'
+  );
+}
+
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every(key => allowedKeys.includes(key));
+}
+
+function isOptionalSupersetId(value: unknown): boolean {
+  return value === undefined || isSupersetId(value);
+}
+
+function hasValidListPagination(
+  request: unknown,
+): request is ListPaginationRequest {
+  return (
+    isRecord(request) &&
+    isPositiveInteger(request['page']) &&
+    isListPageSize(request['pageSize'])
+  );
+}
+
+function withFallbackListPagination<T extends ListPaginationRequest>(
+  request: unknown,
+): T {
+  const record = isRecord(request) ? request : {};
+  return {
+    ...record,
+    page: isPositiveInteger(record['page']) ? record['page'] : 1,
+    pageSize: isListPageSize(record['pageSize']) ? record['pageSize'] : 100,
+    selectColumns: isListColumnArray(record['selectColumns'])
+      ? record['selectColumns']
+      : [],
+  } as unknown as T;
+}
+
+function invalidListRequestResponse<
+  TRequest extends ListPaginationRequest,
+  TResponse,
+>(
+  request: TRequest,
+  resourceName: string,
+  contractVersion: string,
+  emptyResponse: EmptyListResponseFactory<TRequest, TResponse>,
+  options: ListRequestValidationOptions = {},
+): TResponse | undefined {
+  if (!hasValidListPagination(request)) {
+    return emptyResponse(withFallbackListPagination<TRequest>(request), [
+      `${resourceName} list request contains invalid pagination`,
+    ]);
+  }
+  if (!hasValidListColumns(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid columns`,
+    ]);
+  }
+  if (!hasValidListOrdering(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid ordering`,
+    ]);
+  }
+  if (!hasValidListFilters(request)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid filters`,
+    ]);
+  }
+  if (!hasExpectedContractVersion(request, contractVersion)) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid contract version`,
+    ]);
+  }
+  if (
+    options.requiresOwnedByMeFlag !== undefined &&
+    !hasValidOwnershipFlags(request, options.requiresOwnedByMeFlag)
+  ) {
+    return emptyResponse(request, [
+      `${resourceName} list request contains invalid ownership flags`,
+    ]);
+  }
+  return undefined;
+}
+
+function hasValidListColumns(request: unknown): request is ListColumnRequest {
+  return isRecord(request) && isListColumnArray(request['selectColumns']);
+}
+
+function hasValidAnnotationLayerId(
+  request: unknown,
+): request is AnnotationListRequest {
+  return isRecord(request) && isPositiveInteger(request['layerId']);
+}
+
+function withFallbackAnnotationLayerId(request: unknown): AnnotationListRequest {
+  const record = isRecord(request) ? request : {};
+  return {
+    ...withFallbackListPagination<AnnotationListRequest>(record),
+    layerId: isNonNegativeInteger(record['layerId']) ? record['layerId'] : 0,
+  } as AnnotationListRequest;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return isInteger(value) && value >= 1;
+}
+
+function isListPageSize(value: unknown): value is number {
+  return isInteger(value) && value >= 1 && value <= 100;
+}
+
+function hasValidListOrdering(request: unknown): request is ListOrderingRequest {
+  return (
+    isRecord(request) &&
+    isListOrderDirection(request['orderDirection']) &&
+    isOptionalListOrderColumn(request['orderColumn'])
+  );
+}
+
+function isListOrderDirection(value: unknown): value is 'asc' | 'desc' {
+  return value === 'asc' || value === 'desc';
+}
+
+function isOptionalListOrderColumn(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (typeof value === 'string' &&
+      (value === '' || isRisonToken(value)))
+  );
+}
+
+function hasValidListFilters(request: unknown): request is ListFilterRequest {
+  return (
+    isRecord(request) &&
+    Array.isArray(request['filters']) &&
+    request['filters'].every(isListFilter) &&
+    hasValidListSearch(request)
+  );
+}
+
+function hasValidListSearch(request: Record<string, unknown>): boolean {
+  const search = request['search'];
+  return (
+    search === undefined ||
+    (isRisonScalarString(search) && (search === '' || search.trim() !== ''))
+  );
+}
+
+function hasValidOwnershipFlags(
+  request: unknown,
+  requiresOwnedByMe: boolean,
+): boolean {
+  if (!isRecord(request) || typeof request['createdByMe'] !== 'boolean') {
+    return false;
+  }
+  return (
+    !requiresOwnedByMe || typeof request['ownedByMe'] === 'boolean'
+  );
+}
+
+function hasExpectedContractVersion(
+  request: unknown,
+  contractVersion: string,
+): boolean {
+  return isRecord(request) && request['contractVersion'] === contractVersion;
+}
+
+function isListFilter(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    isRisonToken(value['col']) &&
+    isRisonToken(value['opr']) &&
+    isListFilterValue(value['value'])
+  );
+}
+
+function isRisonToken(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_]+$/.test(value);
+}
+
+function isListFilterValue(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return isHomogeneousListFilterArray(value);
+  }
+  return isListFilterScalar(value);
+}
+
+function isHomogeneousListFilterArray(value: unknown[]): boolean {
+  if (value.length === 0) {
+    return true;
+  }
+  if (!isListFilterScalar(value[0])) {
+    return false;
+  }
+
+  const scalarType = typeof value[0];
+  return value.every(
+    item => isListFilterScalar(item) && typeof item === scalarType,
+  );
+}
+
+function isListFilterScalar(value: unknown): boolean {
+  return (
+    isRisonScalarString(value) ||
+    typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))
+  );
+}
+
+function isRisonScalarString(value: unknown): value is string {
+  return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function externalErrorMessage(error: unknown): string {
+  return externalMessage(
+    error instanceof Error ? error.message : String(error),
+    'dependency request failed',
+  );
+}
+
+function optionalExternalMessage(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const message = externalMessage(value, '');
+  return message === '' ? undefined : message;
+}
+
+function externalMessage(value: string, fallback: string): string {
+  const message = value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (message.length === 0) {
+    return fallback;
+  }
+
+  return message.slice(0, MAX_EXTERNAL_MESSAGE_LENGTH);
+}
+
+function cleanAssetText(value: unknown, maxLength: number): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function cleanMetadataKey(value: string): string | undefined {
+  const key = value
+    .replace(CONTROL_CHARACTER_PATTERN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_METADATA_KEY_LENGTH);
+
+  return key.length === 0 ? undefined : key;
+}
+
+function isListColumnArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isRisonToken);
+}
+
+function isCleanString(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.trim() !== '' &&
+    !/[\u0000-\u001f\u007f]/.test(value)
+  );
+}
+
+function isOptionalCleanString(value: unknown): boolean {
+  return value === undefined || isCleanString(value);
+}
+
+function isOptionalCleanStringArray(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (Array.isArray(value) && value.every(isCleanString))
+  );
+}
+
+function isAssetSearchLimit(value: unknown): value is number {
+  return isInteger(value) && value >= 1 && value <= 100;
+}
+
+function hasValidAssetSearchQuery(value: string): boolean {
+  return (
+    value.length <= MAX_ASSET_TEXT_LENGTH &&
+    value.trim() !== '' &&
+    isRisonScalarString(value)
+  );
+}
+
+function hasValidAssetSearchRequestShape(
+  request: unknown,
+): request is AssetSearchRequest {
+  return (
+    isRecord(request) &&
+    hasOnlyKeys(request, [
+      'contractVersion',
+      'query',
+      'assetTypes',
+      'includeCertifiedOnly',
+      'limit',
+    ]) &&
+    request['contractVersion'] === ASSET_SEARCH_CONTRACT_VERSION &&
+    typeof request['query'] === 'string' &&
+    Array.isArray(request['assetTypes']) &&
+    request['assetTypes'].every(isAssetType) &&
+    typeof request['includeCertifiedOnly'] === 'boolean'
+  );
+}
+
+function isAssetType(value: unknown): value is AssetType {
+  return (
+    value === 'chart' ||
+    value === 'dashboard' ||
+    value === 'dataset' ||
+    value === 'metric'
+  );
+}
+
+function isCacheTimeout(value: unknown): value is number {
+  return isInteger(value) && value >= -1;
+}
+
+function isInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return isInteger(value) && value >= 0;
+}
+
+function isNonNegativeFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

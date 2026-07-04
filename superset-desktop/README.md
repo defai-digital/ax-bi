@@ -8,7 +8,7 @@ AX-BI Desktop delivers a native desktop experience for the AX-BI web application
 
 ### Phase 1 — PWA + Desktop-Grade UX (in the web app)
 
-These features live in `superset-frontend/` and work in both the browser and the Tauri shell:
+These features live in `ax-bi-frontend/` and work in both the browser and the Tauri shell:
 
 - **Command palette** — `⌘K` / `Ctrl+K` fuzzy-search across all navigation and actions
 - **Global keyboard shortcuts** — OS-aware shortcut registry with help overlay
@@ -51,7 +51,7 @@ The desktop client is a **thin shell** that loads the AX-BI web application. It 
 
 ## Prerequisites
 
-- **Node.js**: See `superset-frontend/package.json` `engines` field (24.x+)
+- **Node.js**: See `ax-bi-frontend/package.json` `engines` field (24.x+)
 - **Rust**: 1.75 or later (via [rustup](https://rustup.rs/))
 - **Platform-specific dependencies**:
   - **macOS**: Xcode Command Line Tools
@@ -63,7 +63,7 @@ The desktop client is a **thin shell** that loads the AX-BI web application. It 
 ### 1. Start the AX-BI frontend dev server
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run dev-server    # Serves on http://127.0.0.1:9000
 ```
 
@@ -142,7 +142,7 @@ superset-desktop/
 ├── package.json                 # Node.js deps + npm scripts
 └── README.md
 
-Phase 1 frontend components (in superset-frontend/):
+Phase 1 frontend components (in ax-bi-frontend/):
 ├── src/components/
 │   ├── CommandPalette/          # Modal + context provider
 │   ├── KeyboardShortcuts/       # Shortcut registry + provider

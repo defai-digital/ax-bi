@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, List, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -86,7 +86,7 @@ class UserFilter(ColumnOperator):
         ...,
         description="Operator to use.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
@@ -122,7 +122,7 @@ class UserInfo(BaseModel):
 
 
 class UserList(BaseModel):
-    users: List[UserInfo]
+    users: list[UserInfo]
     count: int
     total_count: int
     page: int
@@ -130,23 +130,23 @@ class UserList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each user",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[UserFilter] = Field(
+    filters_applied: list[UserFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -159,7 +159,7 @@ class ListUsersRequest(BaseModel):
     """Request schema for list_users."""
 
     filters: Annotated[
-        List[UserFilter],
+        list[UserFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -168,7 +168,7 @@ class ListUsersRequest(BaseModel):
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns if "
@@ -208,18 +208,18 @@ class ListUsersRequest(BaseModel):
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[UserFilter]:
+    def parse_filters(cls, v: Any) -> list[UserFilter]:
         """Accept both JSON string and list of objects."""
         return parse_filters(v, UserFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_columns(cls, v: Any) -> List[str]:
+    def parse_columns(cls, v: Any) -> list[str]:
         """Accept JSON array, list, or comma-separated string."""
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListUsersRequest":
+    def validate_search_and_filters(self) -> ListUsersRequest:
         ensure_search_and_filters_not_combined(
             self.search,
             self.filters,

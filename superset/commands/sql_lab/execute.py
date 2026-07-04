@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask_babel import gettext as __
 from sqlalchemy.exc import SQLAlchemyError
@@ -205,7 +205,7 @@ class ExecuteSqlCommand(BaseCommand):
         db.session.commit()  # pylint: disable=consider-using-transaction
 
     def _validate_access(
-        self, query: Query, template_params: Optional[dict[str, Any]] = None
+        self, query: Query, template_params: dict[str, Any] | None = None
     ) -> None:
         try:
             self._access_validator.validate(query, template_params)
@@ -245,7 +245,7 @@ class ExecuteSqlCommand(BaseCommand):
 
 class CanAccessQueryValidator:
     def validate(
-        self, query: Query, template_params: Optional[dict[str, Any]] = None
+        self, query: Query, template_params: dict[str, Any] | None = None
     ) -> None:
         raise NotImplementedError()
 

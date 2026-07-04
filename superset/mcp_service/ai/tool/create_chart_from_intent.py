@@ -312,8 +312,8 @@ async def create_chart_from_intent(  # noqa: C901
     ```
     """
     await ctx.info(
-        "Creating chart from intent: prompt='%s', dataset_id=%s, save=%s"
-        % (request.prompt[:80], request.dataset_id, request.save_chart)
+        f"Creating chart from intent: prompt='{request.prompt[:80]}', "
+        f"dataset_id={request.dataset_id}, save={request.save_chart}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -334,7 +334,7 @@ async def create_chart_from_intent(  # noqa: C901
 
     if dataset is None:
         await ctx.warning(
-            "No dataset found for intent: prompt='%s'" % request.prompt[:80]
+            f"No dataset found for intent: prompt='{request.prompt[:80]}'"
         )
         return CreateChartFromIntentResponse(
             warnings=all_warnings,
@@ -345,9 +345,7 @@ async def create_chart_from_intent(  # noqa: C901
         "id": dataset.id,
         "name": getattr(dataset, "table_name", "") or "",
     }
-    await ctx.info(
-        "Dataset resolved: id=%s, name=%s" % (dataset.id, dataset_info["name"])
-    )
+    await ctx.info(f"Dataset resolved: id={dataset.id}, name={dataset_info['name']}")
 
     # Surface governed rules so they reach the caller even on the heuristic path.
     try:
@@ -387,7 +385,7 @@ async def create_chart_from_intent(  # noqa: C901
 
     if blocking_violations:
         await ctx.warning(
-            "Chart blocked by governance policy: %s" % blocking_violations[0]
+            f"Chart blocked by governance policy: {blocking_violations[0]}"
         )
         return CreateChartFromIntentResponse(
             dataset_used=dataset_info,
@@ -414,11 +412,13 @@ async def create_chart_from_intent(  # noqa: C901
         )
 
         # Import and call generate_chart directly (in-process, not via MCP).
-        # The @tool wrapper injects ctx itself, so we pass only the request —
-        # passing ctx here collides ("multiple values for argument 'ctx'").
+        # ctx is passed as a keyword argument: the @tool wrapper binds the
+        # first positional argument to the request, so passing ctx
+        # positionally collides ("multiple values for argument 'ctx'"). The
+        # keyword form supplies the already-resolved ctx without collision.
         from superset.mcp_service.chart.tool.generate_chart import generate_chart
 
-        chart_response = await generate_chart(chart_request)
+        chart_response = await generate_chart(chart_request, ctx=ctx)
 
     # Step 4: Build response
     await ctx.report_progress(4, 4, "Building response")
@@ -453,12 +453,9 @@ async def create_chart_from_intent(  # noqa: C901
     alternatives = _suggest_alternatives(chart_type)
 
     await ctx.info(
-        "Chart created from intent: chart_id=%s, type=%s, confidence=%.2f"
-        % (
-            chart_data.get("id") if chart_data else None,
-            chart_type,
-            confidence,
-        )
+        f"Chart created from intent: "
+        f"chart_id={chart_data.get('id') if chart_data else None}, "
+        f"type={chart_type}, confidence={confidence:.2f}"
     )
 
     return CreateChartFromIntentResponse(

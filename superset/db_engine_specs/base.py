@@ -21,19 +21,17 @@ from __future__ import annotations
 import logging
 import re
 import warnings
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from inspect import signature
 from re import Match, Pattern
 from typing import (
     Any,
-    Callable,
     cast,
-    ContextManager,
     NamedTuple,
-    Optional,
     TYPE_CHECKING,
     TypedDict,
-    Union,
 )
 from urllib.parse import urlencode, urljoin
 from uuid import UUID, uuid4
@@ -106,7 +104,7 @@ if TYPE_CHECKING:
 
 ColumnTypeMapping = tuple[
     Pattern[str],
-    Union[TypeEngine, Callable[[Match[str]], TypeEngine]],
+    TypeEngine | Callable[[Match[str]], TypeEngine],
     GenericDataType,
 ]
 
@@ -946,7 +944,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         cls,
         database: Database,
         query: Query,
-        template_params: Optional[dict[str, Any]] = None,
+        template_params: dict[str, Any] | None = None,
     ) -> str | None:
         """
         Return the default schema for a given query.
@@ -1049,7 +1047,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         catalog: str | None = None,
         schema: str | None = None,
         source: utils.QuerySource | None = None,
-    ) -> ContextManager[Engine]:
+    ) -> AbstractContextManager[Engine]:
         """
         Return an engine context manager.
 
@@ -1409,7 +1407,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         try:
             script = SQLScript(sql, engine=cls.engine)
-            return script.statements[-1].get_limit_value()
+            return (
+                script.statements[-1].get_limit_value() if script.statements else None
+            )
         except SupersetParseError:
             # SQL with a malformed LIMIT clause (e.g. LIMIT without a value) is
             # not parseable in sqlglot 30+, which now requires an expression arg.

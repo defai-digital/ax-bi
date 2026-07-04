@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import math
-from typing import Any, Optional
+from typing import Any
 
 from pandas import Series
 
@@ -42,9 +42,7 @@ def series_to_list(series: Series) -> list[Any]:
     ]
 
 
-def round_floats(
-    floats: list[Optional[float]], precision: int
-) -> list[Optional[float]]:
+def round_floats(floats: list[float | None], precision: int) -> list[float | None]:
     """
     Round list of floats to certain precision
 

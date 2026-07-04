@@ -18,9 +18,10 @@
 from __future__ import annotations
 
 import csv
+from collections.abc import Generator
 from datetime import datetime
 from io import BytesIO, StringIO
-from typing import Any, Generator
+from typing import Any
 
 import pandas as pd
 import pytest

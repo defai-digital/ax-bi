@@ -20,7 +20,7 @@ import logging
 import re
 from datetime import datetime
 from re import Pattern
-from typing import Any, Optional, TYPE_CHECKING, TypedDict
+from typing import Any, TYPE_CHECKING, TypedDict
 from urllib import parse
 
 from apispec import APISpec
@@ -212,8 +212,8 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         cls,
         uri: URL,
         connect_args: dict[str, Any],
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> tuple[URL, dict[str, Any]]:
         if uri.database and "/" in uri.database:
             current_catalog, current_schema = uri.database.split("/", 1)
@@ -237,7 +237,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         cls,
         sqlalchemy_uri: URL,
         connect_args: dict[str, Any],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the configured schema.
         """
@@ -252,7 +252,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return parse.unquote(database.split("/")[1])
 
     @classmethod
-    def get_default_catalog(cls, database: "Database") -> Optional[str]:
+    def get_default_catalog(cls, database: Database) -> str | None:
         """
         Return the default catalog.
         """
@@ -264,7 +264,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
     @classmethod
     def get_catalog_names(
         cls,
-        database: "Database",
+        database: Database,
         inspector: Inspector,
     ) -> set[str]:
         """
@@ -290,8 +290,8 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(sqla_type, types.Date):
@@ -303,7 +303,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         return None
 
     @staticmethod
-    def mutate_db_for_connection_test(database: "Database") -> None:
+    def mutate_db_for_connection_test(database: Database) -> None:
         """
         By default, snowflake doesn't validate if the user/role has access to the chosen
         database.
@@ -325,7 +325,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
         database.extra = json.dumps(extra)
 
     @classmethod
-    def get_cancel_query_id(cls, cursor: Any, query: Query) -> Optional[str]:
+    def get_cancel_query_id(cls, cursor: Any, query: Query) -> str | None:
         """
         Get Snowflake session ID that will be used to cancel all other running
         queries in the same session.
@@ -364,9 +364,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
     def build_sqlalchemy_uri(
         cls,
         parameters: SnowflakeParametersType,
-        encrypted_extra: Optional[  # pylint: disable=unused-argument
-            dict[str, Any]
-        ] = None,
+        encrypted_extra: dict[str, Any] | None = None,
     ) -> str:
         return str(
             URL.create(
@@ -386,9 +384,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
     def get_parameters_from_uri(
         cls,
         uri: str,
-        encrypted_extra: Optional[  # pylint: disable=unused-argument
-            dict[str, str]
-        ] = None,
+        encrypted_extra: dict[str, str] | None = None,
     ) -> Any:
         url = make_url_safe(uri)
         query = dict(url.query.items())
@@ -449,7 +445,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
 
     @staticmethod
     def update_params_from_encrypted_extra(
-        database: "Database",
+        database: Database,
         params: dict[str, Any],
     ) -> None:
         if not database.encrypted_extra:

@@ -17,7 +17,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app, Flask
 from flask_babel import lazy_gettext as _
@@ -118,9 +118,9 @@ class AbstractEncryptedFieldAdapter(ABC):  # pylint: disable=too-few-public-meth
     @abstractmethod
     def create(
         self,
-        app_config: Optional[dict[str, Any]],
+        app_config: dict[str, Any] | None,
         *args: list[Any],
-        **kwargs: Optional[dict[str, Any]],
+        **kwargs: dict[str, Any] | None,
     ) -> TypeDecorator:
         pass
 
@@ -130,9 +130,9 @@ class SQLAlchemyUtilsAdapter(  # pylint: disable=too-few-public-methods
 ):
     def create(
         self,
-        app_config: Optional[dict[str, Any]],
+        app_config: dict[str, Any] | None,
         *args: list[Any],
-        **kwargs: Optional[dict[str, Any]],
+        **kwargs: dict[str, Any] | None,
     ) -> TypeDecorator:
         if app_config:
             # Select the encryption engine from config, defaulting to the
@@ -150,7 +150,7 @@ class SQLAlchemyUtilsAdapter(  # pylint: disable=too-few-public-methods
                     "SQLALCHEMY_ENCRYPTED_FIELD_ENGINE",
                     DEFAULT_ENCRYPTION_ENGINE_NAME,
                 )
-                # ``**kwargs`` is loosely annotated as ``Optional[dict]`` here, so
+                # ``**kwargs`` is loosely typed because callers pass engine options, so
                 # route the resolved engine class through an ``Any`` local.
                 engine_cls: Any = resolve_encryption_engine(engine_name)
                 kwargs["engine"] = engine_cls
@@ -163,8 +163,8 @@ class SQLAlchemyUtilsAdapter(  # pylint: disable=too-few-public-methods
 
 class EncryptedFieldFactory:
     def __init__(self) -> None:
-        self._concrete_type_adapter: Optional[AbstractEncryptedFieldAdapter] = None
-        self._config: Optional[dict[str, Any]] = None
+        self._concrete_type_adapter: AbstractEncryptedFieldAdapter | None = None
+        self._config: dict[str, Any] | None = None
 
     def init_app(self, app: Flask) -> None:
         self._config = app.config
@@ -173,7 +173,7 @@ class EncryptedFieldFactory:
         ]()
 
     def create(
-        self, *args: list[Any], **kwargs: Optional[dict[str, Any]]
+        self, *args: list[Any], **kwargs: dict[str, Any] | None
     ) -> TypeDecorator:
         if self._concrete_type_adapter:
             adapter = self._concrete_type_adapter.create(self._config, *args, **kwargs)
@@ -210,8 +210,8 @@ class SecretsMigrator:
 
     def __init__(
         self,
-        previous_secret_key: Optional[str] = None,
-        target_engine: Optional[type[Any]] = None,
+        previous_secret_key: str | None = None,
+        target_engine: type[Any] | None = None,
     ) -> None:
         """Configure a migration run.
 
@@ -276,7 +276,7 @@ class SecretsMigrator:
         return meta_info
 
     @staticmethod
-    def _read_bytes(col_name: str, value: Any) -> Optional[bytes]:
+    def _read_bytes(col_name: str, value: Any) -> bytes | None:
         if value is None or isinstance(value, bytes):
             return value
         # Note that the Postgres Driver returns memoryview's for BLOB types
@@ -473,7 +473,7 @@ class SecretsMigrator:
             # read the value (current engine/key, then previous key).
             unencrypted_value = None
             decrypted = False
-            last_error: Optional[Exception] = None
+            last_error: Exception | None = None
             for decryptor in self._source_decryptors(encrypted_type):
                 try:
                     unencrypted_value = decryptor.process_result_value(

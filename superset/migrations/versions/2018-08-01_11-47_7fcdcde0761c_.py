@@ -72,9 +72,8 @@ def upgrade():
 
             dashboard.position_json = text
             print(
-                "dash id:{} position_json size from {} to {}".format(
-                    dashboard.id, len(original_text), len(text)
-                )
+                f"dash id:{dashboard.id} position_json size from "
+                f"{len(original_text)} to {len(text)}"
             )
             session.commit()
 

@@ -42,7 +42,7 @@ def vector_literal(vector: Sequence[float]) -> str:
 
     values: list[str] = []
     for index, value in enumerate(vector):
-        if isinstance(value, (bool, bytes, str)):
+        if isinstance(value, bool | bytes | str):
             raise ValueError(f"Embedding value {index} is not numeric")
         try:
             numeric_value = float(value)

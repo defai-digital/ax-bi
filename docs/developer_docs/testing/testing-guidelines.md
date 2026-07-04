@@ -44,7 +44,7 @@ Your tests shouldn't trigger warnings. This is really common when testing async 
 
 ### Example
 
-You can find an example of a test [here](https://github.com/apache/superset/blob/e6c5bf4/superset-frontend/src/common/hooks/useChangeEffect/useChangeEffect.test.ts).
+You can find an example of a test [here](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/src/common/hooks/useChangeEffect/useChangeEffect.test.ts).
 
 ## React Testing Library (RTL)
 
@@ -78,7 +78,7 @@ Prefer the [user-event](https://github.com/testing-library/user-event) library, 
 
 ### Example
 
-You can find an example of a test [here](https://github.com/apache/superset/blob/master/superset-frontend/src/dashboard/components/PublishedStatus/PublishedStatus.test.tsx).
+You can find an example of a test [here](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/src/dashboard/components/PublishedStatus/PublishedStatus.test.tsx).
 
 ## Cypress
 

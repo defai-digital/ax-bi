@@ -310,7 +310,7 @@ class DuckDBEngineSpec(DuckDBParametersMixin, BaseEngineSpec):
     ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
-        if isinstance(sqla_type, (types.String, types.DateTime)):
+        if isinstance(sqla_type, types.String | types.DateTime):
             return f"""'{dttm.isoformat(sep=" ", timespec="microseconds")}'"""
         return None
 

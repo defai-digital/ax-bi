@@ -146,7 +146,7 @@ class MyExtensionAPI(RestApi):
 from .api import MyExtensionAPI
 ```
 
-**Note**: The [`@api`](https://github.com/apache/superset/blob/master/superset-core/src/superset_core/rest_api/decorators.py) decorator automatically detects context and generates appropriate paths:
+**Note**: The [`@api`](https://github.com/defai-digital/ax-bi/blob/main/superset-core/src/superset_core/rest_api/decorators.py) decorator automatically detects context and generates appropriate paths:
 
 - **Extension context**: `/extensions/{publisher}/{name}/` with ID prefixed as `extensions.{publisher}.{name}.{id}`
 - **Host context**: `/api/v1/` with original ID

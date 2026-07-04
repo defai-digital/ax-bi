@@ -42,7 +42,6 @@ from superset.mcp_service.dashboard.tool.generate_dashboard import (
 )
 from superset.utils import json
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 add_chart_to_existing_dashboard_module = import_module(
     "superset.mcp_service.dashboard.tool.add_chart_to_existing_dashboard"

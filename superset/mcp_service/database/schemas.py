@@ -22,7 +22,7 @@ Pydantic schemas for database-related responses
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, cast, Dict, List, Literal
+from typing import Annotated, Any, cast, Literal
 
 from pydantic import (
     BaseModel,
@@ -77,7 +77,7 @@ class DatabaseFilter(ColumnOperator):
         description="Operator to use. Use get_schema(model_type='database') for "
         "available operators.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
@@ -123,7 +123,7 @@ class DatabaseInfo(BaseModel):
     external_url: str | None = Field(
         None, description="URL of the external management system"
     )
-    extra: Dict[str, Any | None] | None = Field(None, description="Extra configuration")
+    extra: dict[str, Any | None] | None = Field(None, description="Extra configuration")
     changed_on: str | datetime | None = Field(
         None, description="Last modification timestamp"
     )
@@ -141,7 +141,7 @@ class DatabaseInfo(BaseModel):
     )
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
 
     @field_validator("database_name")
@@ -154,12 +154,12 @@ class DatabaseInfo(BaseModel):
 
     @field_validator("extra")
     @classmethod
-    def sanitize_extra(cls, v: Dict[str, Any | None] | None) -> Dict[str, Any] | None:
+    def sanitize_extra(cls, v: dict[str, Any | None] | None) -> dict[str, Any] | None:
         """Wrap string values in database extra metadata before LLM exposure."""
         if v is None:
             return None
         return cast(
-            Dict[str, Any],
+            dict[str, Any],
             sanitize_for_llm_context(
                 v,
                 field_path=("extra",),
@@ -169,7 +169,7 @@ class DatabaseInfo(BaseModel):
 
 
 class DatabaseList(BaseModel):
-    databases: List[DatabaseInfo]
+    databases: list[DatabaseInfo]
     count: int
     total_count: int
     page: int
@@ -177,23 +177,23 @@ class DatabaseList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each database",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[DatabaseFilter] = Field(
+    filters_applied: list[DatabaseFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -206,7 +206,7 @@ class ListDatabasesRequest(CreatedByMeMixin, MetadataCacheControl):
     """Request schema for list_databases with clear, unambiguous types."""
 
     filters: Annotated[
-        List[DatabaseFilter],
+        list[DatabaseFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -215,7 +215,7 @@ class ListDatabasesRequest(CreatedByMeMixin, MetadataCacheControl):
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns if not "
@@ -255,18 +255,18 @@ class ListDatabasesRequest(CreatedByMeMixin, MetadataCacheControl):
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[DatabaseFilter]:
+    def parse_filters(cls, v: Any) -> list[DatabaseFilter]:
         """Accept both JSON string and list of objects."""
         return parse_filters(v, DatabaseFilter)
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_columns(cls, v: Any) -> List[str]:
+    def parse_columns(cls, v: Any) -> list[str]:
         """Accept JSON array, list, or comma-separated string."""
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListDatabasesRequest":
+    def validate_search_and_filters(self) -> ListDatabasesRequest:
         """Prevent using both search and filters simultaneously to avoid query
         conflicts."""
         ensure_search_and_filters_not_combined(
@@ -292,7 +292,7 @@ class GetDatabaseInfoRequest(MetadataCacheControl):
     ]
 
 
-def _parse_json_field(obj: Any, field_name: str) -> Dict[str, Any] | None:
+def _parse_json_field(obj: Any, field_name: str) -> dict[str, Any] | None:
     """Parse a field that may be stored as a JSON string into a dict."""
     value = getattr(obj, field_name, None)
     if isinstance(value, str):

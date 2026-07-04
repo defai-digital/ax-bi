@@ -16,7 +16,6 @@
 # under the License.
 
 from datetime import datetime
-from typing import Optional
 
 import pytest
 
@@ -64,7 +63,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
         ("P1Y", "CAST(EXTRACT(YEAR FROM timestamp_column) || '-01-01' AS DATE)"),
     ],
 )
-def test_time_grain_expressions(time_grain: Optional[str], expected: str) -> None:
+def test_time_grain_expressions(time_grain: str | None, expected: str) -> None:
     from superset.db_engine_specs.firebird import FirebirdEngineSpec
 
     assert (
@@ -96,7 +95,7 @@ def test_epoch_to_dttm() -> None:
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.firebird import (

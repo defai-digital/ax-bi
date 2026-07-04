@@ -36,7 +36,7 @@ status=0
 for entry in "${MANIFEST[@]}"; do
   IFS=: read -r dataset_id golden min_compliance min_intent <<<"${entry}"
   echo "== generation eval: dataset ${dataset_id} (golden=${golden}) =="
-  if ! superset semantic-index eval-generation \
+  if ! ax-bi semantic-index eval-generation \
       --dataset-id "${dataset_id}" \
       --cases-file "${golden}" \
       --fail-under "${min_compliance}" \

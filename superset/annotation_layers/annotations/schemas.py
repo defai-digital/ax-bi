@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Union
 
 from marshmallow import fields, Schema, ValidationError
 from marshmallow.validate import Length
@@ -48,7 +47,7 @@ annotation_long_descr = "A long description"
 annotation_json_metadata = "JSON metadata"
 
 
-def validate_json(value: Union[bytes, bytearray, str]) -> None:
+def validate_json(value: bytes | bytearray | str) -> None:
     try:
         json.validate_json(value)
     except json.JSONDecodeError as ex:

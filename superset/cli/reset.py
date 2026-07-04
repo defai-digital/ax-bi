@@ -51,7 +51,7 @@ def factory_reset(
     """Factory Reset Apache Superset"""
 
     # Check feature flag inside the command
-    if not current_app.config.get("FEATURE_FLAGS", {}).get(
+    if not (current_app.config.get("FEATURE_FLAGS") or {}).get(
         "ENABLE_FACTORY_RESET_COMMAND"
     ):
         click.secho(

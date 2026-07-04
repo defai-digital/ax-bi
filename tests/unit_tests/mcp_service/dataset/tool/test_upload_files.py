@@ -223,6 +223,7 @@ class TestUploadFiles:
             file_content=_csv_base64(),
             filename="data.csv",
             table_name="custom_table",
+            sheet_name=None,
         )
 
 

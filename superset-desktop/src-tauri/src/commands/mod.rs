@@ -19,6 +19,7 @@
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, Runtime};
+use url::Url;
 
 use crate::navigation::build_navigation_script;
 
@@ -30,12 +31,70 @@ pub struct AppConfig {
 }
 
 const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
+const MAX_NOTIFICATION_TITLE_CHARS: usize = 128;
+const MAX_NOTIFICATION_BODY_CHARS: usize = 1024;
+
+fn normalize_server_url(value: &str) -> Result<String, String> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return Err("AXBI_SERVER_URL must not be empty".to_string());
+    }
+
+    let lower_trimmed = trimmed.to_ascii_lowercase();
+    if !lower_trimmed.starts_with("http://") && !lower_trimmed.starts_with("https://") {
+        return Err("AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string());
+    }
+
+    let url = Url::parse(trimmed)
+        .map_err(|_| "AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string())?;
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return Err("AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string());
+    }
+    if url.host_str().is_none() {
+        return Err("AXBI_SERVER_URL must include a host".to_string());
+    }
+    if url.query().is_some() || url.fragment().is_some() {
+        return Err("AXBI_SERVER_URL must not include query or fragment".to_string());
+    }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err("AXBI_SERVER_URL must not include credentials".to_string());
+    }
+
+    Ok(url.as_str().trim_end_matches('/').to_string())
+}
+
+fn validate_notification_input(title: &str, body: &str) -> Result<(), String> {
+    if title.trim().is_empty() {
+        return Err("Notification title must not be empty".to_string());
+    }
+    if title.chars().any(char::is_control) {
+        return Err("Notification title must not contain control characters".to_string());
+    }
+    if body.chars().any(char::is_control) {
+        return Err("Notification body must not contain control characters".to_string());
+    }
+    if title.chars().count() > MAX_NOTIFICATION_TITLE_CHARS {
+        return Err(format!(
+            "Notification title must be at most {MAX_NOTIFICATION_TITLE_CHARS} characters"
+        ));
+    }
+    if body.chars().count() > MAX_NOTIFICATION_BODY_CHARS {
+        return Err(format!(
+            "Notification body must be at most {MAX_NOTIFICATION_BODY_CHARS} characters"
+        ));
+    }
+
+    Ok(())
+}
 
 #[tauri::command]
 pub async fn get_app_config<R: Runtime>(_app: AppHandle<R>) -> Result<AppConfig, String> {
+    let server_url = std::env::var("AXBI_SERVER_URL")
+        .map(|value| normalize_server_url(&value))
+        .unwrap_or_else(|_| normalize_server_url(DEFAULT_SERVER_URL))?;
+
     Ok(AppConfig {
-        server_url: std::env::var("AXBI_SERVER_URL")
-            .unwrap_or_else(|_| DEFAULT_SERVER_URL.to_string()),
+        server_url,
         sso_enabled: true,
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
@@ -59,6 +118,7 @@ pub async fn show_notification<R: Runtime>(
     body: String,
 ) -> Result<(), String> {
     use tauri_plugin_notification::NotificationExt;
+    validate_notification_input(&title, &body)?;
     app.notification()
         .builder()
         .title(title)
@@ -71,4 +131,82 @@ pub async fn show_notification<R: Runtime>(
 #[tauri::command]
 pub async fn get_version() -> Result<String, String> {
     Ok(env!("CARGO_PKG_VERSION").to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_server_url, validate_notification_input, DEFAULT_SERVER_URL};
+
+    #[test]
+    fn normalizes_valid_server_urls() {
+        assert_eq!(
+            normalize_server_url("  https://superset.example.test/  ").unwrap(),
+            "https://superset.example.test"
+        );
+        assert_eq!(
+            normalize_server_url(DEFAULT_SERVER_URL).unwrap(),
+            DEFAULT_SERVER_URL
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_server_urls() {
+        assert_eq!(
+            normalize_server_url("   ").unwrap_err(),
+            "AXBI_SERVER_URL must not be empty"
+        );
+        assert_eq!(
+            normalize_server_url("not a url").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("file:///tmp/superset").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("http:dashboard").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("https:/dashboard").unwrap_err(),
+            "AXBI_SERVER_URL must be a valid HTTP(S) URL"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test?tenant=ax").unwrap_err(),
+            "AXBI_SERVER_URL must not include query or fragment"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test#dashboard").unwrap_err(),
+            "AXBI_SERVER_URL must not include query or fragment"
+        );
+        assert_eq!(
+            normalize_server_url("https://user:s3cr3t@superset.example.test").unwrap_err(),
+            "AXBI_SERVER_URL must not include credentials"
+        );
+    }
+
+    #[test]
+    fn validates_notification_input() {
+        assert!(validate_notification_input("Job complete", "").is_ok());
+        assert_eq!(
+            validate_notification_input("   ", "body").unwrap_err(),
+            "Notification title must not be empty"
+        );
+        assert_eq!(
+            validate_notification_input("Bad\nTitle", "body").unwrap_err(),
+            "Notification title must not contain control characters"
+        );
+        assert_eq!(
+            validate_notification_input("Title", "Bad\u{0000}body").unwrap_err(),
+            "Notification body must not contain control characters"
+        );
+        assert_eq!(
+            validate_notification_input(&"a".repeat(129), "body").unwrap_err(),
+            "Notification title must be at most 128 characters"
+        );
+        assert_eq!(
+            validate_notification_input("Title", &"b".repeat(1025)).unwrap_err(),
+            "Notification body must be at most 1024 characters"
+        );
+    }
 }

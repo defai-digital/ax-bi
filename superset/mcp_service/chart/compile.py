@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal
+from typing import Any, Literal
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -90,7 +90,7 @@ class CompileResult:
     error_code: str | None = None
     tier: Literal["validation", "compile"] | None = None
     error_obj: ChartGenerationError | None = None
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     row_count: int | None = None
 
 
@@ -104,7 +104,7 @@ def build_dataset_context_from_orm(dataset: Any) -> DatasetContext | None:
     if dataset is None:
         return None
 
-    columns: List[Dict[str, Any]] = []
+    columns: list[dict[str, Any]] = []
     for col in getattr(dataset, "columns", []) or []:
         columns.append(
             {
@@ -115,7 +115,7 @@ def build_dataset_context_from_orm(dataset: Any) -> DatasetContext | None:
             }
         )
 
-    metrics: List[Dict[str, Any]] = []
+    metrics: list[dict[str, Any]] = []
     for metric in getattr(dataset, "metrics", []) or []:
         metrics.append(
             {
@@ -141,7 +141,7 @@ def build_dataset_context_from_orm(dataset: Any) -> DatasetContext | None:
 
 
 def _compile_chart(
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     dataset_id: int,
 ) -> CompileResult:
     """Execute the chart's query to verify it renders without errors.
@@ -198,7 +198,7 @@ def _compile_chart(
         command.validate()
         result = command.run()
 
-        warnings: List[str] = []
+        warnings: list[str] = []
         row_count = 0
         for query in result.get("queries", []):
             if query.get("error"):
@@ -274,7 +274,7 @@ def _adhoc_filter_column_valid(
 
 
 def _validate_adhoc_filter_columns(
-    form_data: Dict[str, Any], dataset_context: DatasetContext
+    form_data: dict[str, Any], dataset_context: DatasetContext
 ) -> ChartGenerationError | None:
     """Tier-1 check for adhoc-filter column references stored in ``form_data``.
 
@@ -286,7 +286,7 @@ def _validate_adhoc_filter_columns(
     and surface only when Explore tries to run the query.
     """
     adhoc_filters = form_data.get("adhoc_filters") or []
-    invalid: List[str] = []
+    invalid: list[str] = []
     for f in adhoc_filters:
         if not isinstance(f, dict):
             continue
@@ -305,7 +305,7 @@ def _validate_adhoc_filter_columns(
     if not invalid:
         return None
 
-    suggestions: List[str] = []
+    suggestions: list[str] = []
     for column in invalid:
         for suggestion in DatasetValidator._get_column_suggestions(
             column, dataset_context
@@ -397,7 +397,7 @@ def _build_compile_error(message: str) -> ChartGenerationError:
 
 def validate_and_compile(
     config: Any,
-    form_data: Dict[str, Any],
+    form_data: dict[str, Any],
     dataset: Any,
     *,
     run_compile_check: bool = True,

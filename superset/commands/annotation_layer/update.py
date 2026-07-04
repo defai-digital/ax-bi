@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.models.sqla import Model
 from marshmallow import ValidationError
@@ -39,7 +39,7 @@ class UpdateAnnotationLayerCommand(BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[AnnotationLayer] = None
+        self._model: AnnotationLayer | None = None
 
     @transaction(on_error=partial(on_error, reraise=AnnotationLayerUpdateFailedError))
     def run(self) -> Model:

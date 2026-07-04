@@ -19,7 +19,7 @@
 
 import json  # noqa: TID251
 from types import SimpleNamespace
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from flask_appbuilder.security.sqla.models import Role, User
@@ -1404,7 +1404,7 @@ def _table_sort_query_context(
     mocker: MockerFixture,
     orderby: list[Any],
     *,
-    stored_metrics: Optional[list[Any]] = None,
+    stored_metrics: list[Any] | None = None,
     with_stored_query_context: bool = True,
 ) -> Any:
     """

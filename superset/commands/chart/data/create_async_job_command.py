@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask import Request
 
@@ -32,7 +32,7 @@ class CreateAsyncChartDataJobCommand:
             request
         )
 
-    def run(self, form_data: dict[str, Any], user_id: Optional[int]) -> dict[str, Any]:
+    def run(self, form_data: dict[str, Any], user_id: int | None) -> dict[str, Any]:
         if not getattr(self, "_async_channel_id", None):
             raise RuntimeError(
                 "CreateAsyncChartDataJobCommand.run() called before validate(); "

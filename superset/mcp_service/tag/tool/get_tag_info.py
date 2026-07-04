@@ -65,7 +65,7 @@ async def get_tag_info(request: GetTagInfoRequest, ctx: Context) -> TagInfo | Ta
     }
     ```
     """
-    await ctx.info("Retrieving tag information: identifier=%s" % (request.identifier,))
+    await ctx.info(f"Retrieving tag information: identifier={request.identifier}")
 
     try:
         from superset.daos.tag import TagDAO
@@ -84,21 +84,22 @@ async def get_tag_info(request: GetTagInfoRequest, ctx: Context) -> TagInfo | Ta
 
         if isinstance(result, TagInfo):
             await ctx.info(
-                "Tag information retrieved successfully: tag_id=%s, name=%s, type=%s"
-                % (result.id, result.name, result.type)
+                "Tag information retrieved successfully: "
+                f"tag_id={result.id}, name={result.name}, type={result.type}"
             )
         else:
             await ctx.warning(
-                "Tag retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Tag retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Tag information retrieval failed: identifier=%s, error=%s, error_type=%s"
-            % (request.identifier, str(e), type(e).__name__)
+            "Tag information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return TagError.create(
             error=f"Failed to get tag info: {str(e)}",
