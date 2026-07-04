@@ -929,10 +929,9 @@ class SQLStatement(BaseSQLStatement[exp.Expression]):
                 return True
 
         # Handle ALTER parsed as Command (Oracle, MS SQL dialects)
-        if isinstance(self._parsed, exp.Command) and self._parsed.name == "ALTER":
-            return True  # pragma: no cover
-
-        return False
+        return (  # pragma: no cover
+            isinstance(self._parsed, exp.Command) and self._parsed.name == "ALTER"
+        )
 
     def format(self, comments: bool = True) -> str:
         """

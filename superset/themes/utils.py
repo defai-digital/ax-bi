@@ -86,10 +86,7 @@ def is_valid_theme(theme: dict[str, Any]) -> bool:
                 return False
 
         # Validate algorithm field separately due to its complexity
-        if "algorithm" in theme and not _is_valid_algorithm(theme["algorithm"]):
-            return False
-
-        return True
+        return "algorithm" not in theme or _is_valid_algorithm(theme["algorithm"])
     except Exception:
         return False
 

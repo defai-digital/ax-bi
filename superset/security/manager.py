@@ -728,17 +728,11 @@ def query_context_modified(query_context: "QueryContext") -> bool:
     # compare columns and metrics in form_data with stored values. Order-by is
     # handled separately: a strict subset check there would reject a guest
     # legitimately sorting an embedded chart by one of its existing columns.
-    if _columns_metrics_modified(
-        query_context, form_data, stored_chart, stored_query_context
-    ):
-        return True
-
     # Order-by may sort only by columns/metrics already present in the stored
     # chart; new expressions (e.g. ``random()``) are still rejected.
-    if _orderby_modified(query_context, stored_chart, stored_query_context):
-        return True
-
-    return False
+    return _columns_metrics_modified(
+        query_context, form_data, stored_chart, stored_query_context
+    ) or _orderby_modified(query_context, stored_chart, stored_query_context)
 
 
 class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
@@ -1285,23 +1279,23 @@ class SupersetSecurityManager(  # pylint: disable=too-many-public-methods
         """
         from superset import is_feature_enabled
 
-        if (
+        return bool(
             (
-                is_feature_enabled("EMBEDDED_SUPERSET")
-                and self.is_guest_user()
-                and self.has_guest_access(dashboard)
+                (
+                    is_feature_enabled("EMBEDDED_SUPERSET")
+                    and self.is_guest_user()
+                    and self.has_guest_access(dashboard)
+                )
+                or (
+                    is_feature_enabled("DASHBOARD_RBAC")
+                    and dashboard.roles
+                    and dashboard.published
+                    and {role.id for role in dashboard.roles}
+                    & {role.id for role in self.get_user_roles()}
+                )
             )
-            or (
-                is_feature_enabled("DASHBOARD_RBAC")
-                and dashboard.roles
-                and dashboard.published
-                and {role.id for role in dashboard.roles}
-                & {role.id for role in self.get_user_roles()}
-            )
-        ) and dataset.id in {dataset.id for dataset in dashboard.datasources}:
-            return True
-
-        return False
+            and dataset.id in {dataset.id for dataset in dashboard.datasources}
+        )
 
     def _validate_child_in_parent_multilayer(
         self, child_slice_id: int, parent_slice: "Slice"

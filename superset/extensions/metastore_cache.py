@@ -118,9 +118,7 @@ class SupersetMetastoreCache(BaseCache):
 
     def has(self, key: str) -> bool:
         entry = self.get(key)
-        if entry:
-            return True
-        return False
+        return bool(entry)
 
     @transaction()
     def delete(self, key: str) -> Any:

@@ -1057,9 +1057,7 @@ def _rust_rollout_decision_passed(artifact: Mapping[str, Any] | None) -> bool:
             _non_empty_string(artifact.get("serving_flag"))
             and artifact.get("serving_flag_enabled") is True
         )
-    if decision == "rejected":
-        return True
-    return False
+    return decision == "rejected"
 
 
 def validate_production_evidence(
