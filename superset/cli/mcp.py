@@ -22,7 +22,6 @@ import click
 @click.group()
 def mcp() -> None:
     """Model Context Protocol service commands"""
-    pass
 
 
 @mcp.command()

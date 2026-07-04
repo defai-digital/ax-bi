@@ -69,8 +69,6 @@ logger = logging.getLogger(__name__)
 class UndefinedTemplateFunctionException(SupersetTemplateException):
     """Raised when an undefined function-like Jinja identifier is encountered."""
 
-    pass
-
 
 NONE_TYPE = type(None).__name__
 ALLOWED_TYPES = (
