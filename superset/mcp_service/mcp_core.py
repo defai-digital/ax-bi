@@ -103,7 +103,6 @@ class BaseCore(ABC):
 
         This method must be implemented by all subclasses.
         """
-        pass
 
     def _log_error(self, error: Exception, context: str = "") -> None:
         """Log an error at DEBUG level for stack-trace context.

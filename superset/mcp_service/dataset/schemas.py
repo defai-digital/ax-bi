@@ -392,8 +392,7 @@ class GetDatasetInfoRequest(MetadataCacheControl):
 
         if value is None or value == "":
             return list(DEFAULT_GET_DATASET_INFO_COLUMN_FIELDS)
-        parsed = parse_json_or_list(value, "column_fields")
-        return parsed
+        return parse_json_or_list(value, "column_fields")
 
 
 class CreateDatasetMetric(BaseModel):

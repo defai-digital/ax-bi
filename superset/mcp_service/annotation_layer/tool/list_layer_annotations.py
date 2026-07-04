@@ -132,7 +132,7 @@ def _annotation_info_from_ax_services(
         return None
 
     layer_id = payload.get("layerId")
-    annotation = AnnotationInfo(
+    return AnnotationInfo(
         id=annotation_id,
         short_descr=sanitize_for_llm_context(
             _optional_string(payload.get("shortDescr")),
@@ -147,7 +147,6 @@ def _annotation_info_from_ax_services(
         json_metadata=_sanitize_annotation_json_metadata(payload.get("jsonMetadata")),
         layer_id=layer_id if isinstance(layer_id, int) else None,
     )
-    return annotation
 
 
 def _is_string_list(value: Any) -> bool:

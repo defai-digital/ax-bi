@@ -141,6 +141,5 @@ def create_response_caching_middleware() -> Any | None:
     # Use existing app context if available, otherwise push one
     if has_app_context():
         return _create_middleware()
-    else:
-        with flask_app.app_context():
-            return _create_middleware()
+    with flask_app.app_context():
+        return _create_middleware()
