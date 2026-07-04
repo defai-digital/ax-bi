@@ -399,8 +399,8 @@ async def _list_layer_annotations_python(
     """Run the authoritative Python layer annotation list path."""
 
     await ctx.info(
-        "Listing annotations: layer_id=%s, page=%s, page_size=%s, search=%s"
-        % (request.layer_id, request.page, request.page_size, request.search)
+        f"Listing annotations: layer_id={request.layer_id}, page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
 
     try:
@@ -409,7 +409,7 @@ async def _list_layer_annotations_python(
         # Verify the layer exists before listing
         layer = AnnotationLayerDAO.find_by_id(request.layer_id)
         if layer is None:
-            await ctx.warning("Annotation layer not found: id=%s" % (request.layer_id,))
+            await ctx.warning(f"Annotation layer not found: id={request.layer_id}")
             return AnnotationLayerError.create(
                 error=f"Annotation layer with id '{request.layer_id}' not found",
                 error_type="not_found",
@@ -452,18 +452,15 @@ async def _list_layer_annotations_python(
         result.layer_id = request.layer_id
 
         await ctx.info(
-            "Annotations listed: layer_id=%s, count=%s, total_count=%s"
-            % (
-                request.layer_id,
-                len(result.annotations) if hasattr(result, "annotations") else 0,
-                getattr(result, "total_count", None),
-            )
+            f"Annotations listed: layer_id={request.layer_id}, "
+            f"count={len(result.annotations) if hasattr(result, 'annotations') else 0}, "
+            f"total_count={getattr(result, 'total_count', None)}"
         )
         return result.model_dump(mode="json")
 
     except Exception as e:
         await ctx.error(
-            "Annotation listing failed: layer_id=%s, error=%s, error_type=%s"
-            % (request.layer_id, str(e), type(e).__name__)
+            f"Annotation listing failed: layer_id={request.layer_id}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise
