@@ -44,7 +44,6 @@ from superset.mcp_service.utils.sanitization import (
     sanitize_for_llm_context,
 )
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
