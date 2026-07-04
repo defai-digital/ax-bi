@@ -39,8 +39,5 @@ def aggregate(
     """
     aggregates = aggregates or {}
     aggregate_funcs = _get_aggregate_funcs(df, aggregates)
-    if groupby:
-        df_groupby = df.groupby(by=groupby)
-    else:
-        df_groupby = df.groupby(lambda _: True)
+    df_groupby = df.groupby(by=groupby) if groupby else df.groupby(lambda _: True)
     return df_groupby.agg(**aggregate_funcs).reset_index(drop=not groupby)
