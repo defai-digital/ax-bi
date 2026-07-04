@@ -249,8 +249,7 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
                         dataset_uuid,
                     )
 
-    fixed = update_cross_filter_scoping(fixed, id_map, uuid_to_new_id)
-    return fixed
+    return update_cross_filter_scoping(fixed, id_map, uuid_to_new_id)
 
 
 def _remap_chart_ids(

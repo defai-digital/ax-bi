@@ -212,10 +212,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
             current_tabs = self._model.tabs  # type: ignore
             if position_json and current_tabs:
                 position = json.loads(position_json)
-                deleted_tabs = [
-                    tab for tab in current_tabs["all_tabs"] if tab not in position
-                ]
-                return deleted_tabs
+                return [tab for tab in current_tabs["all_tabs"] if tab not in position]
             return []
 
         def send_deactivated_email_warning(report: ReportSchedule) -> None:
@@ -281,11 +278,7 @@ class UpdateDashboardNativeFiltersCommand(UpdateDashboardCommand):
         super().validate()
         assert self._model
 
-        configuration = DashboardDAO.update_native_filters_config(
-            self._model, self._properties
-        )
-
-        return configuration
+        return DashboardDAO.update_native_filters_config(self._model, self._properties)
 
 
 class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
@@ -298,11 +291,9 @@ class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
         super().validate()
         assert self._model
 
-        configuration = DashboardDAO.update_chart_customizations_config(
+        return DashboardDAO.update_chart_customizations_config(
             self._model, self._properties
         )
-
-        return configuration
 
 
 class UpdateDashboardColorsConfigCommand(UpdateDashboardCommand):
