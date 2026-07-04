@@ -810,10 +810,7 @@ def create_temporary_output_directory(parent: Path, prefix: str, label: str) -> 
         raise click.ClickException(f"Refusing to create {label}: temp path is unsafe.")
     current_parent_identity = get_directory_node_identity(parent)
     if current_parent_identity is None or current_parent_identity != parent_identity:
-        try:
-            remove_output_directory(temp_path, label, temp_identity)
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(temp_path, label, temp_identity)
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
     return temp_path
 
@@ -1507,15 +1504,13 @@ def create_scaffold_directory(path: Path, label: str) -> None:
         raise click.ClickException(f"Refusing to create {label}: path changed.")
     current_anchor_identity = get_directory_node_identity(anchor)
     if current_anchor_identity is None or current_anchor_identity != anchor_identity:
-        try:
+        with suppress(click.ClickException):
             cleanup_scaffold_directory(
                 path,
                 label,
                 created_identity,
                 allow_content_changes=False,
             )
-        except click.ClickException:
-            pass
         raise click.ClickException(f"Refusing to create {label}: parent path changed.")
     if get_directory_path_identity(path) != created_identity:
         raise click.ClickException(f"Refusing to create {label}: path changed.")
@@ -1773,14 +1768,11 @@ def copy_frontend_dist(cwd: Path) -> str:
             "dist/frontend directory",
         )
     except click.ClickException:
-        try:
-            remove_output_directory(
-                staged_frontend_output_dir,
-                "temporary frontend output directory",
-                staged_frontend_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            staged_frontend_output_dir,
+            "temporary frontend output directory",
+            staged_frontend_identity,
+        )
         raise
 
     return remote_entries[0]
@@ -1940,14 +1932,11 @@ def copy_backend_files(cwd: Path) -> None:
             "dist/backend directory",
         )
     except click.ClickException:
-        try:
-            remove_output_directory(
-                staged_backend_output_dir,
-                "temporary backend output directory",
-                staged_backend_identity,
-            )
-        except click.ClickException:
-            pass
+        remove_output_directory_best_effort(
+            staged_backend_output_dir,
+            "temporary backend output directory",
+            staged_backend_identity,
+        )
         raise
 
 
@@ -2404,43 +2393,41 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
         )
 
     # Update frontend/package.json
-    if frontend_pkg is not None:
-        if frontend_pkg:
-            pkg_changed = False
-            if frontend_pkg.get("version") != target_version:
-                frontend_pkg["version"] = target_version
-                pkg_changed = True
-            if target_license and frontend_pkg.get("license") != target_license:
-                frontend_pkg["license"] = target_license
-                pkg_changed = True
-            if pkg_changed:
-                pending_json_writes.append(
-                    (frontend_pkg_path, "frontend/package.json", frontend_pkg)
-                )
+    if frontend_pkg is not None and frontend_pkg:
+        pkg_changed = False
+        if frontend_pkg.get("version") != target_version:
+            frontend_pkg["version"] = target_version
+            pkg_changed = True
+        if target_license and frontend_pkg.get("license") != target_license:
+            frontend_pkg["license"] = target_license
+            pkg_changed = True
+        if pkg_changed:
+            pending_json_writes.append(
+                (frontend_pkg_path, "frontend/package.json", frontend_pkg)
+            )
 
     # Update backend/pyproject.toml
-    if backend_pyproject is not None:
-        if backend_pyproject:
-            project = backend_project
-            toml_changed = False
-            if project is not None and project.get("version") != target_version:
-                project["version"] = target_version
-                toml_changed = True
-            if (
-                project is not None
-                and target_license
-                and project.get("license") != target_license
-            ):
-                project["license"] = target_license
-                toml_changed = True
-            if toml_changed:
-                pending_toml_writes.append(
-                    (
-                        backend_pyproject_path,
-                        "backend/pyproject.toml",
-                        backend_pyproject,
-                    )
+    if backend_pyproject is not None and backend_pyproject:
+        project = backend_project
+        toml_changed = False
+        if project is not None and project.get("version") != target_version:
+            project["version"] = target_version
+            toml_changed = True
+        if (
+            project is not None
+            and target_license
+            and project.get("license") != target_license
+        ):
+            project["license"] = target_license
+            toml_changed = True
+        if toml_changed:
+            pending_toml_writes.append(
+                (
+                    backend_pyproject_path,
+                    "backend/pyproject.toml",
+                    backend_pyproject,
                 )
+            )
 
     try:
         for path, label, _ in [*pending_json_writes, *pending_toml_writes]:
@@ -2859,7 +2846,7 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
             and temp_identity is not None
             and output_parent_cleanup_identity is not None
         ):
-            try:
+            with suppress(click.ClickException):
                 remove_output_file(
                     temp_path,
                     "temporary bundle",
@@ -2867,8 +2854,6 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                     allow_content_changes=True,
                     expected_parent_identity=output_parent_cleanup_identity,
                 )
-            except click.ClickException:
-                pass
         click.secho(f"❌ Failed to create bundle: {ex}", err=True, fg="red")
         sys.exit(1)
 
@@ -2908,10 +2893,12 @@ def dev(ctx: click.Context) -> None:
     write_manifest(cwd, manifest)
 
     def frontend_watcher() -> None:
-        if optional_directory_exists(frontend_dir, "frontend"):
-            if (remote_entry := rebuild_frontend(cwd, frontend_dir)) is not None:
-                manifest = build_manifest(cwd, remote_entry)
-                write_manifest(cwd, manifest)
+        if (
+            optional_directory_exists(frontend_dir, "frontend")
+            and (remote_entry := rebuild_frontend(cwd, frontend_dir)) is not None
+        ):
+            manifest = build_manifest(cwd, remote_entry)
+            write_manifest(cwd, manifest)
 
     def backend_watcher() -> None:
         if optional_directory_exists(backend_dir, "backend"):
