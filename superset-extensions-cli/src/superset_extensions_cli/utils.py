@@ -19,6 +19,7 @@ import json  # noqa: TID251
 import re
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -195,7 +196,8 @@ def get_write_parent_identity(path: Path) -> NodeIdentity | None:
     return _get_parent_directory_identity(path)
 
 
-def read_toml(path: Path) -> dict[str, Any] | None:
+def read_validated_text(path: Path, reader: Callable[[Path], str]) -> str | None:
+    """Read a safe input file and reject content if identity changes."""
     read_path = validate_read_path(path)
     if read_path is None:
         return None
@@ -206,42 +208,39 @@ def read_toml(path: Path) -> dict[str, Any] | None:
     if parent_identity is None:
         return None
 
-    try:
-        with read_path.open("rb") as f:
-            content = f.read()
-    except OSError as ex:
-        raise OSError(f"Failed to read TOML file {read_path}: {ex}") from ex
+    content = reader(read_path)
 
     if (
         get_read_parent_identity(path) != parent_identity
         or get_read_path_identity(path) != initial_identity
     ):
         return None
-    return tomllib.loads(content.decode("utf-8"))
+    return content
+
+
+def read_toml(path: Path) -> dict[str, Any] | None:
+    def read_toml_text(read_path: Path) -> str:
+        with read_path.open("rb") as f:
+            return f.read().decode("utf-8")
+
+    try:
+        content = read_validated_text(path, read_toml_text)
+    except OSError as ex:
+        raise OSError(f"Failed to read TOML file {path}: {ex}") from ex
+
+    return None if content is None else tomllib.loads(content)
 
 
 def read_json(path: Path) -> object | None:
-    read_path = validate_read_path(path)
-    if read_path is None:
-        return None
-    initial_identity = get_read_path_identity(path)
-    if initial_identity is None:
-        return None
-    parent_identity = get_read_parent_identity(path)
-    if parent_identity is None:
-        return None
-
     try:
-        content = read_path.read_text(encoding="utf-8")
+        content = read_validated_text(
+            path,
+            lambda read_path: read_path.read_text(encoding="utf-8"),
+        )
     except OSError as ex:
-        raise OSError(f"Failed to read JSON file {read_path}: {ex}") from ex
+        raise OSError(f"Failed to read JSON file {path}: {ex}") from ex
 
-    if (
-        get_read_parent_identity(path) != parent_identity
-        or get_read_path_identity(path) != initial_identity
-    ):
-        return None
-    return json.loads(content)
+    return None if content is None else json.loads(content)
 
 
 def validate_write_path(path: Path) -> Path:
