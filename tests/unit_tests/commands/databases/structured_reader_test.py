@@ -72,9 +72,7 @@ def test_structured_reader_gzip_jsonl() -> None:
     reader = StructuredReader()
     df = reader.file_to_dataframe(
         make_file(
-            gzip.compress(
-                b'{"prompt":"A","score":0.8}\n{"prompt":"B","score":0.9}\n'
-            ),
+            gzip.compress(b'{"prompt":"A","score":0.8}\n{"prompt":"B","score":0.9}\n'),
             "eval.jsonl.gz",
         )
     )

@@ -29,6 +29,8 @@ MAXIMUM_MESSAGE_SIZE = 4000
 
 # pylint: disable=too-few-public-methods
 class SlackMixin:
+    _content: NotificationContent
+
     def _message_template(
         self,
         content: NotificationContent,

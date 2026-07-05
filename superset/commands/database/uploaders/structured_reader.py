@@ -426,8 +426,7 @@ class StructuredReader(BaseDataReader):
                     "shape": json.dumps(shape),
                     "artifact_type": "numpy_array_metadata",
                     "warning": (
-                        "Array has more than two dimensions; "
-                        "imported as metadata."
+                        "Array has more than two dimensions; imported as metadata."
                     ),
                 }
             ]
@@ -442,9 +441,7 @@ class StructuredReader(BaseDataReader):
         for feature in features:
             properties = feature.get("properties") or {}
             geometry = feature.get("geometry")
-            geometry_type = (
-                geometry.get("type") if isinstance(geometry, dict) else None
-            )
+            geometry_type = geometry.get("type") if isinstance(geometry, dict) else None
             rows.append(
                 {
                     **properties,
@@ -475,7 +472,7 @@ class StructuredReader(BaseDataReader):
 
     def _read_avro(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         try:
-            import fastavro  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
+            import fastavro  # pylint: disable=import-outside-toplevel
         except ImportError:
             return self._artifact_metadata_frame(
                 file,
@@ -515,7 +512,7 @@ class StructuredReader(BaseDataReader):
         if not is_zipfile(file):
             raise DatabaseUploadFailed(_("Not a valid ZIP file"))
         file.seek(0)
-        rows = []
+        rows: list[dict[str, Any]] = []
         with ZipFile(file) as zip_file:
             try:
                 check_is_safe_zip(zip_file)
@@ -547,7 +544,7 @@ class StructuredReader(BaseDataReader):
     @staticmethod
     def _tar_manifest(file: FileStorage, extension: str) -> list[dict[str, Any]]:
         file.seek(0)
-        rows = []
+        rows: list[dict[str, Any]] = []
         try:
             with tarfile.open(fileobj=file.stream, mode="r:*") as tar:
                 for index, member in enumerate(tar):

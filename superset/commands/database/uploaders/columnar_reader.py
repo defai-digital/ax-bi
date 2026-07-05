@@ -118,9 +118,7 @@ class ColumnarReader(BaseDataReader):
                     ]
                     if not filenames:
                         raise DatabaseUploadFailed(_("ZIP file contains no files"))
-                    file_suffixes = {
-                        Path(name).suffix.lower() for name in filenames
-                    }
+                    file_suffixes = {Path(name).suffix.lower() for name in filenames}
                     if len(file_suffixes) > 1:
                         raise DatabaseUploadFailed(
                             _("ZIP file contains multiple file types")
