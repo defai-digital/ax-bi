@@ -28,6 +28,7 @@ from typing import Any, cast, Literal
 
 from flask import g, has_request_context, request
 from flask_appbuilder.const import API_URI_RIS_KEY
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from superset.extensions import stats_logger_manager
@@ -42,6 +43,21 @@ def _resolve_local_proxy(value: Any) -> Any:
     if hasattr(value, "_get_current_object"):
         return value._get_current_object()
     return value
+
+
+def _is_mapped_instance(value: Any) -> bool:
+    """Return whether a value is a SQLAlchemy mapped instance."""
+    return sa_inspect(value, raiseerr=False) is not None
+
+
+def _get_user_id_from_session_user(session: Any, user: Any) -> int | None:
+    """Add a mapped user to the active session before reading its ID."""
+    actual_user = _resolve_local_proxy(user)
+    if not _is_mapped_instance(actual_user):
+        return None
+
+    session.add(actual_user)
+    return get_user_id()
 
 
 def collect_request_payload() -> dict[str, Any]:
@@ -217,9 +233,10 @@ class AbstractEventLogger(ABC):
             try:
                 actual_user = g.get("user", None)
                 if actual_user is not None:
-                    actual_user = _resolve_local_proxy(actual_user)
-                    db.session.add(actual_user)
-                    user_id = get_user_id()
+                    user_id = _get_user_id_from_session_user(
+                        db.session,
+                        actual_user,
+                    )
             except Exception as ex:
                 logging.warning("Failed to add user to db session: %s", ex)
                 user_id = None
