@@ -1237,11 +1237,35 @@ type ListContractCase = {
   name: string;
   request: Record<string, unknown>;
   warning: string;
-  call: (
-    client: SupersetClient,
-    request: Record<string, unknown>,
-  ) => Promise<{ warnings: string[] }>;
+  method: ListMethodName;
 };
+
+type ListMethodName =
+  | 'listAnnotationLayers'
+  | 'listAnnotations'
+  | 'listCharts'
+  | 'listDashboards'
+  | 'listDatabases'
+  | 'listDatasets'
+  | 'listQueries'
+  | 'listReports'
+  | 'listRoles'
+  | 'listRlsFilters'
+  | 'listSavedQueries'
+  | 'listTags'
+  | 'listTasks';
+
+type ListMethod = (
+  request: Record<string, unknown>,
+) => Promise<{ warnings: string[] }>;
+
+function callListMethod(
+  client: SupersetClient,
+  method: ListMethodName,
+  request: Record<string, unknown>,
+): Promise<{ warnings: string[] }> {
+  return (client[method] as unknown as ListMethod)(request);
+}
 
 const validListRequest = {
   filters: [],
@@ -1259,12 +1283,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'annotation-layer-list.v0',
     },
     warning: 'annotation layer list request contains invalid contract version',
-    call: (client, request) =>
-      client.listAnnotationLayers(
-        request as unknown as Parameters<
-          SupersetClient['listAnnotationLayers']
-        >[0],
-      ),
+    method: 'listAnnotationLayers',
   },
   {
     name: 'annotation list',
@@ -1274,10 +1293,7 @@ const listContractVersionCases: ListContractCase[] = [
       layerId: 5,
     },
     warning: 'annotation list request contains invalid contract version',
-    call: (client, request) =>
-      client.listAnnotations(
-        request as unknown as Parameters<SupersetClient['listAnnotations']>[0],
-      ),
+    method: 'listAnnotations',
   },
   {
     name: 'dashboard list',
@@ -1288,10 +1304,7 @@ const listContractVersionCases: ListContractCase[] = [
       ownedByMe: false,
     },
     warning: 'dashboard list request contains invalid contract version',
-    call: (client, request) =>
-      client.listDashboards(
-        request as unknown as Parameters<SupersetClient['listDashboards']>[0],
-      ),
+    method: 'listDashboards',
   },
   {
     name: 'chart list',
@@ -1300,10 +1313,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'chart-list.v0',
     },
     warning: 'chart list request contains invalid contract version',
-    call: (client, request) =>
-      client.listCharts(
-        request as unknown as Parameters<SupersetClient['listCharts']>[0],
-      ),
+    method: 'listCharts',
   },
   {
     name: 'dataset list',
@@ -1312,10 +1322,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'dataset-list.v0',
     },
     warning: 'dataset list request contains invalid contract version',
-    call: (client, request) =>
-      client.listDatasets(
-        request as unknown as Parameters<SupersetClient['listDatasets']>[0],
-      ),
+    method: 'listDatasets',
   },
   {
     name: 'database list',
@@ -1324,10 +1331,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'database-list.v0',
     },
     warning: 'database list request contains invalid contract version',
-    call: (client, request) =>
-      client.listDatabases(
-        request as unknown as Parameters<SupersetClient['listDatabases']>[0],
-      ),
+    method: 'listDatabases',
   },
   {
     name: 'query list',
@@ -1336,10 +1340,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'query-list.v0',
     },
     warning: 'query list request contains invalid contract version',
-    call: (client, request) =>
-      client.listQueries(
-        request as unknown as Parameters<SupersetClient['listQueries']>[0],
-      ),
+    method: 'listQueries',
   },
   {
     name: 'saved query list',
@@ -1348,12 +1349,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'saved-query-list.v0',
     },
     warning: 'saved query list request contains invalid contract version',
-    call: (client, request) =>
-      client.listSavedQueries(
-        request as unknown as Parameters<
-          SupersetClient['listSavedQueries']
-        >[0],
-      ),
+    method: 'listSavedQueries',
   },
   {
     name: 'report list',
@@ -1362,10 +1358,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'report-list.v0',
     },
     warning: 'report list request contains invalid contract version',
-    call: (client, request) =>
-      client.listReports(
-        request as unknown as Parameters<SupersetClient['listReports']>[0],
-      ),
+    method: 'listReports',
   },
   {
     name: 'role list',
@@ -1374,10 +1367,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'role-list.v0',
     },
     warning: 'role list request contains invalid contract version',
-    call: (client, request) =>
-      client.listRoles(
-        request as unknown as Parameters<SupersetClient['listRoles']>[0],
-      ),
+    method: 'listRoles',
   },
   {
     name: 'RLS filter list',
@@ -1386,10 +1376,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'rls-list.v0',
     },
     warning: 'RLS filter list request contains invalid contract version',
-    call: (client, request) =>
-      client.listRlsFilters(
-        request as unknown as Parameters<SupersetClient['listRlsFilters']>[0],
-      ),
+    method: 'listRlsFilters',
   },
   {
     name: 'tag list',
@@ -1398,10 +1385,7 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'tag-list.v0',
     },
     warning: 'tag list request contains invalid contract version',
-    call: (client, request) =>
-      client.listTags(
-        request as unknown as Parameters<SupersetClient['listTags']>[0],
-      ),
+    method: 'listTags',
   },
   {
     name: 'task list',
@@ -1410,14 +1394,11 @@ const listContractVersionCases: ListContractCase[] = [
       contractVersion: 'task-list.v0',
     },
     warning: 'task list request contains invalid contract version',
-    call: (client, request) =>
-      client.listTasks(
-        request as unknown as Parameters<SupersetClient['listTasks']>[0],
-      ),
+    method: 'listTasks',
   },
 ];
 
-for (const { name, request, warning, call } of listContractVersionCases) {
+for (const { name, request, warning, method } of listContractVersionCases) {
   test(`${name} rejects wrong request contract versions before querying Superset`, async () => {
     let fetchCalled = false;
     global.fetch = async () => {
@@ -1426,7 +1407,7 @@ for (const { name, request, warning, call } of listContractVersionCases) {
     };
     const client = new SupersetClient(buildConfig({}));
 
-    const result = await call(client, request);
+    const result = await callListMethod(client, method, request);
 
     expect(result.warnings).toContain(warning);
     expect(fetchCalled).toBe(false);
@@ -1437,10 +1418,7 @@ type OwnershipFlagCase = {
   name: string;
   request: Record<string, unknown>;
   warning: string;
-  call: (
-    client: SupersetClient,
-    request: Record<string, unknown>,
-  ) => Promise<{ warnings: string[] }>;
+  method: ListMethodName;
 };
 
 const ownershipFlagCases: OwnershipFlagCase[] = [
@@ -1453,10 +1431,7 @@ const ownershipFlagCases: OwnershipFlagCase[] = [
       ownedByMe: false,
     },
     warning: 'dashboard list request contains invalid ownership flags',
-    call: (client, request) =>
-      client.listDashboards(
-        request as unknown as Parameters<SupersetClient['listDashboards']>[0],
-      ),
+    method: 'listDashboards',
   },
   {
     name: 'chart list',
@@ -1466,10 +1441,7 @@ const ownershipFlagCases: OwnershipFlagCase[] = [
       createdByMe: false,
     },
     warning: 'chart list request contains invalid ownership flags',
-    call: (client, request) =>
-      client.listCharts(
-        request as unknown as Parameters<SupersetClient['listCharts']>[0],
-      ),
+    method: 'listCharts',
   },
   {
     name: 'dataset list',
@@ -1480,10 +1452,7 @@ const ownershipFlagCases: OwnershipFlagCase[] = [
       ownedByMe: 'false',
     },
     warning: 'dataset list request contains invalid ownership flags',
-    call: (client, request) =>
-      client.listDatasets(
-        request as unknown as Parameters<SupersetClient['listDatasets']>[0],
-      ),
+    method: 'listDatasets',
   },
   {
     name: 'database list',
@@ -1492,14 +1461,11 @@ const ownershipFlagCases: OwnershipFlagCase[] = [
       contractVersion: DATABASE_LIST_CONTRACT_VERSION,
     },
     warning: 'database list request contains invalid ownership flags',
-    call: (client, request) =>
-      client.listDatabases(
-        request as unknown as Parameters<SupersetClient['listDatabases']>[0],
-      ),
+    method: 'listDatabases',
   },
 ];
 
-for (const { name, request, warning, call } of ownershipFlagCases) {
+for (const { name, request, warning, method } of ownershipFlagCases) {
   test(`${name} rejects invalid ownership flags before querying Superset`, async () => {
     let fetchCalled = false;
     global.fetch = async () => {
@@ -1508,7 +1474,7 @@ for (const { name, request, warning, call } of ownershipFlagCases) {
     };
     const client = new SupersetClient(buildConfig({}));
 
-    const result = await call(client, request);
+    const result = await callListMethod(client, method, request);
 
     expect(result.warnings).toContain(warning);
     expect(fetchCalled).toBe(false);
