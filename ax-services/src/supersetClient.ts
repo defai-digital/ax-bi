@@ -2250,195 +2250,182 @@ function emptyDashboardListResponse(
   request: DashboardListRequest,
   warnings: string[],
 ): DashboardListResponse {
-  return {
-    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
-    dashboards: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedDashboardColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    DASHBOARD_LIST_CONTRACT_VERSION,
+    requestedDashboardColumns(request),
+    { dashboards: [] },
+  );
 }
 
 function emptyAnnotationLayerListResponse(
   request: AnnotationLayerListRequest,
   warnings: string[],
 ): AnnotationLayerListResponse {
-  return {
-    contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
-    annotationLayers: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedAnnotationLayerColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+    requestedAnnotationLayerColumns(request),
+    { annotationLayers: [] },
+  );
 }
 
 function emptyAnnotationListResponse(
   request: AnnotationListRequest,
   warnings: string[],
 ): AnnotationListResponse {
-  return {
-    contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
-    annotations: [],
-    layerId: request.layerId,
-    ...emptyListResponseMetadata(
-      request,
-      requestedAnnotationColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    ANNOTATION_LIST_CONTRACT_VERSION,
+    requestedAnnotationColumns(request),
+    { annotations: [], layerId: request.layerId },
+  );
 }
 
 function emptyChartListResponse(
   request: ChartListRequest,
   warnings: string[],
 ): ChartListResponse {
-  return {
-    contractVersion: CHART_LIST_CONTRACT_VERSION,
-    charts: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedChartColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    CHART_LIST_CONTRACT_VERSION,
+    requestedChartColumns(request),
+    { charts: [] },
+  );
 }
 
 function emptyDatasetListResponse(
   request: DatasetListRequest,
   warnings: string[],
 ): DatasetListResponse {
-  return {
-    contractVersion: DATASET_LIST_CONTRACT_VERSION,
-    datasets: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedDatasetColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    DATASET_LIST_CONTRACT_VERSION,
+    requestedDatasetColumns(request),
+    { datasets: [] },
+  );
 }
 
 function emptyDatabaseListResponse(
   request: DatabaseListRequest,
   warnings: string[],
 ): DatabaseListResponse {
-  return {
-    contractVersion: DATABASE_LIST_CONTRACT_VERSION,
-    databases: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedDatabaseColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    DATABASE_LIST_CONTRACT_VERSION,
+    requestedDatabaseColumns(request),
+    { databases: [] },
+  );
 }
 
 function emptyQueryListResponse(
   request: QueryListRequest,
   warnings: string[],
 ): QueryListResponse {
-  return {
-    contractVersion: QUERY_LIST_CONTRACT_VERSION,
-    queries: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedQueryColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    QUERY_LIST_CONTRACT_VERSION,
+    requestedQueryColumns(request),
+    { queries: [] },
+  );
 }
 
 function emptySavedQueryListResponse(
   request: SavedQueryListRequest,
   warnings: string[],
 ): SavedQueryListResponse {
-  return {
-    contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
-    savedQueries: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedSavedQueryColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    SAVED_QUERY_LIST_CONTRACT_VERSION,
+    requestedSavedQueryColumns(request),
+    { savedQueries: [] },
+  );
 }
 
 function emptyReportListResponse(
   request: ReportListRequest,
   warnings: string[],
 ): ReportListResponse {
-  return {
-    contractVersion: REPORT_LIST_CONTRACT_VERSION,
-    reports: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedReportColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    REPORT_LIST_CONTRACT_VERSION,
+    requestedReportColumns(request),
+    { reports: [] },
+  );
 }
 
 function emptyRoleListResponse(
   request: RoleListRequest,
   warnings: string[],
 ): RoleListResponse {
-  return {
-    contractVersion: ROLE_LIST_CONTRACT_VERSION,
-    roles: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedRoleColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    ROLE_LIST_CONTRACT_VERSION,
+    requestedRoleColumns(request),
+    { roles: [] },
+  );
 }
 
 function emptyRlsListResponse(
   request: RlsListRequest,
   warnings: string[],
 ): RlsListResponse {
-  return {
-    contractVersion: RLS_LIST_CONTRACT_VERSION,
-    rlsFilters: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedRlsColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    RLS_LIST_CONTRACT_VERSION,
+    requestedRlsColumns(request),
+    { rlsFilters: [] },
+  );
 }
 
 function emptyTagListResponse(
   request: TagListRequest,
   warnings: string[],
 ): TagListResponse {
-  return {
-    contractVersion: TAG_LIST_CONTRACT_VERSION,
-    tags: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedTagColumns(request),
-      warnings,
-    ),
-  };
+  return emptyListResponse(
+    request,
+    warnings,
+    TAG_LIST_CONTRACT_VERSION,
+    requestedTagColumns(request),
+    { tags: [] },
+  );
 }
 
 function emptyTaskListResponse(
   request: TaskListRequest,
   warnings: string[],
 ): TaskListResponse {
+  return emptyListResponse(
+    request,
+    warnings,
+    TASK_LIST_CONTRACT_VERSION,
+    requestedTaskColumns(request),
+    { tasks: [] },
+  );
+}
+
+function emptyListResponse<TContract extends string, TFields extends object>(
+  request: ListPaginationRequest,
+  warnings: string[],
+  contractVersion: TContract,
+  columnsRequested: string[],
+  fields: TFields,
+): TFields & { contractVersion: TContract } & ListResponseMetadata {
   return {
-    contractVersion: TASK_LIST_CONTRACT_VERSION,
-    tasks: [],
-    ...emptyListResponseMetadata(
-      request,
-      requestedTaskColumns(request),
-      warnings,
-    ),
+    contractVersion,
+    ...fields,
+    ...emptyListResponseMetadata(request, columnsRequested, warnings),
   };
 }
 
