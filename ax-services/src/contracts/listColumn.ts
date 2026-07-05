@@ -172,3 +172,86 @@ export function buildListRequestSchema<
     properties,
   } as const;
 }
+
+const listResponseMetricsRequired = [
+  'count',
+  'totalCount',
+  'page',
+  'pageSize',
+  'totalPages',
+  'hasNext',
+  'hasPrevious',
+] as const;
+
+const listResponseColumnRequired = [
+  'columnsRequested',
+  'columnsLoaded',
+  'warnings',
+] as const;
+
+const listResponseMetricProperties = {
+  count: listCountSchema,
+  totalCount: listCountSchema,
+  page: listPageSchema,
+  pageSize: listPageSizeSchema,
+  totalPages: listTotalPagesSchema,
+  hasNext: { type: 'boolean' },
+  hasPrevious: { type: 'boolean' },
+} as const;
+
+const listResponseColumnProperties = {
+  columnsRequested: listColumnSchema,
+  columnsLoaded: listColumnSchema,
+  warnings: warningSchema,
+} as const;
+
+export function buildListResponseSchema<
+  TContractVersion extends string,
+  TCollectionKey extends string,
+  TItemSchema extends Record<string, unknown>,
+  TMiddleProperties extends Record<string, unknown> = Record<never, never>,
+>({
+  schemaId,
+  contractVersion,
+  collectionKey,
+  itemSchema,
+  middleRequired = [],
+  middleProperties,
+}: {
+  schemaId: string;
+  contractVersion: TContractVersion;
+  collectionKey: TCollectionKey;
+  itemSchema: TItemSchema;
+  middleRequired?: readonly (keyof TMiddleProperties & string)[];
+  middleProperties?: TMiddleProperties;
+}) {
+  const collectionProperty = {
+    type: 'array',
+    items: itemSchema,
+  } as const;
+  const properties = {
+    contractVersion: { const: contractVersion },
+    [collectionKey]: collectionProperty,
+    ...listResponseMetricProperties,
+    ...middleProperties,
+    ...listResponseColumnProperties,
+  } as { contractVersion: { const: TContractVersion } } &
+    Record<TCollectionKey, typeof collectionProperty> &
+    typeof listResponseMetricProperties &
+    TMiddleProperties &
+    typeof listResponseColumnProperties;
+
+  return {
+    $id: schemaId,
+    type: 'object',
+    required: [
+      'contractVersion',
+      collectionKey,
+      ...listResponseMetricsRequired,
+      ...middleRequired,
+      ...listResponseColumnRequired,
+    ],
+    additionalProperties: false,
+    properties,
+  } as const;
+}

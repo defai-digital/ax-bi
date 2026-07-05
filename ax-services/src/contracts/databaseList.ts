@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
@@ -126,42 +121,12 @@ export const databaseListRequestSchema = buildListRequestSchema({
   },
 });
 
-export const databaseListResponseSchema = {
-  $id: 'ax-services.database-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'databases',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATABASE_LIST_CONTRACT_VERSION },
-    databases: {
-      type: 'array',
-      items: databaseListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const databaseListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.database-list.v1.response',
+  contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+  collectionKey: 'databases',
+  itemSchema: databaseListItemSchema,
+});
 
 export const databaseListContractSchemas = {
   databaseListRequestSchema,

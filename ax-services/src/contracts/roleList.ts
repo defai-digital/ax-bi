@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const ROLE_LIST_CONTRACT_VERSION = 'role-list.v1';
@@ -80,42 +75,12 @@ export const roleListRequestSchema = buildListRequestSchema({
   contractVersion: ROLE_LIST_CONTRACT_VERSION,
 });
 
-export const roleListResponseSchema = {
-  $id: 'ax-services.role-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'roles',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ROLE_LIST_CONTRACT_VERSION },
-    roles: {
-      type: 'array',
-      items: roleListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const roleListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.role-list.v1.response',
+  contractVersion: ROLE_LIST_CONTRACT_VERSION,
+  collectionKey: 'roles',
+  itemSchema: roleListItemSchema,
+});
 
 export const roleListContractSchemas = {
   roleListRequestSchema,

@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const RLS_LIST_CONTRACT_VERSION = 'rls-list.v1';
@@ -120,39 +115,12 @@ export const rlsListRequestSchema = buildListRequestSchema({
   contractVersion: RLS_LIST_CONTRACT_VERSION,
 });
 
-export const rlsListResponseSchema = {
-  $id: 'ax-services.rls-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'rlsFilters',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: RLS_LIST_CONTRACT_VERSION },
-    rlsFilters: { type: 'array', items: rlsListItemSchema },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const rlsListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.rls-list.v1.response',
+  contractVersion: RLS_LIST_CONTRACT_VERSION,
+  collectionKey: 'rlsFilters',
+  itemSchema: rlsListItemSchema,
+});
 
 export const rlsListContractSchemas = {
   rlsListRequestSchema,

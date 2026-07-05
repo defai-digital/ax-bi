@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const TAG_LIST_CONTRACT_VERSION = 'tag-list.v1';
@@ -92,42 +87,12 @@ export const tagListRequestSchema = buildListRequestSchema({
   contractVersion: TAG_LIST_CONTRACT_VERSION,
 });
 
-export const tagListResponseSchema = {
-  $id: 'ax-services.tag-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'tags',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: TAG_LIST_CONTRACT_VERSION },
-    tags: {
-      type: 'array',
-      items: tagListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const tagListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.tag-list.v1.response',
+  contractVersion: TAG_LIST_CONTRACT_VERSION,
+  collectionKey: 'tags',
+  itemSchema: tagListItemSchema,
+});
 
 export const tagListContractSchemas = {
   tagListRequestSchema,

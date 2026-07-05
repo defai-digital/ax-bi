@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const ANNOTATION_LAYER_LIST_CONTRACT_VERSION =
@@ -87,42 +82,12 @@ export const annotationLayerListRequestSchema = buildListRequestSchema({
   contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
 });
 
-export const annotationLayerListResponseSchema = {
-  $id: 'ax-services.annotation-layer-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'annotationLayers',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ANNOTATION_LAYER_LIST_CONTRACT_VERSION },
-    annotationLayers: {
-      type: 'array',
-      items: annotationLayerListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const annotationLayerListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.annotation-layer-list.v1.response',
+  contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
+  collectionKey: 'annotationLayers',
+  itemSchema: annotationLayerListItemSchema,
+});
 
 export const annotationLayerListContractSchemas = {
   annotationLayerListRequestSchema,

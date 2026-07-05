@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const QUERY_LIST_CONTRACT_VERSION = 'query-list.v1';
@@ -110,42 +105,12 @@ export const queryListRequestSchema = buildListRequestSchema({
   contractVersion: QUERY_LIST_CONTRACT_VERSION,
 });
 
-export const queryListResponseSchema = {
-  $id: 'ax-services.query-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'queries',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
-    queries: {
-      type: 'array',
-      items: queryListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const queryListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.query-list.v1.response',
+  contractVersion: QUERY_LIST_CONTRACT_VERSION,
+  collectionKey: 'queries',
+  itemSchema: queryListItemSchema,
+});
 
 export const queryListContractSchemas = {
   queryListRequestSchema,

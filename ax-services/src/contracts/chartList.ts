@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const CHART_LIST_CONTRACT_VERSION = 'chart-list.v1';
@@ -103,42 +98,12 @@ export const chartListRequestSchema = buildListRequestSchema({
   },
 });
 
-export const chartListResponseSchema = {
-  $id: 'ax-services.chart-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'charts',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: CHART_LIST_CONTRACT_VERSION },
-    charts: {
-      type: 'array',
-      items: chartListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const chartListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.chart-list.v1.response',
+  contractVersion: CHART_LIST_CONTRACT_VERSION,
+  collectionKey: 'charts',
+  itemSchema: chartListItemSchema,
+});
 
 export const chartListContractSchemas = {
   chartListRequestSchema,

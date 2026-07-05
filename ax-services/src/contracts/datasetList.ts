@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const DATASET_LIST_CONTRACT_VERSION = 'dataset-list.v1';
@@ -109,42 +104,12 @@ export const datasetListRequestSchema = buildListRequestSchema({
   },
 });
 
-export const datasetListResponseSchema = {
-  $id: 'ax-services.dataset-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'datasets',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATASET_LIST_CONTRACT_VERSION },
-    datasets: {
-      type: 'array',
-      items: datasetListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const datasetListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.dataset-list.v1.response',
+  contractVersion: DATASET_LIST_CONTRACT_VERSION,
+  collectionKey: 'datasets',
+  itemSchema: datasetListItemSchema,
+});
 
 export const datasetListContractSchemas = {
   datasetListRequestSchema,

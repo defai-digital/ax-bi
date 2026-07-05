@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const DASHBOARD_LIST_CONTRACT_VERSION = 'dashboard-list.v1';
@@ -105,42 +100,12 @@ export const dashboardListRequestSchema = buildListRequestSchema({
   },
 });
 
-export const dashboardListResponseSchema = {
-  $id: 'ax-services.dashboard-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'dashboards',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DASHBOARD_LIST_CONTRACT_VERSION },
-    dashboards: {
-      type: 'array',
-      items: dashboardListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const dashboardListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.dashboard-list.v1.response',
+  contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+  collectionKey: 'dashboards',
+  itemSchema: dashboardListItemSchema,
+});
 
 export const dashboardListContractSchemas = {
   dashboardListRequestSchema,

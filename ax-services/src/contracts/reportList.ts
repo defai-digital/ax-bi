@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const REPORT_LIST_CONTRACT_VERSION = 'report-list.v1';
@@ -108,42 +103,12 @@ export const reportListRequestSchema = buildListRequestSchema({
   contractVersion: REPORT_LIST_CONTRACT_VERSION,
 });
 
-export const reportListResponseSchema = {
-  $id: 'ax-services.report-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'reports',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: REPORT_LIST_CONTRACT_VERSION },
-    reports: {
-      type: 'array',
-      items: reportListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const reportListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.report-list.v1.response',
+  contractVersion: REPORT_LIST_CONTRACT_VERSION,
+  collectionKey: 'reports',
+  itemSchema: reportListItemSchema,
+});
 
 export const reportListContractSchemas = {
   reportListRequestSchema,

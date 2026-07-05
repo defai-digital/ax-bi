@@ -20,12 +20,7 @@ import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
   buildListRequestSchema,
-  listColumnSchema,
-  listCountSchema,
-  listPageSchema,
-  listPageSizeSchema,
-  listTotalPagesSchema,
-  warningSchema,
+  buildListResponseSchema,
 } from './listColumn';
 
 export const TASK_LIST_CONTRACT_VERSION = 'task-list.v1';
@@ -94,42 +89,12 @@ export const taskListRequestSchema = buildListRequestSchema({
   contractVersion: TASK_LIST_CONTRACT_VERSION,
 });
 
-export const taskListResponseSchema = {
-  $id: 'ax-services.task-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'tasks',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: TASK_LIST_CONTRACT_VERSION },
-    tasks: {
-      type: 'array',
-      items: taskListItemSchema,
-    },
-    count: listCountSchema,
-    totalCount: listCountSchema,
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-    totalPages: listTotalPagesSchema,
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: listColumnSchema,
-    columnsLoaded: listColumnSchema,
-    warnings: warningSchema,
-  },
-} as const;
+export const taskListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.task-list.v1.response',
+  contractVersion: TASK_LIST_CONTRACT_VERSION,
+  collectionKey: 'tasks',
+  itemSchema: taskListItemSchema,
+});
 
 export const taskListContractSchemas = {
   taskListRequestSchema,
