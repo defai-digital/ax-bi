@@ -577,7 +577,7 @@ nh3==0.3.5
     #   apache-superset
 nodeenv==1.8.0
     # via pre-commit
-numpy==1.26.4
+numpy==2.2.6
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -641,7 +641,7 @@ packaging==25.0
     #   pytest
     #   shillelagh
     #   sqlalchemy-bigquery
-pandas==2.1.4
+pandas==2.3.3
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -822,6 +822,10 @@ pytest-mock==3.10.0
     # via
     #   apache-superset
     #   apache-superset-extensions-cli
+python-calamine==0.7.0
+    # via
+    #   -c requirements/base-constraint.txt
+    #   pandas
 python-dateutil==2.9.0.post0
     # via
     #   -c requirements/base-constraint.txt

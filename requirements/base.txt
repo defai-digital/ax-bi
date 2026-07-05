@@ -249,7 +249,7 @@ nh3==0.3.5
     # via apache-superset (pyproject.toml)
 numexpr==2.10.2
     # via -r requirements/base.in
-numpy==1.26.4
+numpy==2.2.6
     # via
     #   apache-superset (pyproject.toml)
     #   bottleneck
@@ -277,7 +277,7 @@ packaging==25.0
     #   gunicorn
     #   limits
     #   shillelagh
-pandas==2.1.4
+pandas==2.3.3
     # via apache-superset (pyproject.toml)
 paramiko==3.5.1
     # via
@@ -333,6 +333,8 @@ pyparsing==3.3.2
     # via apache-superset (pyproject.toml)
 pysocks==1.7.1
     # via urllib3
+python-calamine==0.7.0
+    # via pandas
 python-dateutil==2.9.0.post0
     # via
     #   apache-superset (pyproject.toml)
