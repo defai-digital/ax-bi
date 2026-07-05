@@ -185,7 +185,7 @@ def debounce(duration: float | int = 0.1) -> Callable[..., Any]:
 
 
 def on_security_exception(self: Any, ex: Exception) -> Response:
-    return self.response(403, **{"message": utils.error_msg_from_exception(ex)})
+    return self.response(403, message=utils.error_msg_from_exception(ex))
 
 
 @contextmanager

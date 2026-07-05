@@ -257,12 +257,12 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         if (
             hasattr(column.type, "python_type")
             and column.type.python_type == uuid_lib.UUID
+            and isinstance(value, str)
         ):
-            if isinstance(value, str):
-                try:
-                    return uuid_lib.UUID(value)
-                except (ValueError, AttributeError):
-                    return None
+            try:
+                return uuid_lib.UUID(value)
+            except (ValueError, AttributeError):
+                return None
         return value
 
     @classmethod
