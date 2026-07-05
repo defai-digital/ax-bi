@@ -306,9 +306,10 @@ This quick start is for local trials. Before exposing AX-BI on a network:
 - Configure JWT authentication before exposing MCP with
   `MCP_AUTH_ENABLED=true`.
 
-See [`docker/README.md`](docker/README.md) for Docker details and
-[`superset/mcp_service/PRODUCTION.md`](superset/mcp_service/PRODUCTION.md) for
-MCP production guidance.
+See [`docker/README.md`](https://github.com/defai-digital/ax-bi/tree/main/docker)
+for Docker details and
+[`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md)
+for MCP production guidance.
 
 To build images from this checkout instead of pulling published images:
 
