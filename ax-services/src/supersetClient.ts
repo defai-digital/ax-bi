@@ -396,7 +396,7 @@ export class SupersetClient
           request,
           annotationLayers.length,
           totalCount,
-          requestedAnnotationLayerColumns(request),
+          requestedListColumns(request, 'annotationLayer'),
           annotationLayerColumnsLoaded(annotationLayers),
           [],
         ),
@@ -440,7 +440,7 @@ export class SupersetClient
           request,
           annotations.length,
           totalCount,
-          requestedAnnotationColumns(request),
+          requestedListColumns(request, 'annotation'),
           annotationColumnsLoaded(annotations),
           [],
         ),
@@ -617,7 +617,7 @@ export class SupersetClient
           request,
           dashboards.length,
           totalCount,
-          requestedDashboardColumns(request),
+          requestedListColumns(request, 'dashboard'),
           dashboardColumnsLoaded(dashboards),
           [],
         ),
@@ -658,7 +658,7 @@ export class SupersetClient
           request,
           charts.length,
           totalCount,
-          requestedChartColumns(request),
+          requestedListColumns(request, 'chart'),
           chartColumnsLoaded(charts),
           [],
         ),
@@ -699,7 +699,7 @@ export class SupersetClient
           request,
           datasets.length,
           totalCount,
-          requestedDatasetColumns(request),
+          requestedListColumns(request, 'dataset'),
           datasetColumnsLoaded(datasets),
           [],
         ),
@@ -740,7 +740,7 @@ export class SupersetClient
           request,
           databases.length,
           totalCount,
-          requestedDatabaseColumns(request),
+          requestedListColumns(request, 'database'),
           databaseColumnsLoaded(databases),
           [],
         ),
@@ -848,7 +848,7 @@ export class SupersetClient
           request,
           queries.length,
           totalCount,
-          requestedQueryColumns(request),
+          requestedListColumns(request, 'query'),
           queryColumnsLoaded(queries),
           [],
         ),
@@ -888,7 +888,7 @@ export class SupersetClient
           request,
           savedQueries.length,
           totalCount,
-          requestedSavedQueryColumns(request),
+          requestedListColumns(request, 'savedQuery'),
           savedQueryColumnsLoaded(savedQueries),
           [],
         ),
@@ -928,7 +928,7 @@ export class SupersetClient
           request,
           reports.length,
           totalCount,
-          requestedReportColumns(request),
+          requestedListColumns(request, 'report'),
           reportColumnsLoaded(reports),
           [],
         ),
@@ -968,7 +968,7 @@ export class SupersetClient
           request,
           roles.length,
           totalCount,
-          requestedRoleColumns(request),
+          requestedListColumns(request, 'role'),
           roleColumnsLoaded(roles),
           [],
         ),
@@ -1008,7 +1008,7 @@ export class SupersetClient
           request,
           rlsFilters.length,
           totalCount,
-          requestedRlsColumns(request),
+          requestedListColumns(request, 'rls'),
           rlsColumnsLoaded(rlsFilters),
           [],
         ),
@@ -1048,7 +1048,7 @@ export class SupersetClient
           request,
           tags.length,
           totalCount,
-          requestedTagColumns(request),
+          requestedListColumns(request, 'tag'),
           tagColumnsLoaded(tags),
           [],
         ),
@@ -1088,7 +1088,7 @@ export class SupersetClient
           request,
           tasks.length,
           totalCount,
-          requestedTaskColumns(request),
+          requestedListColumns(request, 'task'),
           taskColumnsLoaded(tasks),
           [],
         ),
@@ -1357,6 +1357,62 @@ const listSearchColumns = {
   savedQuery: 'label',
   tag: 'name',
   task: 'task_name',
+} as const;
+
+const defaultListColumns = {
+  annotation: ['id', 'short_descr', 'start_dttm', 'end_dttm', 'layer_id'],
+  annotationLayer: ['id', 'name', 'descr'],
+  chart: [
+    'id',
+    'slice_name',
+    'viz_type',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ],
+  dashboard: [
+    'id',
+    'dashboard_title',
+    'slug',
+    'description',
+    'certified_by',
+    'certification_details',
+    'url',
+    'changed_on',
+    'changed_on_humanized',
+  ],
+  database: [
+    'id',
+    'uuid',
+    'database_name',
+    'backend',
+    'expose_in_sqllab',
+    'allow_file_upload',
+    'changed_on',
+    'changed_on_humanized',
+  ],
+  dataset: [
+    'id',
+    'table_name',
+    'schema',
+    'database_name',
+    'database',
+    'description',
+    'certified_by',
+    'certification_details',
+    'changed_on',
+    'changed_on_humanized',
+  ],
+  query: ['id', 'status', 'start_time', 'database_id', 'schema'],
+  report: ['id', 'name', 'type', 'active', 'crontab'],
+  rls: ['id', 'name', 'filter_type', 'clause'],
+  role: ['id', 'name'],
+  savedQuery: ['id', 'label', 'db_id', 'schema', 'uuid'],
+  tag: ['id', 'name', 'type'],
+  task: ['id', 'uuid', 'task_type', 'status', 'changed_on'],
 } as const;
 
 function isSupportedSearchType(
@@ -1896,36 +1952,6 @@ function extractDatabaseName(item: SupersetListItem): string | undefined {
     : undefined;
 }
 
-function requestedDashboardColumns(request: DashboardListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'dashboard_title',
-    'slug',
-    'description',
-    'certified_by',
-    'certification_details',
-    'url',
-    'changed_on',
-    'changed_on_humanized',
-  ]);
-}
-
-function requestedAnnotationLayerColumns(
-  request: AnnotationLayerListRequest,
-): string[] {
-  return requestedColumnsOrDefault(request, ['id', 'name', 'descr']);
-}
-
-function requestedAnnotationColumns(request: AnnotationListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'short_descr',
-    'start_dttm',
-    'end_dttm',
-    'layer_id',
-  ]);
-}
-
 function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
   return loadedColumns(dashboards, [
     ['dashboardTitle', 'dashboard_title'],
@@ -1938,20 +1964,6 @@ function dashboardColumnsLoaded(dashboards: DashboardListItem[]): string[] {
     ['url', 'url'],
     ['changedOn', 'changed_on'],
     ['changedOnHumanized', 'changed_on_humanized'],
-  ]);
-}
-
-function requestedChartColumns(request: ChartListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'slice_name',
-    'viz_type',
-    'description',
-    'certified_by',
-    'certification_details',
-    'url',
-    'changed_on',
-    'changed_on_humanized',
   ]);
 }
 
@@ -1969,99 +1981,21 @@ function chartColumnsLoaded(charts: ChartListItem[]): string[] {
   ]);
 }
 
-function requestedDatasetColumns(request: DatasetListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'table_name',
-    'schema',
-    'database_name',
-    'database',
-    'description',
-    'certified_by',
-    'certification_details',
-    'changed_on',
-    'changed_on_humanized',
-  ]);
-}
-
-function requestedDatabaseColumns(request: DatabaseListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'uuid',
-    'database_name',
-    'backend',
-    'expose_in_sqllab',
-    'allow_file_upload',
-    'changed_on',
-    'changed_on_humanized',
-  ]);
-}
-
-function requestedQueryColumns(request: QueryListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'status',
-    'start_time',
-    'database_id',
-    'schema',
-  ]);
-}
-
-function requestedSavedQueryColumns(request: SavedQueryListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'label',
-    'db_id',
-    'schema',
-    'uuid',
-  ]);
-}
-
-function requestedReportColumns(request: ReportListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'name',
-    'type',
-    'active',
-    'crontab',
-  ]);
-}
-
-function requestedRoleColumns(request: RoleListRequest): string[] {
-  return requestedColumnsOrDefault(request, ['id', 'name']);
-}
-
-function requestedRlsColumns(request: RlsListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'name',
-    'filter_type',
-    'clause',
-  ]);
-}
-
-function requestedTagColumns(request: TagListRequest): string[] {
-  return requestedColumnsOrDefault(request, ['id', 'name', 'type']);
-}
-
-function requestedTaskColumns(request: TaskListRequest): string[] {
-  return requestedColumnsOrDefault(request, [
-    'id',
-    'uuid',
-    'task_type',
-    'status',
-    'changed_on',
-  ]);
-}
-
 function requestedColumnsOrDefault(
   request: ListColumnRequest,
-  defaultColumns: string[],
+  defaultColumns: readonly string[],
 ): string[] {
   return isListColumnArray(request.selectColumns) &&
     request.selectColumns.length > 0
     ? request.selectColumns
-    : defaultColumns;
+    : [...defaultColumns];
+}
+
+function requestedListColumns(
+  request: ListColumnRequest,
+  key: keyof typeof defaultListColumns,
+): string[] {
+  return requestedColumnsOrDefault(request, defaultListColumns[key]);
 }
 
 function loadedColumns<T extends object>(
@@ -2254,7 +2188,7 @@ function emptyDashboardListResponse(
     request,
     warnings,
     DASHBOARD_LIST_CONTRACT_VERSION,
-    requestedDashboardColumns(request),
+    requestedListColumns(request, 'dashboard'),
     { dashboards: [] },
   );
 }
@@ -2267,7 +2201,7 @@ function emptyAnnotationLayerListResponse(
     request,
     warnings,
     ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
-    requestedAnnotationLayerColumns(request),
+    requestedListColumns(request, 'annotationLayer'),
     { annotationLayers: [] },
   );
 }
@@ -2280,7 +2214,7 @@ function emptyAnnotationListResponse(
     request,
     warnings,
     ANNOTATION_LIST_CONTRACT_VERSION,
-    requestedAnnotationColumns(request),
+    requestedListColumns(request, 'annotation'),
     { annotations: [], layerId: request.layerId },
   );
 }
@@ -2293,7 +2227,7 @@ function emptyChartListResponse(
     request,
     warnings,
     CHART_LIST_CONTRACT_VERSION,
-    requestedChartColumns(request),
+    requestedListColumns(request, 'chart'),
     { charts: [] },
   );
 }
@@ -2306,7 +2240,7 @@ function emptyDatasetListResponse(
     request,
     warnings,
     DATASET_LIST_CONTRACT_VERSION,
-    requestedDatasetColumns(request),
+    requestedListColumns(request, 'dataset'),
     { datasets: [] },
   );
 }
@@ -2319,7 +2253,7 @@ function emptyDatabaseListResponse(
     request,
     warnings,
     DATABASE_LIST_CONTRACT_VERSION,
-    requestedDatabaseColumns(request),
+    requestedListColumns(request, 'database'),
     { databases: [] },
   );
 }
@@ -2332,7 +2266,7 @@ function emptyQueryListResponse(
     request,
     warnings,
     QUERY_LIST_CONTRACT_VERSION,
-    requestedQueryColumns(request),
+    requestedListColumns(request, 'query'),
     { queries: [] },
   );
 }
@@ -2345,7 +2279,7 @@ function emptySavedQueryListResponse(
     request,
     warnings,
     SAVED_QUERY_LIST_CONTRACT_VERSION,
-    requestedSavedQueryColumns(request),
+    requestedListColumns(request, 'savedQuery'),
     { savedQueries: [] },
   );
 }
@@ -2358,7 +2292,7 @@ function emptyReportListResponse(
     request,
     warnings,
     REPORT_LIST_CONTRACT_VERSION,
-    requestedReportColumns(request),
+    requestedListColumns(request, 'report'),
     { reports: [] },
   );
 }
@@ -2371,7 +2305,7 @@ function emptyRoleListResponse(
     request,
     warnings,
     ROLE_LIST_CONTRACT_VERSION,
-    requestedRoleColumns(request),
+    requestedListColumns(request, 'role'),
     { roles: [] },
   );
 }
@@ -2384,7 +2318,7 @@ function emptyRlsListResponse(
     request,
     warnings,
     RLS_LIST_CONTRACT_VERSION,
-    requestedRlsColumns(request),
+    requestedListColumns(request, 'rls'),
     { rlsFilters: [] },
   );
 }
@@ -2397,7 +2331,7 @@ function emptyTagListResponse(
     request,
     warnings,
     TAG_LIST_CONTRACT_VERSION,
-    requestedTagColumns(request),
+    requestedListColumns(request, 'tag'),
     { tags: [] },
   );
 }
@@ -2410,7 +2344,7 @@ function emptyTaskListResponse(
     request,
     warnings,
     TASK_LIST_CONTRACT_VERSION,
-    requestedTaskColumns(request),
+    requestedListColumns(request, 'task'),
     { tasks: [] },
   );
 }
