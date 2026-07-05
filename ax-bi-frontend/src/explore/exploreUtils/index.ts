@@ -29,13 +29,15 @@ import {
   getChartBuildQueryRegistry,
   getChartMetadataRegistry,
   QueryFormData,
+  QueryObject,
   SupersetClient,
   SetDataMaskHook,
   JsonObject,
+  type BuildQuery,
 } from '@superset-ui/core';
 import { safeStringify } from 'src/utils/safeStringify';
 import { optionLabel } from 'src/utils/common';
-import { ensureAppRoot } from 'src/utils/pathUtils';
+import { ensureAppRoot, normalizeLegacyRoutePrefix } from 'src/utils/pathUtils';
 import { downloadBlob, getFilenameFromResponse } from 'src/utils/export';
 import { URL_PARAMS } from 'src/constants';
 import {
@@ -180,10 +182,7 @@ export function mountExploreUrl(
   return uri.directory(directory).search(search).toString();
 }
 
-export function getChartDataUri({
-  path,
-  qs,
-}: ChartDataUriParams): URI {
+export function getChartDataUri({ path, qs }: ChartDataUriParams): URI {
   // The search params from the window.location are carried through,
   // but can be specified with curUrl (used for unit tests to spoof
   // the window.location).
@@ -303,8 +302,8 @@ export const buildV1ChartDataPayload = async ({
 }: BuildV1ChartDataPayloadParams): Promise<
   ReturnType<typeof buildQueryContext>
 > => {
-  const defaultBuildQuery = (buildQueryFormData: QueryFormData) =>
-    buildQueryContext(buildQueryFormData, baseQueryObject => [
+  const defaultBuildQuery: BuildQuery<QueryFormData> = buildQueryFormData =>
+    buildQueryContext(buildQueryFormData, (baseQueryObject: QueryObject) => [
       {
         ...baseQueryObject,
       },
@@ -377,7 +376,7 @@ export const exportChart = async ({
     // Streaming uses native fetch — apply appRoot prefix here since useStreamingExport
     // does not go through SupersetClient (which would add it automatically).
     onStartStreamingExport({
-      url: url ? ensureAppRoot(url) : url,
+      url: url ? normalizeLegacyRoutePrefix(ensureAppRoot(url)) : url,
       payload,
       exportType: resultFormat,
       exportSource: 'chart',
@@ -490,7 +489,8 @@ export const getSimpleSQLExpression = (
     expression += ` ${operator}`;
     const firstValue =
       isMulti && Array.isArray(comparator) ? comparator[0] : comparator;
-    const comparatorArray = ensureIsArray(comparator);
+    const comparatorArray: ComparatorValue[] =
+      ensureIsArray<ComparatorValue>(comparator);
     const isString =
       firstValue !== undefined &&
       (typeof firstValue === 'boolean' || Number.isNaN(Number(firstValue)));
@@ -498,9 +498,9 @@ export const getSimpleSQLExpression = (
     const [prefix, suffix] = isMulti ? ['(', ')'] : ['', ''];
     if (comparatorArray.length > 0 && showComparator) {
       const formattedComparators = comparatorArray
-        .map(val => optionLabel(val))
+        .map((val: ComparatorValue) => optionLabel(val))
         .map(
-          val =>
+          (val: string) =>
             `${quote}${isString ? String(val).replace(/'/g, "''") : val}${quote}`,
         );
       expression += ` ${prefix}${formattedComparators.join(', ')}${suffix}`;

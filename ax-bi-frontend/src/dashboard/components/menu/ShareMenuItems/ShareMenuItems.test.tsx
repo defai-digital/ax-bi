@@ -32,6 +32,12 @@ import { useShareMenuItems, ShareMenuItemProps } from '.';
 const spy = jest.spyOn(copyTextToClipboard, 'default');
 
 const DASHBOARD_ID = '26';
+const setFeatureFlags = (featureFlags: Record<string, unknown>) => {
+  (
+    window as typeof window & { featureFlags?: Record<string, unknown> }
+  ).featureFlags = featureFlags;
+};
+
 const createProps = () => ({
   addDangerToast: jest.fn(),
   addSuccessToast: jest.fn(),
@@ -72,7 +78,7 @@ beforeEach(() => {
 
 afterEach(() => {
   locationSpy.mockRestore();
-  window.featureFlags = {};
+  setFeatureFlags({});
   fetchMock.clearHistory().removeRoutes();
 });
 
@@ -188,7 +194,7 @@ test('Click on "Share dashboard by email" and succeed', async () => {
   await waitFor(() => {
     expect(props.addDangerToast).toHaveBeenCalledTimes(0);
     expect(window.location.href).toBe(
-      'mailto:?Subject=Superset%20dashboard%20COVID%20Vaccine%20Dashboard%20&Body=Check%20out%20this%20dashboard%3A%20http%3A%2F%2Flocalhost%2Fsuperset%2Fdashboard%2Fp%2F123%2F',
+      'mailto:?Subject=Superset%20dashboard%20COVID%20Vaccine%20Dashboard%20&Body=Check%20out%20this%20dashboard%3A%20http%3A%2F%2Flocalhost%2Fax-bi%2Fdashboard%2Fp%2F123%2F',
     );
   });
 });
@@ -225,9 +231,9 @@ test('Click on "Share dashboard by email" and fail', async () => {
 });
 
 test('Should show "Embed code" menu item when feature flag is enabled and chart has data', () => {
-  window.featureFlags = {
+  setFeatureFlags({
     EMBEDDABLE_CHARTS: true,
-  };
+  });
   const props = createProps();
   const propsWithFormData = {
     ...props,
@@ -250,9 +256,9 @@ test('Should show "Embed code" menu item when feature flag is enabled and chart 
 });
 
 test('Should NOT show "Embed code" when feature flag is disabled', () => {
-  window.featureFlags = {
+  setFeatureFlags({
     EMBEDDABLE_CHARTS: false,
-  };
+  });
   const props = createProps();
   const propsWithFormData = {
     ...props,
@@ -275,9 +281,9 @@ test('Should NOT show "Embed code" when feature flag is disabled', () => {
 });
 
 test('Should NOT show "Embed code" when chart has no data', () => {
-  window.featureFlags = {
+  setFeatureFlags({
     EMBEDDABLE_CHARTS: true,
-  };
+  });
   const props = createProps();
   render(
     <MenuWrapper
@@ -293,9 +299,9 @@ test('Should NOT show "Embed code" when chart has no data', () => {
 });
 
 test('Should NOT show "Embed code" when latestQueryFormData is empty object', () => {
-  window.featureFlags = {
+  setFeatureFlags({
     EMBEDDABLE_CHARTS: true,
-  };
+  });
   const props = createProps();
   const propsWithEmptyFormData = {
     ...props,
@@ -315,9 +321,9 @@ test('Should NOT show "Embed code" when latestQueryFormData is empty object', ()
 });
 
 test('Should render "Embed code" with data-test attribute', () => {
-  window.featureFlags = {
+  setFeatureFlags({
     EMBEDDABLE_CHARTS: true,
-  };
+  });
   const props = createProps();
   const propsWithFormData = {
     ...props,

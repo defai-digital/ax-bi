@@ -64,6 +64,8 @@ interface MockD3Selection {
   attr: jest.Mock;
   style: jest.Mock;
   classed: jest.Mock;
+  append: jest.Mock;
+  html: jest.Mock;
   selectAll: jest.Mock;
 }
 
@@ -201,6 +203,8 @@ test('stores original fill color on mouseover', () => {
       return mockD3Selection;
     }),
     classed: jest.fn().mockReturnThis(),
+    append: jest.fn().mockReturnThis(),
+    html: jest.fn().mockReturnThis(),
     selectAll: jest.fn().mockReturnValue({ remove: jest.fn() }),
   };
 
@@ -252,10 +256,13 @@ test('restores original fill color on mouseout for country with data', () => {
     style: jest.fn((styleName: string, value?: string) => {
       if (value !== undefined) {
         mockElement.style[styleName as any] = value;
+        return mockD3Selection;
       }
       return mockElement.style[styleName as any] || mockD3Selection;
     }),
     classed: jest.fn().mockReturnThis(),
+    append: jest.fn().mockReturnThis(),
+    html: jest.fn().mockReturnThis(),
     selectAll: jest.fn().mockReturnValue({ remove: jest.fn() }),
   };
 
@@ -308,10 +315,13 @@ test('restores default fill color on mouseout for country with no data', () => {
     style: jest.fn((styleName: string, value?: string) => {
       if (value !== undefined) {
         mockElement.style[styleName as any] = value;
+        return mockD3Selection;
       }
       return mockElement.style[styleName as any] || mockD3Selection;
     }),
     classed: jest.fn().mockReturnThis(),
+    append: jest.fn().mockReturnThis(),
+    html: jest.fn().mockReturnThis(),
     selectAll: jest.fn().mockReturnValue({ remove: jest.fn() }),
   };
 
@@ -355,6 +365,8 @@ test('does not handle mouse events when inContextMenu is true', () => {
     attr: jest.fn(() => mockD3Selection),
     style: jest.fn(() => mockD3Selection),
     classed: jest.fn().mockReturnThis(),
+    append: jest.fn().mockReturnThis(),
+    html: jest.fn().mockReturnThis(),
     selectAll: jest.fn().mockReturnValue({ remove: jest.fn() }),
   };
 

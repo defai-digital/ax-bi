@@ -21,7 +21,6 @@ import { logging } from '@apache-superset/core/utils';
 import { t } from '@apache-superset/core/translation';
 import {
   SupersetClient,
-  SupersetClientResponse,
   getClientErrorObject,
   lruCache,
 } from '@superset-ui/core';
@@ -317,7 +316,7 @@ export function createErrorHandler(
     errMsg?: string | Record<string, string[] | string>,
   ) => void,
 ) {
-  return async (e: SupersetClientResponse | string) => {
+  return async (e: FetchResourceError) => {
     const parsedError = await getClientErrorObject(e);
     // Taking the first error returned from the API
     const errorsArray = parsedError?.errors;

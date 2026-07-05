@@ -89,20 +89,20 @@ describe('UploadData', () => {
     });
 
     // Check that the page title is rendered
-    expect(screen.getByText('Upload Data')).toBeVisible();
-
-    // Check that the subtitle is rendered (multi-file)
     expect(
-      screen.getByText('Drop one or more files to start exploring your data'),
+      screen.getByText('Upload data and build charts faster'),
     ).toBeVisible();
 
+    // Check that the subtitle is rendered (multi-file)
+    expect(screen.getByText('Start with a file')).toBeVisible();
+
     // Check that the drop zone text is rendered (multi-file)
-    expect(screen.getByText('Click or drag files to upload')).toBeVisible();
+    expect(screen.getByText('Click or drag files here')).toBeVisible();
 
     // Check that supported formats are listed with multi-file note
     expect(
       screen.getByText(
-        'Supported formats: CSV, TSV, TXT, XLS, XLSX, Parquet, JSON, JSONL, XML, SQL dumps, and SQLite. Multiple files supported.',
+        'Supported formats include CSV/TSV, compressed exports, Excel/ODS, Parquet/ORC/Arrow, JSON/XML, SQL text dumps, SQLite, fixed-width, HTML/statistical files, geospatial files, embeddings, and AI artifact metadata. Multiple files supported.',
       ),
     ).toBeVisible();
   });

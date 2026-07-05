@@ -183,6 +183,7 @@ def test_structured_reader_fixed_width() -> None:
 
 
 def test_structured_reader_html_table() -> None:
+    pytest.importorskip("lxml")
     reader = StructuredReader()
     df = reader.file_to_dataframe(
         make_file(
