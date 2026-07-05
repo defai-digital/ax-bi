@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -95,32 +93,10 @@ const savedQueryListItemSchema = {
   },
 } as const;
 
-export const savedQueryListRequestSchema = {
-  $id: 'ax-services.saved-query-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: SAVED_QUERY_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: listFilterSchema,
-    },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-  },
-} as const;
+export const savedQueryListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.saved-query-list.v1.request',
+  contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
+});
 
 export const savedQueryListResponseSchema = {
   $id: 'ax-services.saved-query-list.v1.response',

@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -77,32 +75,10 @@ const roleListItemSchema = {
   },
 } as const;
 
-export const roleListRequestSchema = {
-  $id: 'ax-services.role-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ROLE_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: listFilterSchema,
-    },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-  },
-} as const;
+export const roleListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.role-list.v1.request',
+  contractVersion: ROLE_LIST_CONTRACT_VERSION,
+});
 
 export const roleListResponseSchema = {
   $id: 'ax-services.role-list.v1.response',

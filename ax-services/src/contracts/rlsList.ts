@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -117,29 +115,10 @@ const rlsListItemSchema = {
   },
 } as const;
 
-export const rlsListRequestSchema = {
-  $id: 'ax-services.rls-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: RLS_LIST_CONTRACT_VERSION },
-    filters: { type: 'array', items: listFilterSchema },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-  },
-} as const;
+export const rlsListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.rls-list.v1.request',
+  contractVersion: RLS_LIST_CONTRACT_VERSION,
+});
 
 export const rlsListResponseSchema = {
   $id: 'ax-services.rls-list.v1.response',

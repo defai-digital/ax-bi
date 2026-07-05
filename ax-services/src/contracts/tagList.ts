@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -89,32 +87,10 @@ const tagListItemSchema = {
   },
 } as const;
 
-export const tagListRequestSchema = {
-  $id: 'ax-services.tag-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: TAG_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: listFilterSchema,
-    },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
-  },
-} as const;
+export const tagListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.tag-list.v1.request',
+  contractVersion: TAG_LIST_CONTRACT_VERSION,
+});
 
 export const tagListResponseSchema = {
   $id: 'ax-services.tag-list.v1.response',

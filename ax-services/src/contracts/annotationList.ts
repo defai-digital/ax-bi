@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -89,34 +87,14 @@ const annotationListItemSchema = {
   },
 } as const;
 
-export const annotationListRequestSchema = {
-  $id: 'ax-services.annotation-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'layerId',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ANNOTATION_LIST_CONTRACT_VERSION },
+export const annotationListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.annotation-list.v1.request',
+  contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+  leadingRequired: ['layerId'],
+  leadingProperties: {
     layerId: { type: 'integer', minimum: 1 },
-    filters: {
-      type: 'array',
-      items: listFilterSchema,
-    },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
   },
-} as const;
+});
 
 export const annotationListResponseSchema = {
   $id: 'ax-services.annotation-list.v1.response',

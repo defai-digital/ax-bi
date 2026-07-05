@@ -108,3 +108,67 @@ export const warningSchema = {
     pattern: '^[^\\u0000-\\u001F\\u007F]+$',
   },
 } as const;
+
+const baseListRequestFields = [
+  'filters',
+  'selectColumns',
+  'orderDirection',
+  'page',
+  'pageSize',
+] as const;
+
+const baseListRequestProperties = {
+  filters: {
+    type: 'array',
+    items: listFilterSchema,
+  },
+  selectColumns: listColumnSchema,
+  search: listSearchSchema,
+  orderColumn: listOrderColumnSchema,
+  orderDirection: { enum: ['asc', 'desc'] },
+  page: listPageSchema,
+  pageSize: listPageSizeSchema,
+} as const;
+
+export function buildListRequestSchema<
+  TContractVersion extends string,
+  TLeadingProperties extends Record<string, unknown> = Record<never, never>,
+  TExtraProperties extends Record<string, unknown> = Record<never, never>,
+>({
+  schemaId,
+  contractVersion,
+  leadingRequired = [],
+  leadingProperties,
+  extraRequired = [],
+  extraProperties,
+}: {
+  schemaId: string;
+  contractVersion: TContractVersion;
+  leadingRequired?: readonly (keyof TLeadingProperties & string)[];
+  leadingProperties?: TLeadingProperties;
+  extraRequired?: readonly (keyof TExtraProperties & string)[];
+  extraProperties?: TExtraProperties;
+}) {
+  const properties = {
+    contractVersion: { const: contractVersion },
+    ...leadingProperties,
+    ...baseListRequestProperties,
+    ...extraProperties,
+  } as { contractVersion: { const: TContractVersion } } &
+    TLeadingProperties &
+    typeof baseListRequestProperties &
+    TExtraProperties;
+
+  return {
+    $id: schemaId,
+    type: 'object',
+    required: [
+      'contractVersion',
+      ...leadingRequired,
+      ...baseListRequestFields,
+      ...extraRequired,
+    ],
+    additionalProperties: false,
+    properties,
+  } as const;
+}

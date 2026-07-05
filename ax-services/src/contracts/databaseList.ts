@@ -19,13 +19,11 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  buildListRequestSchema,
   listColumnSchema,
   listCountSchema,
-  listFilterSchema,
-  listOrderColumnSchema,
   listPageSchema,
   listPageSizeSchema,
-  listSearchSchema,
   listTotalPagesSchema,
   warningSchema,
 } from './listColumn';
@@ -119,34 +117,14 @@ const databaseListItemSchema = {
   },
 } as const;
 
-export const databaseListRequestSchema = {
-  $id: 'ax-services.database-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-    'createdByMe',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATABASE_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: listFilterSchema,
-    },
-    selectColumns: listColumnSchema,
-    search: listSearchSchema,
-    orderColumn: listOrderColumnSchema,
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: listPageSchema,
-    pageSize: listPageSizeSchema,
+export const databaseListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.database-list.v1.request',
+  contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+  extraRequired: ['createdByMe'],
+  extraProperties: {
     createdByMe: { type: 'boolean' },
   },
-} as const;
+});
 
 export const databaseListResponseSchema = {
   $id: 'ax-services.database-list.v1.response',
