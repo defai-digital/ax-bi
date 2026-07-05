@@ -24,15 +24,13 @@ name = "apache_superset"
 description = "A modern, enterprise-ready business intelligence web application"
 readme = "README.md"
 dynamic = ["version", "scripts", "entry-points"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
 authors = [
     { name = "Apache Software Foundation", email = "dev@superset.apache.org" },
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
@@ -169,7 +167,6 @@ gevent = ["gevent>=26.5.0"]
 gsheets = ["shillelagh[gsheetsapi]>=1.4.4, <2"]
 hana = ["hdbcli==2.29.23", "sqlalchemy_hana==4.6.0"]
 hive = [
-    "pyhive[hive]>=0.6.5;python_version<'3.11'",
     "pyhive[hive_pure_sasl]>=0.7.0",
     "tableschema",
     "thrift>=0.23.0, <1.0.0",
@@ -203,7 +200,6 @@ singlestore = ["sqlalchemy-singlestoredb>=1.2.1, <2"]
 snowflake = ["snowflake-sqlalchemy>=1.10.2, <2"]
 sqlite = ["syntaqlite>=0.6.0,<0.7.0"]
 spark = [
-    "pyhive[hive]>=0.6.5;python_version<'3.11'",
     "pyhive[hive_pure_sasl]>=0.7",
     "tableschema",
     "thrift>=0.23.0, <1",
@@ -346,8 +342,8 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.10
-target-version = "py310"
+# Assume Python 3.12
+target-version = "py312"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
