@@ -432,8 +432,8 @@ APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png?v=20260626-4"
 APP_ICON_DARK = "/static/assets/images/ax-bi-logo-horiz-dark.png?v=20260629-2"
 
 # Specify where clicking the logo would take the user
-# Default value of None will take you to '/superset/welcome'
-# You can also specify a relative URL e.g. '/superset/welcome' or '/dashboards/list'
+# Default value of None will take you to '/ax-bi/welcome'
+# You can also specify a relative URL e.g. '/ax-bi/welcome' or '/dashboards/list'
 # or you can specify a full URL e.g. 'https://foo.bar'
 # NOTE: Overriding this in superset_config.py automatically updates the logo link
 # (THEME_DEFAULT["token"]["brandLogoHref"]); see sync_theme_logo_href below.

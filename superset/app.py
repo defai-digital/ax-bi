@@ -34,9 +34,10 @@ else:
     if TYPE_CHECKING:
         from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
-from flask import Flask, Response
+from flask import Flask, redirect, request, Response
 from werkzeug.exceptions import NotFound
 
+from superset.constants import AX_BI_ROUTE_PREFIX, LEGACY_SUPERSET_ROUTE_PREFIX
 from superset.extensions.cache_middleware import ExtensionCacheMiddleware
 from superset.extensions.local_extensions_watcher import (
     start_local_extensions_watcher_thread,
@@ -47,6 +48,29 @@ from superset.marshmallow_compatibility import patch_marshmallow_for_flask_appbu
 patch_marshmallow_for_flask_appbuilder()
 
 logger = logging.getLogger(__name__)
+
+
+def _register_legacy_superset_route_redirects(app: Flask) -> None:
+    """Redirect legacy browser route-prefix URLs to AX-BI branded URLs."""
+
+    base_route = f"{LEGACY_SUPERSET_ROUTE_PREFIX}/"
+
+    @app.route(
+        base_route,
+        defaults={"path": ""},
+        methods=("GET", "POST", "PUT", "PATCH", "DELETE"),
+        endpoint="legacy_superset_route_redirect_base",
+    )
+    @app.route(
+        f"{base_route}<path:path>",
+        methods=("GET", "POST", "PUT", "PATCH", "DELETE"),
+        endpoint="legacy_superset_route_redirect",
+    )
+    def legacy_superset_route_redirect(path: str) -> Response:
+        target = f"{AX_BI_ROUTE_PREFIX}/{path}"
+        if request.query_string:
+            target = f"{target}?{request.query_string.decode()}"
+        return redirect(target, code=308 if request.method != "GET" else 302)
 
 
 def create_app(
@@ -80,6 +104,7 @@ def create_app(
 
         app_initializer = app.config.get("APP_INITIALIZER", SupersetAppInitializer)(app)
         app_initializer.init_app()
+        _register_legacy_superset_route_redirects(app)
 
         # Must be applied before AppRootMiddleware so the path prefix
         # is stripped before the extension asset path regex runs.

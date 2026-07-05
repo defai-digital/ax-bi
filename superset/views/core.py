@@ -64,6 +64,7 @@ from superset.commands.explore.form_data.parameters import CommandParameters
 from superset.commands.explore.permalink.get import GetExplorePermalinkCommand
 from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
 from superset.connectors.sqla.models import BaseDatasource, SqlaTable
+from superset.constants import AX_BI_ROUTE_PREFIX
 from superset.daos.chart import ChartDAO
 from superset.daos.datasource import DatasourceDAO
 from superset.dashboards.permalink.exceptions import DashboardPermalinkGetFailedError
@@ -165,6 +166,8 @@ def _get_selected_column_names(selected_columns: object) -> list[str]:
 
 class Superset(BaseSupersetView):
     """The base views for Superset!"""
+
+    route_base = AX_BI_ROUTE_PREFIX
 
     logger = logging.getLogger(__name__)
 
@@ -427,7 +430,7 @@ class Superset(BaseSupersetView):
         the form_data param with a form_data_key by saving the original content
         to the cache layer.
         """
-        redirect_url = request.url.replace("/superset/explore", "/explore")
+        redirect_url = request.url.replace(f"{AX_BI_ROUTE_PREFIX}/explore", "/explore")
         form_data_key = None
         if request_form_data := request.args.get("form_data"):
             parsed_form_data = loads_request_json(request_form_data)

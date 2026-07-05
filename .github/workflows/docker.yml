@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     branches:
       - "master"
+      - "main"
 
 permissions:
   contents: read
@@ -198,10 +200,10 @@ jobs:
           docker compose --env-file /tmp/axbi.env -f docker-compose-axbi.yml -f docker-compose-axbi-build.yml config
 
   docker-compose-image-tag:
-    # Run this job only on pushes to master (not for PRs)
+    # Run this job only on pushes to primary branches (not for PRs)
     # goal is to check that building the latest image works, not required for all PR pushes
     needs: changes
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.changes.outputs.docker == 'true'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

@@ -227,7 +227,7 @@ export type DatabaseForm = {
 };
 
 // the values should align with the database
-// model enum in superset/superset/models/core.py
+// model enum in superset/ax-bi/models/core.py
 export enum ConfigurationMethod {
   SqlalchemyUri = 'sqlalchemy_form',
   DynamicForm = 'dynamic_form',

@@ -2,7 +2,7 @@
   "name": "AX-BI",
   "short_name": "AX-BI",
   "description": "AX-BI analytics and visualization platform",
-  "start_url": "/superset/welcome/",
+  "start_url": "/ax-bi/welcome/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -51,7 +51,7 @@
   ],
   "file_handlers": [
     {
-      "action": "/superset/file-handler",
+      "action": "/ax-bi/file-handler",
       "accept": {
         "text/csv": [".csv"],
         "application/vnd.ms-excel": [".xls"],

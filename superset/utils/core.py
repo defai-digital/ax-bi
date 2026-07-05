@@ -82,10 +82,12 @@ from sqlalchemy.sql.type_api import Variant
 from sqlalchemy.types import TypeEngine
 
 from superset.constants import (
+    AX_BI_ROUTE_PREFIX,
     DEFAULT_USER_AGENT,
     EXTRA_FORM_DATA_APPEND_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS,
+    LEGACY_SUPERSET_ROUTE_PREFIX,
     NO_TIME_RANGE,
 )
 from superset.errors import ErrorLevel, SupersetErrorType
@@ -2303,7 +2305,11 @@ def to_int(v: Any, value_if_invalid: int = 0) -> int:
 def get_query_source_from_request() -> QuerySource | None:
     if not request or not request.referrer:
         return None
-    if "/superset/dashboard/" in request.referrer:
+    dashboard_paths = (
+        f"{AX_BI_ROUTE_PREFIX}/dashboard/",
+        f"{LEGACY_SUPERSET_ROUTE_PREFIX}/dashboard/",
+    )
+    if any(path in request.referrer for path in dashboard_paths):
         return QuerySource.DASHBOARD
     if "/explore/" in request.referrer:
         return QuerySource.CHART

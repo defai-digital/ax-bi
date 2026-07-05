@@ -55,9 +55,11 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: "ax-bi-frontend/.nvmrc"
+          cache: "npm"
+          cache-dependency-path: "packages/ax-sdk/package-lock.json"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: TypeScript checks
         run: npm run type

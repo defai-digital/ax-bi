@@ -20,7 +20,7 @@ import { getURIDirectory } from '.';
 
 test('Cases in which the "explore_json" will be returned', () => {
   ['full', 'json', 'csv', 'query', 'results', 'samples'].forEach(name => {
-    expect(getURIDirectory(name)).toBe('/superset/explore_json/');
+    expect(getURIDirectory(name)).toBe('/ax-bi/explore_json/');
   });
 });
 

@@ -1390,7 +1390,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                           avatar={<span>•</span>}
                           title={
                             <Typography.Link
-                              href={`/superset/dashboard/${result.id}`}
+                              href={`/ax-bi/dashboard/${result.id}`}
                               target="_atRiskItem"
                             >
                               {result.title}

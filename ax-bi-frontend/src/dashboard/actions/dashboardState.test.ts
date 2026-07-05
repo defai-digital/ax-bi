@@ -278,7 +278,7 @@ describe('dashboardState actions', () => {
 
       await waitFor(() => expect(postStub.mock.calls.length).toBe(1));
       expect(mockNavigateTo).toHaveBeenCalledWith(
-        `/superset/dashboard/${newDashboardId}/`,
+        `/ax-bi/dashboard/${newDashboardId}/`,
       );
     });
   });

@@ -249,7 +249,7 @@ def add_dashboard_filter(
             command = UpdateDashboardCommand(request.dashboard_id, update_data)
             updated = command.run()
 
-        dashboard_url = f"{get_superset_base_url()}/superset/dashboard/{updated.id}/"
+        dashboard_url = f"{get_superset_base_url()}/ax-bi/dashboard/{updated.id}/"
 
         logger.info(
             "Added filter '%s' (%s) to dashboard %s",

@@ -35,7 +35,7 @@ test('ensureAppRoot should add application root prefix to path with default root
 test('ensureAppRoot should add application root prefix to path with custom subdirectory', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -45,14 +45,14 @@ test('ensureAppRoot should add application root prefix to path with custom subdi
   await import('./getBootstrapData');
   const { ensureAppRoot } = await import('./pathUtils');
 
-  expect(ensureAppRoot('/sqllab')).toBe('/superset/sqllab');
-  expect(ensureAppRoot('/api/v1/chart')).toBe('/superset/api/v1/chart');
+  expect(ensureAppRoot('/sqllab')).toBe('/ax-bi/sqllab');
+  expect(ensureAppRoot('/api/v1/chart')).toBe('/ax-bi/api/v1/chart');
 });
 
 test('ensureAppRoot should handle paths without leading slash', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -61,14 +61,14 @@ test('ensureAppRoot should handle paths without leading slash', async () => {
   await import('./getBootstrapData');
   const { ensureAppRoot } = await import('./pathUtils');
 
-  expect(ensureAppRoot('sqllab')).toBe('/superset/sqllab');
-  expect(ensureAppRoot('api/v1/chart')).toBe('/superset/api/v1/chart');
+  expect(ensureAppRoot('sqllab')).toBe('/ax-bi/sqllab');
+  expect(ensureAppRoot('api/v1/chart')).toBe('/ax-bi/api/v1/chart');
 });
 
 test('ensureAppRoot should handle paths with query strings', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -77,9 +77,9 @@ test('ensureAppRoot should handle paths with query strings', async () => {
   await import('./getBootstrapData');
   const { ensureAppRoot } = await import('./pathUtils');
 
-  expect(ensureAppRoot('/sqllab?new=true')).toBe('/superset/sqllab?new=true');
+  expect(ensureAppRoot('/sqllab?new=true')).toBe('/ax-bi/sqllab?new=true');
   expect(ensureAppRoot('/api/v1/chart/export/123/')).toBe(
-    '/superset/api/v1/chart/export/123/',
+    '/ax-bi/api/v1/chart/export/123/',
   );
 });
 
@@ -95,7 +95,7 @@ test('makeUrl should create URL with default application root', async () => {
 test('makeUrl should create URL with subdirectory prefix', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -104,17 +104,17 @@ test('makeUrl should create URL with subdirectory prefix', async () => {
   await import('./getBootstrapData');
   const { makeUrl } = await import('./pathUtils');
 
-  expect(makeUrl('/sqllab')).toBe('/superset/sqllab');
-  expect(makeUrl('/sqllab?new=true')).toBe('/superset/sqllab?new=true');
+  expect(makeUrl('/sqllab')).toBe('/ax-bi/sqllab');
+  expect(makeUrl('/sqllab?new=true')).toBe('/ax-bi/sqllab?new=true');
   expect(makeUrl('/api/v1/sqllab/export/123/')).toBe(
-    '/superset/api/v1/sqllab/export/123/',
+    '/ax-bi/api/v1/sqllab/export/123/',
   );
 });
 
 test('makeUrl should handle paths without leading slash', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -123,13 +123,13 @@ test('makeUrl should handle paths without leading slash', async () => {
   await import('./getBootstrapData');
   const { makeUrl } = await import('./pathUtils');
 
-  expect(makeUrl('sqllab?queryId=123')).toBe('/superset/sqllab?queryId=123');
+  expect(makeUrl('sqllab?queryId=123')).toBe('/ax-bi/sqllab?queryId=123');
 });
 
 test('makeUrl should work with different subdirectory paths', async () => {
   const customData = {
     common: {
-      application_root: '/my-app/superset/',
+      application_root: '/my-app/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -138,14 +138,14 @@ test('makeUrl should work with different subdirectory paths', async () => {
   await import('./getBootstrapData');
   const { makeUrl } = await import('./pathUtils');
 
-  expect(makeUrl('/sqllab')).toBe('/my-app/superset/sqllab');
-  expect(makeUrl('/dashboard/list')).toBe('/my-app/superset/dashboard/list');
+  expect(makeUrl('/sqllab')).toBe('/my-app/ax-bi/sqllab');
+  expect(makeUrl('/dashboard/list')).toBe('/my-app/ax-bi/dashboard/list');
 });
 
 test('makeUrl should handle URLs with anchors', async () => {
   const customData = {
     common: {
-      application_root: '/superset/',
+      application_root: '/ax-bi/',
     },
   };
   document.body.innerHTML = `<div id="app" data-bootstrap='${JSON.stringify(customData)}'></div>`;
@@ -155,7 +155,7 @@ test('makeUrl should handle URLs with anchors', async () => {
   const { makeUrl } = await import('./pathUtils');
 
   expect(makeUrl('/dashboard/123#anchor')).toBe(
-    '/superset/dashboard/123#anchor',
+    '/ax-bi/dashboard/123#anchor',
   );
 });
 
@@ -186,7 +186,7 @@ test('ensureAppRoot should preserve absolute and protocol-relative URLs unchange
 });
 
 test('ensureAppRoot should preserve absolute URLs unchanged with custom subdirectory', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
   expect(ensureAppRoot(HTTPS_URL)).toBe(HTTPS_URL);
   expect(ensureAppRoot(HTTP_URL)).toBe(HTTP_URL);
@@ -197,13 +197,13 @@ test('ensureAppRoot should preserve absolute URLs unchanged with custom subdirec
 });
 
 test('ensureAppRoot should preserve protocol-relative URLs unchanged', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
   expect(ensureAppRoot(PROTOCOL_RELATIVE_URL)).toBe(PROTOCOL_RELATIVE_URL);
 });
 
 test('makeUrl should preserve absolute and protocol-relative URLs unchanged', async () => {
-  const { makeUrl } = await loadPathUtils('/superset/');
+  const { makeUrl } = await loadPathUtils('/ax-bi/');
 
   expect(makeUrl(HTTPS_URL)).toBe(HTTPS_URL);
   expect(makeUrl(PROTOCOL_RELATIVE_URL)).toBe(PROTOCOL_RELATIVE_URL);
@@ -212,45 +212,45 @@ test('makeUrl should preserve absolute and protocol-relative URLs unchanged', as
 });
 
 test('ensureAppRoot should block javascript: and data: schemes (XSS prevention)', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
   // Dangerous schemes must NOT pass through — they get prefixed to neutralise them.
   // Build the literals via concatenation so the linter's no-script-url rule
   // does not flag this intentional test input.
   const jsUrl = `${'javascript'}:alert(1)`;
   const dataUrl = `${'data'}:text/html,<h1>xss</h1>`;
-  expect(ensureAppRoot(jsUrl)).toBe(`/superset/${jsUrl}`);
-  expect(ensureAppRoot(dataUrl)).toBe(`/superset/${dataUrl}`);
+  expect(ensureAppRoot(jsUrl)).toBe(`/ax-bi/${jsUrl}`);
+  expect(ensureAppRoot(dataUrl)).toBe(`/ax-bi/${dataUrl}`);
 });
 
 test('ensureAppRoot should prefix unknown schemes instead of passing through', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
   // Unknown / custom schemes are treated as relative paths
-  expect(ensureAppRoot('foo:bar')).toBe('/superset/foo:bar');
+  expect(ensureAppRoot('foo:bar')).toBe('/ax-bi/foo:bar');
 });
 
 test('ensureAppRoot should be idempotent — not double-prefix an already-prefixed path', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
   const once = ensureAppRoot('/sqllab');
   const twice = ensureAppRoot(once);
-  expect(twice).toBe(once); // /superset/sqllab, NOT /superset/superset/sqllab
+  expect(twice).toBe(once); // /ax-bi/sqllab, NOT /ax-bi/ax-bi/sqllab
 });
 
 test('makeUrl should be idempotent with subdirectory prefix', async () => {
-  const { makeUrl } = await loadPathUtils('/superset/');
+  const { makeUrl } = await loadPathUtils('/ax-bi/');
 
   const once = makeUrl('/sqllab?new=true');
   const twice = makeUrl(once);
-  expect(twice).toBe(once); // /superset/sqllab?new=true, NOT /superset/superset/sqllab?new=true
+  expect(twice).toBe(once); // /ax-bi/sqllab?new=true, NOT /ax-bi/ax-bi/sqllab?new=true
 });
 
 test('ensureAppRoot should fall back to application root when path is null or undefined', async () => {
-  const { ensureAppRoot } = await loadPathUtils('/superset/');
+  const { ensureAppRoot } = await loadPathUtils('/ax-bi/');
 
-  expect(ensureAppRoot(null)).toBe('/superset');
-  expect(ensureAppRoot(undefined)).toBe('/superset');
+  expect(ensureAppRoot(null)).toBe('/ax-bi');
+  expect(ensureAppRoot(undefined)).toBe('/ax-bi');
 });
 
 test('ensureAppRoot should fall back to "/" when path is null and no application root is configured', async () => {

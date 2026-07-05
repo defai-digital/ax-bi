@@ -593,7 +593,7 @@ export function saveDashboardRequest(
       );
       dispatch(saveDashboardFinished());
       navigateTo(
-        `/superset/dashboard/${(response.json as JsonObject).result?.id}/`,
+        `/ax-bi/dashboard/${(response.json as JsonObject).result?.id}/`,
       );
       dispatch(addSuccessToast(t('This dashboard was saved successfully.')));
       return response;
@@ -647,7 +647,7 @@ export function saveDashboardRequest(
       }
       dispatch(saveDashboardFinished());
       // redirect to the new slug or id
-      navigateWithState(`/superset/dashboard/${slug || id}/`, {
+      navigateWithState(`/ax-bi/dashboard/${slug || id}/`, {
         event: 'dashboard_properties_changed',
       });
 
