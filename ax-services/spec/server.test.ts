@@ -93,6 +93,38 @@ const config = buildConfig({
   AX_SERVICES_LOG_LEVEL: 'silent',
 });
 
+function emptyListResponse<
+  TContractVersion extends string,
+  TFields extends object,
+>(
+  fields: TFields & { contractVersion: TContractVersion },
+): TFields & { contractVersion: TContractVersion } & {
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+} {
+  return {
+    ...fields,
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  };
+}
+
 function makeSupersetClient({
   health = {
     ok: true,
@@ -132,189 +164,59 @@ function makeSupersetClient({
     contractVersion: AUTHORIZATION_CONTRACT_VERSION,
     allowed: false,
   },
-  annotationLayerList = {
+  annotationLayerList = emptyListResponse({
     contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
     annotationLayers: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  annotationList = {
+  }),
+  annotationList = emptyListResponse({
     contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
     annotations: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
     layerId: 1,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  chartList = {
+  }),
+  chartList = emptyListResponse({
     contractVersion: CHART_LIST_CONTRACT_VERSION,
     charts: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  dashboardList = {
+  }),
+  dashboardList = emptyListResponse({
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
     dashboards: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  databaseList = {
+  }),
+  databaseList = emptyListResponse({
     contractVersion: DATABASE_LIST_CONTRACT_VERSION,
     databases: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  datasetList = {
+  }),
+  datasetList = emptyListResponse({
     contractVersion: DATASET_LIST_CONTRACT_VERSION,
     datasets: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  queryList = {
+  }),
+  queryList = emptyListResponse({
     contractVersion: QUERY_LIST_CONTRACT_VERSION,
     queries: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  savedQueryList = {
+  }),
+  savedQueryList = emptyListResponse({
     contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
     savedQueries: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  reportList = {
+  }),
+  reportList = emptyListResponse({
     contractVersion: REPORT_LIST_CONTRACT_VERSION,
     reports: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  roleList = {
+  }),
+  roleList = emptyListResponse({
     contractVersion: ROLE_LIST_CONTRACT_VERSION,
     roles: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  rlsList = {
+  }),
+  rlsList = emptyListResponse({
     contractVersion: RLS_LIST_CONTRACT_VERSION,
     rlsFilters: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  tagList = {
+  }),
+  tagList = emptyListResponse({
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  taskList = {
+  }),
+  taskList = emptyListResponse({
     contractVersion: TASK_LIST_CONTRACT_VERSION,
     tasks: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
+  }),
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
