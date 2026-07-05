@@ -1188,12 +1188,16 @@ def publish_output_file(
     raise publish_error
 
 
-def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
-    """Load an optional JSON metadata file and require an object when present."""
+def load_metadata_file(
+    path: Path,
+    label: str,
+    reader: Callable[[Path], object | None],
+) -> object | None:
+    """Load an optional metadata file and wrap read/parser errors for the CLI."""
     try:
         if not input_file_exists(path, label):
             return None
-        data = read_json(path)
+        data = reader(path)
     except click.ClickException:
         raise
     except OSError as ex:
@@ -1201,29 +1205,25 @@ def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
     except Exception as ex:
         raise click.ClickException(f"Invalid {label}: {ex}") from ex
 
-    if data is not None and not isinstance(data, dict):
-        raise click.ClickException(f"Invalid {label}: expected a JSON object.")
     if data is None:
         raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+    return data
 
+
+def load_json_object(path: Path, label: str) -> dict[str, Any] | None:
+    """Load an optional JSON metadata file and require an object when present."""
+    data = load_metadata_file(path, label, read_json)
+
+    if data is not None and not isinstance(data, dict):
+        raise click.ClickException(f"Invalid {label}: expected a JSON object.")
     return data
 
 
 def load_toml_object(path: Path, label: str) -> dict[str, Any] | None:
     """Load an optional TOML metadata file and wrap parser errors for the CLI."""
-    try:
-        if not input_file_exists(path, label):
-            return None
-        data = read_toml(path)
-    except click.ClickException:
-        raise
-    except OSError as ex:
-        raise click.ClickException(f"Failed to read {label}: {ex}") from ex
-    except Exception as ex:
-        raise click.ClickException(f"Invalid {label}: {ex}") from ex
-
-    if data is None:
-        raise click.ClickException(f"Failed to read {label}: path is no longer safe.")
+    data = load_metadata_file(path, label, read_toml)
+    if data is not None and not isinstance(data, dict):
+        raise click.ClickException(f"Invalid {label}: expected a TOML table.")
     return data
 
 
