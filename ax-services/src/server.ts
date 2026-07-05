@@ -124,25 +124,7 @@ import {
   taskListResponseSchema,
 } from './contracts/taskList';
 import { ServiceMetrics } from './metrics';
-import {
-  SupersetHealthClient,
-  SupersetMetadataClient,
-  SupersetAnnotationListClient,
-  SupersetAnnotationLayerListClient,
-  SupersetAssetSearchClient,
-  SupersetChartListClient,
-  SupersetDashboardListClient,
-  SupersetDatabaseListClient,
-  SupersetDatasetListClient,
-  SupersetQueryListClient,
-  SupersetPermissionClient,
-  SupersetReportListClient,
-  SupersetRoleListClient,
-  SupersetRlsListClient,
-  SupersetSavedQueryListClient,
-  SupersetTagListClient,
-  SupersetTaskListClient,
-} from './supersetClient';
+import { SupersetDependencyClient } from './supersetClient';
 
 export { normalizeRequestIdHeader } from './requestId';
 
@@ -172,23 +154,7 @@ function runtimeVersion(): string {
 
 export function buildServer(
   config: ServiceConfig,
-  supersetClient: SupersetHealthClient &
-    SupersetMetadataClient &
-    SupersetAnnotationListClient &
-    SupersetAnnotationLayerListClient &
-    SupersetAssetSearchClient &
-    SupersetPermissionClient &
-    SupersetDashboardListClient &
-    SupersetChartListClient &
-    SupersetDatabaseListClient &
-    SupersetDatasetListClient &
-    SupersetQueryListClient &
-    SupersetReportListClient &
-    SupersetRoleListClient &
-    SupersetRlsListClient &
-    SupersetSavedQueryListClient &
-    SupersetTagListClient &
-    SupersetTaskListClient,
+  supersetClient: SupersetDependencyClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();

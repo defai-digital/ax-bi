@@ -237,17 +237,8 @@ export interface SupersetTaskListClient {
   ): Promise<TaskListResponse>;
 }
 
-const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
-const MAX_ASSET_TEXT_LENGTH = 256;
-const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
-const MAX_ASSET_LIST_VALUE_LENGTH = 128;
-const MAX_METADATA_KEYS = 100;
-const MAX_METADATA_KEY_LENGTH = 128;
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
-
-export class SupersetClient
-  implements
-    SupersetHealthClient,
+export interface SupersetDependencyClient
+  extends SupersetHealthClient,
     SupersetMetadataClient,
     SupersetAnnotationListClient,
     SupersetAnnotationLayerListClient,
@@ -263,8 +254,17 @@ export class SupersetClient
     SupersetRlsListClient,
     SupersetSavedQueryListClient,
     SupersetTagListClient,
-    SupersetTaskListClient
-{
+    SupersetTaskListClient {}
+
+const MAX_EXTERNAL_MESSAGE_LENGTH = 256;
+const MAX_ASSET_TEXT_LENGTH = 256;
+const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
+const MAX_ASSET_LIST_VALUE_LENGTH = 128;
+const MAX_METADATA_KEYS = 100;
+const MAX_METADATA_KEY_LENGTH = 128;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
+
+export class SupersetClient implements SupersetDependencyClient {
   private readonly healthUrl: string;
   private readonly metadataUrl: string;
   private readonly permissionUrl: string;

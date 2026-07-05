@@ -83,23 +83,7 @@ import {
 import {
   DependencyHealth,
   DependencyMetadata,
-  SupersetAnnotationListClient,
-  SupersetAnnotationLayerListClient,
-  SupersetAssetSearchClient,
-  SupersetChartListClient,
-  SupersetDashboardListClient,
-  SupersetDatabaseListClient,
-  SupersetDatasetListClient,
-  SupersetQueryListClient,
-  SupersetHealthClient,
-  SupersetMetadataClient,
-  SupersetPermissionClient,
-  SupersetReportListClient,
-  SupersetRoleListClient,
-  SupersetRlsListClient,
-  SupersetSavedQueryListClient,
-  SupersetTagListClient,
-  SupersetTaskListClient,
+  SupersetDependencyClient,
 } from '../src/supersetClient';
 
 const uuidPattern =
@@ -366,23 +350,7 @@ function makeSupersetClient({
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
   onListTasks?: (correlationId?: string) => void;
-} = {}): SupersetHealthClient &
-  SupersetMetadataClient &
-  SupersetAnnotationListClient &
-  SupersetAnnotationLayerListClient &
-  SupersetAssetSearchClient &
-  SupersetPermissionClient &
-  SupersetChartListClient &
-  SupersetDashboardListClient &
-  SupersetDatabaseListClient &
-  SupersetDatasetListClient &
-  SupersetQueryListClient &
-  SupersetReportListClient &
-  SupersetRoleListClient &
-  SupersetRlsListClient &
-  SupersetSavedQueryListClient &
-  SupersetTagListClient &
-  SupersetTaskListClient {
+} = {}): SupersetDependencyClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
