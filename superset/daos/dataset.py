@@ -296,13 +296,13 @@ class DatasetDAO(BaseDAO[SqlaTable]):
             if (
                 "python_date_format" in column
                 and column["python_date_format"] is not None
-            ):
-                if not DatasetDAO.validate_python_date_format(
+                and not DatasetDAO.validate_python_date_format(
                     column["python_date_format"]
-                ):
-                    raise ValueError(
-                        "python_date_format is an invalid date/timestamp format."
-                    )
+                )
+            ):
+                raise ValueError(
+                    "python_date_format is an invalid date/timestamp format."
+                )
 
         if override_columns:
             db.session.query(TableColumn).filter(
