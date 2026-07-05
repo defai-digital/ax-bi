@@ -172,4 +172,3 @@ Decision: accepted.
 3. Add unit tests for representative supported groups.
 4. Later add richer UI for multi-table dumps, archive table selection, and
    optional parser installation status.
-

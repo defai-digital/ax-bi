@@ -221,4 +221,3 @@ tools can inspect AI assets and build governed dashboards around them.
   width, HTML, embeddings, AI annotations, model metadata, and archive metadata.
 - Unsupported native backups and document formats are rejected with clear
   messages.
-
