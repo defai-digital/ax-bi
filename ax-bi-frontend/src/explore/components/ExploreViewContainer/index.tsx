@@ -60,7 +60,7 @@ import {
 import { RESERVED_CHART_URL_PARAMS, URL_PARAMS } from 'src/constants';
 import { QUERY_MODE_REQUISITES } from 'src/explore/constants';
 import { areObjectsEqual } from 'src/reduxUtils';
-import * as logActions from 'src/logger/actions';
+import { logEvent } from 'src/logger/actions';
 import {
   LOG_ACTIONS_MOUNT_EXPLORER,
   LOG_ACTIONS_CHANGE_EXPLORE_CONTROLS,
@@ -68,15 +68,38 @@ import {
 import { getUrlParam } from 'src/utils/urlUtils';
 import { sanitizeDocumentTitle } from 'src/utils/sanitizeDocumentTitle';
 import cx from 'classnames';
-import * as chartActions from 'src/components/Chart/chartAction';
+import {
+  chartRenderingSucceeded,
+  chartUpdateSucceeded,
+  dynamicPluginControlsReady,
+  postChartFormData,
+  renderTriggered,
+  triggerQuery,
+  updateQueryFormData,
+} from 'src/components/Chart/chartAction';
 import { fetchDatasourceMetadata } from 'src/dashboard/actions/datasources';
 import { mergeExtraFormData } from 'src/dashboard/components/nativeFilters/utils';
 import { postFormData, putFormData } from 'src/explore/exploreUtils/formData';
 import { datasourcesActions } from 'src/explore/actions/datasourcesActions';
 import { mountExploreUrl } from 'src/explore/exploreUtils';
 import { getFormDataFromControls } from 'src/explore/controlUtils';
-import * as exploreActions from 'src/explore/actions/exploreActions';
-import * as saveModalActions from 'src/explore/actions/saveModalActions';
+import {
+  fetchCompatibility,
+  fetchFaveStar,
+  saveFaveStar,
+  setControlValue,
+  setForceQuery,
+  setFormData,
+  setSaveAction,
+  updateChartTitle,
+} from 'src/explore/actions/exploreActions';
+import {
+  createDashboard,
+  createSlice,
+  getSliceDashboards,
+  saveSliceFailed,
+  updateSlice,
+} from 'src/explore/actions/saveModalActions';
 import { useTabId } from 'src/hooks/useTabId';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import {
@@ -1301,14 +1324,31 @@ function mapStateToProps(state: ExploreRootState) {
 
 function mapDispatchToProps(dispatch: Dispatch): DispatchProps {
   const actions = {
-    ...exploreActions,
+    fetchCompatibility,
+    fetchFaveStar,
+    saveFaveStar,
+    setControlValue,
+    setForceQuery,
+    setFormData,
+    setSaveAction,
+    updateChartTitle,
     ...datasourcesActions,
-    ...saveModalActions,
-    ...chartActions,
-    ...logActions,
+    createDashboard,
+    createSlice,
+    getSliceDashboards,
+    saveSliceFailed,
+    updateSlice,
+    chartRenderingSucceeded,
+    chartUpdateSucceeded,
+    dynamicPluginControlsReady,
+    postChartFormData,
+    renderTriggered,
+    triggerQuery,
+    updateQueryFormData,
+    logEvent,
   };
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Action modules export mixed types (creators + constants)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Action creators use mixed thunk/action signatures.
     actions: bindActionCreators(actions as any, dispatch),
   };
 }
