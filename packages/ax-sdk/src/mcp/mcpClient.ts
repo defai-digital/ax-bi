@@ -19,6 +19,7 @@
 
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError } from '../shared/errors.js';
+import { stripTrailingSlashes } from '../shared/url.js';
 
 /** JSON-RPC 2.0 request envelope. */
 interface JsonRpcRequest {
@@ -76,8 +77,12 @@ export class MCPClient {
   /** MCP session ID returned by the server on initialization. */
   private sessionId: string | null = null;
 
-  constructor(options: { mcpUrl: string; auth: AuthProvider; timeout?: number }) {
-    this.mcpUrl = options.mcpUrl.replace(/\/+$/, '');
+  constructor(options: {
+    mcpUrl: string;
+    auth: AuthProvider;
+    timeout?: number;
+  }) {
+    this.mcpUrl = stripTrailingSlashes(options.mcpUrl);
     this.auth = options.auth;
     this.timeout = options.timeout ?? 60_000;
   }
@@ -129,7 +134,9 @@ export class MCPClient {
   }
 
   /** Send a JSON-RPC request and return the result. */
-  private async sendRequest<T>(request: Omit<JsonRpcRequest, 'jsonrpc' | 'id'>): Promise<T> {
+  private async sendRequest<T>(
+    request: Omit<JsonRpcRequest, 'jsonrpc' | 'id'>,
+  ): Promise<T> {
     const id = String(++this.requestId);
     const body: JsonRpcRequest = {
       jsonrpc: '2.0',
@@ -210,7 +217,10 @@ export class MCPClient {
    * Parse an SSE stream and return the final JSON-RPC result.
    * SSE events contain `data:` lines with JSON-RPC messages.
    */
-  private async parseSseResponse<T>(response: Response, expectedId: string): Promise<T> {
+  private async parseSseResponse<T>(
+    response: Response,
+    expectedId: string,
+  ): Promise<T> {
     const text = await response.text();
     const lines = text.split('\n');
 
@@ -241,7 +251,9 @@ export class MCPClient {
       });
     }
     if (response.id !== expectedId) {
-      throw new AxBIError(`Unexpected JSON-RPC response ID: ${response.id} (expected ${expectedId})`);
+      throw new AxBIError(
+        `Unexpected JSON-RPC response ID: ${response.id} (expected ${expectedId})`,
+      );
     }
     return response.result as T;
   }

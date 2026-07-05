@@ -93,6 +93,7 @@ from superset.utils.core import (
     get_user_id,
     ReservedUrlParameters,
 )
+from superset.utils.link_redirect import get_safe_redirect_target, relative_redirect
 from superset.views.base import (
     api,
     BaseSupersetView,
@@ -455,9 +456,7 @@ class Superset(BaseSupersetView):
             url = url._replace(query=parse.urlencode(query, True))
             redirect_url = parse.urlunparse(url)
 
-        # Return a relative URL
-        url = parse.urlparse(redirect_url)
-        return f"{url.path}?{url.query}" if url.query else url.path
+        return get_safe_redirect_target(redirect_url) or "/"
 
     @has_access
     @event_logger.log_this
@@ -484,7 +483,7 @@ class Superset(BaseSupersetView):
         key: str | None = None,
     ) -> FlaskResponse:
         if request.method == "GET":
-            return redirect(Superset.get_redirect_url())
+            return relative_redirect(Superset.get_redirect_url())
 
         initial_form_data = {}
 

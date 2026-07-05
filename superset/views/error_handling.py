@@ -124,7 +124,7 @@ def handle_api_exception(
             return json_error_response(utils.error_msg_from_exception(ex), status=422)
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception(ex)
-            return json_error_response(utils.error_msg_from_exception(ex))
+            return json_error_response("An unexpected error occurred")
 
     return functools.update_wrapper(wraps, f)
 

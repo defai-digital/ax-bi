@@ -19,6 +19,7 @@
 
 import type { AuthConfig } from './types.js';
 import { AxBIAuthError } from '../shared/errors.js';
+import { stripTrailingSlashes } from '../shared/url.js';
 
 /**
  * Manages authentication state and header injection for the HTTP transport.
@@ -37,7 +38,7 @@ export class AuthProvider {
 
   constructor(config: AuthConfig, baseUrl: string) {
     this.config = config;
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    this.baseUrl = stripTrailingSlashes(baseUrl);
 
     // Seed token for token-based auth
     if (config.type === 'token') {
@@ -122,7 +123,9 @@ export class AuthProvider {
       const csrfUrl = `${this.baseUrl}/api/v1/security/csrf_token/`;
       const response = await fetch(csrfUrl, {
         headers: {
-          ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
+          ...(this.accessToken
+            ? { Authorization: `Bearer ${this.accessToken}` }
+            : {}),
         },
       });
       if (response.ok) {

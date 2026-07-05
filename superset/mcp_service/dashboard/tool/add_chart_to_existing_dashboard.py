@@ -22,7 +22,6 @@ This tool adds a chart to an existing dashboard with automatic layout positionin
 """
 
 import logging
-import re
 from typing import Any
 
 from fastmcp import Context
@@ -48,21 +47,23 @@ from superset.utils import json
 
 logger = logging.getLogger(__name__)
 
-# Compiled regex for stripping common emoji Unicode ranges from tab text.
-# Uses specific Unicode blocks to avoid overly permissive ranges.
-_EMOJI_RE = re.compile(
-    "["
-    "\U0001f300-\U0001f5ff"  # Misc Symbols and Pictographs
-    "\U0001f600-\U0001f64f"  # Emoticons
-    "\U0001f680-\U0001f6ff"  # Transport and Map Symbols
-    "\U0001f900-\U0001f9ff"  # Supplemental Symbols and Pictographs
-    "\U0001fa70-\U0001faff"  # Symbols and Pictographs Extended-A
-    "\u2600-\u26ff"  # Misc Symbols
-    "\u2700-\u27bf"  # Dingbats
-    "\ufe00-\ufe0f"  # Variation Selectors
-    "\u200d"  # Zero-width joiner
-    "]+"
+_EMOJI_RANGES: tuple[tuple[int, int], ...] = (
+    (0x1F300, 0x1F5FF),  # Misc Symbols and Pictographs
+    (0x1F600, 0x1F64F),  # Emoticons
+    (0x1F680, 0x1F6FF),  # Transport and Map Symbols
+    (0x1F900, 0x1F9FF),  # Supplemental Symbols and Pictographs
+    (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
+    (0x2600, 0x26FF),  # Misc Symbols
+    (0x2700, 0x27BF),  # Dingbats
+    (0xFE00, 0xFE0F),  # Variation Selectors
 )
+
+
+def _is_emoji_codepoint(codepoint: int) -> bool:
+    """Return true for emoji/decorator codepoints stripped from tab labels."""
+    return codepoint == 0x200D or any(
+        start <= codepoint <= end for start, end in _EMOJI_RANGES
+    )
 
 
 def _find_next_row_position(layout: dict[str, Any]) -> str:
@@ -87,7 +88,7 @@ def _normalize_tab_text(text: str | None) -> str:
     """Strip emoji and extra whitespace from tab text for flexible matching."""
     if not text:
         return ""
-    cleaned = _EMOJI_RE.sub("", text)
+    cleaned = "".join(char for char in text if not _is_emoji_codepoint(ord(char)))
     return cleaned.strip().lower()
 
 

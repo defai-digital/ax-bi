@@ -17,13 +17,7 @@
  * under the License.
  */
 
-import { isAllowedScheme, getTargetUrl, isUrlTrusted, trustUrl } from './utils';
-
-const TRUSTED_URLS_KEY = 'superset_trusted_urls';
-
-beforeEach(() => {
-  localStorage.clear();
-});
+import { isAllowedScheme, getTargetUrl, getSafeTargetUrl } from './utils';
 
 test('isAllowedScheme accepts http URLs', () => {
   expect(isAllowedScheme('http://example.com')).toBe(true);
@@ -52,7 +46,7 @@ test('isAllowedScheme blocks file: URLs', () => {
   expect(isAllowedScheme('file:///etc/passwd')).toBe(false);
 });
 
-test('isAllowedScheme allows relative URLs (unparseable as absolute)', () => {
+test('isAllowedScheme allows relative URLs', () => {
   expect(isAllowedScheme('/dashboard/1')).toBe(true);
 });
 
@@ -81,44 +75,20 @@ test('getTargetUrl does not double-decode percent-encoded values', () => {
   locationSpy.mockRestore();
 });
 
-test('trustUrl stores and isUrlTrusted retrieves a URL', () => {
-  const url = 'https://example.com/page';
-  expect(isUrlTrusted(url)).toBe(false);
-  trustUrl(url);
-  expect(isUrlTrusted(url)).toBe(true);
+test('getSafeTargetUrl returns a normalized http URL', () => {
+  const locationSpy = jest.spyOn(window, 'location', 'get').mockReturnValue({
+    origin: 'https://superset.example',
+    search: '?url=https%3A%2F%2Fexample.com%2Fpage',
+  } as Location);
+  expect(getSafeTargetUrl()).toBe('https://example.com/page');
+  locationSpy.mockRestore();
 });
 
-test('isUrlTrusted normalizes URLs for comparison', () => {
-  trustUrl('https://example.com/page/');
-  expect(isUrlTrusted('https://example.com/page')).toBe(true);
-});
-
-test('trustUrl does not add duplicates', () => {
-  trustUrl('https://example.com');
-  trustUrl('https://example.com');
-  const stored = JSON.parse(
-    localStorage.getItem(TRUSTED_URLS_KEY) ?? '[]',
-  ) as string[];
-  expect(stored).toHaveLength(1);
-});
-
-test('isUrlTrusted returns false when localStorage contains invalid data', () => {
-  localStorage.setItem(TRUSTED_URLS_KEY, '"not-an-array"');
-  expect(isUrlTrusted('https://example.com')).toBe(false);
-});
-
-test('isUrlTrusted returns false when localStorage contains a non-array object', () => {
-  localStorage.setItem(TRUSTED_URLS_KEY, '{"foo":"bar"}');
-  expect(isUrlTrusted('https://example.com')).toBe(false);
-});
-
-test('trustUrl caps storage at 100 entries', () => {
-  const urls = Array.from({ length: 105 }, (_, i) => `https://example${i}.com`);
-  urls.forEach(url => trustUrl(url));
-  const stored = JSON.parse(
-    localStorage.getItem(TRUSTED_URLS_KEY) ?? '[]',
-  ) as string[];
-  expect(stored.length).toBeLessThanOrEqual(100);
-  // The most recent entries should be kept
-  expect(stored).toContain('https://example104.com');
+test('getSafeTargetUrl returns null for dangerous schemes', () => {
+  const locationSpy = jest.spyOn(window, 'location', 'get').mockReturnValue({
+    origin: 'https://superset.example',
+    search: '?url=javascript%3Aalert(1)',
+  } as Location);
+  expect(getSafeTargetUrl()).toBeNull();
+  locationSpy.mockRestore();
 });

@@ -20,7 +20,6 @@ import copy
 import functools
 import logging
 import os
-import traceback
 from collections.abc import Callable, Iterable
 from datetime import datetime
 from typing import Any, cast
@@ -162,15 +161,7 @@ def _serialize_auth_providers(
 
 
 def get_error_msg() -> str:
-    if app.config.get("SHOW_STACKTRACE"):
-        error_msg = traceback.format_exc()
-    else:
-        error_msg = "FATAL ERROR \n"
-        error_msg += (
-            "Stacktrace is hidden. Change the SHOW_STACKTRACE "
-            "configuration setting to enable it"
-        )
-    return error_msg
+    return "FATAL ERROR \nStacktrace is hidden in client responses"
 
 
 def json_success(json_msg: str, status: int = 200) -> FlaskResponse:

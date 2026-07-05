@@ -19,6 +19,7 @@
 
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError, AxBIAuthError, errorFromStatus } from '../shared/errors.js';
+import { stripTrailingSlashes } from '../shared/url.js';
 import type { RequestOptions } from './types.js';
 
 /** Default request timeout in milliseconds. */
@@ -50,7 +51,7 @@ export class HttpClient {
     timeout?: number;
     retries?: number;
   }) {
-    this.baseUrl = options.baseUrl.replace(/\/+$/, '');
+    this.baseUrl = stripTrailingSlashes(options.baseUrl);
     this.auth = options.auth;
     this.defaultTimeout = options.timeout ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = options.retries ?? 3;
@@ -78,7 +79,8 @@ export class HttpClient {
     const init: RequestInit = {
       method,
       headers,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body:
+        options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal: AbortSignal.timeout(timeout),
     };
 
@@ -101,18 +103,25 @@ export class HttpClient {
             headers['Authorization'] = `Bearer ${this.auth.getAccessToken()}`;
             continue;
           } catch {
-            throw new AxBIAuthError('Authentication failed', { responseBody: body });
+            throw new AxBIAuthError('Authentication failed', {
+              responseBody: body,
+            });
           }
         }
 
         // Retry on transient errors
-        if (RETRYABLE_STATUSES.has(response.status) && attempt < this.maxRetries) {
+        if (
+          RETRYABLE_STATUSES.has(response.status) &&
+          attempt < this.maxRetries
+        ) {
           await this.sleep(BASE_RETRY_DELAY_MS * Math.pow(2, attempt));
           continue;
         }
 
         // Extract error message from response body if available
-        const message = this.extractErrorMessage(body) ?? `Request failed (${response.status})`;
+        const message =
+          this.extractErrorMessage(body) ??
+          `Request failed (${response.status})`;
         throw errorFromStatus(response.status, body, message);
       } catch (error) {
         if (error instanceof AxBIError) {
@@ -136,7 +145,10 @@ export class HttpClient {
   }
 
   /** Convenience: GET request. */
-  async get<T = unknown>(path: string, query?: Record<string, string | number | boolean | undefined>): Promise<T> {
+  async get<T = unknown>(
+    path: string,
+    query?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
     return this.request<T>({ method: 'GET', path, query });
   }
 

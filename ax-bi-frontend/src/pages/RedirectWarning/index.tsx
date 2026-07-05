@@ -17,18 +17,12 @@
  * under the License.
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { css, styled, useTheme } from '@apache-superset/core/theme';
-import {
-  Button,
-  Card,
-  Checkbox,
-  Flex,
-  Typography,
-} from '@superset-ui/core/components';
+import { Button, Card, Flex, Typography } from '@superset-ui/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
-import { getTargetUrl, isUrlTrusted, trustUrl, isAllowedScheme } from './utils';
+import { getSafeTargetUrl, getTargetUrl } from './utils';
 
 const PageContainer = styled(Flex)`
   ${({ theme }) => css`
@@ -92,36 +86,23 @@ const WarningTitle = styled(Typography.Title)`
 
 export default function RedirectWarning() {
   const theme = useTheme();
-  const [trustChecked, setTrustChecked] = useState(false);
 
   const targetUrl = useMemo(() => getTargetUrl(), []);
-
-  // Redirect immediately if the URL is already trusted
-  useEffect(() => {
-    if (targetUrl && isAllowedScheme(targetUrl) && isUrlTrusted(targetUrl)) {
-      window.location.href = targetUrl;
-    }
-  }, [targetUrl]);
-
-  const handleContinue = useCallback(() => {
-    if (!targetUrl || !isAllowedScheme(targetUrl)) return;
-    if (trustChecked) {
-      trustUrl(targetUrl);
-    }
-    window.location.href = targetUrl;
-  }, [trustChecked, targetUrl]);
+  const safeTargetUrl = useMemo(() => getSafeTargetUrl(), []);
 
   const handleReturn = useCallback(() => {
     window.location.href = '/';
   }, []);
 
-  if (!targetUrl) {
+  if (!safeTargetUrl) {
     return (
       <PageContainer justify="center" align="center">
         <WarningCard>
           <WarningBody>
             <Typography.Text type="danger">
-              {t('Missing URL parameter')}
+              {targetUrl
+                ? t('Invalid URL parameter')
+                : t('Missing URL parameter')}
             </Typography.Text>
           </WarningBody>
         </WarningCard>
@@ -146,17 +127,8 @@ export default function RedirectWarning() {
 
           <UrlDisplay align="center" gap="small">
             <Icons.LinkOutlined iconColor={theme.colorTextTertiary} />
-            <UrlText>{targetUrl}</UrlText>
+            <UrlText>{safeTargetUrl}</UrlText>
           </UrlDisplay>
-
-          <Flex align="center" gap="small">
-            <Checkbox
-              checked={trustChecked}
-              onChange={e => setTrustChecked(e.target.checked)}
-            >
-              {t("Trust this URL and don't ask again")}
-            </Checkbox>
-          </Flex>
 
           <Typography.Text type="secondary">
             {t('Only proceed if you trust the destination or its source.')}
@@ -165,7 +137,7 @@ export default function RedirectWarning() {
 
         <WarningFooter justify="flex-end" gap="small">
           <Button onClick={handleReturn}>{t('Return to AX-BI')}</Button>
-          <Button type="primary" onClick={handleContinue}>
+          <Button type="primary" href={safeTargetUrl} rel="noopener noreferrer">
             {t('Continue')}
           </Button>
         </WarningFooter>

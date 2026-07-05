@@ -17,21 +17,7 @@
  * under the License.
  */
 
-const TRUSTED_URLS_KEY = 'superset_trusted_urls';
-const MAX_TRUSTED_URLS = 100;
 const ALLOWED_SCHEMES = ['http:', 'https:'];
-
-/**
- * Normalize a URL for comparison (origin + path without trailing slash + search).
- */
-function normalizeUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return parsed.origin + parsed.pathname.replace(/\/$/, '') + parsed.search;
-  } catch {
-    return url;
-  }
-}
 
 /**
  * Return true if the URL scheme is safe for navigation.
@@ -39,11 +25,10 @@ function normalizeUrl(url: string): string {
  */
 export function isAllowedScheme(url: string): boolean {
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(url, window.location.origin);
     return ALLOWED_SCHEMES.includes(parsed.protocol);
   } catch {
-    // relative URLs or unparseable — allow (they'll resolve against current origin)
-    return true;
+    return false;
   }
 }
 
@@ -60,37 +45,15 @@ export function getTargetUrl(): string {
   return url.trim();
 }
 
-function getTrustedUrls(): string[] {
-  try {
-    const stored = localStorage.getItem(TRUSTED_URLS_KEY);
-    if (!stored) return [];
-    const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? (parsed as string[]) : [];
-  } catch {
-    return [];
+export function getSafeTargetUrl(): string | null {
+  const targetUrl = getTargetUrl();
+  if (!targetUrl || !isAllowedScheme(targetUrl)) {
+    return null;
   }
-}
 
-function saveTrustedUrls(urls: string[]): void {
-  const limited =
-    urls.length > MAX_TRUSTED_URLS ? urls.slice(-MAX_TRUSTED_URLS) : urls;
   try {
-    localStorage.setItem(TRUSTED_URLS_KEY, JSON.stringify(limited));
+    return new URL(targetUrl, window.location.origin).href;
   } catch {
-    // Ignore storage errors (private browsing, quota exceeded, etc.)
-  }
-}
-
-export function isUrlTrusted(url: string): boolean {
-  const normalized = normalizeUrl(url);
-  return getTrustedUrls().some(t => normalizeUrl(t) === normalized);
-}
-
-export function trustUrl(url: string): void {
-  const normalized = normalizeUrl(url);
-  const trusted = getTrustedUrls();
-  if (!trusted.some(t => normalizeUrl(t) === normalized)) {
-    trusted.push(url);
-    saveTrustedUrls(trusted);
+    return null;
   }
 }

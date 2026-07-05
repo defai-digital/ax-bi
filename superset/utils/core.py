@@ -558,10 +558,7 @@ def markdown(raw: str, markup_wrap: bool | None = False) -> str:
 
 
 def sanitize_svg_content(svg_content: str) -> str:
-    """Basic SVG protection - remove obvious XSS vectors, trust admin input otherwise.
-
-    Minimal protection approach that removes scripts and javascript: URLs while
-    preserving all legitimate SVG features. Assumes admin-provided content.
+    """Sanitize SVG content while preserving common presentational elements.
 
     Args:
         svg_content: Raw SVG content string
@@ -572,24 +569,78 @@ def sanitize_svg_content(svg_content: str) -> str:
     if not svg_content or not svg_content.strip():
         return ""
 
-    # Minimal protection: remove obvious malicious content, preserve all SVG features
-    content = re.sub(
-        r"<script[^>]*>.*?</script>", "", svg_content, flags=re.IGNORECASE | re.DOTALL
+    svg_tags = {
+        "svg",
+        "g",
+        "path",
+        "rect",
+        "circle",
+        "ellipse",
+        "line",
+        "polyline",
+        "polygon",
+        "text",
+        "tspan",
+        "defs",
+        "linearGradient",
+        "radialGradient",
+        "stop",
+        "clipPath",
+        "mask",
+        "use",
+    }
+    svg_attrs = {
+        "*": {
+            "aria-hidden",
+            "aria-label",
+            "class",
+            "clip-path",
+            "cx",
+            "cy",
+            "d",
+            "dx",
+            "dy",
+            "fill",
+            "fill-opacity",
+            "focusable",
+            "font-family",
+            "font-size",
+            "height",
+            "id",
+            "mask",
+            "offset",
+            "opacity",
+            "points",
+            "preserveAspectRatio",
+            "r",
+            "rx",
+            "ry",
+            "stroke",
+            "stroke-linecap",
+            "stroke-linejoin",
+            "stroke-opacity",
+            "stroke-width",
+            "style",
+            "transform",
+            "viewBox",
+            "width",
+            "x",
+            "x1",
+            "x2",
+            "xlink:href",
+            "xmlns",
+            "xmlns:xlink",
+            "y",
+            "y1",
+            "y2",
+        }
+    }
+    return nh3.clean(
+        svg_content,
+        tags=svg_tags,
+        attributes=svg_attrs,
+        link_rel=None,
     )
-    content = re.sub(r"javascript:", "", content, flags=re.IGNORECASE)
-    content = re.sub(r"data:[^;]*;[^,]*,.*javascript", "", content, flags=re.IGNORECASE)
-
-    # Remove event handlers (simple catch-all approach)
-    content = re.sub(r"\bon\w+\s*=", "", content, flags=re.IGNORECASE)
-
-    # Remove other suspicious patterns
-    content = re.sub(
-        r"<iframe[^>]*>.*?</iframe>", "", content, flags=re.IGNORECASE | re.DOTALL
-    )
-    content = re.sub(
-        r"<object[^>]*>.*?</object>", "", content, flags=re.IGNORECASE | re.DOTALL
-    )
-    return re.sub(r"<embed[^>]*>", "", content, flags=re.IGNORECASE)
 
 
 def sanitize_url(url: str) -> str:

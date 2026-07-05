@@ -21,6 +21,7 @@ import os
 import sys
 from collections.abc import Iterable
 from typing import cast
+from urllib.parse import quote
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -34,7 +35,7 @@ else:
     if TYPE_CHECKING:
         from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
-from flask import Flask, redirect, request, Response
+from flask import Flask, request, Response
 from werkzeug.exceptions import NotFound
 
 from superset.constants import AX_BI_ROUTE_PREFIX, LEGACY_SUPERSET_ROUTE_PREFIX
@@ -44,6 +45,7 @@ from superset.extensions.local_extensions_watcher import (
 )
 from superset.initialization import SupersetAppInitializer
 from superset.marshmallow_compatibility import patch_marshmallow_for_flask_appbuilder
+from superset.utils.link_redirect import relative_redirect
 
 patch_marshmallow_for_flask_appbuilder()
 
@@ -67,10 +69,10 @@ def _register_legacy_superset_route_redirects(app: Flask) -> None:
         endpoint="legacy_superset_route_redirect",
     )
     def legacy_superset_route_redirect(path: str) -> Response:
-        target = f"{AX_BI_ROUTE_PREFIX}/{path}"
+        target = f"{AX_BI_ROUTE_PREFIX}/{quote(path, safe='/')}"
         if request.query_string:
             target = f"{target}?{request.query_string.decode()}"
-        return redirect(target, code=308 if request.method != "GET" else 302)
+        return relative_redirect(target, code=308 if request.method != "GET" else 302)
 
 
 def create_app(
