@@ -49,7 +49,7 @@ ENV BUILD_CMD=${NPM_BUILD_CMD} \
 # Run the frontend memory monitoring script
 RUN /app/docker/frontend-mem-nag.sh
 
-WORKDIR /app/ax-bi-frontend
+WORKDIR /app/ax-office-frontend
 
 # Create necessary folders to avoid errors in subsequent steps
 RUN mkdir -p /app/superset/static/assets \
@@ -67,8 +67,8 @@ ENV npm_config_fetch_retries=5 \
 # ideally we'd COPY only their package.json. Here npm ci will be cached as long
 # as the full content of these folders don't change, yielding a decent cache reuse rate.
 # Note that it's not possible to selectively COPY or mount using blobs.
-RUN --mount=type=bind,source=./ax-bi-frontend/package.json,target=./package.json \
-    --mount=type=bind,source=./ax-bi-frontend/package-lock.json,target=./package-lock.json \
+RUN --mount=type=bind,source=./ax-office-frontend/package.json,target=./package.json \
+    --mount=type=bind,source=./ax-office-frontend/package-lock.json,target=./package-lock.json \
     --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/root/.npm \
     if [ "${DEV_MODE}" = "false" ]; then \
@@ -78,7 +78,7 @@ RUN --mount=type=bind,source=./ax-bi-frontend/package.json,target=./package.json
     fi
 
 # Runs the webpack build process
-COPY ax-bi-frontend /app/ax-bi-frontend
+COPY ax-office-frontend /app/ax-office-frontend
 
 ######################################################################
 # superset-node is used for compiling frontend assets
@@ -166,7 +166,7 @@ RUN mkdir -p \
       ${PYTHONPATH} \
       superset/static \
       requirements \
-      ax-bi-frontend \
+      ax-office-frontend \
       apache_superset.egg-info \
       requirements \
     && touch superset/static/version_info.json
@@ -188,7 +188,7 @@ RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
 
 # Copy required files for Python build
 COPY pyproject.toml setup.py MANIFEST.in README.md ./
-COPY ax-bi-frontend/package.json ax-bi-frontend/
+COPY ax-office-frontend/package.json ax-office-frontend/
 COPY scripts/check-env.py scripts/
 
 # keeping for backward compatibility

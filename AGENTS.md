@@ -4,7 +4,7 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 
 ## Project Overview
 
-This is the **AX-BI fork** of Apache Superset — a data visualization platform with a Flask/Python backend and React/TypeScript frontend. Beyond stock Superset, this fork carries:
+This is the **AX-Office fork** of Apache Superset — a data visualization platform with a Flask/Python backend and React/TypeScript frontend. Beyond stock Superset, this fork carries:
 
 - **MCP service** (`superset/mcp_service/`) — a Model Context Protocol server exposing Superset resources to LLM agents. Has its own [`ARCHITECTURE.md`](superset/mcp_service/ARCHITECTURE.md), [`SECURITY.md`](superset/mcp_service/SECURITY.md), and [`PRODUCTION.md`](superset/mcp_service/PRODUCTION.md). **Read those before touching `superset/mcp_service/`.**
 - **GenAI BI direction** — see [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for the product direction (prompt-to-dashboard, governed semantic layer, AI-ready metadata).
@@ -14,13 +14,13 @@ This is the **AX-BI fork** of Apache Superset — a data visualization platform 
 - **`ax-services`** (`ax-services/`) — TypeScript sidecar (port 5010) for runtime modernization: health/readiness checks, MCP asset search proxy, and Superset connectivity. Has its own `jest.config.js` and contract schemas in `contracts/`.
 - **`superset-desktop`** (`superset-desktop/`) — thin Tauri v2 desktop shell that loads the web app. Rust backend in `src-tauri/`, TypeScript bridge in `src/`. Supports `axbi://` deep links, system tray, and cross-platform builds.
 - **`superset-extensions-cli`** (`superset-extensions-cli/`) — CLI tool (`superset-extensions init/build/bundle`) for scaffolding and packaging Superset extensions.
-- **`@defai/ax-sdk`** (`packages/ax-sdk/`) — TypeScript SDK providing typed REST + MCP access to AX-BI for downstream products (ax-studio, ax-code). Dual-protocol: REST CRUD for dashboards/charts/datasets/databases/queries, plus AI tool wrappers via MCP (prompt-to-dashboard, semantic search, SQL execution). See [`packages/ax-sdk/README.md`](packages/ax-sdk/README.md).
+- **`@defai/ax-sdk`** (`packages/ax-sdk/`) — TypeScript SDK providing typed REST + MCP access to AX-Office for downstream products (ax-studio, ax-code). Dual-protocol: REST CRUD for dashboards/charts/datasets/databases/queries, plus AI tool wrappers via MCP (prompt-to-dashboard, semantic search, SQL execution). See [`packages/ax-sdk/README.md`](packages/ax-sdk/README.md).
 The agent-instruction files (`CLAUDE.md`, `GEMINI.md`, `GPT.md`) are **symlinks to `AGENTS.md`**. Edit this file — all four update together.
 
 ## Naming Policy
 
-AX-BI uses an external rename strategy. Public commands and local development
-paths use AX-BI names: `ax-bi`, `ax-bi-mcp`, and `ax-bi-frontend/`.
+AX-Office uses an external rename strategy. Public commands and local development
+paths use AX-Office names: `ax-office`, `ax-office-mcp`, and `ax-office-frontend/`.
 
 Keep core Superset namespaces unless a task is explicitly scoped as a full
 compatibility migration. This includes `superset/`, `superset_config.py`,
@@ -29,7 +29,7 @@ compatibility migration. This includes `superset/`, `superset_config.py`,
 `@apache-superset/core`, and `apache-superset-*` package metadata. These names
 preserve upstream sync, imports, migrations, extension contracts, operator
 configs, and existing deployments. See
-[`docs/developer_docs/ax-bi-rename-policy.md`](docs/developer_docs/ax-bi-rename-policy.md)
+[`docs/developer_docs/ax-office-rename-policy.md`](docs/developer_docs/ax-office-rename-policy.md)
 before renaming any remaining `superset*` surface.
 
 ## Development Commands
@@ -38,10 +38,10 @@ before renaming any remaining `superset*` surface.
 
 ```bash
 # Run the development server (port 8088)
-ax-bi run -p 8088 --with-threads --reload --debugger
+ax-office run -p 8088 --with-threads --reload --debugger
 
 # Run the MCP service (port 5008, requires: pip install fastmcp)
-ax-bi mcp run --port 5008
+ax-office mcp run --port 5008
 
 # Run ALL backend tests
 pytest
@@ -56,19 +56,19 @@ pytest tests/unit_tests/path/to/test_file.py::TestClassName::test_method_name
 pytest tests/unit_tests/some_module/
 
 # Database migrations
-ax-bi db upgrade              # Apply pending migrations
-ax-bi db migrate -m "description"  # Create a new migration
+ax-office db upgrade              # Apply pending migrations
+ax-office db migrate -m "description"  # Create a new migration
 
 # Load examples
-ax-bi load-examples
+ax-office load-examples
 ```
 
 ### Frontend (TypeScript/React)
 
-All frontend commands run from `ax-bi-frontend/`:
+All frontend commands run from `ax-office-frontend/`:
 
 ```bash
-cd ax-bi-frontend
+cd ax-office-frontend
 
 # Development server with hot reload (port 9000)
 npm run dev-server
@@ -165,7 +165,7 @@ npm run build          # Release build with platform installers
 ### Playwright E2E Tests
 
 ```bash
-cd ax-bi-frontend
+cd ax-office-frontend
 npm run playwright:test                              # All tests
 npm run playwright:ui                                # Interactive UI mode
 npx playwright test tests/auth/login.spec.ts         # Single file
@@ -236,7 +236,7 @@ Singletons initialized once at app startup, imported throughout the codebase:
 
 The MCP service runs as a **separate process** from the Superset web server with its own Flask app singleton (`superset/mcp_service/flask_singleton.py`). Key points:
 
-- Run via CLI: `ax-bi mcp run` (see `superset/cli/mcp.py`)
+- Run via CLI: `ax-office mcp run` (see `superset/cli/mcp.py`)
 - Each resource (chart, dashboard, dataset, etc.) has a subdirectory with `tool/`, `schemas.py`, and optional `validation/`
 - Tool functions decorated with `@mcp.tool` and `@mcp_auth_hook` (manages `g.user`, session lifecycle)
 - Shared utilities in `superset/mcp_service/utils/` — use `config_utils.py` for Flask config access, `logging_utils.py` for event logging, `permissions_utils.py` for RBAC checks, `response_utils.py` for serialization
@@ -246,7 +246,7 @@ The MCP service runs as a **separate process** from the Superset web server with
 ### Frontend Structure
 
 ```
-ax-bi-frontend/
+ax-office-frontend/
 ├── src/
 │   ├── features/           # Feature modules (charts, dashboards, datasets, etc.)
 │   ├── components/         # Shared reusable components
@@ -329,7 +329,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 ## Environment
 
 - Python 3.10+ (see `pyproject.toml` classifiers)
-- Node.js (see `ax-bi-frontend/package.json` `engines` field — currently ^24.16.0)
+- Node.js (see `ax-office-frontend/package.json` `engines` field — currently ^24.16.0)
 - SQLAlchemy 1.4 (not 2.0)
 - Backend config: `superset/config.py` (large file — search for specific settings rather than reading entirely)
 - Health check: `curl -f http://localhost:8088/health`

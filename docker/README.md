@@ -17,10 +17,10 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Getting Started with AX-BI Using Docker
+# Getting Started with AX-Office Using Docker
 
-Docker is the recommended way to deploy AX-BI for users who want a
-self-contained stack. The AX-BI stack includes Superset, the MCP service, the
+Docker is the recommended way to deploy AX-Office for users who want a
+self-contained stack. The AX-Office stack includes Superset, the MCP service, the
 TypeScript `ax-services` sidecar, Postgres, Redis, Celery worker, and Celery
 beat.
 
@@ -35,8 +35,8 @@ beat.
 Clone the repository and run these commands from the repository root:
 
 ```shell
-git clone https://github.com/defai-digital/ax-bi.git
-cd ax-bi
+git clone https://github.com/defai-digital/ax-office.git
+cd ax-office
 ```
 
 ```shell
@@ -57,7 +57,7 @@ Generate each secret value with:
 openssl rand -base64 42
 ```
 
-Then start AX-BI:
+Then start AX-Office:
 
 ```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
@@ -66,8 +66,8 @@ docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 This pulls the public images:
 
 ```text
-ghcr.io/defai-digital/ax-bi:latest
-ghcr.io/defai-digital/ax-bi-services:latest
+ghcr.io/defai-digital/ax-office:latest
+ghcr.io/defai-digital/ax-office-services:latest
 ```
 
 The first startup initializes the metadata database, applies migrations, creates
@@ -83,7 +83,7 @@ Services are exposed locally on:
 
 | Service | Default URL |
 |---------|-------------|
-| AX-BI web app | `http://localhost:8088` |
+| AX-Office web app | `http://localhost:8088` |
 | MCP service | `http://localhost:5008` |
 | AX services sidecar | `http://localhost:5010` |
 
@@ -143,14 +143,14 @@ For a local single-user trial, you may set `MCP_DEV_USERNAME=admin` in
 - Configure JWT settings for the MCP service: `MCP_AUTH_ENABLED`,
   `MCP_JWT_ISSUER`, `MCP_JWT_AUDIENCE`, `MCP_JWKS_URI`, and optional
   `MCP_REQUIRED_SCOPES`.
-- Put the AX-BI web app behind HTTPS.
+- Put the AX-Office web app behind HTTPS.
 - Keep Postgres and Redis private.
 - Pin image tags instead of using `latest`.
 - Back up the Postgres metadata database.
 
 ### Configuration
 
-The AX-BI Docker image includes
+The AX-Office Docker image includes
 [`./docker/pythonpath_axbi/superset_config.py`](./pythonpath_axbi/superset_config.py),
 an environment-driven configuration for Docker deployments.
 

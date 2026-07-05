@@ -16,17 +16,42 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<svg viewBox='-36 -25 72 50' xmlns='http://www.w3.org/2000/svg' overflow='visible'>
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" overflow="visible">
   <defs>
-    <filter id='shadow1' x='-50%' y='-50%' width='200%' height='200%'>
-      <feDropShadow dx='1' dy='1' stdDeviation='2' flood-color='rgba(0,0,0,0.3)' />
-    </filter>
-    <path id='morphPath' d='M 0,0 C 7,16 22,8.7 22,0 22,-8.7 7,-16 0,0 -7,16 -22,8.7 -22,-0 -22,-8.7 -7,-16 0,0 Z' stroke-width='7' fill='transparent' filter='url(#shadow1)'>
-      <animate attributeName='d' dur='8s' repeatCount='indefinite' values='M 0,0 C 7,16 22,8.7 22,0 22,-8.7 7,-16 0,0 -7,16 -22,8.7 -22,-0 -22,-8.7 -7,-16 0,0 Z;M 0,0 C 7,16 22,8.7 22,0 22,-8.7 7,-16 0,0 -7,16 -22,8.7 -22,-0 -22,-8.7 -7,-16 0,0 Z;M 0,-16 C 8.7,-16 16,-8.7 16,0 16,8.7 8.7,16 0,16 -8.7,16 -16,8.7 -16,-0 -16,-8.7 -8.7,-16 0,-16 Z;M 0,-16 C 8.7,-16 16,-8.7 16,0 16,8.7 8.7,16 0,16 -8.7,16 -16,8.7 -16,-0 -16,-8.7 -8.7,-16 0,-16 Z;M 0,0 C 7,-16 22,-8.7 22,0 22,8.7 7,16 0,0 -7,-16 -22,-8.7 -22,0 -22,8.7 -7,16 0,0 Z;M 0,0 C 7,-16 22,-8.7 22,0 22,8.7 7,16 0,0 -7,-16 -22,-8.7 -22,0 -22,8.7 -7,16 0,0 Z;M 0,16 C 8.7,16 16,8.7 16,0 16,-8.7 8.7,-16 0,-16 -8.7,-16 -16,-8.7 -16,0 -16,8.7 -8.7,16 0,16 Z;M 0,16 C 8.7,16 16,8.7 16,0 16,-8.7 8.7,-16 0,-16 -8.7,-16 -16,-8.7 -16,0 -16,8.7 -8.7,16 0,16 Z;M 0,0 C 7,16 22,8.7 22,0 22,-8.7 7,-16 0,0 -7,16 -22,8.7 -22,-0 -22,-8.7 -7,-16 0,0 Z' keyTimes='0;0.1;0.2;0.4;0.5;0.6;0.7;0.9;1' />
-    </path>
+    <linearGradient id="axbi-ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#35c98d" />
+      <stop offset="100%" stop-color="#1f2434" />
+    </linearGradient>
   </defs>
-  <use href='#morphPath' stroke='rgb(80, 165, 197)' />
-  <use href='#morphPath' stroke='rgb(72, 72, 72)' stroke-dasharray='108 10'>
-    <animate attributeName='stroke-dashoffset' from='0' to='130' dur='.8s' repeatCount='indefinite' />
-  </use>
+
+  <!-- Outer rotating ring -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="url(#axbi-ring-gradient)" stroke-width="3" stroke-dasharray="40 20" stroke-linecap="round" opacity="0.5">
+    <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="4s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Inner counter-rotating ring -->
+  <circle cx="100" cy="100" r="65" fill="none" stroke="url(#axbi-ring-gradient)" stroke-width="2" stroke-dasharray="25 15" stroke-linecap="round" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" from="360 100 100" to="0 100 100" dur="3s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Pulsing glow circle behind the icon -->
+  <circle cx="100" cy="100" r="40" fill="none" stroke="#35c98d" stroke-width="1.5" opacity="0.4">
+    <animate attributeName="r" values="38;44;38" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.4;0.15;0.4" dur="2s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- brand symbol - pulsing -->
+  <g transform="translate(100, 100)">
+    <animateTransform attributeName="transform" type="scale" values="1;1.06;1" dur="2s" repeatCount="indefinite" additive="sum" />
+    <animateTransform attributeName="transform" type="translate" values="100 100;100 100;100 100" dur="2s" repeatCount="indefinite" additive="replace" />
+
+    <!-- Opening brace -->
+    <text x="-30" y="12" text-anchor="middle" font-family="'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace" font-weight="700" font-size="48" fill="#35c98d">{</text>
+
+    <!-- Beta symbol -->
+    <text x="2" y="12" text-anchor="middle" font-family="'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace" font-weight="700" font-size="48" fill="#1f2434">&#946;</text>
+
+    <!-- Closing brace -->
+    <text x="32" y="12" text-anchor="middle" font-family="'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace" font-weight="700" font-size="48" fill="#1f2434">}</text>
+  </g>
 </svg>

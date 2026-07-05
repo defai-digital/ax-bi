@@ -19,7 +19,7 @@ from flask_appbuilder.api import expose
 from flask_appbuilder.security.decorators import has_access
 
 from superset import event_logger
-from superset.constants import AX_BI_ROUTE_PREFIX
+from superset.constants import AX_OFFICE_ROUTE_PREFIX
 from superset.superset_typing import FlaskResponse
 
 from .base import BaseSupersetView
@@ -38,7 +38,7 @@ class ExploreView(BaseSupersetView):
 
 
 class ExplorePermalinkView(BaseSupersetView):
-    route_base = AX_BI_ROUTE_PREFIX
+    route_base = AX_OFFICE_ROUTE_PREFIX
     class_permission_name = "Explore"
 
     @expose("/explore/p/<key>/")

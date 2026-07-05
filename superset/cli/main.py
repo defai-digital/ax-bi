@@ -66,13 +66,13 @@ def create_app() -> Any:
 
 
 @click.group(
-    name="ax-bi",
+    name="ax-office",
     cls=SupersetFlaskGroup,
     create_app=create_app,
     context_settings={"token_normalize_func": normalize_token},
 )
 def superset() -> None:
-    """\033[1;37mThe AX-BI CLI\033[0m"""
+    """\033[1;37mThe AX-Office CLI\033[0m"""
     # NOTE: codes above are ANSI color codes for bold white in CLI header ^^^
 
 
@@ -107,7 +107,7 @@ def version(verbose: bool) -> None:
     print(Fore.BLUE + "-=" * 15)
     print(
         Fore.YELLOW
-        + "AX-BI "
+        + "AX-Office "
         + Fore.CYAN
         + f"{current_app.config['VERSION_STRING']}"
     )

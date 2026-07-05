@@ -70,7 +70,7 @@ extraEnv: {}
   # Different gunicorn settings, refer to the gunicorn documentation
   # https://docs.gunicorn.org/en/stable/settings.html#
   # These variables are used as Flags at the gunicorn startup
-  # https://github.com/defai-digital/ax-bi/blob/main/docker/run-server.sh#L22
+  # https://github.com/defai-digital/ax-office/blob/main/docker/run-server.sh#L22
   # Extend timeout to allow long running queries.
   # GUNICORN_TIMEOUT: 300
   # Increase the gunicorn worker amount, can improve performance drastically
@@ -188,7 +188,7 @@ configMountPath: "/app/pythonpath"
 extraConfigMountPath: "/app/configs"
 
 image:
-  repository: ghcr.io/defai-digital/ax-bi
+  repository: ghcr.io/defai-digital/ax-office
   tag: ~
   pullPolicy: IfNotPresent
 
@@ -722,8 +722,8 @@ supersetWebsockets:
     repository: oneacrefund/superset-websocket
     tag: latest
     pullPolicy: IfNotPresent
-  # -- The config.json to pass to the server, see https://github.com/defai-digital/ax-bi/tree/main/superset-websocket
-  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/defai-digital/ax-bi/blob/main/superset-websocket/src/config.ts for a list of supported variables
+  # -- The config.json to pass to the server, see https://github.com/defai-digital/ax-office/tree/main/superset-websocket
+  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/defai-digital/ax-office/blob/main/superset-websocket/src/config.ts for a list of supported variables
   # @default -- see `values.yaml`
   config:
     {
@@ -803,7 +803,7 @@ mcp:
   command:
     - "/bin/sh"
     - "-c"
-    - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; exec ax-bi mcp run --host 0.0.0.0 --port {{ .Values.mcp.service.port }}"
+    - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; exec ax-office mcp run --host 0.0.0.0 --port {{ .Values.mcp.service.port }}"
   env: {}
   envRaw: []
   initContainers:
@@ -998,12 +998,12 @@ init:
     #!/bin/sh
     set -eu
     echo "Upgrading DB schema..."
-    ax-bi db upgrade
+    ax-office db upgrade
     echo "Initializing roles..."
-    ax-bi init
+    ax-office init
     {{ if .Values.init.createAdmin }}
     echo "Creating admin user..."
-    ax-bi fab create-admin \
+    ax-office fab create-admin \
                     --username {{ .Values.init.adminUser.username }} \
                     --firstname {{ .Values.init.adminUser.firstname }} \
                     --lastname {{ .Values.init.adminUser.lastname }} \
@@ -1013,11 +1013,11 @@ init:
     {{- end }}
     {{ if .Values.init.loadExamples }}
     echo "Loading examples..."
-    ax-bi load_examples
+    ax-office load_examples
     {{- end }}
     if [ -f "{{ .Values.extraConfigMountPath }}/import_datasources.yaml" ]; then
       echo "Importing database connections.... "
-      ax-bi import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
+      ax-office import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
     fi
   # -- Launch additional containers into init job pod
   extraContainers: []

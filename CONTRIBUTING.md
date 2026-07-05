@@ -16,15 +16,15 @@
  specific language governing permissions and limitations
  under the License.
 -->
-# Contributing to AX-BI
+# Contributing to AX-Office
 
-AX-BI is developed and maintained by DEFAI Private Limited.
+AX-Office is developed and maintained by DEFAI Private Limited.
 
-At this time, AX-BI is not accepting unsolicited public code contributions or
+At this time, AX-Office is not accepting unsolicited public code contributions or
 pull requests.
 
 All project interactions are governed by the
-[AX-BI Code of Conduct](CODE_OF_CONDUCT.md).
+[AX-Office Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## What We Welcome
 
@@ -49,8 +49,8 @@ If you want to propose a change, open an issue first with:
 
 ## Apache Superset Upstream
 
-AX-BI is derived from Apache Superset. If your change applies to upstream
-Superset rather than AX-BI-specific MCP, GenAI BI, desktop, sidecar, or product
+AX-Office is derived from Apache Superset. If your change applies to upstream
+Superset rather than AX-Office-specific MCP, GenAI BI, desktop, sidecar, or product
 work, consider contributing it to the Apache Superset project through the
 upstream developer portal:
 

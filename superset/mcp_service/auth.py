@@ -654,7 +654,7 @@ def get_user_from_request() -> User:
         if not user:
             raise ValueError(
                 f"User '{username}' not found. "
-                f"Please create admin user with: ax-bi fab create-admin"
+                f"Please create admin user with: ax-office fab create-admin"
             )
         return user
 

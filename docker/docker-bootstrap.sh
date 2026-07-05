@@ -98,7 +98,7 @@ case "${1}" in
         echo "  🔒 Werkzeug debugger disabled (set SUPERSET_DEBUG_ENABLED=true to enable)"
     fi
 
-    flask run -p $PORT --reload $DEBUGGER_FLAG --host=0.0.0.0 --exclude-patterns "*/node_modules/*:*/.venv/*:*/build/*:*/__pycache__/*:*/ax-bi-frontend/*"
+    flask run -p $PORT --reload $DEBUGGER_FLAG --host=0.0.0.0 --exclude-patterns "*/node_modules/*:*/.venv/*:*/build/*:*/__pycache__/*:*/ax-office-frontend/*"
     ;;
   app-gunicorn)
     echo "Starting web app..."
@@ -110,7 +110,7 @@ case "${1}" in
     if [[ "${MCP_DEBUG:-}" == "true" ]]; then
         MCP_DEBUG_FLAG="--debug"
     fi
-    ax-bi mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} ${MCP_DEBUG_FLAG}
+    ax-office mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} ${MCP_DEBUG_FLAG}
     ;;
   *)
     echo "Unknown Operation!!!"
