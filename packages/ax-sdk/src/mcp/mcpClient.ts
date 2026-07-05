@@ -137,15 +137,7 @@ export class MCPClient {
       ...request,
     };
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json, text/event-stream',
-      ...this.auth.getAuthHeaders(),
-    };
-
-    if (this.sessionId) {
-      headers['Mcp-Session-Id'] = this.sessionId;
-    }
+    const headers = this.buildHeaders('application/json, text/event-stream');
 
     const response = await fetch(`${this.mcpUrl}/mcp`, {
       method: 'POST',
@@ -182,13 +174,7 @@ export class MCPClient {
 
   /** Send a notification (no response expected). */
   private async sendNotification(method: string): Promise<void> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...this.auth.getAuthHeaders(),
-    };
-    if (this.sessionId) {
-      headers['Mcp-Session-Id'] = this.sessionId;
-    }
+    const headers = this.buildHeaders();
 
     await fetch(`${this.mcpUrl}/mcp`, {
       method: 'POST',
@@ -201,6 +187,23 @@ export class MCPClient {
     }).catch(() => {
       // Notifications are fire-and-forget; swallow errors.
     });
+  }
+
+  private buildHeaders(accept?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...this.auth.getAuthHeaders(),
+    };
+
+    if (accept !== undefined) {
+      headers['Accept'] = accept;
+    }
+
+    if (this.sessionId) {
+      headers['Mcp-Session-Id'] = this.sessionId;
+    }
+
+    return headers;
   }
 
   /**
