@@ -749,6 +749,33 @@ export class SupersetClient
     toItem: (item: SupersetListItem) => TItem | undefined;
     buildResponse: (items: TItem[], totalCount: number) => TResponse;
   }): Promise<TResponse> {
+    return this.fetchSupersetListOperation({
+      url,
+      correlationId,
+      operationLabel: `${resourceLabel} list`,
+      emptyResult: warnings => emptyResponse(request, warnings),
+      onPayload: payload => {
+        const items = extractSupersetResults(payload).map(toItem).filter(isDefined);
+        const totalCount = extractSupersetCount(payload, items.length);
+
+        return buildResponse(items, totalCount);
+      },
+    });
+  }
+
+  private async fetchSupersetListOperation<TResult>({
+    url,
+    correlationId,
+    operationLabel,
+    emptyResult,
+    onPayload,
+  }: {
+    url: string;
+    correlationId: string | undefined;
+    operationLabel: string;
+    emptyResult: (warnings: string[]) => TResult;
+    onPayload: (payload: unknown) => TResult;
+  }): Promise<TResult> {
     try {
       const response = await fetch(url, {
         headers: this.buildHeaders(correlationId),
@@ -756,19 +783,15 @@ export class SupersetClient
       });
 
       if (!response.ok) {
-        return emptyResponse(request, [
-          `${resourceLabel} list returned status ${response.status} from Superset`,
+        return emptyResult([
+          `${operationLabel} returned status ${response.status} from Superset`,
         ]);
       }
 
-      const payload = (await response.json()) as unknown;
-      const items = extractSupersetResults(payload).map(toItem).filter(isDefined);
-      const totalCount = extractSupersetCount(payload, items.length);
-
-      return buildResponse(items, totalCount);
+      return onPayload((await response.json()) as unknown);
     } catch (error) {
-      return emptyResponse(request, [
-        `${resourceLabel} list failed: ${externalErrorMessage(error)}`,
+      return emptyResult([
+        `${operationLabel} failed: ${externalErrorMessage(error)}`,
       ]);
     }
   }
@@ -1032,39 +1055,24 @@ export class SupersetClient
   ): Promise<{ assets: AssetSearchResult[]; warnings: string[] }> {
     const url = this.buildAssetSearchUrl(assetType, request);
 
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return {
-          assets: [],
-          warnings: [
-            `${assetType} search returned status ${response.status} from Superset`,
-          ],
-        };
-      }
-
-      const payload = (await response.json()) as unknown;
-
-      return {
+    return this.fetchSupersetListOperation<{
+      assets: AssetSearchResult[];
+      warnings: string[];
+    }>({
+      url,
+      correlationId,
+      operationLabel: `${assetType} search`,
+      emptyResult: warnings => ({
+        assets: [],
+        warnings,
+      }),
+      onPayload: payload => ({
         assets: extractSupersetResults(payload)
           .map(item => toAssetSearchResult(assetType, item, request.query))
           .filter(isDefined),
         warnings: [],
-      };
-    } catch (error) {
-      return {
-        assets: [],
-        warnings: [
-          `${assetType} search failed: ${
-            externalErrorMessage(error)
-          }`,
-        ],
-      };
-    }
+      }),
+    });
   }
 
   private buildAssetSearchUrl(
