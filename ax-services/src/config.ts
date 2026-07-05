@@ -69,6 +69,7 @@ type EnvironmentVariable =
 
 type Environment = Partial<Record<EnvironmentVariable, string | undefined>>;
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
+type SupersetAssetSearchPathKey = keyof ServiceConfig['supersetAssetSearchPaths'];
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 5010;
@@ -101,6 +102,63 @@ const LOG_LEVELS = new Set<LogLevel>([
   'error',
   'silent',
 ]);
+
+const SUPERSET_ASSET_SEARCH_PATHS = {
+  annotationLayer: {
+    env: 'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
+  },
+  chart: {
+    env: 'AX_SUPERSET_CHART_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_CHART_LIST_PATH,
+  },
+  dashboard: {
+    env: 'AX_SUPERSET_DASHBOARD_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+  },
+  database: {
+    env: 'AX_SUPERSET_DATABASE_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_DATABASE_LIST_PATH,
+  },
+  dataset: {
+    env: 'AX_SUPERSET_DATASET_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_DATASET_LIST_PATH,
+  },
+  query: {
+    env: 'AX_SUPERSET_QUERY_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_QUERY_LIST_PATH,
+  },
+  report: {
+    env: 'AX_SUPERSET_REPORT_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_REPORT_LIST_PATH,
+  },
+  role: {
+    env: 'AX_SUPERSET_ROLE_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_ROLE_LIST_PATH,
+  },
+  rls: {
+    env: 'AX_SUPERSET_RLS_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_RLS_LIST_PATH,
+  },
+  savedQuery: {
+    env: 'AX_SUPERSET_SAVED_QUERY_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
+  },
+  tag: {
+    env: 'AX_SUPERSET_TAG_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_TAG_LIST_PATH,
+  },
+  task: {
+    env: 'AX_SUPERSET_TASK_LIST_PATH',
+    defaultValue: DEFAULT_SUPERSET_TASK_LIST_PATH,
+  },
+} as const satisfies Record<
+  SupersetAssetSearchPathKey,
+  {
+    env: EnvironmentVariable;
+    defaultValue: string;
+  }
+>;
 
 function normalizeHost(value: string | undefined): string {
   const host = value?.trim();
@@ -274,6 +332,19 @@ function normalizeLogLevel(value: string | undefined): LogLevel {
   return logLevel as LogLevel;
 }
 
+function buildSupersetAssetSearchPaths(
+  env: Environment,
+): ServiceConfig['supersetAssetSearchPaths'] {
+  return Object.fromEntries(
+    Object.entries(SUPERSET_ASSET_SEARCH_PATHS).map(
+      ([key, { env: envName, defaultValue }]) => [
+        key,
+        normalizeEnvPath(env, envName, defaultValue),
+      ],
+    ),
+  ) as ServiceConfig['supersetAssetSearchPaths'];
+}
+
 export function buildConfig(env: Environment = process.env): ServiceConfig {
   return {
     host: normalizeHost(env.AX_SERVICES_HOST),
@@ -296,68 +367,7 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
       'AX_SUPERSET_PERMISSION_PATH',
       DEFAULT_SUPERSET_PERMISSION_PATH,
     ),
-    supersetAssetSearchPaths: {
-      annotationLayer: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH',
-        DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
-      ),
-      chart: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_CHART_LIST_PATH',
-        DEFAULT_SUPERSET_CHART_LIST_PATH,
-      ),
-      dashboard: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_DASHBOARD_LIST_PATH',
-        DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
-      ),
-      database: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_DATABASE_LIST_PATH',
-        DEFAULT_SUPERSET_DATABASE_LIST_PATH,
-      ),
-      dataset: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_DATASET_LIST_PATH',
-        DEFAULT_SUPERSET_DATASET_LIST_PATH,
-      ),
-      query: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_QUERY_LIST_PATH',
-        DEFAULT_SUPERSET_QUERY_LIST_PATH,
-      ),
-      report: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_REPORT_LIST_PATH',
-        DEFAULT_SUPERSET_REPORT_LIST_PATH,
-      ),
-      role: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_ROLE_LIST_PATH',
-        DEFAULT_SUPERSET_ROLE_LIST_PATH,
-      ),
-      rls: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_RLS_LIST_PATH',
-        DEFAULT_SUPERSET_RLS_LIST_PATH,
-      ),
-      savedQuery: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_SAVED_QUERY_LIST_PATH',
-        DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
-      ),
-      tag: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_TAG_LIST_PATH',
-        DEFAULT_SUPERSET_TAG_LIST_PATH,
-      ),
-      task: normalizeEnvPath(
-        env,
-        'AX_SUPERSET_TASK_LIST_PATH',
-        DEFAULT_SUPERSET_TASK_LIST_PATH,
-      ),
-    },
+    supersetAssetSearchPaths: buildSupersetAssetSearchPaths(env),
     supersetTimeoutMs: parseSupersetTimeout(env.AX_SUPERSET_TIMEOUT_MS),
     supersetInternalToken: normalizeOptionalSecret(
       env.AX_SUPERSET_INTERNAL_TOKEN,
