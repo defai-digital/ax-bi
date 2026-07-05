@@ -216,6 +216,39 @@ def test_columnar_reader_zip():
     ]
 
 
+def test_columnar_reader_zip_with_uppercase_entry_suffix():
+    reader = ColumnarReader(
+        options=ColumnarReaderOptions(),
+    )
+    file1 = create_columnar_file(COLUMNAR_DATA, "test1.parquet")
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file1:
+        tmp_file1.write(file1.read())
+        tmp_file1.seek(0)
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_zip:
+        with ZipFile(tmp_zip, "w") as zip_file:
+            zip_file.write(tmp_file1.name, "TEST1.PARQUET")
+        tmp_zip.seek(0)
+        df = reader.file_to_dataframe(FileStorage(tmp_zip, "test.zip"))
+
+    assert df["Name"].tolist() == ["name1", "name2", "name3"]
+
+
+def test_columnar_reader_empty_zip():
+    reader = ColumnarReader(
+        options=ColumnarReaderOptions(),
+    )
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_zip:
+        with ZipFile(tmp_zip, "w"):
+            pass
+        tmp_zip.seek(0)
+        with pytest.raises(DatabaseUploadFailed) as ex:
+            reader.file_to_dataframe(FileStorage(tmp_zip, "test.zip"))
+
+    assert str(ex.value) == "ZIP file contains no files"
+
+
 def test_columnar_reader_bad_parquet_in_zip():
     reader = ColumnarReader(
         options=ColumnarReaderOptions(),

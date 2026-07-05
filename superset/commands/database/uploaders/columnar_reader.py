@@ -113,20 +113,24 @@ class ColumnarReader(BaseDataReader):
                     except SupersetException as ex:
                         raise DatabaseUploadFailed(str(ex)) from ex
                     # check if all file types are of the same extension
+                    filenames = [
+                        name for name in zip_file.namelist() if not name.endswith("/")
+                    ]
+                    if not filenames:
+                        raise DatabaseUploadFailed(_("ZIP file contains no files"))
                     file_suffixes = {
-                        Path(name).suffix.lower()
-                        for name in zip_file.namelist()
-                        if not name.endswith("/")
+                        Path(name).suffix.lower() for name in filenames
                     }
                     if len(file_suffixes) > 1:
                         raise DatabaseUploadFailed(
                             _("ZIP file contains multiple file types")
                         )
-                    for filename in zip_file.namelist():
-                        if filename.endswith("/"):
-                            continue
+                    for filename in filenames:
                         with zip_file.open(filename) as file_in_zip:
-                            yield BytesIO(file_in_zip.read()), Path(filename).suffix
+                            yield (
+                                BytesIO(file_in_zip.read()),
+                                Path(filename).suffix.lower(),
+                            )
             except BadZipfile as ex:
                 raise DatabaseUploadFailed(_("Not a valid ZIP file")) from ex
         else:
@@ -139,10 +143,13 @@ class ColumnarReader(BaseDataReader):
         :return: pandas DataFrame
         :throws DatabaseUploadFailed: if there is an error reading the file
         """
-        return pd.concat(
+        frames = [
             self._read_buffer_to_dataframe(buffer, extension)
             for buffer, extension in self._yield_files(file)
-        )
+        ]
+        if not frames:
+            raise DatabaseUploadFailed(_("Columnar upload contains no files"))
+        return pd.concat(frames)
 
     def file_metadata(self, file: FileStorage) -> FileMetadata:  # noqa: C901
         column_names: list[str] = []
