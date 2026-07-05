@@ -381,7 +381,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildAnnotationLayerListUrl(request),
+      url: this.buildConfiguredListUrl(
+        'annotationLayer',
+        buildAnnotationLayerListQuery(request),
+      ),
       resourceLabel: 'annotation layer',
       emptyResponse: emptyAnnotationLayerListResponse,
       toItem: toAnnotationLayerListItem,
@@ -598,7 +601,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildDashboardListUrl(request),
+      url: this.buildConfiguredListUrl(
+        'dashboard',
+        buildDashboardListQuery(request),
+      ),
       resourceLabel: 'dashboard',
       emptyResponse: emptyDashboardListResponse,
       toItem: toDashboardListItem,
@@ -635,7 +641,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildChartListUrl(request),
+      url: this.buildConfiguredListUrl('chart', buildChartListQuery(request)),
       resourceLabel: 'chart',
       emptyResponse: emptyChartListResponse,
       toItem: toChartListItem,
@@ -672,7 +678,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildDatasetListUrl(request),
+      url: this.buildConfiguredListUrl(
+        'dataset',
+        buildDatasetListQuery(request),
+      ),
       resourceLabel: 'dataset',
       emptyResponse: emptyDatasetListResponse,
       toItem: toDatasetListItem,
@@ -709,7 +718,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildDatabaseListUrl(request),
+      url: this.buildConfiguredListUrl(
+        'database',
+        buildDatabaseListQuery(request),
+      ),
       resourceLabel: 'database',
       emptyResponse: emptyDatabaseListResponse,
       toItem: toDatabaseListItem,
@@ -813,7 +825,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildQueryListUrl(request),
+      url: this.buildConfiguredListUrl('query', buildQueryListQuery(request)),
       resourceLabel: 'query',
       emptyResponse: emptyQueryListResponse,
       toItem: toQueryListItem,
@@ -849,7 +861,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildSavedQueryListUrl(request),
+      url: this.buildConfiguredListUrl(
+        'savedQuery',
+        buildSavedQueryListQuery(request),
+      ),
       resourceLabel: 'saved query',
       emptyResponse: emptySavedQueryListResponse,
       toItem: toSavedQueryListItem,
@@ -885,7 +900,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildReportListUrl(request),
+      url: this.buildConfiguredListUrl('report', buildReportListQuery(request)),
       resourceLabel: 'report',
       emptyResponse: emptyReportListResponse,
       toItem: toReportListItem,
@@ -921,7 +936,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildRoleListUrl(request),
+      url: this.buildConfiguredListUrl('role', buildRoleListQuery(request)),
       resourceLabel: 'role',
       emptyResponse: emptyRoleListResponse,
       toItem: toRoleListItem,
@@ -957,7 +972,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildRlsListUrl(request),
+      url: this.buildConfiguredListUrl('rls', buildRlsListQuery(request)),
       resourceLabel: 'RLS filter',
       emptyResponse: emptyRlsListResponse,
       toItem: toRlsListItem,
@@ -993,7 +1008,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildTagListUrl(request),
+      url: this.buildConfiguredListUrl('tag', buildTagListQuery(request)),
       resourceLabel: 'tag',
       emptyResponse: emptyTagListResponse,
       toItem: toTagListItem,
@@ -1029,7 +1044,7 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildTaskListUrl(request),
+      url: this.buildConfiguredListUrl('task', buildTaskListQuery(request)),
       resourceLabel: 'task',
       emptyResponse: emptyTaskListResponse,
       toItem: toTaskListItem,
@@ -1079,7 +1094,6 @@ export class SupersetClient
     assetType: SearchableAssetType,
     request: AssetSearchRequest,
   ): string {
-    const path = this.config.supersetAssetSearchPaths[assetType];
     const filterColumn = assetSearchFilterColumns[assetType];
     const query = buildSupersetListQuery(
       filterColumn,
@@ -1087,16 +1101,7 @@ export class SupersetClient
       request.limit,
       request.includeCertifiedOnly,
     );
-    return this.buildSupersetQueryUrl(path, query);
-  }
-
-  private buildAnnotationLayerListUrl(
-    request: AnnotationLayerListRequest,
-  ): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.annotationLayer,
-      buildAnnotationLayerListQuery(request),
-    );
+    return this.buildConfiguredListUrl(assetType, query);
   }
 
   private buildAnnotationListUrl(request: AnnotationListRequest): string {
@@ -1110,80 +1115,13 @@ export class SupersetClient
     );
   }
 
-  private buildDashboardListUrl(request: DashboardListRequest): string {
+  private buildConfiguredListUrl(
+    pathKey: SupersetAssetSearchPathKey,
+    query: string,
+  ): string {
     return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.dashboard,
-      buildDashboardListQuery(request),
-    );
-  }
-
-  private buildChartListUrl(request: ChartListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.chart,
-      buildChartListQuery(request),
-    );
-  }
-
-  private buildDatasetListUrl(request: DatasetListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.dataset,
-      buildDatasetListQuery(request),
-    );
-  }
-
-  private buildDatabaseListUrl(request: DatabaseListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.database,
-      buildDatabaseListQuery(request),
-    );
-  }
-
-  private buildQueryListUrl(request: QueryListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.query,
-      buildQueryListQuery(request),
-    );
-  }
-
-  private buildSavedQueryListUrl(request: SavedQueryListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.savedQuery,
-      buildSavedQueryListQuery(request),
-    );
-  }
-
-  private buildReportListUrl(request: ReportListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.report,
-      buildReportListQuery(request),
-    );
-  }
-
-  private buildRoleListUrl(request: RoleListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.role,
-      buildRoleListQuery(request),
-    );
-  }
-
-  private buildRlsListUrl(request: RlsListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.rls,
-      buildRlsListQuery(request),
-    );
-  }
-
-  private buildTagListUrl(request: TagListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.tag,
-      buildTagListQuery(request),
-    );
-  }
-
-  private buildTaskListUrl(request: TaskListRequest): string {
-    return this.buildSupersetQueryUrl(
-      this.config.supersetAssetSearchPaths.task,
-      buildTaskListQuery(request),
+      this.config.supersetAssetSearchPaths[pathKey],
+      query,
     );
   }
 
@@ -1211,6 +1149,7 @@ function extractObjectKeys(payload: unknown): string[] {
 }
 
 type SearchableAssetType = Exclude<AssetType, 'metric'>;
+type SupersetAssetSearchPathKey = keyof ServiceConfig['supersetAssetSearchPaths'];
 
 interface ListPaginationRequest {
   page: number;
