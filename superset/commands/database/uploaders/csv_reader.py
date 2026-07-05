@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import gzip
 import logging
 from importlib import util
 from typing import Any
@@ -69,6 +70,26 @@ class CSVReader(BaseDataReader):
         super().__init__(
             options=dict(options),
         )
+
+    @staticmethod
+    def _filename(file: FileStorage) -> str:
+        """Return a normalized upload filename."""
+        return (file.filename or "").lower()
+
+    @staticmethod
+    def _compression(file: FileStorage) -> str | None:
+        """Return pandas compression mode for known compressed CSV uploads."""
+        return "gzip" if CSVReader._filename(file).endswith(".gz") else None
+
+    @staticmethod
+    def _delimiter_from_filename(file: FileStorage) -> str | None:
+        """Return delimiter implied by the upload filename."""
+        filename = CSVReader._filename(file)
+        if filename.endswith((".tsv", ".tsv.gz")):
+            return "\t"
+        if filename.endswith((".csv", ".csv.gz")):
+            return ","
+        return None
 
     @staticmethod
     def _detect_encoding(file: FileStorage) -> str:
@@ -140,7 +161,11 @@ class CSVReader(BaseDataReader):
         """
         position = file.tell()
         try:
-            sample = file.read(65536)
+            if CSVReader._compression(file) == "gzip":
+                with gzip.GzipFile(fileobj=file.stream) as gzip_file:
+                    sample = gzip_file.read(65536)
+            else:
+                sample = file.read(65536)
             if isinstance(sample, str):
                 text = sample
             else:
@@ -539,6 +564,7 @@ class CSVReader(BaseDataReader):
             "nrows": rows_to_read,
             "parse_dates": self._options.get("column_dates"),
             "sep": self._options.get("delimiter")
+            or self._delimiter_from_filename(file)
             or self._sniff_delimiter(
                 file,
                 self._options.get("encoding", DEFAULT_ENCODING),
@@ -552,6 +578,7 @@ class CSVReader(BaseDataReader):
                 else None
             ),
             "cache_dates": True,
+            "compression": self._compression(file),
         }
 
         if use_chunking:
@@ -573,10 +600,12 @@ class CSVReader(BaseDataReader):
             "encoding": self._options.get("encoding", DEFAULT_ENCODING),
             "low_memory": False,
             "dtype": "string",
+            "compression": self._compression(file),
         }
-        kwargs["sep"] = self._options.get("delimiter") or self._sniff_delimiter(
-            file,
-            kwargs["encoding"],
+        kwargs["sep"] = (
+            self._options.get("delimiter")
+            or self._delimiter_from_filename(file)
+            or self._sniff_delimiter(file, kwargs["encoding"])
         )
         df = self._read_csv(file, kwargs)
         return {"items": [build_upload_metadata_item(df, None)]}

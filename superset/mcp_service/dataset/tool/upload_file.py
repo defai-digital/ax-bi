@@ -74,34 +74,90 @@ logger = logging.getLogger(__name__)
 
 # Map of file extension -> UploadFileType
 FILE_TYPE_MAP: dict[str, UploadFileType] = {
+    ".ann": UploadFileType.STRUCTURED,
+    ".arrow": UploadFileType.COLUMNAR,
+    ".asc": UploadFileType.STRUCTURED,
+    ".avro": UploadFileType.STRUCTURED,
+    ".croissant.json": UploadFileType.STRUCTURED,
     ".csv": UploadFileType.CSV,
-    ".tsv": UploadFileType.CSV,
-    ".txt": UploadFileType.CSV,
-    ".xls": UploadFileType.EXCEL,
-    ".xlsx": UploadFileType.EXCEL,
-    ".parquet": UploadFileType.COLUMNAR,
+    ".csv.gz": UploadFileType.CSV,
+    ".dat": UploadFileType.STRUCTURED,
+    ".db": UploadFileType.STRUCTURED,
+    ".dta": UploadFileType.STRUCTURED,
+    ".dump": UploadFileType.STRUCTURED,
+    ".faiss": UploadFileType.STRUCTURED,
+    ".feather": UploadFileType.COLUMNAR,
+    ".fwf": UploadFileType.STRUCTURED,
+    ".geojson": UploadFileType.STRUCTURED,
+    ".gguf": UploadFileType.STRUCTURED,
+    ".gpkg": UploadFileType.STRUCTURED,
+    ".hnsw": UploadFileType.STRUCTURED,
+    ".htm": UploadFileType.STRUCTURED,
+    ".html": UploadFileType.STRUCTURED,
+    ".index": UploadFileType.STRUCTURED,
+    ".ipc": UploadFileType.COLUMNAR,
     ".json": UploadFileType.STRUCTURED,
     ".jsonl": UploadFileType.STRUCTURED,
+    ".jsonl.gz": UploadFileType.STRUCTURED,
+    ".lance": UploadFileType.STRUCTURED,
+    ".lance.zip": UploadFileType.STRUCTURED,
+    ".mlflow.zip": UploadFileType.STRUCTURED,
+    ".mlruns.zip": UploadFileType.STRUCTURED,
     ".ndjson": UploadFileType.STRUCTURED,
-    ".xml": UploadFileType.STRUCTURED,
+    ".ndjson.gz": UploadFileType.STRUCTURED,
+    ".npy": UploadFileType.STRUCTURED,
+    ".npz": UploadFileType.STRUCTURED,
+    ".ods": UploadFileType.EXCEL,
+    ".onnx": UploadFileType.STRUCTURED,
+    ".orc": UploadFileType.COLUMNAR,
+    ".parquet": UploadFileType.COLUMNAR,
+    ".sas7bdat": UploadFileType.STRUCTURED,
+    ".sav": UploadFileType.STRUCTURED,
+    ".safetensors": UploadFileType.STRUCTURED,
+    ".shp.zip": UploadFileType.STRUCTURED,
     ".sql": UploadFileType.STRUCTURED,
-    ".dump": UploadFileType.STRUCTURED,
     ".sqlite": UploadFileType.STRUCTURED,
     ".sqlite3": UploadFileType.STRUCTURED,
-    ".db": UploadFileType.STRUCTURED,
+    ".tar": UploadFileType.STRUCTURED,
+    ".tar.gz": UploadFileType.STRUCTURED,
+    ".tgz": UploadFileType.STRUCTURED,
+    ".tsv": UploadFileType.CSV,
+    ".tsv.gz": UploadFileType.CSV,
+    ".txt": UploadFileType.CSV,
+    ".txt.gz": UploadFileType.CSV,
+    ".xls": UploadFileType.EXCEL,
+    ".xlsx": UploadFileType.EXCEL,
+    ".xml": UploadFileType.STRUCTURED,
+    ".xpt": UploadFileType.STRUCTURED,
+    ".yaml": UploadFileType.STRUCTURED,
+    ".yml": UploadFileType.STRUCTURED,
+    ".yolo.zip": UploadFileType.STRUCTURED,
+    ".zip": UploadFileType.COLUMNAR,
 }
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
 MAX_TABLE_NAME_LENGTH = 63
 
 
+def _detect_upload_file_type(filename: str) -> tuple[str, UploadFileType] | None:
+    """Return the normalized extension and upload type for a filename."""
+    lowered = filename.lower()
+    if lowered == "mlmodel":
+        return ".mlmodel", UploadFileType.STRUCTURED
+    for extension in sorted(FILE_TYPE_MAP, key=len, reverse=True):
+        if lowered.endswith(extension) and len(lowered) > len(extension):
+            return extension, FILE_TYPE_MAP[extension]
+    return None
+
+
 def _safe_upload_filename(filename: str) -> str:
     """Return a path-free filename for downstream upload readers."""
-    ext = os.path.splitext(filename)[1].lower()
+    detected_file_type = _detect_upload_file_type(filename)
     safe_filename = secure_filename(filename)
-    if ext in FILE_TYPE_MAP:
-        stem = os.path.splitext(safe_filename)[0].strip("._")
-        if not stem or stem.lower() == ext.lstrip("."):
+    if detected_file_type:
+        ext, _file_type = detected_file_type
+        stem = safe_filename[: -len(ext)].strip("._")
+        if not stem or stem.lower() == ext.lstrip(".") or filename.lower() == "mlmodel":
             stem = "upload"
         return f"{stem}{ext}"
     return safe_filename or "upload"
@@ -193,16 +249,17 @@ def upload_single_file(  # noqa: C901
             error_type="FeatureDisabledError",
         )
 
-    ext = os.path.splitext(filename)[1].lower()
-    file_type = FILE_TYPE_MAP.get(ext)
+    detected_file_type = _detect_upload_file_type(filename)
 
-    if file_type is None:
+    if detected_file_type is None:
         return DatasetError.create(
             error=(
-                f"Unsupported file extension '{ext}'. Supported: {SUPPORTED_EXTENSIONS}"
+                f"Unsupported file extension for '{filename}'. "
+                f"Supported: {SUPPORTED_EXTENSIONS}"
             ),
             error_type="UnsupportedFileTypeError",
         )
+    _ext, file_type = detected_file_type
 
     if oversized_error := _reject_oversized_base64(file_content):
         return oversized_error

@@ -20,6 +20,7 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
+import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
@@ -51,6 +52,18 @@ COLUMNAR_WITH_FLOATS: dict[str, list[Any]] = {
     "City": ["city1", "city2", "city3"],
     "Birth": ["1990-02-01", "1995-02-01", "2000-02-01"],
 }
+
+
+def test_columnar_reader_reads_feather_file() -> None:
+    buffer = io.BytesIO()
+    pd.DataFrame(COLUMNAR_DATA).to_feather(buffer)
+    buffer.seek(0)
+    reader = ColumnarReader()
+
+    df = reader.file_to_dataframe(FileStorage(buffer, filename="users.feather"))
+
+    assert df["Name"].tolist() == ["name1", "name2", "name3"]
+    assert df["Age"].tolist() == [30, 25, 20]
 
 
 @pytest.mark.parametrize(

@@ -168,9 +168,9 @@ const defaultUploadInfo: UploadInfo = {
 // by selecting all file extensions on the OS file picker. Also ".txt" will
 // allow all files to be selected.
 const allowedExtensionsToAccept = {
-  csv: '.csv, .tsv',
-  excel: '.xls, .xlsx',
-  columnar: '.parquet, .zip',
+  csv: '.csv, .tsv, .txt, .csv.gz, .tsv.gz, .txt.gz',
+  excel: '.xls, .xlsx, .ods',
+  columnar: '.parquet, .zip, .orc, .feather, .arrow, .ipc',
 };
 
 const extensionsToLabel: Record<UploadType, string> = {
@@ -183,16 +183,22 @@ export const validateUploadFileExtension = (
   file: UploadFile<any>,
   allowedExtensions: string[],
 ) => {
-  const extensionMatch = file.name.match(/.+\.([^.]+)$/);
-  if (!extensionMatch) {
+  const filename = file.name.toLowerCase();
+  const lowerCaseAllowedExtensions = allowedExtensions.map(ext =>
+    ext.toLowerCase().replace(/^\./, ''),
+  );
+  if (
+    lowerCaseAllowedExtensions.some(extension => {
+      const suffix = `.${extension}`;
+      return filename.endsWith(suffix) && filename.length > suffix.length;
+    })
+  ) {
+    return true;
+  }
+  if (!filename.includes('.')) {
     return false;
   }
-
-  const fileType = extensionMatch[1].toLowerCase();
-  const lowerCaseAllowedExtensions = allowedExtensions.map(ext =>
-    ext.toLowerCase(),
-  );
-  return lowerCaseAllowedExtensions.includes(fileType);
+  return false;
 };
 
 interface StyledSwitchContainerProps extends SwitchProps {
