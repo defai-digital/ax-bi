@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import d3 from 'd3';
+import d3 from 'd3v3';
 import { getNumberFormatter, ValueFormatter } from '@superset-ui/core';
 import WorldMap from '../src/WorldMap';
 import { ColorBy } from '../src/utils';

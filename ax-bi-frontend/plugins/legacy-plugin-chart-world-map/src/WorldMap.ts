@@ -18,7 +18,7 @@
  */
 // @ts-nocheck
 /* eslint-disable react/sort-prop-types */
-import d3 from 'd3';
+import d3 from 'd3v3';
 import PropTypes from 'prop-types';
 import { extent as d3Extent } from 'd3-array';
 import {
@@ -382,7 +382,8 @@ function WorldMap(element: HTMLElement, props: WorldMapProps): void {
   const highLabel =
     maxMetric !== undefined ? formatter(maxMetric) : 'Higher value';
 
-  div.append('div')
+  div
+    .append('div')
     .attr('class', 'world-map-inline-legend')
     .style('background', legendBackground)
     .style('border-color', legendBorder)

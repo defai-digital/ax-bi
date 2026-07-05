@@ -19,7 +19,7 @@
  * under the License.
  */
 import { kebabCase, throttle } from 'lodash';
-import d3 from 'd3';
+import d3 from 'd3v3';
 import utc from 'dayjs/plugin/utc';
 import nv from 'nvd3-fork';
 import PropTypes from 'prop-types';

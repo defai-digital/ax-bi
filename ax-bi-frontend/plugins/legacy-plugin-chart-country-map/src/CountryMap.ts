@@ -18,7 +18,7 @@
  * under the License.
  */
 /* eslint-disable react/sort-prop-types */
-import d3 from 'd3';
+import d3 from 'd3v3';
 import { extent as d3Extent } from 'd3-array';
 import {
   BinaryQueryObjectFilterClause,

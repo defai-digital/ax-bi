@@ -18,7 +18,7 @@
  * under the License.
  */
 /* eslint-disable no-param-reassign, react/sort-prop-types */
-import d3 from 'd3';
+import d3 from 'd3v3';
 import {
   getNumberFormatter,
   CategoricalColorNamespace,

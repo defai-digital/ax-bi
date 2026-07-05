@@ -17,7 +17,7 @@
  * under the License.
  */
 // @ts-nocheck -- legacy file heavily dependent on untyped d3 v3 and nvd3 APIs
-import d3 from 'd3';
+import d3 from 'd3v3';
 import d3tip from 'd3-tip';
 import dompurify from 'dompurify';
 import {

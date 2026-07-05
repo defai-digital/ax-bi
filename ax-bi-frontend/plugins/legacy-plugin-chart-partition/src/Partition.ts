@@ -20,7 +20,7 @@
 // @ts-nocheck -- Legacy D3 visualization using d3-hierarchy v1 APIs without proper type definitions.
 // Uses the same approach as NVD3Vis.ts and other heavily D3-dependent files.
 /* eslint no-param-reassign: [2, {"props": false}] */
-import d3 from 'd3';
+import d3 from 'd3v3';
 import PropTypes from 'prop-types';
 import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import {
