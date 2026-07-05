@@ -44,12 +44,7 @@ export class DashboardsResource extends BaseResource<DashboardItem> {
 
   /** Export one or more dashboards as ZIP. */
   async export(ids: number[]): Promise<Blob> {
-    const response = await this.http.request<Blob>({
-      method: 'GET',
-      path: `${this.basePath}/export/`,
-      query: { q: JSON.stringify(ids) },
-    });
-    return response;
+    return this.exportZip(ids);
   }
 
   /** Copy a dashboard by ID. Returns the new dashboard. */

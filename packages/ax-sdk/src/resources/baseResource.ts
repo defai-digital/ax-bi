@@ -66,6 +66,15 @@ export abstract class BaseResource<TItem> {
     await this.http.delete<SupersetDeleteEnvelope>(`${this.basePath}/${id}`);
   }
 
+  /** Export one or more resources as a ZIP archive. */
+  protected async exportZip(ids: number[]): Promise<Blob> {
+    return this.http.request<Blob>({
+      method: 'GET',
+      path: `${this.basePath}/export/`,
+      query: { q: JSON.stringify(ids) },
+    });
+  }
+
   /**
    * Async iterator that paginates through all items.
    *

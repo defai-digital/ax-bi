@@ -54,11 +54,6 @@ export class DatasetsResource extends BaseResource<DatasetItem> {
 
   /** Export one or more datasets as ZIP. */
   async export(ids: number[]): Promise<Blob> {
-    const response = await this.http.request<Blob>({
-      method: 'GET',
-      path: `${this.basePath}/export/`,
-      query: { q: JSON.stringify(ids) },
-    });
-    return response;
+    return this.exportZip(ids);
   }
 }
