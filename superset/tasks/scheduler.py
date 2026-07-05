@@ -169,16 +169,6 @@ def prune_query(
     stats_logger: BaseStatsLogger = current_app.config["STATS_LOGGER"]
     stats_logger.incr("prune_query")
 
-    # TODO: Deprecated: Remove support for passing retention period via options in 6.0
-    if retention_period_days is None:
-        retention_period_days = prune_query.request.properties.get(
-            "retention_period_days"
-        )
-        logger.warning(
-            "Your `prune_query` beat schedule uses `options` to pass the retention "
-            "period, please use `kwargs` instead."
-        )
-
     try:
         QueryPruneCommand(retention_period_days).run()
     except CommandException as ex:
@@ -195,16 +185,6 @@ def prune_logs(
     stats_logger: BaseStatsLogger = current_app.config["STATS_LOGGER"]
     stats_logger.incr("prune_logs")
 
-    # TODO: Deprecated: Remove support for passing retention period via options in 6.0
-    if retention_period_days is None:
-        retention_period_days = prune_logs.request.properties.get(
-            "retention_period_days"
-        )
-        logger.warning(
-            "Your `prune_logs` beat schedule uses `options` to pass the retention "
-            "period, please use `kwargs` instead."
-        )
-
     try:
         LogPruneCommand(retention_period_days, max_rows_per_run).run()
     except CommandException as ex:
@@ -220,16 +200,6 @@ def prune_tasks(
 ) -> None:
     stats_logger: BaseStatsLogger = current_app.config["STATS_LOGGER"]
     stats_logger.incr("prune_tasks")
-
-    # TODO: Deprecated: Remove support for passing retention period via options in 6.0
-    if retention_period_days is None:
-        retention_period_days = prune_tasks.request.properties.get(
-            "retention_period_days"
-        )
-        logger.warning(
-            "Your `prune_tasks` beat schedule uses `options` to pass the "
-            "retention period, please use `kwargs` instead."
-        )
 
     try:
         TaskPruneCommand(retention_period_days, max_rows_per_run).run()
