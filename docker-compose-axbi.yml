@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-x-axbi-image: &axbi-image ${AXBI_IMAGE:-ghcr.io/defai-digital/ax-bi:v1.0.2}
-x-axbi-services-image: &axbi-services-image ${AX_SERVICES_IMAGE:-ghcr.io/defai-digital/ax-bi-services:v1.0.2}
+x-axbi-image: &axbi-image ${AXBI_IMAGE:-ghcr.io/defai-digital/ax-bi:latest}
+x-axbi-services-image: &axbi-services-image ${AX_SERVICES_IMAGE:-ghcr.io/defai-digital/ax-bi-services:latest}
 
 x-axbi-env: &axbi-env
   SUPERSET_CONFIG_PATH: /app/docker/pythonpath_axbi/superset_config.py

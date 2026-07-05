@@ -30,7 +30,7 @@ under the License.
 
 [**Why BI Agents Break Down**](#why-bi-agents-break-down) |
 [**MCP-Native GenAI BI**](#mcp-native-genai-bi) |
-[**Get Started**](#get-started-in-60-seconds) |
+[**Get Started**](#quick-start-with-docker) |
 [**Supported File Types**](#supported-file-types) |
 [**Supported Databases**](#supported-databases) |
 [**Architecture**](#workspace-architecture) |
@@ -198,33 +198,73 @@ AX-BI
     └── Docker and Helm deployment paths
 ```
 
-## Get Started in 60 Seconds
+## Quick Start with Docker
 
-### Prerequisites
+The fastest way to try AX-BI is Docker Compose. This pulls the public
+multi-architecture images from GitHub Container Registry:
+
+- `ghcr.io/defai-digital/ax-bi`
+- `ghcr.io/defai-digital/ax-bi-services`
+
+### 1. Install Prerequisites
 
 - Docker and Docker Compose
-- A generated `SUPERSET_SECRET_KEY`
-- Values for `DATABASE_PASSWORD` and `ADMIN_PASSWORD`
+- Git
 
-```bash
+### 2. Clone AX-BI
+
+```shell
 git clone https://github.com/defai-digital/ax-bi.git
 cd ax-bi
+```
 
+### 3. Create Your Environment File
+
+```shell
 cp docker/.env-axbi.example docker/.env-axbi
-# Fill SUPERSET_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
-# Generate secrets with: openssl rand -base64 42
+```
 
+Edit `docker/.env-axbi` and fill the required values:
+
+```env
+SUPERSET_SECRET_KEY=<generated secret>
+DATABASE_PASSWORD=<generated database password>
+ADMIN_PASSWORD=<admin login password>
+```
+
+Generate secure values with:
+
+```shell
+openssl rand -base64 42
+```
+
+The sample file uses the public images:
+
+```env
+AXBI_IMAGE=ghcr.io/defai-digital/ax-bi:latest
+AX_SERVICES_IMAGE=ghcr.io/defai-digital/ax-bi-services:latest
+```
+
+For production or repeatable demos, replace `latest` with a pinned release tag
+when one is available.
+
+### 4. Start AX-BI
+
+```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
-This quickstart is for a local trial. The sample environment pins published
-image tags and leaves MCP authentication unconfigured; set
-`MCP_DEV_USERNAME=admin` only for a local single-user trial. For any shared or
-network-exposed deployment, configure JWT authentication with
-`MCP_AUTH_ENABLED=true`, pin the image tags you intend to run, and follow the
-MCP production guide before exposing port 5008.
+The first startup initializes Postgres, runs migrations, creates the admin user,
+and starts the web app, MCP service, AX Services sidecar, Redis, and Celery
+workers.
 
-Default local endpoints:
+Check the containers:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml ps
+```
+
+Wait until the `superset` service is healthy, then open:
 
 | Service | URL |
 | --- | --- |
@@ -232,9 +272,47 @@ Default local endpoints:
 | MCP service | `http://localhost:5008` |
 | AX Services sidecar | `http://localhost:5010` |
 
+Log in with:
+
+```text
+username: admin
+password: ADMIN_PASSWORD from docker/.env-axbi
+```
+
+### 5. Stop or Update
+
+Stop the stack without deleting data:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml stop
+```
+
+Pull newer images and restart:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml pull
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
+```
+
+### Notes for Shared or Public Deployments
+
+This quick start is for local trials. Before exposing AX-BI on a network:
+
+- Put the web app behind HTTPS.
+- Keep Postgres and Redis private.
+- Pin image tags instead of using `latest`.
+- Back up the Postgres metadata database.
+- Leave `MCP_DEV_USERNAME` empty.
+- Configure JWT authentication before exposing MCP with
+  `MCP_AUTH_ENABLED=true`.
+
+See [`docker/README.md`](docker/README.md) for Docker details and
+[`superset/mcp_service/PRODUCTION.md`](superset/mcp_service/PRODUCTION.md) for
+MCP production guidance.
+
 To build images from this checkout instead of pulling published images:
 
-```bash
+```shell
 docker compose \
   --env-file docker/.env-axbi \
   -f docker-compose-axbi.yml \
