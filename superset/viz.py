@@ -660,13 +660,6 @@ class BaseViz:  # pylint: disable=too-many-public-methods
                 )
                 self.errors.append(error)
                 self.status = QueryStatus.FAILED
-                # Only expose the raw stacktrace when explicitly enabled, mirroring
-                # the gating used elsewhere (e.g. superset.views.base.get_error_msg).
-                # ``get_stacktrace()`` itself returns ``None`` unless SHOW_STACKTRACE
-                # is set, so gating purely on that config keeps the two consistent.
-                if current_app.config.get("SHOW_STACKTRACE"):
-                    stacktrace = utils.get_stacktrace()
-
             if is_loaded and cache_key and self.status != QueryStatus.FAILED:
                 set_and_log_cache(
                     cache_instance=cache_manager.data_cache,

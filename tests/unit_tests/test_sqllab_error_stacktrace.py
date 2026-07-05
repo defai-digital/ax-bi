@@ -16,14 +16,11 @@
 # under the License.
 
 """
-Regression for #28248: SQL Lab error responses must include stacktrace information.
+SQL Lab error responses must not include stacktrace information.
 
-SQL Lab query execution errors should surface stacktrace information so users
-and operators can debug failures.  The bug is that the Celery task wrapper
-catches unhandled exceptions and logs them with ``logger.debug`` (no
-``exc_info``), so the Python traceback is silently discarded.  Operators
-relying on application logs or the returned error payload have no way to
-determine the root cause of an unexpected failure.
+SQL Lab query execution errors should preserve tracebacks in server logs so
+operators can debug failures, but returned payloads must not expose raw Python
+tracebacks to clients.
 
 Both the legacy ``superset.sql_lab.handle_query_error`` function and the
 newer ``superset.sql.execution.celery_task._handle_query_error`` share the
@@ -62,18 +59,14 @@ def _make_query_mock() -> MagicMock:
 
 
 # ---------------------------------------------------------------------------
-# Legacy sql_lab.handle_query_error — payload contains stacktrace (SHOW_STACKTRACE=True)
+# Legacy sql_lab.handle_query_error — no stacktrace when SHOW_STACKTRACE=True
 # ---------------------------------------------------------------------------
 
 
-def test_legacy_handle_query_error_payload_includes_stacktrace_when_enabled() -> None:
+def test_legacy_handle_query_error_payload_omits_stacktrace_when_enabled() -> None:
     """
-    The dict returned by ``handle_query_error`` must include a ``stacktrace``
+    The dict returned by ``handle_query_error`` must NOT include a ``stacktrace``
     key when SHOW_STACKTRACE is True.
-
-    Regression for #28248: without this field, neither the UI nor log
-    aggregation pipelines can surface the root cause of a query failure to
-    the user or operator.
     """
     config = {"TROUBLESHOOTING_LINK": None, "SHOW_STACKTRACE": True}
     with (
@@ -91,13 +84,10 @@ def test_legacy_handle_query_error_payload_includes_stacktrace_when_enabled() ->
         except RuntimeError as ex:
             payload = handle_query_error(ex, query)
 
-    assert "stacktrace" in payload, (
-        "handle_query_error must include 'stacktrace' in the returned payload "
-        "when SHOW_STACKTRACE=True (regression for #28248). "
+    assert "stacktrace" not in payload, (
+        "handle_query_error must NOT include 'stacktrace' when SHOW_STACKTRACE=True "
+        "to avoid exposing internal details to clients. "
         f"Got keys: {list(payload.keys())}"
-    )
-    assert payload["stacktrace"], (
-        "stacktrace must be non-empty when an exception occurs"
     )
 
 
@@ -180,17 +170,15 @@ def test_legacy_get_sql_results_outer_except_logs_exc_info() -> None:
 
 
 # ---------------------------------------------------------------------------
-# New celery_task._handle_query_error — stacktrace present (SHOW_STACKTRACE=True)
+# New celery_task._handle_query_error — no stacktrace when SHOW_STACKTRACE=True
 # ---------------------------------------------------------------------------
 
 
-def test_new_handle_query_error_payload_includes_stacktrace_when_enabled() -> None:
+def test_new_handle_query_error_payload_omits_stacktrace_when_enabled() -> None:
     """
     The dict returned by
-    ``superset.sql.execution.celery_task._handle_query_error`` must include a
+    ``superset.sql.execution.celery_task._handle_query_error`` must NOT include a
     ``stacktrace`` key when SHOW_STACKTRACE is True.
-
-    Regression for #28248.
     """
     from superset.sql.execution import celery_task as ct
 
@@ -206,13 +194,10 @@ def test_new_handle_query_error_payload_includes_stacktrace_when_enabled() -> No
         except RuntimeError as ex:
             payload = ct._handle_query_error(ex, query)
 
-    assert "stacktrace" in payload, (
-        "_handle_query_error must include 'stacktrace' in the returned payload "
-        "when SHOW_STACKTRACE=True (regression for #28248). "
+    assert "stacktrace" not in payload, (
+        "_handle_query_error must NOT include 'stacktrace' when SHOW_STACKTRACE=True "
+        "to avoid exposing internal details to clients. "
         f"Got keys: {list(payload.keys())}"
-    )
-    assert payload["stacktrace"], (
-        "stacktrace must be non-empty when an exception occurs"
     )
 
 

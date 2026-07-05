@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-import traceback
 import uuid
 from typing import Any
 
@@ -103,9 +102,6 @@ def _handle_query_error(
     payload.update(
         {"status": query.status.value, "error": msg, "errors": errors_payload}
     )
-    if app.config.get("SHOW_STACKTRACE"):
-        if stacktrace := traceback.format_exc():
-            payload["stacktrace"] = stacktrace
     if troubleshooting_link := app.config.get("TROUBLESHOOTING_LINK"):
         payload["link"] = troubleshooting_link
     return payload

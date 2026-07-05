@@ -18,7 +18,6 @@
 import dataclasses
 import logging
 import sys
-import traceback
 import uuid
 from contextlib import closing
 from datetime import datetime
@@ -123,9 +122,6 @@ def handle_query_error(
 
     db.session.commit()
     payload.update({"status": query.status, "error": msg, "errors": errors_payload})
-    if app.config.get("SHOW_STACKTRACE"):
-        if stacktrace := traceback.format_exc():
-            payload["stacktrace"] = stacktrace
     if troubleshooting_link := app.config["TROUBLESHOOTING_LINK"]:
         payload["link"] = troubleshooting_link
     return payload

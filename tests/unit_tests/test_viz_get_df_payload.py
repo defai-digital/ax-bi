@@ -373,9 +373,9 @@ def test_get_df_payload_hides_stacktrace_when_show_stacktrace_disabled() -> None
     assert payload["stacktrace"] is None
 
 
-def test_get_df_payload_shows_stacktrace_when_show_stacktrace_enabled() -> None:
+def test_get_df_payload_hides_stacktrace_when_show_stacktrace_enabled() -> None:
     """
-    The error payload must expose a stacktrace when ``SHOW_STACKTRACE`` is enabled.
+    The error payload must not expose a stacktrace when ``SHOW_STACKTRACE`` is enabled.
     """
     obj = _viz()
 
@@ -386,5 +386,4 @@ def test_get_df_payload_shows_stacktrace_when_show_stacktrace_enabled() -> None:
         payload = obj.get_df_payload(QUERY_OBJ)
 
     assert obj.status == QueryStatus.FAILED
-    assert payload["stacktrace"] is not None
-    assert "RuntimeError" in payload["stacktrace"]
+    assert payload["stacktrace"] is None
