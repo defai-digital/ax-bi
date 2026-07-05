@@ -37,6 +37,13 @@ from superset.utils.core import get_user_id, LoggerLevel, to_int
 logger = logging.getLogger(__name__)
 
 
+def _resolve_local_proxy(value: Any) -> Any:
+    """Return the object behind a Werkzeug LocalProxy when present."""
+    if hasattr(value, "_get_current_object"):
+        return value._get_current_object()
+    return value
+
+
 def collect_request_payload() -> dict[str, Any]:
     """Collect log payload identifiable from request context"""
     if not request:
@@ -210,6 +217,7 @@ class AbstractEventLogger(ABC):
             try:
                 actual_user = g.get("user", None)
                 if actual_user is not None:
+                    actual_user = _resolve_local_proxy(actual_user)
                     db.session.add(actual_user)
                     user_id = get_user_id()
             except Exception as ex:
