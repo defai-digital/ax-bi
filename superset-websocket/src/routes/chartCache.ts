@@ -19,7 +19,12 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import jwt, { Algorithm } from 'jsonwebtoken';
 import { parse } from 'cookie';
-import { getChartCache, hasChartCache, fastCacheOpts, fastCacheStatsd } from '../fastCache';
+import {
+  getChartCache,
+  hasChartCache,
+  fastCacheOpts,
+  fastCacheStatsd,
+} from '../fastCache';
 import { createLogger } from '../logger';
 
 const opts = fastCacheOpts;
@@ -155,7 +160,10 @@ const handleHeadChartCache = async (
   }
 
   const exists = await hasChartCache(cacheKey);
-  reply.status(exists ? 200 : 404).header('X-Cache', exists ? 'HIT' : 'MISS').send();
+  reply
+    .status(exists ? 200 : 404)
+    .header('X-Cache', exists ? 'HIT' : 'MISS')
+    .send();
 };
 
 /**
