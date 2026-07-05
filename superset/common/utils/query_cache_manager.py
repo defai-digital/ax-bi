@@ -32,7 +32,7 @@ from superset.models.helpers import QueryResult
 from superset.stats_logger import BaseStatsLogger
 from superset.superset_typing import Column
 from superset.utils.cache import set_and_log_cache
-from superset.utils.core import error_msg_from_exception, get_stacktrace
+from superset.utils.core import error_msg_from_exception
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ class QueryCacheManager:
             if not self.error_message:
                 self.error_message = str(ex)
             self.status = QueryStatus.FAILED
-            self.stacktrace = get_stacktrace()
+            self.stacktrace = None
 
     @classmethod
     def get(
