@@ -34,6 +34,6 @@ export const URL = {
   DATASET_LIST: 'tablemodelview/list',
   LOGIN: 'login/',
   SAVED_QUERIES_LIST: 'savedqueryview/list/',
-  SQLLAB: 'sqllab',
-  WELCOME: 'superset/welcome/',
+  SQLLAB: 'sqllab/',
+  WELCOME: 'ax-bi/welcome/',
 } as const;
