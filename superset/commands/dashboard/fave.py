@@ -37,7 +37,7 @@ class AddFavoriteDashboardCommand(BaseCommand):
     def run(self) -> None:
         self.validate()
         if self._dashboard:
-            return DashboardDAO.add_favorite(self._dashboard)
+            DashboardDAO.add_favorite(self._dashboard)
 
     def validate(self) -> None:
         # Raises DashboardNotFoundError or DashboardAccessDeniedError

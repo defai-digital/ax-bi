@@ -41,7 +41,7 @@ class AddFavoriteChartCommand(BaseCommand):
     def run(self) -> None:
         self.validate()
         if self._chart:
-            return ChartDAO.add_favorite(self._chart)
+            ChartDAO.add_favorite(self._chart)
 
     def validate(self) -> None:
         chart = ChartDAO.find_by_id(self._chart_id)
