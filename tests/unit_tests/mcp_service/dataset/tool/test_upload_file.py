@@ -98,6 +98,25 @@ def _csv_base64() -> str:
     return base64.b64encode(csv_content).decode()
 
 
+def test_detect_upload_file_type_rejects_bare_extension() -> None:
+    """Compound-aware type detection still requires a real filename stem."""
+    assert upload_file_module._detect_upload_file_type(".csv") is None
+    assert upload_file_module._detect_upload_file_type(".tar.gz") is None
+
+
+def test_detect_upload_file_type_accepts_compound_and_mlmodel() -> None:
+    """Type detection handles compound extensions and MLflow model files."""
+    assert upload_file_module._detect_upload_file_type("foo.mlmodel") is None
+    assert upload_file_module._detect_upload_file_type("data.csv.gz") == (
+        ".csv.gz",
+        upload_file_module.UploadFileType.CSV,
+    )
+    assert upload_file_module._detect_upload_file_type("MLmodel") == (
+        ".mlmodel",
+        upload_file_module.UploadFileType.STRUCTURED,
+    )
+
+
 @pytest.fixture
 def mcp_server():
     return mcp

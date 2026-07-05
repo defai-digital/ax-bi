@@ -156,21 +156,27 @@ const renderWelcome = (props = mockedProps) =>
     });
   });
 
+const getPanelTitles = (pattern: RegExp) =>
+  screen
+    .getAllByText(pattern)
+    .filter(element => element.classList.contains('ant-collapse-title'));
+
 afterEach(() => {
   fetchMock.clearHistory();
 });
 
 test('With sql role - renders', async () => {
   await renderWelcome();
-  expect(await screen.findByText('Dashboards')).toBeInTheDocument();
+  expect(await screen.findAllByText('Dashboards')).not.toHaveLength(0);
 });
 
 test('With sql role - renders all panels on the page on page load', async () => {
   await renderWelcome();
-  const panels = await screen.findAllByText(
-    /Dashboards|Charts|Recents|Saved queries/,
-  );
-  expect(panels).toHaveLength(4);
+  await waitFor(() => {
+    expect(
+      getPanelTitles(/Dashboards|Charts|Recents|Saved queries/),
+    ).toHaveLength(4);
+  });
 });
 
 test('With sql role - renders distinct recent activities', async () => {
@@ -201,14 +207,15 @@ test('Without sql role - renders', async () => {
   */
   // @ts-expect-error-next-line
   await renderWelcome(mockedPropsWithoutSqlRole);
-  expect(await screen.findByText('Dashboards')).toBeInTheDocument();
+  expect(await screen.findAllByText('Dashboards')).not.toHaveLength(0);
 });
 
 test('Without sql role - renders all panels on the page on page load', async () => {
   // @ts-expect-error-next-line
   await renderWelcome(mockedPropsWithoutSqlRole);
-  const panels = await screen.findAllByText(/Dashboards|Charts|Recents/);
-  expect(panels).toHaveLength(3);
+  await waitFor(() => {
+    expect(getPanelTitles(/Dashboards|Charts|Recents/)).toHaveLength(3);
+  });
 });
 
 test('Without sql role - calls api methods in parallel on page load', async () => {

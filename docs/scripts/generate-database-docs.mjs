@@ -130,6 +130,24 @@ import sys
 import json
 import ast
 import os
+import importlib.util
+sys.path.insert(0, '.')
+
+cloud_capabilities_path = os.path.join(
+    'superset', 'db_engine_specs', 'cloud_capabilities.py'
+)
+cloud_capabilities_spec = importlib.util.spec_from_file_location(
+    'axbi_cloud_capabilities',
+    cloud_capabilities_path,
+)
+if cloud_capabilities_spec is None or cloud_capabilities_spec.loader is None:
+    raise RuntimeError(f'Could not load {cloud_capabilities_path}')
+cloud_capabilities_module = importlib.util.module_from_spec(cloud_capabilities_spec)
+sys.modules[cloud_capabilities_spec.name] = cloud_capabilities_module
+cloud_capabilities_spec.loader.exec_module(cloud_capabilities_module)
+get_cloud_connector_capability_for_values = (
+    cloud_capabilities_module.get_cloud_connector_capability_for_values
+)
 
 def eval_node(node):
     """Safely evaluate an AST node as a Python literal."""
@@ -551,6 +569,14 @@ for class_name, info in class_info.items():
             ),
         }
 
+        cloud_capability = get_cloud_connector_capability_for_values(
+            engine=engine_attr,
+            engine_name=display_name,
+            categories=tuple(final_metadata.get('categories', ())),
+        )
+        if cloud_capability:
+            entry['cloud_capability'] = cloud_capability.to_dict()
+
         # Tell the JS layer which output fields were populated from the
         # BaseEngineSpec default because the source assignment was an
         # unevaluable expression; those get overridden from existing JSON.
@@ -612,6 +638,8 @@ function buildStatistics(databases) {
     withConnectionString: 0,
     withDrivers: 0,
     withAuthMethods: 0,
+    cloudConnectors: 0,
+    highValueCloudConnectors: 0,
     supportsJoins: 0,
     supportsSubqueries: 0,
     supportsDynamicSchema: 0,
@@ -631,6 +659,10 @@ function buildStatistics(databases) {
       stats.withConnectionString++;
     if (docs.drivers?.length > 0) stats.withDrivers++;
     if (docs.authentication_methods?.length > 0) stats.withAuthMethods++;
+    if (db.cloud_capability) {
+      stats.cloudConnectors++;
+      if (db.cloud_capability.recommended) stats.highValueCloudConnectors++;
+    }
     if (db.joins) stats.supportsJoins++;
     if (db.subqueries) stats.supportsSubqueries++;
     if (db.supports_dynamic_schema) stats.supportsDynamicSchema++;

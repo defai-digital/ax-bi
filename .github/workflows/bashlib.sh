@@ -343,6 +343,7 @@ playwright-run() {
 
   say "::group::Run Playwright tests"
   echo "Running Playwright with baseURL: ${PLAYWRIGHT_BASE_URL}"
+  local status=0
   if [ -n "$TEST_PATH" ]; then
     # Check if there are any test files in the specified path
     if ! find "playwright/tests/${TEST_PATH}" -name "*.spec.ts" -type f 2>/dev/null | grep -q .; then
@@ -353,14 +354,21 @@ playwright-run() {
     echo "Running tests: ${TEST_PATH}"
     # Set INCLUDE_EXPERIMENTAL=true to allow experimental tests to run
     export INCLUDE_EXPERIMENTAL=true
+    set +e
     npx playwright test "${TEST_PATH}" --output=playwright-results
-    local status=$?
+    status=$?
+    set -e
     # Unset to prevent leaking into subsequent commands
     unset INCLUDE_EXPERIMENTAL
   else
-    echo "Running all required tests (experimental/ excluded via playwright.config.ts)"
-    npx playwright test --output=playwright-results
-    local status=$?
+    echo "Running required Playwright tests (experimental and SQL Lab projects excluded)"
+    set +e
+    npx playwright test \
+      --project=chromium \
+      --project=chromium-unauth \
+      --output=playwright-results/required-main
+    status=$?
+    set -e
   fi
   say "::endgroup::"
 

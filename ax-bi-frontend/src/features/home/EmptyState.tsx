@@ -21,6 +21,7 @@ import {
   Button,
   EmptyState as EmptyStateComponent,
 } from '@superset-ui/core/components';
+import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
 import { TableTab } from 'src/views/CRUD/types';
 import { t } from '@apache-superset/core/translation';
 import { styled } from '@apache-superset/core/theme';
@@ -102,11 +103,7 @@ export default function EmptyState({ tableName, tab }: EmptyStateProps) {
     findPermission('can_upload', 'Database', state.user?.roles),
   );
   const uploadEnabled =
-    canUploadData &&
-    Boolean(
-      (window as { featureFlags?: Record<string, unknown> }).featureFlags
-        ?.ENABLE_LOCAL_FILE_UPLOAD,
-    );
+    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
   const showUploadCta =
     uploadEnabled &&
     tab !== TableTab.Favorite &&

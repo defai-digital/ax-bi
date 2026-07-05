@@ -154,9 +154,7 @@ test('makeUrl should handle URLs with anchors', async () => {
   await import('./getBootstrapData');
   const { makeUrl } = await import('./pathUtils');
 
-  expect(makeUrl('/dashboard/123#anchor')).toBe(
-    '/ax-bi/dashboard/123#anchor',
-  );
+  expect(makeUrl('/dashboard/123#anchor')).toBe('/ax-bi/dashboard/123#anchor');
 });
 
 // Representative URLs used across the absolute-URL passthrough tests below.
@@ -209,6 +207,21 @@ test('makeUrl should preserve absolute and protocol-relative URLs unchanged', as
   expect(makeUrl(PROTOCOL_RELATIVE_URL)).toBe(PROTOCOL_RELATIVE_URL);
   // Non-http absolute scheme parity with ensureAppRoot
   expect(makeUrl(FTP_URL)).toBe(FTP_URL);
+});
+
+test('normalizeLegacyRoutePrefix should replace legacy Superset path segment only', async () => {
+  const { normalizeLegacyRoutePrefix } = await loadPathUtils('/ax-bi/');
+
+  expect(normalizeLegacyRoutePrefix('/superset/dashboard/1/')).toBe(
+    '/ax-bi/dashboard/1/',
+  );
+  expect(
+    normalizeLegacyRoutePrefix('/my-company/analytics/superset/welcome/'),
+  ).toBe('/my-company/analytics/ax-bi/welcome/');
+  expect(normalizeLegacyRoutePrefix(HTTPS_URL)).toBe(HTTPS_URL);
+  expect(normalizeLegacyRoutePrefix(PROTOCOL_RELATIVE_URL)).toBe(
+    PROTOCOL_RELATIVE_URL,
+  );
 });
 
 test('ensureAppRoot should block javascript: and data: schemes (XSS prevention)', async () => {

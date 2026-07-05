@@ -117,7 +117,7 @@ const {
 } = require('../../src/utils/legendLayout');
 
 const expectedThemeProps = {
-  selector: ['all', 'inverse'],
+  selector: false,
   selected: {},
   selectorLabel: {
     fontFamily: theme.fontFamily,

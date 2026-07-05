@@ -1261,7 +1261,7 @@ async def test_list_dashboards_sanitizes_dashboard_descriptions_and_filter_text(
         assert dashboard_payload["slug"] == "quarterly-dashboard"
         assert dashboard_payload["uuid"] == "uuid-quarterly-3"
         assert dashboard_payload["url"].endswith(
-            "/superset/dashboard/quarterly-dashboard/"
+            "/ax-bi/dashboard/quarterly-dashboard/"
         )
 
         assert "uuid" in data["columns_requested"]
@@ -1462,7 +1462,7 @@ async def test_list_dashboards_shadows_ax_services_when_enabled(
     dashboard.id = 7
     dashboard.dashboard_title = "Sales Dashboard"
     dashboard.slug = "sales"
-    dashboard.url = "/superset/dashboard/7/"
+    dashboard.url = "/ax-bi/dashboard/7/"
     dashboard.published = True
     dashboard.changed_on = None
     dashboard.created_on = None
@@ -1553,7 +1553,7 @@ async def test_list_dashboards_serves_ax_services_when_enabled(
                         "id": 9,
                         "dashboardTitle": "TS Dashboard",
                         "slug": "ts-dashboard",
-                        "url": "/superset/dashboard/9/",
+                        "url": "/ax-bi/dashboard/9/",
                     }
                 ],
                 "count": 1,
@@ -1582,7 +1582,7 @@ async def test_list_dashboards_serves_ax_services_when_enabled(
             "id": 9,
             "dashboard_title": _wrapped("TS Dashboard"),
             "slug": "ts-dashboard",
-            "url": "/superset/dashboard/9/",
+            "url": "/ax-bi/dashboard/9/",
         }
     ]
     stats_logger.incr.assert_any_call(

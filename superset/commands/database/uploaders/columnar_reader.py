@@ -55,13 +55,26 @@ class ColumnarReader(BaseDataReader):
             options=dict(options),
         )
 
-    def _read_buffer_to_dataframe(self, buffer: IO[bytes]) -> pd.DataFrame:
-        kwargs: dict[str, Any] = {
-            "path": buffer,
-        }
-        if self._options.get("columns_read"):
-            kwargs["columns"] = self._options.get("columns_read")
+    def _read_buffer_to_dataframe(
+        self,
+        buffer: IO[bytes],
+        extension: str,
+    ) -> pd.DataFrame:
+        columns = self._options.get("columns_read")
         try:
+            if extension == ".orc":
+                kwargs: dict[str, Any] = {"path": buffer}
+                if columns:
+                    kwargs["columns"] = columns
+                return pd.read_orc(**kwargs)
+            if extension in {".feather", ".arrow", ".ipc"}:
+                kwargs = {"path": buffer}
+                if columns:
+                    kwargs["columns"] = columns
+                return pd.read_feather(**kwargs)
+            kwargs = {"path": buffer}
+            if columns:
+                kwargs["columns"] = columns
             return pd.read_parquet(**kwargs)
         except (
             pd.errors.ParserError,
@@ -76,7 +89,7 @@ class ColumnarReader(BaseDataReader):
             raise DatabaseUploadFailed(_("Error reading Columnar file")) from ex
 
     @staticmethod
-    def _yield_files(file: FileStorage) -> Generator[IO[bytes], None, None]:
+    def _yield_files(file: FileStorage) -> Generator[tuple[IO[bytes], str], None, None]:
         """
         Yields files from the provided file. If the file is a zip file, it yields each
         file within the zip file. If it's a single file, it yields the file itself.
@@ -84,7 +97,7 @@ class ColumnarReader(BaseDataReader):
         :param file: The file to yield files from.
         :return: A generator that yields files.
         """
-        file_suffix = Path(file.filename).suffix
+        file_suffix = Path(file.filename).suffix.lower()
         if not file_suffix:
             raise DatabaseUploadFailed(_("Unexpected no file extension found"))
         file_suffix = file_suffix[1:]  # remove the dot
@@ -100,18 +113,26 @@ class ColumnarReader(BaseDataReader):
                     except SupersetException as ex:
                         raise DatabaseUploadFailed(str(ex)) from ex
                     # check if all file types are of the same extension
-                    file_suffixes = {Path(name).suffix for name in zip_file.namelist()}
+                    filenames = [
+                        name for name in zip_file.namelist() if not name.endswith("/")
+                    ]
+                    if not filenames:
+                        raise DatabaseUploadFailed(_("ZIP file contains no files"))
+                    file_suffixes = {Path(name).suffix.lower() for name in filenames}
                     if len(file_suffixes) > 1:
                         raise DatabaseUploadFailed(
                             _("ZIP file contains multiple file types")
                         )
-                    for filename in zip_file.namelist():
+                    for filename in filenames:
                         with zip_file.open(filename) as file_in_zip:
-                            yield BytesIO(file_in_zip.read())
+                            yield (
+                                BytesIO(file_in_zip.read()),
+                                Path(filename).suffix.lower(),
+                            )
             except BadZipfile as ex:
                 raise DatabaseUploadFailed(_("Not a valid ZIP file")) from ex
         else:
-            yield file
+            yield file, f".{file_suffix}"
 
     def file_to_dataframe(self, file: FileStorage) -> pd.DataFrame:
         """
@@ -120,32 +141,44 @@ class ColumnarReader(BaseDataReader):
         :return: pandas DataFrame
         :throws DatabaseUploadFailed: if there is an error reading the file
         """
-        return pd.concat(
-            self._read_buffer_to_dataframe(buffer) for buffer in self._yield_files(file)
-        )
+        frames = [
+            self._read_buffer_to_dataframe(buffer, extension)
+            for buffer, extension in self._yield_files(file)
+        ]
+        if not frames:
+            raise DatabaseUploadFailed(_("Columnar upload contains no files"))
+        return pd.concat(frames)
 
-    def file_metadata(self, file: FileStorage) -> FileMetadata:
+    def file_metadata(self, file: FileStorage) -> FileMetadata:  # noqa: C901
         column_names: list[str] = []
         sample_frames: list[pd.DataFrame] = []
         rows_remaining = ROWS_TO_READ_METADATA
         try:
-            for file_item in self._yield_files(file):
-                parquet_file = pq.ParquetFile(file_item)
-                for column_name in parquet_file.metadata.schema.names:  # pylint: disable=no-member
-                    if column_name not in column_names:
-                        column_names.append(column_name)
-                if rows_remaining <= 0:
-                    continue
-                try:
-                    batch = next(
-                        parquet_file.iter_batches(
-                            batch_size=rows_remaining,
-                            columns=self._options.get("columns_read"),
+            for file_item, extension in self._yield_files(file):
+                if extension == ".parquet":
+                    parquet_file = pq.ParquetFile(file_item)
+                    for column_name in parquet_file.metadata.schema.names:  # pylint: disable=no-member
+                        if column_name not in column_names:
+                            column_names.append(column_name)
+                    if rows_remaining <= 0:
+                        continue
+                    try:
+                        batch = next(
+                            parquet_file.iter_batches(
+                                batch_size=rows_remaining,
+                                columns=self._options.get("columns_read"),
+                            )
                         )
+                    except StopIteration:
+                        continue
+                    frame = batch.to_pandas()
+                else:
+                    frame = self._read_buffer_to_dataframe(file_item, extension).head(
+                        rows_remaining
                     )
-                except StopIteration:
-                    continue
-                frame = batch.to_pandas()
+                    for column_name in frame.columns:
+                        if column_name not in column_names:
+                            column_names.append(str(column_name))
                 sample_frames.append(frame)
                 rows_remaining -= len(frame)
         except ArrowException as ex:

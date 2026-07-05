@@ -85,9 +85,8 @@ const RightMenu = ({
   const canUploadData = useSelector((state: RootState) =>
     findPermission('can_upload', 'Database', state.user?.roles),
   );
-  const localFileUploadEnabled = Boolean(
-    (window as { featureFlags?: Record<string, unknown> }).featureFlags
-      ?.ENABLE_LOCAL_FILE_UPLOAD,
+  const localFileUploadEnabled = isFeatureEnabled(
+    FeatureFlag.EnableLocalFileUpload,
   );
   const {
     setThemeMode,

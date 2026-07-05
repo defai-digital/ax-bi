@@ -17,7 +17,7 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Getting Started with AX-BI using Docker
+# Getting Started with AX-BI Using Docker
 
 Docker is the recommended way to deploy AX-BI for users who want a
 self-contained stack. The AX-BI stack includes Superset, the MCP service, the
@@ -28,39 +28,58 @@ beat.
 
 1. [Docker](https://www.docker.com/get-started)
 2. [Docker Compose](https://docs.docker.com/compose/install/)
+3. `openssl` for generating local secrets
 
-## AX-BI Deployment
+## Quick Start
 
-Use [`../docker-compose-axbi.yml`](../docker-compose-axbi.yml) for user-facing
-AX-BI deployments:
+Clone the repository and run these commands from the repository root:
 
-```bash
+```shell
+git clone https://github.com/defai-digital/ax-bi.git
+cd ax-bi
+```
+
+```shell
 cp docker/.env-axbi.example docker/.env-axbi
+```
 
-# Fill required secrets:
-# - SUPERSET_SECRET_KEY
-# - DATABASE_PASSWORD
-# - ADMIN_PASSWORD
-#
-# Generate secret values with:
-#   openssl rand -base64 42
+Edit `docker/.env-axbi` and fill:
 
+```env
+SUPERSET_SECRET_KEY=<generated secret>
+DATABASE_PASSWORD=<generated database password>
+ADMIN_PASSWORD=<admin login password>
+```
+
+Generate each secret value with:
+
+```shell
+openssl rand -base64 42
+```
+
+Then start AX-BI:
+
+```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
-This pulls the published `ghcr.io/defai-digital/ax-bi` and
-`ghcr.io/defai-digital/ax-bi-services` images. To build from this checkout
-instead, run:
+This pulls the public images:
 
-```bash
-docker compose \
-  --env-file docker/.env-axbi \
-  -f docker-compose-axbi.yml \
-  -f docker-compose-axbi-build.yml \
-  up -d --build
+```text
+ghcr.io/defai-digital/ax-bi:latest
+ghcr.io/defai-digital/ax-bi-services:latest
 ```
 
-Services are exposed on:
+The first startup initializes the metadata database, applies migrations, creates
+the admin user, and starts the web app, MCP service, sidecar, Redis, and Celery.
+
+Check status:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml ps
+```
+
+Services are exposed locally on:
 
 | Service | Default URL |
 |---------|-------------|
@@ -68,10 +87,66 @@ Services are exposed on:
 | MCP service | `http://localhost:5008` |
 | AX services sidecar | `http://localhost:5010` |
 
-For a local single-user trial, set `MCP_DEV_USERNAME=admin` in
-`docker/.env-axbi`. For production, leave `MCP_DEV_USERNAME` empty and configure
-JWT settings for the MCP service (`MCP_AUTH_ENABLED`, `MCP_JWT_ISSUER`,
-`MCP_JWT_AUDIENCE`, `MCP_JWKS_URI`, and optional `MCP_REQUIRED_SCOPES`).
+Log in to the web app with:
+
+```text
+username: admin
+password: ADMIN_PASSWORD from docker/.env-axbi
+```
+
+## Common Operations
+
+View logs:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml logs -f
+```
+
+Stop without deleting data:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml stop
+```
+
+Pull newer images and restart:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml pull
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
+```
+
+Remove containers and volumes:
+
+```shell
+docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml down -v
+```
+
+## Build from Source
+
+The quick start pulls published images. To build from this checkout instead,
+run:
+
+```shell
+docker compose \
+  --env-file docker/.env-axbi \
+  -f docker-compose-axbi.yml \
+  -f docker-compose-axbi-build.yml \
+  up -d --build
+```
+
+## Shared or Public Deployments
+
+For a local single-user trial, you may set `MCP_DEV_USERNAME=admin` in
+`docker/.env-axbi`. For production or any shared deployment:
+
+- Leave `MCP_DEV_USERNAME` empty.
+- Configure JWT settings for the MCP service: `MCP_AUTH_ENABLED`,
+  `MCP_JWT_ISSUER`, `MCP_JWT_AUDIENCE`, `MCP_JWKS_URI`, and optional
+  `MCP_REQUIRED_SCOPES`.
+- Put the AX-BI web app behind HTTPS.
+- Keep Postgres and Redis private.
+- Pin image tags instead of using `latest`.
+- Back up the Postgres metadata database.
 
 ### Configuration
 

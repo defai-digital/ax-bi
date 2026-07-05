@@ -163,9 +163,7 @@ def prune_log() -> None:
 
 
 @celery_app.task(name="prune_query", bind=True)
-def prune_query(
-    self: Task, retention_period_days: int | None = None, **kwargs: Any
-) -> None:
+def prune_query(self: Task, retention_period_days: int = 180, **kwargs: Any) -> None:
     stats_logger: BaseStatsLogger = current_app.config["STATS_LOGGER"]
     stats_logger.incr("prune_query")
 
@@ -178,7 +176,7 @@ def prune_query(
 @celery_app.task(name="prune_logs", bind=True)
 def prune_logs(
     self: Task,
-    retention_period_days: int | None = None,
+    retention_period_days: int = 180,
     max_rows_per_run: int | None = None,
     **kwargs: Any,
 ) -> None:
@@ -194,7 +192,7 @@ def prune_logs(
 @celery_app.task(name="prune_tasks", bind=True)
 def prune_tasks(
     self: Task,
-    retention_period_days: int | None = None,
+    retention_period_days: int = 90,
     max_rows_per_run: int | None = None,
     **kwargs: Any,
 ) -> None:

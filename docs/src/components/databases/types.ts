@@ -125,6 +125,28 @@ export interface DatabaseDocumentation {
   custom_errors?: CustomError[];  // Database-specific error messages and troubleshooting info
 }
 
+export interface CloudConnectorCapability {
+  engine: string;
+  engine_name: string;
+  product_type:
+    | 'cloud_warehouse'
+    | 'lakehouse'
+    | 'data_lake_query_engine'
+    | 'query_engine'
+    | 'nosql_or_search'
+    | 'embedded_or_edge_sql'
+    | 'observability_analytics';
+  support_level:
+    | 'certified'
+    | 'packaged'
+    | 'compatible'
+    | 'integration_candidate';
+  cloud_providers: string[];
+  data_products: string[];
+  recommended: boolean;
+  notes?: string;
+}
+
 export interface TimeGrains {
   SECOND?: boolean;
   MINUTE?: boolean;
@@ -156,6 +178,7 @@ export interface DatabaseInfo {
   default_driver?: string;
   module?: string;
   documentation: DatabaseDocumentation;
+  cloud_capability?: CloudConnectorCapability;
 
   // Diagnostics from lib.py diagnose() function
   time_grains: TimeGrains;
@@ -207,6 +230,8 @@ export interface Statistics {
   withConnectionString: number;
   withDrivers: number;
   withAuthMethods: number;
+  cloudConnectors?: number;
+  highValueCloudConnectors?: number;
   supportsJoins: number;
   supportsSubqueries: number;
   supportsDynamicSchema: number;

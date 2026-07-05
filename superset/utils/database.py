@@ -58,6 +58,9 @@ def get_or_create_db(
     if database and database.sqlalchemy_uri_decrypted != sqlalchemy_uri:
         database.set_sqlalchemy_uri(sqlalchemy_uri)
 
+    if database is None:
+        raise RuntimeError(f"Database reference not found: {database_name}")
+
     db.session.flush()
     return database
 

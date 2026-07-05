@@ -30,7 +30,7 @@ import { URL_PARAMS } from 'src/constants';
 const { Dragger } = Upload;
 
 const ACCEPTED_EXTENSIONS =
-  '.csv,.tsv,.txt,.xls,.xlsx,.parquet,.json,.jsonl,.ndjson,.xml,.sql,.dump,.sqlite,.sqlite3,.db';
+  '.csv,.tsv,.txt,.csv.gz,.tsv.gz,.txt.gz,.xls,.xlsx,.ods,.parquet,.zip,.orc,.feather,.arrow,.ipc,.json,.jsonl,.ndjson,.jsonl.gz,.ndjson.gz,.xml,.sql,.dump,.sqlite,.sqlite3,.db,.avro,.geojson,.gpkg,.shp.zip,.fwf,.dat,.asc,.dta,.sav,.sas7bdat,.xpt,.html,.htm,.croissant.json,.npy,.npz,.lance,.lance.zip,.faiss,.index,.hnsw,.ann,.tar,.tar.gz,.tgz,.mlflow.zip,.mlruns.zip,.safetensors,.onnx,.gguf,.yaml,.yml,.yolo.zip';
 
 const PageWrapper = styled.div`
   max-width: 1080px;
@@ -388,7 +388,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
           <Title>{t('Upload data and build charts faster')}</Title>
           <Subtitle>
             {t(
-              'Supported formats: CSV, TSV, TXT, XLS, XLSX, Parquet, JSON, JSONL, XML, SQL dumps, and SQLite. Multiple files supported.',
+              'Supported formats include CSV/TSV, compressed exports, Excel/ODS, Parquet/ORC/Arrow, JSON/XML, SQL text dumps, SQLite, fixed-width, HTML/statistical files, geospatial files, embeddings, and AI artifact metadata. Multiple files supported.',
             )}
           </Subtitle>
           <SupportNote>
@@ -415,7 +415,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
             </p>
             <HelpText>
               {t(
-                'CSV, TSV, Excel, text and Parquet files are supported. You can upload multiple files at once.',
+                'Tabular files become datasets. Model, vector-index, archive, and AI manifest files are imported as metadata datasets.',
               )}
             </HelpText>
           </Dragger>
@@ -427,7 +427,9 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
           <StepBadge>1</StepBadge>
           <StepTitle>{t('Upload your data')}</StepTitle>
           <StepText>
-            {t('Use a local CSV, Excel, text or Parquet file as a dataset.')}
+            {t(
+              'Use local data, analytics, geospatial, or AI artifact files as datasets.',
+            )}
           </StepText>
         </StepCard>
         <StepCard>

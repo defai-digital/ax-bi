@@ -30,6 +30,7 @@ if __name__ == "__main__":
 from superset.constants import TimeGrain
 from superset.db_engine_specs import load_engine_specs
 from superset.db_engine_specs.base import BaseEngineSpec
+from superset.db_engine_specs.cloud_capabilities import get_cloud_connector_capability
 
 LIMIT_METHODS = {
     "FORCE_LIMIT": (
@@ -781,6 +782,8 @@ def generate_yaml_docs(output_dir: str | None = None) -> dict[str, dict[str, Any
         doc_data["supports_dynamic_schema"] = spec.supports_dynamic_schema
         doc_data["supports_catalog"] = spec.supports_catalog
         doc_data["supports_dynamic_catalog"] = spec.supports_dynamic_catalog
+        if cloud_capability := get_cloud_connector_capability(spec):
+            doc_data["cloud_capability"] = cloud_capability.to_dict()
 
         all_docs[name] = doc_data
 

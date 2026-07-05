@@ -26,6 +26,9 @@ jest.mock('src/utils/export', () => ({
 // Mock pathUtils to control app root prefix
 jest.mock('src/utils/pathUtils', () => ({
   ensureAppRoot: jest.fn((path: string) => path),
+  normalizeLegacyRoutePrefix: jest.fn((path: string) =>
+    path.replace(/(^|\/)superset(?=\/|$)/, '$1ax-bi'),
+  ),
 }));
 
 // Mock SupersetClient

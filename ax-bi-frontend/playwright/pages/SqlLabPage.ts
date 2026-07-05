@@ -39,7 +39,8 @@ export class SqlLabPage {
   private readonly editorTabs: EditableTabs;
 
   private static readonly SELECTORS = {
-    SQL_EDITOR_TABS: '[data-test="sql-editor-tabs"]',
+    SQL_EDITOR_TABS:
+      '[data-test="sql-editor-tabs"], #a11y-query-editor-tabs, .SqlEditorTabs',
     ADD_TAB_ICON: '[data-test="add-tab-icon"]',
     RUN_QUERY_BUTTON: '[data-test="run-query-action"]',
     SOUTH_PANE: '[data-test="south-pane"]',

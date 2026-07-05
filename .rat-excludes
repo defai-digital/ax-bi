@@ -101,6 +101,7 @@ GPT.md
 .npmignore
 .env-axbi.example
 BOUNDARY_REPORT.md
+values-axbi.yaml
 # superset-desktop is a separate Tauri sub-app
 Cargo.toml
 superset-desktop/*

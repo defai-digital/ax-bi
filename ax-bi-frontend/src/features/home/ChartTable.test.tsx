@@ -111,7 +111,9 @@ beforeEach(() => {
 test('renders with EmptyState if no data present', async () => {
   await renderChartTable(mockedProps);
   expect(screen.getAllByRole('tab')).toHaveLength(3);
-  expect(screen.getByText(/nothing here yet/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/upload data or create a chart to start visual analysis/i),
+  ).toBeInTheDocument();
 });
 
 test('fetches chart favorites and renders chart cards', async () => {

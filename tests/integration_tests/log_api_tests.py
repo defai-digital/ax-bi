@@ -198,7 +198,7 @@ class TestLogApi(SupersetTestCase):
                 {
                     "action": "log",
                     "item_type": "dashboard",
-                    "item_url": "/superset/dashboard/dash_slug/",
+                    "item_url": "/ax-bi/dashboard/dash_slug/",
                     "item_title": "dash_title",
                     "time": ANY,
                     "time_delta_humanized": ANY,
@@ -317,7 +317,7 @@ class TestLogApi(SupersetTestCase):
                 {
                     "action": "log",
                     "item_type": "dashboard",
-                    "item_url": "/superset/dashboard/dash3_slug/",
+                    "item_url": "/ax-bi/dashboard/dash3_slug/",
                     "item_title": "dash3_title",
                     "time": ANY,
                     "time_delta_humanized": ANY,
@@ -325,7 +325,7 @@ class TestLogApi(SupersetTestCase):
                 {
                     "action": "log",
                     "item_type": "dashboard",
-                    "item_url": "/superset/dashboard/dash2_slug/",
+                    "item_url": "/ax-bi/dashboard/dash2_slug/",
                     "item_title": "dash2_title",
                     "time": ANY,
                     "time_delta_humanized": ANY,
@@ -352,7 +352,7 @@ class TestLogApi(SupersetTestCase):
                 {
                     "action": "log",
                     "item_type": "dashboard",
-                    "item_url": "/superset/dashboard/dash_slug/",
+                    "item_url": "/ax-bi/dashboard/dash_slug/",
                     "item_title": "dash_title",
                     "time": ANY,
                     "time_delta_humanized": ANY,

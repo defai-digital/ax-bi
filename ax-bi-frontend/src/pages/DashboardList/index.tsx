@@ -54,18 +54,17 @@ import {
   ListView,
   ListViewFilterOperator as FilterOperator,
   type ListViewProps,
+  type ListViewFetchDataConfig,
   type ListViewFilter,
   type ListViewFilters,
 } from 'src/components';
 import handleResourceExport from 'src/utils/export';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
-import Owner from 'src/types/Owner';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { Icons } from '@superset-ui/core/components/Icons';
 import PropertiesModal from 'src/dashboard/components/PropertiesModal';
 
-import Dashboard from 'src/dashboard/containers/Dashboard';
 import {
   Dashboard as CRUDDashboard,
   QueryObjectColumns,
@@ -104,19 +103,16 @@ interface DashboardListProps {
   };
 }
 
-export interface Dashboard {
+type DashboardListItem = CRUDDashboard & {
   changed_by_name: string;
   changed_on_delta_humanized: string;
   changed_by: string;
-  changed_on?: string;
-  dashboard_title: string;
-  id: number;
-  published: boolean;
-  url: string;
-  owners: Owner[];
   tags: TagType[];
   created_by: object;
-}
+  slug?: string;
+  description?: string;
+  json_metadata?: string;
+};
 
 const Actions = styled.div`
   color: ${({ theme }) => theme.colorIcon};
@@ -184,7 +180,7 @@ function DashboardList(props: DashboardListProps) {
     fetchData,
     toggleBulkSelect,
     refreshData,
-  } = useListViewResource<Dashboard>(
+  } = useListViewResource<DashboardListItem>(
     'dashboard',
     t('dashboard'),
     addDangerToast,
@@ -201,7 +197,7 @@ function DashboardList(props: DashboardListProps) {
     addDangerToast,
   );
 
-  const [dashboardToEdit, setDashboardToEdit] = useState<Dashboard | null>(
+  const [dashboardToEdit, setDashboardToEdit] = useState<CRUDDashboard | null>(
     null,
   );
   const [dashboardToDelete, setDashboardToDelete] =
@@ -245,32 +241,40 @@ function DashboardList(props: DashboardListProps) {
 
   const initialSort = [{ id: 'changed_on_delta_humanized', desc: true }];
 
-  const openDashboardEditModal = useCallback((dashboard: Dashboard) => {
+  const refreshDashboardData = useCallback(
+    (config?: ListViewFetchDataConfig | null) =>
+      refreshData(config ?? undefined),
+    [refreshData],
+  );
+
+  const openDashboardEditModal = useCallback((dashboard: CRUDDashboard) => {
     setDashboardToEdit(dashboard);
   }, []);
 
-  function handleDashboardEdit(edits: Dashboard) {
+  function handleDashboardEdit(edits: CRUDDashboard) {
     return SupersetClient.get({
       endpoint: `/api/v1/dashboard/${edits.id}`,
     }).then(
       ({ json = {} }) => {
+        const { result } = json as { result?: Partial<DashboardListItem> };
         setDashboards(
           dashboards.map(dashboard => {
-            if (dashboard.id === json?.result?.id) {
+            if (dashboard.id === result?.id) {
               const {
-                changed_by_name: changedByName,
-                changed_by: changedBy,
-                dashboard_title: dashboardTitle = '',
+                changed_by_name: changedByName = dashboard.changed_by_name,
+                changed_by: changedBy = dashboard.changed_by,
+                dashboard_title: dashboardTitle = dashboard.dashboard_title,
                 slug = '',
                 description = '',
                 json_metadata: jsonMetadata = '',
-                changed_on_delta_humanized: changedOnDeltaHumanized,
-                url = '',
+                changed_on_delta_humanized:
+                  changedOnDeltaHumanized = dashboard.changed_on_delta_humanized,
+                url = dashboard.url,
                 certified_by: certifiedBy = '',
                 certification_details: certificationDetails = '',
-                owners,
-                tags,
-              } = json.result;
+                owners = dashboard.owners,
+                tags = dashboard.tags,
+              } = result;
               return {
                 ...dashboard,
                 changed_by_name: changedByName,
@@ -300,7 +304,7 @@ function DashboardList(props: DashboardListProps) {
   }
 
   const handleBulkDashboardExport = useCallback(
-    async (dashboardsToExport: Dashboard[]) => {
+    async (dashboardsToExport: CRUDDashboard[]) => {
       const ids = dashboardsToExport.map(({ id }) => id);
       setPreparingExport(true);
       try {
@@ -317,7 +321,7 @@ function DashboardList(props: DashboardListProps) {
     [addDangerToast],
   );
 
-  function handleBulkDashboardDelete(dashboardsToDelete: Dashboard[]) {
+  function handleBulkDashboardDelete(dashboardsToDelete: CRUDDashboard[]) {
     return SupersetClient.delete({
       endpoint: `/api/v1/dashboard/?q=${rison.encode(
         dashboardsToDelete.map(({ id }) => id),
@@ -325,7 +329,7 @@ function DashboardList(props: DashboardListProps) {
     }).then(
       ({ json = {} }) => {
         refreshData();
-        addSuccessToast(json.message);
+        addSuccessToast((json as { message: string }).message);
       },
       createErrorHandler(errMsg =>
         addDangerToast(
@@ -458,7 +462,7 @@ function DashboardList(props: DashboardListProps) {
           const handleDelete = () =>
             handleDashboardDelete(
               original,
-              refreshData,
+              refreshDashboardData,
               addSuccessToast,
               addDangerToast,
             );
@@ -512,7 +516,7 @@ function DashboardList(props: DashboardListProps) {
                   }
                   onConfirm={handleDelete}
                 >
-                  {confirmDelete => (
+                  {(confirmDelete: () => void) => (
                     <Tooltip
                       id="delete-action-tooltip"
                       title={t('Delete')}
@@ -698,7 +702,7 @@ function DashboardList(props: DashboardListProps) {
   ];
 
   const renderCard = useCallback(
-    (dashboard: Dashboard) => (
+    (dashboard: DashboardListItem) => (
       <DashboardCard
         dashboard={dashboard}
         hasPerm={hasPerm}
@@ -778,7 +782,7 @@ function DashboardList(props: DashboardListProps) {
         )}
         onConfirm={handleBulkDashboardDelete}
       >
-        {confirmDelete => {
+        {(confirmDelete: () => void) => {
           const enableBulkTag = isFeatureEnabled(FeatureFlag.TaggingSystem);
           const bulkActions: ListViewProps['bulkActions'] = [];
           if (canDelete) {
@@ -818,7 +822,7 @@ function DashboardList(props: DashboardListProps) {
                   onConfirm={() => {
                     handleDashboardDelete(
                       dashboardToDelete,
-                      refreshData,
+                      refreshDashboardData,
                       addSuccessToast,
                       addDangerToast,
                       undefined,
@@ -831,7 +835,7 @@ function DashboardList(props: DashboardListProps) {
                   title={t('Please confirm')}
                 />
               )}
-              <ListView<Dashboard>
+              <ListView<DashboardListItem>
                 bulkActions={bulkActions}
                 bulkSelectEnabled={bulkSelectEnabled}
                 cardSortSelectOptions={sortTypes}
@@ -854,7 +858,11 @@ function DashboardList(props: DashboardListProps) {
                     : isFeatureEnabled(FeatureFlag.Thumbnails)
                 }
                 renderCard={renderCard}
-                defaultViewMode="card"
+                defaultViewMode={
+                  isFeatureEnabled(FeatureFlag.ListviewsDefaultCardView)
+                    ? 'card'
+                    : 'table'
+                }
                 enableBulkTag={enableBulkTag}
                 bulkTagResourceName="dashboard"
               />

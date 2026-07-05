@@ -52,7 +52,7 @@ def test_dashboard_link_renders_plain_slug() -> None:
 
     link = str(dash.dashboard_link())
 
-    assert "/superset/dashboard/sales/" in link
+    assert "/ax-bi/dashboard/sales/" in link
     assert "Sales" in link
 
 

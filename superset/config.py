@@ -1454,19 +1454,55 @@ HTML_SANITIZATION = True
 HTML_SANITIZATION_SCHEMA_EXTENSIONS: dict[str, Any] = {}
 
 # Allowed format types for upload on Database view
-EXCEL_EXTENSIONS = {"xlsx", "xls"}
-CSV_EXTENSIONS = {"csv", "tsv", "txt"}
-COLUMNAR_EXTENSIONS = {"parquet", "zip"}
+EXCEL_EXTENSIONS = {"xlsx", "xls", "ods"}
+CSV_EXTENSIONS = {"csv", "tsv", "txt", "csv.gz", "tsv.gz", "txt.gz"}
+COLUMNAR_EXTENSIONS = {"parquet", "zip", "orc", "feather", "arrow", "ipc"}
 STRUCTURED_EXTENSIONS = {
+    "ann",
+    "asc",
+    "avro",
+    "croissant.json",
+    "dat",
+    "dta",
+    "faiss",
+    "fwf",
+    "geojson",
+    "gguf",
+    "gpkg",
+    "hnsw",
+    "htm",
+    "html",
+    "index",
     "json",
     "jsonl",
+    "jsonl.gz",
+    "lance",
+    "lance.zip",
+    "mlflow.zip",
+    "mlmodel",
+    "mlruns.zip",
     "ndjson",
+    "ndjson.gz",
+    "npy",
+    "npz",
+    "onnx",
+    "sas7bdat",
+    "sav",
+    "safetensors",
+    "shp.zip",
     "xml",
+    "tar",
+    "tar.gz",
+    "tgz",
     "sql",
     "dump",
     "sqlite",
     "sqlite3",
+    "xpt",
+    "yaml",
+    "yml",
     "db",
+    "yolo.zip",
 }
 ALLOWED_EXTENSIONS = {
     *EXCEL_EXTENSIONS,

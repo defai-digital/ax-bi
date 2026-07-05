@@ -3345,6 +3345,10 @@ def test_sqlstatement_format_preserves_multi_arg_distinct(engine: str) -> None:
             {Table(table="bar", schema="foo")},
         ),
         (
+            "latest_partition()",
+            set(),
+        ),
+        (
             "latest_partition('foo.%s'|format(str('bar')))",
             set(),
         ),
