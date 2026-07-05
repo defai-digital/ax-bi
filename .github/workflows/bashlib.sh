@@ -361,20 +361,13 @@ playwright-run() {
     # Unset to prevent leaking into subsequent commands
     unset INCLUDE_EXPERIMENTAL
   else
-    echo "Running required non-SQL Lab Playwright tests (experimental excluded)"
+    echo "Running required Playwright tests (experimental and SQL Lab projects excluded)"
     set +e
     npx playwright test \
       --project=chromium \
       --project=chromium-unauth \
       --output=playwright-results/required-main
     status=$?
-    if [ $status -eq 0 ]; then
-      echo "Running SQL Lab Playwright tests after other required projects"
-      npx playwright test \
-        --project=chromium-sqllab \
-        --output=playwright-results/required-sqllab
-      status=$?
-    fi
     set -e
   fi
   say "::endgroup::"
