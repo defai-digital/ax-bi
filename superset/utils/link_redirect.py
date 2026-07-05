@@ -141,7 +141,7 @@ def is_safe_redirect_url(url: str) -> bool:
     stripped = _URL_STRIPPED_CONTROL_CHARS.sub("", url.strip())
 
     # Block protocol-relative URLs
-    if stripped.startswith("//") or stripped.startswith("\\\\"):
+    if stripped.startswith(("//", "\\\\")):
         return False
 
     parsed = urlparse(stripped)
