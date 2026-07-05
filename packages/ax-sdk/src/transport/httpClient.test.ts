@@ -26,9 +26,8 @@ import {
   AxBIValidationError,
 } from '../shared/errors.js';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockFetch = jest.fn<(...args: any[]) => any>();
-global.fetch = mockFetch as typeof fetch;
+const mockFetch = jest.fn<typeof fetch>();
+global.fetch = mockFetch;
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
