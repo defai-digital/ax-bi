@@ -378,27 +378,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildAnnotationLayerListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyAnnotationLayerListResponse(request, [
-          `annotation layer list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const annotationLayers = extractSupersetResults(payload)
-        .map(toAnnotationLayerListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, annotationLayers.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildAnnotationLayerListUrl(request),
+      resourceLabel: 'annotation layer',
+      emptyResponse: emptyAnnotationLayerListResponse,
+      toItem: toAnnotationLayerListItem,
+      buildResponse: (annotationLayers, totalCount) => ({
         contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
         annotationLayers,
         ...listResponseMetadata(
@@ -409,14 +396,8 @@ export class SupersetClient
           annotationLayerColumnsLoaded(annotationLayers),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyAnnotationLayerListResponse(request, [
-        `annotation layer list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listAnnotations(
@@ -440,27 +421,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildAnnotationListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyAnnotationListResponse(request, [
-          `annotation list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const annotations = extractSupersetResults(payload)
-        .map(item => toAnnotationListItem(item, request.layerId))
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, annotations.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildAnnotationListUrl(request),
+      resourceLabel: 'annotation',
+      emptyResponse: emptyAnnotationListResponse,
+      toItem: item => toAnnotationListItem(item, request.layerId),
+      buildResponse: (annotations, totalCount) => ({
         contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
         annotations,
         layerId: request.layerId,
@@ -472,14 +440,8 @@ export class SupersetClient
           annotationColumnsLoaded(annotations),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyAnnotationListResponse(request, [
-        `annotation list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async searchAssets(
