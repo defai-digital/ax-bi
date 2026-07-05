@@ -825,27 +825,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildQueryListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyQueryListResponse(request, [
-          `query list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const queries = extractSupersetResults(payload)
-        .map(toQueryListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, queries.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildQueryListUrl(request),
+      resourceLabel: 'query',
+      emptyResponse: emptyQueryListResponse,
+      toItem: toQueryListItem,
+      buildResponse: (queries, totalCount) => ({
         contractVersion: QUERY_LIST_CONTRACT_VERSION,
         queries,
         ...listResponseMetadata(
@@ -856,14 +843,8 @@ export class SupersetClient
           queryColumnsLoaded(queries),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyQueryListResponse(request, [
-        `query list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listSavedQueries(
@@ -880,27 +861,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildSavedQueryListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptySavedQueryListResponse(request, [
-          `saved query list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const savedQueries = extractSupersetResults(payload)
-        .map(toSavedQueryListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, savedQueries.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildSavedQueryListUrl(request),
+      resourceLabel: 'saved query',
+      emptyResponse: emptySavedQueryListResponse,
+      toItem: toSavedQueryListItem,
+      buildResponse: (savedQueries, totalCount) => ({
         contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
         savedQueries,
         ...listResponseMetadata(
@@ -911,14 +879,8 @@ export class SupersetClient
           savedQueryColumnsLoaded(savedQueries),
           [],
         ),
-      };
-    } catch (error) {
-      return emptySavedQueryListResponse(request, [
-        `saved query list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listReports(
@@ -935,27 +897,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildReportListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyReportListResponse(request, [
-          `report list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const reports = extractSupersetResults(payload)
-        .map(toReportListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, reports.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildReportListUrl(request),
+      resourceLabel: 'report',
+      emptyResponse: emptyReportListResponse,
+      toItem: toReportListItem,
+      buildResponse: (reports, totalCount) => ({
         contractVersion: REPORT_LIST_CONTRACT_VERSION,
         reports,
         ...listResponseMetadata(
@@ -966,14 +915,8 @@ export class SupersetClient
           reportColumnsLoaded(reports),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyReportListResponse(request, [
-        `report list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listRoles(
@@ -990,27 +933,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildRoleListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyRoleListResponse(request, [
-          `role list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const roles = extractSupersetResults(payload)
-        .map(toRoleListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, roles.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildRoleListUrl(request),
+      resourceLabel: 'role',
+      emptyResponse: emptyRoleListResponse,
+      toItem: toRoleListItem,
+      buildResponse: (roles, totalCount) => ({
         contractVersion: ROLE_LIST_CONTRACT_VERSION,
         roles,
         ...listResponseMetadata(
@@ -1021,14 +951,8 @@ export class SupersetClient
           roleColumnsLoaded(roles),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyRoleListResponse(request, [
-        `role list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listRlsFilters(
@@ -1045,27 +969,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildRlsListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyRlsListResponse(request, [
-          `RLS filter list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const rlsFilters = extractSupersetResults(payload)
-        .map(toRlsListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, rlsFilters.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildRlsListUrl(request),
+      resourceLabel: 'RLS filter',
+      emptyResponse: emptyRlsListResponse,
+      toItem: toRlsListItem,
+      buildResponse: (rlsFilters, totalCount) => ({
         contractVersion: RLS_LIST_CONTRACT_VERSION,
         rlsFilters,
         ...listResponseMetadata(
@@ -1076,14 +987,8 @@ export class SupersetClient
           rlsColumnsLoaded(rlsFilters),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyRlsListResponse(request, [
-        `RLS filter list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listTags(
@@ -1100,27 +1005,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildTagListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyTagListResponse(request, [
-          `tag list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const tags = extractSupersetResults(payload)
-        .map(toTagListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, tags.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildTagListUrl(request),
+      resourceLabel: 'tag',
+      emptyResponse: emptyTagListResponse,
+      toItem: toTagListItem,
+      buildResponse: (tags, totalCount) => ({
         contractVersion: TAG_LIST_CONTRACT_VERSION,
         tags,
         ...listResponseMetadata(
@@ -1131,14 +1023,8 @@ export class SupersetClient
           tagColumnsLoaded(tags),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyTagListResponse(request, [
-        `tag list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listTasks(
@@ -1155,27 +1041,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildTaskListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyTaskListResponse(request, [
-          `task list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const tasks = extractSupersetResults(payload)
-        .map(toTaskListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, tasks.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildTaskListUrl(request),
+      resourceLabel: 'task',
+      emptyResponse: emptyTaskListResponse,
+      toItem: toTaskListItem,
+      buildResponse: (tasks, totalCount) => ({
         contractVersion: TASK_LIST_CONTRACT_VERSION,
         tasks,
         ...listResponseMetadata(
@@ -1186,14 +1059,8 @@ export class SupersetClient
           taskColumnsLoaded(tasks),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyTaskListResponse(request, [
-        `task list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   private async searchAssetType(
