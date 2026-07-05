@@ -57,12 +57,15 @@ def populate_owner_list(
     owners = []
     if not owner_ids and default_to_user:
         return [g.user]
-    if not (security_manager.is_admin() or get_user_id() in owner_ids):
+    should_add_current_user = (
+        not (security_manager.is_admin() or get_user_id() in owner_ids)
+        and not current_app.config.get("EXTRA_OWNERS_RESOLVER")
+    )
+    if should_add_current_user:
         # Make sure non-admins can't remove themselves as owner by mistake.
-        # Skip auto-add when an EXTRA_OWNERS_RESOLVER is configured — the
+        # Skip auto-add when an EXTRA_OWNERS_RESOLVER is configured because the
         # resolver handles access independently of the owners list.
-        if not current_app.config.get("EXTRA_OWNERS_RESOLVER"):
-            owners.append(g.user)
+        owners.append(g.user)
     for owner_id in owner_ids:
         owner = security_manager.get_user_by_id(owner_id)
         if not owner:
