@@ -159,11 +159,7 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
         elif "catalog" not in self._properties:
             catalog = self._model.catalog
 
-        schema = (
-            self._properties["schema"]
-            if "schema" in self._properties
-            else self._model.schema
-        )
+        schema = self._properties.get("schema", self._model.schema)
 
         table = Table(
             self._properties.get("table_name", self._model.table_name),
