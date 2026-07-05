@@ -217,6 +217,13 @@ cp docker/.env-axbi.example docker/.env-axbi
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
+This quickstart is for a local trial. The sample environment pins published
+image tags and leaves MCP authentication unconfigured; set
+`MCP_DEV_USERNAME=admin` only for a local single-user trial. For any shared or
+network-exposed deployment, configure JWT authentication with
+`MCP_AUTH_ENABLED=true`, pin the image tags you intend to run, and follow the
+MCP production guide before exposing port 5008.
+
 Default local endpoints:
 
 | Service | URL |
@@ -282,7 +289,7 @@ Want to add support for your datastore or data engine? Read about the [technical
 
 AX-BI runs anywhere the underlying Superset platform runs.
 
-- **Docker deployment** — the recommended path for AX-BI users:
+- **Docker deployment** — the recommended path for local AX-BI trials:
   ```bash
   cp docker/.env-axbi.example docker/.env-axbi
   # Fill SUPERSET_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
@@ -291,7 +298,9 @@ AX-BI runs anywhere the underlying Superset platform runs.
   ```
   To build images from this checkout instead of pulling published images, add
   `-f docker-compose-axbi-build.yml --build`.
-- **Production deployments** — use the Docker stack above with managed Postgres/Redis or see the [Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) and the architecture guidance in the [Superset admin docs](https://superset.apache.org/admin-docs/installation/architecture), which apply to AX-BI.
+- **Production deployments** — use managed Postgres/Redis, pinned image tags,
+  JWT-backed MCP authentication, and only the externally exposed services your
+  deployment needs. For Kubernetes, use the [AX-BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) with `helm/superset/values-axbi.yaml` and replace all placeholder secrets.
 - **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md).
 
 ## Development

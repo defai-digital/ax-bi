@@ -48,6 +48,12 @@ PATTERNS = {
         r"^ax-services/",
         r"^scripts/change_detector\.py",
     ],
+    "ax-sdk": [
+        r"^\.github/workflows/ax-sdk\.yml",
+        r"^\.github/actions/change-detector/",
+        r"^packages/ax-sdk/",
+        r"^scripts/change_detector\.py",
+    ],
     "superset-rust": [
         r"^\.github/workflows/superset-rust\.yml",
         r"^\.github/actions/change-detector/",
