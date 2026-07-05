@@ -633,27 +633,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildDashboardListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyDashboardListResponse(request, [
-          `dashboard list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const dashboards = extractSupersetResults(payload)
-        .map(toDashboardListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, dashboards.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildDashboardListUrl(request),
+      resourceLabel: 'dashboard',
+      emptyResponse: emptyDashboardListResponse,
+      toItem: toDashboardListItem,
+      buildResponse: (dashboards, totalCount) => ({
         contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
         dashboards,
         ...listResponseMetadata(
@@ -664,14 +651,8 @@ export class SupersetClient
           dashboardColumnsLoaded(dashboards),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyDashboardListResponse(request, [
-        `dashboard list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listCharts(
@@ -689,27 +670,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildChartListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyChartListResponse(request, [
-          `chart list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const charts = extractSupersetResults(payload)
-        .map(toChartListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, charts.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildChartListUrl(request),
+      resourceLabel: 'chart',
+      emptyResponse: emptyChartListResponse,
+      toItem: toChartListItem,
+      buildResponse: (charts, totalCount) => ({
         contractVersion: CHART_LIST_CONTRACT_VERSION,
         charts,
         ...listResponseMetadata(
@@ -720,14 +688,8 @@ export class SupersetClient
           chartColumnsLoaded(charts),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyChartListResponse(request, [
-        `chart list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listDatasets(
@@ -745,27 +707,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildDatasetListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyDatasetListResponse(request, [
-          `dataset list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const datasets = extractSupersetResults(payload)
-        .map(toDatasetListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, datasets.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildDatasetListUrl(request),
+      resourceLabel: 'dataset',
+      emptyResponse: emptyDatasetListResponse,
+      toItem: toDatasetListItem,
+      buildResponse: (datasets, totalCount) => ({
         contractVersion: DATASET_LIST_CONTRACT_VERSION,
         datasets,
         ...listResponseMetadata(
@@ -776,14 +725,8 @@ export class SupersetClient
           datasetColumnsLoaded(datasets),
           [],
         ),
-      };
-    } catch (error) {
-      return emptyDatasetListResponse(request, [
-        `dataset list failed: ${
-          externalErrorMessage(error)
-        }`,
-      ]);
-    }
+      }),
+    });
   }
 
   async listDatabases(
@@ -801,27 +744,14 @@ export class SupersetClient
       return invalidRequestResponse;
     }
 
-    const url = this.buildDatabaseListUrl(request);
-
-    try {
-      const response = await fetch(url, {
-        headers: this.buildHeaders(correlationId),
-        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
-      });
-
-      if (!response.ok) {
-        return emptyDatabaseListResponse(request, [
-          `database list returned status ${response.status} from Superset`,
-        ]);
-      }
-
-      const payload = (await response.json()) as unknown;
-      const databases = extractSupersetResults(payload)
-        .map(toDatabaseListItem)
-        .filter(isDefined);
-      const totalCount = extractSupersetCount(payload, databases.length);
-
-      return {
+    return this.fetchListResource({
+      request,
+      correlationId,
+      url: this.buildDatabaseListUrl(request),
+      resourceLabel: 'database',
+      emptyResponse: emptyDatabaseListResponse,
+      toItem: toDatabaseListItem,
+      buildResponse: (databases, totalCount) => ({
         contractVersion: DATABASE_LIST_CONTRACT_VERSION,
         databases,
         ...listResponseMetadata(
@@ -832,12 +762,51 @@ export class SupersetClient
           databaseColumnsLoaded(databases),
           [],
         ),
-      };
+      }),
+    });
+  }
+
+  private async fetchListResource<
+    TRequest extends ListPaginationRequest,
+    TItem,
+    TResponse,
+  >({
+    request,
+    correlationId,
+    url,
+    resourceLabel,
+    emptyResponse,
+    toItem,
+    buildResponse,
+  }: {
+    request: TRequest;
+    correlationId: string | undefined;
+    url: string;
+    resourceLabel: string;
+    emptyResponse: EmptyListResponseFactory<TRequest, TResponse>;
+    toItem: (item: SupersetListItem) => TItem | undefined;
+    buildResponse: (items: TItem[], totalCount: number) => TResponse;
+  }): Promise<TResponse> {
+    try {
+      const response = await fetch(url, {
+        headers: this.buildHeaders(correlationId),
+        signal: AbortSignal.timeout(this.config.supersetTimeoutMs),
+      });
+
+      if (!response.ok) {
+        return emptyResponse(request, [
+          `${resourceLabel} list returned status ${response.status} from Superset`,
+        ]);
+      }
+
+      const payload = (await response.json()) as unknown;
+      const items = extractSupersetResults(payload).map(toItem).filter(isDefined);
+      const totalCount = extractSupersetCount(payload, items.length);
+
+      return buildResponse(items, totalCount);
     } catch (error) {
-      return emptyDatabaseListResponse(request, [
-        `database list failed: ${
-          externalErrorMessage(error)
-        }`,
+      return emptyResponse(request, [
+        `${resourceLabel} list failed: ${externalErrorMessage(error)}`,
       ]);
     }
   }
