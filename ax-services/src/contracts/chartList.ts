@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,15 +31,8 @@ export type ChartFilterValue = SharedListFilterValue;
 
 export type ChartListFilter = SharedListFilter;
 
-export interface ChartListRequest {
-  contractVersion: typeof CHART_LIST_CONTRACT_VERSION;
-  filters: ChartListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface ChartListRequest
+  extends ListRequestBase<typeof CHART_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
   ownedByMe: boolean;
 }
@@ -55,19 +50,9 @@ export interface ChartListItem {
   changedOnHumanized?: string;
 }
 
-export interface ChartListResponse {
-  contractVersion: typeof CHART_LIST_CONTRACT_VERSION;
+export interface ChartListResponse
+  extends ListResponseBase<typeof CHART_LIST_CONTRACT_VERSION> {
   charts: ChartListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const chartListItemSchema = {

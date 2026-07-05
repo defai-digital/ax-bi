@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,7 @@ export type ReportFilterValue = SharedListFilterValue;
 
 export type ReportListFilter = SharedListFilter;
 
-export interface ReportListRequest {
-  contractVersion: typeof REPORT_LIST_CONTRACT_VERSION;
-  filters: ReportListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type ReportListRequest = ListRequestBase<typeof REPORT_LIST_CONTRACT_VERSION>;
 
 export interface ReportListItem {
   id: number;
@@ -59,19 +52,9 @@ export interface ReportListItem {
   createdOnHumanized?: string;
 }
 
-export interface ReportListResponse {
-  contractVersion: typeof REPORT_LIST_CONTRACT_VERSION;
+export interface ReportListResponse
+  extends ListResponseBase<typeof REPORT_LIST_CONTRACT_VERSION> {
   reports: ReportListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const reportListItemSchema = {

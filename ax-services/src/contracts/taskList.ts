@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,7 @@ export type TaskFilterValue = SharedListFilterValue;
 
 export type TaskListFilter = SharedListFilter;
 
-export interface TaskListRequest {
-  contractVersion: typeof TASK_LIST_CONTRACT_VERSION;
-  filters: TaskListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type TaskListRequest = ListRequestBase<typeof TASK_LIST_CONTRACT_VERSION>;
 
 export interface TaskListItem {
   id: number;
@@ -52,19 +45,9 @@ export interface TaskListItem {
   createdOn?: string;
 }
 
-export interface TaskListResponse {
-  contractVersion: typeof TASK_LIST_CONTRACT_VERSION;
+export interface TaskListResponse
+  extends ListResponseBase<typeof TASK_LIST_CONTRACT_VERSION> {
   tasks: TaskListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const taskListItemSchema = {

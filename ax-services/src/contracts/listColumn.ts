@@ -31,6 +31,31 @@ export interface ListFilter {
   value: ListFilterValue;
 }
 
+export interface ListRequestBase<TContractVersion extends string> {
+  contractVersion: TContractVersion;
+  filters: ListFilter[];
+  selectColumns: string[];
+  search?: string;
+  orderColumn?: string;
+  orderDirection: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
+}
+
+export interface ListResponseBase<TContractVersion extends string> {
+  contractVersion: TContractVersion;
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+}
+
 export const listIdentifierSchema = {
   type: 'string',
   pattern: '^[A-Za-z0-9_]+$',

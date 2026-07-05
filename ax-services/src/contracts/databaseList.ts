@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,15 +31,8 @@ export type DatabaseFilterValue = SharedListFilterValue;
 
 export type DatabaseListFilter = SharedListFilter;
 
-export interface DatabaseListRequest {
-  contractVersion: typeof DATABASE_LIST_CONTRACT_VERSION;
-  filters: DatabaseListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DatabaseListRequest
+  extends ListRequestBase<typeof DATABASE_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
 }
 
@@ -65,19 +60,9 @@ export interface DatabaseListItem {
   createdOnHumanized?: string;
 }
 
-export interface DatabaseListResponse {
-  contractVersion: typeof DATABASE_LIST_CONTRACT_VERSION;
+export interface DatabaseListResponse
+  extends ListResponseBase<typeof DATABASE_LIST_CONTRACT_VERSION> {
   databases: DatabaseListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const databaseListItemSchema = {

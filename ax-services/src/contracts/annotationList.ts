@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,9 @@ export type AnnotationFilterValue = SharedListFilterValue;
 
 export type AnnotationListFilter = SharedListFilter;
 
-export interface AnnotationListRequest {
-  contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;
+export interface AnnotationListRequest
+  extends ListRequestBase<typeof ANNOTATION_LIST_CONTRACT_VERSION> {
   layerId: number;
-  filters: AnnotationListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
 }
 
 export interface AnnotationListItem {
@@ -51,20 +46,10 @@ export interface AnnotationListItem {
   layerId?: number;
 }
 
-export interface AnnotationListResponse {
-  contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;
+export interface AnnotationListResponse
+  extends ListResponseBase<typeof ANNOTATION_LIST_CONTRACT_VERSION> {
   annotations: AnnotationListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
   layerId: number;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const annotationListItemSchema = {

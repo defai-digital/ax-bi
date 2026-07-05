@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,7 @@ export type TagFilterValue = SharedListFilterValue;
 
 export type TagListFilter = SharedListFilter;
 
-export interface TagListRequest {
-  contractVersion: typeof TAG_LIST_CONTRACT_VERSION;
-  filters: TagListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type TagListRequest = ListRequestBase<typeof TAG_LIST_CONTRACT_VERSION>;
 
 export interface TagListItem {
   id: number;
@@ -51,19 +44,9 @@ export interface TagListItem {
   createdOnHumanized?: string;
 }
 
-export interface TagListResponse {
-  contractVersion: typeof TAG_LIST_CONTRACT_VERSION;
+export interface TagListResponse
+  extends ListResponseBase<typeof TAG_LIST_CONTRACT_VERSION> {
   tags: TagListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const tagListItemSchema = {

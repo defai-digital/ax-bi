@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,15 +31,8 @@ export type DashboardFilterValue = SharedListFilterValue;
 
 export type DashboardListFilter = SharedListFilter;
 
-export interface DashboardListRequest {
-  contractVersion: typeof DASHBOARD_LIST_CONTRACT_VERSION;
-  filters: DashboardListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DashboardListRequest
+  extends ListRequestBase<typeof DASHBOARD_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
   ownedByMe: boolean;
 }
@@ -56,19 +51,9 @@ export interface DashboardListItem {
   changedOnHumanized?: string;
 }
 
-export interface DashboardListResponse {
-  contractVersion: typeof DASHBOARD_LIST_CONTRACT_VERSION;
+export interface DashboardListResponse
+  extends ListResponseBase<typeof DASHBOARD_LIST_CONTRACT_VERSION> {
   dashboards: DashboardListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const dashboardListItemSchema = {

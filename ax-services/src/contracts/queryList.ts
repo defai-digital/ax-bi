@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,7 @@ export type QueryFilterValue = SharedListFilterValue;
 
 export type QueryListFilter = SharedListFilter;
 
-export interface QueryListRequest {
-  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
-  filters: QueryListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type QueryListRequest = ListRequestBase<typeof QUERY_LIST_CONTRACT_VERSION>;
 
 export interface QueryListItem {
   id: number;
@@ -60,19 +53,9 @@ export interface QueryListItem {
   userId?: number;
 }
 
-export interface QueryListResponse {
-  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
+export interface QueryListResponse
+  extends ListResponseBase<typeof QUERY_LIST_CONTRACT_VERSION> {
   queries: QueryListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const queryListItemSchema = {

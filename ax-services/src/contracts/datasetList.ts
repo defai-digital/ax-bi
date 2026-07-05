@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,15 +31,8 @@ export type DatasetFilterValue = SharedListFilterValue;
 
 export type DatasetListFilter = SharedListFilter;
 
-export interface DatasetListRequest {
-  contractVersion: typeof DATASET_LIST_CONTRACT_VERSION;
-  filters: DatasetListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DatasetListRequest
+  extends ListRequestBase<typeof DATASET_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
   ownedByMe: boolean;
 }
@@ -58,19 +53,9 @@ export interface DatasetListItem {
   url?: string;
 }
 
-export interface DatasetListResponse {
-  contractVersion: typeof DATASET_LIST_CONTRACT_VERSION;
+export interface DatasetListResponse
+  extends ListResponseBase<typeof DATASET_LIST_CONTRACT_VERSION> {
   datasets: DatasetListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const datasetListItemSchema = {

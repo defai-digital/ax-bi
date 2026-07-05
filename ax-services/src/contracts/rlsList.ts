@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,16 +31,7 @@ export type RlsFilterValue = SharedListFilterValue;
 
 export type RlsListFilter = SharedListFilter;
 
-export interface RlsListRequest {
-  contractVersion: typeof RLS_LIST_CONTRACT_VERSION;
-  filters: RlsListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type RlsListRequest = ListRequestBase<typeof RLS_LIST_CONTRACT_VERSION>;
 
 export interface RlsTableRef {
   id?: number;
@@ -61,19 +54,9 @@ export interface RlsListItem {
   changedOn?: string;
 }
 
-export interface RlsListResponse {
-  contractVersion: typeof RLS_LIST_CONTRACT_VERSION;
+export interface RlsListResponse
+  extends ListResponseBase<typeof RLS_LIST_CONTRACT_VERSION> {
   rlsFilters: RlsListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const rlsTableRefSchema = {

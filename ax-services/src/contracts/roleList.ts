@@ -19,6 +19,8 @@
 import {
   type ListFilter as SharedListFilter,
   type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
   buildListRequestSchema,
   buildListResponseSchema,
 } from './listColumn';
@@ -29,35 +31,16 @@ export type RoleFilterValue = SharedListFilterValue;
 
 export type RoleListFilter = SharedListFilter;
 
-export interface RoleListRequest {
-  contractVersion: typeof ROLE_LIST_CONTRACT_VERSION;
-  filters: RoleListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type RoleListRequest = ListRequestBase<typeof ROLE_LIST_CONTRACT_VERSION>;
 
 export interface RoleListItem {
   id: number;
   name?: string;
 }
 
-export interface RoleListResponse {
-  contractVersion: typeof ROLE_LIST_CONTRACT_VERSION;
+export interface RoleListResponse
+  extends ListResponseBase<typeof ROLE_LIST_CONTRACT_VERSION> {
   roles: RoleListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
 
 const roleListItemSchema = {
