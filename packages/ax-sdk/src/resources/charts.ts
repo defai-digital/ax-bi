@@ -21,19 +21,13 @@ import { BaseResource } from './baseResource.js';
 import type { ChartItem, CreateChartInput, UpdateChartInput } from './types.js';
 
 /** CRUD operations for charts (slices). */
-export class ChartsResource extends BaseResource<ChartItem> {
+export class ChartsResource extends BaseResource<
+  ChartItem,
+  CreateChartInput,
+  UpdateChartInput
+> {
   protected readonly basePath = '/api/v1/chart';
   protected readonly searchColumn = 'slice_name';
-
-  /** Create a new chart. */
-  override async create(data: CreateChartInput): Promise<ChartItem> {
-    return super.create(data);
-  }
-
-  /** Update an existing chart. */
-  override async update(id: number | string, data: UpdateChartInput): Promise<ChartItem> {
-    return super.update(id, data);
-  }
 
   /** Get chart data (query result) for a given chart. */
   async getData(id: number | string): Promise<Record<string, unknown>> {

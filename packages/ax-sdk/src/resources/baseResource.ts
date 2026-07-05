@@ -26,7 +26,7 @@ import type { SupersetListEnvelope, SupersetItemEnvelope, SupersetDeleteEnvelope
  * Base class for REST resource modules.
  * Provides standard CRUD operations mapped to Superset API conventions.
  */
-export abstract class BaseResource<TItem> {
+export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput = unknown> {
   protected abstract readonly basePath: string;
   /** The column name used for text search in the backend API (e.g. 'dashboard_title', 'slice_name'). */
   protected abstract readonly searchColumn: string;
@@ -47,13 +47,13 @@ export abstract class BaseResource<TItem> {
   }
 
   /** Create a new resource. Returns the created item. */
-  async create(data: unknown): Promise<TItem> {
+  async create(data: TCreateInput): Promise<TItem> {
     const envelope = await this.http.post<SupersetItemEnvelope<TItem>>(`${this.basePath}/`, data);
     return envelope.result;
   }
 
   /** Update an existing resource by ID or UUID. */
-  async update(id: number | string, data: unknown): Promise<TItem> {
+  async update(id: number | string, data: TUpdateInput): Promise<TItem> {
     const envelope = await this.http.put<SupersetItemEnvelope<TItem>>(
       `${this.basePath}/${id}`,
       data,

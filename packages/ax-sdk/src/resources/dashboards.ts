@@ -21,19 +21,13 @@ import { BaseResource } from './baseResource.js';
 import type { DashboardItem, CreateDashboardInput, UpdateDashboardInput } from './types.js';
 
 /** CRUD operations for dashboards. */
-export class DashboardsResource extends BaseResource<DashboardItem> {
+export class DashboardsResource extends BaseResource<
+  DashboardItem,
+  CreateDashboardInput,
+  UpdateDashboardInput
+> {
   protected readonly basePath = '/api/v1/dashboard';
   protected readonly searchColumn = 'dashboard_title';
-
-  /** Create a new dashboard. */
-  override async create(data: CreateDashboardInput): Promise<DashboardItem> {
-    return super.create(data);
-  }
-
-  /** Update an existing dashboard. */
-  override async update(id: number | string, data: UpdateDashboardInput): Promise<DashboardItem> {
-    return super.update(id, data);
-  }
 
   /** Get the dashboard's JSON metadata (position, filters, etc.). */
   async getMetadata(id: number | string): Promise<{ metadata: Record<string, unknown> }> {

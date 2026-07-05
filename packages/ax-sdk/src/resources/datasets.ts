@@ -21,19 +21,13 @@ import { BaseResource } from './baseResource.js';
 import type { DatasetItem, CreateDatasetInput, UpdateDatasetInput } from './types.js';
 
 /** CRUD operations for datasets (tables). */
-export class DatasetsResource extends BaseResource<DatasetItem> {
+export class DatasetsResource extends BaseResource<
+  DatasetItem,
+  CreateDatasetInput,
+  UpdateDatasetInput
+> {
   protected readonly basePath = '/api/v1/dataset';
   protected readonly searchColumn = 'table_name';
-
-  /** Create a new dataset. */
-  override async create(data: CreateDatasetInput): Promise<DatasetItem> {
-    return super.create(data);
-  }
-
-  /** Update an existing dataset. */
-  override async update(id: number | string, data: UpdateDatasetInput): Promise<DatasetItem> {
-    return super.update(id, data);
-  }
 
   /** Get the columns for a dataset. */
   async getColumns(id: number | string): Promise<NonNullable<DatasetItem['columns']>> {
