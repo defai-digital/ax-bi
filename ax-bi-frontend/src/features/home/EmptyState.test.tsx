@@ -47,30 +47,36 @@ beforeEach(() => {
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('EmptyState', () => {
-  const variants: EmptyStateProps[] = [
+  const variants: Array<EmptyStateProps & { description: string }> = [
     {
       tab: TableTab.Favorite,
       tableName: WelcomeTable.Dashboards,
+      description: 'Create a dashboard or generate one from uploaded data.',
     },
     {
       tab: TableTab.Mine,
       tableName: WelcomeTable.Dashboards,
+      description: 'Create a dashboard or generate one from uploaded data.',
     },
     {
       tab: TableTab.Favorite,
       tableName: WelcomeTable.Charts,
+      description: 'Upload data or create a chart to start visual analysis.',
     },
     {
       tab: TableTab.Mine,
       tableName: WelcomeTable.Charts,
+      description: 'Upload data or create a chart to start visual analysis.',
     },
     {
       tab: TableTab.Favorite,
       tableName: WelcomeTable.SavedQueries,
+      description: 'Your recent analytics activity will appear here.',
     },
     {
       tab: TableTab.Mine,
       tableName: WelcomeTable.SavedQueries,
+      description: 'Your recent analytics activity will appear here.',
     },
   ];
   const recents: EmptyStateProps[] = [
@@ -97,7 +103,7 @@ describe('EmptyState', () => {
       // Select the first description node
       expect(
         container.querySelector('.ant-empty-description'),
-      ).toHaveTextContent('Nothing here yet');
+      ).toHaveTextContent(variant.description);
       expect(screen.getAllByRole('button')).toHaveLength(1);
     });
   });
@@ -112,7 +118,7 @@ describe('EmptyState', () => {
       // Check the correct text is displayed
       expect(
         container.querySelector('.ant-empty-description'),
-      ).toHaveTextContent('Nothing here yet');
+      ).toHaveTextContent('Your recent analytics activity will appear here.');
 
       // Validate the image
       expect(

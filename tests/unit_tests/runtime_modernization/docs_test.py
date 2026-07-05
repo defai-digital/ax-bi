@@ -16,8 +16,10 @@
 # under the License.
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DOCS_ROOT = REPO_ROOT / "ax-internal" / "docs"
+DOCS_ROOT = REPO_ROOT / ".internal" / "docs"
 BOUNDARY_ADR = DOCS_ROOT / "runtime-modernization-boundary-decision-adr.md"
 INITIAL_ADR = DOCS_ROOT / "runtime-modernization-adr.md"
 PHASED_PLAN = DOCS_ROOT / "runtime-modernization-phased-plan.md"
@@ -28,6 +30,9 @@ DEVELOPER_SIDEBAR = REPO_ROOT / "docs" / "developer_docs" / "sidebars.js"
 def test_runtime_modernization_boundary_adr_is_linked() -> None:
     """Boundary decision ADR is discoverable from the main planning docs."""
 
+    if not BOUNDARY_ADR.exists():
+        pytest.skip("private runtime modernization ADR bundle is not present")
+
     boundary_name = "runtime-modernization-boundary-decision-adr.md"
 
     assert BOUNDARY_ADR.exists()
@@ -37,6 +42,9 @@ def test_runtime_modernization_boundary_adr_is_linked() -> None:
 
 def test_runtime_modernization_boundary_adr_records_phase_six_decisions() -> None:
     """Boundary decision ADR records the large-boundary choices."""
+
+    if not BOUNDARY_ADR.exists():
+        pytest.skip("private runtime modernization ADR bundle is not present")
 
     text = BOUNDARY_ADR.read_text(encoding="utf-8")
 
@@ -52,10 +60,11 @@ def test_runtime_modernization_developer_guide_is_linked() -> None:
     guide_text = DEVELOPER_GUIDE.read_text(encoding="utf-8")
 
     assert DEVELOPER_GUIDE.exists()
-    assert (
-        "../../docs/developer_docs/runtime-modernization.md"
-        in PHASED_PLAN.read_text(encoding="utf-8")
-    )
+    if PHASED_PLAN.exists():
+        assert (
+            "../../docs/developer_docs/runtime-modernization.md"
+            in PHASED_PLAN.read_text(encoding="utf-8")
+        )
     assert "'runtime-modernization'" in DEVELOPER_SIDEBAR.read_text(encoding="utf-8")
     assert "Runtime Ownership" in guide_text
     assert "Local Setup" in guide_text

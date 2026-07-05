@@ -267,7 +267,7 @@ class TestPromptToDashboardPipeline:
         async def _mock_compose(*a, **kw):
             return {
                 "dashboard": {"id": 201, "dashboard_title": "Service Revenue"},
-                "dashboard_url": "/superset/dashboard/201/",
+                "dashboard_url": "/ax-bi/dashboard/201/",
                 "layout_summary": "1 chart",
                 "lineage": {"dataset_ids": [99]},
             }
