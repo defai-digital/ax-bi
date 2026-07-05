@@ -224,48 +224,51 @@ class BaseStreamingCSVExportCommand(BaseCommand):
             # Merge database to prevent DetachedInstanceError
             merged_database = session.merge(database)
 
-            with merged_database.get_sqla_engine(
-                catalog=catalog, schema=schema
-            ) as engine:
-                with engine.connect() as connection:
-                    result_proxy = connection.execution_options(
-                        stream_results=True
-                    ).execute(text(sql))
+            with (
+                merged_database.get_sqla_engine(
+                    catalog=catalog,
+                    schema=schema,
+                ) as engine,
+                engine.connect() as connection,
+            ):
+                result_proxy = connection.execution_options(
+                    stream_results=True
+                ).execute(text(sql))
 
-                    columns = list(result_proxy.keys())
+                columns = list(result_proxy.keys())
 
-                    # Use StringIO with csv.writer for proper escaping
-                    # Apply delimiter from CSV_EXPORT config
-                    buffer = io.StringIO()
-                    csv_writer = csv.writer(
-                        buffer, delimiter=delimiter, quoting=csv.QUOTE_MINIMAL
-                    )
+                # Use StringIO with csv.writer for proper escaping
+                # Apply delimiter from CSV_EXPORT config
+                buffer = io.StringIO()
+                csv_writer = csv.writer(
+                    buffer, delimiter=delimiter, quoting=csv.QUOTE_MINIMAL
+                )
 
-                    # Write CSV header
-                    header_data, header_bytes = self._write_csv_header(
-                        columns, csv_writer, buffer
-                    )
-                    total_bytes += header_bytes
-                    yield header_data
+                # Write CSV header
+                header_data, header_bytes = self._write_csv_header(
+                    columns, csv_writer, buffer
+                )
+                total_bytes += header_bytes
+                yield header_data
 
-                    # Process rows and yield chunks
-                    row_count = 0
-                    for data_chunk, rows_processed, chunk_bytes in self._process_rows(
-                        result_proxy, csv_writer, buffer, limit, decimal_separator
-                    ):
-                        total_bytes += chunk_bytes
-                        row_count = rows_processed
-                        yield data_chunk
+                # Process rows and yield chunks
+                row_count = 0
+                for data_chunk, rows_processed, chunk_bytes in self._process_rows(
+                    result_proxy, csv_writer, buffer, limit, decimal_separator
+                ):
+                    total_bytes += chunk_bytes
+                    row_count = rows_processed
+                    yield data_chunk
 
-                    # Log completion
-                    total_time = time.time() - start_time
-                    total_mb = total_bytes / (1024 * 1024)
-                    logger.info(
-                        "Streaming CSV completed: %s rows, %.1fMB in %.2fs",
-                        f"{row_count:,}",
-                        total_mb,
-                        total_time,
-                    )
+                # Log completion
+                total_time = time.time() - start_time
+                total_mb = total_bytes / (1024 * 1024)
+                logger.info(
+                    "Streaming CSV completed: %s rows, %.1fMB in %.2fs",
+                    f"{row_count:,}",
+                    total_mb,
+                    total_time,
+                )
 
     def run(self) -> Callable[[], Generator[str, None, None]]:
         """
@@ -287,23 +290,22 @@ class BaseStreamingCSVExportCommand(BaseCommand):
 
         def csv_generator() -> Generator[str, None, None]:
             """Generator that yields CSV data chunks."""
-            with self._current_app.app_context():
-                with preserve_g_context(captured_g):
-                    try:
-                        yield from self._execute_query_and_stream(
-                            sql, database, limit, catalog, schema
-                        )
-                    except Exception as e:
-                        logger.error("Error in streaming CSV generator: %s", e)
-                        import traceback
+            with self._current_app.app_context(), preserve_g_context(captured_g):
+                try:
+                    yield from self._execute_query_and_stream(
+                        sql, database, limit, catalog, schema
+                    )
+                except Exception as e:
+                    logger.error("Error in streaming CSV generator: %s", e)
+                    import traceback
 
-                        logger.error("Traceback: %s", traceback.format_exc())
+                    logger.error("Traceback: %s", traceback.format_exc())
 
-                        # Send error marker for frontend to detect
-                        error_marker = (
-                            "__STREAM_ERROR__:Export failed. "
-                            "Please try again in some time.\n"
-                        )
-                        yield error_marker
+                    # Send error marker for frontend to detect
+                    error_marker = (
+                        "__STREAM_ERROR__:Export failed. "
+                        "Please try again in some time.\n"
+                    )
+                    yield error_marker
 
         return csv_generator
