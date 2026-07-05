@@ -106,7 +106,10 @@ def test_detect_upload_file_type_rejects_bare_extension() -> None:
 
 def test_detect_upload_file_type_accepts_compound_and_mlmodel() -> None:
     """Type detection handles compound extensions and MLflow model files."""
-    assert upload_file_module._detect_upload_file_type("foo.mlmodel") is None
+    assert upload_file_module._detect_upload_file_type("foo.mlmodel") == (
+        ".mlmodel",
+        upload_file_module.UploadFileType.STRUCTURED,
+    )
     assert upload_file_module._detect_upload_file_type("data.csv.gz") == (
         ".csv.gz",
         upload_file_module.UploadFileType.CSV,

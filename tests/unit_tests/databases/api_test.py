@@ -59,7 +59,10 @@ def test_detect_upload_file_type_handles_compound_and_mlflow_model() -> None:
     from superset.databases.api import detect_upload_file_type
 
     assert detect_upload_file_type(".csv") is None
-    assert detect_upload_file_type("foo.mlmodel") is None
+    assert detect_upload_file_type("foo.mlmodel") == (
+        ".mlmodel",
+        UploadFileType.STRUCTURED,
+    )
     assert detect_upload_file_type("data.csv.gz") == (".csv.gz", UploadFileType.CSV)
     assert detect_upload_file_type("MLmodel") == (
         ".mlmodel",

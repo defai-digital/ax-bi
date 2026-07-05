@@ -102,6 +102,7 @@ FILE_TYPE_MAP: dict[str, UploadFileType] = {
     ".lance": UploadFileType.STRUCTURED,
     ".lance.zip": UploadFileType.STRUCTURED,
     ".mlflow.zip": UploadFileType.STRUCTURED,
+    ".mlmodel": UploadFileType.STRUCTURED,
     ".mlruns.zip": UploadFileType.STRUCTURED,
     ".ndjson": UploadFileType.STRUCTURED,
     ".ndjson.gz": UploadFileType.STRUCTURED,
