@@ -21,8 +21,10 @@ from datetime import timedelta
 from typing import Any
 from unittest.mock import patch
 
-from flask import current_app  # noqa: F401
+from flask import current_app, g  # noqa: F401
+from flask_login import AnonymousUserMixin
 from freezegun import freeze_time
+from werkzeug.local import LocalProxy
 
 from superset import security_manager
 from superset.utils.log import (
@@ -81,6 +83,45 @@ class TestEventLogger(unittest.TestCase):
                 }
             ]
             assert payload["duration_ms"] >= 50
+
+    @patch("superset.db.session.add")
+    @patch("superset.utils.log.get_user_id")
+    @patch.object(DBEventLogger, "log")
+    def test_log_with_context_resolves_local_proxy_user(
+        self,
+        mock_log,
+        mock_get_user_id,
+        mock_session_add,
+    ):
+        logger = DBEventLogger()
+
+        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+            user = security_manager.find_user("admin")
+            mock_get_user_id.side_effect = [None, user.id]
+            g.user = LocalProxy(lambda: user)
+            logger.log_with_context(action="test_action")
+
+        mock_session_add.assert_called_once_with(user)
+        assert mock_log.call_args.args[0] == user.id
+
+    @patch("superset.db.session.add")
+    @patch("superset.utils.log.get_user_id")
+    @patch.object(DBEventLogger, "log")
+    def test_log_with_context_ignores_unmapped_user(
+        self,
+        mock_log,
+        mock_get_user_id,
+        mock_session_add,
+    ):
+        logger = DBEventLogger()
+
+        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+            mock_get_user_id.return_value = None
+            g.user = AnonymousUserMixin()
+            logger.log_with_context(action="test_action")
+
+        mock_session_add.assert_not_called()
+        assert mock_log.call_args.args[0] is None
 
     @patch.object(DBEventLogger, "log")
     def test_log_this_with_extra_payload(self, mock_log):
