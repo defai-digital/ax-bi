@@ -2810,16 +2810,13 @@ function optionalExternalMessage(value: unknown): string | undefined {
 }
 
 function externalMessage(value: string, fallback: string): string {
-  const message = value
-    .replace(CONTROL_CHARACTER_PATTERN, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const message = cleanBoundedText(value, MAX_EXTERNAL_MESSAGE_LENGTH);
 
   if (message.length === 0) {
     return fallback;
   }
 
-  return message.slice(0, MAX_EXTERNAL_MESSAGE_LENGTH);
+  return message;
 }
 
 function cleanAssetText(value: unknown, maxLength: number): string {
@@ -2827,6 +2824,10 @@ function cleanAssetText(value: unknown, maxLength: number): string {
     return '';
   }
 
+  return cleanBoundedText(value, maxLength);
+}
+
+function cleanBoundedText(value: string, maxLength: number): string {
   return value
     .replace(CONTROL_CHARACTER_PATTERN, ' ')
     .replace(/\s+/g, ' ')
@@ -2835,11 +2836,7 @@ function cleanAssetText(value: unknown, maxLength: number): string {
 }
 
 function cleanMetadataKey(value: string): string | undefined {
-  const key = value
-    .replace(CONTROL_CHARACTER_PATTERN, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, MAX_METADATA_KEY_LENGTH);
+  const key = cleanBoundedText(value, MAX_METADATA_KEY_LENGTH);
 
   return key.length === 0 ? undefined : key;
 }
