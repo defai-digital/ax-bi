@@ -75,16 +75,6 @@ def get_main_database() -> Database:
     return get_or_create_db("main", db_uri)
 
 
-# TODO - the below method used by tests so should move there but should move together
-# with above function... think of how to refactor it
-def remove_database(database: Database) -> None:
-    # pylint: disable=import-outside-toplevel
-    from superset import db
-
-    db.session.delete(database)
-    db.session.flush()
-
-
 def apply_mariadb_ddl_fix() -> None:
     """
     Fix MariaDB "NO CYCLE" syntax issue - MariaDB uses "NOCYCLE" (no space).
