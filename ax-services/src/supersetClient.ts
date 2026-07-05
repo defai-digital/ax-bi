@@ -381,9 +381,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl(
+      url: this.buildConfiguredPagedListUrl(
         'annotationLayer',
-        buildAnnotationLayerListQuery(request),
+        request,
+        listSearchColumns.annotationLayer,
       ),
       resourceLabel: 'annotation layer',
       emptyResponse: emptyAnnotationLayerListResponse,
@@ -601,9 +602,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl(
+      url: this.buildConfiguredPagedListUrl(
         'dashboard',
-        buildDashboardListQuery(request),
+        request,
+        listSearchColumns.dashboard,
       ),
       resourceLabel: 'dashboard',
       emptyResponse: emptyDashboardListResponse,
@@ -641,7 +643,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('chart', buildChartListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'chart',
+        request,
+        listSearchColumns.chart,
+      ),
       resourceLabel: 'chart',
       emptyResponse: emptyChartListResponse,
       toItem: toChartListItem,
@@ -678,9 +684,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl(
+      url: this.buildConfiguredPagedListUrl(
         'dataset',
-        buildDatasetListQuery(request),
+        request,
+        listSearchColumns.dataset,
       ),
       resourceLabel: 'dataset',
       emptyResponse: emptyDatasetListResponse,
@@ -718,9 +725,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl(
+      url: this.buildConfiguredPagedListUrl(
         'database',
-        buildDatabaseListQuery(request),
+        request,
+        listSearchColumns.database,
       ),
       resourceLabel: 'database',
       emptyResponse: emptyDatabaseListResponse,
@@ -825,7 +833,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('query', buildQueryListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'query',
+        request,
+        listSearchColumns.query,
+      ),
       resourceLabel: 'query',
       emptyResponse: emptyQueryListResponse,
       toItem: toQueryListItem,
@@ -861,9 +873,10 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl(
+      url: this.buildConfiguredPagedListUrl(
         'savedQuery',
-        buildSavedQueryListQuery(request),
+        request,
+        listSearchColumns.savedQuery,
       ),
       resourceLabel: 'saved query',
       emptyResponse: emptySavedQueryListResponse,
@@ -900,7 +913,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('report', buildReportListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'report',
+        request,
+        listSearchColumns.report,
+      ),
       resourceLabel: 'report',
       emptyResponse: emptyReportListResponse,
       toItem: toReportListItem,
@@ -936,7 +953,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('role', buildRoleListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'role',
+        request,
+        listSearchColumns.role,
+      ),
       resourceLabel: 'role',
       emptyResponse: emptyRoleListResponse,
       toItem: toRoleListItem,
@@ -972,7 +993,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('rls', buildRlsListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'rls',
+        request,
+        listSearchColumns.rls,
+      ),
       resourceLabel: 'RLS filter',
       emptyResponse: emptyRlsListResponse,
       toItem: toRlsListItem,
@@ -1008,7 +1033,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('tag', buildTagListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'tag',
+        request,
+        listSearchColumns.tag,
+      ),
       resourceLabel: 'tag',
       emptyResponse: emptyTagListResponse,
       toItem: toTagListItem,
@@ -1044,7 +1073,11 @@ export class SupersetClient
     return this.fetchListResource({
       request,
       correlationId,
-      url: this.buildConfiguredListUrl('task', buildTaskListQuery(request)),
+      url: this.buildConfiguredPagedListUrl(
+        'task',
+        request,
+        listSearchColumns.task,
+      ),
       resourceLabel: 'task',
       emptyResponse: emptyTaskListResponse,
       toItem: toTaskListItem,
@@ -1111,7 +1144,18 @@ export class SupersetClient
     );
     return this.buildSupersetQueryUrl(
       `${basePath}/${request.layerId}/annotation/`,
-      buildAnnotationListQuery(request),
+      buildSupersetPagedListQuery(request, listSearchColumns.annotation),
+    );
+  }
+
+  private buildConfiguredPagedListUrl(
+    pathKey: SupersetAssetSearchPathKey,
+    request: SupersetListQueryRequest,
+    searchColumn: string,
+  ): string {
+    return this.buildConfiguredListUrl(
+      pathKey,
+      buildSupersetPagedListQuery(request, searchColumn),
     );
   }
 
@@ -1299,6 +1343,22 @@ const assetSearchFilterColumns: Record<SearchableAssetType, string> = {
   dataset: 'table_name',
 };
 
+const listSearchColumns = {
+  annotation: 'short_descr',
+  annotationLayer: 'name',
+  chart: 'slice_name',
+  dashboard: 'dashboard_title',
+  database: 'database_name',
+  dataset: 'table_name',
+  query: 'sql',
+  report: 'name',
+  rls: 'name',
+  role: 'name',
+  savedQuery: 'label',
+  tag: 'name',
+  task: 'task_name',
+} as const;
+
 function isSupportedSearchType(
   assetType: AssetType,
 ): assetType is SearchableAssetType {
@@ -1324,60 +1384,6 @@ function buildSupersetListQuery(
   }
 
   return `(page:0,page_size:${limit},filters:!(${filters.join(',')}))`;
-}
-
-function buildAnnotationLayerListQuery(
-  request: AnnotationLayerListRequest,
-): string {
-  return buildSupersetPagedListQuery(request, 'name');
-}
-
-function buildAnnotationListQuery(request: AnnotationListRequest): string {
-  return buildSupersetPagedListQuery(request, 'short_descr');
-}
-
-function buildDashboardListQuery(request: DashboardListRequest): string {
-  return buildSupersetPagedListQuery(request, 'dashboard_title');
-}
-
-function buildChartListQuery(request: ChartListRequest): string {
-  return buildSupersetPagedListQuery(request, 'slice_name');
-}
-
-function buildDatasetListQuery(request: DatasetListRequest): string {
-  return buildSupersetPagedListQuery(request, 'table_name');
-}
-
-function buildDatabaseListQuery(request: DatabaseListRequest): string {
-  return buildSupersetPagedListQuery(request, 'database_name');
-}
-
-function buildQueryListQuery(request: QueryListRequest): string {
-  return buildSupersetPagedListQuery(request, 'sql');
-}
-
-function buildSavedQueryListQuery(request: SavedQueryListRequest): string {
-  return buildSupersetPagedListQuery(request, 'label');
-}
-
-function buildReportListQuery(request: ReportListRequest): string {
-  return buildSupersetPagedListQuery(request, 'name');
-}
-
-function buildRoleListQuery(request: RoleListRequest): string {
-  return buildSupersetPagedListQuery(request, 'name');
-}
-
-function buildRlsListQuery(request: RlsListRequest): string {
-  return buildSupersetPagedListQuery(request, 'name');
-}
-
-function buildTagListQuery(request: TagListRequest): string {
-  return buildSupersetPagedListQuery(request, 'name');
-}
-
-function buildTaskListQuery(request: TaskListRequest): string {
-  return buildSupersetPagedListQuery(request, 'task_name');
 }
 
 function buildSupersetPagedListQuery(
