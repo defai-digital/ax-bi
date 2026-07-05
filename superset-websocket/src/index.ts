@@ -636,11 +636,13 @@ export const cleanChannel = (channel: string) => {
   }
 };
 
+const MAX_FASTIFY_BODY_LIMIT_BYTES = Number.MAX_SAFE_INTEGER;
+
 // Fastify HTTP API server (Fast Data API Gateway)
 const fastify = Fastify({
   logger: false,
-  // Disable Fastify's own body limit; chart data payloads can be large
-  bodyLimit: 0,
+  // Chart data payloads can be large; Fastify requires a positive integer.
+  bodyLimit: MAX_FASTIFY_BODY_LIMIT_BYTES,
 });
 
 export const getFastify = (): ReturnType<typeof Fastify> => fastify;
