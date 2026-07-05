@@ -27,7 +27,6 @@ const createParams = () => ({
   force: false,
   curUrl: null,
   requestParams: {},
-  allowDomainSharding: false,
   method: 'POST' as const,
 });
 

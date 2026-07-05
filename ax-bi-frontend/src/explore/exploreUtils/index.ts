@@ -33,7 +33,6 @@ import {
   SetDataMaskHook,
   JsonObject,
 } from '@superset-ui/core';
-import { availableDomains } from 'src/utils/hostNamesConfig';
 import { safeStringify } from 'src/utils/safeStringify';
 import { optionLabel } from 'src/utils/common';
 import { ensureAppRoot } from 'src/utils/pathUtils';
@@ -70,7 +69,6 @@ interface ExploreState {
 interface ChartDataUriParams {
   path: string;
   qs?: Record<string, string>;
-  allowDomainSharding?: boolean;
 }
 
 interface GetExploreUrlParams {
@@ -79,7 +77,6 @@ interface GetExploreUrlParams {
   force?: boolean;
   curUrl?: string | null;
   requestParams?: Record<string, string>;
-  allowDomainSharding?: boolean;
   method?: 'GET' | 'POST';
   relative?: boolean;
   includeAppRoot?: boolean;
@@ -121,22 +118,8 @@ export function getChartKey(explore: ExploreState): number {
   return slice?.slice_id ?? form_data?.slice_id ?? UNSAVED_CHART_ID;
 }
 
-let requestCounter = 0;
-export function getHostName(allowDomainSharding = false): string {
-  let currentIndex = 0;
-  if (allowDomainSharding) {
-    currentIndex = requestCounter % availableDomains.length;
-    requestCounter += 1;
-
-    // if domain sharding is enabled, skip main domain for fetching chart API
-    // leave main domain free for other calls like fav star, save change, etc.
-    // to make dashboard be responsive when it's loading large number of charts
-    if (currentIndex === 0) {
-      currentIndex += 1;
-      requestCounter += 1;
-    }
-  }
-  return availableDomains[currentIndex];
+export function getHostName(): string {
+  return window.location.hostname;
 }
 
 export function getAnnotationJsonUrl(
@@ -200,14 +183,13 @@ export function mountExploreUrl(
 export function getChartDataUri({
   path,
   qs,
-  allowDomainSharding = false,
 }: ChartDataUriParams): URI {
   // The search params from the window.location are carried through,
   // but can be specified with curUrl (used for unit tests to spoof
   // the window.location).
   let uri = new URI({
     protocol: window.location.protocol.slice(0, -1),
-    hostname: getHostName(allowDomainSharding),
+    hostname: getHostName(),
     port: window.location.port ? window.location.port : '',
     path: ensureAppRoot(path),
   });
@@ -228,7 +210,6 @@ export function getExploreUrl({
   force = false,
   curUrl = null,
   requestParams = {},
-  allowDomainSharding = false,
   method = 'POST',
   relative = false,
   includeAppRoot = true,
@@ -245,7 +226,6 @@ export function getExploreUrl({
     ? new URI('/')
     : getChartDataUri({
         path: '/',
-        allowDomainSharding,
       });
   if (curUrl) {
     uri = URI(URI(curUrl).search());
@@ -377,7 +357,6 @@ export const exportChart = async ({
       formData,
       endpointType,
       force,
-      allowDomainSharding: false,
       relative: true,
       includeAppRoot: false,
     });
@@ -462,7 +441,6 @@ export const exploreChart = (
   const url = getExploreUrl({
     formData,
     endpointType: 'base',
-    allowDomainSharding: false,
     requestParams,
   });
   SupersetClient.postForm(url as string, {

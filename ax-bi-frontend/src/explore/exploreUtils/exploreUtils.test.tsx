@@ -25,7 +25,6 @@ import {
   getQuerySettings,
 } from 'src/explore/exploreUtils';
 import { DashboardStandaloneMode } from 'src/dashboard/util/constants';
-import * as hostNamesConfig from 'src/utils/hostNamesConfig';
 import {
   ChartMetadata,
   getChartMetadataRegistry,
@@ -129,73 +128,6 @@ describe('exploreUtils', () => {
         URI(url!),
         URI('/ax-bi/explore_json/').search({ foo: 'bar' }),
       );
-    });
-  });
-
-  // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
-  describe('domain sharding', () => {
-    let stub: jest.ReplaceProperty<typeof hostNamesConfig.availableDomains>;
-    const availableDomains = [
-      'http://localhost/',
-      'domain1.com',
-      'domain2.com',
-      'domain3.com',
-    ];
-    beforeEach(() => {
-      stub = jest.replaceProperty(
-        hostNamesConfig,
-        'availableDomains',
-        availableDomains,
-      );
-    });
-    afterEach(() => {
-      stub.restore();
-    });
-
-    test('generate url to different domains', () => {
-      let url = getExploreUrl({
-        formData,
-        endpointType: 'json',
-        allowDomainSharding: true,
-      });
-      // skip main domain for fetching chart if domain sharding is enabled
-      // to leave main domain free for other calls like fav star, save change, etc.
-      expect(url).toMatch(availableDomains[1]);
-
-      url = getExploreUrl({
-        formData,
-        endpointType: 'json',
-        allowDomainSharding: true,
-      });
-      expect(url).toMatch(availableDomains[2]);
-
-      url = getExploreUrl({
-        formData,
-        endpointType: 'json',
-        allowDomainSharding: true,
-      });
-      expect(url).toMatch(availableDomains[3]);
-
-      // circle back to first available domain
-      url = getExploreUrl({
-        formData,
-        endpointType: 'json',
-        allowDomainSharding: true,
-      });
-      expect(url).toMatch(availableDomains[1]);
-    });
-    test('not generate url to different domains without flag', () => {
-      let csvURL = getExploreUrl({
-        formData,
-        endpointType: 'csv',
-      });
-      expect(csvURL).toMatch(availableDomains[0]);
-
-      csvURL = getExploreUrl({
-        formData,
-        endpointType: 'csv',
-      });
-      expect(csvURL).toMatch(availableDomains[0]);
     });
   });
 

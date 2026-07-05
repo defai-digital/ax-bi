@@ -48,7 +48,6 @@ import {
 } from 'src/components/MessageToasts/actions';
 import { logEvent } from 'src/logger/actions';
 import { Logger, LOG_ACTIONS_LOAD_CHART } from 'src/logger/LogUtils';
-import { allowCrossDomain as domainShardingEnabled } from 'src/utils/hostNamesConfig';
 import { updateDataMask } from 'src/dataMask/actions';
 import { waitForAsyncData } from 'src/middleware/asyncEvent';
 import { safeStringify } from 'src/utils/safeStringify';
@@ -415,17 +414,12 @@ const legacyChartDataRequest = async (
   parseMethod?: string,
 ): Promise<ChartDataRequestResponse> => {
   const endpointType = getLegacyEndpointType({ resultFormat, resultType });
-  const allowDomainSharding = Boolean(
-    // eslint-disable-next-line camelcase
-    domainShardingEnabled && requestParams?.dashboard_id,
-  );
   const url = getExploreUrl({
     formData: formData as QueryFormData & {
       label_colors?: Record<string, string>;
     },
     endpointType,
     force,
-    allowDomainSharding,
     method,
     requestParams: requestParams.dashboard_id
       ? { dashboard_id: String(requestParams.dashboard_id) }
@@ -478,14 +472,9 @@ const v1ChartDataRequest = async (
   if (dashboardId !== undefined) qs.dashboard_id = String(dashboardId);
   if (force) qs.force = String(force);
 
-  const allowDomainSharding = Boolean(
-    // eslint-disable-next-line camelcase
-    domainShardingEnabled && requestParams?.dashboard_id,
-  );
   const url = getChartDataUri({
     path: '/api/v1/chart/data',
     qs,
-    allowDomainSharding,
   }).toString();
 
   const querySettings: QuerySettings = {
@@ -511,17 +500,10 @@ export async function getChartDataRequest({
   requestParams = {},
   ownState = {},
 }: GetChartDataRequestParams): Promise<ChartDataRequestResponse> {
-  let querySettings: RequestParams = {
+  const querySettings: RequestParams = {
     ...requestParams,
   };
 
-  if (domainShardingEnabled) {
-    querySettings = {
-      ...querySettings,
-      mode: 'cors',
-      credentials: 'include',
-    };
-  }
   const [useLegacyApi, parseMethod] = getQuerySettings(formData);
   if (useLegacyApi) {
     return legacyChartDataRequest(

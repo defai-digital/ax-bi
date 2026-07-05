@@ -27,12 +27,11 @@ describe('Get ChartUri', () => {
     (path: string) => `/prefix${path}`,
   );
 
-  test('Get ChartUri when allowDomainSharding:false', () => {
+  test('Get ChartUri', () => {
     expect(
       getChartDataUri({
         path: '/path',
         qs: { key: 'same-string' },
-        allowDomainSharding: false,
       }),
     ).toEqual({
       _deferred_build: true,
@@ -47,33 +46,6 @@ describe('Get ChartUri', () => {
         preventInvalidHostname: false,
         protocol: 'http',
         query: 'key=same-string',
-        urn: null,
-        username: null,
-      },
-      _string: '',
-    });
-  });
-
-  test('Get ChartUri when allowDomainSharding:true', () => {
-    expect(
-      getChartDataUri({
-        path: '/path-allowDomainSharding-true',
-        qs: { key: 'allowDomainSharding-true' },
-        allowDomainSharding: true,
-      }),
-    ).toEqual({
-      _deferred_build: true,
-      _parts: {
-        duplicateQueryParameters: false,
-        escapeQuerySpace: true,
-        fragment: null,
-        hostname: undefined,
-        password: null,
-        path: '/prefix/path-allowDomainSharding-true',
-        port: '',
-        preventInvalidHostname: false,
-        protocol: 'http',
-        query: 'key=allowDomainSharding-true',
         urn: null,
         username: null,
       },
