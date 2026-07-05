@@ -31,17 +31,15 @@ logging.getLogger("MARKDOWN").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# TODO: duplicate code with DatabaseDao, below function should be moved or use dao
 def get_or_create_db(
     database_name: str, sqlalchemy_uri: str, always_create: bool | None = True
 ) -> Database:
     # pylint: disable=import-outside-toplevel
     from superset import db
+    from superset.daos.database import DatabaseDAO
     from superset.models import core as models
 
-    database = (
-        db.session.query(models.Database).filter_by(database_name=database_name).first()
-    )
+    database = DatabaseDAO.get_database_by_name(database_name)
 
     # databases with a fixed UUID
     uuids = {
