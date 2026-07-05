@@ -42,6 +42,21 @@ afterEach(() => {
   global.fetch = originalFetch;
 });
 
+type ClientRequest<TMethod extends keyof SupersetClient> =
+  SupersetClient[TMethod] extends (
+    request: infer TRequest,
+    ...args: unknown[]
+  ) => unknown
+    ? TRequest
+    : never;
+
+function requestFor<TMethod extends keyof SupersetClient>(
+  _method: TMethod,
+  request: unknown,
+): ClientRequest<TMethod> {
+  return request as ClientRequest<TMethod>;
+}
+
 test('checkHealth returns Superset status and forwards request ID', async () => {
   let seenInput: RequestInfo | URL | undefined;
   let seenInit: RequestInit | undefined;
@@ -292,7 +307,7 @@ test('checkPermission fails closed for invalid request shapes', async () => {
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.checkPermission({
+  const result = await client.checkPermission(requestFor('checkPermission', {
     contractVersion: AUTHORIZATION_CONTRACT_VERSION,
     principal: {
       type: 'service',
@@ -303,7 +318,7 @@ test('checkPermission fails closed for invalid request shapes', async () => {
       id: 5,
     },
     action: 'read',
-  } as unknown as Parameters<SupersetClient['checkPermission']>[0]);
+  }));
 
   expect(result).toEqual({
     contractVersion: AUTHORIZATION_CONTRACT_VERSION,
@@ -360,7 +375,7 @@ test('checkPermission fails closed for extra authorization fields', async () => 
     },
   ]) {
     const result = await client.checkPermission(
-      request as unknown as Parameters<SupersetClient['checkPermission']>[0],
+      requestFor('checkPermission', request),
     );
 
     expect(result).toEqual({
@@ -419,7 +434,7 @@ test('checkPermission fails closed for unsafe authorization strings', async () =
     },
   ]) {
     const result = await client.checkPermission(
-      request as unknown as Parameters<SupersetClient['checkPermission']>[0],
+      requestFor('checkPermission', request),
     );
 
     expect(result).toEqual({
@@ -440,17 +455,19 @@ test('checkPermission fails closed for wrong authorization request contract vers
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.checkPermission({
-    contractVersion: 'authorization.v0',
-    principal: {
-      type: 'service',
-    },
-    resource: {
-      type: 'dashboard',
-      id: 5,
-    },
-    action: 'read',
-  } as unknown as Parameters<SupersetClient['checkPermission']>[0]);
+  const result = await client.checkPermission(
+    requestFor('checkPermission', {
+      contractVersion: 'authorization.v0',
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    }),
+  );
 
   expect(result).toEqual({
     contractVersion: AUTHORIZATION_CONTRACT_VERSION,
@@ -1144,13 +1161,15 @@ test('searchAssets rejects invalid request shapes before querying Superset', asy
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.searchAssets({
-    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
-    query: 'sales',
-    assetTypes: 'dashboard',
-    includeCertifiedOnly: false,
-    limit: 10,
-  } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
+  const result = await client.searchAssets(
+    requestFor('searchAssets', {
+      contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+      query: 'sales',
+      assetTypes: 'dashboard',
+      includeCertifiedOnly: false,
+      limit: 10,
+    }),
+  );
 
   expect(result).toEqual({
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -1168,14 +1187,16 @@ test('searchAssets rejects extra request fields before querying Superset', async
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.searchAssets({
-    contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
-    query: 'sales',
-    assetTypes: ['dashboard'],
-    includeCertifiedOnly: false,
-    limit: 10,
-    tenant: 'ax',
-  } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
+  const result = await client.searchAssets(
+    requestFor('searchAssets', {
+      contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+      query: 'sales',
+      assetTypes: ['dashboard'],
+      includeCertifiedOnly: false,
+      limit: 10,
+      tenant: 'ax',
+    }),
+  );
 
   expect(result).toEqual({
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -1193,13 +1214,15 @@ test('searchAssets rejects wrong request contract versions before querying Super
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.searchAssets({
-    contractVersion: 'asset-search.v0',
-    query: 'sales',
-    assetTypes: ['dashboard'],
-    includeCertifiedOnly: false,
-    limit: 10,
-  } as unknown as Parameters<SupersetClient['searchAssets']>[0]);
+  const result = await client.searchAssets(
+    requestFor('searchAssets', {
+      contractVersion: 'asset-search.v0',
+      query: 'sales',
+      assetTypes: ['dashboard'],
+      includeCertifiedOnly: false,
+      limit: 10,
+    }),
+  );
 
   expect(result).toEqual({
     contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
@@ -1753,7 +1776,7 @@ test('listAnnotations rejects malformed requests before querying Superset', asyn
   const client = new SupersetClient(buildConfig({}));
 
   const result = await client.listAnnotations(
-    null as unknown as Parameters<SupersetClient['listAnnotations']>[0],
+    requestFor('listAnnotations', null),
   );
 
   expect(result).toEqual({
@@ -2015,7 +2038,7 @@ test('listDashboards rejects malformed requests before querying Superset', async
   const client = new SupersetClient(buildConfig({}));
 
   const result = await client.listDashboards(
-    null as unknown as Parameters<SupersetClient['listDashboards']>[0],
+    requestFor('listDashboards', null),
   );
 
   expect(result).toEqual({
@@ -2245,17 +2268,19 @@ test('listDashboards rejects invalid search values before querying Superset', as
   const client = new SupersetClient(buildConfig({}));
 
   for (const search of ['sales\nregion', '   ', { query: 'sales' }]) {
-    const result = await client.listDashboards({
-      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
-      filters: [],
-      selectColumns: [],
-      search,
-      orderDirection: 'asc',
-      page: 1,
-      pageSize: 10,
-      createdByMe: false,
-      ownedByMe: false,
-    } as unknown as Parameters<SupersetClient['listDashboards']>[0]);
+    const result = await client.listDashboards(
+      requestFor('listDashboards', {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        filters: [],
+        selectColumns: [],
+        search,
+        orderDirection: 'asc',
+        page: 1,
+        pageSize: 10,
+        createdByMe: false,
+        ownedByMe: false,
+      }),
+    );
 
     expect(result.warnings).toEqual([
       'dashboard list request contains invalid filters',
@@ -2324,22 +2349,24 @@ test('listDashboards rejects mixed-type filter arrays before querying Superset',
   };
   const client = new SupersetClient(buildConfig({}));
 
-  const result = await client.listDashboards({
-    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
-    filters: [
-      {
-        col: 'published',
-        opr: 'in',
-        value: [true, 'false'],
-      },
-    ],
-    selectColumns: [],
-    orderDirection: 'asc',
-    page: 1,
-    pageSize: 10,
-    createdByMe: false,
-    ownedByMe: false,
-  } as unknown as Parameters<SupersetClient['listDashboards']>[0]);
+  const result = await client.listDashboards(
+    requestFor('listDashboards', {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [
+        {
+          col: 'published',
+          opr: 'in',
+          value: [true, 'false'],
+        },
+      ],
+      selectColumns: [],
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    }),
+  );
 
   expect(result).toEqual({
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
