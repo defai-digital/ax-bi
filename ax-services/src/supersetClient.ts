@@ -1524,21 +1524,18 @@ function toDashboardListItem(
 
   return omitUndefined<DashboardListItem>({
     id: item.id,
-    dashboardTitle:
-      typeof item.dashboard_title === 'string' ? item.dashboard_title : undefined,
-    slug: typeof item.slug === 'string' ? item.slug : undefined,
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    certifiedBy:
-      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    dashboardTitle: optionalString(item.dashboard_title),
+    slug: optionalString(item.slug),
+    description: optionalString(item.description),
+    certifiedBy: optionalString(item.certified_by),
     certificationDetails:
       typeof item.certification_details === 'string'
         ? item.certification_details
         : undefined,
-    published: typeof item.published === 'boolean' ? item.published : undefined,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    url: typeof item.url === 'string' ? item.url : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    published: optionalBoolean(item.published),
+    uuid: optionalString(item.uuid),
+    url: optionalString(item.url),
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
@@ -1553,19 +1550,17 @@ function toChartListItem(item: SupersetListItem): ChartListItem | undefined {
 
   return omitUndefined<ChartListItem>({
     id: item.id,
-    sliceName: typeof item.slice_name === 'string' ? item.slice_name : undefined,
-    vizType: typeof item.viz_type === 'string' ? item.viz_type : undefined,
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    certifiedBy:
-      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    sliceName: optionalString(item.slice_name),
+    vizType: optionalString(item.viz_type),
+    description: optionalString(item.description),
+    certifiedBy: optionalString(item.certified_by),
     certificationDetails:
       typeof item.certification_details === 'string'
         ? item.certification_details
         : undefined,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    url: typeof item.url === 'string' ? item.url : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    uuid: optionalString(item.uuid),
+    url: optionalString(item.url),
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
@@ -1580,18 +1575,16 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
 
   return omitUndefined<DatasetListItem>({
     id: item.id,
-    tableName: typeof item.table_name === 'string' ? item.table_name : undefined,
-    schema: typeof item.schema === 'string' ? item.schema : undefined,
+    tableName: optionalString(item.table_name),
+    schema: optionalString(item.schema),
     databaseName: extractDatabaseName(item),
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    certifiedBy:
-      typeof item.certified_by === 'string' ? item.certified_by : undefined,
+    description: optionalString(item.description),
+    certifiedBy: optionalString(item.certified_by),
     certificationDetails:
       typeof item.certification_details === 'string'
         ? item.certification_details
         : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
@@ -1606,8 +1599,8 @@ function toDatasetListItem(item: SupersetListItem): DatasetListItem | undefined 
         : isSupersetId(item.database?.id)
           ? item.database.id
           : undefined,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    url: typeof item.url === 'string' ? item.url : undefined,
+    uuid: optionalString(item.uuid),
+    url: optionalString(item.url),
   });
 }
 
@@ -1618,19 +1611,16 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
 
   return omitUndefined<DatabaseListItem>({
     id: item.id,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    databaseName:
-      typeof item.database_name === 'string' ? item.database_name : undefined,
-    backend: typeof item.backend === 'string' ? item.backend : undefined,
+    uuid: optionalString(item.uuid),
+    databaseName: optionalString(item.database_name),
+    backend: optionalString(item.backend),
     exposeInSqllab:
       typeof item.expose_in_sqllab === 'boolean'
         ? item.expose_in_sqllab
         : undefined,
-    allowCtas:
-      typeof item.allow_ctas === 'boolean' ? item.allow_ctas : undefined,
-    allowCvas:
-      typeof item.allow_cvas === 'boolean' ? item.allow_cvas : undefined,
-    allowDml: typeof item.allow_dml === 'boolean' ? item.allow_dml : undefined,
+    allowCtas: optionalBoolean(item.allow_ctas),
+    allowCvas: optionalBoolean(item.allow_cvas),
+    allowDml: optionalBoolean(item.allow_dml),
     allowFileUpload:
       typeof item.allow_file_upload === 'boolean'
         ? item.allow_file_upload
@@ -1658,15 +1648,14 @@ function toDatabaseListItem(item: SupersetListItem): DatabaseListItem | undefine
       typeof item.is_managed_externally === 'boolean'
         ? item.is_managed_externally
         : undefined,
-    externalUrl:
-      typeof item.external_url === 'string' ? item.external_url : undefined,
+    externalUrl: optionalString(item.external_url),
     extra: isRecord(item.extra) ? item.extra : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOn: optionalString(item.created_on),
     createdOnHumanized:
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
@@ -1683,17 +1672,16 @@ function toSavedQueryListItem(
 
   return omitUndefined<SavedQueryListItem>({
     id: item.id,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    label: typeof item.label === 'string' ? item.label : undefined,
-    sql: typeof item.sql === 'string' ? item.sql : undefined,
+    uuid: optionalString(item.uuid),
+    label: optionalString(item.label),
+    sql: optionalString(item.sql),
     dbId: isSupersetId(item.db_id) ? item.db_id : undefined,
-    schema: typeof item.schema === 'string' ? item.schema : undefined,
-    catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
-    lastRun: typeof item.last_run === 'string' ? item.last_run : undefined,
+    schema: optionalString(item.schema),
+    catalog: optionalString(item.catalog),
+    description: optionalString(item.description),
+    changedOn: optionalString(item.changed_on),
+    createdOn: optionalString(item.created_on),
+    lastRun: optionalString(item.last_run),
   });
 }
 
@@ -1706,10 +1694,10 @@ function toAnnotationLayerListItem(
 
   return omitUndefined<AnnotationLayerListItem>({
     id: item.id,
-    name: typeof item.name === 'string' ? item.name : undefined,
-    descr: typeof item.descr === 'string' ? item.descr : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    name: optionalString(item.name),
+    descr: optionalString(item.descr),
+    changedOn: optionalString(item.changed_on),
+    createdOn: optionalString(item.created_on),
   });
 }
 
@@ -1723,13 +1711,11 @@ function toAnnotationListItem(
 
   return omitUndefined<AnnotationListItem>({
     id: item.id,
-    shortDescr:
-      typeof item.short_descr === 'string' ? item.short_descr : undefined,
-    longDescr: typeof item.long_descr === 'string' ? item.long_descr : undefined,
-    startDttm: typeof item.start_dttm === 'string' ? item.start_dttm : undefined,
-    endDttm: typeof item.end_dttm === 'string' ? item.end_dttm : undefined,
-    jsonMetadata:
-      typeof item.json_metadata === 'string' ? item.json_metadata : undefined,
+    shortDescr: optionalString(item.short_descr),
+    longDescr: optionalString(item.long_descr),
+    startDttm: optionalString(item.start_dttm),
+    endDttm: optionalString(item.end_dttm),
+    jsonMetadata: optionalString(item.json_metadata),
     layerId: isSupersetId(item.layer_id) ? item.layer_id : fallbackLayerId,
   });
 }
@@ -1741,10 +1727,9 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
 
   return omitUndefined<QueryListItem>({
     id: item.id,
-    sql: typeof item.sql === 'string' ? item.sql : undefined,
-    executedSql:
-      typeof item.executed_sql === 'string' ? item.executed_sql : undefined,
-    status: typeof item.status === 'string' ? item.status : undefined,
+    sql: optionalString(item.sql),
+    executedSql: optionalString(item.executed_sql),
+    status: optionalString(item.status),
     startTime: isNonNegativeFiniteNumber(item.start_time)
       ? item.start_time
       : undefined,
@@ -1758,17 +1743,16 @@ function toQueryListItem(item: SupersetListItem): QueryListItem | undefined {
         : isSupersetId(item.database?.id)
           ? item.database.id
           : undefined,
-    schema: typeof item.schema === 'string' ? item.schema : undefined,
-    catalog: typeof item.catalog === 'string' ? item.catalog : undefined,
-    tabName: typeof item.tab_name === 'string' ? item.tab_name : undefined,
-    errorMessage:
-      typeof item.error_message === 'string' ? item.error_message : undefined,
-    clientId: typeof item.client_id === 'string' ? item.client_id : undefined,
+    schema: optionalString(item.schema),
+    catalog: optionalString(item.catalog),
+    tabName: optionalString(item.tab_name),
+    errorMessage: optionalString(item.error_message),
+    clientId: optionalString(item.client_id),
     limit: isNonNegativeInteger(item.limit) ? item.limit : undefined,
     progress: isNonNegativeFiniteNumber(item.progress)
       ? item.progress
       : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOn: optionalString(item.changed_on),
     userId: isSupersetId(item.user_id)
       ? item.user_id
       : isSupersetId(item.user?.id)
@@ -1784,33 +1768,30 @@ function toReportListItem(item: SupersetListItem): ReportListItem | undefined {
 
   return omitUndefined<ReportListItem>({
     id: item.id,
-    name: typeof item.name === 'string' ? item.name : undefined,
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    type: typeof item.type === 'string' ? item.type : undefined,
-    active: typeof item.active === 'boolean' ? item.active : undefined,
-    crontab: typeof item.crontab === 'string' ? item.crontab : undefined,
+    name: optionalString(item.name),
+    description: optionalString(item.description),
+    type: optionalString(item.type),
+    active: optionalBoolean(item.active),
+    crontab: optionalString(item.crontab),
     dashboardId:
       isSupersetId(item.dashboard_id) ? item.dashboard_id : undefined,
     chartId: isSupersetId(item.chart_id) ? item.chart_id : undefined,
-    lastEvalDttm:
-      typeof item.last_eval_dttm === 'string' ? item.last_eval_dttm : undefined,
+    lastEvalDttm: optionalString(item.last_eval_dttm),
     lastEvalDttmHumanized:
       typeof item.last_eval_dttm_humanized === 'string'
         ? item.last_eval_dttm_humanized
         : undefined,
-    lastState:
-      typeof item.last_state === 'string' ? item.last_state : undefined,
+    lastState: optionalString(item.last_state),
     creationMethod:
       typeof item.creation_method === 'string'
         ? item.creation_method
         : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOn: optionalString(item.created_on),
     createdOnHumanized:
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
@@ -1825,7 +1806,7 @@ function toRoleListItem(item: SupersetListItem): RoleListItem | undefined {
 
   return omitUndefined<RoleListItem>({
     id: item.id,
-    name: typeof item.name === 'string' ? item.name : undefined,
+    name: optionalString(item.name),
   });
 }
 
@@ -1836,13 +1817,12 @@ function toRlsListItem(item: SupersetListItem): RlsListItem | undefined {
 
   return omitUndefined<RlsListItem>({
     id: item.id,
-    name: typeof item.name === 'string' ? item.name : undefined,
-    filterType:
-      typeof item.filter_type === 'string' ? item.filter_type : undefined,
+    name: optionalString(item.name),
+    filterType: optionalString(item.filter_type),
     tables: mapRlsRefs(item.tables, toRlsTableRef),
     roles: mapRlsRefs(item.roles, toRlsRoleRef),
-    clause: typeof item.clause === 'string' ? item.clause : undefined,
-    groupKey: typeof item.group_key === 'string' ? item.group_key : undefined,
+    clause: optionalString(item.clause),
+    groupKey: optionalString(item.group_key),
     changedOn:
       typeof item.changed_on === 'string'
         ? item.changed_on
@@ -1900,16 +1880,15 @@ function toTagListItem(item: SupersetListItem): TagListItem | undefined {
 
   return omitUndefined<TagListItem>({
     id: item.id,
-    name: typeof item.name === 'string' ? item.name : undefined,
-    type: typeof item.type === 'string' ? item.type : undefined,
-    description:
-      typeof item.description === 'string' ? item.description : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
+    name: optionalString(item.name),
+    type: optionalString(item.type),
+    description: optionalString(item.description),
+    changedOn: optionalString(item.changed_on),
     changedOnHumanized:
       typeof item.changed_on_humanized === 'string'
         ? item.changed_on_humanized
         : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    createdOn: optionalString(item.created_on),
     createdOnHumanized:
       typeof item.created_on_humanized === 'string'
         ? item.created_on_humanized
@@ -1924,14 +1903,14 @@ function toTaskListItem(item: SupersetListItem): TaskListItem | undefined {
 
   return omitUndefined<TaskListItem>({
     id: item.id,
-    uuid: typeof item.uuid === 'string' ? item.uuid : undefined,
-    taskType: typeof item.task_type === 'string' ? item.task_type : undefined,
-    taskKey: typeof item.task_key === 'string' ? item.task_key : undefined,
-    taskName: typeof item.task_name === 'string' ? item.task_name : undefined,
-    status: typeof item.status === 'string' ? item.status : undefined,
-    scope: typeof item.scope === 'string' ? item.scope : undefined,
-    changedOn: typeof item.changed_on === 'string' ? item.changed_on : undefined,
-    createdOn: typeof item.created_on === 'string' ? item.created_on : undefined,
+    uuid: optionalString(item.uuid),
+    taskType: optionalString(item.task_type),
+    taskKey: optionalString(item.task_key),
+    taskName: optionalString(item.task_name),
+    status: optionalString(item.status),
+    scope: optionalString(item.scope),
+    changedOn: optionalString(item.changed_on),
+    createdOn: optionalString(item.created_on),
   });
 }
 
@@ -2903,6 +2882,14 @@ function isAssetType(value: unknown): value is AssetType {
     value === 'dataset' ||
     value === 'metric'
   );
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function optionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 function isCacheTimeout(value: unknown): value is number {
