@@ -35,9 +35,15 @@ interface ChartCacheParams {
   cacheKey: string;
 }
 
-interface QueryStatusParams {
-  jobId: string;
-}
+const hasInvalidCacheKeyCharacter = (cacheKey: string): boolean =>
+  [...cacheKey].some(char => /\s/.test(char) || char.charCodeAt(0) <= 31);
+
+const isValidCacheKey = (cacheKey: string | undefined): cacheKey is string => {
+  if (!cacheKey) {
+    return false;
+  }
+  return cacheKey.length <= 256 && !hasInvalidCacheKeyCharacter(cacheKey);
+};
 
 /**
  * Validates the JWT cookie from an HTTP request.
@@ -104,7 +110,7 @@ const handleGetChartCache = async (
   const { cacheKey } = request.params;
 
   // Validate cache key format to prevent Redis injection via crafted keys
-  if (!cacheKey || cacheKey.length > 256 || /[\s\x00-\x1f]/.test(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send({ error: 'Invalid cache key' });
     return;
   }
@@ -143,7 +149,7 @@ const handleHeadChartCache = async (
 ): Promise<void> => {
   const { cacheKey } = request.params;
 
-  if (!cacheKey || cacheKey.length > 256 || /[\s\x00-\x1f]/.test(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send();
     return;
   }
