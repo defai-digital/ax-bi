@@ -130,9 +130,23 @@ import sys
 import json
 import ast
 import os
+import importlib.util
 sys.path.insert(0, '.')
-from superset.db_engine_specs.cloud_capabilities import (
-    get_cloud_connector_capability_for_values,
+
+cloud_capabilities_path = os.path.join(
+    'superset', 'db_engine_specs', 'cloud_capabilities.py'
+)
+cloud_capabilities_spec = importlib.util.spec_from_file_location(
+    'axbi_cloud_capabilities',
+    cloud_capabilities_path,
+)
+if cloud_capabilities_spec is None or cloud_capabilities_spec.loader is None:
+    raise RuntimeError(f'Could not load {cloud_capabilities_path}')
+cloud_capabilities_module = importlib.util.module_from_spec(cloud_capabilities_spec)
+sys.modules[cloud_capabilities_spec.name] = cloud_capabilities_module
+cloud_capabilities_spec.loader.exec_module(cloud_capabilities_module)
+get_cloud_connector_capability_for_values = (
+    cloud_capabilities_module.get_cloud_connector_capability_for_values
 )
 
 def eval_node(node):
