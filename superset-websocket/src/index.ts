@@ -22,7 +22,7 @@ import { inspect } from 'util';
 import WebSocket, { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import jwt, { Algorithm } from 'jsonwebtoken';
-import { parse } from 'cookie';
+import { parseCookie } from 'cookie';
 import Redis, { RedisOptions } from 'ioredis';
 import StatsD from 'hot-shots';
 import Fastify from 'fastify';
@@ -394,7 +394,7 @@ export const processStreamResults = async (
  * configured via 'jwtCookieName' in the config.
  */
 const readChannelId = (request: http.IncomingMessage): string => {
-  const cookies = parse(request.headers.cookie || '');
+  const cookies = parseCookie(request.headers.cookie || '');
   const token = cookies[opts.jwtCookieName];
 
   if (!token) throw new Error('JWT not present');
@@ -639,8 +639,8 @@ export const cleanChannel = (channel: string) => {
 // Fastify HTTP API server (Fast Data API Gateway)
 const fastify = Fastify({
   logger: false,
-  // Disable Fastify's own body limit; chart data payloads can be large
-  bodyLimit: 0,
+  // Keep Fastify's body limit effectively unbounded for large chart payloads.
+  bodyLimit: Number.MAX_SAFE_INTEGER,
 });
 
 export const getFastify = (): ReturnType<typeof Fastify> => fastify;

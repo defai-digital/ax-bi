@@ -62,8 +62,7 @@ import Fastify from 'fastify';
 import { registerChartCacheRoutes } from '../../src/routes/chartCache';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET =
-  'test123-test123-test123-test123-test123-test123-test123';
+const JWT_SECRET = 'test123-test123-test123-test123-test123-test123-test123';
 const COOKIE_NAME = 'test-async-token';
 
 const buildJwtCookie = (channelId: string): string => {

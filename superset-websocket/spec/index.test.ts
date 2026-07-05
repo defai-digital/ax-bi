@@ -32,7 +32,7 @@ import * as net from 'net';
 import { WebSocket } from 'ws';
 
 interface MockedRedisXrange {
-  (): Promise<server.StreamResult[]>;
+  (key: string, startId: string, endId: string): Promise<server.StreamResult[]>;
 }
 
 // NOTE: these mock variables needs to start with "mock" due to
@@ -251,7 +251,7 @@ describe('server', () => {
       expect(statsdIncrementMock).toHaveBeenCalledTimes(0);
       server.trackClient(channelId, socketInstance);
       expect(statsdIncrementMock).toHaveBeenCalledTimes(1);
-      expect(statsdIncrementMock).toHaveBeenNthCalledWith(
+      expect(statsdIncrementMock as jest.Mock).toHaveBeenNthCalledWith(
         1,
         'ws_connected_client',
       );
@@ -261,8 +261,8 @@ describe('server', () => {
 
       const message1 = `{"id":"1615426152415-0","channel_id":"${channelId}","job_id":"c9b99965-8f1e-4ce5-aa43-d6fc94d6a510","user_id":"1","status":"done","errors":[],"result_url":"/superset/explore_json/data/ejr-37281682b1282cdb8f25e0de0339b386"}`;
       const message2 = `{"id":"1615426152516-0","channel_id":"${channelId}","job_id":"f1e5bb1f-f2f1-4f21-9b2f-c9b91dcc9b59","user_id":"1","status":"done","errors":[],"result_url":"/api/v1/chart/data/qc-64e8452dc9907dd77746cb75a19202de"}`;
-      expect(sendMock).toHaveBeenCalledWith(message1);
-      expect(sendMock).toHaveBeenCalledWith(message2);
+      expect(sendMock as jest.Mock).toHaveBeenCalledWith(message1);
+      expect(sendMock as jest.Mock).toHaveBeenCalledWith(message2);
     });
 
     test('channel not present', async () => {
@@ -287,14 +287,14 @@ describe('server', () => {
       expect(statsdIncrementMock).toHaveBeenCalledTimes(0);
       server.trackClient(channelId, socketInstance);
       expect(statsdIncrementMock).toHaveBeenCalledTimes(1);
-      expect(statsdIncrementMock).toHaveBeenNthCalledWith(
+      expect(statsdIncrementMock as jest.Mock).toHaveBeenNthCalledWith(
         1,
         'ws_connected_client',
       );
 
       server.processStreamResults(streamReturnValue);
       expect(statsdIncrementMock).toHaveBeenCalledTimes(2);
-      expect(statsdIncrementMock).toHaveBeenNthCalledWith(
+      expect(statsdIncrementMock as jest.Mock).toHaveBeenNthCalledWith(
         2,
         'ws_client_send_error',
       );
@@ -411,7 +411,7 @@ describe('server', () => {
 
       expect(terminateMock).toHaveBeenCalled();
       expect(sendMock).not.toHaveBeenCalled();
-      expect(statsdIncrementMock).toHaveBeenCalledWith(
+      expect(statsdIncrementMock as jest.Mock).toHaveBeenCalledWith(
         'ws_client_backpressure_disconnect',
       );
       expect(cleanChannelMock).toHaveBeenCalledWith(channelId);
@@ -829,7 +829,9 @@ describe('server', () => {
       expect(socketDestroySpy).toHaveBeenCalled();
       expect(wssUpgradeSpy).not.toHaveBeenCalled();
       // rejected upgrades are counted for auditability
-      expect(statsdIncrementMock).toHaveBeenCalledWith('ws_upgrade_rejected');
+      expect(statsdIncrementMock as jest.Mock).toHaveBeenCalledWith(
+        'ws_upgrade_rejected',
+      );
     });
 
     test('valid JWT, no channel', async () => {

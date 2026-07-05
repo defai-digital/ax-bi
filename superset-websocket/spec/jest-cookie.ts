@@ -16,10 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  moduleNameMapper: {
-    '^cookie$': '<rootDir>/spec/jest-cookie',
-  },
-};
+
+export const parseCookie = (header: string): Record<string, string> =>
+  header.split(';').reduce<Record<string, string>>((cookies, part) => {
+    const [name, ...valueParts] = part.trim().split('=');
+    if (!name) {
+      return cookies;
+    }
+    cookies[name] = decodeURIComponent(valueParts.join('='));
+    return cookies;
+  }, {});
