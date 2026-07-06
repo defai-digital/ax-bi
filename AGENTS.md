@@ -4,33 +4,18 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 
 ## Project Overview
 
-This is the **AX-Office fork** of Apache Superset — a data visualization platform with a Flask/Python backend and React/TypeScript frontend. Beyond stock Superset, this fork carries:
+This is the **AX-BI fork** of Apache Superset — a data visualization platform with a Flask/Python backend and React/TypeScript frontend. Beyond stock Superset, this fork carries:
 
 - **MCP service** (`superset/mcp_service/`) — a Model Context Protocol server exposing Superset resources to LLM agents. Has its own [`ARCHITECTURE.md`](superset/mcp_service/ARCHITECTURE.md), [`SECURITY.md`](superset/mcp_service/SECURITY.md), and [`PRODUCTION.md`](superset/mcp_service/PRODUCTION.md). **Read those before touching `superset/mcp_service/`.**
 - **GenAI BI direction** — see [`GENAI_BI_ROADMAP.md`](GENAI_BI_ROADMAP.md) for the product direction (prompt-to-dashboard, governed semantic layer, AI-ready metadata).
-- **Boundary-cleanup effort** — [`BOUNDARY_REPORT.md`](BOUNDARY_REPORT.md) tracks module-boundary findings and which are done vs. deferred. Consult it before large refactors.
-- **Upstream Superset sync** — use the controlled merge process in [`docs/developer_docs/upstream-sync-policy.md`](docs/developer_docs/upstream-sync-policy.md). Do not merge upstream PRs blindly; compare against release branches/tags and produce a gap report.
+- **Boundary-cleanup effort** — [`BOUNDARY_REPORT.md`](BOUNDARY_REPORT.md) tracks module-boundary findings and which are done vs. deferred. Bug write-ups live in `ax-internal/bugs/`. Consult these before large refactors.
 - **`superset-core`** (`superset-core/`) — local editable Python package (`apache-superset-core`) providing shared base classes: `BaseDAO`, `BaseCommand` mixins, `RestApi`, semantic layer types, task framework, and MCP decorators (`superset_core.*` namespace). Changes here propagate to the main app.
 - **`ax-services`** (`ax-services/`) — TypeScript sidecar (port 5010) for runtime modernization: health/readiness checks, MCP asset search proxy, and Superset connectivity. Has its own `jest.config.js` and contract schemas in `contracts/`.
 - **`superset-desktop`** (`superset-desktop/`) — thin Tauri v2 desktop shell that loads the web app. Rust backend in `src-tauri/`, TypeScript bridge in `src/`. Supports `axbi://` deep links, system tray, and cross-platform builds.
 - **`superset-extensions-cli`** (`superset-extensions-cli/`) — CLI tool (`superset-extensions init/build/bundle`) for scaffolding and packaging Superset extensions.
-- **`@defai/ax-sdk`** (`packages/ax-sdk/`) — TypeScript SDK providing typed REST + MCP access to AX-Office for downstream products (ax-studio, ax-code). Dual-protocol: REST CRUD for dashboards/charts/datasets/databases/queries, plus AI tool wrappers via MCP (prompt-to-dashboard, semantic search, SQL execution). See [`packages/ax-sdk/README.md`](packages/ax-sdk/README.md).
+- **`ax-internal/`** — internal design docs (`docs/`), reference implementations (`reference/evidence/`), and bug reports (`bugs/`). Read before starting features covered by existing ADRs/PRDs.
+
 The agent-instruction files (`CLAUDE.md`, `GEMINI.md`, `GPT.md`) are **symlinks to `AGENTS.md`**. Edit this file — all four update together.
-
-## Naming Policy
-
-AX-Office uses an external rename strategy. Public commands and local development
-paths use AX-Office names: `ax-office`, `ax-office-mcp`, and `ax-office-frontend/`.
-
-Keep core Superset namespaces unless a task is explicitly scoped as a full
-compatibility migration. This includes `superset/`, `superset_config.py`,
-`superset-core/`, `superset-extensions-cli/`, `superset-embedded-sdk/`,
-`superset-websocket/`, `helm/superset`, `@superset-ui/*`,
-`@apache-superset/core`, and `apache-superset-*` package metadata. These names
-preserve upstream sync, imports, migrations, extension contracts, operator
-configs, and existing deployments. See
-[`docs/developer_docs/ax-office-rename-policy.md`](docs/developer_docs/ax-office-rename-policy.md)
-before renaming any remaining `superset*` surface.
 
 ## Development Commands
 
@@ -38,10 +23,10 @@ before renaming any remaining `superset*` surface.
 
 ```bash
 # Run the development server (port 8088)
-ax-office run -p 8088 --with-threads --reload --debugger
+superset run -p 8088 --with-threads --reload --debugger
 
 # Run the MCP service (port 5008, requires: pip install fastmcp)
-ax-office mcp run --port 5008
+superset mcp run --port 5008
 
 # Run ALL backend tests
 pytest
@@ -56,19 +41,19 @@ pytest tests/unit_tests/path/to/test_file.py::TestClassName::test_method_name
 pytest tests/unit_tests/some_module/
 
 # Database migrations
-ax-office db upgrade              # Apply pending migrations
-ax-office db migrate -m "description"  # Create a new migration
+superset db upgrade              # Apply pending migrations
+superset db migrate -m "description"  # Create a new migration
 
 # Load examples
-ax-office load-examples
+superset load-examples
 ```
 
 ### Frontend (TypeScript/React)
 
-All frontend commands run from `ax-office-frontend/`:
+All frontend commands run from `superset-frontend/`:
 
 ```bash
-cd ax-office-frontend
+cd superset-frontend
 
 # Development server with hot reload (port 9000)
 npm run dev-server
@@ -138,21 +123,6 @@ npm run type           # TypeScript type checking
 npm run contracts:write  # Regenerate contract JSON schemas
 ```
 
-### AX SDK (`@defai/ax-sdk`)
-
-All commands run from `packages/ax-sdk/`:
-
-```bash
-cd packages/ax-sdk
-npm install
-npm run build       # ESM + CJS + type declarations
-npm run test        # Unit tests (Jest, 32 tests)
-npm run type        # TypeScript type checking
-npm run clean       # Remove dist/
-```
-
-The SDK has zero runtime dependencies (uses native `fetch`). It builds dual ESM/CJS outputs with full TypeScript declarations. When changing resource types or adding new AI tool wrappers, update the barrel exports in `src/index.ts`.
-
 ### Desktop (Tauri)
 
 ```bash
@@ -165,7 +135,7 @@ npm run build          # Release build with platform installers
 ### Playwright E2E Tests
 
 ```bash
-cd ax-office-frontend
+cd superset-frontend
 npm run playwright:test                              # All tests
 npm run playwright:ui                                # Interactive UI mode
 npx playwright test tests/auth/login.spec.ts         # Single file
@@ -236,7 +206,7 @@ Singletons initialized once at app startup, imported throughout the codebase:
 
 The MCP service runs as a **separate process** from the Superset web server with its own Flask app singleton (`superset/mcp_service/flask_singleton.py`). Key points:
 
-- Run via CLI: `ax-office mcp run` (see `superset/cli/mcp.py`)
+- Run via CLI: `superset mcp run` (see `superset/cli/mcp.py`)
 - Each resource (chart, dashboard, dataset, etc.) has a subdirectory with `tool/`, `schemas.py`, and optional `validation/`
 - Tool functions decorated with `@mcp.tool` and `@mcp_auth_hook` (manages `g.user`, session lifecycle)
 - Shared utilities in `superset/mcp_service/utils/` — use `config_utils.py` for Flask config access, `logging_utils.py` for event logging, `permissions_utils.py` for RBAC checks, `response_utils.py` for serialization
@@ -246,7 +216,7 @@ The MCP service runs as a **separate process** from the Superset web server with
 ### Frontend Structure
 
 ```
-ax-office-frontend/
+superset-frontend/
 ├── src/
 │   ├── features/           # Feature modules (charts, dashboards, datasets, etc.)
 │   ├── components/         # Shared reusable components
@@ -264,6 +234,22 @@ ax-office-frontend/
 ```
 
 npm workspaces link `packages/*` and `plugins/*` as local dependencies.
+
+### TypeScript Project References
+
+The frontend uses [TypeScript Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) to structure the codebase as a set of smaller, interconnected projects rather than one monolithic compilation unit. This setup is critical for incremental builds, faster type-checking, and clear module boundaries.
+
+**How it works:**
+
+- The root `ax-office-frontend/tsconfig.json` declares `"composite": true` and lists every sub-project in the `"references"` array (packages and plugins).
+- Each sub-project (`packages/superset-ui-core/`, `packages/superset-ui-chart-controls/`, `packages/superset-core/`, and every plugin under `plugins/`) has its own `tsconfig.json` with `"composite": true`. This produces `.d.ts` declaration files that downstream projects consume.
+- Path aliases in the root `tsconfig.json` (`"paths"` field) map `@superset-ui/core`, `@superset-ui/chart-controls`, `@apache-superset/core`, etc. to their respective `src/` directories so that IDEs and bundlers resolve to live source rather than stale build output.
+
+**Common pitfalls:**
+
+- **Stale `lib/` directories**: Each sub-project's `declarationDir` is `lib/`. If `lib/` is not excluded from the root `include` patterns, TypeScript will try to compile the generated `.d.ts` files as part of the program, causing hundreds of "file not found" errors. The root `tsconfig.json` must include `"**/lib/**"` in its `"exclude"` array.
+- **Forgetting to rebuild**: After changing a shared package (e.g., `superset-ui-core`), dependent plugins need the updated declarations. Run `npm run type` from the root to trigger an incremental build across all referenced projects in dependency order.
+- **Adding a new plugin/package**: You must (1) create a `tsconfig.json` with `"composite": true` in the new directory, and (2) add a `{ "path": "./plugins/<name>" }` entry to the root `tsconfig.json` `references` array. Without this, cross-project type resolution will silently fall back to `node_modules` and may use stale declarations.
 
 ## Ongoing Refactors — What NOT to Do
 
@@ -311,7 +297,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 
 **Python:** `SupersetTestCase` base class (`tests/integration_tests/base_tests.py`), `@with_config` / `@with_feature_flags` decorators, `login_as()` / `login_as_admin()` helpers, `create_dashboard()` / `create_slice()` utilities. Use `MagicMock()` for config objects; avoid `AsyncMock` for synchronous code. Test discovery uses `tests/` as root (`pytest.ini`). `asyncio_mode = auto` is set — async test functions run without explicit markers. SQLAlchemy 1.4→2.0 deprecation warnings are configured as errors in `pytest.ini` to prevent regression.
 
-**TypeScript:** Custom `render()` with providers at `ax-bi-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
+**TypeScript:** Custom `render()` with providers at `superset-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
 
 ## Pull Requests
 
@@ -329,7 +315,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 ## Environment
 
 - Python 3.10+ (see `pyproject.toml` classifiers)
-- Node.js (see `ax-office-frontend/package.json` `engines` field — currently ^24.16.0)
+- Node.js (see `superset-frontend/package.json` `engines` field — currently ^24.16.0)
 - SQLAlchemy 1.4 (not 2.0)
 - Backend config: `superset/config.py` (large file — search for specific settings rather than reading entirely)
 - Health check: `curl -f http://localhost:8088/health`
