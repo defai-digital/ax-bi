@@ -52,7 +52,7 @@ test('buildConfig returns service defaults', () => {
 
 test('buildConfig reads environment overrides', () => {
   const config = buildConfig({
-    AX_SERVICES_HOST: '0.0.0.0',
+    AX_SERVICES_HOST: '  0.0.0.0  ',
     AX_SERVICES_PORT: '6010',
     AX_SUPERSET_BASE_URL: 'https://superset.example.test/',
     AX_SUPERSET_HEALTH_PATH: 'healthz',
@@ -71,8 +71,8 @@ test('buildConfig reads environment overrides', () => {
     AX_SUPERSET_TAG_LIST_PATH: 'tags',
     AX_SUPERSET_TASK_LIST_PATH: 'tasks',
     AX_SUPERSET_TIMEOUT_MS: '1500',
-    AX_SUPERSET_INTERNAL_TOKEN: 'token-123',
-    AX_SERVICES_LOG_LEVEL: 'debug',
+    AX_SUPERSET_INTERNAL_TOKEN: '  token-123  ',
+    AX_SERVICES_LOG_LEVEL: ' DEBUG ',
   });
 
   expect(config.host).toBe('0.0.0.0');
@@ -100,17 +100,223 @@ test('buildConfig reads environment overrides', () => {
   expect(config.logLevel).toBe('debug');
 });
 
+test('buildConfig canonicalizes configured Superset paths', () => {
+  const config = buildConfig({
+    AX_SUPERSET_HEALTH_PATH: '  ///healthz  ',
+    AX_SUPERSET_CHART_LIST_PATH: '  charts  ',
+  });
+
+  expect(config.supersetHealthPath).toBe('/healthz');
+  expect(config.supersetAssetSearchPaths.chart).toBe('/charts');
+});
+
+test('buildConfig supports path-prefixed Superset base URLs', () => {
+  const config = buildConfig({
+    AX_SUPERSET_BASE_URL: 'https://example.test/superset/',
+  });
+
+  expect(config.supersetBaseUrl).toBe('https://example.test/superset');
+});
+
+test('buildConfig defaults blank host and log level values', () => {
+  const config = buildConfig({
+    AX_SERVICES_HOST: '   ',
+    AX_SERVICES_LOG_LEVEL: '   ',
+  });
+
+  expect(config.host).toBe('127.0.0.1');
+  expect(config.logLevel).toBe('info');
+});
+
+test('buildConfig accepts hostnames and IP listener addresses', () => {
+  expect(buildConfig({ AX_SERVICES_HOST: ' service.internal ' }).host).toBe(
+    'service.internal',
+  );
+  expect(buildConfig({ AX_SERVICES_HOST: '::1' }).host).toBe('::1');
+});
+
+test('buildConfig rejects host values with whitespace or control characters', () => {
+  expect(() => buildConfig({ AX_SERVICES_HOST: '127.0.0.1 localhost' })).toThrow(
+    'AX_SERVICES_HOST must not contain whitespace or control characters',
+  );
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost\nready' })).toThrow(
+    'AX_SERVICES_HOST must not contain whitespace or control characters',
+  );
+});
+
+test('buildConfig rejects ambiguous host listener values', () => {
+  const message =
+    'AX_SERVICES_HOST must be a hostname or IP address without scheme, path, or port';
+
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'http://localhost' })).toThrow(
+    message,
+  );
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost:5010' })).toThrow(
+    message,
+  );
+  expect(() =>
+    buildConfig({ AX_SERVICES_HOST: '/tmp/ax-services.sock' }),
+  ).toThrow(message);
+});
+
+test('buildConfig defaults blank numeric settings', () => {
+  const config = buildConfig({
+    AX_SERVICES_PORT: '   ',
+    AX_SUPERSET_TIMEOUT_MS: '   ',
+  });
+
+  expect(config.port).toBe(5010);
+  expect(config.supersetTimeoutMs).toBe(2000);
+});
+
 test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AX_SERVICES_PORT: 'abc' })).toThrow(
     'AX_SERVICES_PORT must be a positive integer',
   );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '0x1392' })).toThrow(
+    'AX_SERVICES_PORT must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '5_010' })).toThrow(
+    'AX_SERVICES_PORT must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SERVICES_PORT: '65536' })).toThrow(
+    'AX_SERVICES_PORT must be between 1 and 65535',
+  );
   expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '0' })).toThrow(
     'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
   );
+  expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '1e3' })).toThrow(
+    'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
+  );
+  expect(() => buildConfig({ AX_SUPERSET_TIMEOUT_MS: '1000.5' })).toThrow(
+    'AX_SUPERSET_TIMEOUT_MS must be a positive integer',
+  );
+  expect(() =>
+    buildConfig({ AX_SUPERSET_TIMEOUT_MS: '2147483648' }),
+  ).toThrow('AX_SUPERSET_TIMEOUT_MS must be between 1 and 2147483647');
+});
+
+test('buildConfig accepts maximum supported Superset timeout', () => {
+  const config = buildConfig({ AX_SUPERSET_TIMEOUT_MS: '2147483647' });
+
+  expect(config.supersetTimeoutMs).toBe(2147483647);
+});
+
+test('buildConfig treats blank optional token as absent', () => {
+  const config = buildConfig({ AX_SUPERSET_INTERNAL_TOKEN: '   ' });
+
+  expect(config.supersetInternalToken).toBeUndefined();
+});
+
+test('buildConfig rejects internal tokens with control characters', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_INTERNAL_TOKEN: 'token-123\nX-Other: value' }),
+  ).toThrow('AX_SUPERSET_INTERNAL_TOKEN must not contain control characters');
 });
 
 test('buildConfig rejects invalid Superset URL', () => {
   expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'not a url' })).toThrow(
-    'AX_SUPERSET_BASE_URL must be a valid URL',
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+  );
+  expect(() => buildConfig({ AX_SUPERSET_BASE_URL: 'http:dashboard' })).toThrow(
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+  );
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https:/dashboard' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+});
+
+test('buildConfig rejects unsupported Superset URL protocols', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'ftp://superset.example.test' }),
+  ).toThrow(
+    'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+  );
+});
+
+test('buildConfig rejects Superset base URLs with query or fragment', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https://example.test?tenant=ax' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_BASE_URL: 'https://example.test#dashboard' }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+});
+
+test('buildConfig rejects Superset base URLs with credentials', () => {
+  expect(() =>
+    buildConfig({
+      AX_SUPERSET_BASE_URL: 'https://user:pass@example.test/superset',
+    }),
+  ).toThrow('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL');
+});
+
+test('buildConfig rejects ambiguous Superset base URL paths', () => {
+  for (const AX_SUPERSET_BASE_URL of [
+    'https://example.test/superset/../admin',
+    'https://example.test/superset/%2e%2e/admin',
+    'https://example.test/superset%2fapi',
+    'https://example.test/superset/%zz',
+  ]) {
+    expect(() => buildConfig({ AX_SUPERSET_BASE_URL })).toThrow(
+      'AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL',
+    );
+  }
+});
+
+test('buildConfig rejects blank Superset path overrides', () => {
+  expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
+    'AX_SUPERSET_HEALTH_PATH must not be empty',
+  );
+});
+
+test('buildConfig rejects ambiguous Superset path overrides', () => {
+  const message =
+    'AX_SUPERSET_HEALTH_PATH must be a URL path without query, fragment, backslash, whitespace, or control characters';
+
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health?verbose=true' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health#ready' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: String.raw`api\v1\health` }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health\nready' }),
+  ).toThrow(message);
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/health ready' }),
+  ).toThrow(message);
+});
+
+test('buildConfig rejects Superset path overrides with dot segments', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/../health' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain dot path segments');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_CHART_LIST_PATH: 'api/./v1/chart' }),
+  ).toThrow('AX_SUPERSET_CHART_LIST_PATH must not contain dot path segments');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_METADATA_PATH: 'api/%2e%2e/dashboard/_info' }),
+  ).toThrow('AX_SUPERSET_METADATA_PATH must not contain dot path segments');
+});
+
+test('buildConfig rejects ambiguous percent-encoded Superset path overrides', () => {
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%2fhealth' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain encoded path separators');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%5chealth' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain encoded path separators');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api/%zz/health' }),
+  ).toThrow('AX_SUPERSET_HEALTH_PATH must contain valid percent-encoding');
+});
+
+test('buildConfig rejects unsupported log levels', () => {
+  expect(() => buildConfig({ AX_SERVICES_LOG_LEVEL: 'verbose' })).toThrow(
+    'AX_SERVICES_LOG_LEVEL must be one of: debug, info, warn, error, silent',
   );
 });

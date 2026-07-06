@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from sqlalchemy import update
 
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 class SetSystemDefaultThemeCommand(BaseCommand):
     def __init__(self, theme_id: int):
         self._theme_id = theme_id
-        self._theme: Optional[Theme] = None
+        self._theme: Theme | None = None
 
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:
@@ -64,7 +63,7 @@ class SetSystemDefaultThemeCommand(BaseCommand):
 class SetSystemDarkThemeCommand(BaseCommand):
     def __init__(self, theme_id: int):
         self._theme_id = theme_id
-        self._theme: Optional[Theme] = None
+        self._theme: Theme | None = None
 
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:

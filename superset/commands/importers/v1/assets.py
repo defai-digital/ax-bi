@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from marshmallow import Schema
 from marshmallow.exceptions import ValidationError
@@ -112,7 +112,7 @@ class ImportAssetsCommand(BaseCommand):
     def _import(  # noqa: C901
         configs: dict[str, Any],
         sparse: bool = False,
-        contents: Optional[dict[str, Any]] = None,
+        contents: dict[str, Any] | None = None,
         overwrite: bool = True,
     ) -> None:
         contents = {} if contents is None else contents
@@ -180,11 +180,11 @@ class ImportAssetsCommand(BaseCommand):
                 chart_ids[str(chart.uuid)] = chart.id
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        import_tag(
-                            config["tags"], contents, chart.id, "chart", db.session
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    import_tag(config["tags"], contents, chart.id, "chart", db.session)
 
         # import dashboards
         for file_name, config in configs.items():
@@ -212,15 +212,17 @@ class ImportAssetsCommand(BaseCommand):
                 db.session.execute(insert(dashboard_slices).values(dashboard_chart_ids))
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        import_tag(
-                            config["tags"],
-                            contents,
-                            dashboard.id,
-                            "dashboard",
-                            db.session,
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    import_tag(
+                        config["tags"],
+                        contents,
+                        dashboard.id,
+                        "dashboard",
+                        db.session,
+                    )
 
                 # Migrate any filter-box charts to native dashboard filters.
                 migrate_dashboard(dashboard)
@@ -312,7 +314,7 @@ class ImportAssetsCommand(BaseCommand):
 
         # verify that the metadata file is present and valid
         try:
-            metadata: Optional[dict[str, str]] = load_metadata(self.contents)
+            metadata: dict[str, str] | None = load_metadata(self.contents)
         except ValidationError as exc:
             exceptions.append(exc)
             metadata = None

@@ -32,6 +32,8 @@ module.exports = {
       ],
     },
     'runtime-modernization',
+    'upstream-sync-policy',
+    'ax-bi-rename-policy',
     {
       type: 'category',
       label: 'Extensions',

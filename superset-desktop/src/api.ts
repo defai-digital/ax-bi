@@ -29,11 +29,29 @@ export interface AppConfig {
   version: string;
 }
 
+function isAppConfig(value: unknown): value is AppConfig {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  const config = value as Record<string, unknown>;
+  return (
+    typeof config['server_url'] === 'string' &&
+    typeof config['sso_enabled'] === 'boolean' &&
+    typeof config['version'] === 'string'
+  );
+}
+
 /**
  * Get the application configuration
  */
 export async function getAppConfig(): Promise<AppConfig> {
-  return invoke<AppConfig>('get_app_config');
+  const config = await invoke<unknown>('get_app_config');
+  if (!isAppConfig(config)) {
+    throw new Error('Native app config response has an invalid shape');
+  }
+
+  return config;
 }
 
 /**

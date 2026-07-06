@@ -144,7 +144,7 @@ class SqlResultExportCommand(BaseCommand):
                 sql = self._query.executed_sql
                 script = SQLScript(sql, self._query.database.db_engine_spec.engine)
                 # when a query has multiple statements only the last one returns data
-                limit = script.statements[-1].get_limit_value()
+                limit = script.statements[-1].get_limit_value() if script.statements else None
             if limit is not None and self._query.limiting_factor in {
                 LimitingFactor.QUERY,
                 LimitingFactor.DROPDOWN,

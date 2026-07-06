@@ -91,7 +91,7 @@ MAPBOX_API_KEY = env('MAPBOX_API_KEY', '')
 CACHE_CONFIG = {
       'CACHE_TYPE': 'RedisCache',
       'CACHE_DEFAULT_TIMEOUT': 300,
-      'CACHE_KEY_PREFIX': 'superset_',
+      'CACHE_KEY_PREFIX': 'axbi_',
       'CACHE_REDIS_URL': CACHE_REDIS_URL,
 }
 DATA_CACHE_CONFIG = CACHE_CONFIG
@@ -120,7 +120,7 @@ RESULTS_BACKEND = RedisCache(
       password=env('REDIS_PASSWORD'),
       {{- end }}
       port=env('REDIS_PORT'),
-      key_prefix='superset_results',
+      key_prefix='axbi_results',
       {{- if .Values.supersetNode.connections.redis_ssl.enabled }}
       ssl=True,
       ssl_cert_reqs=env('REDIS_SSL_CERT_REQS'),
@@ -168,5 +168,15 @@ release: {{ .Release.Name }}
 
 {{- define "supersetWorker.selectorLabels" -}}
 app: {{ include "superset.name" . }}-worker
+release: {{ .Release.Name }}
+{{- end }}
+
+{{- define "axbiMcp.selectorLabels" -}}
+app: {{ include "superset.name" . }}-mcp
+release: {{ .Release.Name }}
+{{- end }}
+
+{{- define "axbiServices.selectorLabels" -}}
+app: {{ include "superset.name" . }}-services
 release: {{ .Release.Name }}
 {{- end }}

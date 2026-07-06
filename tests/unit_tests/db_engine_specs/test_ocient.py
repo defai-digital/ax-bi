@@ -17,7 +17,8 @@
 
 # pylint: disable=import-outside-toplevel
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 

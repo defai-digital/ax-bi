@@ -17,8 +17,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from functools import partial
-from typing import Iterable
 
 from flask import current_app as app, g
 
@@ -200,8 +200,7 @@ class SyncPermissionsCommand(BaseCommand):
                 or self.db_connection.allow_multi_catalog
             ):
                 return self.db_connection.get_all_catalog_names(force=True)
-            else:
-                return {self.db_connection.get_default_catalog()}
+            return {self.db_connection.get_default_catalog()}
         except OAuth2RedirectError:
             # raise OAuth2 exceptions as-is
             raise

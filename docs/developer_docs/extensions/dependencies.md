@@ -50,7 +50,7 @@ The core packages follow [semantic versioning](https://semver.org/) and provide 
 
 Any code that is not exported through the core packages is considered internal. This includes:
 
-- Direct imports from `superset-frontend/src/` modules
+- Direct imports from `ax-bi-frontend/src/` modules
 - Direct imports from `superset/` Python modules (outside of `superset_core`)
 - Undocumented functions, classes, or utilities
 

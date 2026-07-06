@@ -57,7 +57,7 @@ def get_time_grain_choices() -> Any:
         for i in {
             **builtin_time_grains,
             **time_grain_addons,
-        }.keys()
+        }
         if i
     ]
 

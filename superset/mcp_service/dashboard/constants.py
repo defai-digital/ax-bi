@@ -19,7 +19,7 @@
 Shared constants for MCP dashboard tools.
 
 Values match frontend defaults from
-``superset-frontend/src/dashboard/util/constants.ts``.
+``ax-office-frontend/src/dashboard/util/constants.ts``.
 """
 
 import uuid

@@ -67,7 +67,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, TYPE_CHECKING
+from typing import Annotated, Any, Literal, TYPE_CHECKING
 
 from pydantic import (
     AliasChoices,
@@ -175,7 +175,7 @@ class DashboardFilter(ColumnOperator):
         description="Operator to use. Use get_schema(model_type='dashboard') for "
         "available operators.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
@@ -184,7 +184,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
     """Request schema for list_dashboards with clear, unambiguous types."""
 
     filters: Annotated[
-        List[DashboardFilter],
+        list[DashboardFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -193,7 +193,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns "
@@ -203,7 +203,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[DashboardFilter]:
+    def parse_filters(cls, v: Any) -> list[DashboardFilter]:
         """
         Parse filters from JSON string or list.
 
@@ -216,7 +216,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_select_columns(cls, v: Any) -> List[str]:
+    def parse_select_columns(cls, v: Any) -> list[str]:
         """
         Parse select_columns from JSON string, list, or CSV string.
 
@@ -261,7 +261,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
     ]
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListDashboardsRequest":
+    def validate_search_and_filters(self) -> ListDashboardsRequest:
         """Prevent using both search and filters simultaneously."""
         from superset.mcp_service.utils.schema_utils import (
             ensure_search_and_filters_not_combined,
@@ -277,7 +277,7 @@ class ListDashboardsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheContr
         return self
 
 
-DEFAULT_GET_DASHBOARD_INFO_COLUMNS: List[str] = [
+DEFAULT_GET_DASHBOARD_INFO_COLUMNS: list[str] = [
     "id",
     "dashboard_title",
     "slug",
@@ -328,7 +328,7 @@ class GetDashboardInfoRequest(MetadataCacheControl):
         ),
     )
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=lambda: list(DEFAULT_GET_DASHBOARD_INFO_COLUMNS),
             description=(
@@ -379,7 +379,7 @@ class NativeFilterSummary(BaseModel):
     filter_type: str | None = Field(
         None, description="Filter type (e.g. filter_select, filter_range)"
     )
-    targets: List[Dict[str, Any]] = Field(
+    targets: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Filter targets (column name and dataset ID)",
     )
@@ -419,11 +419,11 @@ class DashboardInfo(BaseModel):
     created_on_humanized: str | None = None
     changed_on_humanized: str | None = None
     chart_count: int = 0
-    tags: List[TagInfo] = Field(default_factory=list)
-    charts: List[DashboardChartSummary] = Field(default_factory=list)
+    tags: list[TagInfo] = Field(default_factory=list)
+    charts: list[DashboardChartSummary] = Field(default_factory=list)
 
     # Structured filter information extracted from json_metadata
-    native_filters: List[NativeFilterSummary] = Field(
+    native_filters: list[NativeFilterSummary] = Field(
         default_factory=list,
         description=(
             "Native filters configured on this dashboard. Extracted from "
@@ -437,7 +437,7 @@ class DashboardInfo(BaseModel):
     )
 
     # Omission metadata — tells the agent what was stripped and why
-    omitted_fields: Dict[str, str] = Field(
+    omitted_fields: dict[str, str] = Field(
         default_factory=dict,
         description=(
             "Fields omitted from this response to reduce size. Keys are field "
@@ -455,7 +455,7 @@ class DashboardInfo(BaseModel):
             "the filter_state came from a permalink rather than the default dashboard."
         ),
     )
-    filter_state: Dict[str, Any] | None = Field(
+    filter_state: dict[str, Any] | None = Field(
         default=None,
         description=(
             "Filter state from permalink. Contains dataMask (native filter values), "
@@ -476,12 +476,12 @@ class DashboardInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True, ser_json_timedelta="iso8601")
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
 
 
 class DashboardList(BaseModel):
-    dashboards: List[DashboardInfo]
+    dashboards: list[DashboardInfo]
     count: int
     total_count: int
     page: int
@@ -489,23 +489,23 @@ class DashboardList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each dashboard",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[DashboardFilter] = Field(
+    filters_applied: list[DashboardFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -576,7 +576,7 @@ class GenerateDashboardRequest(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    chart_ids: List[int] = Field(
+    chart_ids: list[int] = Field(
         ..., description="List of chart IDs to include in the dashboard", min_length=1
     )
     dashboard_title: str | None = Field(
@@ -591,7 +591,7 @@ class GenerateDashboardRequest(BaseModel):
     published: bool = Field(
         default=False, description="Whether to publish the dashboard"
     )
-    sanitization_warnings: List[str] = Field(
+    sanitization_warnings: list[str] = Field(
         default_factory=list,
         description=(
             "Internal: warnings emitted when user input was altered by "
@@ -671,7 +671,7 @@ class GenerateDashboardResponse(BaseModel):
     )
     dashboard_url: str | None = Field(None, description="URL to view the dashboard")
     error: str | None = Field(None, description="Error message, if creation failed")
-    warnings: List[str] = Field(
+    warnings: list[str] = Field(
         default_factory=list,
         description=(
             "Non-fatal advisory messages about the created dashboard — "
@@ -698,7 +698,7 @@ class ChartPosition(BaseModel):
             "under any TAB component."
         ),
     )
-    tab_path: List[str] = Field(
+    tab_path: list[str] = Field(
         default_factory=list,
         description=(
             "Names of ancestor tabs (outermost first) so the agent can describe "
@@ -718,7 +718,7 @@ class DashboardTab(BaseModel):
         None,
         description=("ID of the enclosing tab when tabs are nested, otherwise None."),
     )
-    chart_ids: List[int] = Field(
+    chart_ids: list[int] = Field(
         default_factory=list,
         description="IDs of charts contained directly or indirectly under this tab",
     )
@@ -730,13 +730,13 @@ class DashboardLayout(BaseModel):
     id: int | None = Field(None, description="Dashboard ID")
     dashboard_title: str | None = Field(None, description="Dashboard title")
     uuid: str | None = Field(None, description="Dashboard UUID")
-    tabs: List[DashboardTab] = Field(
+    tabs: list[DashboardTab] = Field(
         default_factory=list,
         description=(
             "Tabs declared in the dashboard layout (empty for untabbed dashboards)"
         ),
     )
-    charts: List[ChartPosition] = Field(
+    charts: list[ChartPosition] = Field(
         default_factory=list,
         description="Charts placed in the dashboard layout with their tab context",
     )
@@ -746,7 +746,7 @@ class DashboardLayout(BaseModel):
     )
 
 
-def _parse_json_metadata(json_metadata_str: str | None) -> Dict[str, Any] | None:
+def _parse_json_metadata(json_metadata_str: str | None) -> dict[str, Any] | None:
     """Parse json_metadata string into a dict, returning None on any failure.
 
     Handles None/empty input, invalid JSON, and non-dict JSON values
@@ -767,7 +767,7 @@ def _extract_native_filters(
     json_metadata_str: str | None,
     *,
     include_data_model_metadata: bool = False,
-) -> List[NativeFilterSummary]:
+) -> list[NativeFilterSummary]:
     """Extract native filter summaries from raw json_metadata string.
 
     Parses the json_metadata JSON blob and pulls out only the filter
@@ -783,7 +783,7 @@ def _extract_native_filters(
     if not isinstance(native_filters, list):
         return []
 
-    summaries: List[NativeFilterSummary] = []
+    summaries: list[NativeFilterSummary] = []
     for f in native_filters:
         if not isinstance(f, dict):
             continue
@@ -819,7 +819,7 @@ def _extract_cross_filters_enabled(json_metadata_str: str | None) -> bool | None
 
 def _parse_position_json(
     position_json_str: str | None,
-) -> Dict[str, Any] | None:
+) -> dict[str, Any] | None:
     """Parse position_json into a dict, returning None on any failure."""
     if not position_json_str:
         return None
@@ -834,9 +834,9 @@ def _parse_position_json(
 
 def _record_tab(
     node_id: str,
-    meta: Dict[str, Any],
+    meta: dict[str, Any],
     tab_ancestry: tuple[str, ...],
-    tabs_by_id: Dict[str, DashboardTab],
+    tabs_by_id: dict[str, DashboardTab],
 ) -> None:
     """Register a TAB node into tabs_by_id keyed by component id."""
     raw_text = meta.get("text")
@@ -849,10 +849,10 @@ def _record_tab(
 
 
 def _record_chart(
-    meta: Dict[str, Any],
+    meta: dict[str, Any],
     tab_ancestry: tuple[str, ...],
-    tabs_by_id: Dict[str, DashboardTab],
-    charts: List[ChartPosition],
+    tabs_by_id: dict[str, DashboardTab],
+    charts: list[ChartPosition],
 ) -> None:
     """Record a CHART node's position and update enclosing tabs."""
     raw_chart_id = meta.get("chartId")
@@ -880,7 +880,7 @@ def _record_chart(
 
 def _extract_layout_from_position(
     position_json_str: str | None,
-) -> tuple[List[DashboardTab], List[ChartPosition]]:
+) -> tuple[list[DashboardTab], list[ChartPosition]]:
     """Walk position_json and return (tabs, chart_positions).
 
     Traverses the component tree iteratively starting from ROOT_ID. Tab
@@ -893,10 +893,10 @@ def _extract_layout_from_position(
     if not position or "ROOT_ID" not in position:
         return [], []
 
-    tabs_by_id: Dict[str, DashboardTab] = {}
-    charts: List[ChartPosition] = []
+    tabs_by_id: dict[str, DashboardTab] = {}
+    charts: list[ChartPosition] = []
 
-    stack: List[tuple[str, tuple[str, ...]]] = [("ROOT_ID", ())]
+    stack: list[tuple[str, tuple[str, ...]]] = [("ROOT_ID", ())]
     visited: set[str] = set()
 
     while stack:
@@ -911,7 +911,7 @@ def _extract_layout_from_position(
 
         node_type = node.get("type")
         raw_meta = node.get("meta")
-        meta: Dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
+        meta: dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
         next_ancestry = tab_ancestry
 
         if node_type == "TAB":
@@ -939,7 +939,7 @@ def _extract_layout_from_position(
 
 def _build_omitted_fields(
     json_metadata_str: str | None, position_json_str: str | None
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Build omission metadata describing which fields were stripped and why.
 
     Uses the shared OmittedFieldsBuilder utility so the pattern is consistent
@@ -998,8 +998,8 @@ def serialize_chart_summary(
 
 
 def redact_filter_state_data_model_metadata(
-    filter_state: Dict[str, Any],
-) -> Dict[str, Any]:
+    filter_state: dict[str, Any],
+) -> dict[str, Any]:
     """Remove permalink filter state fields that expose data-model metadata."""
     return {
         key: value
@@ -1085,12 +1085,12 @@ def _sanitize_dashboard_info_for_llm_context(
     return DashboardInfo.model_validate(payload)
 
 
-def dashboard_serializer(dashboard: "Dashboard") -> DashboardInfo:
+def dashboard_serializer(dashboard: Dashboard) -> DashboardInfo:
     from superset.mcp_service.utils.url_utils import get_superset_base_url
 
     include_data_model_metadata = user_can_view_data_model_metadata()
     base_url = get_superset_base_url()
-    relative_url = dashboard.url  # e.g. "/superset/dashboard/{slug_or_id}/"
+    relative_url = dashboard.url  # e.g. "/ax-office/dashboard/{slug_or_id}/"
     absolute_url = f"{base_url}{relative_url}" if relative_url else None
     json_metadata_str = getattr(dashboard, "json_metadata", None)
     position_json_str = getattr(dashboard, "position_json", None)
@@ -1157,7 +1157,7 @@ def serialize_dashboard_object(dashboard: Any) -> DashboardInfo:
     dashboard_url = None
     if dashboard_id is not None:
         dashboard_url = (
-            f"{get_superset_base_url()}/superset/dashboard/{slug or dashboard_id}/"
+            f"{get_superset_base_url()}/ax-office/dashboard/{slug or dashboard_id}/"
         )
 
     json_metadata_str = getattr(dashboard, "json_metadata", None)
@@ -1257,7 +1257,7 @@ def _sanitize_dashboard_layout_for_llm_context(
     return DashboardLayout.model_validate(payload)
 
 
-def dashboard_layout_serializer(dashboard: "Dashboard") -> DashboardLayout:
+def dashboard_layout_serializer(dashboard: Dashboard) -> DashboardLayout:
     """Serialize a Dashboard model to a parsed DashboardLayout."""
     position_json_str = getattr(dashboard, "position_json", None)
     tabs, charts = _extract_layout_from_position(position_json_str)

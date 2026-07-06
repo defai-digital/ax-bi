@@ -16,7 +16,7 @@
 # under the License.
 
 import uuid
-from typing import Any, cast, TypeVar, Union
+from typing import Any, cast, TypeVar
 
 from superset.utils import json
 
@@ -28,7 +28,7 @@ def serialize(params: dict[str, Any]) -> str:
 
     T = TypeVar(
         "T",
-        bound=Union[dict[str, Any], list[Any], int, float, str, bool, None],
+        bound=dict[str, Any] | list[Any] | int | float | str | bool | None,
     )
 
     def sort(obj: T) -> T:

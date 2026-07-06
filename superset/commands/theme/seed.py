@@ -65,8 +65,9 @@ class SeedSystemThemesCommand(BaseCommand):
                         return
                     # Add a note about the theme being copied from UUID reference
                     theme_config["NOTE"] = (
-                        "Copied at startup from theme UUID %s based on config reference"
-                    ) % original_uuid
+                        f"Copied at startup from theme UUID {original_uuid} "
+                        "based on config reference"
+                    )
                     logger.debug(
                         "Copied theme definition from UUID %s for system theme %s",
                         original_uuid,
@@ -110,4 +111,3 @@ class SeedSystemThemesCommand(BaseCommand):
 
     def validate(self) -> None:
         """Validate that the command can be executed."""
-        pass

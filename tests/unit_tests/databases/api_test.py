@@ -53,6 +53,23 @@ from tests.unit_tests.fixtures.common import (
 )
 
 
+def test_detect_upload_file_type_handles_compound_and_mlflow_model() -> None:
+    """Auto-upload routing handles compound names and exact MLflow model files."""
+    from superset.commands.database.uploaders.base import UploadFileType
+    from superset.databases.api import detect_upload_file_type
+
+    assert detect_upload_file_type(".csv") is None
+    assert detect_upload_file_type("foo.mlmodel") == (
+        ".mlmodel",
+        UploadFileType.STRUCTURED,
+    )
+    assert detect_upload_file_type("data.csv.gz") == (".csv.gz", UploadFileType.CSV)
+    assert detect_upload_file_type("MLmodel") == (
+        ".mlmodel",
+        UploadFileType.STRUCTURED,
+    )
+
+
 def test_filter_by_uuid(
     session: Session,
     client: Any,
@@ -1380,6 +1397,8 @@ def test_csv_upload_file_extension_invalid(
         "spaced name.tsv",
         "out.exe.csv",
         "out.csv.csv",
+        "out.csv.gz",
+        "out.tsv.gz",
     ],
 )
 def test_csv_upload_file_extension_valid(

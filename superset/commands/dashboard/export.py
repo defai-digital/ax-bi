@@ -18,7 +18,8 @@
 
 import logging
 import uuid as uuid_module
-from typing import Any, Optional, Callable
+from typing import Any
+from collections.abc import Callable
 from collections.abc import Iterator
 
 import yaml
@@ -213,7 +214,7 @@ def _stabilize_chart_ids(payload: dict[str, Any]) -> None:
     if not isinstance(metadata, dict):
         return
 
-    def remap_id(old_id: Any) -> Optional[int]:
+    def remap_id(old_id: Any) -> int | None:
         """Map a single legacy chart id to its stabilized id, or ``None``.
 
         Returns ``None`` when the id is unknown or not coercible to ``int`` so
@@ -327,7 +328,7 @@ class ExportDashboardsCommand(ExportModelsCommand):
         # TODO (betodealmeida): move this logic to export_to_dict once this
         #  becomes the default export endpoint
         for key, new_name in JSON_KEYS.items():
-            value: Optional[str] = payload.pop(key, None)
+            value: str | None = payload.pop(key, None)
             if value:
                 payload[new_name] = _load_json_object(value, key)
 
@@ -404,8 +405,7 @@ class ExportDashboardsCommand(ExportModelsCommand):
             tags = model.tags if hasattr(model, "tags") else []
             payload["tags"] = [tag.name for tag in tags if tag.type == TagType.custom]
 
-        file_content = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
 
     @staticmethod
     # ruff: noqa: C901
@@ -444,7 +444,7 @@ class ExportDashboardsCommand(ExportModelsCommand):
         # TODO (betodealmeida): move this logic to export_to_dict once this
         #  becomes the default export endpoint
         for key, new_name in JSON_KEYS.items():
-            value: Optional[str] = payload.pop(key, None)
+            value: str | None = payload.pop(key, None)
             if value:
                 payload[new_name] = _load_json_object(value, key)
 

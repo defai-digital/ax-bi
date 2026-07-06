@@ -38,7 +38,7 @@ def mock_dashboard() -> MagicMock:
     dash.__getitem__.side_effect = TypeError
     dash.id = 1
     dash.slug = "test-slug"
-    dash.url = "/superset/dashboard/test-slug/"
+    dash.url = "/ax-bi/dashboard/test-slug/"
     dash.dashboard_title = "Test Dashboard"
     dash.thumbnail_url = "http://example.com/thumb.png"
     dash.published = True

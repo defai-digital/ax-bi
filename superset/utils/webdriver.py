@@ -21,6 +21,7 @@ import atexit
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
+from contextlib import suppress
 from enum import Enum
 from time import sleep
 from typing import Any, TYPE_CHECKING
@@ -152,16 +153,12 @@ class _PlaywrightBrowserManager:
 
     def _cleanup(self) -> None:
         if self._browser is not None:
-            try:
+            with suppress(Exception):
                 self._browser.close()
-            except Exception:  # noqa: S110
-                pass
             self._browser = None
         if self._playwright is not None:
-            try:
+            with suppress(Exception):
                 self._playwright.stop()
-            except Exception:  # noqa: S110
-                pass
             self._playwright = None
 
 
@@ -274,8 +271,7 @@ class WebDriverPlaywright(WebDriverProxy):
     def _get_screenshot(page: Page, element: Locator, element_name: str) -> bytes:
         if element_name == "standalone":
             return page.screenshot(full_page=True)
-        else:
-            return element.screenshot()
+        return element.screenshot()
 
     def get_screenshot(  # pylint: disable=too-many-locals, too-many-statements  # noqa: C901
         self, url: str, element_name: str, user: User | None = None
@@ -572,7 +568,7 @@ class WebDriverSelenium(WebDriverProxy):
 
         for key, value in config.items():
             if any(timeout_key in key.lower() for timeout_key in timeout_keys):
-                if value is None or value == "None" or value == "null":
+                if value is None or value in ("None", "null"):
                     config[key] = None
                 else:
                     try:
@@ -675,14 +671,10 @@ class WebDriverSelenium(WebDriverProxy):
             return
         # This is some very flaky code in selenium. Hence the retries
         # and catch-all exceptions
-        try:
+        with suppress(Exception):
             retry_call(self._driver.close, max_tries=tries)
-        except Exception:  # pylint: disable=broad-except  # noqa: S110
-            pass
-        try:
+        with suppress(Exception):
             self._driver.quit()
-        except Exception:  # pylint: disable=broad-except  # noqa: S110
-            pass
         self._driver = None
 
     @staticmethod

@@ -80,16 +80,11 @@ async def get_database_info(
     }
     ```
     """
-    await ctx.info(
-        "Retrieving database information: identifier=%s" % (request.identifier,)
-    )
+    await ctx.info(f"Retrieving database information: identifier={request.identifier}")
     await ctx.debug(
-        "Metadata cache settings: use_cache=%s refresh_metadata=%s force_refresh=%s"
-        % (
-            request.use_cache,
-            request.refresh_metadata,
-            request.force_refresh,
-        )
+        f"Metadata cache settings: use_cache={request.use_cache} "
+        f"refresh_metadata={request.refresh_metadata} "
+        f"force_refresh={request.force_refresh}"
     )
 
     # The decorator hides this tool from search; this check enforces direct calls.
@@ -118,30 +113,22 @@ async def get_database_info(
         if isinstance(result, DatabaseInfo):
             await ctx.info(
                 "Database information retrieved successfully: "
-                "database_id=%s, database_name=%s, backend=%s"
-                % (
-                    result.id,
-                    result.database_name,
-                    result.backend,
-                )
+                f"database_id={result.id}, database_name={result.database_name}, "
+                f"backend={result.backend}"
             )
         else:
             await ctx.warning(
-                "Database retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Database retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Database information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Database information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return DatabaseError.create(
             error=f"Failed to get database info: {str(e)}",

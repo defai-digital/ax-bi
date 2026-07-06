@@ -609,7 +609,7 @@ class MigrateHistogramChart(MigrateViz):
             result["post_processing"] = [
                 histogram_operator(self.data, base_query_object)
             ]
-            if "metrics" in result.keys():
+            if "metrics" in result:
                 result.pop("metrics", None)
             return [result]
 

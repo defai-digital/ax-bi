@@ -24,9 +24,10 @@ single dataframe.
 
 """
 
+from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta, tzinfo
 from time import time as current_time
-from typing import Any, cast, Sequence, TypeGuard
+from typing import Any, cast, TypeGuard
 from zoneinfo import ZoneInfo
 
 import isodate
@@ -534,7 +535,7 @@ def _convert_query_object_filter(
     value: FilterValues | frozenset[FilterValues]
     if val_str is None:
         value = None
-    elif isinstance(val_str, (list, tuple)):
+    elif isinstance(val_str, list | tuple):
         value = frozenset(val_str)
     else:
         value = val_str
@@ -631,7 +632,7 @@ def _coerce_scalar_filter_value(  # noqa: C901 — type dispatch, complexity is 
     if pa.types.is_boolean(dtype):
         if isinstance(value, bool):
             return value
-        if isinstance(value, (int, float)) and value in (0, 1):
+        if isinstance(value, int | float) and value in (0, 1):
             return bool(value)
         if isinstance(value, str):
             parsed = value.strip().lower()
@@ -675,7 +676,7 @@ def _coerce_scalar_filter_value(  # noqa: C901 — type dispatch, complexity is 
             raise ValueError(
                 f"Invalid numeric value {value!r} for filter column {dimension.name}"
             )
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return float(value)
         if isinstance(value, str):
             try:

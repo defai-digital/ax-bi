@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from flask import current_app
 from flask_appbuilder.models.sqla import Model
@@ -40,7 +39,7 @@ logger = logging.getLogger(__name__)
 class RefreshDatasetCommand(BaseCommand):
     def __init__(self, model_id: int):
         self._model_id = model_id
-        self._model: Optional[SqlaTable] = None
+        self._model: SqlaTable | None = None
 
     @transaction(on_error=partial(on_error, reraise=DatasetRefreshFailedError))
     def run(self) -> Model:

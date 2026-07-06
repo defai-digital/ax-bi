@@ -18,7 +18,7 @@ import logging
 import re
 from abc import abstractmethod
 from functools import partial
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 import pandas as pd
 from flask import current_app
@@ -64,10 +64,10 @@ class ReaderOptions(TypedDict, total=False):
 
 
 class FileMetadataItem(TypedDict, total=False):
-    sheet_name: Optional[str]
+    sheet_name: str | None
     column_names: list[str]
     columns: list["FileColumnMetadata"]
-    sample_rows: list[dict[str, Optional[str]]]
+    sample_rows: list[dict[str, str | None]]
     row_count_sampled: int
 
 
@@ -85,9 +85,9 @@ class FileColumnMetadata(TypedDict, total=False):
     null_count: int
     row_count_sampled: int
     n_unique_sampled: int
-    sample_values: list[Optional[str]]
-    min: Optional[float]
-    max: Optional[float]
+    sample_values: list[str | None]
+    min: float | None
+    max: float | None
     warnings: list[str]
 
 
@@ -108,7 +108,7 @@ _MEASURE_NAME_HINTS = (
 )
 
 
-def _stringify_metadata_value(value: Any) -> Optional[str]:
+def _stringify_metadata_value(value: Any) -> str | None:
     """Return a compact string representation for upload metadata previews."""
     if pd.isna(value):
         return None
@@ -176,8 +176,8 @@ def _infer_column_metadata(  # noqa: C901
     suggested_type = "text"
     bi_role = "Dimension"
     confidence = 0.6
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
+    min_value: float | None = None
+    max_value: float | None = None
 
     identifier_name = _looks_like_identifier(column_name)
     leading_zeroes = _has_leading_zero_values(values)
@@ -268,7 +268,7 @@ def _infer_column_metadata(  # noqa: C901
 
 def build_upload_metadata_item(
     df: pd.DataFrame,
-    sheet_name: Optional[str],
+    sheet_name: str | None,
 ) -> FileMetadataItem:
     """Build rich, BI-oriented metadata for an uploaded file preview."""
     columns = [_infer_column_metadata(str(column), df[column]) for column in df.columns]
@@ -307,7 +307,7 @@ class BaseDataReader:
     to read data from multiple file types (e.g. CSV, Excel, etc.)
     """
 
-    def __init__(self, options: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, options: dict[str, Any] | None = None) -> None:
         self._options = options or {}
 
     @abstractmethod
@@ -321,7 +321,7 @@ class BaseDataReader:
         file: FileStorage,
         database: Database,
         table_name: str,
-        schema_name: Optional[str],
+        schema_name: str | None,
     ) -> None:
         self._dataframe_to_database(
             self.file_to_dataframe(file), database, table_name, schema_name
@@ -332,7 +332,7 @@ class BaseDataReader:
         df: pd.DataFrame,
         database: Database,
         table_name: str,
-        schema_name: Optional[str],
+        schema_name: str | None,
     ) -> None:
         """
         Upload DataFrame to database
@@ -376,11 +376,11 @@ class UploadCommand(BaseCommand):
         model_id: int,
         table_name: str,
         file: Any,
-        schema: Optional[str],
+        schema: str | None,
         reader: BaseDataReader,
     ) -> None:
         self._model_id = model_id
-        self._model: Optional[Database] = None
+        self._model: Database | None = None
         self._table_name = table_name
         self._schema = schema
         self._file = file
@@ -422,7 +422,7 @@ class UploadCommand(BaseCommand):
         sqla_table.fetch_metadata()
 
     @staticmethod
-    def _file_size_bytes(file: Any) -> Optional[int]:
+    def _file_size_bytes(file: Any) -> int | None:
         """
         Return the size of an uploaded file without consuming its stream.
 

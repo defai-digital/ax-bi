@@ -19,8 +19,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable, Iterable
+from typing import Any, TypeVar
 
 from pydantic import Field
 
@@ -102,7 +102,7 @@ class PrivacyError(MCPResourceError):
     privacy_scope: str = Field(..., description="Privacy scope for the denial")
 
     @classmethod
-    def create_data_model_metadata_denied(cls) -> "PrivacyError":
+    def create_data_model_metadata_denied(cls) -> PrivacyError:
         return cls(
             error=DATA_MODEL_METADATA_ERROR_MESSAGE,
             error_type=DATA_MODEL_METADATA_ERROR_TYPE,

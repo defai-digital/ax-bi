@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 
 from flask_babel import _
 

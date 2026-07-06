@@ -18,11 +18,13 @@ import logging
 import time
 import unittest
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import patch
 
-from flask import current_app  # noqa: F401
+from flask import current_app, g  # noqa: F401
+from flask_login import AnonymousUserMixin
 from freezegun import freeze_time
+from werkzeug.local import LocalProxy
 
 from superset import security_manager
 from superset.utils.log import (
@@ -68,19 +70,58 @@ class TestEventLogger(unittest.TestCase):
             time.sleep(0.05)
             return 1
 
-        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+        with app.test_request_context("/ax-bi/dashboard/1/?myparam=foo"):
             result = test_func()
             payload = mock_log.call_args[1]
             assert result == 1
             assert payload["records"] == [
                 {
                     "myparam": "foo",
-                    "path": "/superset/dashboard/1/",
-                    "url_rule": "/superset/dashboard/<dashboard_id_or_slug>/",
+                    "path": "/ax-bi/dashboard/1/",
+                    "url_rule": "/ax-bi/dashboard/<dashboard_id_or_slug>/",
                     "object_ref": test_func.__qualname__,
                 }
             ]
             assert payload["duration_ms"] >= 50
+
+    @patch("superset.db.session.add")
+    @patch("superset.utils.log.get_user_id")
+    @patch.object(DBEventLogger, "log")
+    def test_log_with_context_resolves_local_proxy_user(
+        self,
+        mock_log,
+        mock_get_user_id,
+        mock_session_add,
+    ):
+        logger = DBEventLogger()
+
+        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+            user = security_manager.find_user("admin")
+            mock_get_user_id.side_effect = [None, user.id]
+            g.user = LocalProxy(lambda: user)
+            logger.log_with_context(action="test_action")
+
+        mock_session_add.assert_called_once_with(user)
+        assert mock_log.call_args.args[0] == user.id
+
+    @patch("superset.db.session.add")
+    @patch("superset.utils.log.get_user_id")
+    @patch.object(DBEventLogger, "log")
+    def test_log_with_context_ignores_unmapped_user(
+        self,
+        mock_log,
+        mock_get_user_id,
+        mock_session_add,
+    ):
+        logger = DBEventLogger()
+
+        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+            mock_get_user_id.return_value = None
+            g.user = AnonymousUserMixin()
+            logger.log_with_context(action="test_action")
+
+        mock_session_add.assert_not_called()
+        assert mock_log.call_args.args[0] is None
 
     @patch.object(DBEventLogger, "log")
     def test_log_this_with_extra_payload(self, mock_log):
@@ -115,12 +156,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):
@@ -154,12 +195,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):
@@ -204,12 +245,12 @@ class TestEventLogger(unittest.TestCase):
 
             def log(
                 self,
-                user_id: Optional[int],
+                user_id: int | None,
                 action: str,
-                dashboard_id: Optional[int],
-                duration_ms: Optional[int],
-                slice_id: Optional[int],
-                referrer: Optional[str],
+                dashboard_id: int | None,
+                duration_ms: int | None,
+                slice_id: int | None,
+                referrer: str | None,
                 *args: Any,
                 **kwargs: Any,
             ):

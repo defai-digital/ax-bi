@@ -16,32 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const QUERY_LIST_CONTRACT_VERSION = 'query-list.v1';
 
-export type QueryFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type QueryFilterValue = SharedListFilterValue;
 
-export interface QueryListFilter {
-  col: string;
-  opr: string;
-  value: QueryFilterValue;
-}
+export type QueryListFilter = SharedListFilter;
 
-export interface QueryListRequest {
-  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
-  filters: QueryListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type QueryListRequest = ListRequestBase<typeof QUERY_LIST_CONTRACT_VERSION>;
 
 export interface QueryListItem {
   id: number;
@@ -63,141 +53,47 @@ export interface QueryListItem {
   userId?: number;
 }
 
-export interface QueryListResponse {
-  contractVersion: typeof QUERY_LIST_CONTRACT_VERSION;
+export interface QueryListResponse
+  extends ListResponseBase<typeof QUERY_LIST_CONTRACT_VERSION> {
   queries: QueryListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const queryFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const queryListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     sql: { type: 'string' },
     executedSql: { type: 'string' },
     status: { type: 'string' },
-    startTime: { type: 'number' },
-    endTime: { type: 'number' },
-    rows: { type: 'number' },
-    databaseId: { type: 'number' },
+    startTime: { type: 'number', minimum: 0 },
+    endTime: { type: 'number', minimum: 0 },
+    rows: { type: 'integer', minimum: 0 },
+    databaseId: { type: 'integer', minimum: 0 },
     schema: { type: 'string' },
     catalog: { type: 'string' },
     tabName: { type: 'string' },
     errorMessage: { type: 'string' },
     clientId: { type: 'string' },
-    limit: { type: 'number' },
-    progress: { type: 'number' },
+    limit: { type: 'integer', minimum: 0 },
+    progress: { type: 'number', minimum: 0 },
     changedOn: { type: 'string' },
-    userId: { type: 'number' },
+    userId: { type: 'integer', minimum: 0 },
   },
 } as const;
 
-export const queryListRequestSchema = {
-  $id: 'ax-services.query-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: queryFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
-  },
-} as const;
+export const queryListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.query-list.v1.request',
+  contractVersion: QUERY_LIST_CONTRACT_VERSION,
+});
 
-export const queryListResponseSchema = {
-  $id: 'ax-services.query-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'queries',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: QUERY_LIST_CONTRACT_VERSION },
-    queries: {
-      type: 'array',
-      items: queryListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-  },
-} as const;
+export const queryListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.query-list.v1.response',
+  contractVersion: QUERY_LIST_CONTRACT_VERSION,
+  collectionKey: 'queries',
+  itemSchema: queryListItemSchema,
+});
 
 export const queryListContractSchemas = {
   queryListRequestSchema,

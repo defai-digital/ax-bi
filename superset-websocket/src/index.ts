@@ -22,7 +22,7 @@ import { inspect } from 'util';
 import WebSocket, { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import jwt, { Algorithm } from 'jsonwebtoken';
-import { parse } from 'cookie';
+import { parseCookie } from 'cookie';
 import Redis, { RedisOptions } from 'ioredis';
 import StatsD from 'hot-shots';
 import Fastify from 'fastify';
@@ -39,7 +39,7 @@ export type StreamResult = [
   record: [label: 'data', data: string],
 ];
 
-// sync with superset-frontend/src/components/ErrorMessage/types
+// sync with ax-bi-frontend/src/components/ErrorMessage/types
 export type ErrorLevel = 'info' | 'warning' | 'error';
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export type SupersetError<ExtraType = Record<string, any> | null> = {
@@ -394,7 +394,7 @@ export const processStreamResults = async (
  * configured via 'jwtCookieName' in the config.
  */
 const readChannelId = (request: http.IncomingMessage): string => {
-  const cookies = parse(request.headers.cookie || '');
+  const cookies = parseCookie(request.headers.cookie || '');
   const token = cookies[opts.jwtCookieName];
 
   if (!token) throw new Error('JWT not present');
@@ -636,11 +636,13 @@ export const cleanChannel = (channel: string) => {
   }
 };
 
+const MAX_FASTIFY_BODY_LIMIT_BYTES = Number.MAX_SAFE_INTEGER;
+
 // Fastify HTTP API server (Fast Data API Gateway)
 const fastify = Fastify({
   logger: false,
-  // Disable Fastify's own body limit; chart data payloads can be large
-  bodyLimit: 0,
+  // Chart data payloads can be large; Fastify requires a positive integer.
+  bodyLimit: MAX_FASTIFY_BODY_LIMIT_BYTES,
 });
 
 export const getFastify = (): ReturnType<typeof Fastify> => fastify;

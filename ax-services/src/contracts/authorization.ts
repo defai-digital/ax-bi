@@ -58,6 +58,18 @@ export interface PermissionCheckResult extends PermissionCheckResponse {
   error?: string;
 }
 
+const cleanAuthorizationStringSchema = {
+  type: 'string',
+  pattern: '^(?=.*\\S)[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
+const externalMessageSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+
 export const permissionCheckRequestSchema = {
   $id: 'ax-services.permission-check.v1.request',
   type: 'object',
@@ -71,11 +83,11 @@ export const permissionCheckRequestSchema = {
       additionalProperties: false,
       properties: {
         type: { enum: ['user', 'guest', 'service'] },
-        userId: { type: 'number' },
-        username: { type: 'string' },
+        userId: { type: 'integer', minimum: 0 },
+        username: cleanAuthorizationStringSchema,
         roles: {
           type: 'array',
-          items: { type: 'string' },
+          items: cleanAuthorizationStringSchema,
         },
       },
     },
@@ -85,8 +97,8 @@ export const permissionCheckRequestSchema = {
       additionalProperties: false,
       properties: {
         type: { enum: ['chart', 'dashboard', 'database', 'dataset', 'query'] },
-        id: { type: 'number' },
-        uuid: { type: 'string' },
+        id: { type: 'integer', minimum: 0 },
+        uuid: cleanAuthorizationStringSchema,
       },
     },
     action: { enum: ['create', 'delete', 'read', 'write'] },
@@ -101,7 +113,9 @@ export const permissionCheckResponseSchema = {
   properties: {
     contractVersion: { const: AUTHORIZATION_CONTRACT_VERSION },
     allowed: { type: 'boolean' },
-    reason: { type: 'string' },
+    reason: externalMessageSchema,
+    statusCode: { type: 'integer', minimum: 100, maximum: 599 },
+    error: externalMessageSchema,
   },
 } as const;
 

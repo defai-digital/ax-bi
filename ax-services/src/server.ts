@@ -21,6 +21,7 @@ import { randomUUID } from 'crypto';
 import Fastify, { FastifyInstance } from 'fastify';
 
 import { ServiceConfig } from './config';
+import { normalizeRequestIdHeader } from './requestId';
 import {
   AnnotationListRequest,
   AnnotationListResponse,
@@ -39,6 +40,12 @@ import {
   assetSearchRequestSchema,
   assetSearchResponseSchema,
 } from './contracts/assetSearch';
+import {
+  PermissionCheckRequest,
+  PermissionCheckResult,
+  permissionCheckRequestSchema,
+  permissionCheckResponseSchema,
+} from './contracts/authorization';
 import {
   ChartListRequest,
   ChartListResponse,
@@ -117,54 +124,47 @@ import {
   taskListResponseSchema,
 } from './contracts/taskList';
 import { ServiceMetrics } from './metrics';
-import {
-  SupersetHealthClient,
-  SupersetMetadataClient,
-  SupersetAnnotationListClient,
-  SupersetAnnotationLayerListClient,
-  SupersetAssetSearchClient,
-  SupersetChartListClient,
-  SupersetDashboardListClient,
-  SupersetDatabaseListClient,
-  SupersetDatasetListClient,
-  SupersetQueryListClient,
-  SupersetReportListClient,
-  SupersetRoleListClient,
-  SupersetRlsListClient,
-  SupersetSavedQueryListClient,
-  SupersetTagListClient,
-  SupersetTaskListClient,
-} from './supersetClient';
+import { SupersetDependencyClient } from './supersetClient';
+
+export { normalizeRequestIdHeader } from './requestId';
+
+const DEFAULT_RUNTIME_VERSION = '0.0.1';
+const MAX_RUNTIME_VERSION_LENGTH = 128;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
+
+type ContractRouteHandler<Body, Reply> = (
+  body: Body,
+  requestId: string,
+) => Promise<Reply>;
+
+function runtimeVersion(): string {
+  const version = process.env['npm_package_version']?.trim();
+
+  if (
+    version === undefined ||
+    version.length === 0 ||
+    version.length > MAX_RUNTIME_VERSION_LENGTH ||
+    CONTROL_CHARACTER_PATTERN.test(version)
+  ) {
+    return DEFAULT_RUNTIME_VERSION;
+  }
+
+  return version;
+}
 
 export function buildServer(
   config: ServiceConfig,
-  supersetClient: SupersetHealthClient &
-    SupersetMetadataClient &
-    SupersetAnnotationListClient &
-    SupersetAnnotationLayerListClient &
-    SupersetAssetSearchClient &
-    SupersetDashboardListClient &
-    SupersetChartListClient &
-    SupersetDatabaseListClient &
-    SupersetDatasetListClient &
-    SupersetQueryListClient &
-    SupersetReportListClient &
-    SupersetRoleListClient &
-    SupersetRlsListClient &
-    SupersetSavedQueryListClient &
-    SupersetTagListClient &
-    SupersetTaskListClient,
+  supersetClient: SupersetDependencyClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
   const server = Fastify({
-    logger: config.logLevel !== 'silent',
+    logger: config.logLevel === 'silent' ? false : { level: config.logLevel },
     genReqId(request) {
-      const requestId = request.headers['x-request-id'];
-      if (Array.isArray(requestId)) {
-        return requestId[0] || randomUUID();
-      }
-      return requestId || randomUUID();
+      return (
+        normalizeRequestIdHeader(request.headers['x-request-id']) ||
+        randomUUID()
+      );
     },
   });
 
@@ -191,7 +191,7 @@ export function buildServer(
       service: 'ax-services',
       status: 'ok',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '0.0.1',
+      version: runtimeVersion(),
       nodeVersion: process.version,
       platform: process.platform,
       uptimeSeconds: Number(process.hrtime.bigint() - serviceStartTime) / 1e9,
@@ -260,242 +260,135 @@ export function buildServer(
     async (): Promise<MetricsResponseContract> => metrics.snapshot(),
   );
 
-  server.post<{
-    Body: AnnotationListRequest;
-    Reply: AnnotationListResponse;
-  }>(
+  function registerContractPostRoute<Body, Reply>(
+    path: string,
+    bodySchema: unknown,
+    responseSchema: unknown,
+    handler: ContractRouteHandler<Body, Reply>,
+  ): void {
+    server.post(
+      path,
+      {
+        schema: {
+          body: bodySchema,
+          response: {
+            200: responseSchema,
+          },
+        },
+      },
+      async (request): Promise<Reply> => {
+        const response = await handler(request.body as Body, request.id);
+        return response;
+      },
+    );
+  }
+
+  registerContractPostRoute<AnnotationListRequest, AnnotationListResponse>(
     '/mcp/annotations/list',
-    {
-      schema: {
-        body: annotationListRequestSchema,
-        response: {
-          200: annotationListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<AnnotationListResponse> =>
-      supersetClient.listAnnotations(request.body, request.id),
+    annotationListRequestSchema,
+    annotationListResponseSchema,
+    (body, requestId) => supersetClient.listAnnotations(body, requestId),
   );
 
-  server.post<{
-    Body: AnnotationLayerListRequest;
-    Reply: AnnotationLayerListResponse;
-  }>(
+  registerContractPostRoute<
+    AnnotationLayerListRequest,
+    AnnotationLayerListResponse
+  >(
     '/mcp/annotation-layers/list',
-    {
-      schema: {
-        body: annotationLayerListRequestSchema,
-        response: {
-          200: annotationLayerListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<AnnotationLayerListResponse> =>
-      supersetClient.listAnnotationLayers(request.body, request.id),
+    annotationLayerListRequestSchema,
+    annotationLayerListResponseSchema,
+    (body, requestId) => supersetClient.listAnnotationLayers(body, requestId),
   );
 
-  server.post<{
-    Body: AssetSearchRequest;
-    Reply: AssetSearchResponse;
-  }>(
+  registerContractPostRoute<AssetSearchRequest, AssetSearchResponse>(
     '/mcp/assets/search',
-    {
-      schema: {
-        body: assetSearchRequestSchema,
-        response: {
-          200: assetSearchResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<AssetSearchResponse> =>
-      supersetClient.searchAssets(request.body, request.id),
+    assetSearchRequestSchema,
+    assetSearchResponseSchema,
+    (body, requestId) => supersetClient.searchAssets(body, requestId),
   );
 
-  server.post<{
-    Body: DashboardListRequest;
-    Reply: DashboardListResponse;
-  }>(
+  registerContractPostRoute<PermissionCheckRequest, PermissionCheckResult>(
+    '/mcp/permissions/check',
+    permissionCheckRequestSchema,
+    permissionCheckResponseSchema,
+    (body, requestId) => supersetClient.checkPermission(body, requestId),
+  );
+
+  registerContractPostRoute<DashboardListRequest, DashboardListResponse>(
     '/mcp/dashboards/list',
-    {
-      schema: {
-        body: dashboardListRequestSchema,
-        response: {
-          200: dashboardListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<DashboardListResponse> =>
-      supersetClient.listDashboards(request.body, request.id),
+    dashboardListRequestSchema,
+    dashboardListResponseSchema,
+    (body, requestId) => supersetClient.listDashboards(body, requestId),
   );
 
-  server.post<{
-    Body: ChartListRequest;
-    Reply: ChartListResponse;
-  }>(
+  registerContractPostRoute<ChartListRequest, ChartListResponse>(
     '/mcp/charts/list',
-    {
-      schema: {
-        body: chartListRequestSchema,
-        response: {
-          200: chartListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<ChartListResponse> =>
-      supersetClient.listCharts(request.body, request.id),
+    chartListRequestSchema,
+    chartListResponseSchema,
+    (body, requestId) => supersetClient.listCharts(body, requestId),
   );
 
-  server.post<{
-    Body: DatabaseListRequest;
-    Reply: DatabaseListResponse;
-  }>(
+  registerContractPostRoute<DatabaseListRequest, DatabaseListResponse>(
     '/mcp/databases/list',
-    {
-      schema: {
-        body: databaseListRequestSchema,
-        response: {
-          200: databaseListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<DatabaseListResponse> =>
-      supersetClient.listDatabases(request.body, request.id),
+    databaseListRequestSchema,
+    databaseListResponseSchema,
+    (body, requestId) => supersetClient.listDatabases(body, requestId),
   );
 
-  server.post<{
-    Body: DatasetListRequest;
-    Reply: DatasetListResponse;
-  }>(
+  registerContractPostRoute<DatasetListRequest, DatasetListResponse>(
     '/mcp/datasets/list',
-    {
-      schema: {
-        body: datasetListRequestSchema,
-        response: {
-          200: datasetListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<DatasetListResponse> =>
-      supersetClient.listDatasets(request.body, request.id),
+    datasetListRequestSchema,
+    datasetListResponseSchema,
+    (body, requestId) => supersetClient.listDatasets(body, requestId),
   );
 
-  server.post<{
-    Body: QueryListRequest;
-    Reply: QueryListResponse;
-  }>(
+  registerContractPostRoute<QueryListRequest, QueryListResponse>(
     '/mcp/queries/list',
-    {
-      schema: {
-        body: queryListRequestSchema,
-        response: {
-          200: queryListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<QueryListResponse> =>
-      supersetClient.listQueries(request.body, request.id),
+    queryListRequestSchema,
+    queryListResponseSchema,
+    (body, requestId) => supersetClient.listQueries(body, requestId),
   );
 
-  server.post<{
-    Body: ReportListRequest;
-    Reply: ReportListResponse;
-  }>(
+  registerContractPostRoute<ReportListRequest, ReportListResponse>(
     '/mcp/reports/list',
-    {
-      schema: {
-        body: reportListRequestSchema,
-        response: {
-          200: reportListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<ReportListResponse> =>
-      supersetClient.listReports(request.body, request.id),
+    reportListRequestSchema,
+    reportListResponseSchema,
+    (body, requestId) => supersetClient.listReports(body, requestId),
   );
 
-  server.post<{
-    Body: RoleListRequest;
-    Reply: RoleListResponse;
-  }>(
+  registerContractPostRoute<RoleListRequest, RoleListResponse>(
     '/mcp/roles/list',
-    {
-      schema: {
-        body: roleListRequestSchema,
-        response: {
-          200: roleListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<RoleListResponse> =>
-      supersetClient.listRoles(request.body, request.id),
+    roleListRequestSchema,
+    roleListResponseSchema,
+    (body, requestId) => supersetClient.listRoles(body, requestId),
   );
 
-  server.post<{
-    Body: RlsListRequest;
-    Reply: RlsListResponse;
-  }>(
+  registerContractPostRoute<RlsListRequest, RlsListResponse>(
     '/mcp/rls-filters/list',
-    {
-      schema: {
-        body: rlsListRequestSchema,
-        response: {
-          200: rlsListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<RlsListResponse> =>
-      supersetClient.listRlsFilters(request.body, request.id),
+    rlsListRequestSchema,
+    rlsListResponseSchema,
+    (body, requestId) => supersetClient.listRlsFilters(body, requestId),
   );
 
-  server.post<{
-    Body: SavedQueryListRequest;
-    Reply: SavedQueryListResponse;
-  }>(
+  registerContractPostRoute<SavedQueryListRequest, SavedQueryListResponse>(
     '/mcp/saved-queries/list',
-    {
-      schema: {
-        body: savedQueryListRequestSchema,
-        response: {
-          200: savedQueryListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<SavedQueryListResponse> =>
-      supersetClient.listSavedQueries(request.body, request.id),
+    savedQueryListRequestSchema,
+    savedQueryListResponseSchema,
+    (body, requestId) => supersetClient.listSavedQueries(body, requestId),
   );
 
-  server.post<{
-    Body: TagListRequest;
-    Reply: TagListResponse;
-  }>(
+  registerContractPostRoute<TagListRequest, TagListResponse>(
     '/mcp/tags/list',
-    {
-      schema: {
-        body: tagListRequestSchema,
-        response: {
-          200: tagListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<TagListResponse> =>
-      supersetClient.listTags(request.body, request.id),
+    tagListRequestSchema,
+    tagListResponseSchema,
+    (body, requestId) => supersetClient.listTags(body, requestId),
   );
 
-  server.post<{
-    Body: TaskListRequest;
-    Reply: TaskListResponse;
-  }>(
+  registerContractPostRoute<TaskListRequest, TaskListResponse>(
     '/mcp/tasks/list',
-    {
-      schema: {
-        body: taskListRequestSchema,
-        response: {
-          200: taskListResponseSchema,
-        },
-      },
-    },
-    async (request): Promise<TaskListResponse> =>
-      supersetClient.listTasks(request.body, request.id),
+    taskListRequestSchema,
+    taskListResponseSchema,
+    (body, requestId) => supersetClient.listTasks(body, requestId),
   );
 
   return server;

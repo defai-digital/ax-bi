@@ -116,14 +116,14 @@ async def _validate_chart_dataset_access(
     validation_result = validate_chart_dataset(chart, check_access=True)
     if not validation_result.is_valid:
         await ctx.warning(
-            "Chart found but dataset is not accessible: %s" % (validation_result.error,)
+            f"Chart found but dataset is not accessible: {validation_result.error}"
         )
         return ChartError(
             error=validation_result.error or "Chart's dataset is not accessible",
             error_type="DatasetNotAccessible",
         )
     for warning in validation_result.warnings:
-        await ctx.warning("Dataset warning: %s" % (warning,))
+        await ctx.warning(f"Dataset warning: {warning}")
     return None
 
 
@@ -141,13 +141,13 @@ async def _attach_dashboard_filters(
         try:
             dashboard_filters = build_applied_dashboard_filters(dashboard_id, result.id)
         except DashboardNotFoundError as exc:
-            await ctx.warning("Dashboard not found: %s" % (str(exc),))
+            await ctx.warning(f"Dashboard not found: {str(exc)}")
             return ChartError(error=str(exc), error_type="DashboardNotFound")
         except ChartNotOnDashboardError as exc:
-            await ctx.warning("Chart not on dashboard: %s" % (str(exc),))
+            await ctx.warning(f"Chart not on dashboard: {str(exc)}")
             return ChartError(error=str(exc), error_type="ChartNotOnDashboard")
         except SupersetSecurityException as exc:
-            await ctx.warning("Dashboard not accessible: %s" % (str(exc),))
+            await ctx.warning(f"Dashboard not accessible: {str(exc)}")
             return ChartError(error=str(exc), error_type="DashboardNotAccessible")
 
         if dashboard_filters:
@@ -268,8 +268,8 @@ async def get_chart_info(
     from superset.models.slice import Slice
 
     await ctx.info(
-        "Retrieving chart information: identifier=%s, form_data_key=%s"
-        % (request.identifier, request.form_data_key)
+        f"Retrieving chart information: identifier={request.identifier}, "
+        f"form_data_key={request.form_data_key}"
     )
     can_view_data_model_metadata = user_can_view_data_model_metadata()
 
@@ -280,7 +280,7 @@ async def get_chart_info(
         ):
             await ctx.info(
                 "No chart identifier provided - retrieving unsaved chart from cache: "
-                "form_data_key=%s" % (request.form_data_key,)
+                f"form_data_key={request.form_data_key}"
             )
             result = _build_unsaved_chart_info(request.form_data_key)
             if isinstance(result, ChartError):
@@ -319,8 +319,8 @@ async def get_chart_info(
                 action="mcp.get_chart_info.unsaved_state_override"
             ):
                 await ctx.info(
-                    "Retrieving unsaved chart state from cache: form_data_key=%s"
-                    % (request.form_data_key,)
+                    "Retrieving unsaved chart state from cache: "
+                    f"form_data_key={request.form_data_key}"
                 )
                 _apply_unsaved_state_override(result, request.form_data_key)
 
@@ -328,8 +328,9 @@ async def get_chart_info(
             result = redact_chart_data_model_fields(result)
 
         await ctx.info(
-            "Chart information retrieved successfully: chart_name=%s, "
-            "is_unsaved_state=%s" % (result.slice_name, result.is_unsaved_state)
+            "Chart information retrieved successfully: "
+            f"chart_name={result.slice_name}, "
+            f"is_unsaved_state={result.is_unsaved_state}"
         )
 
         # Validate the chart's dataset is accessible
@@ -343,7 +344,7 @@ async def get_chart_info(
                 return error
 
         return dump_model_with_select_columns(result, request.select_columns)
-    else:
-        await ctx.warning("Chart retrieval failed: error=%s" % (str(result),))
+
+    await ctx.warning(f"Chart retrieval failed: error={str(result)}")
 
     return result

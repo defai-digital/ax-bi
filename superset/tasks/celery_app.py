@@ -64,7 +64,6 @@ def teardown(  # pylint: disable=unused-argument
     :see: https://gist.github.com/twolfson/a1b329e9353f9b575131
     """
 
-    if not flask_app.config.get("CELERY_ALWAYS_EAGER"):
+    if not flask_app.config.get("CELERY_ALWAYS_EAGER") and has_app_context():
         # Ensure session is removed only inside flask app context
-        if has_app_context():
-            db.session.remove()
+        db.session.remove()

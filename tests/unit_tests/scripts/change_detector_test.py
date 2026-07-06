@@ -81,15 +81,15 @@ def test_frontend_build_excludes_browser_test_harness() -> None:
 
     assert not _detects(
         "frontend_build",
-        "superset-frontend/cypress-base/cypress/e2e/explore/utils.ts",
+        "ax-bi-frontend/cypress-base/cypress/e2e/explore/utils.ts",
     )
     assert not _detects(
         "frontend_build",
-        "superset-frontend/playwright/components/core/Select.ts",
+        "ax-bi-frontend/playwright/components/core/Select.ts",
     )
 
 
 def test_frontend_build_includes_app_source() -> None:
     """Frontend app source changes still run full frontend package builds."""
 
-    assert _detects("frontend_build", "superset-frontend/src/views/index.tsx")
+    assert _detects("frontend_build", "ax-bi-frontend/src/views/index.tsx")

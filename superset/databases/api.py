@@ -161,6 +161,87 @@ from superset.views.filters import BaseFilterRelatedUsers, FilterRelatedOwners
 
 logger = logging.getLogger(__name__)
 
+AUTO_UPLOAD_FILE_TYPE_MAP: dict[str, UploadFileType] = {
+    ".ann": UploadFileType.STRUCTURED,
+    ".arrow": UploadFileType.COLUMNAR,
+    ".asc": UploadFileType.STRUCTURED,
+    ".avro": UploadFileType.STRUCTURED,
+    ".croissant.json": UploadFileType.STRUCTURED,
+    ".csv": UploadFileType.CSV,
+    ".csv.gz": UploadFileType.CSV,
+    ".dat": UploadFileType.STRUCTURED,
+    ".db": UploadFileType.STRUCTURED,
+    ".dta": UploadFileType.STRUCTURED,
+    ".dump": UploadFileType.STRUCTURED,
+    ".faiss": UploadFileType.STRUCTURED,
+    ".feather": UploadFileType.COLUMNAR,
+    ".fwf": UploadFileType.STRUCTURED,
+    ".geojson": UploadFileType.STRUCTURED,
+    ".gguf": UploadFileType.STRUCTURED,
+    ".gpkg": UploadFileType.STRUCTURED,
+    ".hnsw": UploadFileType.STRUCTURED,
+    ".htm": UploadFileType.STRUCTURED,
+    ".html": UploadFileType.STRUCTURED,
+    ".index": UploadFileType.STRUCTURED,
+    ".ipc": UploadFileType.COLUMNAR,
+    ".json": UploadFileType.STRUCTURED,
+    ".jsonl": UploadFileType.STRUCTURED,
+    ".jsonl.gz": UploadFileType.STRUCTURED,
+    ".lance": UploadFileType.STRUCTURED,
+    ".lance.zip": UploadFileType.STRUCTURED,
+    ".mlflow.zip": UploadFileType.STRUCTURED,
+    ".mlmodel": UploadFileType.STRUCTURED,
+    ".mlruns.zip": UploadFileType.STRUCTURED,
+    ".ndjson": UploadFileType.STRUCTURED,
+    ".ndjson.gz": UploadFileType.STRUCTURED,
+    ".npy": UploadFileType.STRUCTURED,
+    ".npz": UploadFileType.STRUCTURED,
+    ".ods": UploadFileType.EXCEL,
+    ".onnx": UploadFileType.STRUCTURED,
+    ".orc": UploadFileType.COLUMNAR,
+    ".parquet": UploadFileType.COLUMNAR,
+    ".sas7bdat": UploadFileType.STRUCTURED,
+    ".sav": UploadFileType.STRUCTURED,
+    ".safetensors": UploadFileType.STRUCTURED,
+    ".shp.zip": UploadFileType.STRUCTURED,
+    ".sql": UploadFileType.STRUCTURED,
+    ".sqlite": UploadFileType.STRUCTURED,
+    ".sqlite3": UploadFileType.STRUCTURED,
+    ".tar": UploadFileType.STRUCTURED,
+    ".tar.gz": UploadFileType.STRUCTURED,
+    ".tgz": UploadFileType.STRUCTURED,
+    ".tsv": UploadFileType.CSV,
+    ".tsv.gz": UploadFileType.CSV,
+    ".txt": UploadFileType.CSV,
+    ".txt.gz": UploadFileType.CSV,
+    ".xls": UploadFileType.EXCEL,
+    ".xlsx": UploadFileType.EXCEL,
+    ".xml": UploadFileType.STRUCTURED,
+    ".xpt": UploadFileType.STRUCTURED,
+    ".yaml": UploadFileType.STRUCTURED,
+    ".yml": UploadFileType.STRUCTURED,
+    ".yolo.zip": UploadFileType.STRUCTURED,
+    ".zip": UploadFileType.COLUMNAR,
+}
+
+AUTO_UPLOAD_SUPPORTED_TYPES = (
+    "CSV, TSV, TXT, compressed CSV/TSV/TXT, XLS, XLSX, ODS, Parquet, ORC, "
+    "Arrow/Feather, JSON, JSONL, XML, SQL dumps, SQLite, Avro, GeoJSON, "
+    "fixed-width, HTML tables, statistical files, NumPy arrays, and AI artifact "
+    "metadata"
+)
+
+
+def detect_upload_file_type(filename: str) -> tuple[str, UploadFileType] | None:
+    """Return the normalized extension and upload type for a filename."""
+    lowered = filename.lower()
+    if lowered == "mlmodel":
+        return ".mlmodel", UploadFileType.STRUCTURED
+    for extension in sorted(AUTO_UPLOAD_FILE_TYPE_MAP, key=len, reverse=True):
+        if lowered.endswith(extension) and len(lowered) > len(extension):
+            return extension, AUTO_UPLOAD_FILE_TYPE_MAP[extension]
+    return None
+
 
 # pylint: disable=too-many-public-methods
 class DatabaseRestApi(BaseSupersetModelRestApi):
@@ -1877,8 +1958,10 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                       type: string
                       format: binary
                       description: >-
-                        The file to upload (CSV, TSV, TXT, XLS, XLSX, Parquet,
-                        JSON, JSONL, XML, SQL dump, or SQLite)
+                        The file to upload. Supported formats include CSV, TSV,
+                        compressed tabular files, Excel/ODS, Parquet, ORC,
+                        Arrow/Feather, JSON/JSONL, XML, SQL dumps, SQLite,
+                        geospatial/AI metadata, and model/index metadata.
                     table_name:
                       type: string
                       description: >-
@@ -1930,33 +2013,16 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
             # Validate file size
             UploadCommand.validate_file_size(file)
 
-            # Detect file type from extension
             filename = file.filename
-            ext = os.path.splitext(filename)[1].lower()
-            file_type_map = {
-                ".csv": UploadFileType.CSV,
-                ".tsv": UploadFileType.CSV,
-                ".txt": UploadFileType.CSV,
-                ".xls": UploadFileType.EXCEL,
-                ".xlsx": UploadFileType.EXCEL,
-                ".parquet": UploadFileType.COLUMNAR,
-                ".json": UploadFileType.STRUCTURED,
-                ".jsonl": UploadFileType.STRUCTURED,
-                ".ndjson": UploadFileType.STRUCTURED,
-                ".xml": UploadFileType.STRUCTURED,
-                ".sql": UploadFileType.STRUCTURED,
-                ".dump": UploadFileType.STRUCTURED,
-                ".sqlite": UploadFileType.STRUCTURED,
-                ".sqlite3": UploadFileType.STRUCTURED,
-                ".db": UploadFileType.STRUCTURED,
-            }
-            file_type = file_type_map.get(ext)
-            if not file_type:
+            detected_file_type = detect_upload_file_type(filename)
+            if not detected_file_type:
                 return self.response_400(
-                    message=f"Unsupported file type: {ext}. "
-                    "Supported types: CSV, TSV, TXT, XLS, XLSX, Parquet, "
-                    "JSON, JSONL, XML, SQL dumps, SQLite"
+                    message=(
+                        f"Unsupported file type for {filename}. "
+                        f"Supported types: {AUTO_UPLOAD_SUPPORTED_TYPES}"
+                    )
                 )
+            _, file_type = detected_file_type
 
             # Derive table name from filename (sanitized)
             table_name = request.form.get("table_name") or os.path.splitext(filename)[0]

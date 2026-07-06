@@ -18,8 +18,13 @@
  */
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import jwt, { Algorithm } from 'jsonwebtoken';
-import { parse } from 'cookie';
-import { getChartCache, hasChartCache, fastCacheOpts, fastCacheStatsd } from '../fastCache';
+import { parseCookie } from 'cookie';
+import {
+  getChartCache,
+  hasChartCache,
+  fastCacheOpts,
+  fastCacheStatsd,
+} from '../fastCache';
 import { createLogger } from '../logger';
 
 const opts = fastCacheOpts;
@@ -35,9 +40,15 @@ interface ChartCacheParams {
   cacheKey: string;
 }
 
-interface QueryStatusParams {
-  jobId: string;
-}
+const hasInvalidCacheKeyCharacter = (cacheKey: string): boolean =>
+  [...cacheKey].some(char => /\s/.test(char) || char.charCodeAt(0) <= 31);
+
+const isValidCacheKey = (cacheKey: string | undefined): cacheKey is string => {
+  if (!cacheKey) {
+    return false;
+  }
+  return cacheKey.length <= 256 && !hasInvalidCacheKeyCharacter(cacheKey);
+};
 
 /**
  * Validates the JWT cookie from an HTTP request.
@@ -47,7 +58,7 @@ const validateJwtCookie = (request: FastifyRequest): string | null => {
   const cookieHeader = request.headers.cookie as string | undefined;
   if (!cookieHeader) return null;
 
-  const cookies = parse(cookieHeader);
+  const cookies = parseCookie(cookieHeader);
   const token = cookies[opts.jwtCookieName];
   if (!token) return null;
 
@@ -104,7 +115,7 @@ const handleGetChartCache = async (
   const { cacheKey } = request.params;
 
   // Validate cache key format to prevent Redis injection via crafted keys
-  if (!cacheKey || cacheKey.length > 256 || /[\s\x00-\x1f]/.test(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send({ error: 'Invalid cache key' });
     return;
   }
@@ -143,13 +154,16 @@ const handleHeadChartCache = async (
 ): Promise<void> => {
   const { cacheKey } = request.params;
 
-  if (!cacheKey || cacheKey.length > 256 || /[\s\x00-\x1f]/.test(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send();
     return;
   }
 
   const exists = await hasChartCache(cacheKey);
-  reply.status(exists ? 200 : 404).header('X-Cache', exists ? 'HIT' : 'MISS').send();
+  reply
+    .status(exists ? 200 : 404)
+    .header('X-Cache', exists ? 'HIT' : 'MISS')
+    .send();
 };
 
 /**

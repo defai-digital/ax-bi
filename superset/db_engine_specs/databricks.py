@@ -16,8 +16,9 @@
 # under the License.
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, TYPE_CHECKING, TypedDict, Union
+from typing import Any, TYPE_CHECKING, TypedDict
 
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
@@ -41,6 +42,8 @@ from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.utils import json
 from superset.utils.core import get_user_agent, QuerySource
 from superset.utils.network import is_hostname_valid, is_port_open
+
+DEFAULT_CATALOG = "hive_metastore"
 
 if TYPE_CHECKING:
     from superset.models.core import Database
@@ -70,7 +73,7 @@ class DatabricksStringType(types.TypeDecorator):
             else:
                 _step2 = _step1
 
-            return "%s" % _step2
+            return _step2
 
         return process
 
@@ -397,10 +400,8 @@ class DatabricksDynamicBaseEngineSpec(BasicParametersMixin, DatabricksBaseEngine
     @classmethod
     def validate_parameters(  # type: ignore
         cls,
-        properties: Union[
-            DatabricksNativePropertiesType,
-            DatabricksPythonConnectorPropertiesType,
-        ],
+        properties: DatabricksNativePropertiesType
+        | DatabricksPythonConnectorPropertiesType,
     ) -> list[SupersetError]:
         errors: list[SupersetError] = []
         if extra := json.loads(properties.get("extra")):  # type: ignore
@@ -425,7 +426,7 @@ class DatabricksDynamicBaseEngineSpec(BasicParametersMixin, DatabricksBaseEngine
                 ),
             )
 
-        host = parameters.get("host", None)
+        host = parameters.get("host")
         if not host:
             return errors
 
@@ -440,7 +441,7 @@ class DatabricksDynamicBaseEngineSpec(BasicParametersMixin, DatabricksBaseEngine
             )
             return errors
 
-        port = parameters.get("port", None)
+        port = parameters.get("port")
         if not port:
             return errors
         try:
@@ -613,7 +614,10 @@ class DatabricksNativeEngineSpec(DatabricksDynamicBaseEngineSpec):
                 if len(catalogs) == 1:
                     return catalogs.pop()
 
-                return connection.execute(text("SELECT current_catalog()")).scalar()
+                return (
+                    connection.execute(text("SELECT current_catalog()")).scalar()
+                    or DEFAULT_CATALOG
+                )
 
     @classmethod
     def get_prequeries(

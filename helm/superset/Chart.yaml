@@ -16,20 +16,21 @@
 #
 apiVersion: v2
 appVersion: "6.1.0"
-description: Apache Superset is a modern, enterprise-ready business intelligence web application
-name: superset
-icon: https://artifacthub.io/image/68c1d717-0e97-491f-b046-754e46f46922@2x
-home: https://superset.apache.org/
+description: AX-BI is a GenAI-native business intelligence platform built on Apache Superset
+name: ax-bi
+icon: https://raw.githubusercontent.com/defai-digital/ax-bi/main/docs/static/img/logo.svg
+home: https://github.com/defai-digital/ax-bi
 keywords:
   - business intelligence
   - data science
+  - genai
+  - mcp
 sources:
-  - https://github.com/apache/superset
+  - https://github.com/defai-digital/ax-bi
 maintainers:
-  - name: craig-rueda
-    email: craig@craigrueda.com
-    url: https://github.com/craig-rueda
-version: 0.17.3 # See [README](https://github.com/apache/superset/blob/master/helm/superset/README.md#versioning) for version details.
+  - name: DEFAI Private Limited
+    url: https://github.com/defai-digital
+version: 0.17.3 # See [README](https://github.com/defai-digital/ax-bi/blob/main/helm/superset/README.md#versioning) for version details.
 dependencies:
   - name: postgresql
     version: 18.7.10

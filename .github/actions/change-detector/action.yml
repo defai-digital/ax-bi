@@ -23,6 +23,9 @@ outputs:
   ax-services:
     description: Whether ax-services package-related files were changed
     value: ${{ steps.change-detector.outputs.ax-services }}
+  ax-sdk:
+    description: Whether AX SDK package-related files were changed
+    value: ${{ steps.change-detector.outputs.ax-sdk }}
   superset-rust:
     description: Whether superset-rust package-related files were changed
     value: ${{ steps.change-detector.outputs.superset-rust }}

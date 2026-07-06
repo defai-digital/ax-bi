@@ -20,7 +20,8 @@ import logging
 import threading
 import time
 import traceback
-from typing import Any, Callable, cast, TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import Any, cast, TYPE_CHECKING, TypeVar
 
 from flask import current_app
 from superset_core.tasks.types import (
@@ -66,7 +67,7 @@ class TaskContext(CoreTaskContext):
         self._task_uuid = task.uuid
         self._cleanup_handlers: list[Callable[[], None]] = []
         self._abort_handlers: list[Callable[[], None]] = []
-        self._abort_listener: "AbortListener | None" = None
+        self._abort_listener: AbortListener | None = None
         self._abort_detected = False
         self._abort_handlers_completed = False  # Track if all abort handlers finished
         self._execution_completed = False  # Set by executor after task work completes
@@ -87,7 +88,7 @@ class TaskContext(CoreTaskContext):
 
         # Cached task entity - avoids repeated DB fetches.
         # Updated only by _refresh_task() when checking external state changes.
-        self._task: "Task" = task
+        self._task: Task = task
 
         # In-memory state caches - authoritative during execution
         # These are initialized from the task entity and updated locally

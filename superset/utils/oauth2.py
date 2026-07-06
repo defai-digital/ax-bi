@@ -21,9 +21,10 @@ import base64
 import hashlib
 import logging
 import secrets
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Iterator, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import backoff
 import jwt
@@ -59,8 +60,7 @@ def generate_code_verifier() -> str:
     # Generate random bytes and encode as URL-safe base64
     random_bytes = secrets.token_bytes(PKCE_CODE_VERIFIER_LENGTH)
     # Use URL-safe base64 encoding without padding
-    code_verifier = base64.urlsafe_b64encode(random_bytes).rstrip(b"=").decode("ascii")
-    return code_verifier
+    return base64.urlsafe_b64encode(random_bytes).rstrip(b"=").decode("ascii")
 
 
 def generate_code_challenge(code_verifier: str) -> str:
@@ -72,8 +72,7 @@ def generate_code_challenge(code_verifier: str) -> str:
     # Compute SHA-256 hash of the code verifier
     digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
     # Encode as URL-safe base64 without padding
-    code_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
-    return code_challenge
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
 @backoff.on_exception(
@@ -219,9 +218,7 @@ def encode_oauth2_state(state: OAuth2State) -> str:
     )
 
     # Google OAuth2 needs periods to be escaped.
-    encoded_state = encoded_state.replace(".", "%2E")
-
-    return encoded_state
+    return encoded_state.replace(".", "%2E")
 
 
 class OAuth2StateSchema(Schema):
@@ -264,9 +261,7 @@ def decode_oauth2_state(encoded_state: str) -> OAuth2State:
         key=app.config["SECRET_KEY"],
         algorithms=[app.config["DATABASE_OAUTH2_JWT_ALGORITHM"]],
     )
-    state = oauth2_state_schema.load(payload)
-
-    return state
+    return oauth2_state_schema.load(payload)
 
 
 def get_oauth2_redirect_uri() -> str:

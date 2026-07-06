@@ -18,8 +18,9 @@
 import contextlib
 import re
 import threading
+from collections.abc import Callable
 from re import Pattern
-from typing import Any, Callable, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from flask_babel import gettext as __
 from sqlalchemy.engine.reflection import Inspector
@@ -214,6 +215,8 @@ def _find_columns_to_sanitize(cursor: Any) -> list[PlacedSanitizeFunc]:
     :param cursor: the result set cursor
     :returns: the list of tuples consisting of the column index and sanitization function
     """  # noqa: E501
+    if not cursor.description:
+        return []
     return [
         PlacedSanitizeFunc(i, _sanitized_ocient_type_codes[cursor.description[i][1]])
         for i in range(len(cursor.description))
@@ -314,14 +317,12 @@ class OcientEngineSpec(BaseEngineSpec):
 
     @classmethod
     def get_table_names(
-        cls, database: Database, inspector: Inspector, schema: Optional[str]
+        cls, database: Database, inspector: Inspector, schema: str | None
     ) -> set[str]:
         return inspector.get_table_names(schema)
 
     @classmethod
-    def fetch_data(
-        cls, cursor: Any, limit: Optional[int] = None
-    ) -> list[tuple[Any, ...]]:
+    def fetch_data(cls, cursor: Any, limit: int | None = None) -> list[tuple[Any, ...]]:
         try:
             rows: list[tuple[Any, ...]] = super().fetch_data(cursor, limit)
         except Exception:
@@ -374,7 +375,7 @@ class OcientEngineSpec(BaseEngineSpec):
         return "DATEADD(MS, {col}, '1970-01-01')"
 
     @classmethod
-    def get_cancel_query_id(cls, cursor: Any, query: Query) -> Optional[str]:
+    def get_cancel_query_id(cls, cursor: Any, query: Query) -> str | None:
         # Return a Non-None value
         # If None is returned, Superset will not call cancel_query
         return "DUMMY_VALUE"

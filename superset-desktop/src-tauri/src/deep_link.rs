@@ -32,6 +32,19 @@ fn is_dashboard_identifier(value: &str) -> bool {
             .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_')
 }
 
+fn is_chart_identifier(value: &str) -> bool {
+    !value.is_empty() && value.len() <= 20 && value.chars().all(|ch| ch.is_ascii_digit())
+}
+
+fn static_route(path: &str, route: &str) -> Option<String> {
+    if path.is_empty() {
+        Some(route.to_string())
+    } else {
+        warn!("Invalid static deep link path: {}", path);
+        None
+    }
+}
+
 fn parse_deep_link(url: &str) -> Option<String> {
     if url.contains("/../") || url.ends_with("/..") || url.contains("/./") || url.ends_with("/.") {
         warn!("Rejected deep link with dot segment: {}", url);
@@ -41,6 +54,14 @@ fn parse_deep_link(url: &str) -> Option<String> {
     let parsed = Url::parse(url).ok()?;
     if parsed.scheme() != "axbi" {
         warn!("Unknown deep link scheme: {}", parsed.scheme());
+        return None;
+    }
+    if parsed.query().is_some() || parsed.fragment().is_some() {
+        warn!("Rejected deep link with query or fragment: {}", url);
+        return None;
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        warn!("Rejected deep link with credentials: {}", url);
         return None;
     }
     let host = parsed.host_str()?;
@@ -59,16 +80,16 @@ fn parse_deep_link(url: &str) -> Option<String> {
         "chart" => {
             if path.is_empty() {
                 "/chart/list/".to_string()
-            } else if path.chars().all(|ch| ch.is_ascii_digit()) {
+            } else if is_chart_identifier(path) {
                 format!("/explore/?slice_id={path}")
             } else {
                 warn!("Invalid chart deep link identifier: {}", path);
                 return None;
             }
         }
-        "explore" => "/explore/".to_string(),
-        "sqllab" | "sql" => "/sqllab/".to_string(),
-        "home" => "/superset/welcome/".to_string(),
+        "explore" => static_route(path, "/explore/")?,
+        "sqllab" | "sql" => static_route(path, "/sqllab/")?,
+        "home" => static_route(path, "/superset/welcome/")?,
         other => {
             warn!("Unknown deep link host: {}", other);
             return None;
@@ -144,7 +165,14 @@ mod tests {
         assert_eq!(parse_deep_link("https://dashboard/1"), None);
         assert_eq!(parse_deep_link("axbi://unknown/path"), None);
         assert_eq!(parse_deep_link("axbi://chart/1abc"), None);
+        assert_eq!(parse_deep_link("axbi://chart/123456789012345678901"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/../admin"), None);
         assert_eq!(parse_deep_link("axbi://dashboard/.."), None);
+        assert_eq!(parse_deep_link("axbi://dashboard/1?next=/admin"), None);
+        assert_eq!(parse_deep_link("axbi://chart/42#settings"), None);
+        assert_eq!(parse_deep_link("axbi://user@dashboard/1"), None);
+        assert_eq!(parse_deep_link("axbi://explore/extra"), None);
+        assert_eq!(parse_deep_link("axbi://sqllab/query/1"), None);
+        assert_eq!(parse_deep_link("axbi://home/admin"), None);
     }
 }

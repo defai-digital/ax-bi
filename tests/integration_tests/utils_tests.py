@@ -18,7 +18,7 @@
 from datetime import date, datetime
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock, patch  # noqa: F401
 
 from superset.commands.database.exceptions import DatabaseInvalidError
@@ -363,7 +363,7 @@ class TestUtils(SupersetTestCase):
 
         assert slc.viz is not None
         resp = self.get_json_resp(  # noqa: F841
-            f"/superset/explore_json/{slc.datasource_type}/{slc.datasource_id}/"
+            f"/ax-bi/explore_json/{slc.datasource_type}/{slc.datasource_id}/"
             + f'?form_data={{"slice_id": {slc.id}}}&dashboard_id={dashboard_id}',
             {"form_data": json.dumps(slc.viz.form_data)},
         )
@@ -453,9 +453,9 @@ class TestUtils(SupersetTestCase):
     def test_normalize_dttm_col(self):
         def normalize_col(
             df: pd.DataFrame,
-            timestamp_format: Optional[str],
+            timestamp_format: str | None,
             offset: int,
-            time_shift: Optional[str],
+            time_shift: str | None,
         ) -> pd.DataFrame:
             df = df.copy()
             normalize_dttm_col(

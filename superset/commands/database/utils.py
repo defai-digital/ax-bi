@@ -41,9 +41,11 @@ logger = logging.getLogger(__name__)
 def ping(engine: Engine) -> bool:
     try:
         time_delta = app.config["TEST_DATABASE_CONNECTION_TIMEOUT"]
-        with timeout(int(time_delta.total_seconds())):
-            with closing(engine.raw_connection()) as conn:
-                return engine.dialect.do_ping(conn)
+        with (
+            timeout(int(time_delta.total_seconds())),
+            closing(engine.raw_connection()) as conn,
+        ):
+            return engine.dialect.do_ping(conn)
     except (sqlite3.ProgrammingError, RuntimeError):
         # SQLite can't run on a separate thread, so ``utils.timeout`` fails
         # RuntimeError catches the equivalent error from duckdb.

@@ -37,7 +37,7 @@ class DelFavoriteDashboardCommand(BaseCommand):
     def run(self) -> None:
         self.validate()
         if self._dashboard:
-            return DashboardDAO.remove_favorite(self._dashboard)
+            DashboardDAO.remove_favorite(self._dashboard)
 
     def validate(self) -> None:
         # Raises DashboardNotFoundError or DashboardAccessDeniedError

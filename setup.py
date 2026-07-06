@@ -21,7 +21,7 @@ import subprocess
 from setuptools import find_packages, setup
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-PACKAGE_JSON = os.path.join(BASE_DIR, "superset-frontend", "package.json")
+PACKAGE_JSON = os.path.join(BASE_DIR, "ax-office-frontend", "package.json")
 
 
 with open(PACKAGE_JSON) as package_file:
@@ -58,7 +58,10 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={
-        "console_scripts": ["superset=superset.cli.main:superset"],
+        "console_scripts": [
+            "ax-office=superset.cli.main:superset",
+            "ax-bi=superset.cli.main:superset",  # backward compat alias
+        ],
         # the `postgres` and `postgres+psycopg2://` schemes were removed in SQLAlchemy 1.4  # noqa: E501
         # add an alias here to prevent breaking existing databases
         "sqlalchemy.dialects": [

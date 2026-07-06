@@ -18,7 +18,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
 from flask import current_app as app, Flask, request, Response, session

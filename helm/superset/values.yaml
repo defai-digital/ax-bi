@@ -70,7 +70,7 @@ extraEnv: {}
   # Different gunicorn settings, refer to the gunicorn documentation
   # https://docs.gunicorn.org/en/stable/settings.html#
   # These variables are used as Flags at the gunicorn startup
-  # https://github.com/apache/superset/blob/master/docker/run-server.sh#L22
+  # https://github.com/defai-digital/ax-office/blob/main/docker/run-server.sh#L22
   # Extend timeout to allow long running queries.
   # GUNICORN_TIMEOUT: 300
   # Increase the gunicorn worker amount, can improve performance drastically
@@ -188,7 +188,7 @@ configMountPath: "/app/pythonpath"
 extraConfigMountPath: "/app/configs"
 
 image:
-  repository: apachesuperset.docker.scarf.sh/apache/superset
+  repository: ghcr.io/defai-digital/ax-office
   tag: ~
   pullPolicy: IfNotPresent
 
@@ -722,8 +722,8 @@ supersetWebsockets:
     repository: oneacrefund/superset-websocket
     tag: latest
     pullPolicy: IfNotPresent
-  # -- The config.json to pass to the server, see https://github.com/apache/superset/tree/master/superset-websocket
-  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/apache/superset/blob/master/superset-websocket/src/config.ts for a list of supported variables
+  # -- The config.json to pass to the server, see https://github.com/defai-digital/ax-office/tree/main/superset-websocket
+  # Note that the configuration can also read from environment variables (which will have priority), see https://github.com/defai-digital/ax-office/blob/main/superset-websocket/src/config.ts for a list of supported variables
   # @default -- see `values.yaml`
   config:
     {
@@ -796,6 +796,141 @@ supersetWebsockets:
   # -- Set priorityClassName for supersetWebsockets pods
   priorityClassName: ~
 
+# AX-BI MCP service configuration
+mcp:
+  enabled: true
+  replicaCount: 1
+  command:
+    - "/bin/sh"
+    - "-c"
+    - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; exec ax-office mcp run --host 0.0.0.0 --port {{ .Values.mcp.service.port }}"
+  env: {}
+  envRaw: []
+  initContainers:
+    - name: wait-for-postgres-redis
+      image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+      envFrom:
+        - secretRef:
+            name: "{{ tpl .Values.envFromSecret . }}"
+      command:
+        - /bin/bash
+        - -c
+        - |
+          SECONDS=0
+          wait_for() {
+            local host=$1 port=$2 name=$3
+            until (exec 3<>/dev/tcp/"$host"/"$port") 2>/dev/null; do
+              if [ "$SECONDS" -ge 120 ]; then
+                echo "timeout waiting for $name at $host:$port after 120s" >&2
+                exit 1
+              fi
+              echo "waiting for $name at $host:$port (elapsed ${SECONDS}s)"
+              sleep 2
+            done
+            echo "$name at $host:$port is up"
+          }
+          wait_for "$DB_HOST" "$DB_PORT" postgres
+          wait_for "$REDIS_HOST" "$REDIS_PORT" redis
+      resources:
+        limits:
+          memory: "256Mi"
+        requests:
+          cpu: "250m"
+          memory: "128Mi"
+  service:
+    type: ClusterIP
+    port: 5008
+    annotations: {}
+    nodePort:
+      http: nil
+  podAnnotations: {}
+  podLabels: {}
+  deploymentAnnotations: {}
+  deploymentLabels: {}
+  resources: {}
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  affinity: {}
+  topologySpreadConstraints: []
+  tolerations: []
+  startupProbe:
+    tcpSocket:
+      port: mcp
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    periodSeconds: 5
+  livenessProbe:
+    tcpSocket:
+      port: mcp
+    initialDelaySeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+    periodSeconds: 30
+  readinessProbe:
+    tcpSocket:
+      port: mcp
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    periodSeconds: 10
+
+# AX-BI TypeScript sidecar configuration
+axServices:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/defai-digital/ax-bi-services
+    tag: ~
+    pullPolicy: IfNotPresent
+  env:
+    AX_SERVICES_HOST: "0.0.0.0"
+    AX_SERVICES_PORT: "5010"
+    AX_SERVICES_LOG_LEVEL: "info"
+  envRaw: []
+  initContainers: []
+  service:
+    type: ClusterIP
+    port: 5010
+    annotations: {}
+    nodePort:
+      http: nil
+  podAnnotations: {}
+  podLabels: {}
+  deploymentAnnotations: {}
+  deploymentLabels: {}
+  resources: {}
+  podSecurityContext: {}
+  containerSecurityContext: {}
+  affinity: {}
+  topologySpreadConstraints: []
+  tolerations: []
+  startupProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    periodSeconds: 5
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+    periodSeconds: 30
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    periodSeconds: 10
+
 init:
   # Configure resources
   # Warning: fab command consumes a lot of ram and can
@@ -863,12 +998,12 @@ init:
     #!/bin/sh
     set -eu
     echo "Upgrading DB schema..."
-    superset db upgrade
+    ax-office db upgrade
     echo "Initializing roles..."
-    superset init
+    ax-office init
     {{ if .Values.init.createAdmin }}
     echo "Creating admin user..."
-    superset fab create-admin \
+    ax-office fab create-admin \
                     --username {{ .Values.init.adminUser.username }} \
                     --firstname {{ .Values.init.adminUser.firstname }} \
                     --lastname {{ .Values.init.adminUser.lastname }} \
@@ -878,11 +1013,11 @@ init:
     {{- end }}
     {{ if .Values.init.loadExamples }}
     echo "Loading examples..."
-    superset load_examples
+    ax-office load_examples
     {{- end }}
     if [ -f "{{ .Values.extraConfigMountPath }}/import_datasources.yaml" ]; then
       echo "Importing database connections.... "
-      superset import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
+      ax-office import_datasources -p {{ .Values.extraConfigMountPath }}/import_datasources.yaml
     fi
   # -- Launch additional containers into init job pod
   extraContainers: []

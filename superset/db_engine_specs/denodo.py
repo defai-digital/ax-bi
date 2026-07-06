@@ -16,7 +16,7 @@
 # under the License.
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.types import Date, DateTime
 
@@ -169,8 +169,8 @@ class DenodoEngineSpec(BaseEngineSpec, BasicParametersMixin):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
         if isinstance(sqla_type, Date):
             return f"TO_DATE('yyyy-MM-dd', '{dttm.date().isoformat()}')"
@@ -180,7 +180,7 @@ class DenodoEngineSpec(BaseEngineSpec, BasicParametersMixin):
         return None
 
     @classmethod
-    def get_datatype(cls, type_code: Any) -> Optional[str]:
+    def get_datatype(cls, type_code: Any) -> str | None:
         # pylint: disable=import-outside-toplevel
         from psycopg2.extensions import binary_types, string_types
 

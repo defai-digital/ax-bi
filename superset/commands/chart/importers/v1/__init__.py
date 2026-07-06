@@ -106,9 +106,10 @@ class ImportChartsCommand(ImportModelsCommand):
                 chart = import_chart(config, overwrite=overwrite)
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        target_tag_names = config["tags"]
-                        import_tag(
-                            target_tag_names, contents, chart.id, "chart", db.session
-                        )
+                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM") and (
+                    "tags" in config
+                ):
+                    target_tag_names = config["tags"]
+                    import_tag(
+                        target_tag_names, contents, chart.id, "chart", db.session
+                    )

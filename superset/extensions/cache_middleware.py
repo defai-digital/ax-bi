@@ -17,8 +17,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable, Iterable
 from types import TracebackType
-from typing import Callable, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment

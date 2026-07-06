@@ -52,7 +52,7 @@ Get the MCP server running locally and connect an AI client in three steps.
 The MCP server runs as a separate process alongside Superset:
 
 ```bash
-superset mcp run --host 127.0.0.1 --port 5008
+ax-bi mcp run --host 127.0.0.1 --port 5008
 ```
 
 | Flag | Default | Description |
@@ -245,7 +245,7 @@ def my_custom_auth_factory(app):
     return JWTVerifier(
         jwks_uri="https://my-auth.example.com/.well-known/jwks.json",
         issuer="https://my-auth.example.com/",
-        audience="superset-mcp",
+        audience="ax-bi-mcp",
     )
 
 MCP_AUTH_FACTORY = my_custom_auth_factory
@@ -392,10 +392,10 @@ MCP_SERVICE_URL = "https://superset.example.com"
 
 ```bash
 # Terminal 1 -- Superset web server
-superset run -h 0.0.0.0 -p 8088
+ax-bi run -h 0.0.0.0 -p 8088
 
 # Terminal 2 -- MCP server
-superset mcp run --host 0.0.0.0 --port 5008
+ax-bi mcp run --host 0.0.0.0 --port 5008
 ```
 
 **Nginx reverse proxy with TLS:**
@@ -443,7 +443,7 @@ services:
 
   mcp:
     image: apache/superset:latest
-    command: ["superset", "mcp", "run", "--host", "0.0.0.0", "--port", "5008"]
+    command: ["ax-bi", "mcp", "run", "--host", "0.0.0.0", "--port", "5008"]
     ports:
       - "5008:5008"
     volumes:

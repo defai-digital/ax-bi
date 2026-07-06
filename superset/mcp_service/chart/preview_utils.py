@@ -24,7 +24,7 @@ from form data without requiring a saved chart object.
 
 import logging
 import math
-from typing import Any, Dict, List
+from typing import Any
 
 from superset.mcp_service.chart.schemas import (
     ASCIIPreview,
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 SUPPORTED_FORM_DATA_PREVIEW_FORMATS = frozenset({"ascii", "table", "vega_lite"})
 
 
-def _build_query_columns(form_data: Dict[str, Any]) -> list[str]:
+def _build_query_columns(form_data: dict[str, Any]) -> list[str]:
     """Build query columns list from form_data, including both x_axis and groupby."""
     # Table charts in raw mode use all_columns or columns
     all_columns = form_data.get("all_columns", [])
@@ -62,7 +62,7 @@ def _build_query_columns(form_data: Dict[str, Any]) -> list[str]:
 
 
 def generate_preview_from_form_data(
-    form_data: Dict[str, Any], dataset_id: int, preview_format: str
+    form_data: dict[str, Any], dataset_id: int, preview_format: str
 ) -> Any:
     """
     Generate preview from form data without a saved chart.
@@ -142,15 +142,14 @@ def generate_preview_from_form_data(
         # Generate preview based on format
         if preview_format == "ascii":
             return _generate_ascii_preview_from_data(data, form_data)
-        elif preview_format == "table":
+        if preview_format == "table":
             return _generate_table_preview_from_data(data, form_data)
-        elif preview_format == "vega_lite":
+        if preview_format == "vega_lite":
             return _generate_vega_lite_preview_from_data(data, form_data)
-        else:
-            return ChartError(
-                error=f"Unsupported preview format: {preview_format}",
-                error_type="UnsupportedFormat",
-            )
+        return ChartError(
+            error=f"Unsupported preview format: {preview_format}",
+            error_type="UnsupportedFormat",
+        )
 
     except Exception as e:
         logger.error("Preview generation from form data failed: %s", e)
@@ -160,7 +159,7 @@ def generate_preview_from_form_data(
 
 
 def _generate_ascii_preview_from_data(
-    data: List[Dict[str, Any]], form_data: Dict[str, Any]
+    data: list[dict[str, Any]], form_data: dict[str, Any]
 ) -> ASCIIPreview:
     """Generate ASCII preview from raw data."""
     viz_type = form_data.get("viz_type", "table")
@@ -181,8 +180,8 @@ def _generate_ascii_preview_from_data(
 
 
 def _calculate_column_widths(
-    display_columns: List[str], data: List[Dict[str, Any]]
-) -> Dict[str, int]:
+    display_columns: list[str], data: list[dict[str, Any]]
+) -> dict[str, int]:
     """Calculate optimal width for each column."""
     column_widths = {}
     for col in display_columns:
@@ -233,7 +232,7 @@ def _format_value(val: Any, width: int) -> str:
 
 
 def _generate_table_preview_from_data(
-    data: List[Dict[str, Any]], form_data: Dict[str, Any]
+    data: list[dict[str, Any]], form_data: dict[str, Any]
 ) -> TablePreview:
     """Generate table preview from raw data with improved formatting."""
     if not data:
@@ -294,7 +293,7 @@ def _generate_table_preview_from_data(
     )
 
 
-def _generate_safe_ascii_bar_chart(data: List[Dict[str, Any]]) -> str:
+def _generate_safe_ascii_bar_chart(data: list[dict[str, Any]]) -> str:
     """Generate ASCII bar chart with proper error handling."""
     if not data:
         return "No data available for bar chart"
@@ -310,7 +309,7 @@ def _generate_safe_ascii_bar_chart(data: List[Dict[str, Any]]) -> str:
         value = None
 
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
+            if isinstance(val, int | float) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:
                 label = val
@@ -335,7 +334,7 @@ def _generate_safe_ascii_bar_chart(data: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _generate_safe_ascii_line_chart(data: List[Dict[str, Any]]) -> str:
+def _generate_safe_ascii_line_chart(data: list[dict[str, Any]]) -> str:
     """Generate ASCII line chart with proper NaN handling."""
     if not data:
         return "No data available for line chart"
@@ -355,29 +354,28 @@ def _generate_safe_ascii_line_chart(data: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _extract_numeric_values_safe(data: List[Dict[str, Any]]) -> List[float]:
+def _extract_numeric_values_safe(data: list[dict[str, Any]]) -> list[float]:
     """Extract numeric values safely from data."""
     values = []
     for row in data[:20]:
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val):
+            if isinstance(val, int | float) and not _is_nan(val):
                 values.append(val)
                 break
     return values
 
 
-def _format_range_display(values: List[float]) -> str:
+def _format_range_display(values: list[float]) -> str:
     """Format range display safely."""
     min_val = min(values)
     max_val = max(values)
 
     if _is_nan(min_val) or _is_nan(max_val):
         return "Range: Unable to calculate"
-    else:
-        return f"Range: {min_val:.2f} to {max_val:.2f}"
+    return f"Range: {min_val:.2f} to {max_val:.2f}"
 
 
-def _generate_sparkline_safe(values: List[float]) -> str:
+def _generate_sparkline_safe(values: list[float]) -> str:
     """Generate sparkline from values."""
     if not values:
         return ""
@@ -399,11 +397,10 @@ def _generate_sparkline_safe(values: List[float]) -> str:
             else:
                 sparkline += "█"
         return sparkline
-    else:
-        return "─" * len(values)  # Flat line if all values are same
+    return "─" * len(values)  # Flat line if all values are same
 
 
-def _generate_safe_ascii_pie_chart(data: List[Dict[str, Any]]) -> str:
+def _generate_safe_ascii_pie_chart(data: list[dict[str, Any]]) -> str:
     """Generate ASCII pie chart representation."""
     if not data:
         return "No data available for pie chart"
@@ -419,7 +416,7 @@ def _generate_safe_ascii_pie_chart(data: List[Dict[str, Any]]) -> str:
         value = None
 
         for _, val in row.items():
-            if isinstance(val, (int, float)) and not _is_nan(val) and value is None:
+            if isinstance(val, int | float) and not _is_nan(val) and value is None:
                 value = val
             elif isinstance(val, str) and label is None:
                 label = val
@@ -445,7 +442,7 @@ def _generate_safe_ascii_pie_chart(data: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _generate_safe_ascii_table(data: List[Dict[str, Any]]) -> str:
+def _generate_safe_ascii_table(data: list[dict[str, Any]]) -> str:
     """Generate ASCII table with safe formatting."""
     if not data:
         return "No data available"
@@ -482,7 +479,7 @@ def _is_nan(value: Any) -> bool:
 
 
 def _generate_vega_lite_preview_from_data(  # noqa: C901
-    data: List[Dict[str, Any]], form_data: Dict[str, Any]
+    data: list[dict[str, Any]], form_data: dict[str, Any]
 ) -> VegaLitePreview:
     """Generate Vega-Lite preview from raw data and form_data."""
     viz_type = form_data.get("viz_type", "table")
@@ -530,7 +527,7 @@ def _generate_vega_lite_preview_from_data(  # noqa: C901
                     field_type = "temporal"
                 else:
                     field_type = "nominal"
-            elif isinstance(sample_val, (int, float)):
+            elif isinstance(sample_val, int | float):
                 field_type = "quantitative"
 
         encoding["x"] = {
@@ -543,16 +540,12 @@ def _generate_vega_lite_preview_from_data(  # noqa: C901
     if metrics and data:
         # Find the first metric column in the data
         metric_col = None
-        for col in data[0].keys():
+        for col in data[0]:
             # Check if this is a metric column (usually has aggregation in name)
             if any(
                 agg in str(col).upper()
                 for agg in ["SUM", "AVG", "COUNT", "MIN", "MAX", "TOTAL"]
-            ):
-                metric_col = col
-                break
-            # Or check if it's numeric
-            elif isinstance(data[0].get(col), (int, float)):
+            ) or isinstance(data[0].get(col), int | float):
                 metric_col = col
                 break
 

@@ -21,7 +21,7 @@ Orchestrates schema, dataset, and runtime validations.
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from superset.mcp_service.chart.schemas import (
     ChartConfig,
@@ -52,7 +52,7 @@ class ValidationResult:
         is_valid: bool,
         request: GenerateChartRequest | None = None,
         error: ChartGenerationError | None = None,
-        warnings: Dict[str, Any] | None = None,
+        warnings: dict[str, Any] | None = None,
     ):
         self.is_valid = is_valid
         self.request = request
@@ -70,8 +70,8 @@ class ValidationPipeline:
 
     @staticmethod
     def validate_request(
-        request_data: Dict[str, Any],
-    ) -> Tuple[bool, GenerateChartRequest | None, ChartGenerationError | None]:
+        request_data: dict[str, Any],
+    ) -> tuple[bool, GenerateChartRequest | None, ChartGenerationError | None]:
         """
         Validate a chart generation request through all validation layers.
 
@@ -88,7 +88,7 @@ class ValidationPipeline:
 
     @staticmethod
     def validate_request_with_warnings(
-        request_data: Dict[str, Any],
+        request_data: dict[str, Any],
     ) -> ValidationResult:
         """
         Validate a chart generation request and return warnings as metadata.
@@ -179,7 +179,7 @@ class ValidationPipeline:
         config: ChartConfig,
         dataset_id: int | str,
         dataset_context: DatasetContext | None = None,
-    ) -> Tuple[bool, ChartGenerationError | None]:
+    ) -> tuple[bool, ChartGenerationError | None]:
         """Validate configuration against dataset schema."""
         try:
             from .dataset_validator import DatasetValidator
@@ -201,7 +201,7 @@ class ValidationPipeline:
     @staticmethod
     def _validate_runtime(
         config: ChartConfig, dataset_id: int | str
-    ) -> Tuple[bool, Dict[str, Any] | None]:
+    ) -> tuple[bool, dict[str, Any] | None]:
         """
         Validate runtime issues (performance, compatibility).
 
@@ -273,8 +273,8 @@ class ValidationPipeline:
 
     @staticmethod
     def validate_filters(
-        filters: List[Any],
-    ) -> Tuple[bool, ChartGenerationError | None]:
+        filters: list[Any],
+    ) -> tuple[bool, ChartGenerationError | None]:
         """
         Validate filter logic for contradictions and empty results.
 
@@ -327,10 +327,10 @@ class ValidationPipeline:
         return True, None
 
     @staticmethod
-    def _has_contradictory_filters(filters: List[Any]) -> bool:
+    def _has_contradictory_filters(filters: list[Any]) -> bool:
         """Check if filters contain logical contradictions."""
         # Group filters by column
-        column_filters: Dict[str, List[Any]] = {}
+        column_filters: dict[str, list[Any]] = {}
         for f in filters:
             col = f.column
             if col not in column_filters:
@@ -359,7 +359,7 @@ class ValidationPipeline:
         return False
 
     @staticmethod
-    def _check_empty_result_filters(filters: List[Any]) -> List[str]:
+    def _check_empty_result_filters(filters: list[Any]) -> list[str]:
         """Check for filter patterns that commonly result in empty results."""
         warnings = []
 

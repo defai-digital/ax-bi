@@ -30,7 +30,7 @@ x-superset-volumes: &superset-volumes
   - ./docker:/app/docker
   - ./superset:/app/superset
   - ./superset-core:/app/superset-core
-  - ./superset-frontend:/app/superset-frontend
+  - ./ax-bi-frontend:/app/ax-bi-frontend
   - superset_home:/app/superset_home
   - ./tests:/app/tests
   - superset_data:/app/data
@@ -79,7 +79,7 @@ services:
           attempt=$$((attempt + 1))
           if [ "$$attempt" -ge "$$max_attempts" ]; then
             echo "ERROR: webpack dev server did not serve $$url after $$max_attempts attempts." >&2
-            echo "Is the dev server running? With BUILD_SUPERSET_FRONTEND_IN_DOCKER=false you must start it on the host (e.g. 'npm run dev' in superset-frontend)." >&2
+            echo "Is the dev server running? With BUILD_SUPERSET_FRONTEND_IN_DOCKER=false you must start it on the host (e.g. 'npm run dev' in ax-bi-frontend)." >&2
             exit 1
           fi
           if [ $$((attempt % 15)) -eq 0 ]; then

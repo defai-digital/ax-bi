@@ -23,7 +23,7 @@ instance metrics, dashboard breakdowns, database breakdowns, and activity summar
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from superset.mcp_service.system.schemas import (
     DashboardBreakdown,
@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_dashboard_breakdown(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> DashboardBreakdown:
     """Calculate detailed dashboard breakdown metrics."""
     try:
@@ -94,9 +94,9 @@ def calculate_dashboard_breakdown(
 
 
 def calculate_database_breakdown(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> DatabaseBreakdown:
     """Calculate database type breakdown."""
     try:
@@ -108,7 +108,7 @@ def calculate_database_breakdown(
             Database.database_name, Database.sqlalchemy_uri
         ).all()
 
-        type_counts: Dict[str, int] = {}
+        type_counts: dict[str, int] = {}
         for _name, uri in db_types:
             if uri:
                 # Extract database type from SQLAlchemy URI
@@ -124,9 +124,9 @@ def calculate_database_breakdown(
 
 
 def calculate_instance_summary(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> InstanceSummary:
     """Calculate instance summary with computed metrics."""
     try:
@@ -169,9 +169,9 @@ def calculate_instance_summary(
 
 
 def calculate_recent_activity(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> RecentActivity:
     """Transform time metrics into RecentActivity format."""
     monthly = time_metrics.get("monthly", {})
@@ -188,9 +188,9 @@ def calculate_recent_activity(
 
 
 def calculate_popular_content(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> PopularContent:
     """Calculate popular content metrics (placeholder implementation)."""
 
@@ -201,9 +201,9 @@ def calculate_popular_content(
 
 
 def calculate_feature_availability(
-    base_counts: Dict[str, int],
-    time_metrics: Dict[str, Dict[str, int]],
-    dao_classes: Dict[str, Any],
+    base_counts: dict[str, int],
+    time_metrics: dict[str, dict[str, int]],
+    dao_classes: dict[str, Any],
 ) -> FeatureAvailability:
     """Detect available features dynamically from menus.
 

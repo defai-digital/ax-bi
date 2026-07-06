@@ -639,7 +639,7 @@ def _asset_results_from_ax_services_response(
                 else "",
                 certified=asset.get("certified") is True,
                 relevance_score=relevance_score
-                if isinstance(relevance_score, (int, float))
+                if isinstance(relevance_score, int | float)
                 and not isinstance(relevance_score, bool)
                 else None,
                 relevance_reason=asset.get("relevanceReason")

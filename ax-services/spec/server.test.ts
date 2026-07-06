@@ -19,7 +19,7 @@
 import { expect, test } from '@jest/globals';
 
 import { buildConfig } from '../src/config';
-import { buildServer } from '../src/server';
+import { buildServer, normalizeRequestIdHeader } from '../src/server';
 import {
   ANNOTATION_LIST_CONTRACT_VERSION,
   AnnotationListResponse,
@@ -32,6 +32,10 @@ import {
   ASSET_SEARCH_CONTRACT_VERSION,
   AssetSearchResponse,
 } from '../src/contracts/assetSearch';
+import {
+  AUTHORIZATION_CONTRACT_VERSION,
+  PermissionCheckResult,
+} from '../src/contracts/authorization';
 import {
   CHART_LIST_CONTRACT_VERSION,
   ChartListResponse,
@@ -79,28 +83,47 @@ import {
 import {
   DependencyHealth,
   DependencyMetadata,
-  SupersetAnnotationListClient,
-  SupersetAnnotationLayerListClient,
-  SupersetAssetSearchClient,
-  SupersetChartListClient,
-  SupersetDashboardListClient,
-  SupersetDatabaseListClient,
-  SupersetDatasetListClient,
-  SupersetQueryListClient,
-  SupersetHealthClient,
-  SupersetMetadataClient,
-  SupersetReportListClient,
-  SupersetRoleListClient,
-  SupersetRlsListClient,
-  SupersetSavedQueryListClient,
-  SupersetTagListClient,
-  SupersetTaskListClient,
+  SupersetDependencyClient,
 } from '../src/supersetClient';
 
-const config = {
-  ...buildConfig({}),
-  logLevel: 'silent',
-};
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const config = buildConfig({
+  AX_SERVICES_LOG_LEVEL: 'silent',
+});
+
+function emptyListResponse<
+  TContractVersion extends string,
+  TFields extends object,
+>(
+  fields: TFields & { contractVersion: TContractVersion },
+): TFields & { contractVersion: TContractVersion } & {
+  count: number;
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  columnsRequested: string[];
+  columnsLoaded: string[];
+  warnings: string[];
+} {
+  return {
+    ...fields,
+    count: 0,
+    totalCount: 0,
+    page: 1,
+    pageSize: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+    columnsRequested: [],
+    columnsLoaded: [],
+    warnings: [],
+  };
+}
 
 function makeSupersetClient({
   health = {
@@ -119,6 +142,7 @@ function makeSupersetClient({
   onMetadata,
   onListAnnotations,
   onListAnnotationLayers,
+  onCheckPermission,
   onSearch,
   onListCharts,
   onListDashboards,
@@ -136,193 +160,68 @@ function makeSupersetClient({
     assets: [],
     warnings: [],
   },
-  annotationLayerList = {
+  permissionCheck = {
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+  },
+  annotationLayerList = emptyListResponse({
     contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
     annotationLayers: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  annotationList = {
+  }),
+  annotationList = emptyListResponse({
     contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
     annotations: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
     layerId: 1,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  chartList = {
+  }),
+  chartList = emptyListResponse({
     contractVersion: CHART_LIST_CONTRACT_VERSION,
     charts: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  dashboardList = {
+  }),
+  dashboardList = emptyListResponse({
     contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
     dashboards: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  databaseList = {
+  }),
+  databaseList = emptyListResponse({
     contractVersion: DATABASE_LIST_CONTRACT_VERSION,
     databases: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  datasetList = {
+  }),
+  datasetList = emptyListResponse({
     contractVersion: DATASET_LIST_CONTRACT_VERSION,
     datasets: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  queryList = {
+  }),
+  queryList = emptyListResponse({
     contractVersion: QUERY_LIST_CONTRACT_VERSION,
     queries: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  savedQueryList = {
+  }),
+  savedQueryList = emptyListResponse({
     contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
     savedQueries: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  reportList = {
+  }),
+  reportList = emptyListResponse({
     contractVersion: REPORT_LIST_CONTRACT_VERSION,
     reports: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  roleList = {
+  }),
+  roleList = emptyListResponse({
     contractVersion: ROLE_LIST_CONTRACT_VERSION,
     roles: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  rlsList = {
+  }),
+  rlsList = emptyListResponse({
     contractVersion: RLS_LIST_CONTRACT_VERSION,
     rlsFilters: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  tagList = {
+  }),
+  tagList = emptyListResponse({
     contractVersion: TAG_LIST_CONTRACT_VERSION,
     tags: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
-  taskList = {
+  }),
+  taskList = emptyListResponse({
     contractVersion: TASK_LIST_CONTRACT_VERSION,
     tasks: [],
-    count: 0,
-    totalCount: 0,
-    page: 1,
-    pageSize: 10,
-    totalPages: 0,
-    hasNext: false,
-    hasPrevious: false,
-    columnsRequested: [],
-    columnsLoaded: [],
-    warnings: [],
-  },
+  }),
 }: {
   health?: DependencyHealth;
   metadata?: DependencyMetadata;
   search?: AssetSearchResponse;
+  permissionCheck?: PermissionCheckResult;
   annotationList?: AnnotationListResponse;
   annotationLayerList?: AnnotationLayerListResponse;
   chartList?: ChartListResponse;
@@ -340,6 +239,7 @@ function makeSupersetClient({
   onMetadata?: (correlationId?: string) => void;
   onListAnnotations?: (correlationId?: string) => void;
   onListAnnotationLayers?: (correlationId?: string) => void;
+  onCheckPermission?: (correlationId?: string) => void;
   onSearch?: (correlationId?: string) => void;
   onListCharts?: (correlationId?: string) => void;
   onListDashboards?: (correlationId?: string) => void;
@@ -352,22 +252,7 @@ function makeSupersetClient({
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
   onListTasks?: (correlationId?: string) => void;
-} = {}): SupersetHealthClient &
-  SupersetMetadataClient &
-  SupersetAnnotationListClient &
-  SupersetAnnotationLayerListClient &
-  SupersetAssetSearchClient &
-  SupersetChartListClient &
-  SupersetDashboardListClient &
-  SupersetDatabaseListClient &
-  SupersetDatasetListClient &
-  SupersetQueryListClient &
-  SupersetReportListClient &
-  SupersetRoleListClient &
-  SupersetRlsListClient &
-  SupersetSavedQueryListClient &
-  SupersetTagListClient &
-  SupersetTaskListClient {
+} = {}): SupersetDependencyClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -380,6 +265,10 @@ function makeSupersetClient({
     async searchAssets(_request, correlationId) {
       onSearch?.(correlationId);
       return search;
+    },
+    async checkPermission(_request, correlationId) {
+      onCheckPermission?.(correlationId);
+      return permissionCheck;
     },
     async listAnnotations(_request, correlationId) {
       onListAnnotations?.(correlationId);
@@ -450,12 +339,57 @@ test('health endpoint returns service metadata', async () => {
     contractVersion: 'runtime.v1',
     service: 'ax-services',
     status: 'ok',
-    timestamp: expect.any(String),
+    timestamp: expect.stringMatching(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    ),
     version: expect.any(String),
-    nodeVersion: expect.stringMatching(/^v\d+\./),
-    platform: expect.any(String),
+    nodeVersion: expect.stringMatching(/^v\d+\.\d+\.\d+/),
+    platform: expect.stringMatching(
+      /^(aix|android|darwin|freebsd|haiku|linux|openbsd|sunos|win32|cygwin|netbsd)$/,
+    ),
     uptimeSeconds: expect.any(Number),
   });
+});
+
+test('health endpoint sanitizes package version metadata', async () => {
+  const previousVersion = process.env['npm_package_version'];
+
+  try {
+    process.env['npm_package_version'] = '  1.2.3-build.4  ';
+    const server = buildServer(config, makeSupersetClient());
+
+    const response = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().version).toBe('1.2.3-build.4');
+
+    process.env['npm_package_version'] = '1.2.3\nextra';
+    const unsafeResponse = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(unsafeResponse.statusCode).toBe(200);
+    expect(unsafeResponse.json().version).toBe('0.0.1');
+
+    process.env['npm_package_version'] = '1'.repeat(129);
+    const longResponse = await server.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(longResponse.statusCode).toBe(200);
+    expect(longResponse.json().version).toBe('0.0.1');
+  } finally {
+    if (previousVersion === undefined) {
+      delete process.env['npm_package_version'];
+    } else {
+      process.env['npm_package_version'] = previousVersion;
+    }
+  }
 });
 
 test('ready endpoint returns ok when Superset is reachable', async () => {
@@ -494,6 +428,66 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
       },
     },
   });
+});
+
+test('request ID normalization trims valid IDs and rejects unsafe IDs', () => {
+  expect(normalizeRequestIdHeader('  request-123  ')).toBe('request-123');
+  expect(normalizeRequestIdHeader('request_abc.~123')).toBe('request_abc.~123');
+  expect(normalizeRequestIdHeader(['request-abc'])).toBe('request-abc');
+  expect(normalizeRequestIdHeader(undefined)).toBeUndefined();
+  expect(
+    normalizeRequestIdHeader(['request-abc', 'request-def']),
+  ).toBeUndefined();
+  expect(normalizeRequestIdHeader('   ')).toBeUndefined();
+  expect(normalizeRequestIdHeader('x'.repeat(129))).toBeUndefined();
+  expect(normalizeRequestIdHeader('request\n123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request 123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request,123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request:123')).toBeUndefined();
+  expect(normalizeRequestIdHeader('request/123')).toBeUndefined();
+});
+
+test('server applies configured Fastify log level', async () => {
+  const server = buildServer(
+    buildConfig({
+      AX_SERVICES_LOG_LEVEL: 'warn',
+    }),
+    makeSupersetClient(),
+  );
+
+  expect(server.log.level).toBe('warn');
+
+  await server.close();
+});
+
+test('ready endpoint replaces unsafe request IDs before echoing or forwarding', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onHealth(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+  const unsafeRequestId = 'x'.repeat(129);
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/ready',
+    headers: {
+      'x-request-id': unsafeRequestId,
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toEqual(
+    expect.stringMatching(uuidPattern),
+  );
+  expect(response.headers['x-request-id']).not.toBe(unsafeRequestId);
+  expect(seenRequestIds).toEqual([response.headers['x-request-id']]);
 });
 
 test('ready endpoint returns unavailable when Superset is unreachable', async () => {
@@ -660,6 +654,36 @@ test('metrics endpoint returns request counters by route', async () => {
   ).toBeGreaterThanOrEqual(0);
 });
 
+test('metrics endpoint aggregates unmatched routes under one key', async () => {
+  const server = buildServer(config, makeSupersetClient());
+
+  await server.inject({
+    method: 'GET',
+    url: '/missing?token=first',
+  });
+  await server.inject({
+    method: 'GET',
+    url: '/another-missing?token=second',
+  });
+
+  const response = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+  });
+  const routes = response.json().requests.routes;
+
+  expect(response.statusCode).toBe(200);
+  expect(routes).toMatchObject({
+    'GET <unmatched>': {
+      count: 2,
+      errorCount: 0,
+    },
+  });
+  expect(Object.keys(routes)).not.toContain('GET /another-missing');
+  expect(Object.keys(routes)).not.toContain('GET /missing?token=first');
+  expect(Object.keys(routes)).not.toContain('GET /another-missing?token=second');
+});
+
 test('asset search endpoint delegates to Superset client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
@@ -722,6 +746,183 @@ test('asset search endpoint delegates to Superset client', async () => {
       },
     ],
     warnings: [],
+  });
+});
+
+test('asset search endpoint rejects unsafe query values', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onSearch(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const query of ['   ', 'sales\nregion']) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/assets/search',
+      payload: {
+        contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
+        query,
+        assetTypes: ['dataset'],
+        includeCertifiedOnly: false,
+        limit: 10,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
+test('permission check endpoint delegates to Superset client', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      permissionCheck: {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: true,
+        reason: 'allowed by Superset',
+      },
+      onCheckPermission(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/permissions/check',
+    headers: {
+      'x-request-id': 'request-permission',
+    },
+    payload: {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.headers['x-request-id']).toBe('request-permission');
+  expect(seenRequestIds).toEqual(['request-permission']);
+  expect(response.json()).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: true,
+    reason: 'allowed by Superset',
+  });
+});
+
+test('permission check endpoint rejects unsafe authorization strings', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onCheckPermission(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const payload of [
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'user',
+        username: 'admin\nroot',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+        roles: ['Admin', '   '],
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+    {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        uuid: '',
+      },
+      action: 'read',
+    },
+  ]) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/permissions/check',
+      payload,
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
+test('permission check endpoint returns fail-closed details', async () => {
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      permissionCheck: {
+        contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+        allowed: false,
+        statusCode: 503,
+        error: 'connect failed',
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/permissions/check',
+    payload: {
+      contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+      principal: {
+        type: 'service',
+      },
+      resource: {
+        type: 'dashboard',
+        id: 5,
+      },
+      action: 'read',
+    },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toEqual({
+    contractVersion: AUTHORIZATION_CONTRACT_VERSION,
+    allowed: false,
+    statusCode: 503,
+    error: 'connect failed',
   });
 });
 
@@ -957,6 +1158,140 @@ test('dashboard list endpoint delegates to Superset client', async () => {
     columnsLoaded: ['id', 'dashboard_title', 'slug', 'url'],
     warnings: [],
   });
+});
+
+test('dashboard list endpoint rejects unsafe requested columns', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/dashboards/list',
+    payload: {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'dashboard_title),page_size:100'],
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(400);
+  expect(seenRequestIds).toEqual([]);
+});
+
+test('dashboard list endpoint rejects unsafe ordering columns', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  const response = await server.inject({
+    method: 'POST',
+    url: '/mcp/dashboards/list',
+    payload: {
+      contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+      filters: [],
+      selectColumns: ['id', 'dashboard_title'],
+      orderColumn: 'dashboard_title),page_size:100',
+      orderDirection: 'asc',
+      page: 1,
+      pageSize: 10,
+      createdByMe: false,
+      ownedByMe: false,
+    },
+  });
+
+  expect(response.statusCode).toBe(400);
+  expect(seenRequestIds).toEqual([]);
+});
+
+test('dashboard list endpoint rejects unsafe search values', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const search of ['   ', 'sales\nregion']) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/dashboards/list',
+      payload: {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        filters: [],
+        selectColumns: ['id', 'dashboard_title'],
+        search,
+        orderDirection: 'asc',
+        page: 1,
+        pageSize: 10,
+        createdByMe: false,
+        ownedByMe: false,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
+});
+
+test('dashboard list endpoint rejects unsafe filter values', async () => {
+  const seenRequestIds: string[] = [];
+  const server = buildServer(
+    config,
+    makeSupersetClient({
+      onListDashboards(correlationId) {
+        if (correlationId) {
+          seenRequestIds.push(correlationId);
+        }
+      },
+    }),
+  );
+
+  for (const value of ['sales\nregion', ['sales', 'north\rregion']]) {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp/dashboards/list',
+      payload: {
+        contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+        filters: [{ col: 'dashboard_title', opr: 'ct', value }],
+        selectColumns: ['id', 'dashboard_title'],
+        orderDirection: 'asc',
+        page: 1,
+        pageSize: 10,
+        createdByMe: false,
+        ownedByMe: false,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  }
+  expect(seenRequestIds).toEqual([]);
 });
 
 test('chart list endpoint delegates to Superset client', async () => {

@@ -1,6 +1,12 @@
 name: "Helm: lint and test charts"
 
 on:
+  push:
+    branches:
+      - "main"
+      - "master"
+    paths:
+      - "helm/**"
   pull_request:
     types: [opened, edited, reopened, synchronize]
     paths:
@@ -56,3 +62,17 @@ jobs:
           CT_LINT_CONF: lintconf.yaml
           CT_SINCE: HEAD
           CT_CHART_REPOS: bitnami=https://charts.bitnami.com/bitnami
+
+      - name: Render AX-BI Helm values
+        run: |
+          helm dependency build helm/superset
+          helm lint helm/superset -f helm/superset/values-axbi.yaml
+          helm template ax-bi helm/superset -f helm/superset/values-axbi.yaml > /tmp/ax-bi-rendered.yaml
+          grep -q "name: ax-bi-mcp" /tmp/ax-bi-rendered.yaml
+          grep -q "name: ax-bi-services" /tmp/ax-bi-rendered.yaml
+          grep -Eq 'image: "?ghcr.io/defai-digital/ax-bi:' /tmp/ax-bi-rendered.yaml
+          grep -Eq 'image: "?ghcr.io/defai-digital/ax-bi-services:' /tmp/ax-bi-rendered.yaml
+          if grep -Eq "image: .*:latest" /tmp/ax-bi-rendered.yaml; then
+            echo "::error::AX-BI Helm values must render pinned image tags, not latest"
+            exit 1
+          fi

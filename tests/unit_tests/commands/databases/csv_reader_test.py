@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import gzip
 import io
 from datetime import datetime
 
@@ -61,6 +62,20 @@ CSV_DATA_SKIP_INITIAL_SPACE = [
     ["         Name", "Age", "City", "Birth"],
     ["      name1", "30", "city1", "1990-02-01"],
 ]
+
+
+def test_csv_reader_reads_gzip_tsv_metadata() -> None:
+    payload = gzip.compress(b"Name\tAge\nAlice\t30\nBob\t25\n")
+    file = FileStorage(io.BytesIO(payload), filename="users.tsv.gz")
+
+    metadata = CSVReader().file_metadata(file)
+
+    item = metadata["items"][0]
+    assert item["column_names"] == ["Name", "Age"]
+    assert item["sample_rows"] == [
+        {"Name": "Alice", "Age": "30"},
+        {"Name": "Bob", "Age": "25"},
+    ]
 
 
 @pytest.mark.parametrize(

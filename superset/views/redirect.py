@@ -26,12 +26,12 @@ via the React ``RedirectWarning`` page.
 import logging
 from urllib.parse import urlparse
 
-from flask import abort, redirect, request
+from flask import abort, request
 from flask_appbuilder import expose
 
 from superset import is_feature_enabled
 from superset.superset_typing import FlaskResponse
-from superset.utils.link_redirect import is_safe_redirect_url
+from superset.utils.link_redirect import get_safe_redirect_target, relative_redirect
 from superset.views.base import BaseSupersetView
 
 logger = logging.getLogger(__name__)
@@ -69,8 +69,8 @@ class RedirectView(BaseSupersetView):
             abort(400, description="Invalid URL scheme")
 
         # Internal URLs redirect immediately
-        if is_safe_redirect_url(target_url):
-            return redirect(target_url)
+        if safe_target := get_safe_redirect_target(target_url):
+            return relative_redirect(safe_target)
 
         # External URLs: render the React warning page
         return super().render_app_template()

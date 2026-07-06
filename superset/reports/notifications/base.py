@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -29,13 +29,13 @@ from superset.utils.core import HeaderDataType
 class NotificationContent:
     name: str
     header_data: HeaderDataType  # this is optional to account for error states
-    csv: Optional[bytes] = None  # bytes for csv file
-    pdf: Optional[bytes] = None  # bytes for PDF file
-    screenshots: Optional[list[bytes]] = None  # bytes for a list of screenshots
-    text: Optional[str] = None
-    description: Optional[str] = ""
-    url: Optional[str] = None  # url to chart/dashboard for this screenshot
-    embedded_data: Optional[pd.DataFrame] = None
+    csv: bytes | None = None  # bytes for csv file
+    pdf: bytes | None = None  # bytes for PDF file
+    screenshots: list[bytes] | None = None  # bytes for a list of screenshots
+    text: str | None = None
+    description: str | None = ""
+    url: str | None = None  # url to chart/dashboard for this screenshot
+    embedded_data: pd.DataFrame | None = None
 
 
 class BaseNotification:  # pylint: disable=too-few-public-methods
@@ -47,7 +47,7 @@ class BaseNotification:  # pylint: disable=too-few-public-methods
     """
 
     plugins: list[type["BaseNotification"]] = []
-    type: Optional[ReportRecipientType] = None
+    type: ReportRecipientType | None = None
     """
     Child classes set their notification type ex: `type = "email"` this string will be
     used by ReportRecipients.type to map to the correct implementation

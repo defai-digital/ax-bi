@@ -15,6 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from collections.abc import Sequence
+from io import IOBase
+
 import pandas as pd
 from flask_babel import gettext as __
 
@@ -26,6 +29,8 @@ MAXIMUM_MESSAGE_SIZE = 4000
 
 # pylint: disable=too-few-public-methods
 class SlackMixin:
+    _content: NotificationContent
+
     def _message_template(
         self,
         content: NotificationContent,
@@ -122,3 +127,14 @@ class SlackMixin:
             table = f"```\n{tabulated}\n```"
 
         return self._message_template(table=table, content=content)
+
+    def _get_inline_files(
+        self,
+    ) -> tuple[str | None, Sequence[str | IOBase | bytes]]:
+        if self._content.csv:
+            return ("csv", [self._content.csv])
+        if self._content.screenshots:
+            return ("png", self._content.screenshots)
+        if self._content.pdf:
+            return ("pdf", [self._content.pdf])
+        return (None, [])

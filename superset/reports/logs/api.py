@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from flask import Response
 from flask_appbuilder.api import (
@@ -42,7 +42,7 @@ class ReportExecutionLogRestApi(BaseSupersetModelRestApi):
     datamodel = SQLAInterface(ReportExecutionLog)
 
     @before_request
-    def ensure_alert_reports_enabled(self) -> Optional[Response]:
+    def ensure_alert_reports_enabled(self) -> Response | None:
         if not is_feature_enabled("ALERT_REPORTS"):
             return self.response_404()
         return None

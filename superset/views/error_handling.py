@@ -20,8 +20,9 @@ import dataclasses
 import functools
 import logging
 import typing
+from collections.abc import Callable
 from importlib.resources import files
-from typing import Any, Callable, cast
+from typing import Any
 
 from flask import (
     Flask,
@@ -116,14 +117,14 @@ def handle_api_exception(
         except HTTPException as ex:
             logger.exception(ex)
             return json_error_response(
-                utils.error_msg_from_exception(ex), status=cast(int, ex.code)
+                utils.error_msg_from_exception(ex), status=ex.code or 500
             )
         except (exc.IntegrityError, exc.DatabaseError, exc.DataError) as ex:
             logger.exception(ex)
             return json_error_response(utils.error_msg_from_exception(ex), status=422)
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception(ex)
-            return json_error_response(utils.error_msg_from_exception(ex))
+            return json_error_response("An unexpected error occurred")
 
     return functools.update_wrapper(wraps, f)
 

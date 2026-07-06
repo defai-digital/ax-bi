@@ -109,12 +109,13 @@ async def generate_explore_link(
     """
     chart_type = request.config.chart_type if request.config else "none"
     await ctx.info(
-        "Generating explore link for dataset_id=%s, chart_type=%s"
-        % (request.dataset_id, chart_type)
+        f"Generating explore link for dataset_id={request.dataset_id}, "
+        f"chart_type={chart_type}"
     )
     await ctx.debug(
-        "Configuration details: use_cache=%s, force_refresh=%s, cache_form_data=%s"
-        % (request.use_cache, request.force_refresh, request.cache_form_data)
+        f"Configuration details: use_cache={request.use_cache}, "
+        f"force_refresh={request.force_refresh}, "
+        f"cache_form_data={request.cache_form_data}"
     )
 
     try:
@@ -134,9 +135,7 @@ async def generate_explore_link(
                 dataset = DatasetDAO.find_by_id(request.dataset_id, id_column="uuid")
 
             if not dataset:
-                await ctx.warning(
-                    "Dataset not found: dataset_id=%s" % (request.dataset_id,)
-                )
+                await ctx.warning(f"Dataset not found: dataset_id={request.dataset_id}")
                 return GenerateExploreLinkResponse(
                     url="",
                     form_data={},
@@ -166,7 +165,7 @@ async def generate_explore_link(
                     request.dataset_id,
                 )
                 await ctx.warning(
-                    "Dataset access denied: dataset_id=%s" % (request.dataset_id,)
+                    f"Dataset access denied: dataset_id={request.dataset_id}"
                 )
                 # User-facing message stays generic to avoid leaking dataset
                 # existence; error_type lets programmatic callers distinguish.
@@ -206,7 +205,7 @@ async def generate_explore_link(
                 f"{base_url}/explore/?datasource_type=table&datasource_id={dataset.id}"
             )
             await ctx.info(
-                "Default explore link generated: dataset_id=%s" % (request.dataset_id,)
+                f"Default explore link generated: dataset_id={request.dataset_id}"
             )
             return GenerateExploreLinkResponse(
                 url=default_url,
@@ -244,9 +243,10 @@ async def generate_explore_link(
                     norm_err,
                 )
                 await ctx.warning(
-                    "Column normalization failed for dataset_id=%s; using config "
+                    f"Column normalization failed for dataset_id={request.dataset_id}; "
+                    "using config "
                     "as-supplied. Chart may behave unexpectedly if column names "
-                    "differ in case." % (request.dataset_id,)
+                    "differ in case."
                 )
                 normalized_config = config
 
@@ -261,12 +261,9 @@ async def generate_explore_link(
             form_data["datasource"] = f"{dataset.id}__table"
 
         await ctx.debug(
-            "Form data generated with keys: %s, has_viz_type=%s, has_datasource=%s"
-            % (
-                list(form_data.keys()),
-                bool(form_data.get("viz_type")),
-                bool(form_data.get("datasource")),
-            )
+            f"Form data generated with keys: {list(form_data.keys())}, "
+            f"has_viz_type={bool(form_data.get('viz_type'))}, "
+            f"has_datasource={bool(form_data.get('datasource'))}"
         )
 
         # Tier-1 schema validation against the dataset (no DB roundtrip).
@@ -281,7 +278,7 @@ async def generate_explore_link(
             )
         if not compile_result.success:
             await ctx.warning(
-                "Explore link validation failed: error=%s" % (compile_result.error,)
+                f"Explore link validation failed: error={compile_result.error}"
             )
             if compile_result.error_obj is not None:
                 error_payload = compile_result.error_obj
@@ -317,9 +314,9 @@ async def generate_explore_link(
 
         await ctx.report_progress(4, 4, "URL generation complete")
         await ctx.info(
-            "Explore link generated successfully: url_length=%s, dataset_id=%s, "
-            "permalink_key=%s, form_data_key=%s"
-            % (len(explore_url or ""), request.dataset_id, permalink_key, form_data_key)
+            "Explore link generated successfully: "
+            f"url_length={len(explore_url or '')}, dataset_id={request.dataset_id}, "
+            f"permalink_key={permalink_key}, form_data_key={form_data_key}"
         )
 
         return GenerateExploreLinkResponse(
@@ -334,13 +331,8 @@ async def generate_explore_link(
 
     except Exception as e:
         await ctx.error(
-            "Explore link generation failed for dataset_id=%s, chart_type=%s: %s: %s"
-            % (
-                request.dataset_id,
-                chart_type,
-                type(e).__name__,
-                str(e),
-            )
+            f"Explore link generation failed for dataset_id={request.dataset_id}, "
+            f"chart_type={chart_type}: {type(e).__name__}: {str(e)}"
         )
         # ``details`` intentionally omits ``str(e)`` so internal info
         # (file paths, schema names) isn't echoed to the MCP response.

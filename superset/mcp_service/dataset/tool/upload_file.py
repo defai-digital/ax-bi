@@ -42,6 +42,7 @@ from superset import db, is_feature_enabled
 from superset.commands.database.uploaders.base import (
     BaseDataReader,
     build_type_preserving_upload_options,
+    FileMetadata,
     UploadCommand,
     UploadFileType,
 )
@@ -73,34 +74,91 @@ logger = logging.getLogger(__name__)
 
 # Map of file extension -> UploadFileType
 FILE_TYPE_MAP: dict[str, UploadFileType] = {
+    ".ann": UploadFileType.STRUCTURED,
+    ".arrow": UploadFileType.COLUMNAR,
+    ".asc": UploadFileType.STRUCTURED,
+    ".avro": UploadFileType.STRUCTURED,
+    ".croissant.json": UploadFileType.STRUCTURED,
     ".csv": UploadFileType.CSV,
-    ".tsv": UploadFileType.CSV,
-    ".txt": UploadFileType.CSV,
-    ".xls": UploadFileType.EXCEL,
-    ".xlsx": UploadFileType.EXCEL,
-    ".parquet": UploadFileType.COLUMNAR,
+    ".csv.gz": UploadFileType.CSV,
+    ".dat": UploadFileType.STRUCTURED,
+    ".db": UploadFileType.STRUCTURED,
+    ".dta": UploadFileType.STRUCTURED,
+    ".dump": UploadFileType.STRUCTURED,
+    ".faiss": UploadFileType.STRUCTURED,
+    ".feather": UploadFileType.COLUMNAR,
+    ".fwf": UploadFileType.STRUCTURED,
+    ".geojson": UploadFileType.STRUCTURED,
+    ".gguf": UploadFileType.STRUCTURED,
+    ".gpkg": UploadFileType.STRUCTURED,
+    ".hnsw": UploadFileType.STRUCTURED,
+    ".htm": UploadFileType.STRUCTURED,
+    ".html": UploadFileType.STRUCTURED,
+    ".index": UploadFileType.STRUCTURED,
+    ".ipc": UploadFileType.COLUMNAR,
     ".json": UploadFileType.STRUCTURED,
     ".jsonl": UploadFileType.STRUCTURED,
+    ".jsonl.gz": UploadFileType.STRUCTURED,
+    ".lance": UploadFileType.STRUCTURED,
+    ".lance.zip": UploadFileType.STRUCTURED,
+    ".mlflow.zip": UploadFileType.STRUCTURED,
+    ".mlmodel": UploadFileType.STRUCTURED,
+    ".mlruns.zip": UploadFileType.STRUCTURED,
     ".ndjson": UploadFileType.STRUCTURED,
-    ".xml": UploadFileType.STRUCTURED,
+    ".ndjson.gz": UploadFileType.STRUCTURED,
+    ".npy": UploadFileType.STRUCTURED,
+    ".npz": UploadFileType.STRUCTURED,
+    ".ods": UploadFileType.EXCEL,
+    ".onnx": UploadFileType.STRUCTURED,
+    ".orc": UploadFileType.COLUMNAR,
+    ".parquet": UploadFileType.COLUMNAR,
+    ".sas7bdat": UploadFileType.STRUCTURED,
+    ".sav": UploadFileType.STRUCTURED,
+    ".safetensors": UploadFileType.STRUCTURED,
+    ".shp.zip": UploadFileType.STRUCTURED,
     ".sql": UploadFileType.STRUCTURED,
-    ".dump": UploadFileType.STRUCTURED,
     ".sqlite": UploadFileType.STRUCTURED,
     ".sqlite3": UploadFileType.STRUCTURED,
-    ".db": UploadFileType.STRUCTURED,
+    ".tar": UploadFileType.STRUCTURED,
+    ".tar.gz": UploadFileType.STRUCTURED,
+    ".tgz": UploadFileType.STRUCTURED,
+    ".tsv": UploadFileType.CSV,
+    ".tsv.gz": UploadFileType.CSV,
+    ".txt": UploadFileType.CSV,
+    ".txt.gz": UploadFileType.CSV,
+    ".xls": UploadFileType.EXCEL,
+    ".xlsx": UploadFileType.EXCEL,
+    ".xml": UploadFileType.STRUCTURED,
+    ".xpt": UploadFileType.STRUCTURED,
+    ".yaml": UploadFileType.STRUCTURED,
+    ".yml": UploadFileType.STRUCTURED,
+    ".yolo.zip": UploadFileType.STRUCTURED,
+    ".zip": UploadFileType.COLUMNAR,
 }
 
 SUPPORTED_EXTENSIONS = ", ".join(FILE_TYPE_MAP.keys())
 MAX_TABLE_NAME_LENGTH = 63
 
 
+def _detect_upload_file_type(filename: str) -> tuple[str, UploadFileType] | None:
+    """Return the normalized extension and upload type for a filename."""
+    lowered = filename.lower()
+    if lowered == "mlmodel":
+        return ".mlmodel", UploadFileType.STRUCTURED
+    for extension in sorted(FILE_TYPE_MAP, key=len, reverse=True):
+        if lowered.endswith(extension) and len(lowered) > len(extension):
+            return extension, FILE_TYPE_MAP[extension]
+    return None
+
+
 def _safe_upload_filename(filename: str) -> str:
     """Return a path-free filename for downstream upload readers."""
-    ext = os.path.splitext(filename)[1].lower()
+    detected_file_type = _detect_upload_file_type(filename)
     safe_filename = secure_filename(filename)
-    if ext in FILE_TYPE_MAP:
-        stem = os.path.splitext(safe_filename)[0].strip("._")
-        if not stem or stem.lower() == ext.lstrip("."):
+    if detected_file_type:
+        ext, _file_type = detected_file_type
+        stem = safe_filename[: -len(ext)].strip("._")
+        if not stem or stem.lower() == ext.lstrip(".") or filename.lower() == "mlmodel":
             stem = "upload"
         return f"{stem}{ext}"
     return safe_filename or "upload"
@@ -178,6 +236,7 @@ def upload_single_file(  # noqa: C901
     file_content: str,
     filename: str,
     table_name: str | None = None,
+    sheet_name: str | None = None,
 ) -> DatasetInfo | DatasetError:
     """Upload a single file and return DatasetInfo or DatasetError.
 
@@ -191,16 +250,17 @@ def upload_single_file(  # noqa: C901
             error_type="FeatureDisabledError",
         )
 
-    ext = os.path.splitext(filename)[1].lower()
-    file_type = FILE_TYPE_MAP.get(ext)
+    detected_file_type = _detect_upload_file_type(filename)
 
-    if file_type is None:
+    if detected_file_type is None:
         return DatasetError.create(
             error=(
-                f"Unsupported file extension '{ext}'. Supported: {SUPPORTED_EXTENSIONS}"
+                f"Unsupported file extension for '{filename}'. "
+                f"Supported: {SUPPORTED_EXTENSIONS}"
             ),
             error_type="UnsupportedFileTypeError",
         )
+    _ext, file_type = detected_file_type
 
     if oversized_error := _reject_oversized_base64(file_content):
         return oversized_error
@@ -239,6 +299,7 @@ def upload_single_file(  # noqa: C901
         local_db = get_or_create_local_db()
 
         reader: BaseDataReader
+        excel_metadata: FileMetadata | None = None
         if file_type == UploadFileType.CSV:
             csv_reader_options: CSVReaderOptions = {"already_exists": "replace"}
             csv_metadata = CSVReader(csv_reader_options).file_metadata(file_storage)
@@ -248,6 +309,8 @@ def upload_single_file(  # noqa: C901
             reader = CSVReader(csv_reader_options)
         elif file_type == UploadFileType.EXCEL:
             excel_reader_options: ExcelReaderOptions = {"already_exists": "replace"}
+            if sheet_name:
+                excel_reader_options["sheet_name"] = sheet_name
             excel_metadata = ExcelReader(excel_reader_options).file_metadata(
                 file_storage
             )
@@ -299,12 +362,25 @@ def upload_single_file(  # noqa: C901
                 error="Dataset was created but could not be serialized",
                 error_type="SerializationError",
             )
+
+        # For Excel files, include sheet names from metadata in the response
+        if file_type == UploadFileType.EXCEL and excel_metadata:
+            sheet_names: list[str] = []
+            for item in excel_metadata.get("items", []):
+                name = item.get("sheet_name")
+                if isinstance(name, str) and name:
+                    sheet_names.append(name)
+            if sheet_names and hasattr(result, "model_dump"):
+                result.sheet_names = sheet_names
+            elif sheet_names and isinstance(result, dict):
+                result["sheet_names"] = sheet_names
+
         return result
 
     except Exception as exc:
         logger.exception("upload_single_file failed for '%s'", filename)
         return DatasetError.create(
-            error="Upload failed: %s" % str(exc),
+            error=f"Upload failed: {str(exc)}",
             error_type="UploadFailedError",
         )
 
@@ -350,17 +426,18 @@ async def upload_file(
     For multiple files, use the upload_files tool instead.
     """
     await ctx.info(
-        "Uploading file '%s' (%d bytes)" % (request.filename, len(request.file_content))
+        f"Uploading file '{request.filename}' ({len(request.file_content)} bytes)"
     )
 
     result = upload_single_file(
         file_content=request.file_content,
         filename=request.filename,
         table_name=request.table_name,
+        sheet_name=request.sheet_name,
     )
 
     if isinstance(result, DatasetError):
-        await ctx.error("Upload failed for '%s'" % request.filename)
+        await ctx.error(f"Upload failed for '{request.filename}'")
     else:
-        await ctx.info("Dataset created from uploaded file '%s'" % request.filename)
+        await ctx.info(f"Dataset created from uploaded file '{request.filename}'")
     return result

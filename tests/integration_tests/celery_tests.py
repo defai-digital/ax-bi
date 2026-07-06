@@ -22,7 +22,6 @@ import random
 import string
 import time
 import unittest.mock as mock
-from typing import Optional
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_data,  # noqa: F401
 )
@@ -125,7 +124,7 @@ def drop_table_if_exists(table_name: str, table_type: CTASMethod) -> None:
             connection.execute(text(sql))
 
 
-def quote_f(value: Optional[str]):
+def quote_f(value: str | None):
     if not value:
         return value
     with get_example_database().get_inspector() as inspector:
@@ -133,7 +132,7 @@ def quote_f(value: Optional[str]):
 
 
 def expected_cta_sql(
-    ctas_method: CTASMethod, table: str, schema: Optional[str] = None
+    ctas_method: CTASMethod, table: str, schema: str | None = None
 ) -> str:
     target = quote_f(table)
     if schema:
@@ -153,7 +152,7 @@ def cta_result(ctas_method: CTASMethod):
 
 
 # TODO(bkyryliuk): quote table and schema names for all databases
-def get_select_star(table: str, limit: int, schema: Optional[str] = None):
+def get_select_star(table: str, limit: int, schema: str | None = None):
     if backend() in {"presto", "hive"}:
         schema = quote_f(schema)
         table = quote_f(table)

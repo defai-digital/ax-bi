@@ -75,7 +75,7 @@ async def get_saved_query_info(
     ```
     """
     await ctx.info(
-        "Retrieving saved query information: identifier=%s" % (request.identifier,)
+        f"Retrieving saved query information: identifier={request.identifier}"
     )
 
     try:
@@ -96,30 +96,22 @@ async def get_saved_query_info(
         if isinstance(result, SavedQueryInfo):
             await ctx.info(
                 "Saved query information retrieved successfully: "
-                "saved_query_id=%s, label=%s, db_id=%s"
-                % (
-                    result.id,
-                    result.label,
-                    result.db_id,
-                )
+                f"saved_query_id={result.id}, label={result.label}, "
+                f"db_id={result.db_id}"
             )
         else:
             await ctx.warning(
-                "Saved query retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Saved query retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "Saved query information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                str(e),
-                type(e).__name__,
-            )
+            "Saved query information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         return SavedQueryError.create(
             error="Failed to get saved query info",

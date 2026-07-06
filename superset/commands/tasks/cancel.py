@@ -187,12 +187,11 @@ class CancelTaskCommand(BaseCommand):
                 "Only administrators can cancel system tasks"
             )
 
-        if task.is_shared:
+        if task.is_shared and (not user_id or not task.has_subscriber(user_id)):
             # Shared tasks: must be a subscriber
-            if not user_id or not task.has_subscriber(user_id):
-                raise TaskPermissionDeniedError(
-                    "You must be subscribed to cancel this shared task"
-                )
+            raise TaskPermissionDeniedError(
+                "You must be subscribed to cancel this shared task"
+            )
 
         # Private tasks: already filtered by base_filter (only creator can see)
         # If we got here, user has permission
@@ -221,8 +220,7 @@ class CancelTaskCommand(BaseCommand):
 
         if should_abort:
             return self._do_abort(task, is_admin)
-        else:
-            return self._do_unsubscribe(task, user_id)
+        return self._do_unsubscribe(task, user_id)
 
     def _do_abort(self, task: "Task", is_admin: bool) -> "Task":
         """

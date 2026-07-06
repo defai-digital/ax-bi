@@ -15,8 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from collections.abc import Iterator
-from typing import Callable
+from collections.abc import Callable, Iterator
 
 import yaml
 
@@ -62,8 +61,7 @@ class ExportThemesCommand(ExportModelsCommand):
 
         payload["version"] = EXPORT_VERSION
 
-        file_content = yaml.safe_dump(payload, sort_keys=False)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False)
 
     @staticmethod
     def _export(

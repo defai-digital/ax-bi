@@ -42,6 +42,7 @@ from sqlalchemy.sql.elements import BinaryExpression
 from superset_core.common.models import Chart as CoreChart
 
 from superset import db, is_feature_enabled, security_manager
+from superset.constants import AX_BI_ROUTE_PREFIX
 from superset.legacy import update_time_range
 from superset.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
 from superset.tasks.thumbnails import cache_chart_thumbnail
@@ -309,7 +310,7 @@ class Slice(  # pylint: disable=too-many-public-methods
     @property
     def explore_json_url(self) -> str:
         """Defines the url to access the slice"""
-        return self.get_explore_url("/superset/explore_json")
+        return self.get_explore_url(f"{AX_BI_ROUTE_PREFIX}/explore_json")
 
     @property
     def edit_url(self) -> str:

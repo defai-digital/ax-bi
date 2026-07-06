@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional
 
 import pandas as pd
 from flask_babel import lazy_gettext as _
@@ -50,7 +49,7 @@ class ExcelReaderOptions(ReaderOptions, total=False):
 class ExcelReader(BaseDataReader):
     def __init__(
         self,
-        options: Optional[ExcelReaderOptions] = None,
+        options: ExcelReaderOptions | None = None,
     ) -> None:
         options = options or {}
         super().__init__(

@@ -15,9 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from collections.abc import Sequence
-from io import IOBase
-from typing import List, Union
 
 import backoff
 from flask import g
@@ -58,7 +55,7 @@ class SlackV2Notification(SlackMixin, BaseNotification):  # pylint: disable=too-
 
     type = ReportRecipientType.SLACKV2
 
-    def _get_channels(self) -> List[str]:
+    def _get_channels(self) -> list[str]:
         """
         Get the recipient's channel(s).
         :returns: A list of channel ids: "EID676L"
@@ -71,17 +68,6 @@ class SlackV2Notification(SlackMixin, BaseNotification):  # pylint: disable=too-
         )
 
         return recipients_string_to_list(recipient_str)
-
-    def _get_inline_files(
-        self,
-    ) -> tuple[Union[str, None], Sequence[Union[str, IOBase, bytes]]]:
-        if self._content.csv:
-            return ("csv", [self._content.csv])
-        if self._content.screenshots:
-            return ("png", self._content.screenshots)
-        if self._content.pdf:
-            return ("pdf", [self._content.pdf])
-        return (None, [])
 
     @backoff.on_exception(backoff.expo, SlackApiError, factor=10, base=2, max_tries=5)
     @statsd_gauge("reports.slack.send")

@@ -17,7 +17,7 @@
         "const": "annotation-list.v1"
       },
       "layerId": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1
       },
       "filters": {
@@ -32,15 +32,18 @@
           "additionalProperties": false,
           "properties": {
             "col": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]+$"
             },
             "opr": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]+$"
             },
             "value": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
                 },
                 {
                   "type": "number"
@@ -51,7 +54,8 @@
                 {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[^\\u0000-\\u001F\\u007F]*$"
                   }
                 },
                 {
@@ -74,14 +78,24 @@
       "selectColumns": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "search": {
-        "type": "string"
+        "type": "string",
+        "pattern": "^(?:$|(?=.*\\S)[^\\u0000-\\u001F\\u007F]+)$"
       },
       "orderColumn": {
-        "type": "string"
+        "anyOf": [
+          {
+            "const": ""
+          },
+          {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          }
+        ]
       },
       "orderDirection": {
         "enum": [
@@ -90,11 +104,11 @@
         ]
       },
       "page": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1
       },
       "pageSize": {
-        "type": "number",
+        "type": "integer",
         "minimum": 1,
         "maximum": 100
       }
@@ -133,7 +147,8 @@
           "additionalProperties": false,
           "properties": {
             "id": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             },
             "shortDescr": {
               "type": "string"
@@ -151,25 +166,32 @@
               "type": "string"
             },
             "layerId": {
-              "type": "number"
+              "type": "integer",
+              "minimum": 0
             }
           }
         }
       },
       "count": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "totalCount": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "page": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 1
       },
       "pageSize": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100
       },
       "totalPages": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "hasNext": {
         "type": "boolean"
@@ -178,24 +200,31 @@
         "type": "boolean"
       },
       "layerId": {
-        "type": "number"
+        "type": "integer",
+        "minimum": 0
       },
       "columnsRequested": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "columnsLoaded": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
         }
       },
       "warnings": {
         "type": "array",
+        "maxItems": 10,
         "items": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
         }
       }
     }

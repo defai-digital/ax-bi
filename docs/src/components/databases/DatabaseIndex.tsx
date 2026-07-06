@@ -27,8 +27,14 @@ import {
   SearchOutlined,
   LinkOutlined,
   BugOutlined,
+  CloudOutlined,
 } from '@ant-design/icons';
-import type { DatabaseData, DatabaseInfo, TimeGrains } from './types';
+import type {
+  CloudConnectorCapability,
+  DatabaseData,
+  DatabaseInfo,
+  TimeGrains,
+} from './types';
 
 interface DatabaseIndexProps {
   data: DatabaseData;
@@ -47,6 +53,7 @@ interface TableEntry {
   hasConnectionString: boolean;
   hasCustomErrors: boolean;
   customErrorCount: number;
+  cloud_capability?: CloudConnectorCapability;
   joins?: boolean;
   subqueries?: boolean;
   supports_dynamic_schema?: boolean;
@@ -99,6 +106,23 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Open Source': 'geekblue',
   'Hosted Open Source': 'cyan',
   'Proprietary': 'default',
+};
+
+const PRODUCT_TYPE_LABELS: Record<string, string> = {
+  cloud_warehouse: 'Cloud Warehouse',
+  lakehouse: 'Lakehouse',
+  data_lake_query_engine: 'Data Lake SQL',
+  query_engine: 'Query Engine',
+  nosql_or_search: 'NoSQL/Search',
+  embedded_or_edge_sql: 'Edge SQL',
+  observability_analytics: 'Observability',
+};
+
+const SUPPORT_LEVEL_COLORS: Record<string, string> = {
+  certified: 'green',
+  packaged: 'blue',
+  compatible: 'purple',
+  integration_candidate: 'gold',
 };
 
 // Convert category constant to display name
@@ -205,6 +229,7 @@ function getSupportedTimeGrains(timeGrains?: TimeGrains): string[] {
 const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [cloudFilter, setCloudFilter] = useState<string | null>(null);
 
   const { statistics, databases } = data;
 
@@ -228,6 +253,7 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
         ),
         hasCustomErrors: (db.documentation?.custom_errors?.length ?? 0) > 0,
         customErrorCount: db.documentation?.custom_errors?.length ?? 0,
+        cloud_capability: db.cloud_capability,
         isCompatible: false,
       });
 
@@ -258,6 +284,7 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
             supports_dynamic_schema: db.supports_dynamic_schema,
             supports_catalog: db.supports_catalog,
             ssh_tunneling: db.ssh_tunneling,
+            cloud_capability: db.cloud_capability,
             documentation: {
               description: compat.description,
               connection_string: compat.connection_string,
@@ -285,10 +312,15 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
             ?.toLowerCase()
             .includes(searchText.toLowerCase());
         const matchesCategory = !categoryFilter || db.categories.includes(categoryFilter);
-        return matchesSearch && matchesCategory;
+        const matchesCloud =
+          !cloudFilter ||
+          db.cloud_capability?.product_type === cloudFilter ||
+          db.cloud_capability?.support_level === cloudFilter ||
+          db.cloud_capability?.cloud_providers.includes(cloudFilter);
+        return matchesSearch && matchesCategory && matchesCloud;
       })
       .sort((a, b) => b.score - a.score);
-  }, [databaseList, searchText, categoryFilter]);
+  }, [databaseList, searchText, categoryFilter, cloudFilter]);
 
   // Get unique categories and counts for filter
   const { categories, categoryCounts } = useMemo(() => {
@@ -303,6 +335,25 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
       categories: Object.keys(counts).sort(),
       categoryCounts: counts,
     };
+  }, [databaseList]);
+
+  const cloudOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    databaseList.forEach((db) => {
+      const capability = db.cloud_capability;
+      if (!capability) return;
+      options.set(
+        capability.product_type,
+        PRODUCT_TYPE_LABELS[capability.product_type] || capability.product_type,
+      );
+      options.set(capability.support_level, capability.support_level);
+      capability.cloud_providers.forEach((provider) =>
+        options.set(provider, provider),
+      );
+    });
+    return Array.from(options, ([value, label]) => ({ value, label })).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
   }, [databaseList]);
 
   // Table columns
@@ -335,6 +386,15 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
                 {record.compatibleWith} compatible
               </Tag>
             )}
+            {record.cloud_capability?.recommended && (
+              <Tag
+                icon={<CloudOutlined />}
+                color="blue"
+                style={{ marginLeft: 8, fontSize: '11px' }}
+              >
+                Cloud
+              </Tag>
+            )}
             <div style={{ fontSize: '12px', color: '#666' }}>
               {record.documentation?.description?.slice(0, 80)}
               {(record.documentation?.description?.length ?? 0) > 80 ? '...' : ''}
@@ -358,6 +418,33 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
           ))}
         </div>
       ),
+    },
+    {
+      title: 'Cloud',
+      key: 'cloud',
+      width: 190,
+      render: (_: unknown, record: TableEntry) => {
+        const capability = record.cloud_capability;
+        if (!capability) return <span>-</span>;
+
+        const productType =
+          PRODUCT_TYPE_LABELS[capability.product_type] ||
+          capability.product_type;
+
+        return (
+          <Tooltip title={capability.notes || capability.data_products.join(', ')}>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              <Tag
+                icon={<CloudOutlined />}
+                color={SUPPORT_LEVEL_COLORS[capability.support_level] || 'default'}
+              >
+                {productType}
+              </Tag>
+              {capability.recommended && <Tag color="green">High value</Tag>}
+            </div>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Score',
@@ -521,9 +608,9 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
         <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Multiple Drivers"
-              value={statistics.withDrivers}
-              prefix={<ApiOutlined />}
+              title="Cloud Connectors"
+              value={statistics.cloudConnectors ?? 0}
+              prefix={<CloudOutlined />}
             />
           </Card>
         </Col>
@@ -540,7 +627,7 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
 
       {/* Filters */}
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} sm={12}>
+        <Col xs={24} sm={8}>
           <Input
             placeholder="Search databases..."
             prefix={<SearchOutlined />}
@@ -549,7 +636,7 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
             allowClear
           />
         </Col>
-        <Col xs={24} sm={12}>
+        <Col xs={24} sm={8}>
           <Select
             placeholder="Filter by category"
             style={{ width: '100%' }}
@@ -570,6 +657,16 @@ const DatabaseIndex: React.FC<DatabaseIndexProps> = ({ data }) => {
               ),
               value: cat,
             }))}
+          />
+        </Col>
+        <Col xs={24} sm={8}>
+          <Select
+            placeholder="Filter by cloud capability"
+            style={{ width: '100%' }}
+            value={cloudFilter}
+            onChange={setCloudFilter}
+            allowClear
+            options={cloudOptions}
           />
         </Col>
       </Row>
