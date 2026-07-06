@@ -49,6 +49,7 @@ jest.mock('ag-grid-community', () => ({
     version: '1.0.0',
   },
   CustomFilterModule: { moduleName: 'CustomFilterModule', version: '1.0.0' },
+  RowSelectionModule: { moduleName: 'RowSelectionModule', version: '1.0.0' },
 }));
 
 beforeEach(() => {
@@ -64,6 +65,7 @@ test('defaultModules exports an array of AG Grid modules', () => {
   expect(moduleNames).toContain('ColumnAutoSizeModule');
   expect(moduleNames).toContain('PaginationModule');
   expect(moduleNames).toContain('ClientSideRowModelModule');
+  expect(moduleNames).toContain('RowSelectionModule');
 });
 
 test('setupAGGridModules registers default modules when called without arguments', () => {
