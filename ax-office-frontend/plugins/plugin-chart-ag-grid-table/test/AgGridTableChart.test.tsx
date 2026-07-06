@@ -219,12 +219,12 @@ test('AgGridTableChart renders with totals', async () => {
     expect(grid).toBeInTheDocument();
   });
 
-  const pinnedRows = document.querySelectorAll('.ag-floating-bottom .ag-row');
+  const pinnedRows = document.querySelectorAll(
+    '.ag-row.ag-row-pinned, .ag-floating-bottom-container .ag-row',
+  );
   expect(pinnedRows.length).toBeGreaterThan(0);
 
-  const dataRows = document.querySelectorAll(
-    '.ag-body-viewport .ag-row:not(.ag-row-pinned)',
-  );
+  const dataRows = document.querySelectorAll('.ag-row:not(.ag-row-pinned)');
   expect(dataRows.length).toBe(3);
 });
 
