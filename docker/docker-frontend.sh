@@ -42,5 +42,5 @@ if [ "$BUILD_SUPERSET_FRONTEND_IN_DOCKER" = "true" ]; then
 
 else
     echo "Skipping frontend build steps - YOU NEED TO RUN IT MANUALLY ON THE HOST!"
-    echo "https://github.com/defai-digital/ax-office#frontend-development"
+    echo "https://github.com/defai-digital/ax-bi#frontend-development"
 fi

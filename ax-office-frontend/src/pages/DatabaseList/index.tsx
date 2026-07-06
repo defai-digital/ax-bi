@@ -1049,7 +1049,7 @@ function DatabaseList({
                           avatar={<span>•</span>}
                           title={
                             <Typography.Link
-                              href={`/ax-office/dashboard/${result.id}`}
+                              href={`/ax-bi/dashboard/${result.id}`}
                               target="_atRiskItem"
                             >
                               {result.title}

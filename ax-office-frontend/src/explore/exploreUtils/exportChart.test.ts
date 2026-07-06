@@ -92,7 +92,7 @@ test('exportChart v1 API passes prefixed URL to onStartStreamingExport when app 
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  expect(callArgs.url).toBe('/ax-office/api/v1/chart/data');
+  expect(callArgs.url).toBe('/ax-bi/api/v1/chart/data');
   expect(callArgs.exportType).toBe('csv');
 });
 
@@ -126,7 +126,7 @@ test('exportChart v1 API passes nested prefix for deeply nested deployments', as
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  expect(callArgs.url).toBe('/my-company/analytics/ax-office/api/v1/chart/data');
+  expect(callArgs.url).toBe('/my-company/analytics/ax-bi/api/v1/chart/data');
   expect(callArgs.exportType).toBe('xlsx');
 });
 
@@ -183,7 +183,7 @@ test('exportChart passes xlsx exportType for Excel exports', async () => {
 });
 
 test('exportChart legacy API (useLegacyApi=true) passes prefixed URL to onStartStreamingExport when app root is configured', async () => {
-  const appRoot = '/ax-office';
+  const appRoot = '/ax-bi';
   ensureAppRoot.mockImplementation((path: string) => `${appRoot}${path}`);
 
   getChartMetadataRegistry.mockReturnValue({
@@ -204,9 +204,9 @@ test('exportChart legacy API (useLegacyApi=true) passes prefixed URL to onStartS
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  // The legacy blueprint path is /ax-office/explore_json/; with appRoot=/ax-office the
-  // full streaming URL is /ax-office/ax-office/explore_json/ (appRoot + blueprint prefix).
-  expect(callArgs.url).toBe('/ax-office/ax-office/explore_json/?csv=true');
+  // The legacy blueprint path is /ax-bi/explore_json/; with appRoot=/ax-bi the
+  // full streaming URL is /ax-bi/ax-bi/explore_json/ (appRoot + blueprint prefix).
+  expect(callArgs.url).toBe('/ax-bi/ax-bi/explore_json/?csv=true');
   expect(callArgs.exportType).toBe('csv');
 });
 
@@ -231,7 +231,7 @@ test('exportChart legacy API builds relative URL for CSV export without app root
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  expect(callArgs.url).toBe('/ax-office/explore_json/?csv=true');
+  expect(callArgs.url).toBe('/ax-bi/explore_json/?csv=true');
 });
 
 test('exportChart legacy API builds relative URL for xlsx export', async () => {
@@ -256,7 +256,7 @@ test('exportChart legacy API builds relative URL for xlsx export', async () => {
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  expect(callArgs.url).toBe('/ax-office/explore_json/?xlsx=true');
+  expect(callArgs.url).toBe('/ax-bi/explore_json/?xlsx=true');
 });
 
 test('exportChart legacy API calls postBlob with relative URL', async () => {
@@ -281,7 +281,7 @@ test('exportChart legacy API calls postBlob with relative URL', async () => {
 
   expect(SupersetClient.postBlob).toHaveBeenCalledTimes(1);
   const [url] = SupersetClient.postBlob.mock.calls[0];
-  expect(url).toBe('/ax-office/explore_json/?csv=true');
+  expect(url).toBe('/ax-bi/explore_json/?csv=true');
   expect(url).not.toMatch(/^https?:\/\//);
   expect(downloadBlob).toHaveBeenCalled();
 });
@@ -308,7 +308,7 @@ test('exportChart legacy API includes force param when force=true', async () => 
 
   expect(onStartStreamingExport).toHaveBeenCalledTimes(1);
   const callArgs = onStartStreamingExport.mock.calls[0][0];
-  expect(callArgs.url).toBe('/ax-office/explore_json/?force=true&csv=true');
+  expect(callArgs.url).toBe('/ax-bi/explore_json/?force=true&csv=true');
 });
 
 test('exportChart successfully exports chart as CSV', async () => {

@@ -93,7 +93,7 @@ interface LoggerStore {
   dispatch: Dispatch;
 }
 
-const LOG_ENDPOINT = '/ax-office/log/?explode=events';
+const LOG_ENDPOINT = '/ax-bi/log/?explode=events';
 
 const sendBeacon = (events: LogEventData[]): void => {
   if (events.length <= 0) {

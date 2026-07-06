@@ -116,7 +116,7 @@ const App = () => (
                 </Route>
               ),
             )}
-            <Redirect from="/" to="/ax-office/welcome/" exact />
+            <Redirect from="/" to="/ax-bi/welcome/" exact />
           </Switch>
         </ExtensionsStartup>
         <ToastContainer />

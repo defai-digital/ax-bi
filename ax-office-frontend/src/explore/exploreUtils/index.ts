@@ -156,7 +156,7 @@ export function getURIDirectory(
     'results',
     'samples',
   ].includes(endpointType)
-    ? '/ax-office/explore_json/'
+    ? '/ax-bi/explore_json/'
     : '/explore/';
   return includeAppRoot ? ensureAppRoot(uri) : uri;
 }

@@ -27,8 +27,8 @@ const SAFE_ABSOLUTE_URL_RE = /^(https?|ftp|mailto|tel):/i;
 
 /**
  * Normalizes legacy Superset and AX-BI route prefixes to the public
- * AX-Office route prefix. Deployment roots are preserved, so
- * `/analytics/superset/foo` becomes `/analytics/ax-office/foo`.
+ * AX-BI route prefix. Deployment roots are preserved, so
+ * `/analytics/superset/foo` becomes `/analytics/ax-bi/foo`.
  *
  * The lookahead `(?=[/?#]|$)` ensures the prefix segment is followed by
  * a path separator (`/`), query string (`?`), hash fragment (`#`), or
@@ -85,11 +85,11 @@ export function ensureAppRoot(path: string | null | undefined): string {
  * are returned unchanged.
  *
  * @param path - The path or URL to resolve (e.g., '/sqllab', 'https://example.com')
- * @returns The resolved URL (e.g., '/ax-office/sqllab' or 'https://example.com')
+ * @returns The resolved URL (e.g., '/ax-bi/sqllab' or 'https://example.com')
  *
  * @example
- * // In a subdirectory deployment at /ax-office
- * makeUrl('/sqllab?new=true')          // returns '/ax-office/sqllab?new=true'
+ * // In a subdirectory deployment at /ax-bi
+ * makeUrl('/sqllab?new=true')          // returns '/ax-bi/sqllab?new=true'
  * makeUrl('https://external.example.com') // returns 'https://external.example.com'
  */
 export function makeUrl(path: string): string {

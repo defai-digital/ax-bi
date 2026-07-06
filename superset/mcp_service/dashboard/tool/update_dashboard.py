@@ -173,7 +173,7 @@ def update_dashboard(  # noqa: C901
                     "published": dashboard.published,
                 },
                 dashboard_url=(
-                    f"{get_superset_base_url()}/ax-office/dashboard/{dashboard.id}/"
+                    f"{get_superset_base_url()}/ax-bi/dashboard/{dashboard.id}/"
                 ),
                 changes_applied=[],
                 error="No fields specified for update.",
@@ -184,7 +184,7 @@ def update_dashboard(  # noqa: C901
             command = UpdateDashboardCommand(request.dashboard_id, update_data)
             updated = command.run()
 
-        dashboard_url = f"{get_superset_base_url()}/ax-office/dashboard/{updated.id}/"
+        dashboard_url = f"{get_superset_base_url()}/ax-bi/dashboard/{updated.id}/"
 
         logger.info("Updated dashboard %s: %s", updated.id, ", ".join(changes))
 

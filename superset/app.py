@@ -40,7 +40,7 @@ from werkzeug.exceptions import NotFound
 
 from superset.constants import (
     AX_OFFICE_ROUTE_PREFIX,
-    LEGACY_AX_BI_ROUTE_PREFIX,
+    LEGACY_AX_OFFICE_ROUTE_PREFIX,
     LEGACY_SUPERSET_ROUTE_PREFIX,
 )
 from superset.extensions.cache_middleware import ExtensionCacheMiddleware
@@ -57,11 +57,11 @@ logger = logging.getLogger(__name__)
 
 
 def _register_legacy_route_redirects(app: Flask) -> None:
-    """Redirect legacy route-prefix URLs (/superset, /ax-bi) to /ax-office."""
+    """Redirect legacy route-prefix URLs to the current AX-BI route prefix."""
 
     legacy_prefixes = [
         LEGACY_SUPERSET_ROUTE_PREFIX,
-        LEGACY_AX_BI_ROUTE_PREFIX,
+        LEGACY_AX_OFFICE_ROUTE_PREFIX,
     ]
 
     for idx, legacy_prefix in enumerate(legacy_prefixes):
@@ -208,7 +208,7 @@ class SupersetApp(Flask):
 
             # Check if database is up-to-date with migrations
             if not self._is_database_up_to_date():
-                logger.info("Pending database migrations: run 'ax-office db upgrade'")
+                logger.info("Pending database migrations: run 'ax-bi db upgrade'")
                 return
 
             logger.info("Syncing configuration to database...")

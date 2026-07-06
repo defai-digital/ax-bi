@@ -61,7 +61,7 @@ export interface FilterConfigItem extends JsonObject {
 export type ChartReducerInitialState = typeof chart;
 
 // chart query built from initialState
-// Ref: https://github.com/defai-digital/ax-office/blob/main/ax-office-frontend/src/dashboard/reducers/nativeFilters.ts
+// Ref: https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/src/dashboard/reducers/nativeFilters.ts
 export interface ChartQueryPayload extends Partial<ChartReducerInitialState> {
   id: number;
   form_data?: ChartProps['rawFormData'];

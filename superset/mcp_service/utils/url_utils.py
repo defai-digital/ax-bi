@@ -41,6 +41,22 @@ def _normalize_base_url(url: object) -> str:
     return str(url).strip().rstrip("/")
 
 
+def _browser_safe_base_url(url: str) -> str:
+    """Return a URL that browser clients can open directly."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return url
+
+    if parsed.hostname != "0.0.0.0":
+        return url
+
+    netloc = "127.0.0.1"
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return parsed._replace(netloc=netloc).geturl().rstrip("/")
+
+
 def _is_local_url(url: str) -> bool:
     """Check if a URL points to a local/development host."""
     try:
@@ -61,11 +77,11 @@ def get_superset_base_url() -> str:
 
     try:
         if webserver_url := _normalize_base_url(get_superset_webserver_address()):
-            return webserver_url
+            return _browser_safe_base_url(webserver_url)
         if user_friendly_url := _normalize_base_url(
             get_webdriver_baseurl_user_friendly()
         ):
-            return user_friendly_url
+            return _browser_safe_base_url(user_friendly_url)
         return default_url
     except Exception:
         return default_url

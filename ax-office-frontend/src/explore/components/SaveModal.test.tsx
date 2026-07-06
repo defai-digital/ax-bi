@@ -480,7 +480,7 @@ test('dispatches removeChartState when saving and going to dashboard', async () 
 
   // Mock the dashboard API response
   const dashboardId = 123;
-  const dashboardUrl = '/ax-office/dashboard/test-dashboard/';
+  const dashboardUrl = '/ax-bi/dashboard/test-dashboard/';
   fetchMock.get(`glob:*/api/v1/dashboard/${dashboardId}*`, {
     result: {
       id: dashboardId,
@@ -650,7 +650,7 @@ const makeMetadataDashboard = (id: number, title: string) => ({
   owners: [{ id: 1, first_name: 'Test', last_name: 'User' }],
   extra_owners: [],
   roles: [],
-  url: `/ax-office/dashboard/${id}/`,
+  url: `/ax-bi/dashboard/${id}/`,
   slug: null,
   thumbnail_url: null,
   published: true,

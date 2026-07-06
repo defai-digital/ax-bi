@@ -39,7 +39,7 @@ interface StreamingExportParams {
    *
    * URLs should be prefixed with the application root at the call site using
    * `makeUrl()` from 'src/utils/pathUtils'. This ensures proper handling for
-   * subdirectory deployments (e.g., /ax-office/api/v1/...).
+   * subdirectory deployments (e.g., /ax-bi/api/v1/...).
    *
    * A defensive guard (`ensureUrlPrefix`) will apply the prefix if missing,
    * but callers should not rely on this fallback behavior.
@@ -80,7 +80,7 @@ const ensureUrlPrefix = (url: string): string => {
   }
   // If URL already has the app root prefix, return as-is
   // Use strict check to avoid false positives with sibling paths (e.g., /app2 when appRoot is /app)
-  // Also handle query strings and hashes (e.g., /ax-office?foo=1 or /ax-office#hash)
+  // Also handle query strings and hashes (e.g., /ax-bi?foo=1 or /ax-bi#hash)
   if (
     url === appRoot ||
     url.startsWith(`${appRoot}/`) ||

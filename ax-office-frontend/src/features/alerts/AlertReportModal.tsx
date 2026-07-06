@@ -1446,7 +1446,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
 
   const openDashboardInNewTab = (dashboardId?: number | string | null) => {
     if (!dashboardId) return;
-    navigateTo(`/ax-office/dashboard/${dashboardId}`, { newWindow: true });
+    navigateTo(`/ax-bi/dashboard/${dashboardId}`, { newWindow: true });
   };
 
   const onChartChange = (chart: SelectValue) => {

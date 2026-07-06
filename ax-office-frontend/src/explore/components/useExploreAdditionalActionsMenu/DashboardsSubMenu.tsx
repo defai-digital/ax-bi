@@ -72,7 +72,7 @@ export const useDashboardsMenuItems = ({
             <Link
               target="_blank"
               rel="noreferer noopener"
-              to={`/ax-office/dashboard/${dashboard.id}${urlQueryString}`}
+              to={`/ax-bi/dashboard/${dashboard.id}${urlQueryString}`}
               css={css`
                 display: flex;
                 flex-direction: row;

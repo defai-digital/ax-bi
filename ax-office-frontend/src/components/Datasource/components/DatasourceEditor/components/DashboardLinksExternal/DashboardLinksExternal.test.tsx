@@ -66,7 +66,7 @@ test('renders single dashboard link correctly', () => {
 
   const link = screen.getByText('Sales Dashboard');
   expect(link).toBeInTheDocument();
-  expect(link.closest('a')).toHaveAttribute('href', '/ax-office/dashboard/1/');
+  expect(link.closest('a')).toHaveAttribute('href', '/ax-bi/dashboard/1/');
   expect(link.closest('a')).toHaveAttribute('target', '_blank');
 });
 
@@ -98,9 +98,9 @@ test('links have correct href attributes', () => {
     .getByText(', Very Long Dashboard Name That Should Be Truncated')
     .closest('a');
 
-  expect(salesLink).toHaveAttribute('href', '/ax-office/dashboard/1/');
-  expect(analyticsLink).toHaveAttribute('href', '/ax-office/dashboard/2/');
-  expect(longNameLink).toHaveAttribute('href', '/ax-office/dashboard/3/');
+  expect(salesLink).toHaveAttribute('href', '/ax-bi/dashboard/1/');
+  expect(analyticsLink).toHaveAttribute('href', '/ax-bi/dashboard/2/');
+  expect(longNameLink).toHaveAttribute('href', '/ax-bi/dashboard/3/');
 });
 
 test('applies correct styling classes', () => {
@@ -124,5 +124,5 @@ test('handles dashboard with empty title', () => {
 
   const link = screen.getByRole('link');
   expect(link).toHaveTextContent('');
-  expect(link).toHaveAttribute('href', '/ax-office/dashboard/1/');
+  expect(link).toHaveAttribute('href', '/ax-bi/dashboard/1/');
 });

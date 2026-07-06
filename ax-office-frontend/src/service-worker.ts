@@ -84,8 +84,8 @@ const STATIC_ASSET_PATTERNS = [
 
 const API_PATTERNS = [
   /\/api\/v1\//,
-  /\/ax-office\/csstemplateasyncparam\//,
-  /\/ax-office\/language_pack\//,
+  /\/ax-bi\/csstemplateasyncparam\//,
+  /\/ax-bi\/language_pack\//,
 ];
 
 // Routes that should never be cached

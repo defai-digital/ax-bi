@@ -136,7 +136,7 @@ export default function RedirectWarning() {
         </WarningBody>
 
         <WarningFooter justify="flex-end" gap="small">
-          <Button onClick={handleReturn}>{t('Return to AX-Office')}</Button>
+          <Button onClick={handleReturn}>{t('Return to AX-BI')}</Button>
           <Button type="primary" href={safeTargetUrl} rel="noopener noreferrer">
             {t('Continue')}
           </Button>

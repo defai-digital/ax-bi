@@ -189,8 +189,8 @@ afterEach(async () => {
 
 test('shows error when launchQueue is not supported', async () => {
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -201,7 +201,7 @@ test('shows error when launchQueue is not supported', async () => {
     expect(mockAddDangerToast).toHaveBeenCalledWith(
       'File handling is not supported in this browser. Please use a modern browser like Chrome or Edge.',
     );
-    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-office/welcome/');
+    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-bi/welcome/');
   });
 });
 
@@ -209,8 +209,8 @@ test('redirects when no files are provided', async () => {
   const { triggerConsumer } = setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -221,7 +221,7 @@ test('redirects when no files are provided', async () => {
   await triggerConsumer({ files: [] });
 
   await waitFor(() => {
-    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-office/welcome/');
+    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-bi/welcome/');
   });
 });
 
@@ -230,8 +230,8 @@ test('handles CSV file correctly', async () => {
   const { triggerConsumer } = setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -253,8 +253,8 @@ test('handles Excel (.xls) file correctly', async () => {
   setupLaunchQueue(fileHandle);
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -272,8 +272,8 @@ test('handles Excel (.xlsx) file correctly', async () => {
   const { triggerConsumer } = setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -293,8 +293,8 @@ test('handles Parquet file correctly', async () => {
   setupLaunchQueue(fileHandle);
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -311,8 +311,8 @@ test('shows error for unsupported file type', async () => {
   const { triggerConsumer } = setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -327,7 +327,7 @@ test('shows error for unsupported file type', async () => {
     expect(mockAddDangerToast).toHaveBeenCalledWith(
       'Unsupported file type. Please use CSV, Excel, or Columnar files.',
     );
-    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-office/welcome/');
+    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-bi/welcome/');
   });
 });
 
@@ -336,8 +336,8 @@ test('handles file with uppercase extension', async () => {
   setupLaunchQueue(fileHandle);
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -353,8 +353,8 @@ test('handles errors during file processing', async () => {
   const { triggerConsumer } = setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -379,7 +379,7 @@ test('handles errors during file processing', async () => {
     expect(mockAddDangerToast).toHaveBeenCalledWith(
       'Failed to open file. Please try again.',
     );
-    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-office/welcome/');
+    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-bi/welcome/');
   });
 });
 
@@ -388,8 +388,8 @@ test('modal close redirects to welcome page', async () => {
   setupLaunchQueue(fileHandle);
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,
@@ -403,7 +403,7 @@ test('modal close redirects to welcome page', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Close' }));
 
   await waitFor(() => {
-    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-office/welcome/');
+    expect(mockHistoryPush).toHaveBeenCalledWith('/ax-bi/welcome/');
   });
 });
 
@@ -411,8 +411,8 @@ test('shows loading state while waiting for file', () => {
   setupLaunchQueue();
 
   render(
-    <MemoryRouter initialEntries={['/ax-office/file-handler']}>
-      <Route path="/ax-office/file-handler">
+    <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
+      <Route path="/ax-bi/file-handler">
         <FileHandler />
       </Route>
     </MemoryRouter>,

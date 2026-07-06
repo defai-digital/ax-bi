@@ -64,7 +64,7 @@ const mockedProps = {
         name: 'Home',
         icon: '',
         label: 'Home',
-        url: '/ax-office/welcome',
+        url: '/ax-bi/welcome',
         index: 1,
       },
       {
@@ -126,7 +126,7 @@ const mockedProps = {
       },
     ],
     brand: {
-      path: '/ax-office/welcome/',
+      path: '/ax-bi/welcome/',
       icon: '/static/assets/images/superset-logo-horiz.png',
       alt: 'Apache Superset',
       width: '126',
@@ -653,7 +653,7 @@ test('brand path should be prefixed with app root in subdirectory deployment', a
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithSimplePath.data.brand.alt, 'i'),
   });
-  expect(brandLink).toHaveAttribute('href', '/ax-office/welcome/');
+  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
 });
 
 test('brand link falls back to brand.path when theme brandLogoUrl is absent', async () => {
@@ -682,6 +682,6 @@ test('brand link falls back to brand.path when theme brandLogoUrl is absent', as
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithFallbackPath.data.brand.alt, 'i'),
   });
-  // ensureAppRoot must have been applied: /welcome/ → /ax-office/welcome/
-  expect(brandLink).toHaveAttribute('href', '/ax-office/welcome/');
+  // ensureAppRoot must have been applied: /welcome/ → /ax-bi/welcome/
+  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
 });

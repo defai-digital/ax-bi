@@ -732,9 +732,9 @@ const Chart = (props: ChartProps) => {
       {/*
           This usage of dangerouslySetInnerHTML is safe since it is being used to render
           markdown that is sanitized with nh3. See:
-             https://github.com/defai-digital/ax-office/pull/4390
+             https://github.com/defai-digital/ax-bi/pull/4390
           and
-             https://github.com/defai-digital/ax-office/pull/23862
+             https://github.com/defai-digital/ax-bi/pull/23862
         */}
       {isExpanded && slice.description_markdown && (
         <div

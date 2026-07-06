@@ -430,7 +430,7 @@ async def compose_dashboard(  # noqa: C901
                     exc_info=True,
                 )
 
-        dashboard_url = f"{get_superset_base_url()}/ax-office/dashboard/{dashboard.id}/"
+        dashboard_url = f"{get_superset_base_url()}/ax-bi/dashboard/{dashboard.id}/"
 
         # Build layout summary
         layout_parts = []

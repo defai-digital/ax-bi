@@ -65,7 +65,7 @@ describe('exploreUtils', () => {
         force: false,
         curUrl: 'http://superset.com',
       });
-      compareURI(URI(url!), URI('/ax-office/explore_json/'));
+      compareURI(URI(url!), URI('/ax-bi/explore_json/'));
     });
     test('generates proper json forced url', () => {
       const url = getExploreUrl({
@@ -76,7 +76,7 @@ describe('exploreUtils', () => {
       });
       compareURI(
         URI(url!),
-        URI('/ax-office/explore_json/').search({ force: 'true' }),
+        URI('/ax-bi/explore_json/').search({ force: 'true' }),
       );
     });
     test('generates proper csv URL', () => {
@@ -88,7 +88,7 @@ describe('exploreUtils', () => {
       });
       compareURI(
         URI(url!),
-        URI('/ax-office/explore_json/').search({ csv: 'true' }),
+        URI('/ax-bi/explore_json/').search({ csv: 'true' }),
       );
     });
     test('generates proper standalone URL', () => {
@@ -114,7 +114,7 @@ describe('exploreUtils', () => {
       });
       compareURI(
         URI(url!),
-        URI('/ax-office/explore_json/').search({ foo: 'bar' }),
+        URI('/ax-bi/explore_json/').search({ foo: 'bar' }),
       );
     });
     test('generate proper save slice url', () => {
@@ -126,7 +126,7 @@ describe('exploreUtils', () => {
       });
       compareURI(
         URI(url!),
-        URI('/ax-office/explore_json/').search({ foo: 'bar' }),
+        URI('/ax-bi/explore_json/').search({ foo: 'bar' }),
       );
     });
   });

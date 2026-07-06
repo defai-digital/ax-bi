@@ -59,13 +59,13 @@ const FileHandler = ({ addDangerToast, addSuccessToast }: FileHandlerProps) => {
             'File handling is not supported in this browser. Please use a modern browser like Chrome or Edge.',
           ),
         );
-        history.push('/ax-office/welcome/');
+        history.push('/ax-bi/welcome/');
         return;
       }
 
       launchQueue.setConsumer(async (launchParams: FileLaunchParams) => {
         if (!launchParams.files || launchParams.files.length === 0) {
-          history.push('/ax-office/welcome/');
+          history.push('/ax-bi/welcome/');
           return;
         }
 
@@ -92,7 +92,7 @@ const FileHandler = ({ addDangerToast, addSuccessToast }: FileHandlerProps) => {
                 'Unsupported file type. Please use CSV, Excel, or Columnar files.',
               ),
             );
-            history.push('/ax-office/welcome/');
+            history.push('/ax-bi/welcome/');
             return;
           }
 
@@ -103,7 +103,7 @@ const FileHandler = ({ addDangerToast, addSuccessToast }: FileHandlerProps) => {
         } catch (error) {
           console.error('Error handling file launch:', error);
           addDangerToast(t('Failed to open file. Please try again.'));
-          history.push('/ax-office/welcome/');
+          history.push('/ax-bi/welcome/');
         }
       });
     };
@@ -115,7 +115,7 @@ const FileHandler = ({ addDangerToast, addSuccessToast }: FileHandlerProps) => {
     setShowModal(false);
     setUploadFile(null);
     setUploadType(null);
-    history.push('/ax-office/welcome/');
+    history.push('/ax-bi/welcome/');
   };
 
   if (!uploadFile || !uploadType) {

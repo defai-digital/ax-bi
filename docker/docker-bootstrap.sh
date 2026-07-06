@@ -110,7 +110,7 @@ case "${1}" in
     if [[ "${MCP_DEBUG:-}" == "true" ]]; then
         MCP_DEBUG_FLAG="--debug"
     fi
-    ax-office mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} ${MCP_DEBUG_FLAG}
+    ax-bi mcp run --host 0.0.0.0 --port ${MCP_PORT:-5008} ${MCP_DEBUG_FLAG}
     ;;
   *)
     echo "Unknown Operation!!!"

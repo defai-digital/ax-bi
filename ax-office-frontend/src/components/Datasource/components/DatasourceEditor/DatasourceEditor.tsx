@@ -1584,7 +1584,7 @@ class DatasourceEditor extends PureComponent<
                 'Default URL to redirect to when accessing from the dataset list page. Accepts relative URLs such as',
               )}{' '}
               <Typography.Text code>
-                /ax-office/dashboard/{'{id}'}/
+                /ax-bi/dashboard/{'{id}'}/
               </Typography.Text>
             </>
           }

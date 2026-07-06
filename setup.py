@@ -60,7 +60,7 @@ setup(
     entry_points={
         "console_scripts": [
             "ax-office=superset.cli.main:superset",
-            "ax-bi=superset.cli.main:superset",  # backward compat alias
+            "ax-bi=superset.cli.main:superset",
         ],
         # the `postgres` and `postgres+psycopg2://` schemes were removed in SQLAlchemy 1.4  # noqa: E501
         # add an alias here to prevent breaking existing databases

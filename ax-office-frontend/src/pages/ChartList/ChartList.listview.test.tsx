@@ -569,7 +569,7 @@ test('renders dashboard crosslinks as navigable links', async () => {
       within(crosslinks).getByRole('link', {
         name: new RegExp(dashboard.dashboard_title),
       }),
-    ).toHaveAttribute('href', `/ax-office/dashboard/${dashboard.id}`);
+    ).toHaveAttribute('href', `/ax-bi/dashboard/${dashboard.id}`);
   });
 });
 
@@ -609,7 +609,7 @@ test('shows tag column when TAGGING_SYSTEM is enabled', async () => {
 
   // Tag should be a link to all_entities page
   const tagLink = within(tag).getByRole('link');
-  expect(tagLink).toHaveAttribute('href', '/ax-office/all_entities/?id=1');
+  expect(tagLink).toHaveAttribute('href', '/ax-bi/all_entities/?id=1');
   expect(tagLink).toHaveAttribute('target', '_blank');
 });
 

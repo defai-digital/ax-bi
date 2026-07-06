@@ -29,7 +29,7 @@ import * as chartCustomizationActions from '../../actions/chartCustomizationActi
 
 fetchMock.get('glob:*/csstemplateasyncmodelview/api/read', {});
 fetchMock.put('glob:*/api/v1/dashboard/*/colors*', {});
-fetchMock.post('glob:*/ax-office/log/?*', {});
+fetchMock.post('glob:*/ax-bi/log/?*', {});
 
 jest.mock('@visx/responsive', () => ({
   ParentSize: ({

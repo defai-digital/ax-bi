@@ -73,7 +73,7 @@ export default function initPreamble(): Promise<void> {
       }, LANGUAGE_PACK_REQUEST_TIMEOUT_MS);
 
       try {
-        const languagePackUrl = makeUrl(`/ax-office/language_pack/${lang}/`);
+        const languagePackUrl = makeUrl(`/ax-bi/language_pack/${lang}/`);
         const resp = await fetch(languagePackUrl, {
           signal: abortController.signal,
         });

@@ -221,11 +221,11 @@ export const routes: Routes = [
     Component: Login,
   },
   {
-    path: '/ax-office/welcome/',
+    path: '/ax-bi/welcome/',
     Component: Home,
   },
   {
-    path: '/ax-office/file-handler',
+    path: '/ax-bi/file-handler',
     Component: FileHandler,
   },
   {
@@ -233,7 +233,7 @@ export const routes: Routes = [
     Component: DashboardList,
   },
   {
-    path: '/ax-office/dashboard/:idOrSlug/',
+    path: '/ax-bi/dashboard/:idOrSlug/',
     Component: Dashboard,
   },
   {
@@ -303,7 +303,7 @@ export const routes: Routes = [
     Component: Chart,
   },
   {
-    path: '/ax-office/explore/p',
+    path: '/ax-bi/explore/p',
     Component: Chart,
   },
   {
@@ -339,11 +339,11 @@ export const routes: Routes = [
 
 if (isFeatureEnabled(FeatureFlag.TaggingSystem)) {
   routes.push({
-    path: '/ax-office/all_entities/',
+    path: '/ax-bi/all_entities/',
     Component: AllEntities,
   });
   routes.push({
-    path: '/ax-office/tags/',
+    path: '/ax-bi/tags/',
     Component: Tags,
   });
 }

@@ -41,7 +41,7 @@ const setFeatureFlags = (featureFlags: Record<string, unknown>) => {
 const createProps = () => ({
   addDangerToast: jest.fn(),
   addSuccessToast: jest.fn(),
-  url: `/ax-office/dashboard/${DASHBOARD_ID}`,
+  url: `/ax-bi/dashboard/${DASHBOARD_ID}`,
   copyMenuItemTitle: 'Copy dashboard URL',
   emailMenuItemTitle: 'Share dashboard by email',
   emailSubject: 'Superset dashboard COVID Vaccine Dashboard',
@@ -71,7 +71,7 @@ beforeEach(() => {
   fetchMock.clearHistory().removeRoutes();
   fetchMock.post(
     postDashboardPermalinkMockUrl,
-    { key: '123', url: 'http://localhost/ax-office/dashboard/p/123/' },
+    { key: '123', url: 'http://localhost/ax-bi/dashboard/p/123/' },
     { name: postDashboardPermalinkMockUrl },
   );
 });
@@ -130,7 +130,7 @@ test('Click on "Copy dashboard URL" and succeed', async () => {
   await waitFor(async () => {
     expect(spy).toHaveBeenCalledTimes(1);
     const value = await spy.mock.calls[0][0]();
-    expect(value).toBe('http://localhost/ax-office/dashboard/p/123/');
+    expect(value).toBe('http://localhost/ax-bi/dashboard/p/123/');
     expect(props.addSuccessToast).toHaveBeenCalledTimes(1);
     expect(props.addSuccessToast).toHaveBeenCalledWith('Copied to clipboard!');
     expect(props.addDangerToast).toHaveBeenCalledTimes(0);
@@ -162,7 +162,7 @@ test('Click on "Copy dashboard URL" and fail', async () => {
   await waitFor(async () => {
     expect(spy).toHaveBeenCalledTimes(1);
     const value = await spy.mock.calls[0][0]();
-    expect(value).toBe('http://localhost/ax-office/dashboard/p/123/');
+    expect(value).toBe('http://localhost/ax-bi/dashboard/p/123/');
     expect(props.addSuccessToast).toHaveBeenCalledTimes(0);
     expect(props.addDangerToast).toHaveBeenCalledTimes(1);
     expect(props.addDangerToast).toHaveBeenCalledWith(

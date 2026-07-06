@@ -345,7 +345,7 @@ test('updateUrlWithUnmatchedFilters goes through history when supplied', () => {
 
   // Seed the URL so the function has something to read.
   const originalLocation = window.location.href;
-  window.history.replaceState({}, '', '/ax-office/dashboard/1/?f=(country:USA)');
+  window.history.replaceState({}, '', '/ax-bi/dashboard/1/?f=(country:USA)');
 
   updateUrlWithUnmatchedFilters(
     [{ subject: 'region', operator: '==', comparator: 'EMEA' }],
@@ -354,7 +354,7 @@ test('updateUrlWithUnmatchedFilters goes through history when supplied', () => {
 
   expect(replace).toHaveBeenCalledTimes(1);
   const call = replace.mock.calls[0][0];
-  expect(call.pathname).toBe('/ax-office/dashboard/1/');
+  expect(call.pathname).toBe('/ax-bi/dashboard/1/');
   expect(call.search).toContain('f=');
   expect(call.search).toContain('region');
 
@@ -365,7 +365,7 @@ test('updateUrlWithUnmatchedFilters goes through history when supplied', () => {
 test('updateUrlWithUnmatchedFilters drops f= when no unmatched remain', () => {
   const replace = jest.fn();
   const originalLocation = window.location.href;
-  window.history.replaceState({}, '', '/ax-office/dashboard/1/?f=(country:USA)');
+  window.history.replaceState({}, '', '/ax-bi/dashboard/1/?f=(country:USA)');
 
   updateUrlWithUnmatchedFilters([], { replace });
 
@@ -387,7 +387,7 @@ test('updateUrlWithUnmatchedFilters cleanup is observable by history readers', (
   // react-router-dom's history.replace.
   const fakeHistory = {
     location: {
-      pathname: '/ax-office/dashboard/1/',
+      pathname: '/ax-bi/dashboard/1/',
       search: '?f=(country:USA)',
     },
     replace(next: { pathname: string; search: string }) {
@@ -395,7 +395,7 @@ test('updateUrlWithUnmatchedFilters cleanup is observable by history readers', (
     },
   };
   const originalLocation = window.location.href;
-  window.history.replaceState({}, '', '/ax-office/dashboard/1/?f=(country:USA)');
+  window.history.replaceState({}, '', '/ax-bi/dashboard/1/?f=(country:USA)');
 
   updateUrlWithUnmatchedFilters(
     [{ subject: 'sales', operator: '>', comparator: 1000 }],

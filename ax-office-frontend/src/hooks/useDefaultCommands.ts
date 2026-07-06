@@ -52,7 +52,7 @@ export function useDefaultCommands(): void {
         description: t('Go to the home page'),
         type: 'navigation',
         keywords: ['welcome', 'start', 'main'],
-        action: () => navigate(`${appRoot}/ax-office/welcome/`),
+        action: () => navigate(`${appRoot}/ax-bi/welcome/`),
       },
       {
         id: 'nav-dashboards',

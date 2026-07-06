@@ -40,13 +40,13 @@ jest.mock('react-redux', () => ({
 const seedUrl = (search: string) => {
   // jsdom doesn't navigate, so set both window.location (read by
   // getRisonFilterParam) and react-router's in-memory history.
-  window.history.replaceState({}, '', `/ax-office/dashboard/1/${search}`);
+  window.history.replaceState({}, '', `/ax-bi/dashboard/1/${search}`);
 };
 
 const renderAt = (search: string) => {
   seedUrl(search);
   const history = createMemoryHistory({
-    initialEntries: [`/ax-office/dashboard/1/${search}`],
+    initialEntries: [`/ax-bi/dashboard/1/${search}`],
   });
   const utils = render(
     <Router history={history}>
@@ -131,7 +131,7 @@ test('chip list re-renders when the URL changes (popstate/programmatic nav)', ()
   // forward nav). The component must re-read the URL filters.
   act(() => {
     seedUrl('?f=(priority:high)');
-    history.replace('/ax-office/dashboard/1/?f=(priority:high)');
+    history.replace('/ax-bi/dashboard/1/?f=(priority:high)');
   });
 
   expect(screen.getByText('priority')).toBeInTheDocument();
