@@ -24,7 +24,8 @@ import functools
 import logging
 import secrets
 import time
-from typing import Any, Callable, Type, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from sqlalchemy.exc import OperationalError, TimeoutError
 from starlette.exceptions import HTTPException
@@ -73,7 +74,7 @@ def retry_on_exception(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 60.0,
-    exceptions: tuple[Type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
+    exceptions: tuple[type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
     jitter: bool = True,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
@@ -145,7 +146,7 @@ def async_retry_on_exception(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 60.0,
-    exceptions: tuple[Type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
+    exceptions: tuple[type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
     jitter: bool = True,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
@@ -214,7 +215,7 @@ class RetryableOperation:
         max_attempts: int = 3,
         base_delay: float = 1.0,
         max_delay: float = 60.0,
-        exceptions: tuple[Type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
+        exceptions: tuple[type[Exception], ...] = DEFAULT_RETRYABLE_EXCEPTIONS,
         jitter: bool = True,
     ) -> None:
         self.operation_name = operation_name
@@ -231,7 +232,7 @@ class RetryableOperation:
 
     def __exit__(
         self,
-        exc_type: Type[Exception] | None,
+        exc_type: type[Exception] | None,
         exc_val: Exception | None,
         exc_tb: Any,
     ) -> bool:

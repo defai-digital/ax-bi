@@ -235,6 +235,22 @@ superset-frontend/
 
 npm workspaces link `packages/*` and `plugins/*` as local dependencies.
 
+### TypeScript Project References
+
+The frontend uses [TypeScript Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) to structure the codebase as a set of smaller, interconnected projects rather than one monolithic compilation unit. This setup is critical for incremental builds, faster type-checking, and clear module boundaries.
+
+**How it works:**
+
+- The root `ax-office-frontend/tsconfig.json` declares `"composite": true` and lists every sub-project in the `"references"` array (packages and plugins).
+- Each sub-project (`packages/superset-ui-core/`, `packages/superset-ui-chart-controls/`, `packages/superset-core/`, and every plugin under `plugins/`) has its own `tsconfig.json` with `"composite": true`. This produces `.d.ts` declaration files that downstream projects consume.
+- Path aliases in the root `tsconfig.json` (`"paths"` field) map `@superset-ui/core`, `@superset-ui/chart-controls`, `@apache-superset/core`, etc. to their respective `src/` directories so that IDEs and bundlers resolve to live source rather than stale build output.
+
+**Common pitfalls:**
+
+- **Stale `lib/` directories**: Each sub-project's `declarationDir` is `lib/`. If `lib/` is not excluded from the root `include` patterns, TypeScript will try to compile the generated `.d.ts` files as part of the program, causing hundreds of "file not found" errors. The root `tsconfig.json` must include `"**/lib/**"` in its `"exclude"` array.
+- **Forgetting to rebuild**: After changing a shared package (e.g., `superset-ui-core`), dependent plugins need the updated declarations. Run `npm run type` from the root to trigger an incremental build across all referenced projects in dependency order.
+- **Adding a new plugin/package**: You must (1) create a `tsconfig.json` with `"composite": true` in the new directory, and (2) add a `{ "path": "./plugins/<name>" }` entry to the root `tsconfig.json` `references` array. Without this, cross-project type resolution will silently fall back to `node_modules` and may use stale declarations.
+
 ## Ongoing Refactors — What NOT to Do
 
 These migrations are actively happening. Avoid deprecated patterns:

@@ -35,7 +35,7 @@ Example:
 
 import os
 from collections.abc import Iterable, Iterator
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import click
 import requests
@@ -62,7 +62,7 @@ def request(
 
 def list_runs(
     repo: str,
-    params: Optional[dict[str, str]] = None,
+    params: dict[str, str] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """List all github workflow runs.
     Returns:
@@ -82,18 +82,18 @@ def list_runs(
         page += 1
 
 
-def cancel_run(repo: str, run_id: Union[str, int]) -> dict[str, Any]:
+def cancel_run(repo: str, run_id: str | int) -> dict[str, Any]:
     return request("POST", f"/repos/{repo}/actions/runs/{run_id}/cancel")
 
 
-def get_pull_request(repo: str, pull_number: Union[str, int]) -> dict[str, Any]:
+def get_pull_request(repo: str, pull_number: str | int) -> dict[str, Any]:
     return request("GET", f"/repos/{repo}/pulls/{pull_number}")
 
 
 def get_runs(
     repo: str,
-    branch: Optional[str] = None,
-    user: Optional[str] = None,
+    branch: str | None = None,
+    user: str | None = None,
     statuses: Iterable[str] = ("queued", "in_progress"),
     events: Iterable[str] = ("pull_request", "push"),
 ) -> list[dict[str, Any]]:
@@ -153,7 +153,7 @@ Date:   {date_str}
 )
 @click.argument("branch_or_pull", required=False)
 def cancel_github_workflows(  # noqa: C901
-    branch_or_pull: Optional[str],
+    branch_or_pull: str | None,
     repo: str,
     event: list[str],
     include_last: bool,

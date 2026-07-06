@@ -26,7 +26,7 @@ import logging
 import re
 from urllib.parse import quote, urlparse
 
-from flask import current_app
+from flask import current_app, Response
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ def is_safe_redirect_url(url: str) -> bool:
     stripped = _URL_STRIPPED_CONTROL_CHARS.sub("", url.strip())
 
     # Block protocol-relative URLs
-    if stripped.startswith("//") or stripped.startswith("\\\\"):
+    if stripped.startswith(("//", "\\\\")):
         return False
 
     parsed = urlparse(stripped)
@@ -159,3 +159,35 @@ def is_safe_redirect_url(url: str) -> bool:
         return False
 
     return parsed.netloc.lower() in base_hosts
+
+
+def get_safe_redirect_target(url: str) -> str | None:
+    """
+    Return a normalized relative redirect target for an internal URL.
+
+    Absolute URLs are only accepted when they point at the configured Superset
+    host, and are reduced to path/query/fragment before being emitted in a
+    ``Location`` header.
+    """
+    if not is_safe_redirect_url(url):
+        return None
+
+    stripped = _URL_STRIPPED_CONTROL_CHARS.sub("", url.strip())
+    parsed = urlparse(stripped)
+    path = parsed.path or "/"
+    if not path.startswith("/"):
+        path = f"/{path}"
+
+    target = path
+    if parsed.query:
+        target = f"{target}?{parsed.query}"
+    if parsed.fragment:
+        target = f"{target}#{parsed.fragment}"
+    return target
+
+
+def relative_redirect(location: str, code: int = 302) -> Response:
+    """Return a redirect response for an already-normalized relative location."""
+    response = Response(status=code)
+    response.headers["Location"] = location
+    return response

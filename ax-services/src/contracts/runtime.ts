@@ -17,6 +17,56 @@
  * under the License.
  */
 export const RUNTIME_CONTRACT_VERSION = 'runtime.v1';
+const externalMessageSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 256,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+const metadataKeySchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 128,
+  pattern: '^[^\\u0000-\\u001F\\u007F]+$',
+} as const;
+const httpStatusCodeSchema = {
+  type: 'integer',
+  minimum: 100,
+  maximum: 599,
+} as const;
+const isoTimestampSchema = {
+  type: 'string',
+  format: 'date-time',
+  maxLength: 32,
+} as const;
+const nodeVersionSchema = {
+  type: 'string',
+  maxLength: 64,
+  pattern: '^v\\d+\\.\\d+\\.\\d+',
+} as const;
+const nodePlatformSchema = {
+  enum: [
+    'aix',
+    'android',
+    'darwin',
+    'freebsd',
+    'haiku',
+    'linux',
+    'openbsd',
+    'sunos',
+    'win32',
+    'cygwin',
+    'netbsd',
+  ],
+} as const;
+const nonNegativeIntegerSchema = {
+  type: 'integer',
+  minimum: 0,
+} as const;
+const nonNegativeNumberSchema = {
+  type: 'number',
+  minimum: 0,
+} as const;
 
 export interface DependencyHealthContract {
   ok: boolean;
@@ -87,8 +137,8 @@ const dependencyHealthSchema = {
   properties: {
     ok: { type: 'boolean' },
     url: { type: 'string' },
-    statusCode: { type: 'number' },
-    error: { type: 'string' },
+    statusCode: httpStatusCodeSchema,
+    error: externalMessageSchema,
   },
 } as const;
 
@@ -99,13 +149,14 @@ const dependencyMetadataSchema = {
   properties: {
     ok: { type: 'boolean' },
     url: { type: 'string' },
-    statusCode: { type: 'number' },
-    keyCount: { type: 'number' },
+    statusCode: httpStatusCodeSchema,
+    keyCount: { type: 'integer', minimum: 0, maximum: 100 },
     keys: {
       type: 'array',
-      items: { type: 'string' },
+      maxItems: 100,
+      items: metadataKeySchema,
     },
-    error: { type: 'string' },
+    error: externalMessageSchema,
   },
 } as const;
 
@@ -114,10 +165,10 @@ const routeMetricsSchema = {
   required: ['count', 'errorCount', 'averageDurationMs', 'maxDurationMs'],
   additionalProperties: false,
   properties: {
-    count: { type: 'number' },
-    errorCount: { type: 'number' },
-    averageDurationMs: { type: 'number' },
-    maxDurationMs: { type: 'number' },
+    count: nonNegativeIntegerSchema,
+    errorCount: nonNegativeIntegerSchema,
+    averageDurationMs: nonNegativeNumberSchema,
+    maxDurationMs: nonNegativeNumberSchema,
   },
 } as const;
 
@@ -139,10 +190,15 @@ export const healthResponseSchema = {
     contractVersion: { const: RUNTIME_CONTRACT_VERSION },
     service: { const: 'ax-services' },
     status: { const: 'ok' },
-    timestamp: { type: 'string' },
-    version: { type: 'string' },
-    nodeVersion: { type: 'string' },
-    platform: { type: 'string' },
+    timestamp: isoTimestampSchema,
+    version: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[^\\u0000-\\u001f\\u007f]+$',
+    },
+    nodeVersion: nodeVersionSchema,
+    platform: nodePlatformSchema,
     uptimeSeconds: { type: 'number' },
   },
 } as const;
@@ -176,7 +232,7 @@ export const metricsResponseSchema = {
     contractVersion: { const: RUNTIME_CONTRACT_VERSION },
     service: { const: 'ax-services' },
     status: { const: 'ok' },
-    uptimeSeconds: { type: 'number' },
+    uptimeSeconds: nonNegativeNumberSchema,
     requests: {
       type: 'object',
       required: [
@@ -188,10 +244,10 @@ export const metricsResponseSchema = {
       ],
       additionalProperties: false,
       properties: {
-        total: { type: 'number' },
-        errorCount: { type: 'number' },
-        averageDurationMs: { type: 'number' },
-        maxDurationMs: { type: 'number' },
+        total: nonNegativeIntegerSchema,
+        errorCount: nonNegativeIntegerSchema,
+        averageDurationMs: nonNegativeNumberSchema,
+        maxDurationMs: nonNegativeNumberSchema,
         routes: {
           type: 'object',
           additionalProperties: routeMetricsSchema,

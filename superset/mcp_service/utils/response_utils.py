@@ -56,8 +56,8 @@ Usage example::
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict
+from datetime import datetime, timezone
+from typing import Any
 
 import humanize
 
@@ -69,7 +69,9 @@ def humanize_timestamp(dt: datetime | None) -> str | None:
     """Convert a datetime to a humanized string like '2 hours ago'."""
     if dt is None:
         return None
-    now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    now = datetime.now(dt.tzinfo)
     return humanize.naturaltime(now - dt)
 
 
@@ -157,14 +159,13 @@ async def finalize_list_response(
     count = len(getattr(result, items_attr, []))
     total_pages = getattr(result, "total_pages", None)
     await ctx.info(
-        "%s listed successfully: count=%s, total_pages=%s"
-        % (resource_name, count, total_pages)
+        f"{resource_name} listed successfully: count={count}, total_pages={total_pages}"
     )
 
     columns_to_filter = result.columns_requested
     await ctx.debug(
-        "Applying field filtering via serialization context: columns=%s"
-        % (columns_to_filter,)
+        "Applying field filtering via serialization context: "
+        f"columns={columns_to_filter}"
     )
 
     with mcp_list_serialization_log_context(resource_name):
@@ -186,7 +187,7 @@ def _byte_size_label(value: str | None) -> str:
 class OmittedFieldsBuilder:
     """Builder for constructing omission metadata dicts.
 
-    Produces a ``Dict[str, str]`` mapping field names to human-readable
+    Produces a ``dict[str, str]`` mapping field names to human-readable
     descriptions of what was omitted, including approximate sizes.
 
     Two field types are supported:
@@ -204,14 +205,14 @@ class OmittedFieldsBuilder:
     """
 
     def __init__(self) -> None:
-        self._fields: Dict[str, str] = {}
+        self._fields: dict[str, str] = {}
 
     def add_raw_field(
         self,
         field_name: str,
         raw_value: str | None,
         reason: str,
-    ) -> "OmittedFieldsBuilder":
+    ) -> OmittedFieldsBuilder:
         """Record a field that was stripped with no replacement.
 
         Parameters
@@ -237,7 +238,7 @@ class OmittedFieldsBuilder:
         field_name: str,
         raw_value: str | None,
         reason: str,
-    ) -> "OmittedFieldsBuilder":
+    ) -> OmittedFieldsBuilder:
         """Record a field whose useful parts were extracted into other fields.
 
         Parameters
@@ -261,6 +262,6 @@ class OmittedFieldsBuilder:
             )
         return self
 
-    def build(self) -> Dict[str, str]:
+    def build(self) -> dict[str, str]:
         """Return the omission metadata dict."""
         return dict(self._fields)

@@ -16,7 +16,7 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -44,7 +44,7 @@ class CreateExplorePermalinkCommand(BaseExplorePermalinkCommand):
         form_data = state.get("formData") or {}
         if not isinstance(form_data, dict):
             form_data = {}
-        self.chart_id: Optional[int] = form_data.get("slice_id")
+        self.chart_id: int | None = form_data.get("slice_id")
         self.datasource: Any = form_data.get("datasource")
         self.state = state
 

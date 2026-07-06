@@ -235,6 +235,12 @@ class SSHManager:
             "debug_level": logging.getLogger("flask_appbuilder").level,
         }
 
+        if not hasattr(paramiko, "DSSKey"):
+            # sshtunnel 0.4.0 scans ~/.ssh by default and still references
+            # paramiko.DSSKey, which was removed in Paramiko 4. Keep agent
+            # auth available, but disable the stale filesystem key scan.
+            params["host_pkey_directories"] = []
+
         if expected_host_key is not None:
             # Pin the expected key on the tunnel's own connection, so paramiko verifies
             # the host that actually carries traffic on the same transport. The probe

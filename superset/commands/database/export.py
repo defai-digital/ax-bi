@@ -17,7 +17,8 @@
 # isort:skip_file
 import functools
 import logging
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 from collections.abc import Iterator
 
 import yaml
@@ -116,8 +117,7 @@ class ExportDatabasesCommand(ExportModelsCommand):
 
         payload["version"] = EXPORT_VERSION
 
-        file_content = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
 
     @staticmethod
     def _export(

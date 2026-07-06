@@ -22,6 +22,7 @@ from unittest.mock import MagicMock
 
 from superset.mcp_service.ai.intent_heuristic import (
     _detect_chart_type,
+    _find_dimension_from_prompt,
     _find_first_dimension,
     _find_first_metric,
     _find_time_column,
@@ -162,6 +163,38 @@ class TestFindFirstDimension:
 
 
 # ---------------------------------------------------------------------------
+# _find_dimension_from_prompt
+# ---------------------------------------------------------------------------
+
+
+class TestFindDimensionFromPrompt:
+    def test_matches_by_column_name(self) -> None:
+        ds = _make_dataset(
+            columns=[
+                _make_col("species", "VARCHAR"),
+                _make_col("island", "VARCHAR"),
+            ]
+        )
+        assert _find_dimension_from_prompt("Show count by island", ds) == "island"
+
+    def test_matches_grouped_by_column_name_with_underscore(self) -> None:
+        ds = _make_dataset(
+            columns=[
+                _make_col("product_line", "VARCHAR"),
+                _make_col("country", "VARCHAR"),
+            ]
+        )
+        assert (
+            _find_dimension_from_prompt("Bar chart grouped by product line", ds)
+            == "product_line"
+        )
+
+    def test_returns_none_when_prompt_does_not_name_column(self) -> None:
+        ds = _make_dataset(columns=[_make_col("species", "VARCHAR")])
+        assert _find_dimension_from_prompt("Show a chart", ds) is None
+
+
+# ---------------------------------------------------------------------------
 # _detect_chart_type
 # ---------------------------------------------------------------------------
 
@@ -203,6 +236,14 @@ class TestDetectChartType:
     def test_comparison_keywords(self) -> None:
         ds = _make_dataset()
         chart_type, kind, _ = _detect_chart_type("Compare sales by region", ds)
+        assert chart_type == "xy"
+        assert kind == "bar"
+
+    def test_explicit_bar_chart_takes_priority_over_count(self) -> None:
+        ds = _make_dataset()
+        chart_type, kind, _ = _detect_chart_type(
+            "Create a bar chart showing COUNT(*) by island", ds
+        )
         assert chart_type == "xy"
         assert kind == "bar"
 
@@ -370,4 +411,21 @@ class TestHeuristicChartConfig:
         assert config is not None
         assert config["chart_type"] == "xy"
         assert config["kind"] == "bar"
+        assert chart_type == "echarts_timeseries_bar"
+
+    def test_explicit_bar_count_uses_requested_dimension(self) -> None:
+        ds = _make_dataset(
+            columns=[
+                _make_col("species", "VARCHAR"),
+                _make_col("island", "VARCHAR"),
+            ],
+            metrics=[_make_metric("count")],
+        )
+        config, chart_type, _, _, _ = heuristic_chart_config(
+            "Create a bar chart showing COUNT(*) by island", ds, []
+        )
+        assert config is not None
+        assert config["chart_type"] == "xy"
+        assert config["kind"] == "bar"
+        assert config["x"]["name"] == "island"
         assert chart_type == "echarts_timeseries_bar"

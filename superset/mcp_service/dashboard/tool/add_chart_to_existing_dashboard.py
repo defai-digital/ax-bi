@@ -22,8 +22,7 @@ This tool adds a chart to an existing dashboard with automatic layout positionin
 """
 
 import logging
-import re
-from typing import Any, Dict
+from typing import Any
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -48,24 +47,26 @@ from superset.utils import json
 
 logger = logging.getLogger(__name__)
 
-# Compiled regex for stripping common emoji Unicode ranges from tab text.
-# Uses specific Unicode blocks to avoid overly permissive ranges.
-_EMOJI_RE = re.compile(
-    "["
-    "\U0001f300-\U0001f5ff"  # Misc Symbols and Pictographs
-    "\U0001f600-\U0001f64f"  # Emoticons
-    "\U0001f680-\U0001f6ff"  # Transport and Map Symbols
-    "\U0001f900-\U0001f9ff"  # Supplemental Symbols and Pictographs
-    "\U0001fa70-\U0001faff"  # Symbols and Pictographs Extended-A
-    "\u2600-\u26ff"  # Misc Symbols
-    "\u2700-\u27bf"  # Dingbats
-    "\ufe00-\ufe0f"  # Variation Selectors
-    "\u200d"  # Zero-width joiner
-    "]+"
+_EMOJI_RANGES: tuple[tuple[int, int], ...] = (
+    (0x1F300, 0x1F5FF),  # Misc Symbols and Pictographs
+    (0x1F600, 0x1F64F),  # Emoticons
+    (0x1F680, 0x1F6FF),  # Transport and Map Symbols
+    (0x1F900, 0x1F9FF),  # Supplemental Symbols and Pictographs
+    (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
+    (0x2600, 0x26FF),  # Misc Symbols
+    (0x2700, 0x27BF),  # Dingbats
+    (0xFE00, 0xFE0F),  # Variation Selectors
 )
 
 
-def _find_next_row_position(layout: Dict[str, Any]) -> str:
+def _is_emoji_codepoint(codepoint: int) -> bool:
+    """Return true for emoji/decorator codepoints stripped from tab labels."""
+    return codepoint == 0x200D or any(
+        start <= codepoint <= end for start, end in _EMOJI_RANGES
+    )
+
+
+def _find_next_row_position(layout: dict[str, Any]) -> str:
     """
     Generate a unique ROW ID for a new row in the dashboard layout.
 
@@ -87,12 +88,12 @@ def _normalize_tab_text(text: str | None) -> str:
     """Strip emoji and extra whitespace from tab text for flexible matching."""
     if not text:
         return ""
-    cleaned = _EMOJI_RE.sub("", text)
+    cleaned = "".join(char for char in text if not _is_emoji_codepoint(ord(char)))
     return cleaned.strip().lower()
 
 
 def _match_tab_in_children(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     tabs_children: list[str],
     target_tab: str,
 ) -> str | None:
@@ -116,7 +117,7 @@ def _match_tab_in_children(
     return None
 
 
-def _collect_tabs_groups(layout: Dict[str, Any]) -> list[list[str]]:
+def _collect_tabs_groups(layout: dict[str, Any]) -> list[list[str]]:
     """Collect all TABS groups from ROOT_ID and GRID_ID children.
 
     Superset dashboards can place TABS under either ROOT_ID or GRID_ID
@@ -138,7 +139,7 @@ def _collect_tabs_groups(layout: Dict[str, Any]) -> list[list[str]]:
 
 
 def _first_tab_from_groups(
-    layout: Dict[str, Any], groups: list[list[str]]
+    layout: dict[str, Any], groups: list[list[str]]
 ) -> str | None:
     """Return the first valid TAB ID from the collected groups."""
     for tabs_children in groups:
@@ -149,7 +150,7 @@ def _first_tab_from_groups(
     return None
 
 
-def _collect_available_tab_names(layout: Dict[str, Any]) -> list[str]:
+def _collect_available_tab_names(layout: dict[str, Any]) -> list[str]:
     """Collect display entries (label + component ID) for all TAB components.
 
     Always includes the component ID so callers can retry unambiguously even
@@ -167,7 +168,7 @@ def _collect_available_tab_names(layout: Dict[str, Any]) -> list[str]:
 
 
 def _find_tab_insert_target(
-    layout: Dict[str, Any], target_tab: str | None = None
+    layout: dict[str, Any], target_tab: str | None = None
 ) -> str | None:
     """
     Detect if the dashboard uses tabs and return the appropriate tab's ID.
@@ -198,7 +199,7 @@ def _find_tab_insert_target(
 
 
 def _add_chart_to_layout(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     chart: Any,
     chart_id: int,
     row_key: str,
@@ -278,7 +279,7 @@ def _add_chart_to_layout(
 
 
 def _ensure_layout_structure(
-    layout: Dict[str, Any], row_key: str, parent_id: str
+    layout: dict[str, Any], row_key: str, parent_id: str
 ) -> None:
     """
     Ensure the dashboard layout has proper GRID and ROOT structure,
@@ -338,7 +339,7 @@ def _ensure_layout_structure(
 
 
 def _resolve_parent_container(
-    layout: Dict[str, Any],
+    layout: dict[str, Any],
     dashboard_id: int,
     target_tab: str | None,
 ) -> tuple[str, None] | tuple[None, AddChartToDashboardResponse]:
@@ -580,7 +581,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
                     exc_info=True,
                 )
             dashboard_url = (
-                f"{get_superset_base_url()}/superset/dashboard/{updated_dashboard.id}/"
+                f"{get_superset_base_url()}/ax-office/dashboard/{updated_dashboard.id}/"
             )
             position_info = {
                 "row": row_key,
@@ -615,7 +616,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
             created_on=updated_dashboard.created_on,
             changed_on=updated_dashboard.changed_on,
             uuid=str(updated_dashboard.uuid) if updated_dashboard.uuid else None,
-            url=f"{get_superset_base_url()}/superset/dashboard/{updated_dashboard.id}/",
+            url=f"{get_superset_base_url()}/ax-office/dashboard/{updated_dashboard.id}/",
             chart_count=len(updated_dashboard.slices),
             tags=[
                 serialize_tag_object(tag)
@@ -636,7 +637,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
         )
 
         dashboard_url = (
-            f"{get_superset_base_url()}/superset/dashboard/{updated_dashboard.id}/"
+            f"{get_superset_base_url()}/ax-office/dashboard/{updated_dashboard.id}/"
         )
 
         logger.info(

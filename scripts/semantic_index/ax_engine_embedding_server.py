@@ -159,7 +159,7 @@ class EmbeddingHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         """Write access logs to stderr."""
 
-        sys.stderr.write("%s - %s\n" % (self.address_string(), format % args))
+        sys.stderr.write(f"{self.address_string()} - {format % args}\n")
 
     def _send_json(self, payload: dict[str, Any]) -> None:
         """Send a JSON response."""

@@ -25,6 +25,7 @@ and certification status.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, cast
 
 from flask import current_app, has_app_context
@@ -57,6 +58,13 @@ _CERTIFIED_BONUS = 0.2
 
 _VALID_ASSET_TYPES = frozenset({"dataset", "chart", "dashboard", "metric"})
 _ASSET_SEARCH_CONTRACT_VERSION = "asset-search.v1"
+_DATASET_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(?:dataset|from|table)\s+['\"]?([A-Za-z0-9_.-]+)['\"]?",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b([A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)\b"),
+)
 
 
 def _escape_like_pattern(value: str) -> str:
@@ -68,6 +76,22 @@ def _escape_like_pattern(value: str) -> str:
     return correct results.
     """
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _dataset_name_candidates(query: str) -> list[str]:
+    """Extract likely dataset names from a longer natural-language query."""
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    for pattern in _DATASET_NAME_PATTERNS:
+        for match in pattern.finditer(query):
+            candidate = match.group(1).strip(" '\".,;:!?")
+            key = candidate.lower()
+            if candidate and key not in seen:
+                candidates.append(candidate)
+                seen.add(key)
+
+    return candidates
 
 
 def _score_result(name: str | None, description: str | None, query: str) -> float:
@@ -116,12 +140,18 @@ def _search_datasets(
     from superset.daos.dataset import DatasetDAO
 
     escaped_query = _escape_like_pattern(query)
+    dataset_candidates = _dataset_name_candidates(query)
     search_filter = or_(
         SqlaTable.table_name.ilike(f"%{escaped_query}%", escape="\\"),
         cast(Any, SqlaTable.description).ilike(
             f"%{escaped_query}%",
             escape="\\",
         ),
+        *[SqlaTable.table_name == candidate for candidate in dataset_candidates],
+        *[
+            SqlaTable.table_name.ilike(_escape_like_pattern(candidate), escape="\\")
+            for candidate in dataset_candidates
+        ],
     )
 
     session = db.session
@@ -138,6 +168,10 @@ def _search_datasets(
     assets = []
     for ds in results:
         score = _score_result(ds.table_name, ds.description, query)
+        if ds.table_name and ds.table_name.lower() in {
+            candidate.lower() for candidate in dataset_candidates
+        }:
+            score += _NAME_MATCH_SCORE
         if _is_certified(ds):
             score += _CERTIFIED_BONUS
         assets.append(
@@ -605,7 +639,7 @@ def _asset_results_from_ax_services_response(
                 else "",
                 certified=asset.get("certified") is True,
                 relevance_score=relevance_score
-                if isinstance(relevance_score, (int, float))
+                if isinstance(relevance_score, int | float)
                 and not isinstance(relevance_score, bool)
                 else None,
                 relevance_reason=asset.get("relevanceReason")

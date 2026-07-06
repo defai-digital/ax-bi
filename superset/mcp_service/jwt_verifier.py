@@ -36,6 +36,7 @@ from contextvars import ContextVar
 from typing import Any, cast
 
 import httpx
+from authlib.jose import JsonWebToken
 from authlib.jose.errors import JoseError
 from fastmcp.server.auth.auth import AccessToken
 from fastmcp.server.auth.providers.jwt import JWTVerifier
@@ -394,6 +395,8 @@ class MCPJWTVerifier(JWTVerifier):
         # is unset, so self.algorithm is always truthy post-construction).
         explicit_algorithm = kwargs.get("algorithm")
         super().__init__(*args, **kwargs)
+        if not hasattr(self, "jwt"):
+            self.jwt = JsonWebToken([self.algorithm])
         # Surface permissive auth configuration at startup. Config-gated:
         # a verifier is only built when auth is enabled (see mcp_config).
         # Prefer the raw MCP_JWT_ALGORITHM config value over the constructor
@@ -609,7 +612,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             # rejected here with a precise reason rather than escaping as a
             # generic failure (or, for the overflow, an uncaught 500).
             if (
-                not isinstance(exp, (int, float))
+                not isinstance(exp, int | float)
                 or isinstance(exp, bool)
                 or not math.isfinite(exp)
             ):
@@ -636,7 +639,7 @@ class DetailedJWTVerifier(MCPJWTVerifier):
             nbf = claims.get("nbf")
             if nbf is not None:
                 if (
-                    not isinstance(nbf, (int, float))
+                    not isinstance(nbf, int | float)
                     or isinstance(nbf, bool)
                     or not math.isfinite(nbf)
                 ):

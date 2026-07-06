@@ -743,8 +743,8 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
 
         current_chart = [d for d in res if d["id"] == chart_id][0]
         assert current_chart["slice_name"] == new_name
-        assert "username" not in current_chart["changed_by"].keys()
-        assert "username" not in current_chart["owners"][0].keys()
+        assert "username" not in current_chart["changed_by"]
+        assert "username" not in current_chart["owners"][0]
 
         db.session.delete(model)
         db.session.commit()
@@ -771,7 +771,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         res = json.loads(response.data.decode("utf-8"))["result"]
 
         assert res["slice_name"] == new_name
-        assert "username" not in res["owners"][0].keys()
+        assert "username" not in res["owners"][0]
 
         db.session.delete(model)
         db.session.commit()

@@ -71,12 +71,17 @@ Current endpoints:
 - `GET /ready`
 - `GET /metrics`
 - `POST /mcp/assets/search`
+- `POST /mcp/annotations/list`
 - `POST /mcp/annotation-layers/list`
+- `POST /mcp/permissions/check`
 - `POST /mcp/charts/list`
 - `POST /mcp/dashboards/list`
 - `POST /mcp/databases/list`
 - `POST /mcp/datasets/list`
+- `POST /mcp/queries/list`
 - `POST /mcp/reports/list`
+- `POST /mcp/roles/list`
+- `POST /mcp/rls-filters/list`
 - `POST /mcp/saved-queries/list`
 - `POST /mcp/tags/list`
 - `POST /mcp/tasks/list`

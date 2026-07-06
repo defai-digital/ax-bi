@@ -19,4 +19,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  moduleNameMapper: {
+    '^cookie$': '<rootDir>/spec/jest-cookie',
+  },
 };

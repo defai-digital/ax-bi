@@ -24,7 +24,7 @@ import re
 import urllib.parse
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Generic, Optional, TYPE_CHECKING, TypeVar
+from typing import Any, Generic, TYPE_CHECKING, TypeVar
 
 import sqlglot
 from jinja2 import nodes, Template
@@ -929,10 +929,9 @@ class SQLStatement(BaseSQLStatement[exp.Expression]):
                 return True
 
         # Handle ALTER parsed as Command (Oracle, MS SQL dialects)
-        if isinstance(self._parsed, exp.Command) and self._parsed.name == "ALTER":
-            return True  # pragma: no cover
-
-        return False
+        return (  # pragma: no cover
+            isinstance(self._parsed, exp.Command) and self._parsed.name == "ALTER"
+        )
 
     def format(self, comments: bool = True) -> str:
         """
@@ -1694,7 +1693,7 @@ class SQLScript:
         CTAS (`CREATE TABLE AS SELECT`) can only be run with scripts where the last
         statement is a `SELECT`.
         """
-        return self.statements[-1].is_select()
+        return bool(self.statements) and self.statements[-1].is_select()
 
     def is_valid_cvas(self) -> bool:
         """
@@ -1808,7 +1807,7 @@ def remove_quotes(val: T) -> T:
 
 
 def process_jinja_sql(
-    sql: str, database: Database, template_params: Optional[dict[str, Any]] = None
+    sql: str, database: Database, template_params: dict[str, Any] | None = None
 ) -> JinjaSQLResult:
     """
     Process Jinja-templated SQL and extract table references.
@@ -1845,15 +1844,13 @@ def process_jinja_sql(
         ):
             # Try to extract the table referenced in the macro.
             try:
-                tables.add(
-                    Table(
-                        *[
-                            remove_quotes(part.strip())
-                            for part in node.args[0].as_const().split(".")[::-1]
-                            if len(node.args) == 1
-                        ]
-                    )
-                )
+                # Only process if there's exactly one argument
+                if len(node.args) == 1:
+                    parts = [
+                        remove_quotes(part.strip())
+                        for part in node.args[0].as_const().split(".")[::-1]
+                    ]
+                    tables.add(Table(*parts))
             except nodes.Impossible:
                 pass
 

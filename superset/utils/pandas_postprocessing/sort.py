@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional, Union
 
 from pandas import DataFrame
 
@@ -26,8 +25,8 @@ from superset.utils.pandas_postprocessing.utils import validate_column_args
 def sort(
     df: DataFrame,
     is_sort_index: bool = False,
-    by: Optional[Union[list[str], str]] = None,
-    ascending: Union[list[bool], bool] = True,
+    by: list[str] | str | None = None,
+    ascending: list[bool] | bool = True,
 ) -> DataFrame:
     """
     Sort a DataFrame.

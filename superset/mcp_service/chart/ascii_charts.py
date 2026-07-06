@@ -49,15 +49,12 @@ def generate_ascii_chart(
 
         if chart_type in ["bar", "column", "echarts_timeseries_bar"]:
             return _generate_ascii_bar_chart(data, width, height)
-        elif chart_type in ["line", "echarts_timeseries_line"]:
+        if chart_type in ["line", "echarts_timeseries_line"]:
             return _generate_ascii_line_chart(data, width, height)
-        elif chart_type in ["scatter", "echarts_timeseries_scatter"]:
+        if chart_type in ["scatter", "echarts_timeseries_scatter"]:
             return _generate_ascii_scatter_chart(data, width, height)
-        else:
-            logger.debug(
-                "Unsupported chart type '%s', falling back to table", chart_type
-            )
-            return generate_ascii_table(data, width)
+        logger.debug("Unsupported chart type '%s', falling back to table", chart_type)
+        return generate_ascii_table(data, width)
     except (TypeError, ValueError, KeyError, IndexError) as e:
         logger.error("ASCII chart generation failed: %s", e, exc_info=True)
         return "ASCII chart generation failed"
@@ -80,7 +77,7 @@ def _generate_ascii_bar_chart(data: list[Any], width: int, height: int) -> str:
 
             for _key, val in row.items():
                 if (
-                    isinstance(val, (int, float))
+                    isinstance(val, int | float)
                     and not isinstance(val, bool)
                     and not _is_nan_value(val)
                     and numeric_val is None
@@ -102,8 +99,7 @@ def _generate_ascii_bar_chart(data: list[Any], width: int, height: int) -> str:
 
     if use_horizontal:
         return _generate_horizontal_bar_chart(values, labels, width)
-    else:
-        return _generate_vertical_bar_chart(values, labels, width, height)
+    return _generate_vertical_bar_chart(values, labels, width, height)
 
 
 def _generate_horizontal_bar_chart(
@@ -197,10 +193,7 @@ def _generate_vertical_bar_chart(  # noqa: C901
             if chart_height > 1
             else max_val
         )
-        if abs(y_val) >= 1000:
-            y_label = f"{y_val:.0f}"
-        else:
-            y_label = f"{y_val:.1f}"
+        y_label = f"{y_val:.0f}" if abs(y_val) >= 1000 else f"{y_val:.1f}"
         lines.append(f"{y_label:>6} ┤ " + "".join(f"{cell:^3}" for cell in row_data))
 
     # Add X-axis
@@ -227,18 +220,17 @@ def _create_gradient_bar(length: int, value: float, max_val: float) -> str:
     if intensity > 0.8:
         # High values - solid bars
         return "█" * length
-    elif intensity > 0.6:
+    if intensity > 0.6:
         # Medium-high values - mostly solid with some texture
         return "█" * (length - 1) + "▉" if length > 1 else "█"
-    elif intensity > 0.4:
+    if intensity > 0.4:
         # Medium values - mixed texture
         return "▊" * length
-    elif intensity > 0.2:
+    if intensity > 0.2:
         # Low-medium values - lighter texture
         return "▋" * length
-    else:
-        # Low values - lightest texture
-        return "▌" * length
+    # Low values - lightest texture
+    return "▌" * length
 
 
 def _generate_ascii_line_chart(data: list[Any], width: int, height: int) -> str:
@@ -293,7 +285,7 @@ def _extract_time_series_data(
 
             for key, val in row.items():
                 if (
-                    isinstance(val, (int, float))
+                    isinstance(val, int | float)
                     and not isinstance(val, bool)
                     and not _is_nan_value(val)
                     and numeric_val is None
@@ -364,10 +356,7 @@ def _create_enhanced_line_chart(
             if chart_height > 1
             else max_val
         )
-        if abs(y_val) >= 1000:
-            y_label = f"{y_val:.0f}"
-        else:
-            y_label = f"{y_val:.1f}"
+        y_label = f"{y_val:.0f}" if abs(y_val) >= 1000 else f"{y_val:.1f}"
         lines.append(f"{y_label:>8} ┤ " + "".join(row))
 
     # Add X-axis
@@ -496,8 +485,7 @@ def _create_sparkline(values: list[float]) -> list[str]:
     # Safe formatting to avoid NaN display
     if _is_nan_value(min_val) or _is_nan_value(max_val):
         return ["Range: Unable to calculate from data", sparkline]
-    else:
-        return [f"Range: {min_val:.2f} to {max_val:.2f}", sparkline]
+    return [f"Range: {min_val:.2f} to {max_val:.2f}", sparkline]
 
 
 def _is_nan_value(value: Any) -> bool:
@@ -556,7 +544,7 @@ def _extract_scatter_data(
         # Find the first two numeric columns
         for key, val in data[0].items():
             if (
-                isinstance(val, (int, float))
+                isinstance(val, int | float)
                 and not isinstance(val, bool)
                 and not _is_nan_value(val)
             ):
@@ -572,10 +560,10 @@ def _extract_scatter_data(
                     x_val = row.get(x_column)
                     y_val = row.get(y_column)
                     if (
-                        isinstance(x_val, (int, float))
+                        isinstance(x_val, int | float)
                         and not isinstance(x_val, bool)
                         and not _is_nan_value(x_val)
-                        and isinstance(y_val, (int, float))
+                        and isinstance(y_val, int | float)
                         and not isinstance(y_val, bool)
                         and not _is_nan_value(y_val)
                     ):
@@ -861,7 +849,7 @@ def _format_table_row(
             formatted_val = formatted_val[: width - 5] + "..."
 
         # Align numbers right, text left
-        if isinstance(val, (int, float)):
+        if isinstance(val, int | float):
             formatted_values.append(f"{formatted_val:>{width - 2}}")
         else:
             formatted_values.append(f"{formatted_val:<{width - 2}}")
@@ -879,7 +867,7 @@ def _create_numeric_summaries(data: list[Any], headers: list[str]) -> list[str]:
         for row in data:
             if isinstance(row, dict):
                 val = row.get(header)
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     values.append(val)
 
         if len(values) >= 2:

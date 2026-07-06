@@ -30,7 +30,6 @@ from superset.mcp_service.report.schemas import ListReportsRequest, ReportFilter
 from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 list_reports_module = importlib.import_module(
     "superset.mcp_service.report.tool.list_reports"
@@ -813,9 +812,7 @@ async def test_columns_available_are_serializable(mock_list, mcp_server):
     mock_list.return_value = ([report], 1)
 
     serializable_cols = [
-        col
-        for col in ReportInfo.model_fields.keys()
-        if col not in USER_DIRECTORY_FIELDS
+        col for col in ReportInfo.model_fields if col not in USER_DIRECTORY_FIELDS
     ]
 
     async with Client(mcp_server) as client:

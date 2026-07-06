@@ -17,7 +17,7 @@
 import logging
 import textwrap
 from functools import partial
-from typing import Any, Optional
+from typing import Any
 
 from flask import current_app
 from flask_appbuilder.models.sqla import Model
@@ -67,7 +67,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
     def __init__(self, model_id: int, data: dict[str, Any]):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[Dashboard] = None
+        self._model: Dashboard | None = None
 
     @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
     def run(self) -> Model:
@@ -107,10 +107,10 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
-        roles_ids: Optional[list[int]] = self._properties.get("roles")
-        slug: Optional[str] = self._properties.get("slug")
-        tag_ids: Optional[list[int]] = self._properties.get("tags")
+        owner_ids: list[int] | None = self._properties.get("owners")
+        roles_ids: list[int] | None = self._properties.get("roles")
+        slug: str | None = self._properties.get("slug")
+        tag_ids: list[int] | None = self._properties.get("tags")
 
         self._validate_json_fields(exceptions)
 
@@ -212,10 +212,7 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
             current_tabs = self._model.tabs  # type: ignore
             if position_json and current_tabs:
                 position = json.loads(position_json)
-                deleted_tabs = [
-                    tab for tab in current_tabs["all_tabs"] if tab not in position
-                ]
-                return deleted_tabs
+                return [tab for tab in current_tabs["all_tabs"] if tab not in position]
             return []
 
         def send_deactivated_email_warning(report: ReportSchedule) -> None:
@@ -281,11 +278,7 @@ class UpdateDashboardNativeFiltersCommand(UpdateDashboardCommand):
         super().validate()
         assert self._model
 
-        configuration = DashboardDAO.update_native_filters_config(
-            self._model, self._properties
-        )
-
-        return configuration
+        return DashboardDAO.update_native_filters_config(self._model, self._properties)
 
 
 class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
@@ -298,11 +291,9 @@ class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
         super().validate()
         assert self._model
 
-        configuration = DashboardDAO.update_chart_customizations_config(
+        return DashboardDAO.update_chart_customizations_config(
             self._model, self._properties
         )
-
-        return configuration
 
 
 class UpdateDashboardColorsConfigCommand(UpdateDashboardCommand):

@@ -25,7 +25,7 @@ fi
 
 if [ "$BUILD_SUPERSET_FRONTEND_IN_DOCKER" = "true" ]; then
     echo "Building Superset frontend in dev mode inside docker container"
-    cd /app/superset-frontend
+    cd /app/ax-office-frontend
 
     if [ "$NPM_RUN_PRUNE" = "true" ]; then
         echo "Running \"npm run prune\""
@@ -42,5 +42,5 @@ if [ "$BUILD_SUPERSET_FRONTEND_IN_DOCKER" = "true" ]; then
 
 else
     echo "Skipping frontend build steps - YOU NEED TO RUN IT MANUALLY ON THE HOST!"
-    echo "https://superset.apache.org/docs/contributing/development/#webpack-dev-server"
+    echo "https://github.com/defai-digital/ax-office#frontend-development"
 fi

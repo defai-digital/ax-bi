@@ -20,7 +20,6 @@ import json
 import os
 import re
 import subprocess
-from typing import List, Optional
 from urllib.request import Request, urlopen
 
 # Define patterns for each group of files you're interested in
@@ -38,15 +37,21 @@ PATTERNS = {
     ],
     "frontend": [
         r"^\.github/workflows/.*(bashlib|frontend|e2e)",
-        r"^superset-frontend/",
+        r"^ax-bi-frontend/",
     ],
     "frontend_build": [
-        r"^superset-frontend/(?!(?:cypress-base|playwright)/)",
+        r"^ax-bi-frontend/(?!(?:cypress-base|playwright)/)",
     ],
     "ax-services": [
         r"^\.github/workflows/ax-services\.yml",
         r"^\.github/actions/change-detector/",
         r"^ax-services/",
+        r"^scripts/change_detector\.py",
+    ],
+    "ax-sdk": [
+        r"^\.github/workflows/ax-sdk\.yml",
+        r"^\.github/actions/change-detector/",
+        r"^packages/ax-sdk/",
         r"^scripts/change_detector\.py",
     ],
     "superset-rust": [
@@ -92,7 +97,7 @@ def fetch_files_github_api(url: str):  # type: ignore
         return json.loads(body)
 
 
-def fetch_changed_files_pr(repo: str, pr_number: str) -> List[str]:
+def fetch_changed_files_pr(repo: str, pr_number: str) -> list[str]:
     """Fetches files changed in a PR using the GitHub API."""
 
     # NOTE: limited to 100 files ideally should page-through but instead resorting
@@ -102,7 +107,7 @@ def fetch_changed_files_pr(repo: str, pr_number: str) -> List[str]:
     return [file_info["filename"] for file_info in files]
 
 
-def fetch_changed_files_push(repo: str, sha: str) -> List[str]:
+def fetch_changed_files_push(repo: str, sha: str) -> list[str]:
     """Fetches files changed in the last commit for push events using GitHub API."""
     # Fetch commit details to get the parent SHA
     commit_url = f"https://api.github.com/repos/{repo}/commits/{sha}"
@@ -116,7 +121,7 @@ def fetch_changed_files_push(repo: str, sha: str) -> List[str]:
     return [file["filename"] for file in comparison_data["files"]]
 
 
-def detect_changes(files: List[str], check_patterns: List) -> bool:  # type: ignore
+def detect_changes(files: list[str], check_patterns: list[re.Pattern[str]]) -> bool:
     """Detects if any of the specified files match the provided patterns."""
     for file in files:
         for pattern in check_patterns:
@@ -125,7 +130,7 @@ def detect_changes(files: List[str], check_patterns: List) -> bool:  # type: ign
     return False
 
 
-def print_files(files: List[str]) -> None:
+def print_files(files: list[str]) -> None:
     print("\n".join([f"- {s}" for s in files]))
 
 
@@ -137,7 +142,7 @@ def main(event_type: str, sha: str, repo: str) -> None:
     """Main function to check for file changes based on event context."""
     print("SHA:", sha)
     print("EVENT_TYPE", event_type)
-    files: Optional[List[str]] = []
+    files: list[str] | None = []
     if event_type == "pull_request":
         github_ref = os.getenv("GITHUB_REF", "")
         pr_number = github_ref.split("/")[-2] if "/" in github_ref else ""

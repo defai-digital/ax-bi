@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -59,7 +59,7 @@ from tests.unit_tests.db_engine_specs.utils import (
 def test_convert_dttm(
     target_type: str,
     dttm: datetime,
-    expected_result: Optional[str],
+    expected_result: str | None,
 ) -> None:
     from superset.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
 
@@ -81,7 +81,7 @@ def test_convert_dttm(
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -162,6 +162,27 @@ def test_where_latest_partition(
         )
         == f"""SELECT * FROM table \nWHERE "partition_key" = {expected_value}"""  # noqa: S608
     )
+
+
+def test_latest_sub_partition_rejects_unknown_filter() -> None:
+    """
+    Unknown partition filters should fail before the partition query is executed.
+    """
+    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from superset.exceptions import SupersetTemplateException
+
+    database = mock.Mock()
+    table = Table("test_table", "test_schema")
+
+    with pytest.raises(SupersetTemplateException, match=r"Field \[bad_field\]"):
+        PrestoEngineSpec.latest_sub_partition(
+            database,
+            table,
+            indexes=[{"column_names": ["ds", "event_type"]}],
+            bad_field="click",
+        )
+
+    database.get_df.assert_not_called()
 
 
 def test_adjust_engine_params_fully_qualified() -> None:

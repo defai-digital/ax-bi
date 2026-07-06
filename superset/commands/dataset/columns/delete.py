@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from superset import security_manager
 from superset.commands.base import BaseCommand
@@ -37,7 +36,7 @@ class DeleteDatasetColumnCommand(BaseCommand):
     def __init__(self, dataset_id: int, model_id: int):
         self._dataset_id = dataset_id
         self._model_id = model_id
-        self._model: Optional[TableColumn] = None
+        self._model: TableColumn | None = None
 
     @transaction(on_error=partial(on_error, reraise=DatasetColumnDeleteFailedError))
     def run(self) -> None:

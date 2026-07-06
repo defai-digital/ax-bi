@@ -36,7 +36,7 @@ The mechanism is inert until an epoch is set: users that were never disabled
 import logging
 import math
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from flask import flash, g, request, session
 from flask_babel import gettext as __
@@ -73,7 +73,7 @@ def _as_utc_timestamp(value: datetime) -> float:
 
 
 def is_session_invalidated(
-    login_at: Optional[float], invalidated_at: Optional[datetime]
+    login_at: float | None, invalidated_at: datetime | None
 ) -> bool:
     """
     Return True if a session authenticated at ``login_at`` is invalidated by an
@@ -93,7 +93,7 @@ def is_session_invalidated(
     return login_at < _as_utc_timestamp(invalidated_at)
 
 
-def _get_user_invalidated_at(user_or_id: Any) -> Optional[datetime]:
+def _get_user_invalidated_at(user_or_id: Any) -> datetime | None:
     user_id = getattr(user_or_id, "id", user_or_id)
     if user_id is None:
         return None
@@ -122,7 +122,7 @@ def _get_user_invalidated_at(user_or_id: Any) -> Optional[datetime]:
     )
 
 
-def enforce_session_validity() -> Optional[Response]:
+def enforce_session_validity() -> Response | None:
     """
     ``before_request`` hook: force logout of sessions invalidated by the user's
     epoch.

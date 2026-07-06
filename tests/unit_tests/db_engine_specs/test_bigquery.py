@@ -18,7 +18,7 @@
 # pylint: disable=line-too-long, import-outside-toplevel, protected-access, invalid-name
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -429,7 +429,7 @@ def test_parse_error_raises_exception() -> None:
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     """

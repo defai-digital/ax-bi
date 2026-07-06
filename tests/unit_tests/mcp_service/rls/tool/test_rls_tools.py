@@ -29,7 +29,6 @@ from superset.mcp_service.rls.schemas import ListRlsFiltersRequest, RlsColumnFil
 from superset.runtime_modernization.ax_services import AxServicesResponse
 from superset.utils import json
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 list_rls_filters_module = importlib.import_module(

@@ -249,8 +249,7 @@ def update_id_refs(  # pylint: disable=too-many-locals  # noqa: C901
                         dataset_uuid,
                     )
 
-    fixed = update_cross_filter_scoping(fixed, id_map, uuid_to_new_id)
-    return fixed
+    return update_cross_filter_scoping(fixed, id_map, uuid_to_new_id)
 
 
 def _remap_chart_ids(
@@ -293,9 +292,12 @@ def _update_cross_filter_scope(
         return
 
     scope = cross_filter_config.get("scope", {})
-    if isinstance(scope, dict):
-        if "excluded" in scope and isinstance(excluded := scope.get("excluded"), list):
-            scope["excluded"] = _remap_chart_ids(excluded, id_map, uuid_to_new_id)
+    if (
+        isinstance(scope, dict)
+        and "excluded" in scope
+        and isinstance(excluded := scope.get("excluded"), list)
+    ):
+        scope["excluded"] = _remap_chart_ids(excluded, id_map, uuid_to_new_id)
 
     if "chartsInScope" in cross_filter_config and isinstance(
         charts_in_scope := cross_filter_config.get("chartsInScope"),

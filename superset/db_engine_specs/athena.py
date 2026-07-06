@@ -17,7 +17,7 @@
 import re
 from datetime import datetime
 from re import Pattern
-from typing import Any, Optional
+from typing import Any
 
 from flask_babel import gettext as __
 from sqlalchemy import types
@@ -128,8 +128,8 @@ class AthenaEngineSpec(BaseEngineSpec):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(sqla_type, types.Date):

@@ -405,30 +405,19 @@ async def list_datasets(
     request = request_or_default(request, _DEFAULT_LIST_DATASETS_REQUEST)
 
     await ctx.info(
-        "Listing datasets: page=%s, page_size=%s, search=%s"
-        % (
-            request.page,
-            request.page_size,
-            request.search,
-        )
+        f"Listing datasets: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
     await ctx.debug(
-        "Dataset listing parameters: filters=%s, order_column=%s, "
-        "order_direction=%s, select_columns=%s"
-        % (
-            request.filters,
-            request.order_column,
-            request.order_direction,
-            request.select_columns,
-        )
+        f"Dataset listing parameters: filters={request.filters}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}, "
+        f"select_columns={request.select_columns}"
     )
     await ctx.debug(
-        "Metadata cache settings: use_cache=%s, refresh_metadata=%s, force_refresh=%s"
-        % (
-            request.use_cache,
-            request.refresh_metadata,
-            request.force_refresh,
-        )
+        f"Metadata cache settings: use_cache={request.use_cache}, "
+        f"refresh_metadata={request.refresh_metadata}, "
+        f"force_refresh={request.force_refresh}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -525,13 +514,8 @@ async def _list_datasets_python(
 
     except Exception as e:
         await ctx.error(
-            "Dataset listing failed: page=%s, page_size=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.page,
-                request.page_size,
-                str(e),
-                type(e).__name__,
-            )
+            f"Dataset listing failed: page={request.page}, "
+            f"page_size={request.page_size}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

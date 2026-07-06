@@ -363,12 +363,11 @@ async def _list_tasks_python(
 ) -> dict[str, Any]:
     """Run the authoritative Python task list path."""
 
-    await ctx.info(
-        "Listing tasks: page=%s, page_size=%s" % (request.page, request.page_size)
-    )
+    await ctx.info(f"Listing tasks: page={request.page}, page_size={request.page_size}")
     await ctx.debug(
-        "Task parameters: filters=%s, order_column=%s, order_direction=%s"
-        % (request.filters, request.order_column, request.order_direction)
+        f"Task parameters: filters={request.filters}, "
+        f"order_column={request.order_column}, "
+        f"order_direction={request.order_direction}"
     )
 
     try:
@@ -407,7 +406,7 @@ async def _list_tasks_python(
 
     except Exception as e:
         await ctx.error(
-            "Task listing failed: page=%s, error=%s, error_type=%s"
-            % (request.page, str(e), type(e).__name__)
+            f"Task listing failed: page={request.page}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

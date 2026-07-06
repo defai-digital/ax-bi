@@ -64,6 +64,7 @@ def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
 _saved = _force_passthrough_decorators()
 try:
     from superset.mcp_service.ai.tool.compose_dashboard import (
+        _build_native_filters,
         _CHART_HEIGHT,
         _create_smart_layout,
     )
@@ -253,3 +254,70 @@ class TestCreateSmartLayout:
         col_keys = [k for k in layout if k.startswith("COLUMN-")]
         for ck in col_keys:
             assert layout[ck]["meta"]["background"] == "BACKGROUND_TRANSPARENT"
+
+
+# ---------------------------------------------------------------------------
+# _build_native_filters
+# ---------------------------------------------------------------------------
+
+
+class TestBuildNativeFilters:
+    def test_empty_input(self) -> None:
+        assert _build_native_filters([]) == []
+
+    def test_single_select_filter(self) -> None:
+        filters = _build_native_filters(
+            [
+                {
+                    "name": "Region",
+                    "filter_type": "filter_select",
+                    "targets": [{"datasetId": 1, "column": {"name": "region"}}],
+                    "default_value": "US",
+                    "multi_select": True,
+                }
+            ]
+        )
+        assert len(filters) == 1
+        f = filters[0]
+        assert f["name"] == "Region"
+        assert f["filterType"] == "filter_select"
+        assert f["targets"] == [{"datasetId": 1, "column": {"name": "region"}}]
+        assert f["defaultDataMask"]["filterState"]["value"] == "US"
+        assert f["controlValues"]["multiSelect"] is True
+        assert f["isInstant"] is True
+        assert f["scope"] == {"rootPath": ["ROOT_ID"], "excluded": []}
+        # id is a UUID
+        uuid.UUID(f["id"])
+
+    def test_time_filter_no_default(self) -> None:
+        filters = _build_native_filters(
+            [{"name": "Date Range", "filter_type": "filter_time"}]
+        )
+        assert len(filters) == 1
+        f = filters[0]
+        assert f["filterType"] == "filter_time"
+        assert f["defaultDataMask"] == {}
+
+    def test_multiple_filters(self) -> None:
+        filters = _build_native_filters(
+            [
+                {"name": "Region", "filter_type": "filter_select"},
+                {"name": "Date", "filter_type": "filter_time"},
+                {"name": "Amount", "filter_type": "filter_range"},
+            ]
+        )
+        assert len(filters) == 3
+        names = [f["name"] for f in filters]
+        assert names == ["Region", "Date", "Amount"]
+        # All IDs are unique
+        ids = [f["id"] for f in filters]
+        assert len(set(ids)) == 3
+
+    def test_non_dict_items_skipped(self) -> None:
+        filters = _build_native_filters(["not_a_dict", 42, None])  # type: ignore[list-item]
+        assert filters == []
+
+    def test_default_name_fallback(self) -> None:
+        filters = _build_native_filters([{}])
+        assert filters[0]["name"] == "Filter"
+        assert filters[0]["filterType"] == "filter_select"

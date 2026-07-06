@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from flask import current_app, g
 from flask_appbuilder.security.sqla.models import Role, User
@@ -57,12 +57,15 @@ def populate_owner_list(
     owners = []
     if not owner_ids and default_to_user:
         return [g.user]
-    if not (security_manager.is_admin() or get_user_id() in owner_ids):
+    should_add_current_user = (
+        not (security_manager.is_admin() or get_user_id() in owner_ids)
+        and not current_app.config.get("EXTRA_OWNERS_RESOLVER")
+    )
+    if should_add_current_user:
         # Make sure non-admins can't remove themselves as owner by mistake.
-        # Skip auto-add when an EXTRA_OWNERS_RESOLVER is configured — the
+        # Skip auto-add when an EXTRA_OWNERS_RESOLVER is configured because the
         # resolver handles access independently of the owners list.
-        if not current_app.config.get("EXTRA_OWNERS_RESOLVER"):
-            owners.append(g.user)
+        owners.append(g.user)
     for owner_id in owner_ids:
         owner = security_manager.get_user_by_id(owner_id)
         if not owner:
@@ -116,7 +119,7 @@ def get_datasource_by_id(datasource_id: int, datasource_type: str) -> BaseDataso
 def validate_tags(
     object_type: ObjectType,
     current_tags: list[Tag],
-    new_tag_ids: Optional[list[int]],
+    new_tag_ids: list[int] | None,
 ) -> None:
     """
     Helper function for update commands, to validate the tags list. Users

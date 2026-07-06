@@ -60,7 +60,7 @@ async def get_user_info(
     }
     ```
     """
-    await ctx.info("Retrieving user information: identifier=%s" % (request.identifier,))
+    await ctx.info(f"Retrieving user information: identifier={request.identifier}")
 
     try:
         from superset.daos.user import UserDAO
@@ -88,20 +88,21 @@ async def get_user_info(
 
         if isinstance(result, UserInfo):
             await ctx.info(
-                "User information retrieved successfully: user_id=%s, username=%s"
-                % (result.id, result.username)
+                "User information retrieved successfully: "
+                f"user_id={result.id}, username={result.username}"
             )
         else:
             await ctx.warning(
-                "User retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"User retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "User information retrieval failed: identifier=%s, error=%s, error_type=%s"
-            % (request.identifier, str(e), type(e).__name__)
+            "User information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
         )
         raise

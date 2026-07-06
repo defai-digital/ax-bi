@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask import Response
 
@@ -37,8 +36,8 @@ class BaseTestDashboardSecurity(DashboardTestCase):
         self,
         response: Response,
         expected_counts: int,
-        expected_dashboards: Optional[list[Dashboard]] = None,
-        not_expected_dashboards: Optional[list[Dashboard]] = None,
+        expected_dashboards: list[Dashboard] | None = None,
+        not_expected_dashboards: list[Dashboard] | None = None,
     ) -> None:
         self.assert200(response)
         response_data = response.json

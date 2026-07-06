@@ -22,7 +22,7 @@ Enhanced error schemas for MCP chart generation with contextual information
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, overload
+from typing import Any, overload
 
 from pydantic import (
     BaseModel,
@@ -34,7 +34,10 @@ from pydantic import (
     model_validator,
 )
 
-from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
+from superset.mcp_service.utils.sanitization import (
+    escape_llm_context_delimiters,
+    sanitize_for_llm_context,
+)
 
 
 def mcp_error_timestamp() -> datetime:
@@ -87,7 +90,7 @@ class MCPResourceError(BaseModel):
         return value
 
     @classmethod
-    def create(cls, error: str, error_type: str) -> "MCPResourceError":
+    def create(cls, error: str, error_type: str) -> MCPResourceError:
         """Create a standardized error with an aware UTC timestamp."""
         return cls(error=error, error_type=error_type, timestamp=mcp_error_timestamp())
 
@@ -132,8 +135,14 @@ class MCPBaseError(BaseModel):
 
     @field_serializer("suggestions")
     def _serialize_suggestions_for_llm(self, value: list[str]) -> list[str]:
-        """Wrap suggestion text as untrusted LLM context when serialized."""
-        return sanitize_prompt_value(value)
+        """Escape delimiter tokens in suggestion strings without wrapping.
+
+        Suggestions are server-generated column/metric names derived from
+        dataset metadata. They are not wrapped in UNTRUSTED-CONTENT (since
+        they are not user-controlled input), but any embedded delimiter
+        tokens are escaped to prevent injection.
+        """
+        return escape_llm_context_delimiters(value)
 
     @model_validator(mode="before")
     @classmethod
@@ -171,7 +180,7 @@ class ValidationError(BaseModel):
     provided_value: Any = Field(..., description="Value that was provided")
     error_type: str = Field(..., description="Type of validation error")
     message: str = Field(..., description="Human-readable error message")
-    suggestions: List[ColumnSuggestion] = Field(
+    suggestions: list[ColumnSuggestion] = Field(
         default_factory=list, description="Suggested alternatives"
     )
 
@@ -195,10 +204,10 @@ class DatasetContext(BaseModel):
         description="Schema name",
     )
     database_name: str = Field(..., description="Database name")
-    available_columns: List[Dict[str, Any]] = Field(
+    available_columns: list[dict[str, Any]] = Field(
         default_factory=list, description="Available columns with metadata"
     )
-    available_metrics: List[Dict[str, Any]] = Field(
+    available_metrics: list[dict[str, Any]] = Field(
         default_factory=list, description="Available metrics with metadata"
     )
 
@@ -218,13 +227,13 @@ class ChartGenerationError(MCPBaseError):
     """Enhanced error response for chart generation failures"""
 
     details: str = Field(..., description="Detailed error explanation")
-    validation_errors: List[ValidationError] = Field(
+    validation_errors: list[ValidationError] = Field(
         default_factory=list, description="Specific field validation errors"
     )
     dataset_context: DatasetContext | None = Field(
         None, description="Dataset information for context"
     )
-    query_info: Dict[str, Any] | None = Field(
+    query_info: dict[str, Any] | None = Field(
         None, description="Query execution details"
     )
     help_url: str | None = Field(
@@ -233,8 +242,8 @@ class ChartGenerationError(MCPBaseError):
 
     @field_serializer("query_info")
     def _serialize_query_info_for_llm(
-        self, value: Dict[str, Any] | None
-    ) -> Dict[str, Any] | None:
+        self, value: dict[str, Any] | None
+    ) -> dict[str, Any] | None:
         """Wrap query execution context as untrusted LLM context when serialized."""
         return sanitize_prompt_value(value)
 
@@ -243,12 +252,12 @@ class ChartGenerationResponse(BaseModel):
     """Enhanced chart generation response with detailed error handling"""
 
     success: bool = Field(..., description="Whether chart generation succeeded")
-    chart: Dict[str, Any] | None = Field(
+    chart: dict[str, Any] | None = Field(
         None, description="Chart information if successful"
     )
     error: ChartGenerationError | None = Field(
         None, description="Error details if failed"
     )
-    performance: Dict[str, Any] | None = Field(None, description="Performance metadata")
+    performance: dict[str, Any] | None = Field(None, description="Performance metadata")
     schema_version: str = Field(default="2.0", description="Response schema version")
     api_version: str = Field(default="v1", description="API version")

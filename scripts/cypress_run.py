@@ -158,7 +158,7 @@ def main() -> None:
     validate_args(args, parser)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    cypress_base_path = "superset-frontend/cypress-base/"
+    cypress_base_path = "ax-bi-frontend/cypress-base/"
     cypress_base_full_path = os.path.join(script_dir, "../", cypress_base_path)
     cypress_tests_path = os.path.join(cypress_base_full_path, "cypress/e2e")
 

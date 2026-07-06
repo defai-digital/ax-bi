@@ -149,7 +149,7 @@ class TestUpdateDashboardResponse:
     def test_with_success(self) -> None:
         resp = UpdateDashboardResponse(
             dashboard={"id": 1, "title": "Updated", "published": True},
-            dashboard_url="http://localhost:8088/superset/dashboard/1/",
+            dashboard_url="http://localhost:8088/ax-bi/dashboard/1/",
             changes_applied=["title", "published"],
         )
         assert resp.dashboard is not None

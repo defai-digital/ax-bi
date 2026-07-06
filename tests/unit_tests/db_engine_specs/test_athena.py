@@ -17,7 +17,6 @@
 # pylint: disable=unused-argument, import-outside-toplevel, protected-access
 import re
 from datetime import datetime
-from typing import Optional
 
 import pytest
 from sqlalchemy.engine.url import make_url
@@ -41,7 +40,7 @@ SYNTAX_ERROR_REGEX = re.compile(
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     from superset.db_engine_specs.athena import AthenaEngineSpec as spec  # noqa: N813

@@ -34,24 +34,31 @@
       <link rel="manifest" href="{{ assets_prefix }}/static/assets/pwa-manifest.json?v=4">
     {% endblock %}
 
+    {% set _body_bg = theme_tokens.colorBgBase | default('#fff') %}
+    {% if entry == 'embedded' %}
     <style>
-      {% if entry == 'embedded' %}
       html, body {
         background: transparent !important;
       }
-      {% else %}
+    </style>
+    {% else %}
+    <style>
       body {
-        background: {{ theme_tokens.colorBgBase | default('#fff') }};
+        background: var(--ax-body-bg);
         color: #000;
       }
-      {% endif %}
-      {% if standalone_mode %}
+    </style>
+    {% endif %}
+    {% if standalone_mode and entry != 'embedded' %}
+    <style>
       /* Keep body sized so screenshot waits don't see it as hidden before React mounts. */
       html, body.standalone {
         min-height: 100vh;
         margin: 0;
       }
-      {% endif %}
+    </style>
+    {% endif %}
+    <style>
       main.ant-layout-content:has([data-test='dashboard-content-wrapper']) {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
@@ -125,12 +132,12 @@
     />
   </head>
 
-  <body {% if standalone_mode %}class="standalone"{% endif %}>
+  <body {% if standalone_mode %}class="standalone"{% endif %}{% if entry != 'embedded' %} style="--ax-body-bg: {{ _body_bg }}"{% endif %}>
 
     {% block body %}
       <div id="app" data-bootstrap="{{ bootstrap_data }}">
         {% set tokens = theme_tokens | default({}) %}
-        {% set spinner_style = "width: 70px; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" %}
+        {% set spinner_style = "width: 100px; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" %}
 
         {% if spinner_svg %}
           <!-- Inline SVG: Either custom theme SVG or default spinner -->

@@ -44,6 +44,7 @@ from superset.mcp_service.middleware import (
     GlobalErrorHandlerMiddleware,
     RBACToolVisibilityMiddleware,
     ResponseSizeGuardMiddleware,
+    StructuredContentStripperMiddleware,
 )
 
 
@@ -91,6 +92,65 @@ def test_sanitize_params_recurses_nested_request_values() -> None:
     assert sanitized["request"]["auth_token"] == "[REDACTED]"  # noqa: S105
     assert sanitized["request"]["filters"][0]["value"] == "EMEA"
     assert sanitized["request"]["filters"][1]["api-key"] == "[REDACTED]"
+
+
+class TestStructuredContentStripperMiddleware:
+    """Test structured MCP response compatibility behavior."""
+
+    @pytest.mark.asyncio
+    async def test_converts_structured_only_result_to_json_text(self) -> None:
+        """Structured-only tool results must not become empty responses."""
+        from fastmcp.tools.tool import ToolResult
+
+        from superset.utils.json import loads as json_loads
+
+        middleware = StructuredContentStripperMiddleware()
+        context = MagicMock()
+        context.message.name = "generate_chart"
+        call_next = AsyncMock(
+            return_value=ToolResult(
+                content=[],
+                structured_content={
+                    "success": True,
+                    "chart_id": 12,
+                    "chart_url": "http://127.0.0.1:8080/explore/?slice_id=12",
+                },
+            )
+        )
+
+        result = await middleware.on_call_tool(context, call_next)
+
+        assert isinstance(result, ToolResult)
+        assert result.structured_content is None
+        assert len(result.content) == 1
+        payload = json_loads(result.content[0].text)
+        assert payload["success"] is True
+        assert payload["chart_id"] == 12
+        assert payload["chart_url"] == "http://127.0.0.1:8080/explore/?slice_id=12"
+
+    @pytest.mark.asyncio
+    async def test_preserves_existing_text_content_when_stripping_structured(
+        self,
+    ) -> None:
+        """Existing text content survives structured-data stripping."""
+        import mcp.types as mt
+        from fastmcp.tools.tool import ToolResult
+
+        middleware = StructuredContentStripperMiddleware()
+        context = MagicMock()
+        context.message.name = "generate_chart"
+        call_next = AsyncMock(
+            return_value=ToolResult(
+                content=[mt.TextContent(type="text", text='{"success": true}')],
+                structured_content={"success": True},
+            )
+        )
+
+        result = await middleware.on_call_tool(context, call_next)
+
+        assert isinstance(result, ToolResult)
+        assert result.structured_content is None
+        assert result.content[0].text == '{"success": true}'
 
 
 class TestResponseSizeGuardMiddleware:

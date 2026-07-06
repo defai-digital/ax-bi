@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import re
-from typing import Any, Optional, Union
+from typing import Any
 
 from croniter import croniter
 from flask import current_app
@@ -108,7 +108,7 @@ creation_method_description = (
 )
 
 
-def validate_crontab(value: Union[bytes, bytearray, str]) -> None:
+def validate_crontab(value: bytes | bytearray | str) -> None:
     if not croniter.is_valid(str(value)):
         raise ValidationError("Cron expression is not valid")
 
@@ -170,7 +170,66 @@ class ReportRecipientSchema(Schema):
         validate_addresses("bccTarget", config.get("bccTarget"), required=False)
 
 
-class ReportSchedulePostSchema(Schema):
+def custom_width_field() -> fields.Integer:
+    """Return the shared custom screenshot width field definition."""
+    return fields.Integer(
+        metadata={
+            "description": _("Custom width of the screenshot in pixels"),
+            "example": 1000,
+        },
+        allow_none=True,
+        required=False,
+        dump_default=None,
+    )
+
+
+class ReportScheduleCustomWidthMixin:
+    """Shared validation for report schedule custom screenshot width."""
+
+    @validates("custom_width")
+    def validate_custom_width(
+        self,
+        value: int | None,
+        **kwargs: Any,
+    ) -> None:
+        if value is None:
+            return
+
+        min_width = current_app.config["ALERT_REPORTS_MIN_CUSTOM_SCREENSHOT_WIDTH"]
+        max_width = current_app.config["ALERT_REPORTS_MAX_CUSTOM_SCREENSHOT_WIDTH"]
+        if not min_width <= value <= max_width:
+            raise ValidationError(
+                _(
+                    "Screenshot width must be between %(min)spx and %(max)spx",
+                    min=min_width,
+                    max=max_width,
+                )
+            )
+
+
+class ReportScheduleReferenceMixin:
+    """Shared validation for report schedule resource references."""
+
+    @validates_schema
+    def validate_report_references(  # pylint: disable=unused-argument
+        self,
+        data: dict[str, Any],
+        **kwargs: Any,
+    ) -> None:
+        if (
+            data.get("type") == ReportScheduleType.REPORT
+            and data.get("database") is not None
+        ):
+            raise ValidationError(
+                {"database": ["Database reference is not allowed on a report"]}
+            )
+
+
+class ReportSchedulePostSchema(
+    ReportScheduleCustomWidthMixin,
+    ReportScheduleReferenceMixin,
+    Schema,
+):
     type = fields.String(
         metadata={"description": type_description},
         allow_none=False,
@@ -263,47 +322,7 @@ class ReportSchedulePostSchema(Schema):
         dump_default=None,
     )
     force_screenshot = fields.Boolean(dump_default=False)
-    custom_width = fields.Integer(
-        metadata={
-            "description": _("Custom width of the screenshot in pixels"),
-            "example": 1000,
-        },
-        allow_none=True,
-        required=False,
-        dump_default=None,
-    )
-
-    @validates("custom_width")
-    def validate_custom_width(
-        self,
-        value: Optional[int],
-        **kwargs: Any,
-    ) -> None:
-        if value is None:
-            return
-
-        min_width = current_app.config["ALERT_REPORTS_MIN_CUSTOM_SCREENSHOT_WIDTH"]
-        max_width = current_app.config["ALERT_REPORTS_MAX_CUSTOM_SCREENSHOT_WIDTH"]
-        if not min_width <= value <= max_width:
-            raise ValidationError(
-                _(
-                    "Screenshot width must be between %(min)spx and %(max)spx",
-                    min=min_width,
-                    max=max_width,
-                )
-            )
-
-    @validates_schema
-    def validate_report_references(  # pylint: disable=unused-argument
-        self,
-        data: dict[str, Any],
-        **kwargs: Any,
-    ) -> None:
-        if data["type"] == ReportScheduleType.REPORT:
-            if "database" in data:
-                raise ValidationError(
-                    {"database": ["Database reference is not allowed on a report"]}
-                )
+    custom_width = custom_width_field()
 
 
 class ReportScheduleSubscribeSchema(ReportSchedulePostSchema):
@@ -330,7 +349,11 @@ class ReportScheduleSubscribeSchema(ReportSchedulePostSchema):
         unknown = EXCLUDE
 
 
-class ReportSchedulePutSchema(Schema):
+class ReportSchedulePutSchema(
+    ReportScheduleCustomWidthMixin,
+    ReportScheduleReferenceMixin,
+    Schema,
+):
     type = fields.String(
         metadata={"description": type_description},
         required=False,
@@ -426,49 +449,7 @@ class ReportSchedulePutSchema(Schema):
     extra = fields.Dict(dump_default=None)
     force_screenshot = fields.Boolean(dump_default=False)
 
-    custom_width = fields.Integer(
-        metadata={
-            "description": _("Custom width of the screenshot in pixels"),
-            "example": 1000,
-        },
-        allow_none=True,
-        required=False,
-        dump_default=None,
-    )
-
-    @validates("custom_width")
-    def validate_custom_width(
-        self,
-        value: Optional[int],
-        **kwargs: Any,
-    ) -> None:
-        if value is None:
-            return
-
-        min_width = current_app.config["ALERT_REPORTS_MIN_CUSTOM_SCREENSHOT_WIDTH"]
-        max_width = current_app.config["ALERT_REPORTS_MAX_CUSTOM_SCREENSHOT_WIDTH"]
-        if not min_width <= value <= max_width:
-            raise ValidationError(
-                _(
-                    "Screenshot width must be between %(min)spx and %(max)spx",
-                    min=min_width,
-                    max=max_width,
-                )
-            )
-
-    @validates_schema
-    def validate_report_references(  # pylint: disable=unused-argument
-        self,
-        data: dict[str, Any],
-        **kwargs: Any,
-    ) -> None:
-        if (
-            data.get("type") == ReportScheduleType.REPORT
-            and data.get("database") is not None
-        ):
-            raise ValidationError(
-                {"database": ["Database reference is not allowed on a report"]}
-            )
+    custom_width = custom_width_field()
 
 
 class SlackChannelSchema(Schema):

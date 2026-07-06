@@ -1,6 +1,6 @@
-# AX-BI Boundary Report
+# AX-Office Boundary Report
 
-This report tracks active module-boundary decisions for the AX-BI fork. It is
+This report tracks active module-boundary decisions for the AX-Office fork. It is
 intended as a concise guide for future refactors, not a changelog of completed
 mechanical cleanup.
 

@@ -27,6 +27,7 @@ from flask_appbuilder.security.sqla.models import User
 from marshmallow import ValidationError
 
 from superset.charts.schemas import ChartDataQueryContextSchema
+from superset.constants import AX_OFFICE_ROUTE_PREFIX
 from superset.exceptions import (
     SupersetErrorException,
     SupersetErrorsException,
@@ -177,7 +178,7 @@ def load_explore_json_into_cache(  # pylint: disable=too-many-locals
             set_and_log_cache(
                 cache_instance, cache_key, cache_value, cache_timeout=cache_timeout
             )
-            result_url = f"/superset/explore_json/data/{cache_key}"
+            result_url = f"{AX_OFFICE_ROUTE_PREFIX}/explore_json/data/{cache_key}"
             async_query_manager.update_job(
                 job_metadata,
                 async_query_manager.STATUS_DONE,

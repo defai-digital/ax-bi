@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from functools import partial
-from typing import Any, cast, Optional
+from typing import Any, cast
 from uuid import UUID
 
 from flask_appbuilder.models.sqla import Model
@@ -72,11 +72,11 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
         self,
         model_id: int,
         data: dict[str, Any],
-        override_columns: Optional[bool] = False,
+        override_columns: bool | None = False,
     ):
         self._model_id = model_id
         self._properties = data.copy()
-        self._model: Optional[SqlaTable] = None
+        self._model: SqlaTable | None = None
         self.override_columns = override_columns
         self._properties["override_columns"] = override_columns
 
@@ -97,7 +97,7 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
 
     def validate(self) -> None:
         exceptions: list[ValidationError] = []
-        owner_ids: Optional[list[int]] = self._properties.get("owners")
+        owner_ids: list[int] | None = self._properties.get("owners")
 
         # Validate/populate model exists
         self._model = DatasetDAO.find_by_id(self._model_id)
@@ -159,11 +159,7 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
         elif "catalog" not in self._properties:
             catalog = self._model.catalog
 
-        schema = (
-            self._properties["schema"]
-            if "schema" in self._properties
-            else self._model.schema
-        )
+        schema = self._properties.get("schema", self._model.schema)
 
         table = Table(
             self._properties.get("table_name", self._model.table_name),
@@ -332,12 +328,11 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
 
     @staticmethod
     def _get_duplicates(data: list[dict[str, Any]], key: str) -> list[str]:
-        duplicates = [
+        return [
             name
             for name, count in Counter([item[key] for item in data]).items()
             if count > 1
         ]
-        return duplicates
 
 
 def validate_folders(  # noqa: C901

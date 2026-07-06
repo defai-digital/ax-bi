@@ -24,9 +24,11 @@ data they would see on Explore.
 In order to do that, we reproduce the post-processing in Python for these chart types.
 """
 
+from __future__ import annotations
+
 import logging
 from io import StringIO
-from typing import Any, Optional, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -259,7 +261,7 @@ pivot_v2_aggfunc_map = {
 def pivot_table_v2(
     df: pd.DataFrame,
     form_data: dict[str, Any],
-    datasource: Optional[Union["BaseDatasource", "Query"]] = None,
+    datasource: BaseDatasource | Query | None = None,
 ) -> pd.DataFrame:
     """
     Pivot table v2.
@@ -283,9 +285,7 @@ def pivot_table_v2(
 def table(
     df: pd.DataFrame,
     form_data: dict[str, Any],
-    datasource: Optional[  # pylint: disable=unused-argument
-        Union["BaseDatasource", "Query"]
-    ] = None,
+    datasource: BaseDatasource | Query | None = None,
 ) -> pd.DataFrame:
     """
     Table.
@@ -313,8 +313,8 @@ post_processors = {
 @event_logger.log_this
 def apply_client_processing(  # noqa: C901
     result: dict[Any, Any],
-    form_data: Optional[dict[str, Any]] = None,
-    datasource: Optional[Union["BaseDatasource", "Query"]] = None,
+    form_data: dict[str, Any] | None = None,
+    datasource: BaseDatasource | Query | None = None,
 ) -> dict[Any, Any]:
     form_data = form_data or {}
 

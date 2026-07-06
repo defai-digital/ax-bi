@@ -109,13 +109,13 @@ class TestCore(SupersetTestCase):
 
     def test_dashboard_endpoint(self):
         self.login(ADMIN_USERNAME)
-        resp = self.client.get("/superset/dashboard/-1/")
+        resp = self.client.get("/ax-bi/dashboard/-1/")
         assert resp.status_code == 404
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_slice_endpoint(self):
         self.login(ADMIN_USERNAME)
-        resp = self.client.get("/superset/slice/-1/")
+        resp = self.client.get("/ax-bi/slice/-1/")
         assert resp.status_code == 404
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
@@ -165,7 +165,7 @@ class TestCore(SupersetTestCase):
         new_slice_name = f"{copy_name_prefix}[overwrite]{random.random()}"  # noqa: S311
 
         url = (
-            "/superset/explore/table/{}/?slice_name={}&"
+            "/ax-bi/explore/table/{}/?slice_name={}&"
             "action={}&datasource_name=energy_usage"
         )
 
@@ -320,7 +320,7 @@ class TestCore(SupersetTestCase):
                 )
             ),
         ):
-            assert self.get_json_resp(f"/superset/warm_up_cache?slice_id={slc.id}") == [
+            assert self.get_json_resp(f"/ax-bi/warm_up_cache?slice_id={slc.id}") == [
                 {
                     "slice_id": slc.id,
                     "viz_error": "Error: Empty query?",
@@ -344,7 +344,7 @@ class TestCore(SupersetTestCase):
 
     def test_fetch_datasource_metadata(self):
         self.login(ADMIN_USERNAME)
-        url = "/superset/fetch_datasource_metadata?datasourceKey=1__table"
+        url = "/ax-bi/fetch_datasource_metadata?datasourceKey=1__table"
         resp = self.get_json_resp(url)
         keys = [
             "name",
@@ -355,7 +355,7 @@ class TestCore(SupersetTestCase):
             "id",
         ]
         for k in keys:
-            assert k in resp.keys()
+            assert k in resp
 
     def test_fetch_datasource_metadata_rejects_malformed_datasource_key(self):
         self.login(ADMIN_USERNAME)
@@ -368,7 +368,7 @@ class TestCore(SupersetTestCase):
 
         for datasource_key in datasource_keys:
             resp = self.client.get(
-                f"/superset/fetch_datasource_metadata?datasourceKey={datasource_key}"
+                f"/ax-bi/fetch_datasource_metadata?datasourceKey={datasource_key}"
             )
             payload = json.loads(resp.data.decode("utf-8"))
 
@@ -377,7 +377,7 @@ class TestCore(SupersetTestCase):
 
     def test_fetch_datasource_metadata_rejects_missing_datasource_key(self):
         self.login(ADMIN_USERNAME)
-        resp = self.client.get("/superset/fetch_datasource_metadata")
+        resp = self.client.get("/ax-bi/fetch_datasource_metadata")
         payload = json.loads(resp.data.decode("utf-8"))
 
         assert resp.status_code == 400
@@ -465,7 +465,7 @@ class TestCore(SupersetTestCase):
         }
         self.login(ADMIN_USERNAME)
         rv = self.client.post(
-            "/superset/explore_json/",
+            "/ax-bi/explore_json/",
             data={"form_data": json.dumps(form_data)},
         )
         data = json.loads(rv.data.decode("utf-8"))
@@ -478,7 +478,7 @@ class TestCore(SupersetTestCase):
     def test_explore_json_data_invalid_cache_key(self):
         self.login(ADMIN_USERNAME)
         cache_key = "invalid-cache-key"
-        rv = self.client.get(f"/superset/explore_json/data/{cache_key}")
+        rv = self.client.get(f"/ax-bi/explore_json/data/{cache_key}")
         data = json.loads(rv.data.decode("utf-8"))
 
         assert rv.status_code == 404
@@ -501,7 +501,7 @@ class TestCore(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         slc = self.get_slice("Life Expectancy VS Rural %")
         rv = self.client.post(
-            f"/superset/explore_json/{slc.datasource_type}/{slc.datasource_id}/",
+            f"/ax-bi/explore_json/{slc.datasource_type}/{slc.datasource_id}/",
             data={"form_data": json.dumps(slc.form_data)},
         )
         data = json.loads(rv.data.decode("utf-8"))
@@ -528,7 +528,7 @@ class TestCore(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         slc = self.get_slice("Life Expectancy VS Rural %")
         rv = self.client.post(
-            f"/superset/explore_json/{slc.datasource_type}/{slc.datasource_id}/",
+            f"/ax-bi/explore_json/{slc.datasource_type}/{slc.datasource_id}/",
             data={"form_data": json.dumps(slc.form_data)},
         )
         data = json.loads(rv.data.decode("utf-8"))
@@ -666,8 +666,8 @@ class TestCore(SupersetTestCase):
         dash_id = db.session.query(Dashboard.id).first()[0]
         tbl_id = self.table_ids.get("wb_health_population")
         urls = [
-            "/superset/welcome",
-            f"/superset/dashboard/{dash_id}/",
+            "/ax-bi/welcome",
+            f"/ax-bi/dashboard/{dash_id}/",
             f"/explore/?datasource_type=table&datasource_id={tbl_id}",
         ]
         for url in urls:
@@ -883,7 +883,7 @@ class TestCore(SupersetTestCase):
         exception = SupersetException("Error message")
         mock_db_connection_mutator.side_effect = exception
         dash = db.session.query(Dashboard).first()
-        url = f"/superset/dashboard/{dash.id}/"
+        url = f"/ax-bi/dashboard/{dash.id}/"
 
         self.login(ADMIN_USERNAME)
         data = self.get_resp(url)
@@ -893,7 +893,7 @@ class TestCore(SupersetTestCase):
         exception = SQLAlchemyError("Error message")
         mock_db_connection_mutator.side_effect = exception
         dash = db.session.query(Dashboard).first()
-        url = f"/superset/dashboard/{dash.id}/"
+        url = f"/ax-bi/dashboard/{dash.id}/"
 
         self.login(ADMIN_USERNAME)
         data = self.get_resp(url)
@@ -909,7 +909,7 @@ class TestCore(SupersetTestCase):
         slice_id = self.get_slice(slice_name).id
         form_data = {"slice_id": slice_id, "viz_type": "line", "datasource": "1__table"}
         rv = self.client.get(
-            f"/superset/explore/?form_data={quote(json.dumps(form_data))}"
+            f"/ax-bi/explore/?form_data={quote(json.dumps(form_data))}"
         )
         assert rv.headers["Location"] == f"/explore/?form_data_key={random_key}"
 
@@ -920,7 +920,7 @@ class TestCore(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         form_data = {"slice_id": 1, "viz_type": "line", "datasource": "bad"}
         rv = self.client.get(
-            f"/superset/explore/?form_data={quote(json.dumps(form_data))}"
+            f"/ax-bi/explore/?form_data={quote(json.dumps(form_data))}"
         )
 
         assert rv.status_code == 302
@@ -942,9 +942,9 @@ class TestCore(SupersetTestCase):
         request_mock.query_string = b"standalone=3"
         get_dashboard_permalink_mock.return_value = {"dashboardId": 1}
         self.login(ADMIN_USERNAME)
-        resp = self.client.get("superset/dashboard/p/123/")
+        resp = self.client.get("/ax-bi/dashboard/p/123/")
 
-        expected_url = "/superset/dashboard/1/?permalink_key=123&standalone=3"
+        expected_url = "/ax-bi/dashboard/1/?permalink_key=123&standalone=3"
 
         assert resp.headers["Location"] == expected_url
         assert resp.status_code == 302
@@ -966,7 +966,7 @@ class TestCore(SupersetTestCase):
             "state": {"urlParams": [["native_filters", native_filters_value]]},
         }
         self.login(ADMIN_USERNAME)
-        resp = self.client.get("superset/dashboard/p/123/")
+        resp = self.client.get("/ax-bi/dashboard/p/123/")
 
         location = resp.headers["Location"]
         assert resp.status_code == 302

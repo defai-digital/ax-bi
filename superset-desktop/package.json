@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "tauri": "npx tauri",
+    "type": "tsc --noEmit",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "dev": "npx tauri dev",
     "build": "npx tauri build",
     "build:debug": "npx tauri build --debug"

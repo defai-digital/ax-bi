@@ -24,6 +24,7 @@ from urllib.parse import urlparse
 
 from superset.mcp_service.utils.config_utils import (
     get_mcp_service_url_config,
+    get_superset_webserver_address,
     get_webdriver_baseurl_user_friendly,
 )
 
@@ -59,6 +60,8 @@ def get_superset_base_url() -> str:
     default_url = "http://localhost:9001"
 
     try:
+        if webserver_url := _normalize_base_url(get_superset_webserver_address()):
+            return webserver_url
         if user_friendly_url := _normalize_base_url(
             get_webdriver_baseurl_user_friendly()
         ):

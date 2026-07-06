@@ -106,7 +106,32 @@ def test_get_superset_webserver_address_reads_supplied_config() -> None:
     )
 
 
-def test_get_superset_webserver_address_defaults_to_empty_string() -> None:
+def test_get_superset_webserver_address_reads_environment_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SUPERSET_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
+
+    assert get_superset_webserver_address({}) == "http://127.0.0.1:8080"
+
+
+def test_get_superset_webserver_address_prefers_config_over_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SUPERSET_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
+
+    assert (
+        get_superset_webserver_address(
+            {"SUPERSET_WEBSERVER_ADDRESS": "https://superset.example"}
+        )
+        == "https://superset.example"
+    )
+
+
+def test_get_superset_webserver_address_defaults_to_empty_string(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("SUPERSET_WEBSERVER_ADDRESS", raising=False)
+
     assert get_superset_webserver_address({}) == ""
 
 
@@ -398,7 +423,27 @@ def test_get_mcp_dev_username_reads_supplied_config() -> None:
     assert get_mcp_dev_username({"MCP_DEV_USERNAME": "admin"}) == "admin"
 
 
-def test_get_mcp_dev_username_returns_none_when_unset() -> None:
+def test_get_mcp_dev_username_reads_environment_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MCP_DEV_USERNAME", "admin")
+
+    assert get_mcp_dev_username({}) == "admin"
+
+
+def test_get_mcp_dev_username_prefers_config_over_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MCP_DEV_USERNAME", "env_admin")
+
+    assert get_mcp_dev_username({"MCP_DEV_USERNAME": "config_admin"}) == "config_admin"
+
+
+def test_get_mcp_dev_username_returns_none_when_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MCP_DEV_USERNAME", raising=False)
+
     assert get_mcp_dev_username({}) is None
 
 
@@ -426,7 +471,7 @@ def test_is_mcp_jwt_configured_returns_false_when_unset() -> None:
 
 
 def test_get_mcp_jwt_audience_reads_supplied_config() -> None:
-    assert get_mcp_jwt_audience({"MCP_JWT_AUDIENCE": "superset-mcp"}) == "superset-mcp"
+    assert get_mcp_jwt_audience({"MCP_JWT_AUDIENCE": "ax-bi-mcp"}) == "ax-bi-mcp"
 
 
 def test_get_mcp_jwt_audience_returns_none_when_unset() -> None:

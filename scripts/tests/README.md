@@ -55,7 +55,7 @@ scripts/tests/run.sh --module tests/charts/api_tests.py::TestChartApi::test_get_
 ```
 
 - Example run a single test, without any init procedures. Init procedures include:
-  resetting test database, db upgrade, superset init, loading example data. If your tests
+  resetting test database, db upgrade, ax-bi init, loading example data. If your tests
   are idempotent, after the first run, subsequent runs are really fast
 
 ```bash

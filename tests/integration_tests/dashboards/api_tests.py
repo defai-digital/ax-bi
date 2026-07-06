@@ -573,7 +573,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                 "roles": [],
                 "position_json": "",
                 "published": False,
-                "url": "/superset/dashboard/slug1/",
+                "url": "/ax-bi/dashboard/slug1/",
                 "slug": "slug1",
                 "tags": [],
                 "thumbnail_url": dashboard.thumbnail_url,
@@ -1217,11 +1217,11 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         expected_results = [
             {
                 "dashboard_title": "create_title1",
-                "url": "/superset/dashboard/create_slug1/",
+                "url": "/ax-bi/dashboard/create_slug1/",
             },
             {
                 "dashboard_title": "create_title0",
-                "url": "/superset/dashboard/create_slug0/",
+                "url": "/ax-bi/dashboard/create_slug0/",
             },
         ]
         for idx, response_item in enumerate(data["result"]):
@@ -2505,8 +2505,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
         current_dash = [d for d in res if d["id"] == dashboard_id][0]
         assert current_dash["dashboard_title"] == "title2"
-        assert "username" not in current_dash["changed_by"].keys()
-        assert "username" not in current_dash["owners"][0].keys()
+        assert "username" not in current_dash["changed_by"]
+        assert "username" not in current_dash["owners"][0]
 
         db.session.delete(model)
         db.session.commit()
@@ -2531,8 +2531,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         res = json.loads(response.data.decode("utf-8"))["result"]
 
         assert res["dashboard_title"] == "title2"
-        assert "username" not in res["changed_by"].keys()
-        assert "username" not in res["owners"][0].keys()
+        assert "username" not in res["changed_by"]
+        assert "username" not in res["owners"][0]
 
         db.session.delete(model)
         db.session.commit()

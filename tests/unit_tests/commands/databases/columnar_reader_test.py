@@ -20,6 +20,7 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
+import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
@@ -51,6 +52,18 @@ COLUMNAR_WITH_FLOATS: dict[str, list[Any]] = {
     "City": ["city1", "city2", "city3"],
     "Birth": ["1990-02-01", "1995-02-01", "2000-02-01"],
 }
+
+
+def test_columnar_reader_reads_feather_file() -> None:
+    buffer = io.BytesIO()
+    pd.DataFrame(COLUMNAR_DATA).to_feather(buffer)
+    buffer.seek(0)
+    reader = ColumnarReader()
+
+    df = reader.file_to_dataframe(FileStorage(buffer, filename="users.feather"))
+
+    assert df["Name"].tolist() == ["name1", "name2", "name3"]
+    assert df["Age"].tolist() == [30, 25, 20]
 
 
 @pytest.mark.parametrize(
@@ -201,6 +214,39 @@ def test_columnar_reader_zip():
         ["name2", 25, "city2", "1995-02-01"],
         ["name3", 20, "city3", "2000-02-01"],
     ]
+
+
+def test_columnar_reader_zip_with_uppercase_entry_suffix():
+    reader = ColumnarReader(
+        options=ColumnarReaderOptions(),
+    )
+    file1 = create_columnar_file(COLUMNAR_DATA, "test1.parquet")
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file1:
+        tmp_file1.write(file1.read())
+        tmp_file1.seek(0)
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_zip:
+        with ZipFile(tmp_zip, "w") as zip_file:
+            zip_file.write(tmp_file1.name, "TEST1.PARQUET")
+        tmp_zip.seek(0)
+        df = reader.file_to_dataframe(FileStorage(tmp_zip, "test.zip"))
+
+    assert df["Name"].tolist() == ["name1", "name2", "name3"]
+
+
+def test_columnar_reader_empty_zip():
+    reader = ColumnarReader(
+        options=ColumnarReaderOptions(),
+    )
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_zip:
+        with ZipFile(tmp_zip, "w"):
+            pass
+        tmp_zip.seek(0)
+        with pytest.raises(DatabaseUploadFailed) as ex:
+            reader.file_to_dataframe(FileStorage(tmp_zip, "test.zip"))
+
+    assert str(ex.value) == "ZIP file contains no files"
 
 
 def test_columnar_reader_bad_parquet_in_zip():

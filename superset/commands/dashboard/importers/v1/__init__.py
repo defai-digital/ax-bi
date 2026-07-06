@@ -149,12 +149,14 @@ class ImportDashboardsCommand(ImportModelsCommand):
                 chart_ids[str(chart.uuid)] = chart.id
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        target_tag_names = config["tags"]
-                        import_tag(
-                            target_tag_names, contents, chart.id, "chart", db.session
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    target_tag_names = config["tags"]
+                    import_tag(
+                        target_tag_names, contents, chart.id, "chart", db.session
+                    )
 
         # store the existing relationship between dashboards and charts
         # (only used when overwrite=False to avoid inserting duplicates)
@@ -204,16 +206,18 @@ class ImportDashboardsCommand(ImportModelsCommand):
                         dashboard_chart_ids.append((dashboard.id, chart_id))
 
                 # Handle tags using import_tag function
-                if feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
-                    if "tags" in config:
-                        target_tag_names = config["tags"]
-                        import_tag(
-                            target_tag_names,
-                            contents,
-                            dashboard.id,
-                            "dashboard",
-                            db.session,
-                        )
+                if (
+                    feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM")
+                    and "tags" in config
+                ):
+                    target_tag_names = config["tags"]
+                    import_tag(
+                        target_tag_names,
+                        contents,
+                        dashboard.id,
+                        "dashboard",
+                        db.session,
+                    )
 
         # set ref in the dashboard_slices table
         if dashboard_chart_ids:

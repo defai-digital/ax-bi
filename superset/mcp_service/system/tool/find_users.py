@@ -60,8 +60,7 @@ async def find_users(request: FindUsersRequest, ctx: Context) -> FindUsersRespon
     server instructions.
     """
     await ctx.info(
-        "Resolving user query: query=%s, page_size=%s"
-        % (request.query, request.page_size)
+        f"Resolving user query: query={request.query}, page_size={request.page_size}"
     )
 
     user_model = security_manager.user_model
@@ -104,7 +103,5 @@ async def find_users(request: FindUsersRequest, ctx: Context) -> FindUsersRespon
         for row in rows
     ]
 
-    await ctx.info(
-        "Resolved user query: matches=%s, truncated=%s" % (len(users), truncated)
-    )
+    await ctx.info(f"Resolved user query: matches={len(users)}, truncated={truncated}")
     return FindUsersResponse(users=users, count=len(users), truncated=truncated)

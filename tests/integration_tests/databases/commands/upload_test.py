@@ -172,7 +172,7 @@ def test_csv_upload_with_index():
             (2, "name3", 28, "city3", "1-1-1982"),
         ]
         # assert column names
-        assert [col for col in result.keys()] == [  # noqa: C416
+        assert list(result.keys()) == [
             "id",
             "Name",
             "Age",

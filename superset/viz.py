@@ -30,7 +30,7 @@ import math
 from collections import defaultdict, OrderedDict
 from datetime import datetime, timedelta
 from itertools import product
-from typing import Any, cast, Optional, TYPE_CHECKING
+from typing import Any, cast, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -532,7 +532,7 @@ class BaseViz:  # pylint: disable=too-many-public-methods
         payload = self.get_df_payload(query_obj)
 
         # if payload does not have a df, we are raising an error here.
-        df = cast(Optional[pd.DataFrame], payload["df"])
+        df = cast(pd.DataFrame | None, payload["df"])
 
         if self.status != QueryStatus.FAILED:
             payload["data"] = self.get_data(df)
@@ -660,13 +660,6 @@ class BaseViz:  # pylint: disable=too-many-public-methods
                 )
                 self.errors.append(error)
                 self.status = QueryStatus.FAILED
-                # Only expose the raw stacktrace when explicitly enabled, mirroring
-                # the gating used elsewhere (e.g. superset.views.base.get_error_msg).
-                # ``get_stacktrace()`` itself returns ``None`` unless SHOW_STACKTRACE
-                # is set, so gating purely on that config keeps the two consistent.
-                if current_app.config.get("SHOW_STACKTRACE"):
-                    stacktrace = utils.get_stacktrace()
-
             if is_loaded and cache_key and self.status != QueryStatus.FAILED:
                 set_and_log_cache(
                     cache_instance=cache_manager.data_cache,
@@ -1034,7 +1027,7 @@ class NVD3TimeSeriesViz(NVD3Viz):
             else:
                 series_title = str(name)
             if (
-                isinstance(series_title, (list, tuple))
+                isinstance(series_title, list | tuple)
                 and len(series_title) > 1
                 and len(self.metric_labels) == 1
             ):
@@ -2013,7 +2006,7 @@ class BaseDeckGLViz(BaseViz):
     @staticmethod
     @deprecated(deprecated_in="3.0")
     def reverse_latlong(df: pd.DataFrame, key: str) -> None:
-        df[key] = [tuple(reversed(o)) for o in df[key] if isinstance(o, (list, tuple))]
+        df[key] = [tuple(reversed(o)) for o in df[key] if isinstance(o, list | tuple)]
 
     @deprecated(deprecated_in="3.0")
     def process_spatial_data_obj(self, key: str, df: pd.DataFrame) -> pd.DataFrame:

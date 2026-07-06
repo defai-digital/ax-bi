@@ -16,32 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const TASK_LIST_CONTRACT_VERSION = 'task-list.v1';
 
-export type TaskFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type TaskFilterValue = SharedListFilterValue;
 
-export interface TaskListFilter {
-  col: string;
-  opr: string;
-  value: TaskFilterValue;
-}
+export type TaskListFilter = SharedListFilter;
 
-export interface TaskListRequest {
-  contractVersion: typeof TASK_LIST_CONTRACT_VERSION;
-  filters: TaskListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
-}
+export type TaskListRequest = ListRequestBase<typeof TASK_LIST_CONTRACT_VERSION>;
 
 export interface TaskListItem {
   id: number;
@@ -55,47 +45,17 @@ export interface TaskListItem {
   createdOn?: string;
 }
 
-export interface TaskListResponse {
-  contractVersion: typeof TASK_LIST_CONTRACT_VERSION;
+export interface TaskListResponse
+  extends ListResponseBase<typeof TASK_LIST_CONTRACT_VERSION> {
   tasks: TaskListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const taskFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const taskListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     taskType: { type: 'string' },
     taskKey: { type: 'string' },
@@ -107,81 +67,17 @@ const taskListItemSchema = {
   },
 } as const;
 
-export const taskListRequestSchema = {
-  $id: 'ax-services.task-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: TASK_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: taskFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
-  },
-} as const;
+export const taskListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.task-list.v1.request',
+  contractVersion: TASK_LIST_CONTRACT_VERSION,
+});
 
-export const taskListResponseSchema = {
-  $id: 'ax-services.task-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'tasks',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: TASK_LIST_CONTRACT_VERSION },
-    tasks: {
-      type: 'array',
-      items: taskListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-  },
-} as const;
+export const taskListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.task-list.v1.response',
+  contractVersion: TASK_LIST_CONTRACT_VERSION,
+  collectionKey: 'tasks',
+  itemSchema: taskListItemSchema,
+});
 
 export const taskListContractSchemas = {
   taskListRequestSchema,

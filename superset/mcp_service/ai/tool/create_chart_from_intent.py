@@ -25,6 +25,7 @@ with a single intent-driven call.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -45,6 +46,79 @@ from superset.mcp_service.privacy import (
 from superset.mcp_service.utils.logging_utils import mcp_event_log_context
 
 logger = logging.getLogger(__name__)
+
+_CHART_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\bname\s+it\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bnamed\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\bcalled\s+['\"]?(.+?)['\"]?"
+        r"(?=[.!?]\s+(?:return|do not|don't|keep|use|show)\b|[.!?]\s*$|$)",
+        re.IGNORECASE,
+    ),
+)
+_DATASET_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(?:dataset|from|table)\s+['\"]?([A-Za-z0-9_.-]+)['\"]?",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b([A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)\b"),
+)
+
+
+def _extract_chart_name(prompt: str) -> str | None:
+    """Extract an explicit chart title from natural language when present."""
+    for pattern in _CHART_NAME_PATTERNS:
+        match = pattern.search(prompt)
+        if match:
+            chart_name = match.group(1).strip(" '\"")
+            return chart_name or None
+    return None
+
+
+def _dataset_name_candidates(prompt: str) -> list[str]:
+    """Extract likely dataset/table names mentioned directly in a prompt."""
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    for pattern in _DATASET_NAME_PATTERNS:
+        for match in pattern.finditer(prompt):
+            candidate = match.group(1).strip(" '\".,;:!?")
+            key = candidate.lower()
+            if candidate and key not in seen:
+                candidates.append(candidate)
+                seen.add(key)
+
+    return candidates
+
+
+def _discover_dataset_by_name(prompt: str) -> Any | None:
+    """Resolve a dataset when the prompt directly names a table/dataset."""
+    from superset.daos.dataset import DatasetDAO
+
+    candidates = _dataset_name_candidates(prompt)
+    for candidate in candidates:
+        dataset = DatasetDAO.find_one_or_none(table_name=candidate)
+        if dataset is not None:
+            return dataset
+
+    normalized_candidates = {candidate.lower() for candidate in candidates}
+    if not normalized_candidates:
+        return None
+
+    for dataset in DatasetDAO.find_all():
+        table_name = getattr(dataset, "table_name", "")
+        if table_name.lower() in normalized_candidates:
+            return dataset
+
+    return None
 
 
 def _discover_best_dataset(
@@ -78,6 +152,10 @@ def _discover_best_dataset(
 
         if dataset is None:
             warnings.append(f"Dataset {dataset_id} not found or not accessible.")
+        return dataset, warnings
+
+    dataset = _discover_dataset_by_name(prompt)
+    if dataset is not None:
         return dataset, warnings
 
     # Auto-discover via asset search
@@ -234,8 +312,8 @@ async def create_chart_from_intent(  # noqa: C901
     ```
     """
     await ctx.info(
-        "Creating chart from intent: prompt='%s', dataset_id=%s, save=%s"
-        % (request.prompt[:80], request.dataset_id, request.save_chart)
+        f"Creating chart from intent: prompt='{request.prompt[:80]}', "
+        f"dataset_id={request.dataset_id}, save={request.save_chart}"
     )
 
     if not user_can_view_data_model_metadata():
@@ -256,7 +334,7 @@ async def create_chart_from_intent(  # noqa: C901
 
     if dataset is None:
         await ctx.warning(
-            "No dataset found for intent: prompt='%s'" % request.prompt[:80]
+            f"No dataset found for intent: prompt='{request.prompt[:80]}'"
         )
         return CreateChartFromIntentResponse(
             warnings=all_warnings,
@@ -267,9 +345,7 @@ async def create_chart_from_intent(  # noqa: C901
         "id": dataset.id,
         "name": getattr(dataset, "table_name", "") or "",
     }
-    await ctx.info(
-        "Dataset resolved: id=%s, name=%s" % (dataset.id, dataset_info["name"])
-    )
+    await ctx.info(f"Dataset resolved: id={dataset.id}, name={dataset_info['name']}")
 
     # Surface governed rules so they reach the caller even on the heuristic path.
     try:
@@ -309,7 +385,7 @@ async def create_chart_from_intent(  # noqa: C901
 
     if blocking_violations:
         await ctx.warning(
-            "Chart blocked by governance policy: %s" % blocking_violations[0]
+            f"Chart blocked by governance policy: {blocking_violations[0]}"
         )
         return CreateChartFromIntentResponse(
             dataset_used=dataset_info,
@@ -330,16 +406,19 @@ async def create_chart_from_intent(  # noqa: C901
         chart_request = GenerateChartRequest(
             dataset_id=dataset.id,
             config=config,
+            chart_name=_extract_chart_name(request.prompt),
             save_chart=request.save_chart,
             generate_preview=False,
         )
 
         # Import and call generate_chart directly (in-process, not via MCP).
-        # The @tool wrapper injects ctx itself, so we pass only the request —
-        # passing ctx here collides ("multiple values for argument 'ctx'").
+        # ctx is passed as a keyword argument: the @tool wrapper binds the
+        # first positional argument to the request, so passing ctx
+        # positionally collides ("multiple values for argument 'ctx'"). The
+        # keyword form supplies the already-resolved ctx without collision.
         from superset.mcp_service.chart.tool.generate_chart import generate_chart
 
-        chart_response = await generate_chart(chart_request)
+        chart_response = await generate_chart(chart_request, ctx=ctx)
 
     # Step 4: Build response
     await ctx.report_progress(4, 4, "Building response")
@@ -374,12 +453,9 @@ async def create_chart_from_intent(  # noqa: C901
     alternatives = _suggest_alternatives(chart_type)
 
     await ctx.info(
-        "Chart created from intent: chart_id=%s, type=%s, confidence=%.2f"
-        % (
-            chart_data.get("id") if chart_data else None,
-            chart_type,
-            confidence,
-        )
+        f"Chart created from intent: "
+        f"chart_id={chart_data.get('id') if chart_data else None}, "
+        f"type={chart_type}, confidence={confidence:.2f}"
     )
 
     return CreateChartFromIntentResponse(

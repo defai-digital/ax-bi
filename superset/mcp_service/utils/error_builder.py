@@ -23,7 +23,7 @@ Consolidates error handling logic from multiple files.
 import html
 import logging
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from superset.mcp_service.common.error_schemas import (
     ChartGenerationError,
@@ -68,14 +68,14 @@ def _sanitize_user_input(value: Any) -> str:
     return str_value
 
 
-def _sanitize_template_vars(vars_dict: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_template_vars(vars_dict: dict[str, Any]) -> dict[str, Any]:
     """Sanitize all variables before template formatting."""
     sanitized = {}
     for key, value in vars_dict.items():
         # Only sanitize string-like values that could contain user input
-        if isinstance(value, (str, int, float)) or value is None:
+        if isinstance(value, str | int | float) or value is None:
             sanitized[key] = _sanitize_user_input(value)
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             # Sanitize lists of strings
             sanitized[key] = ", ".join(
                 [_sanitize_user_input(item) for item in value[:10]]
@@ -205,10 +205,10 @@ class ChartErrorBuilder:
         cls,
         error_type: str,
         template_key: str,
-        template_vars: Dict[str, Any] | None = None,
-        custom_suggestions: List[str] | None = None,
+        template_vars: dict[str, Any] | None = None,
+        custom_suggestions: list[str] | None = None,
         error_code: str | None = None,
-        validation_errors: List[ValidationError] | None = None,
+        validation_errors: list[ValidationError] | None = None,
     ) -> ChartGenerationError:
         """
         Build a standardized error using templates.
@@ -244,7 +244,7 @@ class ChartErrorBuilder:
 
     @classmethod
     def _format_message(
-        cls, template: Dict[str, Any], vars_dict: Dict[str, Any]
+        cls, template: dict[str, Any], vars_dict: dict[str, Any]
     ) -> str:
         """Format the error message from template."""
         message_raw = template.get("message", "An error occurred")
@@ -263,7 +263,7 @@ class ChartErrorBuilder:
 
     @classmethod
     def _format_details(
-        cls, template: Dict[str, Any], vars_dict: Dict[str, Any]
+        cls, template: dict[str, Any], vars_dict: dict[str, Any]
     ) -> str:
         """Format the error details from template."""
         details_raw = template.get("details", "")
@@ -283,10 +283,10 @@ class ChartErrorBuilder:
     @classmethod
     def _format_suggestions(
         cls,
-        template: Dict[str, Any],
-        vars_dict: Dict[str, Any],
-        custom_suggestions: List[str] | None,
-    ) -> List[str]:
+        template: dict[str, Any],
+        vars_dict: dict[str, Any],
+        custom_suggestions: list[str] | None,
+    ) -> list[str]:
         """Format suggestions from template and add custom ones."""
         suggestions = []
         for suggestion in template.get("suggestions", []):
@@ -359,7 +359,7 @@ class ChartErrorBuilder:
 
     @classmethod
     def column_not_found_error(
-        cls, column: str, suggestions: List[str] | None = None
+        cls, column: str, suggestions: list[str] | None = None
     ) -> ChartGenerationError:
         """Build a column not found error."""
         suggestion_text = (

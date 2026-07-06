@@ -428,6 +428,26 @@ def test_create_tunnel_without_host_key_does_not_pin(mock_open_tunnel: Mock) -> 
     assert "ssh_host_key" not in kwargs
 
 
+@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+def test_create_tunnel_disables_stale_dss_key_scan_on_paramiko_5(
+    mock_open_tunnel: Mock,
+) -> None:
+    """Paramiko 5 removed DSSKey, but sshtunnel 0.4.0 still scans for it."""
+    manager = _make_manager(strict=False)
+    tunnel = _ssh_tunnel(None)
+    tunnel.username = "user"
+    tunnel.password = None
+    tunnel.private_key = None
+
+    manager.create_tunnel(tunnel, "postgresql://u:p@db:5432/ex")
+
+    _, kwargs = mock_open_tunnel.call_args
+    if hasattr(paramiko, "DSSKey"):
+        assert "host_pkey_directories" not in kwargs
+    else:
+        assert kwargs["host_pkey_directories"] == []
+
+
 def test_ssh_tunnel_schema_round_trips_server_host_key() -> None:
     """The schema accepts and preserves the public host key field."""
     from superset.databases.schemas import DatabaseSSHTunnel

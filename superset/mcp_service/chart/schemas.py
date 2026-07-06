@@ -22,8 +22,9 @@ Pydantic schemas for chart-related responses
 from __future__ import annotations
 
 import difflib
+from contextlib import suppress
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Protocol
+from typing import Annotated, Any, Literal, Protocol
 
 from pydantic import (
     AliasChoices,
@@ -85,7 +86,7 @@ class ChartLike(Protocol):
     url: str | None
     description: str | None
     cache_timeout: int | None
-    form_data: Dict[str, Any] | None
+    form_data: dict[str, Any] | None
     query_context: Any | None
     certified_by: str | None
     certification_details: str | None
@@ -98,8 +99,8 @@ class ChartLike(Protocol):
     created_on: str | datetime | None
     created_on_humanized: str | None
     uuid: str | None
-    tags: List[Any] | None
-    owners: List[Any] | None
+    tags: list[Any] | None
+    owners: list[Any] | None
 
 
 class ChartInfo(BaseModel):
@@ -130,7 +131,7 @@ class ChartInfo(BaseModel):
         None, description="Certification details or reason"
     )
     uuid: str | None = Field(None, description="Chart UUID")
-    tags: List[TagInfo] = Field(default_factory=list, description="Chart tags")
+    tags: list[TagInfo] = Field(default_factory=list, description="Chart tags")
 
     # Filters extracted from form_data for easy inspection
     filters: ChartFiltersInfo | None = Field(
@@ -143,7 +144,7 @@ class ChartInfo(BaseModel):
     )
 
     # Fields for unsaved state support
-    form_data: Dict[str, Any] | None = Field(
+    form_data: dict[str, Any] | None = Field(
         None,
         description=(
             "The chart's form_data configuration. When form_data_key is provided, "
@@ -170,7 +171,7 @@ class ChartInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True, ser_json_timedelta="iso8601")
 
     @model_serializer(mode="wrap")
-    def _filter_fields_by_context(self, serializer: Any, info: Any) -> Dict[str, Any]:
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
         return filter_serialized_response_fields(serializer(self), info)
 
 
@@ -187,8 +188,8 @@ class ChartCapabilities(BaseModel):
         description="Chart supports drill-down navigation"
     )
     supports_export: bool = Field(description="Chart can be exported to other formats")
-    optimal_formats: List[str] = Field(description="Recommended preview formats")
-    data_types: List[str] = Field(
+    optimal_formats: list[str] = Field(description="Recommended preview formats")
+    data_types: list[str] = Field(
         description="Types of data shown (time_series, categorical, etc)"
     )
 
@@ -200,11 +201,11 @@ class ChartSemantics(BaseModel):
         description="Main insight or pattern the chart reveals"
     )
     data_story: str = Field(description="Narrative description of what the data shows")
-    recommended_actions: List[str] = Field(
+    recommended_actions: list[str] = Field(
         description="Suggested next steps based on data"
     )
-    anomalies: List[str] = Field(description="Notable outliers or unusual patterns")
-    statistical_summary: Dict[str, Any] = Field(
+    anomalies: list[str] = Field(description="Notable outliers or unusual patterns")
+    statistical_summary: dict[str, Any] = Field(
         description="Key statistics (mean, median, trends)"
     )
 
@@ -215,7 +216,7 @@ class PerformanceMetadata(BaseModel):
     query_duration_ms: int = Field(description="Query execution time")
     estimated_cost: str | None = Field(None, description="Resource cost estimate")
     cache_status: str = Field(description="Cache hit/miss status")
-    optimization_suggestions: List[str] = Field(
+    optimization_suggestions: list[str] = Field(
         default_factory=list, description="Performance improvement tips"
     )
 
@@ -235,7 +236,7 @@ class VersionedResponse(BaseModel):
     api_version: str = Field("v1", description="MCP API version")
 
 
-DEFAULT_GET_CHART_INFO_COLUMNS: List[str] = [
+DEFAULT_GET_CHART_INFO_COLUMNS: list[str] = [
     "id",
     "slice_name",
     "viz_type",
@@ -299,7 +300,7 @@ class GetChartInfoRequest(BaseModel):
         ),
     )
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=lambda: list(DEFAULT_GET_CHART_INFO_COLUMNS),
             description=(
@@ -311,7 +312,7 @@ class GetChartInfoRequest(BaseModel):
     ]
 
     @model_validator(mode="after")
-    def validate_identifier_or_form_data_key(self) -> "GetChartInfoRequest":
+    def validate_identifier_or_form_data_key(self) -> GetChartInfoRequest:
         if not self.identifier and not self.form_data_key:
             raise ValueError(
                 "At least one of 'identifier' or 'form_data_key' must be provided."
@@ -329,7 +330,7 @@ class GetChartInfoRequest(BaseModel):
 
 
 def extract_filters_from_form_data(
-    form_data: Dict[str, Any] | None,
+    form_data: dict[str, Any] | None,
 ) -> ChartFiltersInfo | None:
     """Extract structured filter information from a chart's form_data.
 
@@ -341,7 +342,7 @@ def extract_filters_from_form_data(
         return None
 
     raw_adhoc = form_data.get("adhoc_filters", [])
-    adhoc_filters: List[AdhocFilter] = []
+    adhoc_filters: list[AdhocFilter] = []
     for f in raw_adhoc or []:
         if not isinstance(f, dict):
             continue
@@ -365,7 +366,7 @@ def extract_filters_from_form_data(
     time_range = form_data.get("time_range")
     granularity_sqla = form_data.get("granularity_sqla")
     raw_extra = form_data.get("extra_filters", [])
-    extra_filters: List[Dict[str, Any]] = [
+    extra_filters: list[dict[str, Any]] = [
         item
         for item in (raw_extra if isinstance(raw_extra, list) else [])
         if isinstance(item, dict)
@@ -375,7 +376,7 @@ def extract_filters_from_form_data(
     # Legacy top-level "filters" payload (older/simpler charts use this
     # instead of adhoc_filters).
     raw_filters = form_data.get("filters", [])
-    filters: List[Dict[str, Any]] = [
+    filters: list[dict[str, Any]] = [
         item
         for item in (raw_filters if isinstance(raw_filters, list) else [])
         if isinstance(item, dict)
@@ -536,10 +537,8 @@ def serialize_chart_object(chart: ChartLike | None) -> ChartInfo | None:
     chart_params = getattr(chart, "params", None)
     chart_form_data = None
     if chart_params and isinstance(chart_params, str):
-        try:
+        with suppress(TypeError, ValueError):
             chart_form_data = utils_json.loads(chart_params)
-        except (TypeError, ValueError):
-            pass
     elif isinstance(chart_params, dict):
         chart_form_data = chart_params
     if not isinstance(chart_form_data, dict):
@@ -605,13 +604,13 @@ class ChartFilter(ColumnOperator):
         description="Operator to use. Use get_schema(model_type='chart') for "
         "available operators.",
     )
-    value: str | int | float | bool | List[str | int | float | bool] = Field(
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
         ..., description="Value to filter by (type depends on col and opr)"
     )
 
 
 class ChartList(BaseModel):
-    charts: List[ChartInfo]
+    charts: list[ChartInfo]
     count: int
     total_count: int
     page: int
@@ -619,23 +618,23 @@ class ChartList(BaseModel):
     total_pages: int
     has_previous: bool
     has_next: bool
-    columns_requested: List[str] = Field(
+    columns_requested: list[str] = Field(
         default_factory=list,
         description="Requested columns for the response",
     )
-    columns_loaded: List[str] = Field(
+    columns_loaded: list[str] = Field(
         default_factory=list,
         description="Columns that were actually loaded for each chart",
     )
-    columns_available: List[str] = Field(
+    columns_available: list[str] = Field(
         default_factory=list,
         description="All columns available for selection via select_columns parameter",
     )
-    sortable_columns: List[str] = Field(
+    sortable_columns: list[str] = Field(
         default_factory=list,
         description="Columns that can be used with order_column parameter",
     )
-    filters_applied: List[ChartFilter] = Field(
+    filters_applied: list[ChartFilter] = Field(
         default_factory=list,
         description="List of advanced filter dicts applied to the query.",
     )
@@ -654,7 +653,7 @@ def _normalize_group_by_input(v: Any) -> Any:
     """Accept a single ColumnRef/dict/str and normalize to list of dicts."""
     if isinstance(v, str):
         return [{"name": v}]
-    if isinstance(v, (dict, ColumnRef)):
+    if isinstance(v, dict | ColumnRef):
         return [v]
     if isinstance(v, list):
         return [{"name": item} if isinstance(item, str) else item for item in v]
@@ -775,7 +774,7 @@ class ColumnRef(BaseModel):
     # ``mode="after"`` validators in source order) so the aggregate/saved
     # conflict surfaces before the cleanup nulls ``aggregate`` out.
     @model_validator(mode="after")
-    def validate_metric_shape(self) -> "ColumnRef":
+    def validate_metric_shape(self) -> ColumnRef:
         """Require exactly one of ``name`` or ``sql_expression``; the SQL form
         is mutually exclusive with ``aggregate`` / ``saved_metric`` and
         requires a ``label``.
@@ -813,7 +812,7 @@ class ColumnRef(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def clear_aggregate_for_saved_metric(self) -> "ColumnRef":
+    def clear_aggregate_for_saved_metric(self) -> ColumnRef:
         """Clear aggregate when saved_metric is True since it's ignored."""
         if self.saved_metric and self.aggregate is not None:
             self.aggregate = None
@@ -871,7 +870,7 @@ class CurrencyFormat(BaseModel):
         validation_alias=AliasChoices("symbol_position", "symbolPosition"),
     )
 
-    def to_form_data(self) -> Dict[str, str]:
+    def to_form_data(self) -> dict[str, str]:
         return {"symbol": self.symbol, "symbolPosition": self.symbol_position}
 
 
@@ -997,7 +996,7 @@ class PieChartConfig(UnknownFieldCheckMixin):
     ] = "key_value_percent"
     sort_by_metric: bool = True
     show_legend: bool = True
-    filters: List[FilterConfig] | None = Field(
+    filters: list[FilterConfig] | None = Field(
         None,
         description="Structured filters (column/op/value). "
         "Do NOT use adhoc_filters or raw SQL expressions.",
@@ -1033,7 +1032,7 @@ class PieChartConfig(UnknownFieldCheckMixin):
     )
 
     @model_validator(mode="after")
-    def reject_sql_expression_on_dimensions(self) -> "PieChartConfig":
+    def reject_sql_expression_on_dimensions(self) -> PieChartConfig:
         """sql_expression is metric-only; reject it on the dimension."""
         _reject_sql_expression_on_dimension(self.dimension, "dimension")
         return self
@@ -1043,16 +1042,16 @@ class PivotTableChartConfig(UnknownFieldCheckMixin):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     chart_type: Literal["pivot_table"] = "pivot_table"
-    rows: List[ColumnRef] = Field(
+    rows: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Row grouping columns",
         validation_alias=AliasChoices("rows", "groupby", "dimension"),
     )
-    columns: List[ColumnRef] | None = Field(
+    columns: list[ColumnRef] | None = Field(
         None, description="Column groups for cross-tabulation"
     )
-    metrics: List[ColumnRef] = Field(
+    metrics: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Metrics (use aggregate e.g. SUM, COUNT, AVG for ad-hoc, "
@@ -1075,7 +1074,7 @@ class PivotTableChartConfig(UnknownFieldCheckMixin):
     show_column_totals: bool = True
     transpose: bool = False
     combine_metric: bool = Field(False, description="Metrics side by side in columns")
-    filters: List[FilterConfig] | None = Field(
+    filters: list[FilterConfig] | None = Field(
         None,
         description="Structured filters (column/op/value). "
         "Do NOT use adhoc_filters or raw SQL expressions.",
@@ -1093,7 +1092,7 @@ class PivotTableChartConfig(UnknownFieldCheckMixin):
     )
 
     @model_validator(mode="after")
-    def reject_sql_expression_on_dimensions(self) -> "PivotTableChartConfig":
+    def reject_sql_expression_on_dimensions(self) -> PivotTableChartConfig:
         """sql_expression is metric-only; reject it on rows and columns."""
         for i, col in enumerate(self.rows):
             _reject_sql_expression_on_dimension(col, f"rows[{i}]")
@@ -1118,27 +1117,27 @@ class MixedTimeseriesChartConfig(UnknownFieldCheckMixin):
         validation_alias=AliasChoices("time_grain", "time_grain_sqla"),
     )
     # Primary series (Query A)
-    y: List[ColumnRef] = Field(
+    y: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Primary Y-axis metrics",
         validation_alias=AliasChoices("y", "metrics"),
     )
     primary_kind: Literal["line", "bar", "area", "scatter"] = "line"
-    group_by: List[ColumnRef] | None = Field(
+    group_by: list[ColumnRef] | None = Field(
         None,
         description="Primary series group by",
         validation_alias=AliasChoices("group_by", "groupby", "series", "dimension"),
     )
     # Secondary series (Query B)
-    y_secondary: List[ColumnRef] = Field(
+    y_secondary: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Secondary Y-axis metrics",
         validation_alias=AliasChoices("y_secondary", "metrics_b"),
     )
     secondary_kind: Literal["line", "bar", "area", "scatter"] = "bar"
-    group_by_secondary: List[ColumnRef] | None = Field(
+    group_by_secondary: list[ColumnRef] | None = Field(
         None,
         description="Secondary series group by",
         validation_alias=AliasChoices(
@@ -1170,7 +1169,7 @@ class MixedTimeseriesChartConfig(UnknownFieldCheckMixin):
         None,
         description="Currency symbol applied to secondary metric values",
     )
-    filters: List[FilterConfig] | None = Field(
+    filters: list[FilterConfig] | None = Field(
         None,
         description="Structured filters (column/op/value). "
         "Do NOT use adhoc_filters or raw SQL expressions.",
@@ -1183,7 +1182,7 @@ class MixedTimeseriesChartConfig(UnknownFieldCheckMixin):
         return _normalize_group_by_input(v)
 
     @model_validator(mode="after")
-    def reject_sql_expression_on_dimensions(self) -> "MixedTimeseriesChartConfig":
+    def reject_sql_expression_on_dimensions(self) -> MixedTimeseriesChartConfig:
         """sql_expression is metric-only; reject it on x and group_by lists."""
         _reject_sql_expression_on_dimension(self.x, "x")
         for field_name, group in (
@@ -1264,7 +1263,7 @@ class HandlebarsChartConfig(UnknownFieldCheckMixin):
     )
 
     @model_validator(mode="after")
-    def reject_sql_expression_on_dimensions(self) -> "HandlebarsChartConfig":
+    def reject_sql_expression_on_dimensions(self) -> HandlebarsChartConfig:
         """sql_expression is metric-only; reject it on raw columns and groupby."""
         if self.columns:
             for i, col in enumerate(self.columns):
@@ -1275,7 +1274,7 @@ class HandlebarsChartConfig(UnknownFieldCheckMixin):
         return self
 
     @model_validator(mode="after")
-    def validate_query_fields(self) -> "HandlebarsChartConfig":
+    def validate_query_fields(self) -> HandlebarsChartConfig:
         """Validate that the right fields are provided for the query mode."""
         if self.query_mode == "raw":
             if not self.columns:
@@ -1491,18 +1490,18 @@ class TableChartConfig(UnknownFieldCheckMixin):
             "function, 'aggregate' otherwise."
         ),
     )
-    columns: List[ColumnRef] = Field(
+    columns: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Columns with unique labels",
         validation_alias=AliasChoices("columns", "all_columns", "groupby"),
     )
-    filters: List[FilterConfig] | None = Field(
+    filters: list[FilterConfig] | None = Field(
         None,
         description="Structured filters (column/op/value). "
         "Do NOT use adhoc_filters or raw SQL expressions.",
     )
-    sort_by: List[str | SortByConfig] | None = Field(
+    sort_by: list[str | SortByConfig] | None = Field(
         None,
         description="Columns to sort by. Each entry is either a column-name "
         "string (defaults to descending) or a SortByConfig object with "
@@ -1521,7 +1520,7 @@ class TableChartConfig(UnknownFieldCheckMixin):
     )
 
     @model_validator(mode="after")
-    def reject_sql_expression_in_raw_mode(self) -> "TableChartConfig":
+    def reject_sql_expression_in_raw_mode(self) -> TableChartConfig:
         """In raw mode every column is a plain selection, so a SQL metric
         there would yield ``None`` in ``form_data['all_columns']``."""
         if self.query_mode == "raw":
@@ -1535,7 +1534,7 @@ class TableChartConfig(UnknownFieldCheckMixin):
         return self
 
     @model_validator(mode="after")
-    def validate_unique_column_labels(self) -> "TableChartConfig":
+    def validate_unique_column_labels(self) -> TableChartConfig:
         """Ensure all column labels are unique."""
         labels_seen = set()
         duplicates = []
@@ -1600,7 +1599,7 @@ class XYChartConfig(UnknownFieldCheckMixin):
         ),
         validation_alias=AliasChoices("x", "x_axis", "x_column"),
     )
-    y: List[ColumnRef] = Field(
+    y: list[ColumnRef] = Field(
         ...,
         min_length=1,
         description="Y-axis metrics (unique labels)",
@@ -1619,7 +1618,7 @@ class XYChartConfig(UnknownFieldCheckMixin):
         False,
         validation_alias=AliasChoices("stacked", "stack"),
     )
-    group_by: List[ColumnRef] | None = Field(
+    group_by: list[ColumnRef] | None = Field(
         None,
         description="Series breakdown columns",
         validation_alias=AliasChoices(
@@ -1651,7 +1650,7 @@ class XYChartConfig(UnknownFieldCheckMixin):
         ),
         max_length=100,
     )
-    filters: List[FilterConfig] | None = Field(
+    filters: list[FilterConfig] | None = Field(
         None,
         description="Structured filters (column/op/value). "
         "Do NOT use adhoc_filters or raw SQL expressions.",
@@ -1674,7 +1673,7 @@ class XYChartConfig(UnknownFieldCheckMixin):
         return _normalize_group_by_input(v)
 
     @model_validator(mode="after")
-    def reject_sql_expression_on_dimensions(self) -> "XYChartConfig":
+    def reject_sql_expression_on_dimensions(self) -> XYChartConfig:
         """sql_expression is metric-only; reject it on x and group_by."""
         _reject_sql_expression_on_dimension(self.x, "x")
         if self.group_by:
@@ -1683,7 +1682,7 @@ class XYChartConfig(UnknownFieldCheckMixin):
         return self
 
     @model_validator(mode="after")
-    def validate_unique_column_labels(self) -> "XYChartConfig":
+    def validate_unique_column_labels(self) -> XYChartConfig:
         """Ensure all column labels are unique across x, y, and group_by."""
         labels_seen: dict[str, str] = {}
         duplicates: list[str] = []
@@ -1760,7 +1759,7 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
     """Request schema for list_charts with clear, unambiguous types."""
 
     filters: Annotated[
-        List[ChartFilter],
+        list[ChartFilter],
         Field(
             default_factory=list,
             description="List of filter objects (column, operator, value). Each "
@@ -1769,7 +1768,7 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
         ),
     ]
     select_columns: Annotated[
-        List[str],
+        list[str],
         Field(
             default_factory=list,
             description="List of columns to select. Defaults to common columns if not "
@@ -1779,7 +1778,7 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
 
     @field_validator("filters", mode="before")
     @classmethod
-    def parse_filters(cls, v: Any) -> List[ChartFilter]:
+    def parse_filters(cls, v: Any) -> list[ChartFilter]:
         """
         Parse filters from JSON string or list.
 
@@ -1792,7 +1791,7 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
 
     @field_validator("select_columns", mode="before")
     @classmethod
-    def parse_select_columns(cls, v: Any) -> List[str]:
+    def parse_select_columns(cls, v: Any) -> list[str]:
         """
         Parse select_columns from JSON string, list, or CSV string.
 
@@ -1837,7 +1836,7 @@ class ListChartsRequest(OwnedByMeMixin, CreatedByMeMixin, MetadataCacheControl):
     ]
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListChartsRequest":
+    def validate_search_and_filters(self) -> ListChartsRequest:
         """Prevent using both search and filters simultaneously."""
         from superset.mcp_service.utils.schema_utils import (
             ensure_search_and_filters_not_combined,
@@ -1867,10 +1866,10 @@ class GenerateChartRequest(QueryCacheControl):
     )
     save_chart: bool = Field(default=False, description="Save permanently in Superset")
     generate_preview: bool = True
-    preview_formats: List[Literal["url", "ascii", "vega_lite", "table"]] = Field(
+    preview_formats: list[Literal["url", "ascii", "vega_lite", "table"]] = Field(
         default_factory=lambda: ["url"],
     )
-    sanitization_warnings: List[str] = Field(
+    sanitization_warnings: list[str] = Field(
         default_factory=list,
         description=(
             "Internal: warnings emitted when user input was altered by "
@@ -1931,7 +1930,7 @@ class GenerateChartRequest(QueryCacheControl):
         return sanitize_user_input(v, "Chart name", max_length=255, allow_empty=True)
 
     @model_validator(mode="after")
-    def validate_cache_timeout(self) -> "GenerateChartRequest":
+    def validate_cache_timeout(self) -> GenerateChartRequest:
         """Validate cache timeout is non-negative."""
         if (
             hasattr(self, "cache_timeout")
@@ -1944,7 +1943,7 @@ class GenerateChartRequest(QueryCacheControl):
         return self
 
     @model_validator(mode="after")
-    def validate_save_or_preview(self) -> "GenerateChartRequest":
+    def validate_save_or_preview(self) -> GenerateChartRequest:
         """Ensure at least one of save_chart or generate_preview is enabled."""
         if not self.save_chart and not self.generate_preview:
             raise ValueError(
@@ -2024,7 +2023,7 @@ class UpdateChartPreviewRequest(FormDataCacheControl):
     dataset_id: int | str = Field(..., description="Dataset ID or UUID")
     config: ChartConfig = Field(..., description="Chart configuration")
     generate_preview: bool = True
-    preview_formats: List[Literal["url", "ascii", "vega_lite", "table"]] = Field(
+    preview_formats: list[Literal["url", "ascii", "vega_lite", "table"]] = Field(
         default_factory=lambda: ["url"],
     )
 
@@ -2060,7 +2059,7 @@ class GetChartDataRequest(QueryCacheControl):
     )
 
     @model_validator(mode="after")
-    def validate_identifier_or_form_data_key(self) -> "GetChartDataRequest":
+    def validate_identifier_or_form_data_key(self) -> GetChartDataRequest:
         if not self.identifier and not self.form_data_key:
             raise ValueError(
                 "At least one of 'identifier' or 'form_data_key' must be provided."
@@ -2093,10 +2092,10 @@ class DataColumn(BaseModel):
     name: str = Field(..., description="Column name")
     display_name: str = Field(..., description="Human-readable column name")
     data_type: str = Field(..., description="Inferred data type")
-    sample_values: List[Any] = Field(description="Representative sample values")
+    sample_values: list[Any] = Field(description="Representative sample values")
     null_count: int = Field(description="Number of null values")
     unique_count: int = Field(description="Number of unique values")
-    statistics: Dict[str, Any] | None = Field(
+    statistics: dict[str, Any] | None = Field(
         None, description="Column statistics if numeric"
     )
     semantic_type: str | None = Field(
@@ -2113,8 +2112,8 @@ class ChartData(BaseModel):
     chart_type: str
 
     # Enhanced data description
-    columns: List[DataColumn] = Field(description="Rich column metadata")
-    data: List[Dict[str, Any]] = Field(description="Actual data rows")
+    columns: list[DataColumn] = Field(description="Rich column metadata")
+    data: list[dict[str, Any]] = Field(description="Actual data rows")
 
     # Data insights
     row_count: int = Field(description="Rows returned")
@@ -2123,9 +2122,9 @@ class ChartData(BaseModel):
 
     # LLM-friendly summaries
     summary: str = Field(description="Human-readable data summary")
-    insights: List[str] = Field(description="Key patterns discovered in the data")
-    data_quality: Dict[str, Any] = Field(description="Data quality assessment")
-    recommended_visualizations: List[str] = Field(
+    insights: list[str] = Field(description="Key patterns discovered in the data")
+    data_quality: dict[str, Any] = Field(description="Data quality assessment")
+    recommended_visualizations: list[str] = Field(
         description="Suggested chart types for this data"
     )
 
@@ -2180,7 +2179,7 @@ class GetChartPreviewRequest(QueryCacheControl):
     )
 
     @model_validator(mode="after")
-    def validate_identifier_or_form_data_key(self) -> "GetChartPreviewRequest":
+    def validate_identifier_or_form_data_key(self) -> GetChartPreviewRequest:
         if not self.identifier and not self.form_data_key:
             raise ValueError(
                 "At least one of 'identifier' or 'form_data_key' must be provided."
@@ -2252,7 +2251,7 @@ class VegaLitePreview(BaseModel):
     """Vega-Lite grammar of graphics specification."""
 
     type: Literal["vega_lite"] = "vega_lite"
-    specification: Dict[str, Any] = Field(..., description="Vega-Lite JSON spec")
+    specification: dict[str, Any] = Field(..., description="Vega-Lite JSON spec")
     data_url: str | None = Field(None, description="External data URL")
     supports_streaming: bool = Field(False, description="Supports live data updates")
 
@@ -2278,9 +2277,12 @@ class GenerateChartResponse(BaseModel):
 
     # Core chart information
     chart: ChartInfo | None = Field(None, description="Complete chart metadata")
+    chart_id: int | None = Field(None, description="Saved chart ID")
+    chart_name: str | None = Field(None, description="Saved chart name")
+    chart_url: str | None = Field(None, description="Saved chart explore page URL")
 
     # Multiple preview formats available
-    previews: Dict[str, ChartPreviewContent] = Field(
+    previews: dict[str, ChartPreviewContent] = Field(
         default_factory=dict,
         description="Available preview formats keyed by format type",
     )
@@ -2302,12 +2304,12 @@ class GenerateChartResponse(BaseModel):
         ),
     )
     embed_code: str | None = Field(None, description="HTML embed snippet")
-    api_endpoints: Dict[str, str] = Field(
+    api_endpoints: dict[str, str] = Field(
         default_factory=dict, description="Related API endpoints for data/updates"
     )
 
     # Form data for rendering charts in external clients (chatbot rendering)
-    form_data: Dict[str, Any] = Field(
+    form_data: dict[str, Any] = Field(
         default_factory=dict,
         description="Complete form_data configuration for rendering the chart",
     )
@@ -2329,7 +2331,7 @@ class GenerateChartResponse(BaseModel):
     error: ChartGenerationError | None = Field(
         None, description="Error details if creation failed"
     )
-    warnings: List[str] = Field(default_factory=list, description="Non-fatal warnings")
+    warnings: list[str] = Field(default_factory=list, description="Non-fatal warnings")
 
     # Inherit versioning
     schema_version: str = Field("2.0", description="Response schema version")
@@ -2392,7 +2394,7 @@ class GetChartSqlRequest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_identifier_or_form_data_key(self) -> "GetChartSqlRequest":
+    def validate_identifier_or_form_data_key(self) -> GetChartSqlRequest:
         if not self.identifier and not self.form_data_key:
             raise ValueError(
                 "At least one of 'identifier' or 'form_data_key' must be provided."
@@ -2485,7 +2487,7 @@ class AppliedDashboardFilter(BaseModel):
 class ChartFiltersInfo(BaseModel):
     """Structured representation of all filters applied to a chart."""
 
-    adhoc_filters: List[AdhocFilter] = Field(
+    adhoc_filters: list[AdhocFilter] = Field(
         default_factory=list,
         description=(
             "Adhoc filters configured on the chart. These are the primary "
@@ -2503,11 +2505,11 @@ class ChartFiltersInfo(BaseModel):
         None,
         description="Temporal column used for time-based filtering",
     )
-    extra_filters: List[Dict[str, Any]] = Field(
+    extra_filters: list[dict[str, Any]] = Field(
         default_factory=list,
         description=("Extra filters applied from dashboard context or URL parameters"),
     )
-    filters: List[Dict[str, Any]] = Field(
+    filters: list[dict[str, Any]] = Field(
         default_factory=list,
         description=(
             "Legacy top-level filters payload (older/simpler charts). "
@@ -2523,7 +2525,7 @@ class ChartFiltersInfo(BaseModel):
         None,
         description="Custom HAVING clause applied to the chart query",
     )
-    dashboard_filters: List[AppliedDashboardFilter] = Field(
+    dashboard_filters: list[AppliedDashboardFilter] = Field(
         default_factory=list,
         description=(
             "Dashboard-level native filters in scope for this chart on the "

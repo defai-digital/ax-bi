@@ -21,8 +21,9 @@ import contextlib
 import logging
 import os
 import re
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 from urllib import parse
 
 from flask import (
@@ -63,6 +64,7 @@ from superset.commands.explore.form_data.parameters import CommandParameters
 from superset.commands.explore.permalink.get import GetExplorePermalinkCommand
 from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
 from superset.connectors.sqla.models import BaseDatasource, SqlaTable
+from superset.constants import AX_OFFICE_ROUTE_PREFIX
 from superset.daos.chart import ChartDAO
 from superset.daos.datasource import DatasourceDAO
 from superset.dashboards.permalink.exceptions import DashboardPermalinkGetFailedError
@@ -91,6 +93,7 @@ from superset.utils.core import (
     get_user_id,
     ReservedUrlParameters,
 )
+from superset.utils.link_redirect import get_safe_redirect_target, relative_redirect
 from superset.views.base import (
     api,
     BaseSupersetView,
@@ -164,6 +167,8 @@ def _get_selected_column_names(selected_columns: object) -> list[str]:
 
 class Superset(BaseSupersetView):
     """The base views for Superset!"""
+
+    route_base = AX_OFFICE_ROUTE_PREFIX
 
     logger = logging.getLogger(__name__)
 
@@ -426,7 +431,7 @@ class Superset(BaseSupersetView):
         the form_data param with a form_data_key by saving the original content
         to the cache layer.
         """
-        redirect_url = request.url.replace("/superset/explore", "/explore")
+        redirect_url = request.url.replace(f"{AX_OFFICE_ROUTE_PREFIX}/explore", "/explore")
         form_data_key = None
         if request_form_data := request.args.get("form_data"):
             parsed_form_data = loads_request_json(request_form_data)
@@ -451,9 +456,7 @@ class Superset(BaseSupersetView):
             url = url._replace(query=parse.urlencode(query, True))
             redirect_url = parse.urlunparse(url)
 
-        # Return a relative URL
-        url = parse.urlparse(redirect_url)
-        return f"{url.path}?{url.query}" if url.query else url.path
+        return get_safe_redirect_target(redirect_url) or "/"
 
     @has_access
     @event_logger.log_this
@@ -480,7 +483,7 @@ class Superset(BaseSupersetView):
         key: str | None = None,
     ) -> FlaskResponse:
         if request.method == "GET":
-            return redirect(Superset.get_redirect_url())
+            return relative_redirect(Superset.get_redirect_url())
 
         initial_form_data = {}
 
@@ -782,8 +785,8 @@ class Superset(BaseSupersetView):
                 db.session.query(SqlaTable)
                 .join(Database)
                 .filter(
-                    Database.database_name == db_name
-                    or SqlaTable.table_name == table_name
+                    Database.database_name == db_name,
+                    SqlaTable.table_name == table_name,
                 )
             ).one_or_none()
             if not table:
@@ -891,15 +894,16 @@ class Superset(BaseSupersetView):
         url = url_for(
             "Superset.dashboard", dashboard_id_or_slug=dashboard_id, permalink_key=key
         )
+        extra_params: list[tuple[str, str]] = []
         if url_params := state.get("urlParams"):
-            for param_key, param_val in url_params:
-                # URL-encode every param value (including native_filters) so a
-                # value containing '&'/'#'/'=' cannot inject extra parameters
-                # into the redirect target. Flask decodes the value back on read.
-                params = parse.urlencode([(param_key, param_val)])
-                url = f"{url}&{params}"
+            extra_params.extend((param[0], param[1]) for param in url_params)
         if original_params := request.query_string.decode():
-            url = f"{url}&{original_params}"
+            extra_params.extend(
+                parse.parse_qsl(original_params, keep_blank_values=True)
+            )
+        if extra_params:
+            delimiter = "&" if "?" in url else "?"
+            url = f"{url}{delimiter}{parse.urlencode(extra_params)}"
         if hash_ := state.get("anchor", state.get("hash")):
             url = f"{url}#{hash_}"
 

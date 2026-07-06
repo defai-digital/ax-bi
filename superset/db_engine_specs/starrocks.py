@@ -349,7 +349,8 @@ class StarRocksEngineSpec(MySQLEngineSpec):
 
             for row in result:
                 try:
-                    if hasattr(row, "keys") and "Catalog" in row.keys():
+                    row_keys = row.keys() if hasattr(row, "keys") else ()
+                    if "Catalog" in row_keys:
                         catalogs.add(row["Catalog"])
                     elif hasattr(row, "Catalog"):
                         catalogs.add(row.Catalog)

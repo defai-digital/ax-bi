@@ -409,8 +409,8 @@ async def _list_rls_filters_python(
     """Run the authoritative Python RLS filter list path."""
 
     await ctx.info(
-        "Listing RLS filters: page=%s, page_size=%s, search=%s"
-        % (request.page, request.page_size, request.search)
+        f"Listing RLS filters: page={request.page}, "
+        f"page_size={request.page_size}, search={request.search}"
     )
 
     try:
@@ -455,8 +455,8 @@ async def _list_rls_filters_python(
             )
 
         await ctx.info(
-            "RLS filters listed: count=%s, total_count=%s"
-            % (len(result.rls_filters), result.total_count)
+            f"RLS filters listed: count={len(result.rls_filters)}, "
+            f"total_count={result.total_count}"
         )
 
         # Build column selection using ALL_RLS_COLUMNS as the source of truth,
@@ -478,7 +478,6 @@ async def _list_rls_filters_python(
 
     except Exception as e:
         await ctx.error(
-            "RLS filter listing failed: error=%s, error_type=%s"
-            % (str(e), type(e).__name__)
+            f"RLS filter listing failed: error={str(e)}, error_type={type(e).__name__}"
         )
         raise

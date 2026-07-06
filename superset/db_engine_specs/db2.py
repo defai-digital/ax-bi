@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional, Union
 
 from sqlalchemy.engine.reflection import Inspector
 
@@ -121,7 +120,7 @@ class Db2EngineSpec(BaseEngineSpec):
         cls,
         inspector: Inspector,
         table: Table,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Get comment of table from a given schema
 
@@ -147,8 +146,8 @@ class Db2EngineSpec(BaseEngineSpec):
     def get_prequeries(
         cls,
         database: Database,
-        catalog: Union[str, None] = None,
-        schema: Union[str, None] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> list[str]:
         """
         Set the search path to the specified schema.

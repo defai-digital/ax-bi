@@ -443,7 +443,7 @@ Credit:
 - [Version Strategy Discussion](https://github.com/apache/superset/discussions)
 
 ### Tools
-- [Release Scripts](https://github.com/apache/superset/tree/master/scripts/release)
-- [Superset Repository Scripts](https://github.com/apache/superset/tree/master/scripts)
+- [Release Scripts](https://github.com/defai-digital/ax-bi/tree/main/scripts/release)
+- [Superset Repository Scripts](https://github.com/defai-digital/ax-bi/tree/main/scripts)
 
 Next: Return to [Contributing Overview](./overview.md)

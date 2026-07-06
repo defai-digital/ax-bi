@@ -215,18 +215,17 @@ class ReportScheduleDAO(BaseDAO[ReportSchedule]):
         if not item:
             item = ReportSchedule()
 
-        if attributes:
-            if recipients := attributes.pop("recipients", None):
-                attributes["recipients"] = [
-                    ReportRecipients(
-                        type=recipient["type"],
-                        recipient_config_json=json.dumps(
-                            recipient["recipient_config_json"]
-                        ),
-                        report_schedule=item,
-                    )
-                    for recipient in recipients
-                ]
+        if attributes and (recipients := attributes.pop("recipients", None)):
+            attributes["recipients"] = [
+                ReportRecipients(
+                    type=recipient["type"],
+                    recipient_config_json=json.dumps(
+                        recipient["recipient_config_json"]
+                    ),
+                    report_schedule=item,
+                )
+                for recipient in recipients
+            ]
 
         return super().create(item, attributes)
 
@@ -247,19 +246,18 @@ class ReportScheduleDAO(BaseDAO[ReportSchedule]):
         if not item:
             item = ReportSchedule()
 
-        if attributes:
-            if "recipients" in attributes:
-                recipients = attributes.pop("recipients")
-                attributes["recipients"] = [
-                    ReportRecipients(
-                        type=recipient["type"],
-                        recipient_config_json=json.dumps(
-                            recipient["recipient_config_json"]
-                        ),
-                        report_schedule=item,
-                    )
-                    for recipient in recipients
-                ]
+        if attributes and "recipients" in attributes:
+            recipients = attributes.pop("recipients")
+            attributes["recipients"] = [
+                ReportRecipients(
+                    type=recipient["type"],
+                    recipient_config_json=json.dumps(
+                        recipient["recipient_config_json"]
+                    ),
+                    report_schedule=item,
+                )
+                for recipient in recipients
+            ]
 
         return super().update(item, attributes)
 

@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, cast, ClassVar, Sequence, TYPE_CHECKING
+from collections.abc import Sequence
+from typing import Any, cast, ClassVar, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd

@@ -62,8 +62,7 @@ def _get_redis_client() -> Any | None:
             return redis_client
 
         # Flask-Caching RedisCache also stores the raw client
-        raw = getattr(underlying, "_client", None)
-        return raw
+        return getattr(underlying, "_client", None)
     except Exception:  # pylint: disable=broad-except
         logger.debug("Fast cache: unable to obtain Redis client", exc_info=True)
         return None

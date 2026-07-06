@@ -18,7 +18,8 @@
 
 import logging
 from collections.abc import Iterator
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 import yaml
 
@@ -115,8 +116,7 @@ class ExportDatasetsCommand(ExportModelsCommand):
         # serialize. Convert all keys to regular strings to fix YAML serialization.
         payload = {str(key): value for key, value in payload.items()}
 
-        file_content = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
-        return file_content
+        return yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
 
     @staticmethod
     def _export(

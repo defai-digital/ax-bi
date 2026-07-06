@@ -33,7 +33,7 @@ superset:
 	uv pip install -e .
 
 	# Create an admin user in your metadata database
-	superset fab create-admin \
+	ax-bi fab create-admin \
                     --username admin \
                     --firstname "Admin I."\
                     --lastname Strator \
@@ -41,16 +41,16 @@ superset:
                     --password general
 
 	# Initialize the database
-	superset db upgrade
+	ax-bi db upgrade
 
 	# Create default roles and permissions
-	superset init
+	ax-bi init
 
 	# Load some data to play with
-	superset load-examples
+	ax-bi load-examples
 
 	# Install node packages
-	cd superset-frontend; npm ci
+	cd ax-bi-frontend; npm ci
 
 update: update-py update-js
 
@@ -65,14 +65,14 @@ update-py:
 	uv pip install -e .
 
 	# Initialize the database
-	superset db upgrade
+	ax-bi db upgrade
 
 	# Create default roles and permissions
-	superset init
+	ax-bi init
 
 update-js:
 	# Install js packages
-	cd superset-frontend; npm ci
+	cd ax-bi-frontend; npm ci
 
 venv:
 	# Create a virtual environment and activate it (recommended)
@@ -95,21 +95,21 @@ py-format: pre-commit
 	pre-commit run black --all-files
 
 js-format:
-	cd superset-frontend; npm run prettier
+	cd ax-bi-frontend; npm run prettier
 
 flask-app:
 	flask run -p 8088 --reload --debugger
 
 node-app:
-	cd superset-frontend; npm run dev-server
+	cd ax-bi-frontend; npm run dev-server
 
 build-cypress:
-	cd superset-frontend; npm run build-instrumented
-	cd superset-frontend/cypress-base; npm ci
+	cd ax-bi-frontend; npm run build-instrumented
+	cd ax-bi-frontend/cypress-base; npm ci
 
 open-cypress:
-	if ! [ $(port) ]; then cd superset-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:9000 npm run cypress open; fi
-	cd superset-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:$(port) npm run cypress open
+	if ! [ $(port) ]; then cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:9000 npm run cypress open; fi
+	cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:$(port) npm run cypress open
 
 report-celery-worker:
 	celery --app=superset.tasks.celery_app:app worker
@@ -118,7 +118,7 @@ report-celery-beat:
 	celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedulecd
 
 admin-user:
-	superset fab create-admin
+	ax-bi fab create-admin
 
 # Docker Compose with auto-assigned ports (for running multiple instances)
 up:

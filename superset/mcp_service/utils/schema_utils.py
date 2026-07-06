@@ -25,7 +25,8 @@ for input parameters, making MCP tools more flexible for different clients.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, List, Type, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -111,7 +112,7 @@ def parse_json_or_passthrough(
 
 def parse_json_or_list(
     value: Any, param_name: str = "parameter", item_separator: str = ","
-) -> List[Any]:
+) -> list[Any]:
     """
     Parse a value into a list, accepting JSON string, list, or comma-separated string.
 
@@ -171,24 +172,23 @@ def parse_json_or_list(
             logger.debug(
                 "Could not parse %s as JSON, trying comma-separated", param_name
             )
-            items = [
+            return [
                 item.strip() for item in value.split(item_separator) if item.strip()
             ]
-            return items
 
     # For any other type, wrap in a list
     logger.debug("Wrapping %s value in list", param_name)
     return [value]
 
 
-def parse_select_columns(value: Any) -> List[Any]:
+def parse_select_columns(value: Any) -> list[Any]:
     """Parse the standard MCP select_columns request parameter."""
     return parse_json_or_list(value, "select_columns")
 
 
 def parse_select_columns_or_default(
-    value: Any, default_columns: List[str]
-) -> List[Any]:
+    value: Any, default_columns: list[str]
+) -> list[Any]:
     """Parse MCP select_columns, falling back to defaults when omitted or empty."""
     if value is None:
         return list(default_columns)
@@ -196,7 +196,7 @@ def parse_select_columns_or_default(
     return parsed if parsed else list(default_columns)
 
 
-def parse_filters(value: Any, model_class: Type[ModelT]) -> List[ModelT]:
+def parse_filters(value: Any, model_class: type[ModelT]) -> list[ModelT]:
     """Parse the standard MCP structured filters request parameter."""
     return parse_json_or_model_list(value, model_class, "filters")
 
@@ -212,7 +212,7 @@ def ensure_search_and_filters_not_combined(
 
 
 def parse_json_or_model(
-    value: Any, model_class: Type[ModelT], param_name: str = "parameter"
+    value: Any, model_class: type[ModelT], param_name: str = "parameter"
 ) -> ModelT:
     """
     Parse a value into a Pydantic model, accepting JSON string or dict.
@@ -255,9 +255,9 @@ def parse_json_or_model(
 
 def parse_json_or_model_list(
     value: Any,
-    model_class: Type[ModelT],
+    model_class: type[ModelT],
     param_name: str = "parameter",
-) -> List[ModelT]:
+) -> list[ModelT]:
     """
     Parse a value into a list of Pydantic models, accepting JSON string or list.
 
@@ -313,7 +313,7 @@ def parse_json_or_model_list(
 # Pydantic validator decorators for common use cases
 def json_or_passthrough_validator(
     param_name: str | None = None, strict: bool = False
-) -> Callable[[Type[BaseModel], Any, Any], Any]:
+) -> Callable[[type[BaseModel], Any, Any], Any]:
     """
     Decorator factory for Pydantic field validators that accept JSON or objects.
 
@@ -337,7 +337,7 @@ def json_or_passthrough_validator(
         ...         return parse_json_or_passthrough(v, 'config')
     """
 
-    def validator(cls: Type[BaseModel], v: Any, info: Any = None) -> Any:
+    def validator(cls: type[BaseModel], v: Any, info: Any = None) -> Any:
         # Use field name from validation info if param_name not provided
         field_name = param_name or (info.field_name if info else "field")
         return parse_json_or_passthrough(v, field_name, strict)
@@ -347,7 +347,7 @@ def json_or_passthrough_validator(
 
 def json_or_list_validator(
     param_name: str | None = None, item_separator: str = ","
-) -> Callable[[Type[BaseModel], Any, Any], List[Any]]:
+) -> Callable[[type[BaseModel], Any, Any], list[Any]]:
     """
     Decorator factory for Pydantic validators that parse values into lists.
 
@@ -360,7 +360,7 @@ def json_or_list_validator(
 
     Example:
         >>> class MySchema(BaseModel):
-        ...     items: List[str]
+        ...     items: list[str]
         ...
         ...     @field_validator('items', mode='before')
         ...     @classmethod
@@ -368,7 +368,7 @@ def json_or_list_validator(
         ...         return parse_json_or_list(v, 'items')
     """
 
-    def validator(cls: Type[BaseModel], v: Any, info: Any = None) -> List[Any]:
+    def validator(cls: type[BaseModel], v: Any, info: Any = None) -> list[Any]:
         field_name = param_name or (info.field_name if info else "field")
         return parse_json_or_list(v, field_name, item_separator)
 
@@ -376,8 +376,8 @@ def json_or_list_validator(
 
 
 def json_or_model_list_validator(
-    model_class: Type[BaseModel], param_name: str | None = None
-) -> Callable[[Type[BaseModel], Any, Any], List[BaseModel]]:
+    model_class: type[BaseModel], param_name: str | None = None
+) -> Callable[[type[BaseModel], Any, Any], list[BaseModel]]:
     """
     Decorator factory for Pydantic validators that parse lists of models.
 
@@ -394,7 +394,7 @@ def json_or_model_list_validator(
         ...     value: str
         ...
         >>> class MySchema(BaseModel):
-        ...     filters: List[FilterModel]
+        ...     filters: list[FilterModel]
         ...
         ...     @field_validator('filters', mode='before')
         ...     @classmethod
@@ -402,7 +402,7 @@ def json_or_model_list_validator(
         ...         return parse_json_or_model_list(v, FilterModel, 'filters')
     """
 
-    def validator(cls: Type[BaseModel], v: Any, info: Any = None) -> List[BaseModel]:
+    def validator(cls: type[BaseModel], v: Any, info: Any = None) -> list[BaseModel]:
         field_name = param_name or (info.field_name if info else "field")
         return parse_json_or_model_list(v, model_class, field_name)
 

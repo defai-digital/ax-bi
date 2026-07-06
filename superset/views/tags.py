@@ -24,6 +24,7 @@ from flask_appbuilder.security.decorators import has_access, has_access_api
 from werkzeug.exceptions import NotFound
 
 from superset import db, is_feature_enabled
+from superset.constants import AX_OFFICE_ROUTE_PREFIX
 from superset.superset_typing import FlaskResponse
 from superset.tags.models import Tag
 from superset.utils import json
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class TagModelView(SupersetModelView):
-    route_base = "/superset/tags"
+    route_base = f"{AX_OFFICE_ROUTE_PREFIX}/tags"
     datamodel = SQLAInterface(Tag)
     class_permission_name = "Tags"
     include_route_methods = {"list"}

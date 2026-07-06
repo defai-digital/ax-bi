@@ -26,6 +26,7 @@ to assemble the dashboard.
 from __future__ import annotations
 
 import logging
+import uuid
 from typing import Any
 
 from superset_core.mcp.decorators import tool, ToolAnnotations
@@ -38,6 +39,7 @@ except ModuleNotFoundError:
 from superset.mcp_service.ai.asset_search import search_assets
 from superset.mcp_service.ai.schemas import (
     ChartIntentDetail,
+    DashboardPlan,
     DashboardPlanFull,
     DashboardPlanRequest,
     DashboardPlanResponse,
@@ -62,8 +64,13 @@ def _discover_datasets(
     When ``pinned_ids`` are provided, look those up directly.
     Otherwise use asset search to discover candidates.
 
+    Each returned dict includes 'columns' — a list of column metadata
+    dicts with 'name', 'type', and 'is_numeric' — so that the planner
+    can populate chart intents with meaningful metrics and dimensions.
+
     Returns:
-        List of dicts with 'id', 'name', 'description', 'certified'.
+        List of dicts with 'id', 'name', 'description', 'certified',
+        'columns'.
     """
     if pinned_ids:
         from superset.daos.dataset import DatasetDAO
@@ -78,6 +85,7 @@ def _discover_datasets(
                         "name": getattr(ds, "table_name", ""),
                         "description": getattr(ds, "description", None) or "",
                         "certified": bool(getattr(ds, "certified_by", None)),
+                        "columns": _extract_columns(ds),
                     }
                 )
         return results
@@ -89,15 +97,120 @@ def _discover_datasets(
         include_certified_only=False,
         limit=limit,
     )
-    return [
-        {
+    results = []
+    for a in assets:
+        ds_dict: dict[str, Any] = {
             "id": a.id,
             "name": a.name,
             "description": a.description or "",
             "certified": a.certified,
         }
-        for a in assets
-    ]
+        # Fetch columns for discovered datasets
+        from superset.daos.dataset import DatasetDAO
+
+        ds = DatasetDAO.find_by_id(a.id)
+        ds_dict["columns"] = _extract_columns(ds) if ds else []
+        results.append(ds_dict)
+    return results
+
+
+_NUMERIC_TYPES = frozenset(
+    {
+        "INT",
+        "INTEGER",
+        "BIGINT",
+        "SMALLINT",
+        "TINYINT",
+        "FLOAT",
+        "DOUBLE",
+        "DOUBLE PRECISION",
+        "REAL",
+        "DECIMAL",
+        "NUMERIC",
+        "NUMBER",
+        "INT64",
+        "INT32",
+        "INT16",
+        "INT8",
+        "FLOAT64",
+        "FLOAT32",
+    }
+)
+
+
+def _extract_columns(ds: Any | None) -> list[dict[str, Any]]:
+    """Extract column metadata from a dataset ORM object.
+
+    Returns a compact list of column dicts suitable for LLM context:
+    ``[{"name": "revenue", "type": "FLOAT", "is_numeric": True}, ...]``
+    """
+    if ds is None:
+        return []
+    columns: list[dict[str, Any]] = []
+    for col in getattr(ds, "columns", []) or []:
+        col_name = getattr(col, "column_name", "")
+        if not col_name:
+            continue
+        col_type = str(getattr(col, "type", "") or "").upper()
+        is_numeric = (
+            "NUMERIC" in col_type
+            or "FLOAT" in col_type
+            or "DOUBLE" in col_type
+            or "INT" in col_type
+            or "DECIMAL" in col_type
+            or col_type in _NUMERIC_TYPES
+        )
+        is_dttm = (
+            bool(getattr(col, "is_dttm", False))
+            or "DATE" in col_type
+            or "TIME" in col_type
+        )
+        columns.append(
+            {
+                "name": col_name,
+                "type": col_type or "VARCHAR",
+                "is_numeric": is_numeric,
+                "is_dttm": is_dttm,
+            }
+        )
+    return columns
+
+
+def _detect_by_dimension(prompt: str, category_cols: list[str]) -> str:
+    """Detect a 'by <category>' grouping from the prompt.
+
+    Returns the matched category column name, or empty string.
+    Example: 'revenue by client' -> 'Client' (if 'Client' is a column).
+
+    Matching priority:
+    1. Exact match (case-insensitive)
+    2. Substring match (keyword is in column name)
+    3. Fallback to first category column
+    """
+    import re
+
+    by_match = re.search(r"\bby\s+(\w+(?:\s+\w+)?)", prompt, re.IGNORECASE)
+    if not by_match:
+        return ""
+    keyword = by_match.group(1).strip().lower()
+
+    # Priority 1: exact match (case-insensitive)
+    for cat in category_cols:
+        if cat.lower() == keyword:
+            return cat
+
+    # Priority 2: keyword appears within column name
+    for cat in category_cols:
+        if keyword in cat.lower():
+            return cat
+
+    # Priority 3: column name appears within keyword
+    for cat in category_cols:
+        if cat.lower() in keyword:
+            return cat
+
+    # Fallback to the first category column
+    return category_cols[0] if category_cols else ""
 
 
 def _build_chart_intents_heuristic(
@@ -109,7 +222,17 @@ def _build_chart_intents_heuristic(
 
     This is the heuristic fallback when no LLM provider is configured.
     It creates a reasonable set of chart intents based on common dashboard
-    patterns.
+    patterns, using actual column names from the dataset metadata when
+    available.
+
+    Recognised prompt patterns:
+    - trend / monthly / over time  → line chart (xy)
+    - top / bottom / ranking      → horizontal bar (ranking)
+    - by <category> / by region   → bar chart grouped by that category
+    - breakdown / composition     → pie chart
+    - kpi / headline / total      → big number
+    - multiple numeric columns    → multi-metric comparison bar
+    - (always)                    → summary table
     """
     import re
 
@@ -118,60 +241,112 @@ def _build_chart_intents_heuristic(
 
     intents: list[ChartIntentDetail] = []
     primary_ds = datasets[0]
+    columns = primary_ds.get("columns", [])
 
-    # Pattern: trend over time
-    if re.search(r"\b(trend|over time|history|growth|change)\b", prompt, re.IGNORECASE):
+    # Identify useful column categories
+    numeric_cols = [c["name"] for c in columns if c.get("is_numeric")]
+    dttm_cols = [c["name"] for c in columns if c.get("is_dttm")]
+    category_cols = [
+        c["name"] for c in columns if not c.get("is_numeric") and not c.get("is_dttm")
+    ]
+
+    # Pick the best metric column (first numeric found)
+    default_metric = numeric_cols[0] if numeric_cols else ""
+    # Pick the best dimension (first category column found)
+    default_dimension = category_cols[0] if category_cols else ""
+    # Pick the best time column
+    default_time_col = dttm_cols[0] if dttm_cols else ""
+
+    # --- Pattern: "by <category>" grouping (e.g. "revenue by client") ---
+    by_dimension = _detect_by_dimension(prompt, category_cols)
+
+    if by_dimension:
+        metrics = numeric_cols[:3] if len(numeric_cols) <= 6 else [default_metric]
+        intents.append(
+            ChartIntentDetail(
+                purpose=f"Show metrics grouped by {by_dimension}",
+                chart_type="xy",
+                dataset_id=primary_ds["id"],
+                metrics=metrics,
+                dimensions=[by_dimension],
+            )
+        )
+
+    # --- Pattern: trend over time ---
+    if re.search(
+        r"\b(trend|over time|history|growth|change|monthly|yearly)\b",
+        prompt,
+        re.IGNORECASE,
+    ):
+        time_range = "No limit"
+        metrics = [default_metric] if default_metric else []
+        # For wide-format data (many numeric cols, no datetime col),
+        # use all numeric columns as separate series for comparison
+        if not default_time_col and len(numeric_cols) >= 3:
+            metrics = numeric_cols[:6]
+            dims: list[str] = [default_dimension] if default_dimension else []
+        else:
+            dims = [default_time_col] if default_time_col else []
         intents.append(
             ChartIntentDetail(
                 purpose="Show trend over time",
                 chart_type="xy",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
-                time_range="Last 90 days",
+                metrics=metrics,
+                dimensions=dims,
+                time_range=time_range,
             )
         )
 
-    # Pattern: top/bottom ranking
+    # --- Pattern: top/bottom ranking ---
     if re.search(
         r"\b(top|bottom|ranking|leaderboard|best|worst)\b", prompt, re.IGNORECASE
     ):
+        metrics = [default_metric] if default_metric else []
+        dims = [default_dimension] if default_dimension else []
         intents.append(
             ChartIntentDetail(
                 purpose="Show top items by key metric",
                 chart_type="xy",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
+                metrics=metrics,
+                dimensions=dims,
             )
         )
 
-    # Pattern: breakdown/composition
+    # --- Pattern: breakdown/composition ---
     if re.search(
-        r"\b(breakdown|composition|share|proportion|by category|by region)\b",
+        r"\b(breakdown|composition|share|proportion|by category|by region|by type)\b",
         prompt,
         re.IGNORECASE,
     ):
+        metrics = [default_metric] if default_metric else []
+        dims = (
+            [by_dimension or default_dimension]
+            if (by_dimension or default_dimension)
+            else []
+        )
         intents.append(
             ChartIntentDetail(
                 purpose="Show breakdown by category",
                 chart_type="pie",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
+                metrics=metrics,
+                dimensions=dims,
             )
         )
 
-    # Pattern: KPI / headline numbers
+    # --- Pattern: KPI / headline numbers ---
     if re.search(
         r"\b(kpi|headline|total|summary|overview|key metric)\b", prompt, re.IGNORECASE
     ):
+        metrics = [default_metric] if default_metric else []
         intents.append(
             ChartIntentDetail(
                 purpose="Show key performance indicators",
                 chart_type="big_number",
                 dataset_id=primary_ds["id"],
-                metrics=[],
+                metrics=metrics,
                 dimensions=[],
             )
         )
@@ -183,8 +358,8 @@ def _build_chart_intents_heuristic(
                 purpose="Detailed data table",
                 chart_type="table",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
+                metrics=numeric_cols[:3] if numeric_cols else [],
+                dimensions=category_cols[:3] if category_cols else [],
             )
         )
 
@@ -195,23 +370,22 @@ def _build_chart_intents_heuristic(
                 purpose="Key metrics overview",
                 chart_type="big_number",
                 dataset_id=primary_ds["id"],
-                metrics=[],
+                metrics=[default_metric] if default_metric else [],
                 dimensions=[],
             ),
             ChartIntentDetail(
-                purpose="Trend over time",
+                purpose="Breakdown by category",
                 chart_type="xy",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
-                time_range="Last 90 days",
+                metrics=[default_metric] if default_metric else [],
+                dimensions=([default_dimension] if default_dimension else []),
             ),
             ChartIntentDetail(
                 purpose="Detailed data",
                 chart_type="table",
                 dataset_id=primary_ds["id"],
-                metrics=[],
-                dimensions=[],
+                metrics=numeric_cols[:3] if numeric_cols else [],
+                dimensions=category_cols[:3] if category_cols else [],
             ),
         ]
 
@@ -232,12 +406,26 @@ def _plan_with_llm(
         # StubLLMProvider raises NotImplementedError on complete_json
         # so this naturally falls through to heuristic
 
-        # Build dataset context for the LLM
-        ds_context = "\n".join(
-            f"- {d['name']} (id={d['id']}, certified={d['certified']}): "
-            f"{d['description']}"
-            for d in datasets
-        )
+        # Build dataset context for the LLM (includes column metadata)
+        ds_context_parts = []
+        for d in datasets:
+            cols = d.get("columns", [])
+            col_str = ""
+            if cols:
+                col_items = []
+                for c in cols[:20]:  # Limit to 20 columns for context
+                    type_hint = ""
+                    if c.get("is_numeric"):
+                        type_hint = " [numeric]"
+                    elif c.get("is_dttm"):
+                        type_hint = " [datetime]"
+                    col_items.append(f"{c['name']}{type_hint}")
+                col_str = f"\n  Columns: {', '.join(col_items)}"
+            ds_context_parts.append(
+                f"- {d['name']} (id={d['id']}, certified={d['certified']}): "
+                f"{d['description']}{col_str}"
+            )
+        ds_context = "\n".join(ds_context_parts)
 
         system_prompt = (
             "You are a dashboard design expert. Given a user request and available "
@@ -310,14 +498,17 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
     ```
     """
     await ctx.info(
-        "Planning dashboard: prompt='%s', datasets=%s"
-        % (request.prompt[:80], request.dataset_candidates)
+        f"Planning dashboard: prompt='{request.prompt[:80]}', "
+        f"datasets={request.dataset_candidates}"
     )
+
+    # Generate a unique plan session ID for lineage tracking
+    plan_id = str(uuid.uuid4())
 
     if not user_can_view_data_model_metadata():
         await ctx.warning("Dashboard planning blocked by privacy controls")
         return DashboardPlanResponse(
-            plan=_empty_plan(),
+            plan=_empty_plan(plan_id),
             warnings=["You don't have permission to access dataset metadata."],
         ).model_dump()
 
@@ -337,7 +528,7 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
             "No datasets found. Specify dataset_candidates or rephrase the prompt."
         )
         return DashboardPlanResponse(
-            plan=_empty_plan(),
+            plan=_empty_plan(plan_id),
             warnings=all_warnings,
         ).model_dump()
 
@@ -348,6 +539,8 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
 
     if llm_result is not None:
         plan, plan_warnings = llm_result
+        # Ensure the LLM-returned plan uses our session plan_id
+        plan.plan_id = plan_id
         all_warnings.extend(plan_warnings)
     else:
         # Heuristic fallback
@@ -359,6 +552,7 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
             "Configure GENAI_LLM_PROVIDER_CONFIG for better results."
         )
         plan = DashboardPlanFull(
+            plan_id=plan_id,
             title=_derive_title(request.prompt),
             description=request.prompt[:200],
             datasets=datasets,
@@ -373,10 +567,13 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
 
     # Step 3: Build response
     await ctx.report_progress(3, 3, "Building response")
-    # Convert to the response schema format
+    # Build the response plan with full planning context
     response_plan = DashboardPlan(
+        plan_id=plan_id,
         title=plan.title,
-        business_goal=plan.description,
+        description=plan.description,
+        datasets=plan.datasets,
+        chart_intents=plan.chart_intents,
         global_filters=plan.global_filters,
         sections=[
             DashboardPlanSection(
@@ -384,11 +581,15 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
                 chart_intents=[ci.model_dump() for ci in plan.chart_intents],
             )
         ],
+        layout_hints=plan.layout_hints,
+        assumptions=plan.assumptions,
+        clarifying_questions=plan.clarifying_questions,
+        confidence=plan.confidence,
     )
 
     await ctx.info(
-        "Dashboard plan created: title='%s', charts=%d, confidence=%.2f"
-        % (plan.title, len(plan.chart_intents), plan.confidence)
+        f"Dashboard plan created: title='{plan.title}', "
+        f"charts={len(plan.chart_intents)}, confidence={plan.confidence:.2f}"
     )
 
     return DashboardPlanResponse(
@@ -397,11 +598,11 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
     ).model_dump()
 
 
-def _empty_plan() -> DashboardPlan:
+def _empty_plan(plan_id: str | None = None) -> DashboardPlan:
     """Return an empty dashboard plan."""
     return DashboardPlan(
+        plan_id=plan_id or str(uuid.uuid4()),
         title="Untitled Dashboard",
-        business_goal="",
         sections=[],
     )
 
@@ -430,7 +631,3 @@ def _derive_title(prompt: str) -> str:
     if meaningful:
         return " ".join(meaningful).title() + " Dashboard"
     return "Dashboard"
-
-
-# Re-import for the response conversion
-from superset.mcp_service.ai.schemas import DashboardPlan  # noqa: E402
