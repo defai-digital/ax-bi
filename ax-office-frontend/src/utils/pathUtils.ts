@@ -40,8 +40,8 @@ export function normalizeLegacyRoutePrefix(path: string): string {
     return path;
   }
   return path
-    .replace(/(^|\/)superset(?=[/?#]|$)/, '$1ax-office')
-    .replace(/(^|\/)ax-bi(?=[/?#]|$)/, '$1ax-office');
+    .replace(/(^|\/)superset(?=[/?#]|$)/, '$1ax-bi')
+    .replace(/(^|\/)ax-office(?=[/?#]|$)/, '$1ax-bi');
 }
 
 /**

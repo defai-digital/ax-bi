@@ -31,7 +31,7 @@ import {
   Skeleton,
   Flex,
 } from '@superset-ui/core/components';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { Icons } from '@superset-ui/core/components/Icons';
 import type { SqlLabRootState } from 'src/SqlLab/types';
 import { CopyToClipboard, FilterableTable } from 'src/components';

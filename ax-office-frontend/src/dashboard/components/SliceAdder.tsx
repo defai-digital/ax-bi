@@ -18,7 +18,7 @@
  */
 /* eslint-env browser */
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
 // @ts-expect-error
 import { createFilter } from 'react-search-input';

@@ -28,7 +28,7 @@ The MCP service operates as a standalone FastMCP server.
 Quick Start:
 -----------
 # Run the MCP server
-ax-office mcp run --port 5009
+ax-bi mcp run --port 5009
 
 # The service will be available at:
 # http://localhost:5009/mcp/

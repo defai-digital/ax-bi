@@ -224,7 +224,21 @@ test('normalizeLegacyRoutePrefix should replace legacy Superset path segment onl
   );
 });
 
-test('normalizeLegacyRoutePrefix should replace legacy AX-BI path segment', async () => {
+test('normalizeLegacyRoutePrefix should replace legacy AX-Office path segment', async () => {
+  const { normalizeLegacyRoutePrefix } = await loadPathUtils('/ax-bi/');
+
+  expect(normalizeLegacyRoutePrefix('/ax-office/dashboard/1/')).toBe(
+    '/ax-bi/dashboard/1/',
+  );
+  expect(normalizeLegacyRoutePrefix('/ax-office/welcome/')).toBe(
+    '/ax-bi/welcome/',
+  );
+  expect(normalizeLegacyRoutePrefix('/my-app/ax-office/explore')).toBe(
+    '/my-app/ax-bi/explore',
+  );
+});
+
+test('normalizeLegacyRoutePrefix should keep current AX-BI path segment', async () => {
   const { normalizeLegacyRoutePrefix } = await loadPathUtils('/ax-bi/');
 
   expect(normalizeLegacyRoutePrefix('/ax-bi/dashboard/1/')).toBe(
@@ -242,6 +256,9 @@ test('normalizeLegacyRoutePrefix should handle URLs with query strings', async (
   // Query string immediately after legacy prefix
   expect(normalizeLegacyRoutePrefix('/superset?foo=bar')).toBe(
     '/ax-bi?foo=bar',
+  );
+  expect(normalizeLegacyRoutePrefix('/ax-office?new=true')).toBe(
+    '/ax-bi?new=true',
   );
   expect(normalizeLegacyRoutePrefix('/ax-bi?new=true')).toBe(
     '/ax-bi?new=true',
@@ -285,6 +302,7 @@ test('normalizeLegacyRoutePrefix should handle bare prefix without trailing slas
 
   // Bare prefix (no trailing slash, no subpath)
   expect(normalizeLegacyRoutePrefix('/superset')).toBe('/ax-bi');
+  expect(normalizeLegacyRoutePrefix('/ax-office')).toBe('/ax-bi');
   expect(normalizeLegacyRoutePrefix('/ax-bi')).toBe('/ax-bi');
   // With deployment root
   expect(normalizeLegacyRoutePrefix('/analytics/superset')).toBe(

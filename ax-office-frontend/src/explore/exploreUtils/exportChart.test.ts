@@ -27,7 +27,9 @@ jest.mock('src/utils/export', () => ({
 jest.mock('src/utils/pathUtils', () => ({
   ensureAppRoot: jest.fn((path: string) => path),
   normalizeLegacyRoutePrefix: jest.fn((path: string) =>
-    path.replace(/(^|\/)superset(?=\/|$)/, '$1ax-office'),
+    path
+      .replace(/(^|\/)superset(?=\/|$)/, '$1ax-bi')
+      .replace(/(^|\/)ax-office(?=\/|$)/, '$1ax-bi'),
   ),
 }));
 
