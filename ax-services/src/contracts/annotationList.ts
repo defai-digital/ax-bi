@@ -16,32 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const ANNOTATION_LIST_CONTRACT_VERSION = 'annotation-list.v1';
 
-export type AnnotationFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type AnnotationFilterValue = SharedListFilterValue;
 
-export interface AnnotationListFilter {
-  col: string;
-  opr: string;
-  value: AnnotationFilterValue;
-}
+export type AnnotationListFilter = SharedListFilter;
 
-export interface AnnotationListRequest {
-  contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;
+export interface AnnotationListRequest
+  extends ListRequestBase<typeof ANNOTATION_LIST_CONTRACT_VERSION> {
   layerId: number;
-  filters: AnnotationListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
 }
 
 export interface AnnotationListItem {
@@ -54,136 +46,46 @@ export interface AnnotationListItem {
   layerId?: number;
 }
 
-export interface AnnotationListResponse {
-  contractVersion: typeof ANNOTATION_LIST_CONTRACT_VERSION;
+export interface AnnotationListResponse
+  extends ListResponseBase<typeof ANNOTATION_LIST_CONTRACT_VERSION> {
   annotations: AnnotationListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
   layerId: number;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const annotationFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const annotationListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     shortDescr: { type: 'string' },
     longDescr: { type: 'string' },
     startDttm: { type: 'string' },
     endDttm: { type: 'string' },
     jsonMetadata: { type: 'string' },
-    layerId: { type: 'number' },
+    layerId: { type: 'integer', minimum: 0 },
   },
 } as const;
 
-export const annotationListRequestSchema = {
-  $id: 'ax-services.annotation-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'layerId',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ANNOTATION_LIST_CONTRACT_VERSION },
-    layerId: { type: 'number', minimum: 1 },
-    filters: {
-      type: 'array',
-      items: annotationFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+export const annotationListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.annotation-list.v1.request',
+  contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+  leadingRequired: ['layerId'],
+  leadingProperties: {
+    layerId: { type: 'integer', minimum: 1 },
   },
-} as const;
+});
 
-export const annotationListResponseSchema = {
-  $id: 'ax-services.annotation-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'annotations',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'layerId',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: ANNOTATION_LIST_CONTRACT_VERSION },
-    annotations: {
-      type: 'array',
-      items: annotationListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    layerId: { type: 'number' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
+export const annotationListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.annotation-list.v1.response',
+  contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
+  collectionKey: 'annotations',
+  itemSchema: annotationListItemSchema,
+  middleRequired: ['layerId'],
+  middleProperties: {
+    layerId: { type: 'integer', minimum: 0 },
   },
-} as const;
+});
 
 export const annotationListContractSchemas = {
   annotationListRequestSchema,

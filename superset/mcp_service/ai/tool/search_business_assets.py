@@ -78,13 +78,9 @@ async def search_business_assets(
     ```
     """
     await ctx.info(
-        "Searching business assets: query='%s', types=%s, certified_only=%s, limit=%d"
-        % (
-            request.query,
-            request.asset_types,
-            request.include_certified_only,
-            request.limit,
-        )
+        f"Searching business assets: query='{request.query}', "
+        f"types={request.asset_types}, "
+        f"certified_only={request.include_certified_only}, limit={request.limit}"
     )
 
     # Privacy check
@@ -104,15 +100,15 @@ async def search_business_assets(
                 limit=request.limit,
             )
 
-        await ctx.info("Asset search completed: found %d results" % len(results))
+        await ctx.info(f"Asset search completed: found {len(results)} results")
 
         response = AssetSearchResponse(assets=results, warnings=[])
         return response.model_dump()
 
     except Exception as e:
         await ctx.error(
-            "Asset search failed: query='%s', error=%s, error_type=%s"
-            % (request.query, str(e), type(e).__name__)
+            f"Asset search failed: query='{request.query}', error={e}, "
+            f"error_type={type(e).__name__}"
         )
         return AssetSearchResponse(
             assets=[],

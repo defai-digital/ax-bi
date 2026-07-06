@@ -1,0 +1,41 @@
+{
+  "name": "@superset-ui/legacy-plugin-chart-chord",
+  "version": "0.20.3",
+  "description": "Superset Legacy Chart - Chord Diagram",
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "lib/index.js",
+  "module": "esm/index.js",
+  "files": [
+    "esm",
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apache/superset.git",
+    "directory": "ax-office-frontend/plugins/legacy-plugin-chart-chord"
+  },
+  "keywords": [
+    "superset"
+  ],
+  "author": "Superset",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/apache/superset/issues"
+  },
+  "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-office-frontend/plugins/legacy-plugin-chart-chord#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "d3": "^3.5.17",
+    "prop-types": "^15.8.1",
+    "react": "^19.2.7"
+  },
+  "peerDependencies": {
+    "@apache-superset/core": "*",
+    "@superset-ui/chart-controls": "*",
+    "@superset-ui/core": "*"
+  }
+}

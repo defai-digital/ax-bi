@@ -116,9 +116,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version-file: "./superset-frontend/.nvmrc"
+          node-version-file: "./ax-bi-frontend/.nvmrc"
           cache: "npm"
-          cache-dependency-path: "superset-frontend/package-lock.json"
+          cache-dependency-path: "ax-bi-frontend/package-lock.json"
       - name: Install npm dependencies
         uses: ./.github/actions/cached-dependencies
         with:
@@ -167,6 +167,6 @@ jobs:
         if: failure()
         with:
           path: |
-            ${{ github.workspace }}/superset-frontend/playwright-results/
-            ${{ github.workspace }}/superset-frontend/test-results/
+            ${{ github.workspace }}/ax-bi-frontend/playwright-results/
+            ${{ github.workspace }}/ax-bi-frontend/test-results/
           name: playwright-experimental-artifact-${{ github.run_id }}-${{ github.job }}-${{ matrix.browser }}--${{ steps.set-safe-app-root.outputs.safe_app_root }}

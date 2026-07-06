@@ -48,7 +48,7 @@ def test_theme_put_schema_returns_sanitized_json_data() -> None:
     result = ThemePutSchema().load(payload)
 
     assert json.loads(result["json_data"]) == {
-        "token": {"brandSpinnerSvg": '<svg "alert(1)"></svg>'}
+        "token": {"brandSpinnerSvg": "<svg></svg>"}
     }
 
 

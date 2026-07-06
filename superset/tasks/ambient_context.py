@@ -16,9 +16,9 @@
 # under the License.
 """Ambient context management for the Global Task Framework (GTF)"""
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Iterator
 
 from superset.tasks.context import TaskContext
 

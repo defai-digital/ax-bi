@@ -39,7 +39,7 @@ export type StreamResult = [
   record: [label: 'data', data: string],
 ];
 
-// sync with superset-frontend/src/components/ErrorMessage/types
+// sync with ax-bi-frontend/src/components/ErrorMessage/types
 export type ErrorLevel = 'info' | 'warning' | 'error';
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export type SupersetError<ExtraType = Record<string, any> | null> = {
@@ -636,11 +636,13 @@ export const cleanChannel = (channel: string) => {
   }
 };
 
+const MAX_FASTIFY_BODY_LIMIT_BYTES = Number.MAX_SAFE_INTEGER;
+
 // Fastify HTTP API server (Fast Data API Gateway)
 const fastify = Fastify({
   logger: false,
-  // Keep Fastify's body limit effectively unbounded for large chart payloads.
-  bodyLimit: Number.MAX_SAFE_INTEGER,
+  // Chart data payloads can be large; Fastify requires a positive integer.
+  bodyLimit: MAX_FASTIFY_BODY_LIMIT_BYTES,
 });
 
 export const getFastify = (): ReturnType<typeof Fastify> => fastify;

@@ -18,10 +18,8 @@
 
 import pytest
 import rison
-from flask import (
-    current_app,
-    escape,  # noqa: F401
-)
+from flask import current_app
+from markupsafe import escape  # noqa: F401
 
 from superset.daos.dashboard import DashboardDAO
 from superset.utils import json
@@ -82,9 +80,7 @@ class TestDashboardDatasetSecurity(DashboardTestCase):
         }
 
         # act
-        responses_by_url = {
-            url: self.client.get(url) for url in dashboard_title_by_url.keys()
-        }
+        responses_by_url = {url: self.client.get(url) for url in dashboard_title_by_url}
 
         # assert
         for dashboard_url, get_dashboard_response in responses_by_url.items():  # noqa: B007

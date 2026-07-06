@@ -90,7 +90,7 @@ class QueryEstimationCommand(BaseCommand):
         db_engine_spec = self._database.db_engine_spec
         parsed_script = SQLScript(sql, engine=db_engine_spec.engine)
 
-        disallowed_functions = app.config["DISALLOWED_SQL_FUNCTIONS"].get(
+        disallowed_functions = (app.config.get("DISALLOWED_SQL_FUNCTIONS") or {}).get(
             db_engine_spec.engine,
             set(),
         )
@@ -99,7 +99,7 @@ class QueryEstimationCommand(BaseCommand):
         ):
             raise SupersetDisallowedSQLFunctionException(disallowed_functions)
 
-        disallowed_tables = app.config["DISALLOWED_SQL_TABLES"].get(
+        disallowed_tables = (app.config.get("DISALLOWED_SQL_TABLES") or {}).get(
             db_engine_spec.engine,
             set(),
         )
@@ -209,5 +209,4 @@ class QueryEstimationCommand(BaseCommand):
         query_cost_formatter = query_cost_formatters.get(
             spec.engine, spec.query_cost_formatter
         )
-        cost = query_cost_formatter(cost)
-        return cost
+        return query_cost_formatter(cost)

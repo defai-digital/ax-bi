@@ -1588,7 +1588,7 @@ class TestDatasetApi(SupersetTestCase):
 
         current_dataset = [d for d in res if d["id"] == dataset.id][0]
         assert current_dataset["description"] == "changed_description"
-        assert "username" not in current_dataset["changed_by"].keys()
+        assert "username" not in current_dataset["changed_by"]
 
         self.items_to_delete = [dataset]
 
@@ -1608,7 +1608,7 @@ class TestDatasetApi(SupersetTestCase):
         res = json.loads(response.data.decode("utf-8"))["result"]
 
         assert res["description"] == "changed_description"
-        assert "username" not in res["changed_by"].keys()
+        assert "username" not in res["changed_by"]
 
         self.items_to_delete = [dataset]
 

@@ -16,7 +16,6 @@
 # under the License.
 import logging
 from functools import partial
-from typing import Optional
 
 from superset.commands.annotation_layer.annotation.exceptions import (
     AnnotationDeleteFailedError,
@@ -33,7 +32,7 @@ logger = logging.getLogger(__name__)
 class DeleteAnnotationCommand(BaseCommand):
     def __init__(self, model_ids: list[int]):
         self._model_ids = model_ids
-        self._models: Optional[list[Annotation]] = None
+        self._models: list[Annotation] | None = None
 
     @transaction(on_error=partial(on_error, reraise=AnnotationDeleteFailedError))
     def run(self) -> None:

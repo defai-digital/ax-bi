@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import cast, Optional
+from typing import cast
 
 from superset import db
 from superset.commands.dataset.exceptions import DatasetNotFoundError
@@ -39,7 +39,7 @@ class GetSqlLabPermalinkCommand(BaseSqlLabPermalinkCommand):
     def __init__(self, key: str):
         self.key = key
 
-    def run(self) -> Optional[SqlLabPermalinkValue]:
+    def run(self) -> SqlLabPermalinkValue | None:
         self.validate()
         if self.key.startswith("kv:"):
             id = int(self.key[3:])

@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 from datetime import datetime
-from typing import Optional
 
 import pytest
 from flask.ctx import AppContext
@@ -49,9 +48,9 @@ def _insert_annotation(
     layer: AnnotationLayer,
     short_descr: str,
     long_descr: str,
-    json_metadata: Optional[str] = "",
-    start_dttm: Optional[datetime] = None,
-    end_dttm: Optional[datetime] = None,
+    json_metadata: str | None = "",
+    start_dttm: datetime | None = None,
+    end_dttm: datetime | None = None,
 ) -> Annotation:
     annotation = Annotation(
         layer=layer,

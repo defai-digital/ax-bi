@@ -111,10 +111,7 @@ class DremioEngineSpec(BaseEngineSpec):
         setting up their databases.
         """
         version = database.get_extra().get("version")
-        if version and Version(version) < FIXED_ALIAS_IN_SELECT_VERSION:
-            return False
-
-        return True
+        return not (version and Version(version) < FIXED_ALIAS_IN_SELECT_VERSION)
 
     @classmethod
     def convert_dttm(

@@ -90,6 +90,4 @@ def histogram(
         histogram_df = histogram_df / histogram_df.values.sum()
 
     # reorder the columns to have the groupby columns first
-    histogram_df = histogram_df.reset_index().loc[:, groupby + bin_edges_str]
-
-    return histogram_df
+    return histogram_df.reset_index().loc[:, groupby + bin_edges_str]

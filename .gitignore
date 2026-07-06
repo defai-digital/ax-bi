@@ -87,6 +87,7 @@ test-changelog.md
 # Ignore package-lock in packages
 plugins/*/package-lock.json
 packages/*/package-lock.json
+!packages/ax-sdk/package-lock.json
 
 # For country map geojson conversion script
 .ipynb_checkpoints/
@@ -145,7 +146,17 @@ PROJECT.md
 models/
 
 # Local/internal planning artifacts.
+.internal/
 ax-internal/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+GPT.md
+GTP.md
+.cursor/
+.devcontainer/
+ASF/
+RESOURCES/
 .env.local
 oxc-custom-build/
 *.code-workspace

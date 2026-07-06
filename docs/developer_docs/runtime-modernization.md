@@ -56,7 +56,7 @@ families, or background reporting paths into another runtime without a new ADR.
 Run Superset normally, then start the TypeScript sidecar in a second terminal:
 
 ```bash
-superset run -p 8088 --with-threads --reload --debugger
+ax-bi run -p 8088 --with-threads --reload --debugger
 
 cd ax-services
 npm install
@@ -79,10 +79,10 @@ npm run build
 Useful Superset checks:
 
 ```bash
-superset runtime-modernization ax-services --check health
-superset runtime-modernization ax-services --check ready
-superset runtime-modernization rollout-manifest --format text
-superset runtime-modernization compatibility-report --iterations 3 --strict
+ax-bi runtime-modernization ax-services --check health
+ax-bi runtime-modernization ax-services --check ready
+ax-bi runtime-modernization rollout-manifest --format text
+ax-bi runtime-modernization compatibility-report --iterations 3 --strict
 ```
 
 ## Feature Flags
@@ -131,13 +131,13 @@ The phase completion audit is intentionally evidence-driven. Generate templates
 and release artifacts with:
 
 ```bash
-superset runtime-modernization production-evidence --format text
-superset runtime-modernization production-evidence-template --format json
-superset runtime-modernization production-flag-state \
+ax-bi runtime-modernization production-evidence --format text
+ax-bi runtime-modernization production-evidence-template --format json
+ax-bi runtime-modernization production-flag-state \
   --environment prod-us \
   --flag-state-reference flags/runtime-modernization/prod-us-123 \
   --format json
-superset runtime-modernization operator-dashboard-snapshot \
+ax-bi runtime-modernization operator-dashboard-snapshot \
   --workflow mcp_asset_search \
   --snapshot-reference observability/runtime-modernization \
   --measurement-window "2026-06-29T00:00Z/2026-06-29T01:00Z" \
@@ -146,8 +146,8 @@ superset runtime-modernization operator-dashboard-snapshot \
   --passed-workflow-gate mcp_asset_search:fallback_rate \
   --passed-workflow-gate mcp_asset_search:error_rate \
   --passed-workflow-gate mcp_asset_search:latency_p95
-superset runtime-modernization rust-kernel-rollout-decision-template --format json
-superset runtime-modernization operator-approval \
+ax-bi runtime-modernization rust-kernel-rollout-decision-template --format json
+ax-bi runtime-modernization operator-approval \
   --workflow mcp_asset_search \
   --boundary-decision "split MCP by tool class" \
   --rollout-scope "selected TypeScript MCP workflows" \
@@ -161,7 +161,7 @@ superset runtime-modernization operator-approval \
 Assemble and validate collected evidence with:
 
 ```bash
-superset runtime-modernization assemble-production-evidence \
+ax-bi runtime-modernization assemble-production-evidence \
   --compatibility-report runtime-modernization-compatibility-report.json \
   --rust-kernel-benchmark sql-kernel-benchmark.json \
   --rust-kernel-rollout-decision rust-kernel-rollout-decision.json \
@@ -172,8 +172,8 @@ superset runtime-modernization assemble-production-evidence \
   --audit \
   --strict
 
-superset runtime-modernization completion-audit evidence-bundle.json --strict
-superset runtime-modernization completion-audit \
+ax-bi runtime-modernization completion-audit evidence-bundle.json --strict
+ax-bi runtime-modernization completion-audit \
   runtime-modernization-production-evidence-template.json \
   --expect-status incomplete
 ```

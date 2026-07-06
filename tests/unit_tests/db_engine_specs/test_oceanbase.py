@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from sqlalchemy import JSON, types
@@ -50,7 +50,7 @@ from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:

@@ -28,8 +28,9 @@ enforce that invariant:
 
 import inspect
 import logging
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Any, Callable
+from typing import Any
 from unittest.mock import patch
 
 import pytest

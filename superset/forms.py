@@ -16,7 +16,7 @@
 # under the License.
 """Contains the logic to create cohesive forms on the explore view"""
 
-from typing import Any, Optional
+from typing import Any
 
 from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
 from wtforms import Field
@@ -60,7 +60,7 @@ class CommaSeparatedListField(Field):
             self.data = []
 
 
-def filter_not_empty_values(values: Optional[list[Any]]) -> Optional[list[Any]]:
+def filter_not_empty_values(values: list[Any] | None) -> list[Any] | None:
     """Returns a list of non empty values or None"""
     if not values:
         return None

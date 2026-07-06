@@ -14,22 +14,22 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 
 class ExplorePermalinkState(TypedDict, total=False):
     formData: dict[str, Any]
-    urlParams: Optional[list[tuple[str, str]]]
-    chartState: Optional[dict[str, Any]]
+    urlParams: list[tuple[str, str]] | None
+    chartState: dict[str, Any] | None
 
 
 class ExplorePermalinkValue(TypedDict):
-    chartId: Optional[int]
+    chartId: int | None
     # either datasetId or datasourceId is required
     # TODO: deprecated - datasetId is deprecated
     # and should be removed in next major release
-    datasetId: Optional[int]
-    datasourceId: Optional[int]
+    datasetId: int | None
+    datasourceId: int | None
     datasourceType: str
     datasource: str
     state: ExplorePermalinkState

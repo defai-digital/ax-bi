@@ -29,5 +29,4 @@ def export_dashboards() -> str:
     dashboard_ids = set()
     for dashboard in dashboards:
         dashboard_ids.add(dashboard.id)
-    data = Dashboard.export_dashboards(dashboard_ids)
-    return data
+    return Dashboard.export_dashboards(dashboard_ids)

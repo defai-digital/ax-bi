@@ -17,7 +17,6 @@
 # pylint: disable=invalid-name, unused-argument, import-outside-toplevel
 import uuid
 from contextlib import nullcontext, suppress
-from typing import Optional, Union
 
 import pandas as pd
 import pytest
@@ -59,9 +58,9 @@ from tests.integration_tests.test_app import app
 )
 def test_execute_query_as_report_executor(
     owner_names: list[str],
-    creator_name: Optional[str],
+    creator_name: str | None,
     config: list[ExecutorType],
-    expected_result: Union[tuple[ExecutorType, str], Exception],
+    expected_result: tuple[ExecutorType, str] | Exception,
     mocker: MockerFixture,
     app_context: AppContext,
     get_user,

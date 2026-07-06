@@ -71,12 +71,12 @@ const GENERATORS = [
     inputs: [
       {
         type: 'glob',
-        base: path.join(ROOT_DIR, 'superset-frontend/packages/superset-ui-core/src/components'),
+        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/superset-ui-core/src/components'),
         pattern: '**/*.stories.tsx',
       },
       {
         type: 'glob',
-        base: path.join(ROOT_DIR, 'superset-frontend/packages/superset-core/src'),
+        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/superset-core/src'),
         pattern: '**/*.stories.tsx',
       },
       { type: 'file', path: path.join(DOCS_DIR, 'scripts/generate-superset-components.mjs') },

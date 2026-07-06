@@ -32,7 +32,7 @@ import * as net from 'net';
 import { WebSocket } from 'ws';
 
 interface MockedRedisXrange {
-  (key: string, startId: string, endId: string): Promise<server.StreamResult[]>;
+  (...args: string[]): Promise<server.StreamResult[]>;
 }
 
 // NOTE: these mock variables needs to start with "mock" due to
@@ -70,12 +70,14 @@ import * as server from '../src/index';
 import { statsd } from '../src/index';
 
 describe('server', () => {
-  let statsdIncrementMock: jest.SpiedFunction<typeof statsd.increment>;
+  let statsdIncrementMock: jest.Mock;
 
   beforeEach(() => {
     mockRedisXrange.mockClear();
     server.resetState();
-    statsdIncrementMock = jest.spyOn(statsd, 'increment').mockReturnValue();
+    statsdIncrementMock = jest
+      .spyOn(statsd, 'increment')
+      .mockReturnValue() as unknown as jest.Mock;
   });
 
   afterEach(() => {
@@ -245,7 +247,7 @@ describe('server', () => {
   describe('processStreamResults', () => {
     test('sends data to channel', async () => {
       const ws = new wsMock('localhost');
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
       const socketInstance = { ws: ws, channel: channelId, pongTs: Date.now() };
 
       expect(statsdIncrementMock).toHaveBeenCalledTimes(0);
@@ -267,7 +269,7 @@ describe('server', () => {
 
     test('channel not present', async () => {
       const ws = new wsMock('localhost');
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
 
       expect(statsdIncrementMock).toHaveBeenCalledTimes(0);
       server.processStreamResults(streamReturnValue);
@@ -280,7 +282,7 @@ describe('server', () => {
       const ws = new wsMock('localhost');
       const sendMock = jest.spyOn(ws, 'send').mockImplementation(() => {
         throw new Error();
-      });
+      }) as unknown as jest.Mock;
       const cleanChannelMock = jest.spyOn(server, 'cleanChannel');
       const socketInstance = { ws: ws, channel: channelId, pongTs: Date.now() };
 
@@ -330,7 +332,7 @@ describe('server', () => {
         channel: channelId,
         pongTs: Date.now(),
       });
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
       const setImmediateSpy = jest.spyOn(global, 'setImmediate');
 
       const results = [0, 1, 2, 3, 4].map(makeItem);
@@ -351,7 +353,7 @@ describe('server', () => {
         channel: channelId,
         pongTs: Date.now(),
       });
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
 
       const results = [0, 1, 2, 3, 4].map(makeItem);
       await server.processStreamResults(results);
@@ -381,7 +383,7 @@ describe('server', () => {
       // simulate a large outbound buffer
       (ws as unknown as { bufferedAmount: number }).bufferedAmount = 10_000_000;
       const terminateMock = jest.spyOn(ws, 'terminate');
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
       server.trackClient(channelId, {
         ws,
         channel: channelId,
@@ -399,7 +401,7 @@ describe('server', () => {
       const ws = new wsMock('localhost');
       (ws as unknown as { bufferedAmount: number }).bufferedAmount = 2048;
       const terminateMock = jest.spyOn(ws, 'terminate');
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
       const cleanChannelMock = jest.spyOn(server, 'cleanChannel');
       server.trackClient(channelId, {
         ws,
@@ -422,7 +424,7 @@ describe('server', () => {
       const ws = new wsMock('localhost');
       (ws as unknown as { bufferedAmount: number }).bufferedAmount = 16;
       const terminateMock = jest.spyOn(ws, 'terminate');
-      const sendMock = jest.spyOn(ws, 'send');
+      const sendMock = jest.spyOn(ws, 'send') as unknown as jest.Mock;
       server.trackClient(channelId, {
         ws,
         channel: channelId,

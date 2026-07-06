@@ -18,7 +18,6 @@
 """Unit tests for Superset"""
 
 import unittest
-from typing import Optional
 
 import pytest
 from flask.ctx import AppContext
@@ -91,8 +90,8 @@ SCHEMA_ACCESS_ROLE = "schema_access_role"
 def test_get_user_id(
     app_context: AppContext,
     mocker: MockerFixture,
-    username: Optional[str],
-    user_id: Optional[int],
+    username: str | None,
+    user_id: int | None,
 ) -> None:
     mock_g = mocker.patch("superset.utils.core.g", spec={})
     mock_g.user = security_manager.find_user(username)
@@ -110,7 +109,7 @@ def test_get_user_id(
 def test_get_username(
     app_context: AppContext,
     mocker: MockerFixture,
-    username: Optional[str],
+    username: str | None,
 ) -> None:
     mock_g = mocker.patch("superset.utils.core.g", spec={})
     mock_g.user = security_manager.find_user(username)

@@ -309,7 +309,7 @@ def parse_response(text: str, batch_size: int) -> dict[int, str]:
     # repr ({'0': 'x'}) which is not valid JSON.
     return {
         int(k): (
-            json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else str(v)
+            json.dumps(v, ensure_ascii=False) if isinstance(v, dict | list) else str(v)
         )
         for k, v in raw.items()
         if str(k).isdigit()

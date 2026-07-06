@@ -16,31 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const DASHBOARD_LIST_CONTRACT_VERSION = 'dashboard-list.v1';
 
-export type DashboardFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DashboardFilterValue = SharedListFilterValue;
 
-export interface DashboardListFilter {
-  col: string;
-  opr: string;
-  value: DashboardFilterValue;
-}
+export type DashboardListFilter = SharedListFilter;
 
-export interface DashboardListRequest {
-  contractVersion: typeof DASHBOARD_LIST_CONTRACT_VERSION;
-  filters: DashboardListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DashboardListRequest
+  extends ListRequestBase<typeof DASHBOARD_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
   ownedByMe: boolean;
 }
@@ -59,47 +51,17 @@ export interface DashboardListItem {
   changedOnHumanized?: string;
 }
 
-export interface DashboardListResponse {
-  contractVersion: typeof DASHBOARD_LIST_CONTRACT_VERSION;
+export interface DashboardListResponse
+  extends ListResponseBase<typeof DASHBOARD_LIST_CONTRACT_VERSION> {
   dashboards: DashboardListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const dashboardFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const dashboardListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     dashboardTitle: { type: 'string' },
     slug: { type: 'string' },
     description: { type: 'string' },
@@ -113,85 +75,22 @@ const dashboardListItemSchema = {
   },
 } as const;
 
-export const dashboardListRequestSchema = {
-  $id: 'ax-services.dashboard-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-    'createdByMe',
-    'ownedByMe',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DASHBOARD_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: dashboardFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+export const dashboardListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.dashboard-list.v1.request',
+  contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+  extraRequired: ['createdByMe', 'ownedByMe'],
+  extraProperties: {
     createdByMe: { type: 'boolean' },
     ownedByMe: { type: 'boolean' },
   },
-} as const;
+});
 
-export const dashboardListResponseSchema = {
-  $id: 'ax-services.dashboard-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'dashboards',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DASHBOARD_LIST_CONTRACT_VERSION },
-    dashboards: {
-      type: 'array',
-      items: dashboardListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-  },
-} as const;
+export const dashboardListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.dashboard-list.v1.response',
+  contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+  collectionKey: 'dashboards',
+  itemSchema: dashboardListItemSchema,
+});
 
 export const dashboardListContractSchemas = {
   dashboardListRequestSchema,

@@ -16,7 +16,7 @@
 # under the License.
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from sqlalchemy import column, types
@@ -48,7 +48,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 )
 def test_convert_dttm(
     target_type: str,
-    expected_result: Optional[str],
+    expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
     assert_convert_dttm(spec, target_type, expected_result, dttm)
@@ -88,7 +88,7 @@ def test_epoch_to_dttm(
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:

@@ -183,9 +183,10 @@ class UpdateDatabaseCommand(BaseCommand):
             db.session.query(model).filter_by(**predicate).update(update)
 
     def validate(self) -> None:
-        if database_name := self._properties.get("database_name"):
-            if not DatabaseDAO.validate_update_uniqueness(
+        if (database_name := self._properties.get("database_name")) and (
+            not DatabaseDAO.validate_update_uniqueness(
                 self._model_id,
                 database_name,
-            ):
-                raise DatabaseInvalidError(exceptions=[DatabaseExistsValidationError()])
+            )
+        ):
+            raise DatabaseInvalidError(exceptions=[DatabaseExistsValidationError()])

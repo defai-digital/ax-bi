@@ -66,14 +66,13 @@ class WebhookNotification(BaseNotification):
             "chart_id": self._content.header_data.get("chart_id"),
             "dashboard_id": self._content.header_data.get("dashboard_id"),
         }
-        content = {
+        return {
             "name": self._content.name,
             "header": header_content,
             "text": self._content.text,
             "description": self._content.description,
             "url": self._content.url,
         }
-        return content
 
     def _get_files(self) -> list[tuple[str, tuple[str, bytes, str]]]:
         files = []
@@ -145,7 +144,7 @@ class WebhookNotification(BaseNotification):
             if files:
                 data = {}
                 for key, value in payload.items():
-                    if isinstance(value, (dict, list)):
+                    if isinstance(value, dict | list):
                         data[key] = json.dumps(value)
                     else:
                         data[key] = value

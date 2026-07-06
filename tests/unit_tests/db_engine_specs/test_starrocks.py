@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from pytest_mock import MockerFixture
@@ -63,7 +63,7 @@ from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 def test_get_column_spec(
     native_type: str,
     sqla_type: type[types.TypeEngine],
-    attrs: Optional[dict[str, Any]],
+    attrs: dict[str, Any] | None,
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
@@ -100,7 +100,7 @@ def test_get_column_spec(
 def test_adjust_engine_params(
     sqlalchemy_uri: str,
     connect_args: dict[str, Any],
-    return_schema: Optional[str],
+    return_schema: str | None,
     return_connect_args: dict[str, Any],
 ) -> None:
     from superset.db_engine_specs.starrocks import StarRocksEngineSpec
@@ -275,9 +275,9 @@ def test_get_catalog_names(mocker: MockerFixture) -> None:
 )
 def test_adjust_engine_params_with_catalog(
     uri: str,
-    catalog: Optional[str],
-    schema: Optional[str],
-    expected_database: Optional[str],
+    catalog: str | None,
+    schema: str | None,
+    expected_database: str | None,
 ) -> None:
     """
     Test the ``adjust_engine_params`` method with catalog parameter.

@@ -510,7 +510,7 @@ def test_import_datasources_cli_encrypts_password(
     Regression for #31983: import_datasources must encrypt sqlalchemy_uri passwords,
     not store them as cleartext.
 
-    The ``superset import_datasources -p file.yaml`` CLI command uses the legacy v0
+    The ``ax-bi import_datasources -p file.yaml`` CLI command uses the legacy v0
     YAML format (a dict with a top-level ``databases`` key).  Internally it calls
     ``Database.import_from_dict``, which historically set ``sqlalchemy_uri`` directly
     on the model — bypassing ``set_sqlalchemy_uri`` and leaving the plaintext password

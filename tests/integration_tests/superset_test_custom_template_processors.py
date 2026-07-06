@@ -18,7 +18,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import partial
-from typing import Any, Dict, SupportsInt  # noqa: F401
+from typing import Any, SupportsInt  # noqa: F401
 
 from superset.jinja_context import PrestoTemplateProcessor
 
@@ -40,7 +40,7 @@ class CustomPrestoTemplateProcessor(PrestoTemplateProcessor):
     def process_template(self, sql: str, **kwargs) -> str:
         """Processes a sql template with $ style macro using regex."""
         # Add custom macros functions.
-        macros = {"DATE": partial(DATE, datetime.utcnow())}  # type: Dict[str, Any]
+        macros = {"DATE": partial(DATE, datetime.utcnow())}  # type: dict[str, Any]
         # Update with macros defined in context and kwargs.
         macros.update(self._context)
         macros.update(kwargs)
@@ -54,6 +54,6 @@ class CustomPrestoTemplateProcessor(PrestoTemplateProcessor):
             f = macros[macro_name[1:]]
             return f(*args)
 
-        macro_names = ["$" + name for name in macros.keys()]
-        pattern = r"(%s)\s*\(([^()]*)\)" % "|".join(map(re.escape, macro_names))
+        macro_names = ["$" + name for name in macros]
+        pattern = rf"({'|'.join(map(re.escape, macro_names))})\s*\(([^()]*)\)"
         return re.sub(pattern, replacer, sql)

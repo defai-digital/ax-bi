@@ -24,9 +24,17 @@ import {
   RUNTIME_CONTRACT_VERSION,
 } from './contracts/runtime';
 
+const UNMATCHED_ROUTE_METRIC_PATH = '<unmatched>';
+
 interface MutableRouteMetrics {
   count: number;
   errorCount: number;
+  totalDurationMs: number;
+  maxDurationMs: number;
+}
+
+interface MutableDurationMetrics {
+  count: number;
   totalDurationMs: number;
   maxDurationMs: number;
 }
@@ -38,13 +46,13 @@ export class ServiceMetrics {
 
   private readonly routes = new Map<string, MutableRouteMetrics>();
 
-  private totalRequests = 0;
+  private readonly totals: MutableDurationMetrics = {
+    count: 0,
+    totalDurationMs: 0,
+    maxDurationMs: 0,
+  };
 
   private errorCount = 0;
-
-  private totalDurationMs = 0;
-
-  private maxDurationMs = 0;
 
   startRequest(request: FastifyRequest): void {
     this.requestStarts.set(request, process.hrtime.bigint());
@@ -56,19 +64,12 @@ export class ServiceMetrics {
       startedAt === undefined
         ? 0
         : Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-    const routeKey = `${request.method} ${
-      request.routeOptions.url ?? request.url
-    }`;
+    const routeKey = `${request.method} ${routeMetricsPath(request)}`;
     const routeMetrics = this.getRouteMetrics(routeKey);
     const isError = reply.statusCode >= 500;
 
-    this.totalRequests += 1;
-    this.totalDurationMs += durationMs;
-    this.maxDurationMs = Math.max(this.maxDurationMs, durationMs);
-
-    routeMetrics.count += 1;
-    routeMetrics.totalDurationMs += durationMs;
-    routeMetrics.maxDurationMs = Math.max(routeMetrics.maxDurationMs, durationMs);
+    recordDuration(this.totals, durationMs);
+    recordDuration(routeMetrics, durationMs);
 
     if (isError) {
       this.errorCount += 1;
@@ -83,10 +84,13 @@ export class ServiceMetrics {
       status: 'ok',
       uptimeSeconds: (Date.now() - this.startedAtMs) / 1000,
       requests: {
-        total: this.totalRequests,
+        total: this.totals.count,
         errorCount: this.errorCount,
-        averageDurationMs: average(this.totalDurationMs, this.totalRequests),
-        maxDurationMs: this.maxDurationMs,
+        averageDurationMs: average(
+          this.totals.totalDurationMs,
+          this.totals.count,
+        ),
+        maxDurationMs: this.totals.maxDurationMs,
         routes: Object.fromEntries(
           [...this.routes.entries()].map(([route, metrics]) => [
             route,
@@ -114,6 +118,10 @@ export class ServiceMetrics {
   }
 }
 
+function routeMetricsPath(request: FastifyRequest): string {
+  return request.routeOptions.url ?? UNMATCHED_ROUTE_METRIC_PATH;
+}
+
 function toRouteContract(metrics: MutableRouteMetrics): RouteMetricsContract {
   return {
     count: metrics.count,
@@ -121,6 +129,15 @@ function toRouteContract(metrics: MutableRouteMetrics): RouteMetricsContract {
     averageDurationMs: average(metrics.totalDurationMs, metrics.count),
     maxDurationMs: metrics.maxDurationMs,
   };
+}
+
+function recordDuration(
+  metrics: MutableDurationMetrics,
+  durationMs: number,
+): void {
+  metrics.count += 1;
+  metrics.totalDurationMs += durationMs;
+  metrics.maxDurationMs = Math.max(metrics.maxDurationMs, durationMs);
 }
 
 function average(total: number, count: number): number {

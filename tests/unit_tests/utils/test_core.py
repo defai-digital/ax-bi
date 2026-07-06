@@ -16,7 +16,7 @@
 # under the License.
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -177,7 +177,7 @@ def test_is_test():
         (None, False),
     ],
 )
-def test_parse_boolean_string(test_input: Optional[str], expected: bool):
+def test_parse_boolean_string(test_input: str | None, expected: bool):
     assert parse_boolean_string(test_input) == expected
 
 
@@ -1910,9 +1910,9 @@ def test_merge_request_params_when_url_params_undefined():
     form_data = {"since": "2000", "until": "now"}
     url_params = {"form_data": form_data, "dashboard_ids": "(1,2,3,4,5)"}
     merge_request_params(form_data, url_params)
-    assert "url_params" in form_data.keys()
+    assert "url_params" in form_data
     assert "dashboard_ids" in form_data["url_params"]
-    assert "form_data" not in form_data.keys()
+    assert "form_data" not in form_data
 
 
 def test_merge_request_params_when_url_params_predefined():
@@ -1923,7 +1923,7 @@ def test_merge_request_params_when_url_params_predefined():
     }
     url_params = {"form_data": form_data, "dashboard_ids": "(1,2,3,4,5)"}
     merge_request_params(form_data, url_params)
-    assert "url_params" in form_data.keys()
+    assert "url_params" in form_data
     assert "abc" in form_data["url_params"]
     assert url_params["dashboard_ids"] == form_data["url_params"]["dashboard_ids"]
 
@@ -2107,5 +2107,5 @@ def test_sanitize_cookie_token_accepts_valid(token: str) -> None:
         "unicode✓",
     ],
 )
-def test_sanitize_cookie_token_rejects_invalid(token: Optional[str]) -> None:
+def test_sanitize_cookie_token_rejects_invalid(token: str | None) -> None:
     assert sanitize_cookie_token(token) is None

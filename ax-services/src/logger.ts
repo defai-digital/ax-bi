@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import type { LogLevel } from './config';
+
 type LogContext = Record<string, unknown>;
 
 export interface ServiceLogger {
@@ -35,35 +37,108 @@ function serializeError(value: unknown): unknown {
 }
 
 function normalizeContext(context: LogContext = {}): LogContext {
-  return Object.fromEntries(
-    Object.entries(context).map(([key, value]) => [key, serializeError(value)]),
+  try {
+    return Object.fromEntries(
+      Object.entries(context).map(([key, value]) => [
+        key,
+        serializeError(value),
+      ]),
+    );
+  } catch (error) {
+    return {
+      serializationError: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function createSafeLogReplacer(): (key: string, value: unknown) => unknown {
+  const seen = new WeakSet<object>();
+
+  return (_key: string, value: unknown): unknown => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    if (value instanceof Error) {
+      return serializeError(value);
+    }
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+}
+
+function stringifyLogEntry(entry: LogContext): string {
+  try {
+    return JSON.stringify(entry, createSafeLogReplacer());
+  } catch (error) {
+    return JSON.stringify({
+      level: typeof entry['level'] === 'string' ? entry['level'] : 'error',
+      message:
+        typeof entry['message'] === 'string'
+          ? entry['message']
+          : 'failed to serialize log entry',
+      serializationError: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+function buildLogEntry(
+  level: 'info' | 'error',
+  message: string,
+  context: LogContext,
+): LogContext {
+  const normalizedContext = normalizeContext(context);
+
+  delete normalizedContext['level'];
+  delete normalizedContext['message'];
+
+  return {
+    level,
+    message,
+    ...normalizedContext,
+  };
+}
+
+const LOG_LEVEL_PRIORITY: Record<Exclude<LogLevel, 'silent'>, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
+
+function shouldLog(
+  configuredLevel: LogLevel,
+  messageLevel: 'info' | 'error',
+): boolean {
+  if (configuredLevel === 'silent') {
+    return false;
+  }
+
+  return (
+    LOG_LEVEL_PRIORITY[messageLevel] >= LOG_LEVEL_PRIORITY[configuredLevel]
   );
 }
 
-export function createLogger(logLevel: string): ServiceLogger {
+export function createLogger(logLevel: LogLevel): ServiceLogger {
   return {
     info(message: string, context: LogContext = {}) {
-      if (logLevel === 'silent') {
+      if (!shouldLog(logLevel, 'info')) {
         return;
       }
       console.log(
-        JSON.stringify({
-          level: 'info',
-          message,
-          ...normalizeContext(context),
-        }),
+        stringifyLogEntry(buildLogEntry('info', message, context)),
       );
     },
     error(message: string, context: LogContext = {}) {
-      if (logLevel === 'silent') {
+      if (!shouldLog(logLevel, 'error')) {
         return;
       }
       console.error(
-        JSON.stringify({
-          level: 'error',
-          message,
-          ...normalizeContext(context),
-        }),
+        stringifyLogEntry(buildLogEntry('error', message, context)),
       );
     },
   };

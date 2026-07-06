@@ -17,7 +17,7 @@
 
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from superset.commands.base import BaseCommand
 from superset.commands.exceptions import DatasourceNotFoundValidationError
@@ -38,7 +38,7 @@ class UpdateRLSRuleCommand(BaseCommand):
         self._properties = data.copy()
         self._tables = self._properties.get("tables", [])
         self._roles = self._properties.get("roles", [])
-        self._model: Optional[RowLevelSecurityFilter] = None
+        self._model: RowLevelSecurityFilter | None = None
 
     @transaction()
     def run(self) -> Any:

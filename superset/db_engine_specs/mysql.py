@@ -19,10 +19,11 @@ from __future__ import annotations
 import contextlib
 import logging
 import re
+from collections.abc import Callable
 from datetime import datetime
 from decimal import Decimal
 from re import Pattern
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from urllib import parse
 
 from flask_babel import gettext as __
@@ -353,8 +354,8 @@ class MySQLEngineSpec(BasicParametersMixin, BaseEngineSpec):
 
     @classmethod
     def convert_dttm(
-        cls, target_type: str, dttm: datetime, db_extra: Optional[dict[str, Any]] = None
-    ) -> Optional[str]:
+        cls, target_type: str, dttm: datetime, db_extra: dict[str, Any] | None = None
+    ) -> str | None:
         sqla_type = cls.get_sqla_column_type(target_type)
 
         if isinstance(sqla_type, types.Date):
@@ -369,8 +370,8 @@ class MySQLEngineSpec(BasicParametersMixin, BaseEngineSpec):
         cls,
         uri: URL,
         connect_args: dict[str, Any],
-        catalog: Optional[str] = None,
-        schema: Optional[str] = None,
+        catalog: str | None = None,
+        schema: str | None = None,
     ) -> tuple[URL, dict[str, Any]]:
         uri, new_connect_args = super().adjust_engine_params(
             uri,
@@ -389,7 +390,7 @@ class MySQLEngineSpec(BasicParametersMixin, BaseEngineSpec):
         cls,
         sqlalchemy_uri: URL,
         connect_args: dict[str, Any],
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Return the configured schema.
 
@@ -398,7 +399,7 @@ class MySQLEngineSpec(BasicParametersMixin, BaseEngineSpec):
         return parse.unquote(sqlalchemy_uri.database)
 
     @classmethod
-    def get_datatype(cls, type_code: Any) -> Optional[str]:
+    def get_datatype(cls, type_code: Any) -> str | None:
         if not cls.type_code_map:
             # only import and store if needed at least once
             # pylint: disable=import-outside-toplevel
@@ -434,7 +435,7 @@ class MySQLEngineSpec(BasicParametersMixin, BaseEngineSpec):
         return message
 
     @classmethod
-    def get_cancel_query_id(cls, cursor: Any, query: Query) -> Optional[str]:
+    def get_cancel_query_id(cls, cursor: Any, query: Query) -> str | None:
         """
         Get MySQL connection ID that will be used to cancel all other running
         queries in the same connection.

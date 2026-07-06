@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import dateutil.parser
 from sqlalchemy import or_, select
@@ -296,13 +296,13 @@ class DatasetDAO(BaseDAO[SqlaTable]):
             if (
                 "python_date_format" in column
                 and column["python_date_format"] is not None
-            ):
-                if not DatasetDAO.validate_python_date_format(
+                and not DatasetDAO.validate_python_date_format(
                     column["python_date_format"]
-                ):
-                    raise ValueError(
-                        "python_date_format is an invalid date/timestamp format."
-                    )
+                )
+            ):
+                raise ValueError(
+                    "python_date_format is an invalid date/timestamp format."
+                )
 
         if override_columns:
             db.session.query(TableColumn).filter(
@@ -446,7 +446,7 @@ class DatasetDAO(BaseDAO[SqlaTable]):
         )
 
     @classmethod
-    def get_filterable_columns_and_operators(cls) -> Dict[str, List[str]]:
+    def get_filterable_columns_and_operators(cls) -> dict[str, list[str]]:
         filterable = super().get_filterable_columns_and_operators()
         # Add custom fields
         filterable.update(DATASET_CUSTOM_FIELDS)

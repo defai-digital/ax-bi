@@ -14,16 +14,16 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Any, Optional, TypedDict, TypeGuard
+from typing import Any, TypedDict, TypeGuard
 
 from superset.utils.core import DatasourceType
 
 
 class TemporaryExploreState(TypedDict):
-    owner: Optional[int]
+    owner: int | None
     datasource_id: int
     datasource_type: DatasourceType
-    chart_id: Optional[int]
+    chart_id: int | None
     form_data: str
 
 

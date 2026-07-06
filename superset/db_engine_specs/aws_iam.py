@@ -182,8 +182,8 @@ class AWSIAMAuthMixin:
             return credentials
 
         except ClientError as ex:
-            error_code = ex.response.get("Error", {}).get("Code", "")
-            error_message = ex.response.get("Error", {}).get("Message", "")
+            error_code = (ex.response.get("Error") or {}).get("Code", "")
+            error_message = (ex.response.get("Error") or {}).get("Message", "")
 
             # Handle ExternalId mismatch (shows as AccessDenied with specific message)
             # Check this first before generic AccessDenied handling

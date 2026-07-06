@@ -14,9 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import gzip
 import logging
 from importlib import util
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 from flask import current_app
@@ -63,12 +64,32 @@ class CSVReaderOptions(ReaderOptions, total=False):
 class CSVReader(BaseDataReader):
     def __init__(
         self,
-        options: Optional[CSVReaderOptions] = None,
+        options: CSVReaderOptions | None = None,
     ) -> None:
         options = options or {}
         super().__init__(
             options=dict(options),
         )
+
+    @staticmethod
+    def _filename(file: FileStorage) -> str:
+        """Return a normalized upload filename."""
+        return (file.filename or "").lower()
+
+    @staticmethod
+    def _compression(file: FileStorage) -> str | None:
+        """Return pandas compression mode for known compressed CSV uploads."""
+        return "gzip" if CSVReader._filename(file).endswith(".gz") else None
+
+    @staticmethod
+    def _delimiter_from_filename(file: FileStorage) -> str | None:
+        """Return delimiter implied by the upload filename."""
+        filename = CSVReader._filename(file)
+        if filename.endswith((".tsv", ".tsv.gz")):
+            return "\t"
+        if filename.endswith((".csv", ".csv.gz")):
+            return ","
+        return None
 
     @staticmethod
     def _detect_encoding(file: FileStorage) -> str:
@@ -113,10 +134,10 @@ class CSVReader(BaseDataReader):
                 # Pandas has built-in pyarrow, safer to use c engine
                 logger.info("Pandas has built-in pyarrow support, using 'c' engine")
                 return "c"
-            else:
-                # External pyarrow available, can safely use it
-                logger.info("Using 'pyarrow' engine for CSV parsing")
-                return "pyarrow"
+
+            # External pyarrow available, can safely use it
+            logger.info("Using 'pyarrow' engine for CSV parsing")
+            return "pyarrow"
 
         except ImportError:
             # PyArrow import failed, fall back to c engine
@@ -140,7 +161,11 @@ class CSVReader(BaseDataReader):
         """
         position = file.tell()
         try:
-            sample = file.read(65536)
+            if CSVReader._compression(file) == "gzip":
+                with gzip.GzipFile(fileobj=file.stream) as gzip_file:
+                    sample = gzip_file.read(65536)
+            else:
+                sample = file.read(65536)
             if isinstance(sample, str):
                 text = sample
             else:
@@ -153,10 +178,13 @@ class CSVReader(BaseDataReader):
         best_count = 0
         for candidate in DELIMITER_CANDIDATES:
             counts = [line.count(candidate) for line in head]
-            if counts and all(count == counts[0] for count in counts):
-                if counts[0] > best_count:
-                    best = candidate
-                    best_count = counts[0]
+            if (
+                counts
+                and all(count == counts[0] for count in counts)
+                and counts[0] > best_count
+            ):
+                best = candidate
+                best_count = counts[0]
         return best
 
     @staticmethod
@@ -240,8 +268,8 @@ class CSVReader(BaseDataReader):
             invalid_value = df.loc[idx, column]
             line_number = idx + kwargs.get("header", 0) + 2
             error_details.append(
-                "  • Line %s: '%s' cannot be converted to %s"
-                % (line_number, invalid_value, dtype)
+                f"  • Line {line_number}: '{invalid_value}' "
+                f"cannot be converted to {dtype}"
             )
 
         return error_details, total_errors
@@ -288,10 +316,8 @@ class CSVReader(BaseDataReader):
                 remaining = total_errors - MAX_DISPLAYED_ERRORS
                 additional_msg = f"\n  ... and {remaining} more error(s)"
                 return f"{base_msg}\n{detailed_errors}{additional_msg}"
-            else:
-                return f"{base_msg}\n{detailed_errors}"
-        else:
-            return f"Cannot convert column '{column}' to {dtype}. {str(original_error)}"
+            return f"{base_msg}\n{detailed_errors}"
+        return f"Cannot convert column '{column}' to {dtype}. {str(original_error)}"
 
     @staticmethod
     def _cast_single_column(
@@ -410,16 +436,19 @@ class CSVReader(BaseDataReader):
 
         try:
             types = None
-            if "dtype" in kwargs and kwargs["dtype"]:
-                if isinstance(kwargs["dtype"], dict):
-                    custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
-                    if pandas_types:
-                        kwargs["dtype"] = pandas_types
-                    else:
-                        kwargs.pop("dtype", None)
+            if (
+                "dtype" in kwargs
+                and kwargs["dtype"]
+                and isinstance(kwargs["dtype"], dict)
+            ):
+                custom_types, pandas_types = CSVReader._split_types(kwargs["dtype"])
+                if pandas_types:
+                    kwargs["dtype"] = pandas_types
+                else:
+                    kwargs.pop("dtype", None)
 
-                    # Custom types for our manual casting
-                    types = custom_types if custom_types else None
+                # Custom types for our manual casting
+                types = custom_types if custom_types else None
 
             if "chunksize" in kwargs:
                 chunks = []
@@ -535,6 +564,7 @@ class CSVReader(BaseDataReader):
             "nrows": rows_to_read,
             "parse_dates": self._options.get("column_dates"),
             "sep": self._options.get("delimiter")
+            or self._delimiter_from_filename(file)
             or self._sniff_delimiter(
                 file,
                 self._options.get("encoding", DEFAULT_ENCODING),
@@ -548,6 +578,7 @@ class CSVReader(BaseDataReader):
                 else None
             ),
             "cache_dates": True,
+            "compression": self._compression(file),
         }
 
         if use_chunking:
@@ -569,10 +600,12 @@ class CSVReader(BaseDataReader):
             "encoding": self._options.get("encoding", DEFAULT_ENCODING),
             "low_memory": False,
             "dtype": "string",
+            "compression": self._compression(file),
         }
-        kwargs["sep"] = self._options.get("delimiter") or self._sniff_delimiter(
-            file,
-            kwargs["encoding"],
+        kwargs["sep"] = (
+            self._options.get("delimiter")
+            or self._delimiter_from_filename(file)
+            or self._sniff_delimiter(file, kwargs["encoding"])
         )
         df = self._read_csv(file, kwargs)
         return {"items": [build_upload_metadata_item(df, None)]}

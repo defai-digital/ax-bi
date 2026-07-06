@@ -17,7 +17,7 @@
 
 
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from flask import current_app as app
 from marshmallow import ValidationError
@@ -182,7 +182,7 @@ def get_channels() -> list[SlackChannelSchema]:
 
 def get_channels_with_search(
     search_string: str = "",
-    types: Optional[list[SlackChannelTypes]] = None,
+    types: list[SlackChannelTypes] | None = None,
     exact_match: bool = False,
     force: bool = False,
 ) -> list[SlackChannelSchema]:
@@ -209,7 +209,7 @@ def get_channels_with_search(
     except SlackClientError as ex:
         raise SupersetException(f"Failed to list channels: {ex}") from ex
 
-    if types and not len(types) == len(SlackChannelTypes):
+    if types and len(types) != len(SlackChannelTypes):
         conditions: list[Callable[[SlackChannelSchema], bool]] = []
         if SlackChannelTypes.PUBLIC in types:
             conditions.append(

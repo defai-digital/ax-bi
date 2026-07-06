@@ -20,10 +20,9 @@ import copy
 import functools
 import logging
 import os
-import traceback
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 from flask import (
     abort,
@@ -82,7 +81,6 @@ FRONTEND_CONF_KEYS = (
     "DEFAULT_SQLLAB_LIMIT",
     "DEFAULT_VIZ_TYPE",
     "SQL_MAX_ROW",
-    "SUPERSET_WEBSERVER_DOMAINS",
     "SQLLAB_SAVE_WARNING_MESSAGE",
     "SQLLAB_DEFAULT_DBID",
     "DISPLAY_MAX_ROW",
@@ -163,15 +161,7 @@ def _serialize_auth_providers(
 
 
 def get_error_msg() -> str:
-    if app.config.get("SHOW_STACKTRACE"):
-        error_msg = traceback.format_exc()
-    else:
-        error_msg = "FATAL ERROR \n"
-        error_msg += (
-            "Stacktrace is hidden. Change the SHOW_STACKTRACE "
-            "configuration setting to enable it"
-        )
-    return error_msg
+    return "FATAL ERROR \nStacktrace is hidden in client responses"
 
 
 def json_success(json_msg: str, status: int = 200) -> FlaskResponse:
@@ -296,7 +286,7 @@ def get_environment_tag() -> dict[str, Any]:
     # this is the actual name we want to use
     env_name = os.environ.get(env_envvar)
 
-    if not env_name or env_name not in env_tag_templates.keys():
+    if not env_name or env_name not in env_tag_templates:
         env_name = "debug" if debug else None
 
     env_tag = env_tag_templates.get(env_name)
@@ -475,7 +465,7 @@ def get_default_spinner_svg() -> str | None:
     )
 
     try:
-        with open(svg_path, "r", encoding="utf-8") as f:
+        with open(svg_path, encoding="utf-8") as f:
             return f.read().strip()
     except (OSError, UnicodeDecodeError) as e:
         logger.warning("Could not load default spinner SVG: %s", e)

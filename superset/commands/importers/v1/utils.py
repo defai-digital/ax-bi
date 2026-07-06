@@ -16,8 +16,9 @@
 # under the License.
 
 import logging
+from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any
 from zipfile import ZipFile
 
 import yaml
@@ -92,7 +93,7 @@ def load_metadata(contents: dict[str, str]) -> dict[str, str]:
 
 
 def validate_metadata_type(
-    metadata: Optional[dict[str, str]],
+    metadata: dict[str, str] | None,
     type_: str,
     exceptions: list[ValidationError],
 ) -> None:
@@ -283,10 +284,7 @@ def is_valid_config(file_name: str) -> bool:
         return False
 
     # ensure extension is YAML
-    if path.suffix.lower() not in {".yaml", ".yml"}:
-        return False
-
-    return True
+    return path.suffix.lower() in {".yaml", ".yml"}
 
 
 def get_contents_from_bundle(bundle: ZipFile) -> dict[str, str]:
@@ -354,7 +352,7 @@ def import_tag(
 
             # If tag does not exist, create it
             if tag is None:
-                description = tag_descriptions.get(tag_name, None)
+                description = tag_descriptions.get(tag_name)
                 tag = Tag(name=tag_name, description=description, type="custom")
                 db_session.add(tag)
                 existing_tags[tag_name] = tag  # Update the existing_tags dictionary
@@ -434,10 +432,10 @@ def safe_insert_dashboard_chart_relationships(
 
 
 def get_resource_mappings_batched(
-    model_class: Type[Any],
+    model_class: type[Any],
     batch_size: int = 1000,
     value_func: Callable[[Any], Any] = lambda x: x.id,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     offset = 0
     mapping = {}
     while True:

@@ -106,8 +106,16 @@ class TestEmptyPlan:
     def test_empty_plan_structure(self) -> None:
         plan = _empty_plan()
         assert plan.title == "Untitled Dashboard"
-        assert plan.business_goal == ""
         assert plan.sections == []
+        # plan_id is auto-generated
+        assert plan.plan_id
+
+    def test_empty_plan_with_explicit_id(self) -> None:
+        plan = _empty_plan("my-plan-id")
+        assert plan.plan_id == "my-plan-id"
+        assert plan.title == "Untitled Dashboard"
+        assert plan.sections == []
+        assert plan.description == ""
 
 
 # ---------------------------------------------------------------------------

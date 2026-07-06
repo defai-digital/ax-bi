@@ -40,6 +40,16 @@ interface ChartCacheParams {
   cacheKey: string;
 }
 
+const hasInvalidCacheKeyCharacter = (cacheKey: string): boolean =>
+  [...cacheKey].some(char => /\s/.test(char) || char.charCodeAt(0) <= 31);
+
+const isValidCacheKey = (cacheKey: string | undefined): cacheKey is string => {
+  if (!cacheKey) {
+    return false;
+  }
+  return cacheKey.length <= 256 && !hasInvalidCacheKeyCharacter(cacheKey);
+};
+
 /**
  * Validates the JWT cookie from an HTTP request.
  * Returns the channel ID from the JWT payload, or null if invalid.
@@ -85,9 +95,6 @@ const jwtAuthPreHandler = async (
   }
 };
 
-const hasInvalidCacheKeyChar = (cacheKey: string): boolean =>
-  [...cacheKey].some(char => char.charCodeAt(0) <= 0x1f || char.trim() === '');
-
 /**
  * GET /api/chart-cache/:cacheKey
  *
@@ -108,7 +115,7 @@ const handleGetChartCache = async (
   const { cacheKey } = request.params;
 
   // Validate cache key format to prevent Redis injection via crafted keys
-  if (!cacheKey || cacheKey.length > 256 || hasInvalidCacheKeyChar(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send({ error: 'Invalid cache key' });
     return;
   }
@@ -147,7 +154,7 @@ const handleHeadChartCache = async (
 ): Promise<void> => {
   const { cacheKey } = request.params;
 
-  if (!cacheKey || cacheKey.length > 256 || hasInvalidCacheKeyChar(cacheKey)) {
+  if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send();
     return;
   }

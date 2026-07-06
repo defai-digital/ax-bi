@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from collections.abc import Collection
-from typing import Any, Callable
+from collections.abc import Callable, Collection
+from typing import Any
 
 import click
 from flask.cli import with_appcontext
@@ -42,10 +42,7 @@ def _should_skip_loader(
         return True
 
     # Skip big data if not requested or when only metadata is requested
-    if loader_name == "load_big_data" and (not load_big_data or only_metadata):
-        return True
-
-    return False
+    return loader_name == "load_big_data" and (not load_big_data or only_metadata)
 
 
 def _load_dataset(

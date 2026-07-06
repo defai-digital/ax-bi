@@ -471,7 +471,7 @@ def test_is_mcp_jwt_configured_returns_false_when_unset() -> None:
 
 
 def test_get_mcp_jwt_audience_reads_supplied_config() -> None:
-    assert get_mcp_jwt_audience({"MCP_JWT_AUDIENCE": "superset-mcp"}) == "superset-mcp"
+    assert get_mcp_jwt_audience({"MCP_JWT_AUDIENCE": "ax-bi-mcp"}) == "ax-bi-mcp"
 
 
 def test_get_mcp_jwt_audience_returns_none_when_unset() -> None:

@@ -45,15 +45,15 @@ if [ "$CYPRESS_CONFIG" == "true" ]; then
 fi
 # Initialize the database
 echo_step "1" "Starting" "Applying DB migrations"
-superset db upgrade
+ax-bi db upgrade
 echo_step "1" "Complete" "Applying DB migrations"
 
 # Create an admin user
 echo_step "2" "Starting" "Setting up admin user ( admin / $ADMIN_PASSWORD )"
 if [ "$CYPRESS_CONFIG" == "true" ]; then
-    superset load_test_users
+    ax-bi load_test_users
 else
-    superset fab create-admin \
+    ax-bi fab create-admin \
         --username admin \
         --email admin@superset.com \
         --password "$ADMIN_PASSWORD" \
@@ -63,7 +63,7 @@ fi
 echo_step "2" "Complete" "Setting up admin user"
 # Create default roles and permissions
 echo_step "3" "Starting" "Setting up roles and perms"
-superset init
+ax-bi init
 echo_step "3" "Complete" "Setting up roles and perms"
 
 if [ "$SUPERSET_LOAD_EXAMPLES" = "yes" ]; then
@@ -73,9 +73,9 @@ if [ "$SUPERSET_LOAD_EXAMPLES" = "yes" ]; then
 
     # If Cypress run which consumes superset_test_config – load required data for tests
     if [ "$CYPRESS_CONFIG" == "true" ]; then
-        superset load_examples --load-test-data
+        ax-bi load_examples --load-test-data
     else
-        superset load_examples
+        ax-bi load_examples
     fi
     echo_step "4" "Complete" "Loading examples"
 fi

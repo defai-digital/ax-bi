@@ -38,16 +38,16 @@ This guide is intended primarily for reusable components. Whenever possible, all
 ### Directory and component structure
 
 ```
-superset-frontend/src/components
+ax-bi-frontend/src/components
    {ComponentName}/
       index.tsx
       {ComponentName}.test.tsx
       {ComponentName}.stories.tsx
 ```
 
-**Components root directory:** Components that are meant to be re-used across different parts of the application should go in the `superset-frontend/src/components` directory. Components that are meant to be specific for a single part of the application should be located in the nearest directory where the component is used, for example, `superset-frontend/src/Explore/components`
+**Components root directory:** Components that are meant to be re-used across different parts of the application should go in the `ax-bi-frontend/src/components` directory. Components that are meant to be specific for a single part of the application should be located in the nearest directory where the component is used, for example, `ax-bi-frontend/src/Explore/components`
 
-**Exporting the component:** All components within the `superset-frontend/src/components` directory should be exported from `superset-frontend/src/components/index.ts` to facilitate their imports by other components
+**Exporting the component:** All components within the `ax-bi-frontend/src/components` directory should be exported from `ax-bi-frontend/src/components/index.ts` to facilitate their imports by other components
 
 **Component directory name:** Use `PascalCase` for the component directory name
 
@@ -185,7 +185,7 @@ Each component should come with its dedicated storybook file.
 
 **One component per story:** Each storybook file should only contain one component unless substantially different variants are required
 
-**Component variants:** If the component behavior is substantially different when certain props are used, it is best to separate the story into different types. See the `superset-frontend/src/components/Select/Select.stories.tsx` as an example.
+**Component variants:** If the component behavior is substantially different when certain props are used, it is best to separate the story into different types. See the `ax-bi-frontend/src/components/Select/Select.stories.tsx` as an example.
 
 **Isolated state:** The storybook should show how the component works in an isolated state and with as few dependencies as possible
 

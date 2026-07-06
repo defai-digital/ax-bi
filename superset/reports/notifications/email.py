@@ -19,7 +19,7 @@ import textwrap
 from dataclasses import dataclass
 from datetime import datetime
 from email.utils import make_msgid, parseaddr
-from typing import Any, Optional
+from typing import Any
 
 import nh3
 from flask import current_app
@@ -75,10 +75,10 @@ ALLOWED_ATTRIBUTES = {
 @dataclass
 class EmailContent:
     body: str
-    header_data: Optional[HeaderDataType] = None
-    data: Optional[dict[str, Any]] = None
-    pdf: Optional[dict[str, bytes]] = None
-    images: Optional[dict[str, bytes]] = None
+    header_data: HeaderDataType | None = None
+    data: dict[str, Any] | None = None
+    pdf: dict[str, bytes] | None = None
+    images: dict[str, bytes] | None = None
 
 
 class EmailNotification(BaseNotification):  # pylint: disable=too-few-public-methods
@@ -175,7 +175,7 @@ class EmailNotification(BaseNotification):  # pylint: disable=too-few-public-met
             html_table = ""
 
         img_tags = []
-        for msgid in images.keys():
+        for msgid in images:
             img_tags.append(
                 f"""<div class="image">
                     <img width="1000" src="cid:{msgid}">

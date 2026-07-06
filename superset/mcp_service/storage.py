@@ -25,8 +25,9 @@ Reusable across caching middleware, OAuth providers, EventStore, etc.
 """
 
 import logging
+from collections.abc import Callable
 from importlib import import_module
-from typing import Any, Callable, Dict
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from redis.asyncio import Redis
@@ -80,13 +81,13 @@ def get_mcp_store(
     # Use existing app context if available, otherwise push one
     if has_app_context():
         return _get_store()
-    else:
-        with flask_app.app_context():
-            return _get_store()
+
+    with flask_app.app_context():
+        return _get_store()
 
 
 def _create_redis_store(
-    store_config: Dict[str, Any],
+    store_config: dict[str, Any],
     prefix: str | Callable[[], str] | None = None,
     wrap: bool = True,
 ) -> Any | None:

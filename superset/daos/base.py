@@ -16,19 +16,16 @@
 # under the License.
 from __future__ import annotations
 
+import builtins
 import logging
 import uuid as uuid_lib
+from collections.abc import Sequence
 from enum import Enum
 from typing import (
     Any,
     ClassVar,
-    Dict,
     Generic,
     get_args,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
 )
 
@@ -77,7 +74,7 @@ class ColumnOperatorEnum(str, Enum):
     def apply(self, column: Any, value: Any) -> Any:
         op_func = operator_map.get(self)
         if not op_func:
-            raise ValueError("Unsupported operator: %s" % self)
+            raise ValueError(f"Unsupported operator: {self}")
         return op_func(column, value)
 
 
@@ -87,7 +84,7 @@ def _escape_like(value: str) -> str:
 
 
 # Define operator_map as a module-level dict after the enum is defined
-operator_map: Dict[ColumnOperatorEnum, Any] = {
+operator_map: dict[ColumnOperatorEnum, Any] = {
     ColumnOperatorEnum.eq: lambda col, val: col == val,
     ColumnOperatorEnum.ne: lambda col, val: col != val,
     ColumnOperatorEnum.sw: lambda col, val: col.like(
@@ -100,10 +97,10 @@ operator_map: Dict[ColumnOperatorEnum, Any] = {
         f"%{_escape_like(val)}%", escape="\\"
     ),
     ColumnOperatorEnum.in_: lambda col, val: col.in_(
-        val if isinstance(val, (list, tuple)) else [val]
+        val if isinstance(val, list | tuple) else [val]
     ),
     ColumnOperatorEnum.nin: lambda col, val: (
-        ~col.in_(val if isinstance(val, (list, tuple)) else [val])
+        ~col.in_(val if isinstance(val, list | tuple) else [val])
     ),
     ColumnOperatorEnum.gt: lambda col, val: col > val,
     ColumnOperatorEnum.gte: lambda col, val: col >= val,
@@ -260,12 +257,12 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         if (
             hasattr(column.type, "python_type")
             and column.type.python_type == uuid_lib.UUID
+            and isinstance(value, str)
         ):
-            if isinstance(value, str):
-                try:
-                    return uuid_lib.UUID(value)
-                except (ValueError, AttributeError):
-                    return None
+            try:
+                return uuid_lib.UUID(value)
+            except (ValueError, AttributeError):
+                return None
         return value
 
     @classmethod
@@ -407,7 +404,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         except SQLAlchemyError as ex:
             model_name = cls.model_cls.__name__ if cls.model_cls else "Unknown"
             raise DAOFindFailedError(
-                "Failed to find %s with ids: %s" % (model_name, model_ids)
+                f"Failed to find {model_name} with ids: {model_ids}"
             ) from ex
 
         return results
@@ -557,7 +554,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
 
     @classmethod
     def apply_column_operators(
-        cls, query: Any, column_operators: Optional[List[ColumnOperator]] = None
+        cls, query: Any, column_operators: list[ColumnOperator] | None = None
     ) -> Any:
         """
         Apply column operators (list of ColumnOperator) to the query using
@@ -576,8 +573,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
                     "Invalid filter: column '%s' does not exist on %s", col, model_name
                 )
                 raise ValueError(
-                    "Invalid filter: column '%s' does not exist on %s"
-                    % (col, model_name)
+                    f"Invalid filter: column '{col}' does not exist on {model_name}"
                 )
             column = getattr(cls.model_cls, col)
             try:
@@ -590,7 +586,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         return query
 
     @classmethod
-    def get_filterable_columns_and_operators(cls) -> Dict[str, List[str]]:
+    def get_filterable_columns_and_operators(cls) -> dict[str, list[str]]:
         """
         Returns a dict mapping filterable columns (including hybrid/computed fields if
         present) to their supported operators. Used by MCP tools to dynamically expose
@@ -608,17 +604,17 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         }
         # You may add custom fields here, e.g.:
         # custom_fields = {"tags": ["eq", "in_", "like"], ...}
-        custom_fields: Dict[str, List[str]] = {}
+        custom_fields: dict[str, list[str]] = {}
 
-        filterable: Dict[str, Any] = {}
+        filterable: dict[str, Any] = {}
         for name, col in columns.items():
-            if isinstance(col.type, (sa.String, sa.Text)):
+            if isinstance(col.type, sa.String | sa.Text):
                 filterable[name] = TYPE_OPERATOR_MAP["string"]
-            elif isinstance(col.type, (sa.Boolean,)):
+            elif isinstance(col.type, sa.Boolean):
                 filterable[name] = TYPE_OPERATOR_MAP["boolean"]
-            elif isinstance(col.type, (sa.Integer, sa.Float, sa.Numeric)):
+            elif isinstance(col.type, sa.Integer | sa.Float | sa.Numeric):
                 filterable[name] = TYPE_OPERATOR_MAP["number"]
-            elif isinstance(col.type, (sa.DateTime, sa.Date, sa.Time)):
+            elif isinstance(col.type, sa.DateTime | sa.Date | sa.Time):
                 filterable[name] = TYPE_OPERATOR_MAP["datetime"]
             else:
                 # Fallback to eq/ne/null
@@ -635,7 +631,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         filterable.update(custom_fields)
 
         # Convert enum values to strings for the return type
-        result: Dict[str, List[str]] = {}
+        result: dict[str, list[str]] = {}
         for key, operators in filterable.items():
             if isinstance(operators, list):
                 # Convert enums to strings
@@ -651,12 +647,12 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def _build_query(
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
-        search: Optional[str] = None,
-        search_columns: Optional[List[str]] = None,
-        custom_filters: Optional[Dict[str, BaseFilter]] = None,
+        column_operators: list[ColumnOperator] | None = None,
+        search: str | None = None,
+        search_columns: list[str] | None = None,
+        custom_filters: dict[str, BaseFilter] | None = None,
         skip_base_filter: bool = False,
-        data_model: Optional[SQLAInterface] = None,
+        data_model: SQLAInterface | None = None,
     ) -> Any:
         """
         Build a SQLAlchemy query with base filter, column operators, search, and
@@ -690,16 +686,16 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def list(  # noqa: C901
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
+        column_operators: list[ColumnOperator] | None = None,
         order_column: str = "changed_on",
         order_direction: str = "desc",
         page: int = 0,
         page_size: int = 100,
-        search: Optional[str] = None,
-        search_columns: Optional[List[str]] = None,
-        custom_filters: Optional[Dict[str, BaseFilter]] = None,
-        columns: Optional[List[str]] = None,
-    ) -> Tuple[List[Any], int]:
+        search: str | None = None,
+        search_columns: list[str] | None = None,
+        custom_filters: dict[str, BaseFilter] | None = None,
+        columns: list[str] | None = None,
+    ) -> tuple[list[Any], int]:
         """
         Generic list method for filtered, sorted, and paginated results.
         If columns is specified, returns a list of tuples (one per row),
@@ -795,7 +791,7 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
     @classmethod
     def count(
         cls,
-        column_operators: Optional[List[ColumnOperator]] = None,
+        column_operators: builtins.list[ColumnOperator] | None = None,
         skip_base_filter: bool = False,
     ) -> int:
         """

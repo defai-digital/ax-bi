@@ -1269,12 +1269,22 @@ class BaseUploadFilePostSchemaMixin(Schema):
         file: FileStorage, allowed_extensions: set[str]
     ) -> None:
         """Validate a file extension against an allowed extension set."""
-        file_suffix = Path(file.filename).suffix
-        if not file_suffix:
+        filename = Path(file.filename or "").name.lower()
+        lower_case_allowed_extensions = {
+            extension.lower().lstrip(".") for extension in allowed_extensions
+        }
+        if filename == "mlmodel" and "mlmodel" in lower_case_allowed_extensions:
+            return
+        if any(
+            extension != "mlmodel"
+            and filename.endswith(f".{extension}")
+            and len(filename) > len(extension) + 1
+            for extension in lower_case_allowed_extensions
+        ):
+            return
+        if not Path(filename).suffix:
             raise ValidationError([_("File extension is not allowed.")])
-        # Make case-insensitive comparison
-        if file_suffix[1:].lower() not in [ext.lower() for ext in allowed_extensions]:
-            raise ValidationError([_("File extension is not allowed.")])
+        raise ValidationError([_("File extension is not allowed.")])
 
 
 class UploadPostSchema(BaseUploadFilePostSchemaMixin):

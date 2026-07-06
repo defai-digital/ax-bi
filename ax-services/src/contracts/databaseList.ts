@@ -16,31 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const DATABASE_LIST_CONTRACT_VERSION = 'database-list.v1';
 
-export type DatabaseFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DatabaseFilterValue = SharedListFilterValue;
 
-export interface DatabaseListFilter {
-  col: string;
-  opr: string;
-  value: DatabaseFilterValue;
-}
+export type DatabaseListFilter = SharedListFilter;
 
-export interface DatabaseListRequest {
-  contractVersion: typeof DATABASE_LIST_CONTRACT_VERSION;
-  filters: DatabaseListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DatabaseListRequest
+  extends ListRequestBase<typeof DATABASE_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
 }
 
@@ -68,47 +60,17 @@ export interface DatabaseListItem {
   createdOnHumanized?: string;
 }
 
-export interface DatabaseListResponse {
-  contractVersion: typeof DATABASE_LIST_CONTRACT_VERSION;
+export interface DatabaseListResponse
+  extends ListResponseBase<typeof DATABASE_LIST_CONTRACT_VERSION> {
   databases: DatabaseListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const databaseFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const databaseListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     databaseName: { type: 'string' },
     backend: { type: 'string' },
@@ -118,7 +80,7 @@ const databaseListItemSchema = {
     allowDml: { type: 'boolean' },
     allowFileUpload: { type: 'boolean' },
     allowRunAsync: { type: 'boolean' },
-    cacheTimeout: { type: 'number' },
+    cacheTimeout: { type: 'integer', minimum: -1 },
     configurationMethod: { type: 'string' },
     forceCtasSchema: { type: 'string' },
     impersonateUser: { type: 'boolean' },
@@ -135,83 +97,21 @@ const databaseListItemSchema = {
   },
 } as const;
 
-export const databaseListRequestSchema = {
-  $id: 'ax-services.database-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-    'createdByMe',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATABASE_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: databaseFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+export const databaseListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.database-list.v1.request',
+  contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+  extraRequired: ['createdByMe'],
+  extraProperties: {
     createdByMe: { type: 'boolean' },
   },
-} as const;
+});
 
-export const databaseListResponseSchema = {
-  $id: 'ax-services.database-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'databases',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATABASE_LIST_CONTRACT_VERSION },
-    databases: {
-      type: 'array',
-      items: databaseListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-  },
-} as const;
+export const databaseListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.database-list.v1.response',
+  contractVersion: DATABASE_LIST_CONTRACT_VERSION,
+  collectionKey: 'databases',
+  itemSchema: databaseListItemSchema,
+});
 
 export const databaseListContractSchemas = {
   databaseListRequestSchema,

@@ -32,11 +32,12 @@ import os
 import re
 import sys
 from collections import OrderedDict
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from importlib.resources import files
-from typing import Any, Callable, Iterator, Literal, Optional, TYPE_CHECKING, TypedDict
+from typing import Any, Literal, TYPE_CHECKING, TypedDict
 
 import click
 from celery.schedules import crontab
@@ -87,7 +88,7 @@ STATS_LOGGER = DummyStatsLogger()
 # By default will log events to the metadata database with `DBEventLogger`
 # Note that you can use `StdOutEventLogger` for debugging
 # Note that you can write your own event logger by extending `AbstractEventLogger`
-# https://github.com/apache/superset/blob/master/superset/utils/log.py
+# https://github.com/defai-digital/ax-bi/blob/main/superset/utils/log.py
 EVENT_LOGGER = DBEventLogger()
 
 SUPERSET_LOG_VIEW = True
@@ -421,18 +422,18 @@ AUTH_PASSWORD_COMMON_BLOCKLIST: list[str] = []
 # GLOBALS FOR APP Builder
 # ------------------------------
 # Uncomment to setup Your App name
-APP_NAME = "AX-BI"
+APP_NAME = "AX-Office"
 
 # Specify the App icon
 # NOTE: This variable is used to populate THEME_DEFAULT. If you override this in
 # superset_config.py, you must also override THEME_DEFAULT to see the change,
 # or set THEME_DEFAULT["token"]["brandLogoUrl"] directly.
-APP_ICON = "/static/assets/images/ax-bi-logo-horiz.png?v=20260626-4"
-APP_ICON_DARK = "/static/assets/images/ax-bi-logo-horiz-dark.png?v=20260629-2"
+APP_ICON = "/static/assets/images/ax-office-logo-horiz.png"
+APP_ICON_DARK = "/static/assets/images/ax-office-logo-horiz-dark.png"
 
 # Specify where clicking the logo would take the user
-# Default value of None will take you to '/superset/welcome'
-# You can also specify a relative URL e.g. '/superset/welcome' or '/dashboards/list'
+# Default value of None will take you to '/ax-office/welcome'
+# You can also specify a relative URL e.g. '/ax-office/welcome' or '/dashboards/list'
 # or you can specify a full URL e.g. 'https://foo.bar'
 # NOTE: Overriding this in superset_config.py automatically updates the logo link
 # (THEME_DEFAULT["token"]["brandLogoHref"]); see sync_theme_logo_href below.
@@ -742,7 +743,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Serve MCP task listing from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_TASK_LIST_SERVING": False,
-    # Enable a TypeScript-derived metadata index for AX-BI search workflows.
+    # Enable a TypeScript-derived metadata index for AX-Office search workflows.
     # @lifecycle: development
     "TS_METADATA_INDEX": False,
     # Enable Rust-backed SQL parsing or normalization kernels.
@@ -1127,11 +1128,11 @@ _THEME_DEFAULT_BASE: Theme = {
         # Brand
         # Application name for window titles
         "brandAppName": APP_NAME,
-        "brandLogoAlt": "AX-BI",
+        "brandLogoAlt": "AX-Office",
         "brandLogoUrl": APP_ICON,
-        "brandLogoMargin": "4px 0 0 -8px",
+        "brandLogoMargin": "18px 0",
         "brandLogoHref": LOGO_TARGET_PATH or "/",
-        "brandLogoHeight": "34px",
+        "brandLogoHeight": "24px",
         # Spinner - Set this to use a custom GIF/image loader
         # "brandSpinnerUrl": "/static/assets/images/loading.gif",
         "brandSpinnerUrl": None,
@@ -1142,7 +1143,12 @@ _THEME_DEFAULT_BASE: Theme = {
         "colorError": "#e04355",
         "colorWarning": "#fcc700",
         "colorSuccess": "#5ac189",
-        "colorInfo": "#66bcfe",
+        # colorInfo intentionally shifted toward indigo/violet (hue ~239deg)
+        # rather than a lighter teal-blue like colorPrimary (hue ~194deg) --
+        # the two were previously close enough in hue/lightness (#66bcfe) to
+        # read as the same color at a glance, making info banners hard to
+        # distinguish from primary actions.
+        "colorInfo": "#6366f1",
         # Fonts
         "fontUrls": [],
         "fontFamily": "Inter, Helvetica, Arial, sans-serif",
@@ -1174,16 +1180,29 @@ _THEME_DARK_BASE: Theme = {
         "brandLogoUrl": APP_ICON_DARK,
         # Darker selection color for dark mode
         "colorEditorSelection": "#5c4d1a",
+        # Explicit dark-mode neutral ramp, pinned rather than left to antd's
+        # `dark` algorithm to derive on its own. Left unpinned, the algorithm
+        # resolves colorBgLayout/colorBgBase to pure black (#000000) with
+        # colorBgContainer at #141414 -- functional, but true black is harsher
+        # than the soft, slightly cool-tinted charcoal most dark dashboard UIs
+        # (e.g. Grafana) use, and pinning it here means a future antd upgrade
+        # can't silently change it. Each step is a small lightness increase
+        # for a clear elevation order: layout < container < elevated < spotlight.
+        "colorBgBase": "#11161a",
+        "colorBgLayout": "#11161a",
+        "colorBgContainer": "#171d22",
+        "colorBgElevated": "#1f262c",
+        "colorBgSpotlight": "#2a333a",
+        "colorBorder": "#2c363d",
+        "colorBorderSecondary": "#222a30",
     },
     "algorithm": "dark",
 }
 
-THEME_DARK: Optional[Theme] = _THEME_DARK_BASE
+THEME_DARK: Theme | None = _THEME_DARK_BASE
 
 
-def sync_theme_logo_href(
-    theme: Optional[Theme], logo_target_path: Optional[str]
-) -> None:
+def sync_theme_logo_href(theme: Theme | None, logo_target_path: str | None) -> None:
     """
     Apply ``LOGO_TARGET_PATH`` to a theme's ``brandLogoHref`` token.
 
@@ -1434,28 +1453,56 @@ HTML_SANITIZATION = True
 # Be careful when extending the default schema to avoid XSS attacks.
 HTML_SANITIZATION_SCHEMA_EXTENSIONS: dict[str, Any] = {}
 
-# Chrome allows up to 6 open connections per domain at a time. When there are more
-# than 6 slices in dashboard, a lot of time fetch requests are queued up and wait for
-# next available socket. PR #5039 added domain sharding for Superset,
-# and this feature can be enabled by configuration only (by default Superset
-# doesn't allow cross-domain request). This feature is deprecated, and will be removed
-# in the next major version of Superset, as enabling HTTP2 will serve the same goals.
-SUPERSET_WEBSERVER_DOMAINS = None  # deprecated
-
 # Allowed format types for upload on Database view
-EXCEL_EXTENSIONS = {"xlsx", "xls"}
-CSV_EXTENSIONS = {"csv", "tsv", "txt"}
-COLUMNAR_EXTENSIONS = {"parquet", "zip"}
+EXCEL_EXTENSIONS = {"xlsx", "xls", "ods"}
+CSV_EXTENSIONS = {"csv", "tsv", "txt", "csv.gz", "tsv.gz", "txt.gz"}
+COLUMNAR_EXTENSIONS = {"parquet", "zip", "orc", "feather", "arrow", "ipc"}
 STRUCTURED_EXTENSIONS = {
+    "ann",
+    "asc",
+    "avro",
+    "croissant.json",
+    "dat",
+    "dta",
+    "faiss",
+    "fwf",
+    "geojson",
+    "gguf",
+    "gpkg",
+    "hnsw",
+    "htm",
+    "html",
+    "index",
     "json",
     "jsonl",
+    "jsonl.gz",
+    "lance",
+    "lance.zip",
+    "mlflow.zip",
+    "mlmodel",
+    "mlruns.zip",
     "ndjson",
+    "ndjson.gz",
+    "npy",
+    "npz",
+    "onnx",
+    "sas7bdat",
+    "sav",
+    "safetensors",
+    "shp.zip",
     "xml",
+    "tar",
+    "tar.gz",
+    "tgz",
     "sql",
     "dump",
     "sqlite",
     "sqlite3",
+    "xpt",
+    "yaml",
+    "yml",
     "db",
+    "yolo.zip",
 }
 ALLOWED_EXTENSIONS = {
     *EXCEL_EXTENSIONS,
@@ -2332,7 +2379,7 @@ IMPALA_CANCEL_QUERY_ALLOW_INTERNAL_HOSTS: bool = False
 EMAIL_REPORTS_SUBJECT_PREFIX = "[Report] "
 
 # The text for call-to-action link in Alerts & Reports emails
-EMAIL_REPORTS_CTA = "Explore in AX-BI"
+EMAIL_REPORTS_CTA = "Explore in AX-Office"
 
 # Slack API token for the superset reports, either string or callable
 SLACK_API_TOKEN: Callable[[], str] | str | None = None
@@ -2684,7 +2731,7 @@ GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
 )
 GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
 
-# AX-BI runtime modernization sidecar config.
+# AX-Office runtime modernization sidecar config.
 # These settings are inert until runtime modernization feature flags route
 # selected workflows to the TypeScript sidecar.
 AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"
@@ -2738,7 +2785,7 @@ GUEST_TOKEN_VALIDATOR_HOOK = None
 # When True, every minted guest token carries a revocation version, and tokens
 # whose version is below the current expected version (stored in the metadata
 # database) are rejected at validation time. Bump the expected version with the
-# `superset revoke-guest-tokens` CLI command to invalidate all outstanding guest
+# `ax-bi revoke-guest-tokens` CLI command to invalidate all outstanding guest
 # tokens (e.g. after a token leak, or when a user's access or RLS rules change).
 #
 # This is opt-in and backward compatible: the default expected version is 0 and

@@ -20,7 +20,7 @@ WebDriver pool configuration defaults for Superset MCP service
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ DEFAULT_WEBDRIVER_POOL_CONFIG = {
 }
 
 
-def configure_webdriver_pool(app_config: Dict[str, Any]) -> None:
+def configure_webdriver_pool(app_config: dict[str, Any]) -> None:
     """
     Configure WebDriver pool settings in Superset app config.
 
@@ -126,7 +126,7 @@ PERFORMANCE_CONFIGS = {
 
 
 def configure_for_environment(
-    app_config: Dict[str, Any], environment: str = "medium_traffic"
+    app_config: dict[str, Any], environment: str = "medium_traffic"
 ) -> None:
     """
     Configure WebDriver pool for specific environment/traffic levels.

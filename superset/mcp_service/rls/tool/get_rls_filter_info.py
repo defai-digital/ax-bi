@@ -59,7 +59,7 @@ async def get_rls_filter_info(
     ```
     """
     await ctx.info(
-        "Retrieving RLS filter information: identifier=%s" % (request.identifier,)
+        f"Retrieving RLS filter information: identifier={request.identifier}"
     )
 
     try:
@@ -77,21 +77,19 @@ async def get_rls_filter_info(
             result = get_tool.run_tool(request.identifier)
 
         if isinstance(result, RlsFilterInfo):
-            await ctx.info(
-                "RLS filter retrieved: id=%s, name=%s" % (result.id, result.name)
-            )
+            await ctx.info(f"RLS filter retrieved: id={result.id}, name={result.name}")
         else:
             await ctx.warning(
-                "RLS filter retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"RLS filter retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as e:
         await ctx.error(
-            "RLS filter info retrieval failed: identifier=%s, error=%s"
-            % (request.identifier, str(e))
+            f"RLS filter info retrieval failed: identifier={request.identifier}, "
+            f"error={str(e)}"
         )
         return RlsFilterError.create(
             error=f"Failed to get RLS filter info: {str(e)}",

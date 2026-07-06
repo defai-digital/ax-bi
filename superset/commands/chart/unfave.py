@@ -41,7 +41,7 @@ class DelFavoriteChartCommand(BaseCommand):
     def run(self) -> None:
         self.validate()
         if self._chart:
-            return ChartDAO.remove_favorite(self._chart)
+            ChartDAO.remove_favorite(self._chart)
 
     def validate(self) -> None:
         chart = ChartDAO.find_by_id(self._chart_id)

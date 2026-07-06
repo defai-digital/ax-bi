@@ -159,7 +159,7 @@ class ListAnnotationLayersRequest(BaseModel):
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListAnnotationLayersRequest":
+    def validate_search_and_filters(self) -> ListAnnotationLayersRequest:
         ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 
@@ -259,7 +259,7 @@ class ListLayerAnnotationsRequest(BaseModel):
         return parse_select_columns(v)
 
     @model_validator(mode="after")
-    def validate_search_and_filters(self) -> "ListLayerAnnotationsRequest":
+    def validate_search_and_filters(self) -> ListLayerAnnotationsRequest:
         ensure_search_and_filters_not_combined(self.search, self.filters)
         return self
 

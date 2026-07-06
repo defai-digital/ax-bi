@@ -16,7 +16,7 @@
 # under the License.
 import copy
 import dataclasses
-from typing import Any, Optional
+from typing import Any
 
 from superset.common.chart_data import ChartDataResultType
 from superset.utils.core import AnnotationType, DTTM_ALIAS
@@ -249,7 +249,7 @@ class QueryContextGenerator:
         add_time_offsets: bool = False,
         table_id=1,
         table_type="table",
-        form_data: Optional[dict[str, Any]] = None,
+        form_data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         form_data = form_data or {}
         table_name = query_name.split(":")[0]

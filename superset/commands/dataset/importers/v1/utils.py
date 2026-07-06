@@ -127,7 +127,7 @@ def get_sqla_type(native_type: str) -> TypeEngine[Any]:
 def get_dtype(df: pd.DataFrame, dataset: SqlaTable) -> dict[str, TypeEngine[Any]]:
     dtype: dict[str, TypeEngine[Any]] = {}
     for column in dataset.columns:
-        if not column.type or column.column_name not in df.keys():
+        if not column.type or column.column_name not in df:
             continue
 
         try:
@@ -234,12 +234,17 @@ def import_dataset(  # noqa: C901
     existing = db.session.query(SqlaTable).filter_by(uuid=config["uuid"]).first()
     user = get_user()
     if existing:
-        if overwrite and can_write and user:
-            if user not in existing.owners and not security_manager.is_admin():
-                raise ImportFailedError(
-                    "A dataset already exists and user doesn't "
-                    "have permissions to overwrite it"
-                )
+        if (
+            overwrite
+            and can_write
+            and user
+            and user not in existing.owners
+            and not security_manager.is_admin()
+        ):
+            raise ImportFailedError(
+                "A dataset already exists and user doesn't "
+                "have permissions to overwrite it"
+            )
         if not overwrite or not can_write:
             return existing
         config["id"] = existing.id
@@ -325,7 +330,7 @@ def import_dataset(  # noqa: C901
 def _convert_temporal_columns(df: pd.DataFrame, dtype: dict[str, Any]) -> None:
     """Convert Date/DateTime columns in-place, coercing only out-of-bounds values."""
     for column_name, sqla_type in dtype.items():
-        if isinstance(sqla_type, (Date, DateTime)):
+        if isinstance(sqla_type, Date | DateTime):
             try:
                 df[column_name] = pd.to_datetime(df[column_name])
             except OutOfBoundsDatetime:

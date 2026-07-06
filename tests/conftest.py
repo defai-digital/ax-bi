@@ -26,7 +26,8 @@
 from __future__ import annotations
 
 import functools
-from typing import Any, Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TYPE_CHECKING
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 from flask import current_app

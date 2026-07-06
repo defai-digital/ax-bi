@@ -16,31 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  type ListFilter as SharedListFilter,
+  type ListFilterValue as SharedListFilterValue,
+  type ListRequestBase,
+  type ListResponseBase,
+  buildListRequestSchema,
+  buildListResponseSchema,
+} from './listColumn';
+
 export const DATASET_LIST_CONTRACT_VERSION = 'dataset-list.v1';
 
-export type DatasetFilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | boolean[];
+export type DatasetFilterValue = SharedListFilterValue;
 
-export interface DatasetListFilter {
-  col: string;
-  opr: string;
-  value: DatasetFilterValue;
-}
+export type DatasetListFilter = SharedListFilter;
 
-export interface DatasetListRequest {
-  contractVersion: typeof DATASET_LIST_CONTRACT_VERSION;
-  filters: DatasetListFilter[];
-  selectColumns: string[];
-  search?: string;
-  orderColumn?: string;
-  orderDirection: 'asc' | 'desc';
-  page: number;
-  pageSize: number;
+export interface DatasetListRequest
+  extends ListRequestBase<typeof DATASET_LIST_CONTRACT_VERSION> {
   createdByMe: boolean;
   ownedByMe: boolean;
 }
@@ -61,47 +53,17 @@ export interface DatasetListItem {
   url?: string;
 }
 
-export interface DatasetListResponse {
-  contractVersion: typeof DATASET_LIST_CONTRACT_VERSION;
+export interface DatasetListResponse
+  extends ListResponseBase<typeof DATASET_LIST_CONTRACT_VERSION> {
   datasets: DatasetListItem[];
-  count: number;
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  columnsRequested: string[];
-  columnsLoaded: string[];
-  warnings: string[];
 }
-
-const datasetFilterSchema = {
-  type: 'object',
-  required: ['col', 'opr', 'value'],
-  additionalProperties: false,
-  properties: {
-    col: { type: 'string' },
-    opr: { type: 'string' },
-    value: {
-      anyOf: [
-        { type: 'string' },
-        { type: 'number' },
-        { type: 'boolean' },
-        { type: 'array', items: { type: 'string' } },
-        { type: 'array', items: { type: 'number' } },
-        { type: 'array', items: { type: 'boolean' } },
-      ],
-    },
-  },
-} as const;
 
 const datasetListItemSchema = {
   type: 'object',
   required: ['id'],
   additionalProperties: false,
   properties: {
-    id: { type: 'number' },
+    id: { type: 'integer', minimum: 0 },
     tableName: { type: 'string' },
     schema: { type: 'string' },
     databaseName: { type: 'string' },
@@ -111,91 +73,28 @@ const datasetListItemSchema = {
     changedOn: { type: 'string' },
     changedOnHumanized: { type: 'string' },
     isVirtual: { type: 'boolean' },
-    databaseId: { type: 'number' },
+    databaseId: { type: 'integer', minimum: 0 },
     uuid: { type: 'string' },
     url: { type: 'string' },
   },
 } as const;
 
-export const datasetListRequestSchema = {
-  $id: 'ax-services.dataset-list.v1.request',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'filters',
-    'selectColumns',
-    'orderDirection',
-    'page',
-    'pageSize',
-    'createdByMe',
-    'ownedByMe',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATASET_LIST_CONTRACT_VERSION },
-    filters: {
-      type: 'array',
-      items: datasetFilterSchema,
-    },
-    selectColumns: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    search: { type: 'string' },
-    orderColumn: { type: 'string' },
-    orderDirection: { enum: ['asc', 'desc'] },
-    page: { type: 'number', minimum: 1 },
-    pageSize: { type: 'number', minimum: 1, maximum: 100 },
+export const datasetListRequestSchema = buildListRequestSchema({
+  schemaId: 'ax-services.dataset-list.v1.request',
+  contractVersion: DATASET_LIST_CONTRACT_VERSION,
+  extraRequired: ['createdByMe', 'ownedByMe'],
+  extraProperties: {
     createdByMe: { type: 'boolean' },
     ownedByMe: { type: 'boolean' },
   },
-} as const;
+});
 
-export const datasetListResponseSchema = {
-  $id: 'ax-services.dataset-list.v1.response',
-  type: 'object',
-  required: [
-    'contractVersion',
-    'datasets',
-    'count',
-    'totalCount',
-    'page',
-    'pageSize',
-    'totalPages',
-    'hasNext',
-    'hasPrevious',
-    'columnsRequested',
-    'columnsLoaded',
-    'warnings',
-  ],
-  additionalProperties: false,
-  properties: {
-    contractVersion: { const: DATASET_LIST_CONTRACT_VERSION },
-    datasets: {
-      type: 'array',
-      items: datasetListItemSchema,
-    },
-    count: { type: 'number' },
-    totalCount: { type: 'number' },
-    page: { type: 'number' },
-    pageSize: { type: 'number' },
-    totalPages: { type: 'number' },
-    hasNext: { type: 'boolean' },
-    hasPrevious: { type: 'boolean' },
-    columnsRequested: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    columnsLoaded: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-    warnings: {
-      type: 'array',
-      items: { type: 'string' },
-    },
-  },
-} as const;
+export const datasetListResponseSchema = buildListResponseSchema({
+  schemaId: 'ax-services.dataset-list.v1.response',
+  contractVersion: DATASET_LIST_CONTRACT_VERSION,
+  collectionKey: 'datasets',
+  itemSchema: datasetListItemSchema,
+});
 
 export const datasetListContractSchemas = {
   datasetListRequestSchema,

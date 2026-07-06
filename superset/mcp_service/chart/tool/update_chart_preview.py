@@ -21,7 +21,7 @@ MCP tool: update_chart_preview
 
 import logging
 import time
-from typing import Any, Dict
+from typing import Any
 
 from fastmcp import Context
 from sqlalchemy.exc import SQLAlchemyError
@@ -114,7 +114,7 @@ def _get_previous_form_data(form_data_key: str) -> dict[str, Any] | None:
 )
 def update_chart_preview(  # noqa: C901
     request: UpdateChartPreviewRequest, ctx: Context
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update cached chart preview without saving.
 
     IMPORTANT:
@@ -282,7 +282,7 @@ def update_chart_preview(  # noqa: C901
             high_contrast_available=False,
         )
 
-        previews: Dict[str, Any] = {}
+        previews: dict[str, Any] = {}
         if request.generate_preview:
             try:
                 with mcp_event_log_context(action="mcp.update_chart_preview.preview"):
@@ -315,7 +315,7 @@ def update_chart_preview(  # noqa: C901
                 logger.warning("Preview generation failed: %s", e)
 
         # Return enhanced data
-        result = {
+        return {
             "chart": {
                 "id": None,
                 "slice_name": chart_name,
@@ -341,7 +341,6 @@ def update_chart_preview(  # noqa: C901
             "schema_version": "2.0",
             "api_version": "v1",
         }
-        return result
 
     except OAuth2RedirectError as ex:
         logger.warning(

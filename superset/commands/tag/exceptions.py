@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typing import Optional
 
 from flask_babel import lazy_gettext as _
 
@@ -49,7 +48,7 @@ class TaggedObjectDeleteFailedError(DeleteFailedError):
 
 
 class TagNotFoundError(ObjectNotFoundError):
-    def __init__(self, tag_name: Optional[str] = None) -> None:
+    def __init__(self, tag_name: str | None = None) -> None:
         message = "Tag not found."
         if tag_name:
             message = f"Tag with name {tag_name} not found."
@@ -59,9 +58,9 @@ class TagNotFoundError(ObjectNotFoundError):
 class TaggedObjectNotFoundError(CommandException):
     def __init__(
         self,
-        object_id: Optional[int] = None,
-        object_type: Optional[str] = None,
-        tag_name: Optional[str] = None,
+        object_id: int | None = None,
+        object_type: str | None = None,
+        tag_name: str | None = None,
     ) -> None:
         message = "Tagged Object not found."
         if object_id and object_type and tag_name:

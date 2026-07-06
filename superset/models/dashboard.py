@@ -44,6 +44,7 @@ from sqlalchemy.sql.elements import BinaryExpression
 from superset_core.common.models import Dashboard as CoreDashboard
 
 from superset import db, is_feature_enabled, security_manager
+from superset.constants import AX_BI_ROUTE_PREFIX
 from superset.connectors.sqla.models import BaseDatasource, SqlaTable
 from superset.daos.datasource import DatasourceDAO
 from superset.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
@@ -291,12 +292,12 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
 
     @property
     def url(self) -> str:
-        return f"/superset/dashboard/{self.slug or self.id}/"
+        return f"{AX_BI_ROUTE_PREFIX}/dashboard/{self.slug or self.id}/"
 
     @staticmethod
     def get_url(id_: int, slug: str | None = None) -> str:
         # To be able to generate URL's without instantiating a Dashboard object
-        return f"/superset/dashboard/{slug or id_}/"
+        return f"{AX_BI_ROUTE_PREFIX}/dashboard/{slug or id_}/"
 
     @property
     def datasources(self) -> set[BaseDatasource]:
@@ -354,7 +355,9 @@ class Dashboard(CoreDashboard, AuditMixinNullable, ImportExportMixin):
             "slug": self.slug,
             "slices": [slc.data for slc in self.slices],
             "position_json": self.position,
-            "last_modified_time": self.changed_on.replace(microsecond=0).timestamp(),
+            "last_modified_time": self.changed_on.replace(microsecond=0).timestamp()
+            if self.changed_on
+            else None,
             "is_managed_externally": self.is_managed_externally,
         }
 

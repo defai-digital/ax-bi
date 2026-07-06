@@ -36,8 +36,8 @@ import traceback
 import uuid
 import warnings
 import zlib
-from collections.abc import Iterable, Iterator, Sequence
-from contextlib import closing, contextmanager
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from contextlib import closing, contextmanager, suppress
 from dataclasses import dataclass
 from datetime import timedelta
 from email.mime.application import MIMEApplication
@@ -51,12 +51,11 @@ from timeit import default_timer
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
     cast,
     NamedTuple,
-    Optional,
     TYPE_CHECKING,
     TypedDict,
+    TypeGuard,
     TypeVar,
 )
 from urllib.parse import unquote_plus
@@ -81,13 +80,14 @@ from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.sql.type_api import Variant
 from sqlalchemy.types import TypeEngine
-from typing_extensions import TypeGuard
 
 from superset.constants import (
+    AX_OFFICE_ROUTE_PREFIX,
     DEFAULT_USER_AGENT,
     EXTRA_FORM_DATA_APPEND_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS,
+    LEGACY_SUPERSET_ROUTE_PREFIX,
     NO_TIME_RANGE,
 )
 from superset.errors import ErrorLevel, SupersetErrorType
@@ -359,7 +359,7 @@ class ReservedUrlParameters(StrEnum):
     def is_standalone_mode() -> bool | None:
         standalone_param = request.args.get(ReservedUrlParameters.STANDALONE.value)
         standalone: bool | None = bool(
-            standalone_param and standalone_param != "false" and standalone_param != "0"
+            standalone_param and standalone_param not in ("false", "0")
         )
         return standalone
 
@@ -443,7 +443,7 @@ def cast_to_num(value: float | int | str | None) -> float | int | None:
     """
     if value is None:
         return None
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value
     if value.isdigit():
         return int(value)
@@ -478,7 +478,7 @@ def cast_to_boolean(value: Any) -> bool | None:
         return None
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value != 0
     if isinstance(value, str):
         return value.strip().lower() == "true"
@@ -558,10 +558,7 @@ def markdown(raw: str, markup_wrap: bool | None = False) -> str:
 
 
 def sanitize_svg_content(svg_content: str) -> str:
-    """Basic SVG protection - remove obvious XSS vectors, trust admin input otherwise.
-
-    Minimal protection approach that removes scripts and javascript: URLs while
-    preserving all legitimate SVG features. Assumes admin-provided content.
+    """Sanitize SVG content while preserving common presentational elements.
 
     Args:
         svg_content: Raw SVG content string
@@ -572,26 +569,78 @@ def sanitize_svg_content(svg_content: str) -> str:
     if not svg_content or not svg_content.strip():
         return ""
 
-    # Minimal protection: remove obvious malicious content, preserve all SVG features
-    content = re.sub(
-        r"<script[^>]*>.*?</script>", "", svg_content, flags=re.IGNORECASE | re.DOTALL
+    svg_tags = {
+        "svg",
+        "g",
+        "path",
+        "rect",
+        "circle",
+        "ellipse",
+        "line",
+        "polyline",
+        "polygon",
+        "text",
+        "tspan",
+        "defs",
+        "linearGradient",
+        "radialGradient",
+        "stop",
+        "clipPath",
+        "mask",
+        "use",
+    }
+    svg_attrs = {
+        "*": {
+            "aria-hidden",
+            "aria-label",
+            "class",
+            "clip-path",
+            "cx",
+            "cy",
+            "d",
+            "dx",
+            "dy",
+            "fill",
+            "fill-opacity",
+            "focusable",
+            "font-family",
+            "font-size",
+            "height",
+            "id",
+            "mask",
+            "offset",
+            "opacity",
+            "points",
+            "preserveAspectRatio",
+            "r",
+            "rx",
+            "ry",
+            "stroke",
+            "stroke-linecap",
+            "stroke-linejoin",
+            "stroke-opacity",
+            "stroke-width",
+            "style",
+            "transform",
+            "viewBox",
+            "width",
+            "x",
+            "x1",
+            "x2",
+            "xlink:href",
+            "xmlns",
+            "xmlns:xlink",
+            "y",
+            "y1",
+            "y2",
+        }
+    }
+    return nh3.clean(
+        svg_content,
+        tags=svg_tags,
+        attributes=svg_attrs,
+        link_rel=None,
     )
-    content = re.sub(r"javascript:", "", content, flags=re.IGNORECASE)
-    content = re.sub(r"data:[^;]*;[^,]*,.*javascript", "", content, flags=re.IGNORECASE)
-
-    # Remove event handlers (simple catch-all approach)
-    content = re.sub(r"\bon\w+\s*=", "", content, flags=re.IGNORECASE)
-
-    # Remove other suspicious patterns
-    content = re.sub(
-        r"<iframe[^>]*>.*?</iframe>", "", content, flags=re.IGNORECASE | re.DOTALL
-    )
-    content = re.sub(
-        r"<object[^>]*>.*?</object>", "", content, flags=re.IGNORECASE | re.DOTALL
-    )
-    content = re.sub(r"<embed[^>]*>", "", content, flags=re.IGNORECASE)
-
-    return content
 
 
 def sanitize_url(url: str) -> str:
@@ -633,8 +682,7 @@ def sanitize_url(url: str) -> str:
 
 def readfile(file_path: str) -> str | None:
     with open(file_path) as f:
-        content = f.read()
-    return content
+        return f.read()
 
 
 def generic_find_constraint_name(
@@ -985,10 +1033,8 @@ def send_mime_email(
         # Always release the socket; the new timeout means starttls/login/
         # sendmail can raise, and a skipped quit() would leak connections in
         # the long-lived worker process.
-        try:
+        with suppress(smtplib.SMTPException):
             smtp.quit()
-        except smtplib.SMTPException:
-            pass
 
 
 def recipients_string_to_list(address_string: str | None) -> list[str]:
@@ -1825,7 +1871,7 @@ def get_column_names_from_metrics(metrics: list[Metric]) -> list[str]:
     return [col for col in map(get_column_name_from_metric, metrics) if col]
 
 
-def map_sql_type_to_inferred_type(sql_type: Optional[str]) -> str:
+def map_sql_type_to_inferred_type(sql_type: str | None) -> str:
     """
     Map a SQL type to a type string recognized by pandas' `infer_objects` method.
 
@@ -2075,7 +2121,7 @@ class DateColumn:
         return hash(self.col_label)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, DateColumn) and hash(self) == hash(other)
+        return isinstance(other, DateColumn) and self.col_label == other.col_label
 
     @classmethod
     def get_legacy_time_column(
@@ -2310,7 +2356,11 @@ def to_int(v: Any, value_if_invalid: int = 0) -> int:
 def get_query_source_from_request() -> QuerySource | None:
     if not request or not request.referrer:
         return None
-    if "/superset/dashboard/" in request.referrer:
+    dashboard_paths = (
+        f"{AX_OFFICE_ROUTE_PREFIX}/dashboard/",
+        f"{LEGACY_SUPERSET_ROUTE_PREFIX}/dashboard/",
+    )
+    if any(path in request.referrer for path in dashboard_paths):
         return QuerySource.DASHBOARD
     if "/explore/" in request.referrer:
         return QuerySource.CHART

@@ -16,7 +16,6 @@
 # under the License.
 import re
 from datetime import date, datetime, timedelta
-from typing import Optional
 from unittest.mock import Mock, patch
 
 import freezegun
@@ -39,7 +38,7 @@ from superset.utils.date_parser import (
 from tests.unit_tests.conftest import with_feature_flags
 
 
-def mock_parse_human_datetime(s: str) -> Optional[datetime]:  # noqa: C901
+def mock_parse_human_datetime(s: str) -> datetime | None:  # noqa: C901
     if s == "now":
         return datetime(2016, 11, 7, 9, 30, 10)
     elif s == "2018":
@@ -78,8 +77,8 @@ def mock_parse_human_datetime(s: str) -> Optional[datetime]:  # noqa: C901
 
 @patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_get_since_until() -> None:
-    result: tuple[Optional[datetime], Optional[datetime]]
-    expected: tuple[Optional[datetime], Optional[datetime]]
+    result: tuple[datetime | None, datetime | None]
+    expected: tuple[datetime | None, datetime | None]
 
     result = get_since_until()
     expected = None, datetime(2016, 11, 7)
@@ -287,8 +286,8 @@ def test_get_since_until() -> None:
 @with_feature_flags(CHART_PLUGINS_EXPERIMENTAL=True)
 @patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_get_since_until_instant_time_comparison_enabled() -> None:
-    result: tuple[Optional[datetime], Optional[datetime]]
-    expected: tuple[Optional[datetime], Optional[datetime]]
+    result: tuple[datetime | None, datetime | None]
+    expected: tuple[datetime | None, datetime | None]
 
     result = get_since_until(
         time_range="2000-01-01T00:00:00 : 2018-01-01T00:00:00",

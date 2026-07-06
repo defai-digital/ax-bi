@@ -54,5 +54,4 @@ def cum(
         raise InvalidPostProcessingError(
             _("Invalid cumulative operator: %(operator)s", operator=operator)
         )
-    df_cum = _append_columns(df, getattr(df_cum, operation)(), columns)
-    return df_cum
+    return _append_columns(df, getattr(df_cum, operation)(), columns)

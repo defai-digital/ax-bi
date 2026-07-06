@@ -65,9 +65,7 @@ async def get_report_info(
     }
     ```
     """
-    await ctx.info(
-        "Retrieving report information: identifier=%s" % (request.identifier,)
-    )
+    await ctx.info(f"Retrieving report information: identifier={request.identifier}")
 
     try:
         from superset import is_feature_enabled
@@ -94,30 +92,21 @@ async def get_report_info(
         if isinstance(result, ReportInfo):
             await ctx.info(
                 "Report information retrieved successfully: "
-                "report_id=%s, name=%s, type=%s"
-                % (
-                    result.id,
-                    result.name,
-                    result.type,
-                )
+                f"report_id={result.id}, name={result.name}, type={result.type}"
             )
         else:
             await ctx.warning(
-                "Report retrieval failed: error_type=%s, error=%s"
-                % (result.error_type, result.error)
+                f"Report retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
             )
 
         return result
 
     except Exception as exc:  # noqa: BLE001
         await ctx.error(
-            "Report information retrieval failed: identifier=%s, error=%s, "
-            "error_type=%s"
-            % (
-                request.identifier,
-                str(exc),
-                type(exc).__name__,
-            )
+            "Report information retrieval failed: "
+            f"identifier={request.identifier}, error={str(exc)}, "
+            f"error_type={type(exc).__name__}"
         )
         return ReportError.create(
             error=f"Failed to get report info: {str(exc)}",

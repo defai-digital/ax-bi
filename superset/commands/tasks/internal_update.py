@@ -80,7 +80,6 @@ class InternalUpdateTaskCommand(BaseCommand):
 
     def validate(self) -> None:
         """No validation needed for internal command."""
-        pass
 
     @transaction(on_error=partial(on_error, reraise=TaskUpdateFailedError))
     def run(self) -> bool:
@@ -165,7 +164,6 @@ class InternalStatusTransitionCommand(BaseCommand):
 
     def validate(self) -> None:
         """No validation needed for internal command."""
-        pass
 
     @transaction(on_error=partial(on_error, reraise=TaskUpdateFailedError))
     def run(self) -> bool:

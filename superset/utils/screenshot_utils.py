@@ -85,7 +85,7 @@ def combine_screenshot_tiles(screenshot_tiles: list[bytes]) -> bytes:
 
 
 def take_tiled_screenshot(
-    page: "Page",
+    page: Page,
     element_name: str,
     tile_height: int,
     load_wait: int = 60,
@@ -225,9 +225,7 @@ def take_tiled_screenshot(
 
         # Combine all tiles
         logger.info("Combining screenshot tiles...")
-        combined_screenshot = combine_screenshot_tiles(screenshot_tiles)
-
-        return combined_screenshot
+        return combine_screenshot_tiles(screenshot_tiles)
 
     except Exception as e:
         logger.exception("Tiled screenshot failed: %s", e)

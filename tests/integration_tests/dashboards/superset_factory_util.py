@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from typing import Optional
 
 from flask_appbuilder import Model
 from flask_appbuilder.security.sqla.models import User
@@ -45,11 +44,11 @@ inserted_slices_ids = []
 
 
 def create_dashboard_to_db(
-    dashboard_title: Optional[str] = None,
-    slug: Optional[str] = None,
+    dashboard_title: str | None = None,
+    slug: str | None = None,
     published: bool = False,
-    owners: Optional[list[User]] = None,
-    slices: Optional[list[Slice]] = None,
+    owners: list[User] | None = None,
+    slices: list[Slice] | None = None,
     css: str = "",
     json_metadata: str = "",
     position_json: str = "",
@@ -71,11 +70,11 @@ def create_dashboard_to_db(
 
 
 def create_dashboard(
-    dashboard_title: Optional[str] = None,
-    slug: Optional[str] = None,
+    dashboard_title: str | None = None,
+    slug: str | None = None,
     published: bool = False,
-    owners: Optional[list[User]] = None,
-    slices: Optional[list[Slice]] = None,
+    owners: list[User] | None = None,
+    slices: list[Slice] | None = None,
     css: str = "",
     json_metadata: str = "",
     position_json: str = "",
@@ -103,9 +102,9 @@ def insert_model(dashboard: Model) -> None:
 
 
 def create_slice_to_db(
-    name: Optional[str] = None,
-    datasource_id: Optional[int] = None,
-    owners: Optional[list[User]] = None,
+    name: str | None = None,
+    datasource_id: int | None = None,
+    owners: list[User] | None = None,
 ) -> Slice:
     slice_ = create_slice(datasource_id, name=name, owners=owners)
     insert_model(slice_)
@@ -114,10 +113,10 @@ def create_slice_to_db(
 
 
 def create_slice(
-    datasource_id: Optional[int] = None,
-    datasource: Optional[SqlaTable] = None,
-    name: Optional[str] = None,
-    owners: Optional[list[User]] = None,
+    datasource_id: int | None = None,
+    datasource: SqlaTable | None = None,
+    name: str | None = None,
+    owners: list[User] | None = None,
 ) -> Slice:
     name = name if name is not None else random_str()
     owners = owners if owners is not None else []
@@ -145,9 +144,9 @@ def create_slice(
 
 
 def create_datasource_table_to_db(
-    name: Optional[str] = None,
-    db_id: Optional[int] = None,
-    owners: Optional[list[User]] = None,
+    name: str | None = None,
+    db_id: int | None = None,
+    owners: list[User] | None = None,
 ) -> SqlaTable:
     sqltable = create_datasource_table(name, db_id, owners=owners)
     insert_model(sqltable)
@@ -156,10 +155,10 @@ def create_datasource_table_to_db(
 
 
 def create_datasource_table(
-    name: Optional[str] = None,
-    db_id: Optional[int] = None,
-    database: Optional[Database] = None,
-    owners: Optional[list[User]] = None,
+    name: str | None = None,
+    db_id: int | None = None,
+    database: Database | None = None,
+    owners: list[User] | None = None,
 ) -> SqlaTable:
     name = name if name is not None else random_str()
     owners = owners if owners is not None else []
@@ -169,14 +168,14 @@ def create_datasource_table(
     return SqlaTable(table_name=name, database_id=db_id, owners=owners)
 
 
-def create_database_to_db(name: Optional[str] = None) -> Database:
+def create_database_to_db(name: str | None = None) -> Database:
     database = create_database(name)
     insert_model(database)
     inserted_databases_ids.append(database.id)
     return database
 
 
-def create_database(name: Optional[str] = None) -> Database:
+def create_database(name: str | None = None) -> Database:
     name = name if name is not None else random_str()
     return Database(database_name=name, sqlalchemy_uri="sqlite:///:memory:")
 

@@ -46,9 +46,8 @@ def add_impersonation_cache_key_if_needed(
         )
         or feature_flag_manager.is_feature_enabled("CACHE_QUERY_BY_USER")
         or extra.get("per_user_caching", False)
+    ) and (
+        key := database.db_engine_spec.get_impersonation_key(getattr(g, "user", None))
     ):
-        if key := database.db_engine_spec.get_impersonation_key(
-            getattr(g, "user", None)
-        ):
-            logger.debug("Adding impersonation key to cache dict: %s", key)
-            cache_dict["impersonation_key"] = key
+        logger.debug("Adding impersonation key to cache dict: %s", key)
+        cache_dict["impersonation_key"] = key

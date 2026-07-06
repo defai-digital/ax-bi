@@ -19,45 +19,45 @@ Future phases will add support for these sources.
 
 9 components
 
-- [ ] `superset-frontend/src/components/AlteredSliceTag/AlteredSliceTag.stories.tsx`
-- [ ] `superset-frontend/src/components/Chart/DrillDetail/DrillDetailTableControls.stories.tsx`
-- [ ] `superset-frontend/src/components/CopyToClipboard/CopyToClipboard.stories.tsx`
-- [ ] `superset-frontend/src/components/ErrorMessage/ErrorAlert.stories.tsx`
-- [ ] `superset-frontend/src/components/FacePile/FacePile.stories.tsx`
-- [ ] `superset-frontend/src/components/FilterableTable/FilterableTable.stories.tsx`
-- [ ] `superset-frontend/src/components/RowCountLabel/RowCountLabel.stories.tsx`
-- [ ] `superset-frontend/src/components/Tag/Tag.stories.tsx`
-- [ ] `superset-frontend/src/components/TagsList/TagsList.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/AlteredSliceTag/AlteredSliceTag.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/Chart/DrillDetail/DrillDetailTableControls.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/CopyToClipboard/CopyToClipboard.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/ErrorMessage/ErrorAlert.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/FacePile/FacePile.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/FilterableTable/FilterableTable.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/RowCountLabel/RowCountLabel.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/Tag/Tag.stories.tsx`
+- [ ] `ax-bi-frontend/src/components/TagsList/TagsList.stories.tsx`
 
 ### Dashboard Components
 
 2 components
 
-- [ ] `superset-frontend/src/dashboard/components/AnchorLink/AnchorLink.stories.tsx`
-- [ ] `superset-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterDivider.stories.tsx`
+- [ ] `ax-bi-frontend/src/dashboard/components/AnchorLink/AnchorLink.stories.tsx`
+- [ ] `ax-bi-frontend/src/dashboard/components/nativeFilters/FilterBar/FilterControls/FilterDivider.stories.tsx`
 
 ### Explore Components
 
 4 components
 
-- [ ] `superset-frontend/src/explore/components/ControlHeader.stories.tsx`
-- [ ] `superset-frontend/src/explore/components/RunQueryButton/RunQueryButton.stories.tsx`
-- [ ] `superset-frontend/src/explore/components/controls/BoundsControl.stories.tsx`
-- [ ] `superset-frontend/src/explore/components/controls/SliderControl.stories.tsx`
+- [ ] `ax-bi-frontend/src/explore/components/ControlHeader.stories.tsx`
+- [ ] `ax-bi-frontend/src/explore/components/RunQueryButton/RunQueryButton.stories.tsx`
+- [ ] `ax-bi-frontend/src/explore/components/controls/BoundsControl.stories.tsx`
+- [ ] `ax-bi-frontend/src/explore/components/controls/SliderControl.stories.tsx`
 
 ### Feature Components
 
 2 components
 
-- [ ] `superset-frontend/src/features/datasets/AddDataset/DatasetPanel/DatasetPanel.stories.tsx`
-- [ ] `superset-frontend/src/features/home/LanguagePicker.stories.tsx`
+- [ ] `ax-bi-frontend/src/features/datasets/AddDataset/DatasetPanel/DatasetPanel.stories.tsx`
+- [ ] `ax-bi-frontend/src/features/home/LanguagePicker.stories.tsx`
 
 ### Filter Components
 
 2 components
 
-- [ ] `superset-frontend/src/filters/components/Range/RangeFilterPlugin.stories.tsx`
-- [ ] `superset-frontend/src/filters/components/Select/SelectFilterPlugin.stories.tsx`
+- [ ] `ax-bi-frontend/src/filters/components/Range/RangeFilterPlugin.stories.tsx`
+- [ ] `ax-bi-frontend/src/filters/components/Select/SelectFilterPlugin.stories.tsx`
 
 ## How to Add Support
 

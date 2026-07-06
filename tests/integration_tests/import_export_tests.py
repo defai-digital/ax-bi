@@ -256,9 +256,8 @@ class TestImportExport(SupersetTestCase):
         birth_dash = self.get_dash_by_slug("births")
         world_health_dash = self.get_dash_by_slug("world_health")
         export_dash_url = (
-            "/dashboard/export_dashboards_form?id={}&id={}&action=go".format(
-                birth_dash.id, world_health_dash.id
-            )
+            f"/dashboard/export_dashboards_form?id={birth_dash.id}"
+            f"&id={world_health_dash.id}&action=go"
         )
         resp = self.client.get(export_dash_url)
         resp_data = json.loads(resp.data.decode("utf-8"), object_hook=decode_dashboards)
@@ -354,20 +353,20 @@ class TestImportExport(SupersetTestCase):
         dash_with_1_slice = self.create_dashboard(
             "dash_with_1_slice", slcs=[slc], id=10002
         )
-        dash_with_1_slice.position_json = """
+        dash_with_1_slice.position_json = f"""
             {{"DASHBOARD_VERSION_KEY": "v2",
-              "DASHBOARD_CHART_TYPE-{0}": {{
+              "DASHBOARD_CHART_TYPE-{slc.id}": {{
                 "type": "CHART",
-                "id": {0},
+                "id": {slc.id},
                 "children": [],
                 "meta": {{
                   "width": 4,
                   "height": 50,
-                  "chartId": {0}
+                  "chartId": {slc.id}
                 }}
               }}
             }}
-        """.format(slc.id)
+        """
         imported_dash_id = import_dashboard(dash_with_1_slice, import_time=1990)
         imported_dash = self.get_dash(imported_dash_id)
 
@@ -552,20 +551,20 @@ class TestImportExport(SupersetTestCase):
         dash_with_1_slice = self.create_dashboard(
             "dash_with_1_slice" + str(id_), slcs=[slc], id=id_ + 2
         )
-        dash_with_1_slice.position_json = """
+        dash_with_1_slice.position_json = f"""
                 {{"DASHBOARD_VERSION_KEY": "v2",
-                "DASHBOARD_CHART_TYPE-{0}": {{
+                "DASHBOARD_CHART_TYPE-{slc.id}": {{
                     "type": "CHART",
-                    "id": {0},
+                    "id": {slc.id},
                     "children": [],
                     "meta": {{
                     "width": 4,
                     "height": 50,
-                    "chartId": {0}
+                    "chartId": {slc.id}
                     }}
                 }}
                 }}
-            """.format(slc.id)
+            """
         return dash_with_1_slice
 
     def test_import_table_no_metadata(self):

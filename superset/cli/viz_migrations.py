@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Type
 
 import click
 from click_option_group import optgroup, RequiredAnyOptionGroup
@@ -61,7 +60,7 @@ class VizType(str, Enum):
     TREEMAP = "treemap"
 
 
-MIGRATIONS: dict[VizType, Type[MigrateViz]] = {
+MIGRATIONS: dict[VizType, type[MigrateViz]] = {
     VizType.AREA: MigrateAreaChart,
     VizType.BAR: MigrateBarChart,
     VizType.BUBBLE: MigrateBubbleChart,
@@ -149,7 +148,7 @@ def migrate_by_viz_type(viz_type: VizType, is_downgrade: bool = False) -> None:
     :param viz_type: The viz type to migrate
     :param is_downgrade: Whether to downgrade the charts. Default is upgrade.
     """
-    migration: Type[MigrateViz] = MIGRATIONS[viz_type]
+    migration: type[MigrateViz] = MIGRATIONS[viz_type]
     if is_downgrade:
         migration.downgrade(db.session)
     else:
