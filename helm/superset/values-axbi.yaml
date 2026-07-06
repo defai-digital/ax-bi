@@ -1,17 +1,17 @@
-# AX-Office opinionated values for Kubernetes deployments.
+# AX-BI opinionated values for Kubernetes deployments.
 #
 # This file keeps upstream-compatible Superset internals in place while exposing
-# AX-Office images and services by default. Override all CHANGE_ME values before
+# AX-BI images and services by default. Override all CHANGE_ME values before
 # using it outside a local cluster.
 
-nameOverride: ax-office
+nameOverride: ax-bi
 runAsUser: 1000
 
 extraLabels:
-  app.kubernetes.io/part-of: ax-office
+  app.kubernetes.io/part-of: ax-bi
 
 image:
-  repository: ghcr.io/defai-digital/ax-office
+  repository: ghcr.io/defai-digital/ax-bi
   tag: ~
   pullPolicy: IfNotPresent
 
@@ -83,7 +83,7 @@ mcp:
 axServices:
   enabled: true
   image:
-    repository: ghcr.io/defai-digital/ax-office-services
+    repository: ghcr.io/defai-digital/ax-bi-services
     tag: ~
     pullPolicy: IfNotPresent
   resources:

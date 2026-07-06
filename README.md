@@ -391,14 +391,14 @@ AX-BI has a Flask/Python backend and a React/TypeScript frontend.
 make flask-app
 
 # Frontend dev server (port 9000)
-cd ax-office-frontend && npm run dev-server
+cd ax-bi-frontend && npm run dev-server
 
 # Run the MCP service
 ax-bi mcp run            # requires: pip install fastmcp
 
 # Tests
 pytest                                 # backend
-cd ax-office-frontend && npm run test   # frontend
+cd ax-bi-frontend && npm run test   # frontend
 
 # Always run before pushing
 pre-commit run --all-files

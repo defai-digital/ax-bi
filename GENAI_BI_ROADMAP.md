@@ -136,7 +136,7 @@ Relevant code:
 - `superset/mcp_service/dashboard/tool/generate_dashboard.py`
 - `superset/mcp_service/dashboard/tool/add_chart_to_existing_dashboard.py`
 - `superset/dashboards`
-- `ax-office-frontend/src/dashboard`
+- `ax-bi-frontend/src/dashboard`
 
 Move from "create dashboard from chart IDs" to a planner/composer workflow:
 
@@ -576,10 +576,10 @@ Fields:
 
 Relevant code:
 
-- `ax-office-frontend/src/features`
-- `ax-office-frontend/src/dashboard`
-- `ax-office-frontend/src/explore`
-- `ax-office-frontend/packages/superset-ui-core`
+- `ax-bi-frontend/src/features`
+- `ax-bi-frontend/src/dashboard`
+- `ax-bi-frontend/src/explore`
+- `ax-bi-frontend/packages/superset-ui-core`
 
 Recommended user flows:
 

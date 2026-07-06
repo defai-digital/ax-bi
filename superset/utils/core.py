@@ -82,7 +82,7 @@ from sqlalchemy.sql.type_api import Variant
 from sqlalchemy.types import TypeEngine
 
 from superset.constants import (
-    AX_OFFICE_ROUTE_PREFIX,
+    AX_BI_ROUTE_PREFIX,
     DEFAULT_USER_AGENT,
     EXTRA_FORM_DATA_APPEND_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS,
@@ -2357,7 +2357,7 @@ def get_query_source_from_request() -> QuerySource | None:
     if not request or not request.referrer:
         return None
     dashboard_paths = (
-        f"{AX_OFFICE_ROUTE_PREFIX}/dashboard/",
+        f"{AX_BI_ROUTE_PREFIX}/dashboard/",
         f"{LEGACY_SUPERSET_ROUTE_PREFIX}/dashboard/",
     )
     if any(path in request.referrer for path in dashboard_paths):

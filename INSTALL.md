@@ -110,7 +110,8 @@ http://127.0.0.1:5008/mcp
 ## Notes
 
 - AX-BI uses `/ax-bi` as the current route prefix.
-- Legacy `/ax-office` links redirect to `/ax-bi` for compatibility.
+- Legacy `/superset` links redirect to `/ax-bi` for compatibility with
+  upstream Superset routes.
 - MCP chart and dashboard URLs should use `127.0.0.1` or your real host, not
   `0.0.0.0`, because `0.0.0.0` is only a bind address.
 - The underlying Superset documentation remains useful for advanced database,

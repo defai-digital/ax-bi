@@ -39,8 +39,7 @@ from flask import Flask, request, Response
 from werkzeug.exceptions import NotFound
 
 from superset.constants import (
-    AX_OFFICE_ROUTE_PREFIX,
-    LEGACY_AX_OFFICE_ROUTE_PREFIX,
+    AX_BI_ROUTE_PREFIX,
     LEGACY_SUPERSET_ROUTE_PREFIX,
 )
 from superset.extensions.cache_middleware import ExtensionCacheMiddleware
@@ -61,7 +60,6 @@ def _register_legacy_route_redirects(app: Flask) -> None:
 
     legacy_prefixes = [
         LEGACY_SUPERSET_ROUTE_PREFIX,
-        LEGACY_AX_OFFICE_ROUTE_PREFIX,
     ]
 
     for idx, legacy_prefix in enumerate(legacy_prefixes):
@@ -79,7 +77,7 @@ def _register_legacy_route_redirects(app: Flask) -> None:
             endpoint=f"legacy_route_redirect_{idx}",
         )
         def _legacy_route_redirect(path: str, _prefix: str = legacy_prefix) -> Response:
-            target = f"{AX_OFFICE_ROUTE_PREFIX}/{quote(path, safe='/')}"
+            target = f"{AX_BI_ROUTE_PREFIX}/{quote(path, safe='/')}"
             if request.query_string:
                 target = f"{target}?{request.query_string.decode()}"
             return relative_redirect(

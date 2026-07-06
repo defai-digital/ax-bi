@@ -241,7 +241,7 @@ The frontend uses [TypeScript Project References](https://www.typescriptlang.org
 
 **How it works:**
 
-- The root `ax-office-frontend/tsconfig.json` declares `"composite": true` and lists every sub-project in the `"references"` array (packages and plugins).
+- The root `ax-bi-frontend/tsconfig.json` declares `"composite": true` and lists every sub-project in the `"references"` array (packages and plugins).
 - Each sub-project (`packages/superset-ui-core/`, `packages/superset-ui-chart-controls/`, `packages/superset-core/`, and every plugin under `plugins/`) has its own `tsconfig.json` with `"composite": true`. This produces `.d.ts` declaration files that downstream projects consume.
 - Path aliases in the root `tsconfig.json` (`"paths"` field) map `@superset-ui/core`, `@superset-ui/chart-controls`, `@apache-superset/core`, etc. to their respective `src/` directories so that IDEs and bundlers resolve to live source rather than stale build output.
 
