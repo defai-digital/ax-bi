@@ -40,6 +40,7 @@ from werkzeug.exceptions import NotFound
 
 from superset.constants import (
     AX_BI_ROUTE_PREFIX,
+    LEGACY_AX_OFFICE_ROUTE_PREFIX,
     LEGACY_SUPERSET_ROUTE_PREFIX,
 )
 from superset.extensions.cache_middleware import ExtensionCacheMiddleware
@@ -60,6 +61,7 @@ def _register_legacy_route_redirects(app: Flask) -> None:
 
     legacy_prefixes = [
         LEGACY_SUPERSET_ROUTE_PREFIX,
+        LEGACY_AX_OFFICE_ROUTE_PREFIX,
     ]
 
     for idx, legacy_prefix in enumerate(legacy_prefixes):
