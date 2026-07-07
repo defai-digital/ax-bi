@@ -1,6 +1,6 @@
 {
   "name": "ax-bi-frontend",
-  "version": "0.0.0-dev",
+  "version": "1.1.0",
   "description": "AX-BI frontend for visual, intuitive, and interactive data exploration.",
   "keywords": [
     "big",
@@ -430,6 +430,5 @@
   "readme": "ERROR: No README data found!",
   "scarfSettings": {
     "allowTopLevel": true
-  },
-  "_id": "superset@0.0.0-dev"
+  }
 }
