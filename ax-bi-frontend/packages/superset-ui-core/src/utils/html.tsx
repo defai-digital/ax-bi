@@ -181,7 +181,7 @@ export function isProbablyHTML(text: string) {
   }
 
   const parser = new DOMParser();
-  const doc = parser.parseFromString(sanitizeHtml(cleanedStr), 'text/html');
+  const doc = parser.parseFromString(cleanedStr, 'text/html');
 
   // Check if parsing created actual HTML elements (not just text nodes)
   const elements = Array.from(doc.body.childNodes).filter(

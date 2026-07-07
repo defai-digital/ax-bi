@@ -17,17 +17,22 @@
  * under the License.
  */
 
-import { ComponentType } from 'react';
-import { isRequired, Plugin, QueryFormData } from '../..';
+import type { ComponentType } from 'react';
+import Plugin from '../../models/Plugin';
+import type { QueryFormData } from '../../query/types/QueryFormData';
+import isRequired from '../../utils/isRequired';
 import ChartMetadata from './ChartMetadata';
 import getChartMetadataRegistry from '../registries/ChartMetadataRegistrySingleton';
 import getChartBuildQueryRegistry from '../registries/ChartBuildQueryRegistrySingleton';
 import getChartComponentRegistry from '../registries/ChartComponentRegistrySingleton';
 import getChartControlPanelRegistry from '../registries/ChartControlPanelRegistrySingleton';
 import getChartTransformPropsRegistry from '../registries/ChartTransformPropsRegistrySingleton';
-import { BuildQueryFunction, TransformProps } from '../types/TransformFunction';
-import { ChartControlPanel } from './ChartControlPanel';
-import { ChartProps } from '..';
+import type {
+  BuildQueryFunction,
+  TransformProps,
+} from '../types/TransformFunction';
+import type { ChartControlPanel } from './ChartControlPanel';
+import type ChartProps from './ChartProps';
 
 function IDENTITY<T>(x: T) {
   return x;

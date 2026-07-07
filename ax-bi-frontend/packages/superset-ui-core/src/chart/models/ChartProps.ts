@@ -17,24 +17,22 @@
  * under the License.
  */
 
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 import { createSelector, lruMemoize } from 'reselect';
 import { supersetTheme, SupersetTheme } from '@apache-superset/core/theme';
-import {
+import type { JsonObject } from '../../connection/types';
+import type { Datasource } from '../../query/types/Datasource';
+import convertKeysToCamelCase from '../../utils/convertKeysToCamelCase';
+import type {
   AppSection,
   Behavior,
-  convertKeysToCamelCase,
-  Datasource,
   FilterState,
-  JsonObject,
-} from '../..';
-import {
   HandlerFunction,
   LegendState,
   PlainObject,
   SetDataMaskHook,
 } from '../types/Base';
-import { QueryData, DataRecordFilters } from '..';
+import type { DataRecordFilters, QueryData } from '../types/QueryResponse';
 
 // TODO: more specific typing for these fields of ChartProps
 type AnnotationData = PlainObject;

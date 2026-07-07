@@ -20,12 +20,12 @@
 /**
  * Types for query response
  */
-import {
+import type {
   DataRecordValue,
   DataRecord,
   ChartDataResponseResult,
-} from '../../types';
-import { PlainObject } from './Base';
+} from '../../query/types/QueryResponse';
+import type { PlainObject } from './Base';
 
 export interface TimeseriesDataRecord extends DataRecord {
   __timestamp: number | string | Date | null;
