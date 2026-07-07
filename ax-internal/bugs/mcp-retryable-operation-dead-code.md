@@ -1,22 +1,22 @@
 # RetryableOperation context manager cannot retry (dead code)
 
-Classification: confirmed
+Classification: fixed
 Severity: LOW
 Component: `superset/mcp_service/utils/retry_utils.py`
 
 ## Summary
 
-`RetryableOperation` is a context manager intended to retry an operation on
+`RetryableOperation` was a context manager intended to retry an operation on
 transient failures, but its retry mechanism cannot work: a Python `with`
 block body executes exactly once on entry. `__exit__` returning `True`
 suppresses the exception, but there is no way for `__exit__` to re-enter
-the `with` body. The operation therefore runs at most once, and any
+the `with` body. The operation therefore ran at most once, and any
 retryable exception is silently swallowed (suppressed without being reraised)
 once `max_attempts` is reached — instead of propagating to the caller.
 
-The class is also currently dead code: a repo-wide search for
-`RetryableOperation` returns only its own definition (no callers), so there
-is no runtime impact today. The two decorator-based helpers in the same
+Before removal, the class was also dead code: a repo-wide search for
+`RetryableOperation` returned only its own definition (no callers), so there
+was no runtime impact. The two decorator-based helpers in the same
 module (`retry_on_exception`, `async_retry_on_exception`) are the real retry
 mechanisms and are correct.
 
@@ -46,10 +46,10 @@ class RetryableOperation:
         return self.current_attempt < self.max_attempts
 ```
 
-The only matches for `RetryableOperation` in the repository are the class
-definition itself (`retry_utils.py:207`) and its `__enter__` (`:230`) — no
-production or test usage. `retry_on_exception` / `async_retry_on_exception`
-are used instead and work correctly.
+Before removal, the only production matches for `RetryableOperation` in the
+repository were the class definition itself (`retry_utils.py:207`) and its
+`__enter__` (`:230`) — no production or test usage. `retry_on_exception` /
+`async_retry_on_exception` are used instead and work correctly.
 
 ## Suggested Fix
 
@@ -59,3 +59,9 @@ retry semantics. The decorator helpers already cover the use case. If a
 context-manager-style API is ever wanted, it must wrap an explicit loop
 (e.g. a generator or a `while` inside the caller), not rely on `__exit__`
 re-entry, which Python does not support.
+
+## Resolution
+
+`RetryableOperation` was removed. The supported `retry_on_exception` and
+`async_retry_on_exception` decorator APIs remain, with focused unit coverage
+verifying that they rerun failing callables until a retry succeeds.
