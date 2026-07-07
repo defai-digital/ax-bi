@@ -99,7 +99,7 @@ export class AxBI {
 
   constructor(config: AxBIConfig) {
     const baseUrl = stripTrailingSlashes(config.baseUrl);
-    this.auth = new AuthProvider(config.auth, baseUrl);
+    this.auth = new AuthProvider(config.auth, baseUrl, config.timeout);
     this.http = new HttpClient({
       baseUrl,
       auth: this.auth,

@@ -38,8 +38,16 @@ function jsonRpcResponse(id: string, result: unknown): Response {
   );
 }
 
+function jsonResponse(body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 describe('AxBI', () => {
   beforeEach(() => {
+    jest.restoreAllMocks();
     mockFetch.mockReset();
   });
 
@@ -71,5 +79,27 @@ describe('AxBI', () => {
     expect(initializedBody.method).toBe('notifications/initialized');
     expect(toolCallBody.method).toBe('tools/call');
     expect(toolCallBody.params.name).toBe('health_check');
+  });
+
+  test('passes configured timeout to credentials auth login', async () => {
+    const timeoutSpy = jest.spyOn(AbortSignal, 'timeout');
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      timeout: 2345,
+      auth: { type: 'credentials', username: 'admin', password: 'admin' },
+    });
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ access_token: 'access-jwt' }))
+      .mockResolvedValueOnce(jsonResponse({ result: 'csrf-token' }))
+      .mockResolvedValueOnce(jsonRpcResponse('1', {}))
+      .mockResolvedValueOnce(new Response(null, { status: 202 }));
+
+    await client.login();
+
+    expect(timeoutSpy).toHaveBeenNthCalledWith(1, 2345);
+    expect(timeoutSpy).toHaveBeenNthCalledWith(2, 2345);
+    expect(timeoutSpy).toHaveBeenNthCalledWith(3, 2345);
+    expect(timeoutSpy).toHaveBeenNthCalledWith(4, 5000);
   });
 });

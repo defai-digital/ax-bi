@@ -17,9 +17,26 @@
  * under the License.
  */
 
+import { jest } from '@jest/globals';
 import { AuthProvider } from './authProvider.js';
+import { AxBIAuthError } from '../shared/errors.js';
+
+const mockFetch = jest.fn<typeof fetch>();
+global.fetch = mockFetch;
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 describe('AuthProvider', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    mockFetch.mockReset();
+  });
+
   describe('token auth', () => {
     test('seeds accessToken from config', () => {
       const auth = new AuthProvider(
@@ -98,6 +115,73 @@ describe('AuthProvider', () => {
       expect(auth.getAccessToken()).toBe('new-token');
       expect(auth.getAuthHeaders()).toEqual({
         Authorization: 'Bearer new-token',
+      });
+    });
+
+    test('login applies configured timeout to login and CSRF requests', async () => {
+      const timeoutSpy = jest.spyOn(AbortSignal, 'timeout');
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ access_token: 'access-jwt' }))
+        .mockResolvedValueOnce(jsonResponse({ result: 'csrf-token' }));
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+        1234,
+      );
+
+      await auth.login();
+
+      expect(timeoutSpy).toHaveBeenNthCalledWith(1, 1234);
+      expect(timeoutSpy).toHaveBeenNthCalledWith(2, 1234);
+      const [, loginInit] = mockFetch.mock.calls[0]!;
+      const [, csrfInit] = mockFetch.mock.calls[1]!;
+      expect((loginInit as RequestInit).signal).toBeDefined();
+      expect((csrfInit as RequestInit).signal).toBeDefined();
+      expect(auth.getAuthHeaders()).toEqual({
+        Authorization: 'Bearer access-jwt',
+        'X-CSRFToken': 'csrf-token',
+      });
+    });
+
+    test('wraps login network failures in AxBIAuthError', async () => {
+      mockFetch.mockRejectedValue(new Error('connect failed'));
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+      );
+
+      await expect(auth.login()).rejects.toThrow(AxBIAuthError);
+    });
+
+    test('wraps invalid login JSON in AxBIAuthError', async () => {
+      mockFetch.mockResolvedValue(
+        new Response('not-json', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+      );
+
+      await expect(auth.login()).rejects.toThrow(AxBIAuthError);
+    });
+
+    test('keeps access token when optional CSRF fetch fails', async () => {
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ access_token: 'access-jwt' }))
+        .mockRejectedValueOnce(new Error('csrf unavailable'));
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+      );
+
+      await auth.login();
+
+      expect(auth.getAccessToken()).toBe('access-jwt');
+      expect(auth.getAuthHeaders()).toEqual({
+        Authorization: 'Bearer access-jwt',
       });
     });
   });

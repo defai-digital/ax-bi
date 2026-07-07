@@ -21,6 +21,9 @@ import type { AuthConfig } from './types.js';
 import { AxBIAuthError } from '../shared/errors.js';
 import { stripTrailingSlashes } from '../shared/url.js';
 
+/** Default auth request timeout in milliseconds. */
+const DEFAULT_AUTH_TIMEOUT_MS = 30_000;
+
 /**
  * Manages authentication state and header injection for the HTTP transport.
  *
@@ -35,10 +38,12 @@ export class AuthProvider {
   private csrfToken: string | null = null;
   private readonly config: AuthConfig;
   private readonly baseUrl: string;
+  private readonly timeout: number;
 
-  constructor(config: AuthConfig, baseUrl: string) {
+  constructor(config: AuthConfig, baseUrl: string, timeout?: number) {
     this.config = config;
     this.baseUrl = stripTrailingSlashes(baseUrl);
+    this.timeout = timeout ?? DEFAULT_AUTH_TIMEOUT_MS;
 
     // Seed token for token-based auth
     if (config.type === 'token') {
@@ -58,23 +63,38 @@ export class AuthProvider {
     }
 
     const loginUrl = `${this.baseUrl}/api/v1/security/login`;
-    const response = await fetch(loginUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: this.config.username,
-        password: this.config.password,
-        provider: 'db',
-        refresh: true,
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: this.config.username,
+          password: this.config.password,
+          provider: 'db',
+          refresh: true,
+        }),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+    } catch (error) {
+      throw new AxBIAuthError('Login request failed', {
+        cause: normalizeError(error),
+      });
+    }
 
     if (!response.ok) {
       const body = await response.text().catch(() => null);
       throw new AxBIAuthError('Login failed', { responseBody: body });
     }
 
-    const data = (await response.json()) as { access_token?: string };
+    let data: { access_token?: string };
+    try {
+      data = (await response.json()) as { access_token?: string };
+    } catch (error) {
+      throw new AxBIAuthError('Login response was not valid JSON', {
+        cause: normalizeError(error),
+      });
+    }
     if (!data.access_token) {
       throw new AxBIAuthError('Login response missing access_token');
     }
@@ -127,6 +147,7 @@ export class AuthProvider {
             ? { Authorization: `Bearer ${this.accessToken}` }
             : {}),
         },
+        signal: AbortSignal.timeout(this.timeout),
       });
       if (response.ok) {
         const data = (await response.json()) as { result?: string };
@@ -138,4 +159,8 @@ export class AuthProvider {
       // CSRF token is optional for some deployments; swallow the error.
     }
   }
+}
+
+function normalizeError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
 }
