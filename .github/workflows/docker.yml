@@ -122,7 +122,7 @@ jobs:
               --preset "$BUILD_PRESET" \
               --context "$EVENT" \
               --context-ref "$RELEASE" $FORCE_LATEST \
-              --extra-flags "--build-arg INCLUDE_CHROMIUM=false --tag $IMAGE_TAG" \
+              --extra-flags "--build-arg INCLUDE_CHROMIUM=false --build-arg PY_VER=3.12.12-slim-trixie --tag $IMAGE_TAG" \
               $PLATFORM_ARG; then
               break
             fi
