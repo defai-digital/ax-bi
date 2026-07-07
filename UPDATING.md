@@ -24,6 +24,12 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Python 3.12 is the minimum supported runtime
+
+AX-BI now requires Python 3.12 or newer for local development, CI, Docker
+images, and Python package metadata. Deployments and development environments
+using Python 3.10 or 3.11 must move to Python 3.12 before upgrading.
+
 ### Guest-token RLS rules reject unknown fields
 
 The `rls` rules passed to `POST /api/v1/security/guest_token/` are now validated strictly: a rule may only contain `dataset` and `clause`. Previously unknown fields were silently dropped, so a mistyped or legacy scope key (most commonly `datasource` instead of `dataset`) produced a rule with no `dataset`, which is treated as a *global* rule applied to every dataset the embedded resource can reach. Such a request now returns HTTP 400 identifying the offending field instead of issuing a token with an unintended global rule. Integrators that were sending extra fields in RLS rules must remove them; valid dataset-scoped (`{"dataset": 41, "clause": "..."}`) and global (`{"clause": "..."}`) rules are unaffected.

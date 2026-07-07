@@ -2,7 +2,7 @@ name: 'Setup Python Environment'
 description: 'Set up Python and install dependencies with optional configurations.'
 inputs:
   python-version:
-    description: 'Python version to set up. Accepts a version number, "current", or "next".'
+    description: 'Python version to set up. Accepts a version number, "current", "previous", or "next".'
     required: true
     default: 'current'
   cache:
@@ -27,13 +27,11 @@ runs:
       env:
         INPUT_PYTHON_VERSION: ${{ inputs.python-version }}
       run: |
-        if [ "$INPUT_PYTHON_VERSION" = "current" ]; then
-          RESOLVED_VERSION="3.11"
-        elif [ "$INPUT_PYTHON_VERSION" = "next" ]; then
-          # currently disabled in GHA matrixes because of library compatibility issues
+        if [ "$INPUT_PYTHON_VERSION" = "current" ] || [ "$INPUT_PYTHON_VERSION" = "previous" ]; then
           RESOLVED_VERSION="3.12"
-        elif [ "$INPUT_PYTHON_VERSION" = "previous" ]; then
-          RESOLVED_VERSION="3.10"
+        elif [ "$INPUT_PYTHON_VERSION" = "next" ]; then
+          # Keep next explicit but out of default matrices until dependency support is proven.
+          RESOLVED_VERSION="3.13"
         elif printf '%s' "$INPUT_PYTHON_VERSION" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$'; then
           RESOLVED_VERSION="$INPUT_PYTHON_VERSION"
         else

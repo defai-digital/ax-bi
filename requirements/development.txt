@@ -62,8 +62,6 @@ backoff==2.2.1
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-backports-tarfile==1.2.0
-    # via jaraco-context
 backports-zstd==1.6.0
     # via
     #   -c requirements/base-constraint.txt
