@@ -136,6 +136,9 @@ docker-compose.override.yml
 test-report.html
 superset/static/stats/statistics.html
 
+# Playwright browser auth state
+ax-office-frontend/playwright/.auth/
+
 # LLM-related
 CLAUDE.local.md
 PROJECT.md
