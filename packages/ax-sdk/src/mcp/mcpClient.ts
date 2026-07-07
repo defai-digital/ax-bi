@@ -115,10 +115,24 @@ export class MCPClient {
 
   /** List all available MCP tools. */
   async listTools(): Promise<MCPToolDefinition[]> {
-    const response = await this.sendRequest<{ tools: MCPToolDefinition[] }>({
+    const response = await this.sendRequest<unknown>({
       method: 'tools/list',
     });
-    return response.tools ?? [];
+    if (!isRecord(response)) {
+      throw new AxBIError('MCP tools/list result must be a JSON object', {
+        responseBody: response,
+      });
+    }
+    const tools = response['tools'];
+    if (tools === undefined) {
+      return [];
+    }
+    if (!Array.isArray(tools)) {
+      throw new AxBIError('MCP tools/list result tools field must be an array', {
+        responseBody: response,
+      });
+    }
+    return tools as MCPToolDefinition[];
   }
 
   /** Invoke an MCP tool by name with typed arguments. */
@@ -146,12 +160,18 @@ export class MCPClient {
 
     const headers = this.buildHeaders('application/json, text/event-stream');
 
-    const response = await fetch(`${this.mcpUrl}/mcp`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(this.timeout),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.mcpUrl}/mcp`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+    } catch (error) {
+      const cause = normalizeError(error);
+      throw new AxBIError(`MCP request failed: ${cause.message}`, { cause });
+    }
 
     if (!response.ok) {
       const text = await response.text().catch(() => null);
@@ -175,7 +195,7 @@ export class MCPClient {
     }
 
     // Handle direct JSON response
-    const json = (await response.json()) as JsonRpcResponse;
+    const json = await this.parseJsonResponse(response);
     return this.extractResult<T>(json, id);
   }
 
@@ -221,7 +241,14 @@ export class MCPClient {
     response: Response,
     expectedId: string,
   ): Promise<T> {
-    const text = await response.text();
+    let text: string;
+    try {
+      text = await response.text();
+    } catch (error) {
+      throw new AxBIError('MCP SSE response could not be read', {
+        cause: normalizeError(error),
+      });
+    }
     const lines = text.split('\n');
 
     // Walk backwards to find the last JSON-RPC response with our ID
@@ -230,13 +257,15 @@ export class MCPClient {
       if (line.startsWith('data:')) {
         const jsonStr = line.slice(5).trim();
         if (!jsonStr) continue;
+        let parsed: unknown;
         try {
-          const parsed = JSON.parse(jsonStr) as JsonRpcResponse;
-          if ('id' in parsed && parsed.id === expectedId) {
-            return this.extractResult<T>(parsed, expectedId);
-          }
+          parsed = JSON.parse(jsonStr) as unknown;
         } catch {
           // Skip non-JSON lines
+          continue;
+        }
+        if (isRecord(parsed) && parsed['id'] === expectedId) {
+          return this.extractResult<T>(parsed, expectedId);
         }
       }
     }
@@ -244,17 +273,89 @@ export class MCPClient {
     throw new AxBIError('No valid JSON-RPC response found in SSE stream');
   }
 
-  private extractResult<T>(response: JsonRpcResponse, expectedId: string): T {
-    if ('error' in response) {
-      throw new AxBIError(response.error.message, {
-        responseBody: response.error.data,
+  private async parseJsonResponse(response: Response): Promise<unknown> {
+    try {
+      return await response.json();
+    } catch (error) {
+      throw new AxBIError('MCP response was not valid JSON', {
+        cause: normalizeError(error),
       });
     }
-    if (response.id !== expectedId) {
+  }
+
+  private extractResult<T>(response: unknown, expectedId: string): T {
+    const parsed = this.parseJsonRpcResponse(response, expectedId);
+
+    if ('error' in parsed) {
+      throw new AxBIError(parsed.error.message, {
+        responseBody: parsed.error.data,
+      });
+    }
+
+    return parsed.result as T;
+  }
+
+  private parseJsonRpcResponse(
+    response: unknown,
+    expectedId: string,
+  ): JsonRpcResponse {
+    if (!isRecord(response)) {
+      throw new AxBIError('MCP response must be a JSON-RPC object', {
+        responseBody: response,
+      });
+    }
+    if (response['jsonrpc'] !== '2.0') {
+      throw new AxBIError('MCP response has an invalid JSON-RPC version', {
+        responseBody: response,
+      });
+    }
+    if (response['id'] !== expectedId) {
       throw new AxBIError(
-        `Unexpected JSON-RPC response ID: ${response.id} (expected ${expectedId})`,
+        `Unexpected JSON-RPC response ID: ${String(response['id'])} (expected ${expectedId})`,
+        { responseBody: response },
       );
     }
-    return response.result as T;
+
+    if ('error' in response) {
+      const error = response['error'];
+      if (
+        !isRecord(error) ||
+        typeof error['code'] !== 'number' ||
+        typeof error['message'] !== 'string'
+      ) {
+        throw new AxBIError('MCP JSON-RPC error response is malformed', {
+          responseBody: response,
+        });
+      }
+      return {
+        jsonrpc: '2.0',
+        id: expectedId,
+        error: {
+          code: error['code'],
+          message: error['message'],
+          data: error['data'],
+        },
+      };
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(response, 'result')) {
+      throw new AxBIError('MCP JSON-RPC response missing result', {
+        responseBody: response,
+      });
+    }
+
+    return {
+      jsonrpc: '2.0',
+      id: expectedId,
+      result: response['result'],
+    };
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
 }

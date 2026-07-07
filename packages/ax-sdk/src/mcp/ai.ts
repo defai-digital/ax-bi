@@ -18,6 +18,7 @@
  */
 
 import { MCPClient, type MCPToolResult } from './mcpClient.js';
+import { AxBIError } from '../shared/errors.js';
 
 // ---- AI tool parameter types ----
 
@@ -320,6 +321,6 @@ export class AIResource {
       }
     }
 
-    throw new Error(`MCP tool "${name}" returned no content`);
+    throw new AxBIError(`MCP tool "${name}" returned no content`);
   }
 }
