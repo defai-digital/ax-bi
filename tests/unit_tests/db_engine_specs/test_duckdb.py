@@ -58,7 +58,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     database.extra = {}
     assert DuckDBEngineSpec.get_extra_params(database) == {
         "engine_params": {
-            "connect_args": {"config": {"custom_user_agent": "apache-superset/1.0.0"}}
+            "connect_args": {"config": {"custom_user_agent": "ax-bi/1.0.0"}}
         }
     }
 
@@ -67,9 +67,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     )
     assert DuckDBEngineSpec.get_extra_params(database) == {
         "engine_params": {
-            "connect_args": {
-                "config": {"custom_user_agent": "apache-superset/1.0.0 my-app"}
-            }
+            "connect_args": {"config": {"custom_user_agent": "ax-bi/1.0.0 my-app"}}
         }
     }
 

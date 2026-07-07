@@ -25,7 +25,9 @@ from flask_caching.backends.filesystemcache import FileSystemCache
 from superset_config import *  # noqa: F403
 
 # Override caching to use simple in-memory cache instead of Redis
-RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
+RESULTS_BACKEND = FileSystemCache(
+    os.path.join(os.getenv("SUPERSET_HOME", "/app/superset_home"), "sqllab")
+)
 
 CACHE_CONFIG = {
     "CACHE_TYPE": "SimpleCache",

@@ -60,13 +60,23 @@ SQLALCHEMY_EXAMPLES_URI = os.getenv(
     ),
 )
 
+SUPERSET_HOME = os.getenv("SUPERSET_HOME", "/app/superset_home")
+UPLOAD_FOLDER = os.getenv(
+    "UPLOAD_FOLDER",
+    os.path.join(SUPERSET_HOME, "uploads"),
+)
+LOCAL_DB_NAME = os.getenv("LOCAL_DB_NAME", "Local Files")
+LOCAL_DB_PATH = os.getenv(
+    "LOCAL_DB_PATH",
+    os.path.join(UPLOAD_FOLDER, "local_files.duckdb"),
+)
 
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "0")
 REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "1")
 
-RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
+RESULTS_BACKEND = FileSystemCache(os.path.join(SUPERSET_HOME, "sqllab"))
 
 CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",

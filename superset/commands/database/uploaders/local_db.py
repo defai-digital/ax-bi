@@ -24,11 +24,13 @@ not need to manually connect a database before uploading files.
 
 import logging
 import os
+import shutil
 import tempfile
 
 from flask import current_app
 
 from superset import db
+from superset.databases.utils import make_url_safe
 from superset.exceptions import SupersetException
 from superset.models.core import Database
 from superset.utils import json
@@ -88,6 +90,60 @@ def _repair_local_db(database: Database) -> bool:
     return changed
 
 
+def _duckdb_path_from_uri(uri: str | None) -> str | None:
+    """Return the filesystem path for a local DuckDB SQLAlchemy URI."""
+    if not uri:
+        return None
+    try:
+        url = make_url_safe(uri)
+    except Exception:  # pylint: disable=broad-except
+        return None
+    if not url.drivername.startswith("duckdb"):
+        return None
+    return url.database
+
+
+def _is_legacy_static_upload_path(path: str | None) -> bool:
+    """Return whether a path matches the old package-static local DB default."""
+    if not path:
+        return False
+    normalized = os.path.normpath(path)
+    return (
+        os.path.basename(normalized) == "local_files.duckdb"
+        and os.path.basename(os.path.dirname(normalized)) == "uploads"
+        and os.path.basename(os.path.dirname(os.path.dirname(normalized))) == "static"
+    )
+
+
+def _migrate_legacy_local_db_path(
+    database: Database,
+    db_path: str,
+    sqlalchemy_uri: str,
+) -> bool:
+    """Copy old package-static local DuckDB data to the configured path."""
+    legacy_path = _duckdb_path_from_uri(database.sqlalchemy_uri)
+    if (
+        not legacy_path
+        or not _is_legacy_static_upload_path(legacy_path)
+        or not os.path.exists(legacy_path)
+    ):
+        return False
+
+    if db_dir := os.path.dirname(db_path):
+        os.makedirs(db_dir, exist_ok=True)
+    if not os.path.exists(db_path):
+        shutil.copy2(legacy_path, db_path)
+
+    database.sqlalchemy_uri = sqlalchemy_uri
+    logger.info(
+        "Migrated local upload DuckDB database '%s' from %s to %s",
+        database.database_name,
+        legacy_path,
+        db_path,
+    )
+    return True
+
+
 def get_or_create_local_db() -> Database:
     """
     Return the auto-provisioned local DuckDB database.
@@ -97,7 +153,7 @@ def get_or_create_local_db() -> Database:
     created with file-upload, DML and async-query support enabled.
 
     The DuckDB file is stored at the path configured in LOCAL_DB_PATH
-    (defaults to ``<UPLOAD_FOLDER>/local_files.duckdb``).
+    (defaults to ``<DATA_DIR>/uploads/local_files.duckdb``).
 
     :returns: A :class:`Database` instance pointing to the local DuckDB.
     """
@@ -118,11 +174,12 @@ def get_or_create_local_db() -> Database:
 
     if local_db:
         if local_db.sqlalchemy_uri != sqlalchemy_uri:
-            raise LocalDatabaseConfigurationError(
-                f"A database named '{db_name}' already exists but does not match the "
-                "configured local upload DuckDB database. Rename that database "
-                "or change LOCAL_DB_NAME."
-            )
+            if not _migrate_legacy_local_db_path(local_db, db_path, sqlalchemy_uri):
+                raise LocalDatabaseConfigurationError(
+                    f"A database named '{db_name}' already exists but does not match "
+                    "the configured local upload DuckDB database. Rename that "
+                    "database or change LOCAL_DB_NAME."
+                )
         if _repair_local_db(local_db):
             db.session.commit()
         logger.debug(

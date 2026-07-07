@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import os
 from io import BytesIO
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -34,13 +35,37 @@ from superset.models.core import Database
 from tests.unit_tests.conftest import with_feature_flags
 
 
+def _local_upload_config(tmp_path: Any) -> dict[str, str]:
+    """Return isolated local upload storage settings for tests."""
+    upload_folder = tmp_path / "uploads"
+    return {
+        "LOCAL_DB_NAME": "Local Files",
+        "LOCAL_DB_PATH": str(upload_folder / "local_files.duckdb"),
+        "UPLOAD_FOLDER": str(upload_folder),
+    }
+
+
 class TestGetOrCreateLocalDb:
     """Tests for the get_or_create_local_db() function."""
+
+    def test_default_local_upload_paths_use_data_dir(self, app_context: None) -> None:
+        """Local upload defaults should not point at the package static tree."""
+        assert current_app.config["UPLOAD_FOLDER"] == os.path.join(
+            current_app.config["DATA_DIR"],
+            "uploads",
+        )
+        assert current_app.config["LOCAL_DB_PATH"] == os.path.join(
+            current_app.config["UPLOAD_FOLDER"],
+            "local_files.duckdb",
+        )
+        assert "static/uploads" not in current_app.config["LOCAL_DB_PATH"]
 
     def test_creates_new_database_when_none_exists(
         self,
         session: Session,
         app_context: None,
+        tmp_path: Any,
+        mocker: MockerFixture,
     ) -> None:
         """
         Test that get_or_create_local_db creates a new DuckDB database
@@ -56,6 +81,7 @@ class TestGetOrCreateLocalDb:
         # Make sure no "Local Files" database exists
         session.query(Database).filter_by(database_name="Local Files").delete()
         session.commit()
+        mocker.patch.dict(current_app.config, _local_upload_config(tmp_path))
 
         local_db = get_or_create_local_db()
 
@@ -76,6 +102,8 @@ class TestGetOrCreateLocalDb:
         self,
         session: Session,
         app_context: None,
+        tmp_path: Any,
+        mocker: MockerFixture,
     ) -> None:
         """
         Test that get_or_create_local_db reuses an existing "Local Files"
@@ -91,6 +119,7 @@ class TestGetOrCreateLocalDb:
         # Clean up any existing record first
         session.query(Database).filter_by(database_name="Local Files").delete()
         session.commit()
+        mocker.patch.dict(current_app.config, _local_upload_config(tmp_path))
 
         # Create the DB the first time
         first_db = get_or_create_local_db()
@@ -104,6 +133,58 @@ class TestGetOrCreateLocalDb:
 
         # Clean up
         session.delete(second_db)
+        session.commit()
+
+    def test_migrates_legacy_static_upload_path(
+        self,
+        session: Session,
+        app_context: None,
+        tmp_path: Any,
+        mocker: MockerFixture,
+    ) -> None:
+        """
+        Test that a local DB created with the old static/uploads default is
+        copied to the configured durable upload path.
+        """
+        from superset.commands.database.uploaders.local_db import (
+            get_or_create_local_db,
+        )
+
+        Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
+        session.query(Database).filter_by(database_name="Local Files").delete()
+
+        legacy_path = tmp_path / "superset" / "static" / "uploads"
+        legacy_path.mkdir(parents=True)
+        legacy_db_path = legacy_path / "local_files.duckdb"
+        legacy_db_path.write_bytes(b"legacy duckdb bytes")
+        new_db_path = tmp_path / "persistent" / "uploads" / "local_files.duckdb"
+
+        local_db = Database(
+            database_name="Local Files",
+            sqlalchemy_uri=f"duckdb:///{legacy_db_path}",
+            allow_file_upload=True,
+            allow_run_async=True,
+            allow_dml=True,
+            allow_ctas=True,
+            allow_cvas=False,
+            expose_in_sqllab=True,
+            extra="{}",
+        )
+        session.add(local_db)
+        session.commit()
+
+        mocker.patch.dict(
+            current_app.config,
+            {"LOCAL_DB_PATH": str(new_db_path), "LOCAL_DB_NAME": "Local Files"},
+        )
+
+        repaired_db = get_or_create_local_db()
+
+        assert repaired_db.id == local_db.id
+        assert repaired_db.sqlalchemy_uri == f"duckdb:///{new_db_path}"
+        assert new_db_path.read_bytes() == b"legacy duckdb bytes"
+
+        session.delete(repaired_db)
         session.commit()
 
     def test_repaired_existing_database_upload_flags(

@@ -25,7 +25,7 @@ repos:
       - id: mypy
         name: mypy (main)
         args: [--check-untyped-defs]
-        exclude: ^superset-extensions-cli/
+        exclude: ^superset-extensions-cli/|^docker/pythonpath_.*/superset_config.*\.py$
         additional_dependencies: [
             types-cachetools,
             types-simplejson,

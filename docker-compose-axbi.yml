@@ -31,6 +31,9 @@ x-axbi-env: &axbi-env
   DATABASE_DB: ${DATABASE_DB:-superset}
   DATABASE_USER: ${DATABASE_USER:-superset}
   DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
+  UPLOAD_FOLDER: ${UPLOAD_FOLDER:-/app/superset_home/uploads}
+  LOCAL_DB_NAME: ${LOCAL_DB_NAME:-Local Files}
+  LOCAL_DB_PATH: ${LOCAL_DB_PATH:-/app/superset_home/uploads/local_files.duckdb}
   REDIS_HOST: redis
   REDIS_PORT: 6379
   ENABLE_PROXY_FIX: ${ENABLE_PROXY_FIX:-true}

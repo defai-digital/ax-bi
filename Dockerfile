@@ -203,9 +203,10 @@ RUN /app/docker/apt-install.sh \
       libecpg-dev \
       libldap2-dev
 
-# Create data directory for DuckDB examples database
-# The database file will be created at runtime when examples are loaded from Parquet files
-RUN mkdir -p /app/data && chown -R superset:superset /app/data
+# Create runtime data directories. Zero-config upload DuckDB files live under
+# SUPERSET_HOME so named volumes persist them across container restarts.
+RUN mkdir -p /app/data /app/superset_home/uploads \
+    && chown -R superset:superset /app/data /app/superset_home/uploads
 
 # Copy compiled things from previous stages
 COPY --from=superset-node /app/superset/static/assets superset/static/assets
@@ -216,8 +217,11 @@ COPY --from=superset-node /app/superset/static/service-worker.j[s] superset/stat
 COPY superset superset
 # TODO in the meantime, remove the .po files
 RUN rm superset/translations/*/*/*.po
-RUN mkdir -p superset/static/uploads \
-    && chown -R superset:superset /app/data superset/static/uploads
+RUN mkdir -p /app/superset_home/uploads superset/static/uploads \
+    && chown -R superset:superset \
+        /app/data \
+        /app/superset_home/uploads \
+        superset/static/uploads
 
 # Merging translations from backend and frontend stages
 COPY --from=superset-node /app/superset/translations superset/translations

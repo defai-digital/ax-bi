@@ -24,6 +24,15 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Local upload storage moved under `SUPERSET_HOME`
+
+The default `UPLOAD_FOLDER` now resolves to `<SUPERSET_HOME>/uploads`, and the
+zero-config local DuckDB database defaults to
+`<SUPERSET_HOME>/uploads/local_files.duckdb`. Packaged AX-BI Docker stacks map
+this to `/app/superset_home/uploads`, which is on the shared `superset_home`
+volume. Override `UPLOAD_FOLDER` or `LOCAL_DB_PATH` if you intentionally store
+uploads elsewhere.
+
 ### Python 3.12 is the minimum supported runtime
 
 AX-BI now requires Python 3.12 or newer for local development, CI, Docker

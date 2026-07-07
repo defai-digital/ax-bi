@@ -1355,12 +1355,12 @@ SCREENSHOT_TILED_VIEWPORT_HEIGHT = 2000  # Height of each tile in pixels
 # Image and file configuration
 # ---------------------------------------------------
 # The file upload folder, when using models with files
-UPLOAD_FOLDER = BASE_DIR + "/static/uploads/"
+UPLOAD_FOLDER = os.path.join(DATA_DIR, "uploads")
 UPLOAD_CHUNK_SIZE = 4096
 
 # Local file analytics: auto-provisioned DuckDB for zero-config uploads
 LOCAL_DB_NAME = "Local Files"
-LOCAL_DB_PATH = UPLOAD_FOLDER + "local_files.duckdb"
+LOCAL_DB_PATH = os.path.join(UPLOAD_FOLDER, "local_files.duckdb")
 
 # Upper bound, in bytes, on the size of a single uploaded data file (e.g. CSV,
 # Excel, columnar). Files larger than this are rejected before their contents
