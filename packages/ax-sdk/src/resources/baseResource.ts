@@ -72,6 +72,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
       method: 'GET',
       path: `${this.basePath}/export/`,
       query: { q: JSON.stringify(ids) },
+      responseType: 'blob',
     });
   }
 

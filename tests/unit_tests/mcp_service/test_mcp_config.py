@@ -399,9 +399,12 @@ def test_create_default_mcp_auth_factory_jwt_with_keys():
     mock_build.assert_called_once()
 
 
-def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_returns_none():
-    """MCP_AUTH_ENABLED=True with no keys/secret and no API key auth returns None."""
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_fails_closed():
+    """MCP_AUTH_ENABLED=True with no keys/secret and no fallback fails closed."""
+    from superset.mcp_service.mcp_config import (
+        create_default_mcp_auth_factory,
+        MCPAuthConfigError,
+    )
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: {
@@ -411,16 +414,21 @@ def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_returns_none()
         "MCP_JWT_AUDIENCE": "ax-bi-mcp",
     }.get(key, default)
 
-    with patch("superset.mcp_service.mcp_config.logger") as mock_logger:
-        result = create_default_mcp_auth_factory(mock_app)
+    with (
+        patch("superset.mcp_service.mcp_config.logger") as mock_logger,
+        pytest.raises(MCPAuthConfigError, match="no JWT keys/secret configured"),
+    ):
+        create_default_mcp_auth_factory(mock_app)
 
-    assert result is None
     mock_logger.warning.assert_called_once()
 
 
-def test_create_default_mcp_auth_factory_jwt_build_failure_returns_none():
-    """A JWT verifier build failure with no API key fallback returns None."""
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+def test_create_default_mcp_auth_factory_jwt_build_failure_fails_closed():
+    """A JWT verifier build failure with no API key fallback fails closed."""
+    from superset.mcp_service.mcp_config import (
+        create_default_mcp_auth_factory,
+        MCPAuthConfigError,
+    )
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: {
@@ -437,10 +445,10 @@ def test_create_default_mcp_auth_factory_jwt_build_failure_returns_none():
             side_effect=ValueError("bad key"),
         ),
         patch("superset.mcp_service.mcp_config.logger") as mock_logger,
+        pytest.raises(MCPAuthConfigError, match="Failed to create MCP JWT verifier"),
     ):
-        result = create_default_mcp_auth_factory(mock_app)
+        create_default_mcp_auth_factory(mock_app)
 
-    assert result is None
     mock_logger.error.assert_called_once()
 
 

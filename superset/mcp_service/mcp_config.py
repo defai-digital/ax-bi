@@ -452,9 +452,13 @@ def create_default_mcp_auth_factory(app: Flask) -> Any | None:
         secret = get_mcp_jwt_secret(app.config)
 
         if not (jwks_uri or public_key or secret):
-            logger.warning("MCP_AUTH_ENABLED is True but no JWT keys/secret configured")
+            message = "MCP_AUTH_ENABLED is True but no JWT keys/secret configured"
+            logger.warning(message)
             if not api_key_enabled:
-                return None
+                raise MCPAuthConfigError(
+                    f"{message}. Configure MCP_JWKS_URI, MCP_JWT_PUBLIC_KEY, "
+                    "or MCP_JWT_SECRET, or disable MCP_AUTH_ENABLED."
+                )
         else:
             try:
                 jwt_verifier = _build_jwt_verifier(
@@ -467,7 +471,11 @@ def create_default_mcp_auth_factory(app: Flask) -> Any | None:
                 # Do not log the exception — it may contain secrets (e.g., key material)
                 logger.error("Failed to create MCP JWT verifier")
                 if not api_key_enabled:
-                    return None
+                    raise MCPAuthConfigError(
+                        "Failed to create MCP JWT verifier. Check MCP JWT key "
+                        "material and algorithm configuration, or disable "
+                        "MCP_AUTH_ENABLED."
+                    ) from None
 
     if api_key_enabled:
         return _build_composite_verifier(app, jwt_verifier)

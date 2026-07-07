@@ -95,6 +95,7 @@ export class AxBI {
   private readonly http: HttpClient;
   private readonly mcp: MCPClient;
   private mcpInitialized = false;
+  private mcpInitialization: Promise<void> | null = null;
 
   constructor(config: AxBIConfig) {
     const baseUrl = stripTrailingSlashes(config.baseUrl);
@@ -120,7 +121,7 @@ export class AxBI {
     this.datasets = new DatasetsResource(this.http);
     this.databases = new DatabasesResource(this.http);
     this.queries = new QueriesResource(this.http);
-    this.ai = new AIResource(this.mcp);
+    this.ai = new AIResource(this.mcp, () => this.ensureMcpInitialized());
   }
 
   /**
@@ -153,14 +154,23 @@ export class AxBI {
    * Called lazily on first AI tool usage.
    */
   private async ensureMcpInitialized(): Promise<void> {
-    if (!this.mcpInitialized) {
-      try {
-        await this.mcp.initialize();
-        this.mcpInitialized = true;
-      } catch {
-        // MCP may not be available in all deployments; don't fail hard
-      }
+    if (this.mcpInitialized) {
+      return;
     }
+    if (this.mcpInitialization === null) {
+      this.mcpInitialization = this.mcp
+        .initialize()
+        .then(() => {
+          this.mcpInitialized = true;
+        })
+        .catch(() => {
+          // MCP may not be available in all deployments; don't fail hard
+        })
+        .finally(() => {
+          this.mcpInitialization = null;
+        });
+    }
+    await this.mcpInitialization;
   }
 
   /**

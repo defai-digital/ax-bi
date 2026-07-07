@@ -20,6 +20,9 @@
 /** HTTP methods supported by the transport. */
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+/** Response body parser to use for successful responses. */
+export type ResponseType = 'json' | 'text' | 'blob' | 'arrayBuffer';
+
 /** Options for a single HTTP request. */
 export interface RequestOptions {
   method?: HttpMethod;
@@ -27,6 +30,8 @@ export interface RequestOptions {
   body?: unknown;
   query?: Record<string, string | number | boolean | undefined>;
   headers?: Record<string, string>;
+  /** Parser to use for successful responses. Defaults to JSON/text auto-detect. */
+  responseType?: ResponseType;
   /** Override the default timeout for this call (ms). */
   timeout?: number;
 }

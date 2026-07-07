@@ -194,9 +194,11 @@ export interface ChartValidation {
  */
 export class AIResource {
   private readonly mcp: MCPClient;
+  private readonly ensureInitialized: () => Promise<void>;
 
-  constructor(mcp: MCPClient) {
+  constructor(mcp: MCPClient, ensureInitialized?: () => Promise<void>) {
     this.mcp = mcp;
+    this.ensureInitialized = ensureInitialized ?? (async () => {});
   }
 
   /** Search across BI assets (dashboards, charts, datasets, metrics). */
@@ -282,11 +284,13 @@ export class AIResource {
     name: string,
     args?: Record<string, unknown>,
   ): Promise<T> {
+    await this.ensureInitialized();
     return this.mcp.callTool<T>(name, args);
   }
 
   /** List all available MCP tools. */
   async listTools() {
+    await this.ensureInitialized();
     return this.mcp.listTools();
   }
 
@@ -298,6 +302,7 @@ export class AIResource {
     name: string,
     args: Record<string, unknown>,
   ): Promise<T> {
+    await this.ensureInitialized();
     const result = await this.mcp.callTool<MCPToolResult>(name, args);
 
     // Prefer structuredContent if available

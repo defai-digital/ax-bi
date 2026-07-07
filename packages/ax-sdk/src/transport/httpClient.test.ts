@@ -128,4 +128,43 @@ describe('HttpClient', () => {
     expect(result).toEqual({ result: 'ok' });
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
+
+  test('creates a fresh timeout signal for each retry attempt', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ message: 'error' }, 500))
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    await retryClient.get('/api/v1/health');
+
+    const firstSignal = (mockFetch.mock.calls[0]![1] as RequestInit).signal;
+    const secondSignal = (mockFetch.mock.calls[1]![1] as RequestInit).signal;
+    expect(firstSignal).toBeDefined();
+    expect(secondSignal).toBeDefined();
+    expect(secondSignal).not.toBe(firstSignal);
+  });
+
+  test('parses successful binary responses as blobs', async () => {
+    mockFetch.mockResolvedValue(
+      new Response('zip-data', {
+        status: 200,
+        headers: { 'Content-Type': 'application/zip' },
+      }),
+    );
+
+    const result = await client.request<Blob>({
+      method: 'GET',
+      path: '/api/v1/dashboard/export/',
+      responseType: 'blob',
+    });
+
+    expect(result).toBeInstanceOf(Blob);
+    await expect(result.text()).resolves.toBe('zip-data');
+  });
 });

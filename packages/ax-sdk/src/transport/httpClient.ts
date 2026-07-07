@@ -20,7 +20,7 @@
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError, AxBIAuthError, errorFromStatus } from '../shared/errors.js';
 import { stripTrailingSlashes } from '../shared/url.js';
-import type { RequestOptions } from './types.js';
+import type { RequestOptions, ResponseType } from './types.js';
 
 /** Default request timeout in milliseconds. */
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -76,20 +76,24 @@ export class HttpClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    const init: RequestInit = {
-      method,
-      headers,
-      body:
-        options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      signal: AbortSignal.timeout(timeout),
-    };
+    const requestBody =
+      options.body !== undefined ? JSON.stringify(options.body) : undefined;
 
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
+        const init: RequestInit = {
+          method,
+          headers,
+          body: requestBody,
+          signal: AbortSignal.timeout(timeout),
+        };
         const response = await fetch(url, init);
-        const body = await this.parseBody(response);
+        const body = await this.parseBody(
+          response,
+          response.ok ? options.responseType : undefined,
+        );
 
         if (response.ok) {
           return body as T;
@@ -185,7 +189,27 @@ export class HttpClient {
     return url.toString();
   }
 
-  private async parseBody(response: Response): Promise<unknown> {
+  private async parseBody(
+    response: Response,
+    responseType?: ResponseType,
+  ): Promise<unknown> {
+    if (responseType === 'blob') {
+      return response.blob();
+    }
+    if (responseType === 'arrayBuffer') {
+      return response.arrayBuffer();
+    }
+    if (responseType === 'text') {
+      const text = await response.text().catch(() => null);
+      return text || null;
+    }
+    if (responseType === 'json') {
+      try {
+        return await response.json();
+      } catch {
+        return null;
+      }
+    }
     const contentType = response.headers.get('content-type') ?? '';
     if (contentType.includes('application/json')) {
       try {
