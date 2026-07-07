@@ -34,16 +34,19 @@ import {
 import { FoldersEditorItemType } from '../types';
 
 // Mock react-virtualized-auto-sizer to provide dimensions in tests
-jest.mock(
-  'react-virtualized-auto-sizer',
-  () =>
-    ({
-      children,
-    }: {
-      children: (params: { height: number; width: number }) => ReactChild;
-    }) =>
-      children({ height: 500, width: 400 }),
-);
+jest.mock('react-virtualized-auto-sizer', () => {
+  const MockAutoSizer = ({
+    children,
+  }: {
+    children: (params: { height: number; width: number }) => ReactChild;
+  }) => children({ height: 500, width: 400 });
+
+  return {
+    __esModule: true,
+    default: MockAutoSizer,
+    AutoSizer: MockAutoSizer,
+  };
+});
 
 // Mock react-window VariableSizeList to render all items for testing
 jest.mock('react-window', () => ({

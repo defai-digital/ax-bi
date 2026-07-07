@@ -20,14 +20,19 @@ import type { ReactNode } from 'react';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import JSEditorControl from 'src/explore/components/controls/JSEditorControl';
 
-jest.mock('react-virtualized-auto-sizer', () => ({
-  __esModule: true,
-  default: ({
+jest.mock('react-virtualized-auto-sizer', () => {
+  const MockAutoSizer = ({
     children,
   }: {
     children: (params: { width: number; height: number }) => ReactNode;
-  }) => children({ width: 500, height: 250 }),
-}));
+  }) => children({ width: 500, height: 250 });
+
+  return {
+    __esModule: true,
+    default: MockAutoSizer,
+    AutoSizer: MockAutoSizer,
+  };
+});
 
 jest.mock('src/core/editors', () => ({
   EditorHost: ({
