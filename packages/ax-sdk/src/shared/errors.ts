@@ -99,6 +99,7 @@ export function errorFromStatus(
   status: number,
   body: unknown,
   message?: string,
+  options?: { retryAfterMs?: number },
 ): AxBIError {
   switch (status) {
     case 401:
@@ -112,7 +113,10 @@ export function errorFromStatus(
     case 422:
       return new AxBIValidationError(message ?? 'Validation error', { responseBody: body });
     case 429:
-      return new AxBIRateLimitError(message ?? 'Rate limit exceeded', { responseBody: body });
+      return new AxBIRateLimitError(message ?? 'Rate limit exceeded', {
+        responseBody: body,
+        retryAfterMs: options?.retryAfterMs,
+      });
     default:
       if (status >= 500) {
         return new AxBIError(`Server error (${status})`, { statusCode: status, responseBody: body });

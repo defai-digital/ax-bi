@@ -32,6 +32,8 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   /** Parser to use for successful responses. Defaults to JSON/text auto-detect. */
   responseType?: ResponseType;
+  /** Override automatic retry eligibility for this call. */
+  retry?: boolean;
   /** Override the default timeout for this call (ms). */
   timeout?: number;
 }

@@ -23,16 +23,21 @@ import { AuthProvider } from '../auth/authProvider.js';
 import {
   AxBIError,
   AxBINotFoundError,
+  AxBIRateLimitError,
   AxBIValidationError,
 } from '../shared/errors.js';
 
 const mockFetch = jest.fn<typeof fetch>();
 global.fetch = mockFetch;
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(
+  body: unknown,
+  status = 200,
+  headers?: Record<string, string>,
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 }
 
@@ -41,6 +46,7 @@ describe('HttpClient', () => {
   let client: HttpClient;
 
   beforeEach(() => {
+    jest.restoreAllMocks();
     mockFetch.mockReset();
     auth = new AuthProvider(
       { type: 'token', accessToken: 'test-token' },
@@ -119,6 +125,12 @@ describe('HttpClient', () => {
       retries: 2,
       timeout: 5000,
     });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
 
     mockFetch
       .mockResolvedValueOnce(jsonResponse({ message: 'error' }, 500))
@@ -127,6 +139,7 @@ describe('HttpClient', () => {
     const result = await retryClient.get<{ result: string }>('/api/v1/health');
     expect(result).toEqual({ result: 'ok' });
     expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(1000);
   });
 
   test('creates a fresh timeout signal for each retry attempt', async () => {
@@ -136,6 +149,12 @@ describe('HttpClient', () => {
       retries: 1,
       timeout: 5000,
     });
+    jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
 
     mockFetch
       .mockResolvedValueOnce(jsonResponse({ message: 'error' }, 500))
@@ -148,6 +167,121 @@ describe('HttpClient', () => {
     expect(firstSignal).toBeDefined();
     expect(secondSignal).toBeDefined();
     expect(secondSignal).not.toBe(firstSignal);
+  });
+
+  test('does not retry POST transient failures by default', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+
+    mockFetch.mockResolvedValue(jsonResponse({ message: 'error' }, 500));
+
+    await expect(
+      retryClient.post('/api/v1/dashboard/', { dashboard_title: 'Test' }),
+    ).rejects.toThrow(AxBIError);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('allows explicit retry opt-in for POST requests', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
+
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ message: 'error' }, 500))
+      .mockResolvedValueOnce(jsonResponse({ result: { id: 1 } }));
+
+    const result = await retryClient.request<{ result: { id: number } }>({
+      method: 'POST',
+      path: '/api/v1/dashboard/',
+      body: { dashboard_title: 'Test' },
+      retry: true,
+    });
+
+    expect(result).toEqual({ result: { id: 1 } });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(1000);
+  });
+
+  test('honors Retry-After before retrying', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
+
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'slow down' }, 429, { 'Retry-After': '2' }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    const result = await retryClient.get('/api/v1/dashboard/');
+
+    expect(result).toEqual({ result: 'ok' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(2000);
+  });
+
+  test('ignores invalid Retry-After values', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
+
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'slow down' }, 429, {
+          'Retry-After': '2.5',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    await retryClient.get('/api/v1/dashboard/');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(1000);
+  });
+
+  test('exposes Retry-After on final rate limit errors', async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({ message: 'slow down' }, 429, { 'Retry-After': '3' }),
+    );
+
+    try {
+      await client.get('/api/v1/dashboard/');
+      throw new Error('Expected request to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AxBIRateLimitError);
+      expect(error).toMatchObject({ retryAfterMs: 3000 });
+    }
   });
 
   test('parses successful binary responses as blobs', async () => {

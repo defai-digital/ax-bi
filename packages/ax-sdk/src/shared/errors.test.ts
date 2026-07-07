@@ -112,6 +112,12 @@ describe('errorFromStatus', () => {
     expect(err).toBeInstanceOf(AxBIRateLimitError);
   });
 
+  test('maps 429 with retry metadata', () => {
+    const err = errorFromStatus(429, null, undefined, { retryAfterMs: 2500 });
+    expect(err).toBeInstanceOf(AxBIRateLimitError);
+    expect((err as AxBIRateLimitError).retryAfterMs).toBe(2500);
+  });
+
   test('maps 500 to AxBIError', () => {
     const err = errorFromStatus(500, null);
     expect(err).toBeInstanceOf(AxBIError);
