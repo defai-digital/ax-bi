@@ -50,10 +50,10 @@ superset load-examples
 
 ### Frontend (TypeScript/React)
 
-All frontend commands run from `superset-frontend/`:
+All frontend commands run from `ax-bi-frontend/`:
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 
 # Development server with hot reload (port 9000)
 npm run dev-server
@@ -135,7 +135,7 @@ npm run build          # Release build with platform installers
 ### Playwright E2E Tests
 
 ```bash
-cd superset-frontend
+cd ax-bi-frontend
 npm run playwright:test                              # All tests
 npm run playwright:ui                                # Interactive UI mode
 npx playwright test tests/auth/login.spec.ts         # Single file
@@ -216,7 +216,7 @@ The MCP service runs as a **separate process** from the Superset web server with
 ### Frontend Structure
 
 ```
-superset-frontend/
+ax-bi-frontend/
 ├── src/
 │   ├── features/           # Feature modules (charts, dashboards, datasets, etc.)
 │   ├── components/         # Shared reusable components
@@ -297,7 +297,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 
 **Python:** `SupersetTestCase` base class (`tests/integration_tests/base_tests.py`), `@with_config` / `@with_feature_flags` decorators, `login_as()` / `login_as_admin()` helpers, `create_dashboard()` / `create_slice()` utilities. Use `MagicMock()` for config objects; avoid `AsyncMock` for synchronous code. Test discovery uses `tests/` as root (`pytest.ini`). `asyncio_mode = auto` is set — async test functions run without explicit markers. SQLAlchemy 1.4→2.0 deprecation warnings are configured as errors in `pytest.ini` to prevent regression.
 
-**TypeScript:** Custom `render()` with providers at `superset-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
+**TypeScript:** Custom `render()` with providers at `ax-bi-frontend/spec/helpers/testing-library.tsx`, `createWrapper()` for Redux/Router/Theme, `selectOption()` helper. React Testing Library only — Enzyme is fully removed.
 
 ## Pull Requests
 
@@ -315,7 +315,7 @@ Automated scanner findings must name the specific SECURITY.md matrix row violate
 ## Environment
 
 - Python 3.10+ (see `pyproject.toml` classifiers)
-- Node.js (see `superset-frontend/package.json` `engines` field — currently ^24.16.0)
+- Node.js (see `ax-bi-frontend/package.json` `engines` field — currently ^24.16.0)
 - SQLAlchemy 1.4 (not 2.0)
 - Backend config: `superset/config.py` (large file — search for specific settings rather than reading entirely)
 - Health check: `curl -f http://localhost:8088/health`
