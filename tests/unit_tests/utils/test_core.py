@@ -26,6 +26,7 @@ from flask import current_app
 from pandas.api.types import is_datetime64_dtype
 from pytest_mock import MockerFixture
 
+from superset.constants import DEFAULT_USER_AGENT
 from superset.exceptions import SupersetException
 from superset.utils.core import (
     cast_to_boolean,
@@ -749,7 +750,7 @@ def test_get_user_agent(mocker: MockerFixture, app_context: None) -> None:
     database_mock = mocker.MagicMock()
     database_mock.database_name = "mydb"
 
-    assert get_user_agent(database_mock, QuerySource.DASHBOARD) == "Apache Superset", (
+    assert get_user_agent(database_mock, QuerySource.DASHBOARD) == DEFAULT_USER_AGENT, (
         "The default user agent should be returned"
     )
 

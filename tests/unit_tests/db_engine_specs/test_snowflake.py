@@ -25,6 +25,7 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.engine.url import make_url
 
+from superset.constants import DEFAULT_USER_AGENT
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.utils import json
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
@@ -180,7 +181,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
 
     database.extra = {}
     assert SnowflakeEngineSpec.get_extra_params(database) == {
-        "engine_params": {"connect_args": {"application": "Apache Superset"}}
+        "engine_params": {"connect_args": {"application": DEFAULT_USER_AGENT}}
     }
 
     database.extra = json.dumps(

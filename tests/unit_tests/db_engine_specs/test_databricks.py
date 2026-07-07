@@ -21,6 +21,7 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockerFixture
 
+from superset.constants import DEFAULT_USER_AGENT
 from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.utils import json
@@ -122,8 +123,8 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     assert DatabricksNativeEngineSpec.get_extra_params(database) == {
         "engine_params": {
             "connect_args": {
-                "http_headers": [("User-Agent", "Apache Superset")],
-                "_user_agent_entry": "Apache Superset",
+                "http_headers": [("User-Agent", DEFAULT_USER_AGENT)],
+                "_user_agent_entry": DEFAULT_USER_AGENT,
             }
         }
     }
