@@ -71,6 +71,7 @@ jobs:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       IMAGE_TAG: apache/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
+      PUBLISH_DOCKER_IMAGES: ${{ github.repository == 'apache/superset' && github.event_name == 'push' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
 
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
@@ -87,6 +88,7 @@ jobs:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
           dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           build: "true"
+          login-to-dockerhub: ${{ github.repository == 'apache/superset' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
 
       - name: Setup supersetbot
         uses: ./.github/actions/setup-supersetbot/
@@ -97,20 +99,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_PRESET: ${{ matrix.build_preset }}
         run: |
-          # Single platform builds in pull_request context to speed things up
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          # Only the upstream Apache repository publishes apache/superset images.
+          # Forks still validate the Docker build locally without Docker Hub push credentials.
+          if [ "$PUBLISH_DOCKER_IMAGES" = "true" ]; then
             PLATFORM_ARG="--platform linux/arm64 --platform linux/amd64"
-            # can only --load images in single-platform builds
             PUSH_OR_LOAD="--push"
-          elif [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+          else
+            echo "::notice::Validating Docker build locally without publishing to Docker Hub."
+            # buildx can only load single-platform images into the local Docker daemon.
             PLATFORM_ARG="--platform linux/amd64"
             PUSH_OR_LOAD="--load"
           fi
 
           # Retry to absorb transient Docker Hub registry errors (base-image
-          # pull timeouts, 504/401 on push, ECONNRESET) that otherwise fail
-          # the whole job. buildx reuses the buildkit layer cache from the
-          # failed attempt, so a retry mostly re-does just the failed push.
+          # pull timeouts, 504/401 on push, ECONNRESET) and local builder
+          # flakiness that otherwise fail the whole job. buildx reuses the
+          # buildkit layer cache from the failed attempt, so a retry mostly
+          # re-does just the failed operation.
           for attempt in 1 2 3; do
             if supersetbot docker \
               $PUSH_OR_LOAD \
@@ -131,7 +136,7 @@ jobs:
 
       # in the context of push (using multi-platform build), we need to pull the image locally
       - name: Docker pull
-        if: github.event_name == 'push'
+        if: env.PUBLISH_DOCKER_IMAGES == 'true'
         run: |
           for i in 1 2 3; do
             docker pull $IMAGE_TAG && break
