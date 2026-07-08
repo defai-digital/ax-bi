@@ -44,6 +44,7 @@ fn normalize_server_url(value: &str) -> Result<String, String> {
     if !lower_trimmed.starts_with("http://") && !lower_trimmed.starts_with("https://") {
         return Err("AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string());
     }
+    validate_server_url_path(raw_url_path(trimmed))?;
 
     let url = Url::parse(trimmed)
         .map_err(|_| "AXBI_SERVER_URL must be a valid HTTP(S) URL".to_string())?;
@@ -61,6 +62,74 @@ fn normalize_server_url(value: &str) -> Result<String, String> {
     }
 
     Ok(url.as_str().trim_end_matches('/').to_string())
+}
+
+fn raw_url_path(value: &str) -> &str {
+    let Some(authority_start) = value.find("://") else {
+        return "";
+    };
+    let after_authority = &value[authority_start + 3..];
+    let Some(path_start) = after_authority.find('/') else {
+        return "";
+    };
+    let path_and_after = &after_authority[path_start..];
+    let path_end = path_and_after
+        .find(['?', '#'])
+        .unwrap_or(path_and_after.len());
+    &path_and_after[..path_end]
+}
+
+fn validate_server_url_path(path: &str) -> Result<(), String> {
+    for segment in path.split('/') {
+        let decoded = percent_decode_path_segment(segment)?;
+        if decoded == "." || decoded == ".." {
+            return Err("AXBI_SERVER_URL path must not include dot segments".to_string());
+        }
+        if decoded.contains('/') || decoded.contains('\\') {
+            return Err(
+                "AXBI_SERVER_URL path must not include encoded path separators".to_string(),
+            );
+        }
+    }
+
+    Ok(())
+}
+
+fn percent_decode_path_segment(segment: &str) -> Result<String, String> {
+    let bytes = segment.as_bytes();
+    let mut decoded = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            if index + 2 >= bytes.len() {
+                return Err("AXBI_SERVER_URL path must contain valid percent-encoding".to_string());
+            }
+            let high = hex_value(bytes[index + 1]).ok_or_else(|| {
+                "AXBI_SERVER_URL path must contain valid percent-encoding".to_string()
+            })?;
+            let low = hex_value(bytes[index + 2]).ok_or_else(|| {
+                "AXBI_SERVER_URL path must contain valid percent-encoding".to_string()
+            })?;
+            decoded.push((high << 4) | low);
+            index += 3;
+        } else {
+            decoded.push(bytes[index]);
+            index += 1;
+        }
+    }
+
+    String::from_utf8(decoded)
+        .map_err(|_| "AXBI_SERVER_URL path must contain valid UTF-8".to_string())
+}
+
+fn hex_value(value: u8) -> Option<u8> {
+    match value {
+        b'0'..=b'9' => Some(value - b'0'),
+        b'a'..=b'f' => Some(value - b'a' + 10),
+        b'A'..=b'F' => Some(value - b'A' + 10),
+        _ => None,
+    }
 }
 
 fn validate_notification_input(title: &str, body: &str) -> Result<(), String> {
@@ -144,6 +213,10 @@ mod tests {
             "https://superset.example.test"
         );
         assert_eq!(
+            normalize_server_url("https://superset.example.test/analytics/").unwrap(),
+            "https://superset.example.test/analytics"
+        );
+        assert_eq!(
             normalize_server_url(DEFAULT_SERVER_URL).unwrap(),
             DEFAULT_SERVER_URL
         );
@@ -182,6 +255,26 @@ mod tests {
         assert_eq!(
             normalize_server_url("https://user:s3cr3t@superset.example.test").unwrap_err(),
             "AXBI_SERVER_URL must not include credentials"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/../admin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include dot segments"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/%2e%2e/admin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include dot segments"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/superset%2fadmin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include encoded path separators"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/superset%5cadmin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include encoded path separators"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/superset%zz").unwrap_err(),
+            "AXBI_SERVER_URL path must contain valid percent-encoding"
         );
     }
 
