@@ -256,6 +256,8 @@ test('buildConfig rejects ambiguous Superset base URL paths', () => {
     'https://example.test/superset/../admin',
     'https://example.test/superset/%2e%2e/admin',
     'https://example.test/superset%2fapi',
+    'https://example.test/superset%20admin',
+    'https://example.test/superset%00admin',
     'https://example.test/superset/%zz',
   ]) {
     expect(() => buildConfig({ AX_SUPERSET_BASE_URL })).toThrow(
@@ -310,6 +312,16 @@ test('buildConfig rejects ambiguous percent-encoded Superset path overrides', ()
   expect(() =>
     buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%5chealth' }),
   ).toThrow('AX_SUPERSET_HEALTH_PATH must not contain encoded path separators');
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%20health' }),
+  ).toThrow(
+    'AX_SUPERSET_HEALTH_PATH must not contain whitespace or control characters',
+  );
+  expect(() =>
+    buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api%00health' }),
+  ).toThrow(
+    'AX_SUPERSET_HEALTH_PATH must not contain whitespace or control characters',
+  );
   expect(() =>
     buildConfig({ AX_SUPERSET_HEALTH_PATH: '/api/%zz/health' }),
   ).toThrow('AX_SUPERSET_HEALTH_PATH must contain valid percent-encoding');

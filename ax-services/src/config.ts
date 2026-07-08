@@ -301,6 +301,11 @@ function validatePathSegments(value: string, name: string): void {
     if (/[\\/]/.test(decodedSegment)) {
       throw new Error(`${name} must not contain encoded path separators`);
     }
+    if (/[\s\u0000-\u001f\u007f]/.test(decodedSegment)) {
+      throw new Error(
+        `${name} must not contain whitespace or control characters`,
+      );
+    }
   }
 }
 
