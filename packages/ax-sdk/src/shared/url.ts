@@ -25,3 +25,28 @@ export function stripTrailingSlashes(value: string): string {
   }
   return value.slice(0, end);
 }
+
+/** Normalize an HTTP(S) service base URL before appending API paths. */
+export function normalizeHttpBaseUrl(value: string, name = 'URL'): string {
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    throw new Error(`${name} must be a valid HTTP(S) URL`);
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`${name} must use HTTP or HTTPS`);
+  }
+  if (url.hostname === '') {
+    throw new Error(`${name} must include a host`);
+  }
+  if (url.username !== '' || url.password !== '') {
+    throw new Error(`${name} must not include credentials`);
+  }
+  if (url.search !== '' || url.hash !== '') {
+    throw new Error(`${name} must not include query or fragment`);
+  }
+
+  return stripTrailingSlashes(url.toString());
+}

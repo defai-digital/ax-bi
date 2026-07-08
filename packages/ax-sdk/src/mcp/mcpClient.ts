@@ -19,7 +19,7 @@
 
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError } from '../shared/errors.js';
-import { stripTrailingSlashes } from '../shared/url.js';
+import { normalizeHttpBaseUrl } from '../shared/url.js';
 
 /** JSON-RPC 2.0 request envelope. */
 interface JsonRpcRequest {
@@ -82,7 +82,7 @@ export class MCPClient {
     auth: AuthProvider;
     timeout?: number;
   }) {
-    this.mcpUrl = stripTrailingSlashes(options.mcpUrl);
+    this.mcpUrl = normalizeHttpBaseUrl(options.mcpUrl, 'mcpUrl');
     this.auth = options.auth;
     this.timeout = options.timeout ?? 60_000;
   }

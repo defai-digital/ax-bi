@@ -94,6 +94,21 @@ describe('MCPClient', () => {
     expect(body).toMatchObject({ id: '1', method: 'tools/list' });
   });
 
+  test('rejects MCP URLs with query strings before requests are sent', () => {
+    const auth = new AuthProvider(
+      { type: 'token', accessToken: 'access-jwt' },
+      'http://localhost:8088',
+    );
+
+    expect(
+      () =>
+        new MCPClient({
+          mcpUrl: 'http://localhost:5008?token=abc',
+          auth,
+        }),
+    ).toThrow('mcpUrl must not include query or fragment');
+  });
+
   test('sends captured MCP session ID on later requests', async () => {
     const client = makeClient();
     mockFetch

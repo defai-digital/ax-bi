@@ -27,7 +27,7 @@ import { DatabasesResource } from './resources/databases.js';
 import { QueriesResource } from './resources/queries.js';
 import { MCPClient } from './mcp/mcpClient.js';
 import { AIResource } from './mcp/ai.js';
-import { stripTrailingSlashes } from './shared/url.js';
+import { normalizeHttpBaseUrl } from './shared/url.js';
 
 /** Configuration for the AxBI client. */
 export interface AxBIConfig {
@@ -98,7 +98,7 @@ export class AxBI {
   private mcpInitialization: Promise<void> | null = null;
 
   constructor(config: AxBIConfig) {
-    const baseUrl = stripTrailingSlashes(config.baseUrl);
+    const baseUrl = normalizeHttpBaseUrl(config.baseUrl, 'baseUrl');
     this.auth = new AuthProvider(config.auth, baseUrl, config.timeout);
     this.http = new HttpClient({
       baseUrl,

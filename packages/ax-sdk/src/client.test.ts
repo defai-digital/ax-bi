@@ -176,4 +176,30 @@ describe('AxBI', () => {
 
     await expect(client.health()).resolves.toEqual({ status: 'error' });
   });
+
+  test('preserves path-prefixed base URLs when building REST requests', async () => {
+    const client = new AxBI({
+      baseUrl: ' http://localhost:8088/superset/ ',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+      retries: 0,
+    });
+    mockFetch.mockResolvedValue(textResponse('OK'));
+
+    await expect(client.health()).resolves.toEqual({ status: 'ok' });
+
+    const [url] = mockFetch.mock.calls[0]!;
+    expect(url).toBe('http://localhost:8088/superset/health');
+  });
+
+  test('rejects base URLs with query strings before requests are sent', () => {
+    expect(
+      () =>
+        new AxBI({
+          baseUrl: 'http://localhost:8088?token=abc',
+          mcpUrl: 'http://localhost:5008',
+          auth: { type: 'token', accessToken: 'test-token' },
+        }),
+    ).toThrow('baseUrl must not include query or fragment');
+  });
 });
