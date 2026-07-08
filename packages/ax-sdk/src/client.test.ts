@@ -45,6 +45,13 @@ function jsonResponse(body: unknown): Response {
   });
 }
 
+function textResponse(body: string): Response {
+  return new Response(body, {
+    status: 200,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
 describe('AxBI', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -101,5 +108,45 @@ describe('AxBI', () => {
     expect(timeoutSpy).toHaveBeenNthCalledWith(2, 2345);
     expect(timeoutSpy).toHaveBeenNthCalledWith(3, 2345);
     expect(timeoutSpy).toHaveBeenNthCalledWith(4, 5000);
+  });
+
+  test('treats plain text OK health responses as healthy', async () => {
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+      retries: 0,
+    });
+    mockFetch.mockResolvedValue(textResponse('OK'));
+
+    await expect(client.health()).resolves.toEqual({ status: 'ok' });
+
+    const [url, init] = mockFetch.mock.calls[0]!;
+    expect(url).toBe('http://localhost:8088/health');
+    expect((init as RequestInit).method).toBe('GET');
+  });
+
+  test('treats JSON OK health responses as healthy', async () => {
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+      retries: 0,
+    });
+    mockFetch.mockResolvedValue(jsonResponse({ status: 'ok' }));
+
+    await expect(client.health()).resolves.toEqual({ status: 'ok' });
+  });
+
+  test('reports unexpected health response bodies as errors', async () => {
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+      retries: 0,
+    });
+    mockFetch.mockResolvedValue(textResponse('DOWN'));
+
+    await expect(client.health()).resolves.toEqual({ status: 'error' });
   });
 });

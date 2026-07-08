@@ -137,9 +137,9 @@ export class AxBI {
   /** Check server health. */
   async health(): Promise<HealthStatus> {
     try {
-      const response = await this.http.get<{ status: string }>('/health');
+      const response = await this.http.get<unknown>('/health');
       return {
-        status: response.status === 'OK' ? 'ok' : 'error',
+        status: isHealthyResponse(response) ? 'ok' : 'error',
       };
     } catch (error) {
       return {
@@ -186,4 +186,15 @@ export class AxBI {
       return `${baseUrl}:5008`;
     }
   }
+}
+
+function isHealthyResponse(response: unknown): boolean {
+  if (typeof response === 'string') {
+    return response.trim().toLowerCase() === 'ok';
+  }
+  if (response && typeof response === 'object') {
+    const status = (response as Record<string, unknown>)['status'];
+    return typeof status === 'string' && status.trim().toLowerCase() === 'ok';
+  }
+  return false;
 }
