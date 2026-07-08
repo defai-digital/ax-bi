@@ -224,6 +224,23 @@ describe('MCPClient', () => {
     });
   });
 
+  test('parses SSE responses with case-insensitive content type', async () => {
+    const client = makeClient();
+    mockFetch.mockResolvedValue(
+      new Response(
+        'event: message\ndata: {"jsonrpc":"2.0","id":"1","result":{"content":[{"type":"text","text":"ok"}]}}\n\n',
+        {
+          status: 200,
+          headers: { 'Content-Type': 'Text/Event-Stream; Charset=UTF-8' },
+        },
+      ),
+    );
+
+    await expect(client.callTool('health_check')).resolves.toEqual({
+      content: [{ type: 'text', text: 'ok' }],
+    });
+  });
+
   test('parses multi-line SSE JSON-RPC data events', async () => {
     const client = makeClient();
     mockFetch.mockResolvedValue(

@@ -118,6 +118,19 @@ describe('HttpClient', () => {
     expect(parsed.searchParams.get('page_size')).toBe('10');
   });
 
+  test('parses JSON responses with case-insensitive content type', async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ result: { id: 1 } }), {
+        status: 200,
+        headers: { 'Content-Type': 'Application/JSON; Charset=UTF-8' },
+      }),
+    );
+
+    await expect(client.get('/api/v1/dashboard/1')).resolves.toEqual({
+      result: { id: 1 },
+    });
+  });
+
   test('retries on 500 when retries > 0', async () => {
     const retryClient = new HttpClient({
       baseUrl: 'http://localhost:8088',

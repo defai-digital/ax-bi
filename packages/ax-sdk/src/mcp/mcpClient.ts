@@ -187,7 +187,8 @@ export class MCPClient {
       this.sessionId = newSessionId;
     }
 
-    const contentType = response.headers.get('content-type') ?? '';
+    const contentType =
+      response.headers.get('content-type')?.toLowerCase() ?? '';
 
     // Handle SSE stream response
     if (contentType.includes('text/event-stream')) {

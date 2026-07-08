@@ -228,7 +228,8 @@ export class HttpClient {
         return null;
       }
     }
-    const contentType = response.headers.get('content-type') ?? '';
+    const contentType =
+      response.headers.get('content-type')?.toLowerCase() ?? '';
     if (contentType.includes('application/json')) {
       try {
         return await response.json();
