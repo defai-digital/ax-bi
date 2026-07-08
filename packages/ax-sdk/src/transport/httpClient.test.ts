@@ -169,6 +169,44 @@ describe('HttpClient', () => {
     expect(secondSignal).not.toBe(firstSignal);
   });
 
+  test('preserves API key auth headers when retrying after 401', async () => {
+    const apiKeyAuth = new AuthProvider(
+      {
+        type: 'apiKey',
+        apiKey: 'key-123',
+        headerName: 'X-API-Key',
+        headerPrefix: '',
+      },
+      'http://localhost:8088',
+    );
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth: apiKeyAuth,
+      retries: 1,
+      timeout: 5000,
+    });
+
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({ message: 'unauthorized' }, 401))
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    await expect(retryClient.get('/api/v1/dashboard/')).resolves.toEqual({
+      result: 'ok',
+    });
+
+    const firstHeaders = mockFetch.mock.calls[0]![1]!.headers as Record<
+      string,
+      string
+    >;
+    const secondHeaders = mockFetch.mock.calls[1]![1]!.headers as Record<
+      string,
+      string
+    >;
+    expect(firstHeaders['X-API-Key']).toBe('key-123');
+    expect(secondHeaders['X-API-Key']).toBe('key-123');
+    expect(secondHeaders['Authorization']).toBeUndefined();
+  });
+
   test('does not retry POST transient failures by default', async () => {
     const retryClient = new HttpClient({
       baseUrl: 'http://localhost:8088',

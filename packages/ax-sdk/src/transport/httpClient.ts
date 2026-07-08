@@ -73,16 +73,7 @@ export class HttpClient {
     const timeout = options.timeout ?? this.defaultTimeout;
     const retryEnabled =
       options.retry ?? DEFAULT_RETRYABLE_METHODS.has(method);
-
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...this.auth.getAuthHeaders(),
-      ...options.headers,
-    };
-
-    if (options.body !== undefined) {
-      headers['Content-Type'] = 'application/json';
-    }
+    let headers = this.buildHeaders(options);
 
     const requestBody =
       options.body !== undefined ? JSON.stringify(options.body) : undefined;
@@ -115,8 +106,7 @@ export class HttpClient {
         if (response.status === 401 && attempt === 0) {
           try {
             await this.auth.login();
-            // Retry with refreshed token
-            headers['Authorization'] = `Bearer ${this.auth.getAccessToken()}`;
+            headers = this.buildHeaders(options);
             continue;
           } catch {
             throw new AxBIAuthError('Authentication failed', {
@@ -183,6 +173,20 @@ export class HttpClient {
   /** Convenience: DELETE request. */
   async delete<T = unknown>(path: string): Promise<T> {
     return this.request<T>({ method: 'DELETE', path });
+  }
+
+  private buildHeaders(options: RequestOptions): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...this.auth.getAuthHeaders(),
+      ...options.headers,
+    };
+
+    if (options.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    return headers;
   }
 
   private buildUrl(
