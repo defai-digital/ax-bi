@@ -112,6 +112,21 @@ describe('MCPClient', () => {
     expect(headers['Mcp-Session-Id']).toBe('session-1');
   });
 
+  test('sends result MCP session ID on initialized notification', async () => {
+    const client = makeClient();
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonRpcResponse('1', { sessionId: 'session-from-result' }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 202 }));
+
+    await client.initialize();
+
+    const [, init] = mockFetch.mock.calls[1]!;
+    const headers = (init as RequestInit).headers as Record<string, string>;
+    expect(headers['Mcp-Session-Id']).toBe('session-from-result');
+  });
+
   test('maps HTTP failures to AxBIError with status and response body', async () => {
     const client = makeClient();
     mockFetch.mockResolvedValue(new Response('unavailable', { status: 503 }));

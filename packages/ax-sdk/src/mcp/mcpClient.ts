@@ -101,9 +101,6 @@ export class MCPClient {
       },
     });
 
-    // Send initialized notification (no response expected)
-    await this.sendNotification('notifications/initialized');
-
     // Extract session ID from response if available
     if (response && typeof response === 'object') {
       const resp = response as Record<string, unknown>;
@@ -111,6 +108,9 @@ export class MCPClient {
         this.sessionId = resp['sessionId'];
       }
     }
+
+    // Send initialized notification (no response expected)
+    await this.sendNotification('notifications/initialized');
   }
 
   /** List all available MCP tools. */
