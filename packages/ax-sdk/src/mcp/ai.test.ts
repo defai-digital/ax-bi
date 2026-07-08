@@ -74,6 +74,18 @@ describe('AIResource', () => {
     });
   });
 
+  test('throws AxBIError when a typed tool returns malformed JSON text', async () => {
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
+      content: [{ type: 'text', text: 'not-json' }],
+    }));
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.searchAssets({ query: 'sales' })).rejects.toMatchObject({
+      message: 'MCP tool "search_business_assets" returned malformed JSON',
+      responseBody: 'not-json',
+    });
+  });
+
   test('returns raw MCP errors from raw tool calls', async () => {
     const toolResult: MCPToolResult = {
       isError: true,

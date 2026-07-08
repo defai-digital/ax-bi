@@ -322,8 +322,11 @@ export class AIResource {
     if (textBlock?.text) {
       try {
         return JSON.parse(textBlock.text) as T;
-      } catch {
-        return textBlock.text as unknown as T;
+      } catch (error) {
+        throw new AxBIError(`MCP tool "${name}" returned malformed JSON`, {
+          cause: error instanceof Error ? error : new Error(String(error)),
+          responseBody: textBlock.text,
+        });
       }
     }
 
