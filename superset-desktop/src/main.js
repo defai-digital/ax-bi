@@ -31,6 +31,8 @@ const LOCAL_RUNTIME_COMMANDS = [
 
 const elements = {
   activity: document.getElementById('activity'),
+  busyBanner: document.getElementById('busyBanner'),
+  busyMessage: document.getElementById('busyMessage'),
   colimaState: document.getElementById('colimaState'),
   credentials: document.getElementById('credentials'),
   credentialsBox: document.getElementById('credentialsBox'),
@@ -76,6 +78,11 @@ function setActivity(message, variant = 'neutral') {
 
 function setBusy(value, message) {
   busy = value;
+  elements.busyBanner.classList.toggle('hidden', !value);
+  if (message) {
+    elements.busyMessage.textContent = message;
+    elements.summary.textContent = message;
+  }
   for (const id of LOCAL_RUNTIME_COMMANDS) {
     const element = elements[id];
     if (element) {
@@ -198,6 +205,7 @@ async function refreshStatus(message) {
 async function runAction(message, command, after) {
   try {
     setBusy(true, message);
+    await nextPaint();
     const result = await invoke(command);
     if (result && result.status) {
       renderStatus(result.status);
@@ -207,7 +215,9 @@ async function runAction(message, command, after) {
     }
     setActivity('Ready', 'ok');
   } catch (error) {
-    setActivity(errorMessage(error), 'bad');
+    const message = errorMessage(error);
+    elements.summary.textContent = message;
+    setActivity(message, 'bad');
   } finally {
     setBusy(false);
   }
@@ -221,10 +231,22 @@ async function pollUntilHealthy() {
       setActivity('Local AX-BI is ready', 'ok');
       return;
     }
-    setActivity('Waiting for AX-BI health checks');
+    const message = status.axbi_running
+      ? 'Waiting for AX-BI health checks'
+      : 'Waiting for containers to start';
+    setActivity(message);
+    elements.summary.textContent = message;
     await delay(2000);
   }
   setActivity('AX-BI is still starting; refresh status in a moment', 'warn');
+}
+
+function nextPaint() {
+  return new Promise(resolve => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
 }
 
 function delay(ms) {
@@ -246,12 +268,15 @@ function errorMessage(error) {
 async function showCredentials() {
   try {
     setBusy(true, 'Reading local admin credentials');
+    await nextPaint();
     const credentials = await invoke('get_local_admin_credentials');
     elements.credentialsBox.classList.remove('hidden');
     elements.credentialsBox.textContent = `username: ${credentials.username}\npassword: ${credentials.password}`;
     setActivity('Credentials loaded', 'ok');
   } catch (error) {
-    setActivity(errorMessage(error), 'bad');
+    const message = errorMessage(error);
+    elements.summary.textContent = message;
+    setActivity(message, 'bad');
   } finally {
     setBusy(false);
   }
@@ -260,6 +285,7 @@ async function showCredentials() {
 async function loadLogs() {
   try {
     setBusy(true, 'Loading logs');
+    await nextPaint();
     const service = elements.logService.value || null;
     elements.logs.textContent = await invoke('get_local_runtime_logs', {
       service,
@@ -267,7 +293,9 @@ async function loadLogs() {
     });
     setActivity('Logs loaded', 'ok');
   } catch (error) {
-    setActivity(errorMessage(error), 'bad');
+    const message = errorMessage(error);
+    elements.summary.textContent = message;
+    setActivity(message, 'bad');
   } finally {
     setBusy(false);
   }
@@ -301,7 +329,9 @@ function connectToServer(event) {
 function wireEvents() {
   elements.refresh.addEventListener('click', () => {
     refreshStatus('Refreshing status').catch(error => {
-      setActivity(errorMessage(error), 'bad');
+      const message = errorMessage(error);
+      elements.summary.textContent = message;
+      setActivity(message, 'bad');
     });
   });
   elements.prepare.addEventListener('click', () => {
@@ -327,5 +357,7 @@ function wireEvents() {
 
 wireEvents();
 refreshStatus('Checking local runtime').catch(error => {
-  setActivity(errorMessage(error), 'bad');
+  const message = errorMessage(error);
+  elements.summary.textContent = message;
+  setActivity(message, 'bad');
 });

@@ -104,6 +104,35 @@ select {
   gap: 8px;
 }
 
+.busy-banner {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 12px;
+  border: 1px solid #b5d8df;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #e9f6f8;
+  color: #17343c;
+  font-weight: 700;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(0, 107, 127, 0.22);
+  border-top-color: var(--primary);
+  border-radius: 999px;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .button {
   min-height: 36px;
   border: 1px solid var(--border);
@@ -275,7 +304,7 @@ input[readonly] {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .dependency-list {
