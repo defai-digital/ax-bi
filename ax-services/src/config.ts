@@ -278,7 +278,7 @@ function normalizeEnvPath(
   name: EnvironmentVariable,
   defaultValue: string,
 ): string {
-  return normalizePath(env[name] || defaultValue, name);
+  return normalizePath(env[name] ?? defaultValue, name);
 }
 
 function rawUrlPath(value: string): string {

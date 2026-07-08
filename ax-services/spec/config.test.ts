@@ -267,8 +267,14 @@ test('buildConfig rejects ambiguous Superset base URL paths', () => {
 });
 
 test('buildConfig rejects blank Superset path overrides', () => {
+  expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '' })).toThrow(
+    'AX_SUPERSET_HEALTH_PATH must not be empty',
+  );
   expect(() => buildConfig({ AX_SUPERSET_HEALTH_PATH: '   ' })).toThrow(
     'AX_SUPERSET_HEALTH_PATH must not be empty',
+  );
+  expect(() => buildConfig({ AX_SUPERSET_CHART_LIST_PATH: '' })).toThrow(
+    'AX_SUPERSET_CHART_LIST_PATH must not be empty',
   );
 });
 
