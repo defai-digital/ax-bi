@@ -21,6 +21,7 @@
 
 mod commands;
 mod deep_link;
+mod local_runtime;
 mod navigation;
 mod tray;
 
@@ -47,6 +48,14 @@ fn main() {
             commands::navigate_to,
             commands::show_notification,
             commands::get_version,
+            commands::get_local_runtime_status,
+            commands::prepare_local_runtime,
+            commands::start_local_runtime,
+            commands::stop_local_runtime,
+            commands::restart_local_runtime,
+            commands::update_local_runtime,
+            commands::get_local_runtime_logs,
+            commands::get_local_admin_credentials,
         ])
         .run(tauri::generate_context!())
         .expect("Error while running AX-BI Desktop");

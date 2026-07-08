@@ -218,6 +218,7 @@ name = "axbi-desktop"
 version = "0.1.0"
 dependencies = [
  "env_logger",
+ "getrandom 0.3.4",
  "log",
  "serde",
  "serde_json",

@@ -19,7 +19,7 @@
         "fullscreen": false,
         "center": true,
         "decorations": true,
-        "url": "http://127.0.0.1:9000"
+        "url": "http://127.0.0.1:8088/ax-bi/welcome/"
       }
     ],
     "security": {
@@ -27,8 +27,8 @@
     }
   },
   "bundle": {
-    "active": false,
-    "targets": "all"
+    "active": true,
+    "targets": ["app"]
   },
   "plugins": {
     "deep-link": {

@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, Runtime};
 use url::Url;
 
+use crate::local_runtime;
 use crate::navigation::build_navigation_script;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,6 +210,64 @@ pub async fn show_notification<R: Runtime>(
 #[tauri::command]
 pub async fn get_version() -> Result<String, String> {
     Ok(env!("CARGO_PKG_VERSION").to_string())
+}
+
+#[tauri::command]
+pub async fn get_local_runtime_status<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeStatus, String> {
+    local_runtime::status(&app)
+}
+
+#[tauri::command]
+pub async fn prepare_local_runtime<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeStatus, String> {
+    local_runtime::prepare(&app)
+}
+
+#[tauri::command]
+pub async fn start_local_runtime<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    local_runtime::start(&app)
+}
+
+#[tauri::command]
+pub async fn stop_local_runtime<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    local_runtime::stop(&app)
+}
+
+#[tauri::command]
+pub async fn restart_local_runtime<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    local_runtime::restart(&app)
+}
+
+#[tauri::command]
+pub async fn update_local_runtime<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    local_runtime::update(&app)
+}
+
+#[tauri::command]
+pub async fn get_local_runtime_logs<R: Runtime>(
+    app: AppHandle<R>,
+    service: Option<String>,
+    tail: Option<u16>,
+) -> Result<String, String> {
+    local_runtime::logs(&app, service, tail)
+}
+
+#[tauri::command]
+pub async fn get_local_admin_credentials<R: Runtime>(
+    app: AppHandle<R>,
+) -> Result<local_runtime::LocalAdminCredentials, String> {
+    local_runtime::credentials(&app)
 }
 
 #[cfg(test)]

@@ -28,6 +28,23 @@ These features live in `superset-desktop/` and require the native app:
 
 The desktop client is a **thin shell** that loads the AX-BI web application. It does **not** bundle the Python backend, database drivers, or any server-side components.
 
+## Recommended User Install
+
+The intended macOS user path is a Homebrew cask that installs AX-BI Desktop and
+the local runtime prerequisites:
+
+```bash
+brew install --cask defai-digital/ax-bi/ax-bi
+```
+
+After installation, AX-BI Desktop should guide the user to either connect to an
+existing AX-BI server or start a local AX-BI runtime. The local runtime manager
+uses Colima and Docker Compose behind the Tauri app so users do not need to
+clone this repository, edit `.env` files, or run Docker commands manually.
+
+See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for the runtime architecture, command
+contract, Homebrew cask shape, and security boundary.
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     AX-BI Desktop Client                         │
@@ -60,14 +77,14 @@ The desktop client is a **thin shell** that loads the AX-BI web application. It 
 
 ## Development
 
-### 1. Start the AX-BI frontend dev server
+### 1. Start an AX-BI server
 
 ```bash
-cd ax-bi-frontend
-npm run dev-server    # Serves on http://127.0.0.1:9000
+superset run -p 8088 --with-threads --reload --debugger
 ```
 
-Ensure the Superset backend is also running (port 8088) so the frontend can proxy API calls.
+Or use the local runtime commands exposed by the Tauri app to start the Compose
+stack managed under the app data directory.
 
 ### 2. Launch the Tauri desktop shell
 
@@ -77,25 +94,25 @@ npm install           # First time only
 npm run dev           # Builds Rust + launches native window
 ```
 
-The Tauri window loads from `http://127.0.0.1:9000` (configured in `src-tauri/tauri.conf.json`).
+The Tauri window loads from `http://127.0.0.1:8088/ax-bi/welcome/`
+(configured in `src-tauri/tauri.conf.json`).
 
 ### Build for production
 
 ```bash
-npm run build         # Release build with platform-specific installers
+npm run build         # Release build with a macOS app bundle
 npm run build:debug   # Debug build (faster, larger)
 ```
 
 Output locations:
-- **macOS**: `.dmg` in `src-tauri/target/release/bundle/dmg/`
-- **Windows**: `.msi` and `.exe` in `src-tauri/target/release/bundle/`
-- **Linux**: `.deb` and `.AppImage` in `src-tauri/target/release/bundle/`
+- **macOS app**: `src-tauri/target/release/bundle/macos/`
 
 ## Configuration
 
 ### Server URL
 
-By default the Tauri shell loads the local dev server. To point at a production instance, edit `src-tauri/tauri.conf.json`:
+By default the Tauri shell loads the local AX-BI URL. To point at a hosted
+production instance, edit `src-tauri/tauri.conf.json`:
 
 ```json
 {
@@ -187,10 +204,10 @@ Ensure your Rust toolchain is up to date:
 rustup update stable
 ```
 
-### Frontend not loading in Tauri window
-Verify the dev server is running at the configured URL:
+### AX-BI not loading in Tauri window
+Verify the configured AX-BI server is running:
 ```bash
-curl -f http://127.0.0.1:9000/health
+curl -f http://127.0.0.1:8088/health
 ```
 
 ### Windows: WebView2 not found
@@ -271,10 +288,8 @@ This will start the Tauri app in development mode with hot reload.
 npm run build
 ```
 
-This will create platform-specific installers:
-- **macOS**: `.dmg` installer in `src-tauri/target/release/bundle/dmg/`
-- **Windows**: `.msi` and `.exe` installers in `src-tauri/target/release/bundle/`
-- **Linux**: `.deb` and `.AppImage` in `src-tauri/target/release/bundle/`
+This will create a macOS bundle:
+- **macOS app**: `src-tauri/target/release/bundle/macos/`
 
 ## Configuration
 

@@ -1,0 +1,29 @@
+# Template for defai-digital/homebrew-ax-bi/Casks/ax-bi.rb.
+# Replace VERSION, architecture artifact names, and SHA256 values during release.
+
+cask "ax-bi" do
+  arch arm: "aarch64", intel: "x64"
+
+  version "VERSION"
+  sha256 arm: "ARM64_SHA256",
+         intel: "X64_SHA256"
+
+  url "https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v#{version}/AX-BI_#{version}_#{arch}.zip",
+      verified: "github.com/defai-digital/ax-bi/"
+  name "AX-BI"
+  desc "Desktop client and local runtime launcher for AX-BI"
+  homepage "https://github.com/defai-digital/ax-bi"
+
+  depends_on formula: "colima"
+  depends_on formula: "docker"
+  depends_on formula: "docker-compose"
+
+  app "AX-BI.app"
+
+  zap trash: [
+    "~/Library/Application Support/com.axbi.desktop",
+    "~/Library/Caches/com.axbi.desktop",
+    "~/Library/Logs/com.axbi.desktop",
+    "~/Library/Preferences/com.axbi.desktop.plist",
+  ]
+end
