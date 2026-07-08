@@ -293,6 +293,38 @@ describe('HttpClient', () => {
     expect(sleepSpy).toHaveBeenCalledWith(2000);
   });
 
+  test('honors HTTP-date Retry-After values before retrying', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
+    jest
+      .spyOn(Date, 'now')
+      .mockReturnValue(Date.parse('Wed, 21 Oct 2015 07:27:58 GMT'));
+
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'slow down' }, 429, {
+          'Retry-After': 'Wed, 21 Oct 2015 07:28:00 GMT',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    const result = await retryClient.get('/api/v1/dashboard/');
+
+    expect(result).toEqual({ result: 'ok' });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(2000);
+  });
+
   test('ignores invalid Retry-After values', async () => {
     const retryClient = new HttpClient({
       baseUrl: 'http://localhost:8088',
@@ -311,6 +343,34 @@ describe('HttpClient', () => {
       .mockResolvedValueOnce(
         jsonResponse({ message: 'slow down' }, 429, {
           'Retry-After': '2.5',
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));
+
+    await retryClient.get('/api/v1/dashboard/');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(sleepSpy).toHaveBeenCalledWith(1000);
+  });
+
+  test('ignores negative numeric Retry-After values', async () => {
+    const retryClient = new HttpClient({
+      baseUrl: 'http://localhost:8088',
+      auth,
+      retries: 1,
+      timeout: 5000,
+    });
+    const sleepSpy = jest
+      .spyOn(
+        retryClient as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
+
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({ message: 'slow down' }, 429, {
+          'Retry-After': '-1',
         }),
       )
       .mockResolvedValueOnce(jsonResponse({ result: 'ok' }));

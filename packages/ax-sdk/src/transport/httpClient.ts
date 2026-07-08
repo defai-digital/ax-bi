@@ -265,10 +265,10 @@ export class HttpClient {
     }
 
     const seconds = Number(trimmed);
-    if (Number.isFinite(seconds) && !Number.isInteger(seconds)) {
-      return undefined;
-    }
-    if (Number.isInteger(seconds) && seconds >= 0) {
+    if (Number.isFinite(seconds)) {
+      if (!Number.isInteger(seconds) || seconds < 0) {
+        return undefined;
+      }
       return Math.min(seconds * 1000, MAX_RETRY_AFTER_MS);
     }
 
