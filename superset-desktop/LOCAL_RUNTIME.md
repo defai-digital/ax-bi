@@ -55,7 +55,7 @@ The native runtime manager writes files under the Tauri app data directory:
 
 The generated `.env` contains local-only secrets:
 
-- `SUPERSET_SECRET_KEY`
+- `AX_BI_SECRET_KEY`
 - `DATABASE_PASSWORD`
 - `ADMIN_PASSWORD`
 

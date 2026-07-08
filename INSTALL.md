@@ -36,7 +36,7 @@ cp docker/.env-axbi.example docker/.env-axbi
 Edit `docker/.env-axbi` and set:
 
 ```env
-SUPERSET_SECRET_KEY=<generated secret>
+AX_BI_SECRET_KEY=<generated secret>
 DATABASE_PASSWORD=<generated database password>
 ADMIN_PASSWORD=<admin login password>
 MCP_DEV_USERNAME=admin

@@ -66,16 +66,16 @@ NAME                                    READY   STATUS      RESTARTS   AGE
 superset-celerybeat-7cdcc9575f-k6xmc    1/1     Running     0          119s
 superset-f5c9c667-dw9lp                 1/1     Running     0          4m7s
 superset-f5c9c667-fk8bk                 1/1     Running     0          4m11s
-superset-init-db-zlm9z                  0/1     Completed   0          111s
+ax-bi-init-db-zlm9z                  0/1     Completed   0          111s
 superset-postgresql-0                   1/1     Running     0          6d20h
 superset-redis-master-0                 1/1     Running     0          6d20h
-superset-worker-75b48bbcc-jmmjr         1/1     Running     0          4m8s
-superset-worker-75b48bbcc-qrq49         1/1     Running     0          4m12s
+ax-bi-worker-75b48bbcc-jmmjr         1/1     Running     0          4m8s
+ax-bi-worker-75b48bbcc-qrq49         1/1     Running     0          4m12s
 ```
 
 The exact list will depend on some of your specific configuration overrides but you should generally expect:
 
-- N `superset-xxxx-yyyy` and `superset-worker-xxxx-yyyy` pods (depending on your `supersetNode.replicaCount` and `supersetWorker.replicaCount` values)
+- N `superset-xxxx-yyyy` and `ax-bi-worker-xxxx-yyyy` pods (depending on your `supersetNode.replicaCount` and `supersetWorker.replicaCount` values)
 - 1 `superset-postgresql-0` depending on your postgres settings
 - 1 `superset-redis-master-0` depending on your redis settings
 - 1 `superset-celerybeat-xxxx-yyyy` pod if you have `supersetCeleryBeat.enabled = true` in your values overrides

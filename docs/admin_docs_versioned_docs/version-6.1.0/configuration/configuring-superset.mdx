@@ -50,7 +50,7 @@ ROW_LIMIT = 5000
 # Your App secret key will be used for securely signing the session cookie
 # and encrypting sensitive information on the database
 # Make sure you are changing this key for your deployment with a strong key.
-# Alternatively you can set it with `SUPERSET_SECRET_KEY` environment variable.
+# Alternatively you can set it with `AX_BI_SECRET_KEY` environment variable.
 # You MUST set this for production environments or the server will refuse
 # to start and you will see an error in the logs accordingly.
 SECRET_KEY = 'YOUR_OWN_RANDOM_GENERATED_SECRET_KEY'
@@ -109,12 +109,12 @@ SECRET_KEY = 'YOUR_OWN_RANDOM_GENERATED_SECRET_KEY'
 
 You can generate a strong secure key with `openssl rand -base64 42`.
 
-Alternatively, you can set the secret key using `SUPERSET_SECRET_KEY` environment variable:
+Alternatively, you can set the secret key using `AX_BI_SECRET_KEY` environment variable:
 
 On a Unix-based system, such as Linux or macOS, you can do so by running the following command in your terminal:
 
 ```bash
-export SUPERSET_SECRET_KEY=$(openssl rand -base64 42)
+export AX_BI_SECRET_KEY=$(openssl rand -base64 42)
 ```
 
 :::caution Use a strong secret key

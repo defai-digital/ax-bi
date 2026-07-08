@@ -26,7 +26,7 @@ function reset_db() {
   echo --------------------
   echo Resetting test DB
   echo --------------------
-  docker compose stop superset-tests-worker superset || true
+  docker compose stop ax-bi-tests-worker ax-bi || true
   RESET_DB_CMD="psql \"postgresql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:5432\" <<-EOF
     DROP DATABASE IF EXISTS ${DB_NAME};
     CREATE DATABASE ${DB_NAME};
@@ -37,8 +37,8 @@ function reset_db() {
     CREATE SCHEMA admin_database;
 EOF
 "
-  docker exec -i superset_db bash -c "${RESET_DB_CMD}"
-  docker compose start superset-tests-worker superset
+  docker exec -i ax_bi_db bash -c "${RESET_DB_CMD}"
+  docker compose start ax-bi-tests-worker ax-bi
 }
 
 #

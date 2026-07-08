@@ -17,7 +17,7 @@ Running Superset without HTTPS (TLS) is not secure. Without it, all network traf
 * **Enforce Modern TLS:** Configure your proxy to enforce TLS 1.2 or higher with strong, industry-standard cipher suites.
 * **Implement HSTS:** Use the HTTP Strict Transport Security (HSTS) header to ensure browsers only connect to your Superset instance over HTTPS. This can be configured in your reverse proxy or within Superset's Talisman settings.
 
-### **`SUPERSET_SECRET_KEY` Management (CRITICAL)**
+### **`AX_BI_SECRET_KEY` Management (CRITICAL)**
 
 This is the most critical security setting for your Superset instance. It is used to sign all session cookies and encrypt sensitive information in the metadata database, such as database connection credentials.
 
@@ -30,12 +30,12 @@ This is the most critical security setting for your Superset instance. It is use
     ```python
     # In superset_config.py
     import os
-    SECRET_KEY = os.environ.get('SUPERSET_SECRET_KEY')
+    SECRET_KEY = os.environ.get('AX_BI_SECRET_KEY')
     ```
 
-> #### ⚠️ Warning: Your `SUPERSET_SECRET_KEY` Must Be Unique
+> #### ⚠️ Warning: Your `AX_BI_SECRET_KEY` Must Be Unique
 >
-> **NEVER** reuse the same `SUPERSET_SECRET_KEY` across different environments (e.g., development, staging, production) or different Superset instances. Reusing a key allows cryptographically signed session cookies to be used across those instances, which can lead to a full authentication bypass if a cookie is compromised. Treat this key like a master password.
+> **NEVER** reuse the same `AX_BI_SECRET_KEY` across different environments (e.g., development, staging, production) or different Superset instances. Reusing a key allows cryptographically signed session cookies to be used across those instances, which can lead to a full authentication bypass if a cookie is compromised. Treat this key like a master password.
 
 ### **Session Management Security (CRITICAL)**
 
@@ -146,7 +146,7 @@ Here's the documentation section how how to set up Talisman: https://superset.ap
 #### **Initial Setup:**
 
   - [ ] HTTPS/TLS is configured and enforced via a reverse proxy.
-  - [ ] A unique, strong `SUPERSET_SECRET_KEY` is generated and secured in an environment variable or secrets vault.
+  - [ ] A unique, strong `AX_BI_SECRET_KEY` is generated and secured in an environment variable or secrets vault.
   - [ ] Server-side session management is configured (e.g., Redis).
   - [ ] `PERMANENT_SESSION_LIFETIME` is set to a short duration (e.g., 8 hours).
   - [ ] All session cookie security flags (`Secure`, `HttpOnly`, `SameSite`) are enabled.
@@ -160,7 +160,7 @@ Here's the documentation section how how to set up Talisman: https://superset.ap
 #### **Ongoing Maintenance:**
 
   - [ ] Regularly update to the latest major or minor versions of Superset. Those versions receive up-to-date security patches.
-  - [ ] Rotate the `SUPERSET_SECRET_KEY` periodically (e.g., quarterly) and after any potential security incident.
+  - [ ] Rotate the `AX_BI_SECRET_KEY` periodically (e.g., quarterly) and after any potential security incident.
   - [ ] Rotate the other security-critical secrets (guest-token and async-query JWT secrets, SMTP and database credentials) on the cadence in Appendix C, and after any potential security incident.
   - [ ] Conduct quarterly access reviews for all users.
   - [ ] Assuming logging and monitoring is in place, review security monitoring alerts weekly.
@@ -168,7 +168,7 @@ Here's the documentation section how how to set up Talisman: https://superset.ap
 ### **Appendix B: `SECRET_KEY` Rotation and Compromise Response**
 
 **Why and When to Rotate the `SECRET_KEY`**
-Rotating the `SUPERSET_SECRET_KEY` is a critical security procedure. It is mandatory after a known or suspected compromise and is a best practice when an employee with access to the key departs. While periodic rotation can limit the window of exposure for an unknown leak, it is a high-impact operation that will invalidate all user sessions and requires careful execution to avoid breaking your instance. The principles behind managing this key align with general best practices for cryptographic storage, which are further detailed in the OWASP Cryptographic Storage Cheat Sheet here: https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html
+Rotating the `AX_BI_SECRET_KEY` is a critical security procedure. It is mandatory after a known or suspected compromise and is a best practice when an employee with access to the key departs. While periodic rotation can limit the window of exposure for an unknown leak, it is a high-impact operation that will invalidate all user sessions and requires careful execution to avoid breaking your instance. The principles behind managing this key align with general best practices for cryptographic storage, which are further detailed in the OWASP Cryptographic Storage Cheat Sheet here: https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html
 
 **Procedure for Rotating the Key**
 The procedure for safely rotating the SECRET_KEY must be followed precisely to avoid locking yourself out of your instance. The official Apache Superset documentation maintains the correct, up-to-date procedure. Please follow the official guide here:
@@ -176,11 +176,11 @@ https://superset.apache.org/admin-docs/configuration/configuring-superset/#rotat
 
 ### **Appendix C: Secrets Register and Rotation Schedule**
 
-`SUPERSET_SECRET_KEY` is not the only security-critical secret in a Superset deployment. Maintain an inventory of all such secrets, store each in a secrets manager (not in `superset_config.py` or version control), assign an owner, and rotate them on a defined cadence as well as after any suspected compromise.
+`AX_BI_SECRET_KEY` is not the only security-critical secret in a Superset deployment. Maintain an inventory of all such secrets, store each in a secrets manager (not in `superset_config.py` or version control), assign an owner, and rotate them on a defined cadence as well as after any suspected compromise.
 
 | Secret | Purpose | Risk if leaked | Suggested rotation |
 |---|---|---|---|
-| `SUPERSET_SECRET_KEY` | Signs session cookies; key material for encrypting stored DB credentials (Fernet/AES) | Forged sessions (auth bypass / privilege escalation); decryption of exfiltrated metadata-DB secrets | Quarterly + post-incident |
+| `AX_BI_SECRET_KEY` | Signs session cookies; key material for encrypting stored DB credentials (Fernet/AES) | Forged sessions (auth bypass / privilege escalation); decryption of exfiltrated metadata-DB secrets | Quarterly + post-incident |
 | `GUEST_TOKEN_JWT_SECRET` | Signs embedded-dashboard guest tokens | Forged guest tokens → unauthorized dashboard/data access | Quarterly + post-incident |
 | `GLOBAL_ASYNC_QUERIES_JWT_SECRET` | Signs the async-query channel JWT | Forged async-query tokens | Quarterly + post-incident |
 | SMTP password | Outbound email for alerts & reports | Email relay abuse / spoofing | Per organizational policy + post-incident |
@@ -189,7 +189,7 @@ https://superset.apache.org/admin-docs/configuration/configuring-superset/#rotat
 Notes:
 
 - Rotating `GUEST_TOKEN_JWT_SECRET` or `GLOBAL_ASYNC_QUERIES_JWT_SECRET` invalidates outstanding tokens of that type; schedule rotations accordingly.
-- After a suspected compromise, rotate **all** of the above, not only `SUPERSET_SECRET_KEY`.
+- After a suspected compromise, rotate **all** of the above, not only `AX_BI_SECRET_KEY`.
 - Keep the register under change control so new secrets introduced by future features are added to the rotation schedule.
 
 :::resources

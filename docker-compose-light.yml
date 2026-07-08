@@ -16,10 +16,10 @@
 #
 
 # -----------------------------------------------------------------------
-# Lightweight docker-compose for running multiple Superset instances
-# This includes only essential services: database and Superset app (no Redis)
+# Lightweight docker-compose for running multiple AX BI instances
+# This includes only essential services: database and AX BI app (no Redis)
 #
-# RUNNING SUPERSET:
+# RUNNING AX BI:
 # 1. Start services: docker-compose -f docker-compose-light.yml up
 # 2. Access at: http://localhost:9001 (or NODE_PORT if specified)
 #
@@ -59,8 +59,8 @@
 # - Tests use SimpleCache instead of Redis (no Redis required)
 # - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed logs
 # -----------------------------------------------------------------------
-x-superset-user: &superset-user root
-x-superset-volumes: &superset-volumes
+x-ax-bi-user: &ax-bi-user root
+x-ax-bi-volumes: &ax-bi-volumes
   # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
   - ./superset:/app/superset
@@ -95,7 +95,7 @@ services:
       POSTGRES_DB: superset_light
     command: postgres -c max_connections=200
 
-  superset-light:
+  ax-bi-light:
     env_file:
       - path: docker/.env # default
         required: true
@@ -107,11 +107,11 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    user: *superset-user
+    user: *ax-bi-user
     depends_on:
-      superset-init-light:
+      ax-bi-init-light:
         condition: service_completed_successfully
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
       DATABASE_DB: superset_light
@@ -124,7 +124,7 @@ services:
       GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-}
       GITHUB_SHA: ${GITHUB_SHA:-}
 
-  superset-init-light:
+  ax-bi-init-light:
     build:
       <<: *common-build
     command: ["/app/docker/docker-init.sh"]
@@ -133,11 +133,11 @@ services:
         required: true
       - path: docker/.env-local # optional override
         required: false
-    user: *superset-user
+    user: *ax-bi-user
     depends_on:
       db-light:
         condition: service_started
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
       DATABASE_DB: superset_light
@@ -150,7 +150,7 @@ services:
     healthcheck:
       disable: true
 
-  superset-node-light:
+  ax-bi-node-light:
     build:
       context: .
       target: superset-node
@@ -168,7 +168,7 @@ services:
       SCARF_ANALYTICS: "${SCARF_ANALYTICS:-}"
       DISABLE_TS_CHECKER: "${DISABLE_TS_CHECKER:-true}"
       # configuring the dev-server to use the host.docker.internal to connect to the backend
-      superset: "http://superset-light:8088"
+      superset: "http://ax-bi-light:8088"
       # Webpack dev server must bind to 0.0.0.0 to be accessible from outside the container
       WEBPACK_DEVSERVER_HOST: "${WEBPACK_DEVSERVER_HOST:-0.0.0.0}"
       WEBPACK_DEVSERVER_PORT: "${WEBPACK_DEVSERVER_PORT:-9000}"
@@ -180,7 +180,7 @@ services:
         required: true
       - path: docker/.env-local # optional override
         required: false
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
 
   pytest-runner:
     build:
@@ -196,8 +196,8 @@ services:
     depends_on:
       db-light:
         condition: service_started
-    user: *superset-user
-    volumes: *superset-volumes
+    user: *ax-bi-user
+    volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
       DATABASE_DB: test

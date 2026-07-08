@@ -228,7 +228,7 @@ cp docker/.env-axbi.example docker/.env-axbi
 Edit `docker/.env-axbi` and fill the required values:
 
 ```env
-SUPERSET_SECRET_KEY=<generated secret>
+AX_BI_SECRET_KEY=<generated secret>
 DATABASE_PASSWORD=<generated database password>
 ADMIN_PASSWORD=<admin login password>
 ```
@@ -372,7 +372,7 @@ AX BI runs anywhere the underlying Superset platform runs.
 - **Docker deployment** — the recommended path for local AX BI trials:
   ```bash
   cp docker/.env-axbi.example docker/.env-axbi
-  # Fill SUPERSET_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
+  # Fill AX_BI_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
   # Generate secrets with: openssl rand -base64 42
   docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
   ```

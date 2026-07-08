@@ -95,6 +95,16 @@ describe('isProbablyHTML', () => {
     expect(isProbablyHTML('price < $100')).toBe(false);
   });
 
+  test('should classify exception-like text without parsing it as HTML', () => {
+    const message =
+      'Failed to decode URL parameter: <img src=x onerror=alert(1)>';
+    expect(isProbablyHTML(message)).toBe(true);
+    const sanitized = sanitizeHtmlIfNeeded(message);
+    expect(sanitized).toContain('Failed to decode URL parameter: ');
+    expect(sanitized).not.toContain('onerror');
+    expect(sanitized).not.toContain('alert');
+  });
+
   test('should return true for all known HTML tags', () => {
     expect(isProbablyHTML('<section>Content</section>')).toBe(true);
     expect(isProbablyHTML('<article>Content</article>')).toBe(true);

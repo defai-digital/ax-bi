@@ -41,10 +41,10 @@ const MAX_LOG_TAIL_LINES: u16 = 500;
 const ALLOWED_LOG_SERVICES: &[&str] = &[
     "redis",
     "db",
-    "superset-init",
-    "superset",
-    "superset-worker",
-    "superset-worker-beat",
+    "ax-bi-init",
+    "ax-bi",
+    "ax-bi-worker",
+    "ax-bi-worker-beat",
     "mcp",
     "ax-services",
 ];
@@ -60,7 +60,8 @@ x-axbi-env: &axbi-env
   SUPERSET_ENV: production
   SUPERSET_LOAD_EXAMPLES: ${SUPERSET_LOAD_EXAMPLES:-no}
   SUPERSET_LOG_LEVEL: ${SUPERSET_LOG_LEVEL:-info}
-  SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?Set SUPERSET_SECRET_KEY in .env}
+  AX_BI_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in .env}
+  SUPERSET_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in .env}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
   DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
   DATABASE_HOST: ${DATABASE_HOST:-db}
@@ -74,6 +75,7 @@ x-axbi-env: &axbi-env
   REDIS_HOST: redis
   REDIS_PORT: 6379
   ENABLE_PROXY_FIX: ${ENABLE_PROXY_FIX:-true}
+  TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}
   MCP_AUTH_ENABLED: ${MCP_AUTH_ENABLED:-false}
   MCP_DEV_USERNAME: ${MCP_DEV_USERNAME:-admin}
   MCP_JWT_ISSUER: ${MCP_JWT_ISSUER:-}
@@ -119,7 +121,7 @@ services:
       timeout: 5s
       retries: 5
 
-  superset-init:
+  ax-bi-init:
     image: *axbi-image
     command: ["/app/docker/docker-init.sh"]
     environment: *axbi-env
@@ -133,7 +135,7 @@ services:
     healthcheck:
       disable: true
 
-  superset:
+  ax-bi:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     restart: unless-stopped
@@ -141,7 +143,7 @@ services:
       - "127.0.0.1:${SUPERSET_PORT:-8088}:8088"
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -153,13 +155,13 @@ services:
       timeout: 10s
       retries: 5
 
-  superset-worker:
+  ax-bi-worker:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
     restart: unless-stopped
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -175,13 +177,13 @@ services:
       timeout: 10s
       retries: 5
 
-  superset-worker-beat:
+  ax-bi-worker-beat:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
     restart: unless-stopped
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -198,7 +200,7 @@ services:
       <<: *axbi-env
       MCP_PORT: 5008
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -222,12 +224,12 @@ services:
     environment:
       AX_SERVICES_HOST: 0.0.0.0
       AX_SERVICES_PORT: 5010
-      AX_SUPERSET_BASE_URL: http://superset:8088
+      AX_SUPERSET_BASE_URL: http://ax-bi:8088
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
       - "127.0.0.1:${AX_SERVICES_PORT:-5010}:5010"
     depends_on:
-      superset:
+      ax-bi:
         condition: service_healthy
 
 volumes:
@@ -288,16 +290,26 @@ struct CommandOutput {
 }
 
 pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, String> {
+    log::info!("Checking local AX BI runtime status");
     let runtime_dir = runtime_dir(app)?;
     let compose_file = compose_file(&runtime_dir);
     let env_file = env_file(&runtime_dir);
+    log::info!("Reading local runtime dependencies");
     let dependencies = dependencies();
     let configured = compose_file.exists() && env_file.exists();
+    if configured {
+        log::info!("Syncing generated local runtime files");
+        sync_runtime_files(&compose_file, &env_file)?;
+    }
+    log::info!("Checking Colima status");
     let colima_running = command_succeeds("colima", ["status", "--profile", AXBI_COLIMA_PROFILE]);
     let docker_host = docker_host()?;
+    log::info!("Checking Docker status");
     let docker_ready =
         command_succeeds_with_env("docker", ["info"], &[("DOCKER_HOST", &docker_host)]);
+    log::info!("Checking Compose service status");
     let axbi_running = docker_ready && compose_services_running(&runtime_dir)?;
+    log::info!("Checking AX BI HTTP health");
     let axbi_healthy = axbi_running && local_http_healthcheck();
     let admin_password_present = configured
         && read_env_value(&env_file, "ADMIN_PASSWORD")
@@ -334,7 +346,7 @@ pub fn prepare<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Str
 pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
     run_colima_start()?;
-    let output = run_docker_compose(&runtime_dir, ["up", "-d"])?;
+    let output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -358,7 +370,7 @@ pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutp
     let runtime_dir = ensure_runtime_files(app)?;
     run_colima_start()?;
     let stop_output = run_docker_compose(&runtime_dir, ["stop"])?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d"])?;
+    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -371,7 +383,7 @@ pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutpu
     let runtime_dir = ensure_runtime_files(app)?;
     run_colima_start()?;
     let pull_output = run_docker_compose(&runtime_dir, ["pull"])?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d"])?;
+    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -422,16 +434,24 @@ fn ensure_runtime_files<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, Strin
         .map_err(|error| format!("Failed to create local runtime directory: {error}"))?;
 
     let compose_path = compose_file(&runtime_dir);
+    let env_path = env_file(&runtime_dir);
+    sync_runtime_files(&compose_path, &env_path)?;
+
+    Ok(runtime_dir)
+}
+
+fn sync_runtime_files(compose_path: &Path, env_path: &Path) -> Result<(), String> {
     fs::write(compose_path, LOCAL_COMPOSE_YAML)
         .map_err(|error| format!("Failed to write local Compose file: {error}"))?;
 
-    let env_path = env_file(&runtime_dir);
     if !env_path.exists() {
         fs::write(env_path, build_env_file()?)
             .map_err(|error| format!("Failed to write local runtime environment: {error}"))?;
+    } else {
+        migrate_env_file(env_path)?;
     }
 
-    Ok(runtime_dir)
+    Ok(())
 }
 
 fn runtime_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
@@ -453,7 +473,7 @@ fn build_env_file() -> Result<String, String> {
     Ok(format!(
         r#"COMPOSE_PROJECT_NAME={AXBI_COMPOSE_PROJECT}
 
-SUPERSET_SECRET_KEY={}
+AX_BI_SECRET_KEY={}
 DATABASE_PASSWORD={}
 ADMIN_PASSWORD={}
 
@@ -480,6 +500,7 @@ LOCAL_DB_PATH=/app/superset_home/uploads/local_files.duckdb
 SUPERSET_LOAD_EXAMPLES=no
 SUPERSET_LOG_LEVEL=info
 ENABLE_PROXY_FIX=true
+TALISMAN_ENABLED=false
 
 GENAI_SEMANTIC_INDEX=false
 GENAI_SEMANTIC_INDEX_PGVECTOR=false
@@ -500,6 +521,48 @@ MCP_REQUIRED_SCOPES=
         random_hex(32)?,
         random_hex(18)?
     ))
+}
+
+fn migrate_env_file(path: &Path) -> Result<(), String> {
+    let content = fs::read_to_string(path)
+        .map_err(|error| format!("Failed to read local runtime environment: {error}"))?;
+    if let Some(updated) = migrate_env_content(&content)? {
+        fs::write(path, updated)
+            .map_err(|error| format!("Failed to update local runtime environment: {error}"))?;
+    }
+    Ok(())
+}
+
+fn migrate_env_content(content: &str) -> Result<Option<String>, String> {
+    if read_env_value_from_str(content, "AX_BI_SECRET_KEY").is_some() {
+        return Ok(None);
+    }
+
+    if read_env_value_from_str(content, "SUPERSET_SECRET_KEY").is_some() {
+        let mut migrated = content
+            .lines()
+            .map(|line| {
+                let Some((key, value)) = line.split_once('=') else {
+                    return line.to_string();
+                };
+                if key.trim() == "SUPERSET_SECRET_KEY" {
+                    format!("AX_BI_SECRET_KEY={}", value.trim())
+                } else {
+                    line.to_string()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        migrated.push('\n');
+        return Ok(Some(migrated));
+    }
+
+    let mut migrated = content.trim_end().to_string();
+    if !migrated.is_empty() {
+        migrated.push('\n');
+    }
+    migrated.push_str(&format!("AX_BI_SECRET_KEY={}\n", random_hex(48)?));
+    Ok(Some(migrated))
 }
 
 fn random_hex(byte_count: usize) -> Result<String, String> {
@@ -630,7 +693,7 @@ fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
         ],
     )?;
 
-    Ok(output.stdout.lines().any(|line| line.trim() == "superset"))
+    Ok(output.stdout.lines().any(|line| line.trim() == "ax-bi"))
 }
 
 fn command_succeeds<const N: usize>(program: &str, args: [&str; N]) -> bool {
@@ -778,8 +841,8 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_env_file, read_env_value_from_str, tail_lines, validate_log_service,
-        LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        build_env_file, migrate_env_content, read_env_value_from_str, tail_lines,
+        validate_log_service, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
     };
 
     #[test]
@@ -787,15 +850,20 @@ mod tests {
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${SUPERSET_PORT:-8088}:8088"));
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${MCP_PORT:-5008}:5008"));
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-5010}:5010"));
+        assert!(LOCAL_COMPOSE_YAML.contains("TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}"));
     }
 
     #[test]
     fn generated_env_contains_required_secrets() {
         let env_file = build_env_file().unwrap();
 
-        assert!(read_env_value_from_str(&env_file, "SUPERSET_SECRET_KEY").is_some());
+        assert!(read_env_value_from_str(&env_file, "AX_BI_SECRET_KEY").is_some());
         assert!(read_env_value_from_str(&env_file, "DATABASE_PASSWORD").is_some());
         assert!(read_env_value_from_str(&env_file, "ADMIN_PASSWORD").is_some());
+        assert_eq!(
+            read_env_value_from_str(&env_file, "TALISMAN_ENABLED").unwrap(),
+            "false"
+        );
         assert_eq!(
             read_env_value_from_str(&env_file, "MCP_DEV_USERNAME").unwrap(),
             "admin"
@@ -803,8 +871,25 @@ mod tests {
     }
 
     #[test]
+    fn migrates_legacy_secret_env_name() {
+        let env_file =
+            "COMPOSE_PROJECT_NAME=axbi\nSUPERSET_SECRET_KEY=legacy\nADMIN_PASSWORD=admin\n";
+        let migrated = migrate_env_content(env_file).unwrap().unwrap();
+
+        assert_eq!(
+            read_env_value_from_str(&migrated, "AX_BI_SECRET_KEY").unwrap(),
+            "legacy"
+        );
+        assert!(read_env_value_from_str(&migrated, "SUPERSET_SECRET_KEY").is_none());
+        assert_eq!(
+            read_env_value_from_str(&migrated, "ADMIN_PASSWORD").unwrap(),
+            "admin"
+        );
+    }
+
+    #[test]
     fn log_services_are_allowlisted() {
-        assert_eq!(validate_log_service("superset").unwrap(), "superset");
+        assert_eq!(validate_log_service("ax-bi").unwrap(), "ax-bi");
         assert!(validate_log_service("../../../etc/passwd").is_err());
         assert!(validate_log_service("unknown").is_err());
     }

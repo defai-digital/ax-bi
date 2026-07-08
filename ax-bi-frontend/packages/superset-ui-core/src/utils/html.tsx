@@ -168,37 +168,7 @@ export function hasHtmlTagPattern(str: string): boolean {
 export function isProbablyHTML(text: string) {
   const cleanedStr = text.trim().toLowerCase();
 
-  if (
-    cleanedStr.startsWith('<!doctype html>') &&
-    hasHtmlTagPattern(cleanedStr)
-  ) {
-    return true;
-  }
-
-  // Check if the string contains common HTML patterns
-  if (!hasHtmlTagPattern(text)) {
-    return false;
-  }
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(cleanedStr, 'text/html');
-
-  // Check if parsing created actual HTML elements (not just text nodes)
-  const elements = Array.from(doc.body.childNodes).filter(
-    node => node.nodeType === 1,
-  ) as Element[];
-
-  // If no elements were created, it's not HTML
-  if (elements.length === 0) {
-    return false;
-  }
-
-  // Check if the elements are known HTML tags (not custom/unknown tags)
-  // This prevents strings like "<abcdef:12345>" from being treated as HTML
-  return elements.some(element => {
-    const tagName = element.tagName.toLowerCase();
-    return KNOWN_HTML_TAGS.has(tagName);
-  });
+  return hasHtmlTagPattern(cleanedStr);
 }
 
 export function sanitizeHtmlIfNeeded(htmlString: string) {

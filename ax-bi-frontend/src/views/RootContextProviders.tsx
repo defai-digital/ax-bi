@@ -18,6 +18,7 @@
  */
 
 import { getExtensionsRegistry } from '@superset-ui/core';
+import { useEffect } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
@@ -27,6 +28,7 @@ import { DynamicPluginProvider } from 'src/components';
 import { EmbeddedUiConfigProvider } from 'src/components/UiConfigContext';
 import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
 import { ThemeController } from 'src/theme/ThemeController';
+import { installDesktopThemeBridge } from 'src/theme/desktopThemeBridge';
 import { store } from './store';
 import '../preamble';
 import querystring from 'query-string';
@@ -37,6 +39,8 @@ const extensionsRegistry = getExtensionsRegistry();
 export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
   children,
 }) => {
+  useEffect(() => installDesktopThemeBridge(themeController), []);
+
   const RootContextProviderExtension = extensionsRegistry.get(
     'root.context.provider',
   );

@@ -97,7 +97,7 @@ with app.app_context():
       encoding: 'utf-8',
       timeout: 60000,
       maxBuffer: 10 * 1024 * 1024,
-      env: { ...process.env, SUPERSET_SECRET_KEY: 'docs-build-key' },
+      env: { ...process.env, AX_BI_SECRET_KEY: 'docs-build-key' },
     });
 
     if (result.error) {

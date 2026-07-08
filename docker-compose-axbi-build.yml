@@ -25,16 +25,16 @@ x-axbi-build: &axbi-build
     BUILD_TRANSLATIONS: ${BUILD_TRANSLATIONS:-false}
 
 services:
-  superset-init:
+  ax-bi-init:
     build: *axbi-build
 
-  superset:
+  ax-bi:
     build: *axbi-build
 
-  superset-worker:
+  ax-bi-worker:
     build: *axbi-build
 
-  superset-worker-beat:
+  ax-bi-worker-beat:
     build: *axbi-build
 
   mcp:

@@ -46,7 +46,7 @@ cp docker/.env-axbi.example docker/.env-axbi
 Edit `docker/.env-axbi` and fill:
 
 ```env
-SUPERSET_SECRET_KEY=<generated secret>
+AX_BI_SECRET_KEY=<generated secret>
 DATABASE_PASSWORD=<generated database password>
 ADMIN_PASSWORD=<admin login password>
 ```
@@ -200,7 +200,7 @@ Steps:
 
 ## Initializing Database
 
-The database will initialize itself upon startup via the init container ([`superset-init`](./docker-init.sh)). This may take a minute.
+The database will initialize itself upon startup via the init container ([`ax-bi-init`](./docker-init.sh)). This may take a minute.
 
 ## Development Operation
 

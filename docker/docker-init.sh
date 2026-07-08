@@ -39,7 +39,7 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 # If Cypress run – overwrite the password for admin and export env variables
 if [ "$CYPRESS_CONFIG" == "true" ]; then
     ADMIN_PASSWORD="general"
-    export SUPERSET_TESTENV=true
+    export AX_BI_TESTENV=true
     export POSTGRES_DB=superset_cypress
     export SUPERSET__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@db:5432/superset_cypress
 fi

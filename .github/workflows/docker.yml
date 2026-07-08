@@ -158,8 +158,8 @@ jobs:
         run: |
           export SUPERSET_BUILD_TARGET=$BUILD_PRESET
           # This should reuse the CACHED image built in the previous steps
-          docker compose build superset-init --build-arg DEV_MODE=false --build-arg INCLUDE_CHROMIUM=false
-          docker compose up superset-init --exit-code-from superset-init
+          docker compose build ax-bi-init --build-arg DEV_MODE=false --build-arg INCLUDE_CHROMIUM=false
+          docker compose up ax-bi-init --exit-code-from ax-bi-init
 
   axbi-compose-config:
     name: axbi-compose-config
@@ -182,7 +182,7 @@ jobs:
         run: |
           {
             echo "COMPOSE_PROJECT_NAME=axbi-ci"
-            echo "SUPERSET_SECRET_KEY=test-secret-key-for-ci-only"
+            echo "AX_BI_SECRET_KEY=test-secret-key-for-ci-only"
             echo "DATABASE_PASSWORD=superset"
             echo "ADMIN_PASSWORD=admin"
           } > /tmp/axbi.env
@@ -213,4 +213,4 @@ jobs:
       - name: docker-compose sanity check
         shell: bash
         run: |
-          docker compose -f docker-compose-image-tag.yml up superset-init --exit-code-from superset-init
+          docker compose -f docker-compose-image-tag.yml up ax-bi-init --exit-code-from ax-bi-init

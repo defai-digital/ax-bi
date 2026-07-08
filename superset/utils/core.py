@@ -2034,7 +2034,9 @@ def extract_column_dtype(col: ColumnMetadata) -> GenericDataType:
 
 
 def is_test() -> bool:
-    return parse_boolean_string(os.environ.get("SUPERSET_TESTENV", "false"))
+    return parse_boolean_string(
+        os.environ.get("AX_BI_TESTENV") or os.environ.get("SUPERSET_TESTENV") or "false"
+    )
 
 
 def get_time_filter_status(

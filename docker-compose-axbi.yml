@@ -23,7 +23,8 @@ x-axbi-env: &axbi-env
   SUPERSET_ENV: production
   SUPERSET_LOAD_EXAMPLES: ${SUPERSET_LOAD_EXAMPLES:-no}
   SUPERSET_LOG_LEVEL: ${SUPERSET_LOG_LEVEL:-info}
-  SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?Set SUPERSET_SECRET_KEY in docker/.env-axbi}
+  AX_BI_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in docker/.env-axbi}
+  SUPERSET_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in docker/.env-axbi}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in docker/.env-axbi}
   DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
   DATABASE_HOST: ${DATABASE_HOST:-db}
@@ -83,7 +84,7 @@ services:
       timeout: 5s
       retries: 5
 
-  superset-init:
+  ax-bi-init:
     image: *axbi-image
     command: ["/app/docker/docker-init.sh"]
     environment: *axbi-env
@@ -97,7 +98,7 @@ services:
     healthcheck:
       disable: true
 
-  superset:
+  ax-bi:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     restart: unless-stopped
@@ -105,7 +106,7 @@ services:
       - "${SUPERSET_PORT:-8088}:8088"
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -117,13 +118,13 @@ services:
       timeout: 10s
       retries: 5
 
-  superset-worker:
+  ax-bi-worker:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
     restart: unless-stopped
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -139,13 +140,13 @@ services:
       timeout: 10s
       retries: 5
 
-  superset-worker-beat:
+  ax-bi-worker-beat:
     image: *axbi-image
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
     restart: unless-stopped
     environment: *axbi-env
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -162,7 +163,7 @@ services:
       <<: *axbi-env
       MCP_PORT: 5008
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
@@ -186,12 +187,12 @@ services:
     environment:
       AX_SERVICES_HOST: 0.0.0.0
       AX_SERVICES_PORT: 5010
-      AX_SUPERSET_BASE_URL: http://superset:8088
+      AX_SUPERSET_BASE_URL: http://ax-bi:8088
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
       - "${AX_SERVICES_PORT:-5010}:5010"
     depends_on:
-      superset:
+      ax-bi:
         condition: service_healthy
 
 volumes:

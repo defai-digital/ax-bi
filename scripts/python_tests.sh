@@ -34,7 +34,7 @@ fi
 # ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: cannot allocate memory in static TLS block
 export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6
 export SUPERSET_CONFIG=${SUPERSET_CONFIG:-tests.integration_tests.superset_test_config}
-export SUPERSET_TESTENV=true
+export AX_BI_TESTENV=true
 echo "Superset config module: $SUPERSET_CONFIG"
 
 ax-bi db upgrade

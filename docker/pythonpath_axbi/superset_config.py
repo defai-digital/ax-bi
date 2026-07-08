@@ -46,7 +46,7 @@ DATABASE_HOST = os.getenv("DATABASE_HOST", "db")
 DATABASE_PORT = os.getenv("DATABASE_PORT", "5432")
 DATABASE_DB = os.getenv("DATABASE_DB", "superset")
 
-SECRET_KEY = _required_env("SUPERSET_SECRET_KEY")
+SECRET_KEY = _required_env("AX_BI_SECRET_KEY")
 
 SQLALCHEMY_DATABASE_URI = (
     f"{DATABASE_DIALECT}://"
@@ -149,7 +149,7 @@ ENABLE_PROXY_FIX = _bool_env("ENABLE_PROXY_FIX", True)
 TALISMAN_ENABLED = _bool_env("TALISMAN_ENABLED", True)
 SQLLAB_CTAS_NO_LIMIT = _bool_env("SQLLAB_CTAS_NO_LIMIT", True)
 
-WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://superset:8088/")
+WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://ax-bi:8088/")
 WEBDRIVER_BASEURL_USER_FRIENDLY = os.getenv(
     "WEBDRIVER_BASEURL_USER_FRIENDLY",
     "http://localhost:8088/",

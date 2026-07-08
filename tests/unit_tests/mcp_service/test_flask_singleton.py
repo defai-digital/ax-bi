@@ -35,7 +35,7 @@ def test_flask_singleton_reuses_started_superset_app_without_context() -> None:
     repo_root = Path(__file__).parents[3]
     env = {
         **os.environ,
-        "SUPERSET_SECRET_KEY": "test-secret-key-for-local-regression",
+        "AX_BI_SECRET_KEY": "test-secret-key-for-local-regression",
     }
     script = textwrap.dedent(
         """

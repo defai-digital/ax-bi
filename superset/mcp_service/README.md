@@ -407,7 +407,7 @@ configOverrides:
 
 # Secret configuration
 extraSecretEnv:
-  SUPERSET_SECRET_KEY: 'your-secret-key-here'  # Use a strong secret!
+  AX_BI_SECRET_KEY: 'your-secret-key-here'  # Use a strong secret!
 
 # Database configuration (using bundled PostgreSQL)
 postgresql:

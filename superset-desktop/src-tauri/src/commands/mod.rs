@@ -187,6 +187,10 @@ fn is_launcher_url(url: &Url) -> bool {
         return true;
     }
 
+    if cfg!(debug_assertions) && matches!(url.host_str(), Some("localhost" | "127.0.0.1")) {
+        return matches!(url.path(), "/" | "/index.html");
+    }
+
     url.scheme() == "file" && file_url_is_launcher_index(url)
 }
 
@@ -446,10 +450,13 @@ mod tests {
             &Url::parse("asset://localhost/index.html").unwrap()
         ));
         assert!(is_launcher_url(
-            &Url::from_file_path(
-                "/Users/test/repo/superset-desktop/src/index.html"
-            )
-            .unwrap()
+            &Url::parse("http://localhost:1430/").unwrap()
+        ));
+        assert!(is_launcher_url(
+            &Url::parse("http://127.0.0.1:1430/index.html").unwrap()
+        ));
+        assert!(is_launcher_url(
+            &Url::from_file_path("/Users/test/repo/superset-desktop/src/index.html").unwrap()
         ));
         assert!(!is_launcher_url(
             &Url::parse("http://127.0.0.1:8088/ax-bi/welcome/").unwrap()

@@ -133,9 +133,9 @@ cd "$REPO_ROOT"
 if docker compose ps --status running 2>/dev/null | grep -q "$PROJECT_NAME"; then
     # Containers are running - get actual ports
     NGINX_PORT=$(get_running_port nginx 80 $NGINX_PORT)
-    SUPERSET_PORT=$(get_running_port superset 8088 $SUPERSET_PORT)
-    NODE_PORT=$(get_running_port superset-node 9000 $NODE_PORT)
-    WEBSOCKET_PORT=$(get_running_port superset-websocket 8080 $WEBSOCKET_PORT)
+    SUPERSET_PORT=$(get_running_port ax-bi 8088 $SUPERSET_PORT)
+    NODE_PORT=$(get_running_port ax-bi-node 9000 $NODE_PORT)
+    WEBSOCKET_PORT=$(get_running_port ax-bi-websocket 8080 $WEBSOCKET_PORT)
     DATABASE_PORT=$(get_running_port db 5432 $DATABASE_PORT)
     REDIS_PORT=$(get_running_port redis 6379 $REDIS_PORT)
 fi

@@ -22,11 +22,11 @@
 # unique random secure passwords and SECRET_KEY.
 #
 # For verbose logging during development:
-# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed Superset logs
+# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed AX BI logs
 # -----------------------------------------------------------------------
-x-superset-image: &superset-image apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest-dev}
-x-superset-volumes:
-  &superset-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
+x-ax-bi-image: &ax-bi-image apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest-dev}
+x-ax-bi-volumes:
+  &ax-bi-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
   - ./superset-core:/app/superset-core
   - superset_home:/app/superset_home
@@ -34,7 +34,7 @@ x-superset-volumes:
 services:
   redis:
     image: redis:7
-    container_name: superset_cache
+    container_name: ax_bi_cache
     restart: unless-stopped
     volumes:
       - redis:/data
@@ -46,7 +46,7 @@ services:
       - path: docker/.env-local # optional override
         required: false
     image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg18}
-    container_name: superset_db
+    container_name: ax_bi_db
     environment:
       PGDATA: /var/lib/postgresql/data
     restart: unless-stopped
@@ -54,27 +54,27 @@ services:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 
-  superset:
+  ax-bi:
     env_file:
       - path: docker/.env # default
         required: true
       - path: docker/.env-local # optional override
         required: false
-    image: *superset-image
-    container_name: superset_app
+    image: *ax-bi-image
+    container_name: ax_bi_app
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     user: "root"
     restart: unless-stopped
     ports:
       - 8088:8088
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
 
-  superset-init:
-    image: *superset-image
-    container_name: superset_init
+  ax-bi-init:
+    image: *ax-bi-image
+    container_name: ax_bi_init
     command: ["/app/docker/docker-init.sh"]
     env_file:
       - path: docker/.env # default
@@ -87,13 +87,13 @@ services:
       redis:
         condition: service_started
     user: "root"
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
     healthcheck:
       disable: true
 
-  superset-worker:
-    image: *superset-image
-    container_name: superset_worker
+  ax-bi-worker:
+    image: *ax-bi-image
+    container_name: ax_bi_worker
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
     env_file:
       - path: docker/.env # default
@@ -102,10 +102,10 @@ services:
         required: false
     restart: unless-stopped
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     user: "root"
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
     healthcheck:
       test:
         [
@@ -113,9 +113,9 @@ services:
           "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
 
-  superset-worker-beat:
-    image: *superset-image
-    container_name: superset_worker_beat
+  ax-bi-worker-beat:
+    image: *ax-bi-image
+    container_name: ax_bi_worker_beat
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
     env_file:
       - path: docker/.env # default
@@ -124,10 +124,10 @@ services:
         required: false
     restart: unless-stopped
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
     user: "root"
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
     healthcheck:
       disable: true
 

@@ -22,10 +22,10 @@
 # unique random secure passwords and SECRET_KEY.
 #
 # For verbose logging during development:
-# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed Superset logs
+# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed AX BI logs
 # -----------------------------------------------------------------------
-x-superset-user: &superset-user root
-x-superset-volumes: &superset-volumes
+x-ax-bi-user: &ax-bi-user root
+x-ax-bi-volumes: &ax-bi-volumes
   # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
   - ./superset:/app/superset
@@ -64,7 +64,7 @@ services:
     # Wait for the webpack dev server's manifest.json to be served before
     # starting nginx. This prevents 404s on static assets at startup. The
     # probe targets host.docker.internal so it works regardless of whether
-    # the dev server runs in the superset-node container
+    # the dev server runs in the ax-bi-node container
     # (BUILD_SUPERSET_FRONTEND_IN_DOCKER=true, the default) or directly on
     # the host (BUILD_SUPERSET_FRONTEND_IN_DOCKER=false).
     command:
@@ -114,7 +114,7 @@ services:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
 
-  superset:
+  ax-bi:
     env_file:
       - path: docker/.env # default
         required: true
@@ -130,13 +130,13 @@ services:
       - ${CYPRESS_PORT:-8081}:8081
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    user: *superset-user
+    user: *ax-bi-user
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
 
-  superset-websocket:
+  ax-bi-websocket:
     build: ./superset-websocket
     ports:
       - ${WEBSOCKET_PORT:-8080}:8080
@@ -171,7 +171,7 @@ services:
       - REDIS_SSL=false
       - FAST_CACHE_ENABLED=true
 
-  superset-init:
+  ax-bi-init:
     build:
       <<: *common-build
     command: ["/app/docker/docker-init.sh"]
@@ -185,12 +185,12 @@ services:
         condition: service_started
       redis:
         condition: service_started
-    user: *superset-user
-    volumes: *superset-volumes
+    user: *ax-bi-user
+    volumes: *ax-bi-volumes
     healthcheck:
       disable: true
 
-  superset-node:
+  ax-bi-node:
     build:
       context: .
       target: superset-node
@@ -207,7 +207,7 @@ services:
       NPM_RUN_PRUNE: false
       SCARF_ANALYTICS: "${SCARF_ANALYTICS:-}"
       # configuring the dev-server to use the host.docker.internal to connect to the backend
-      superset: "http://superset:8088"
+      superset: "http://ax-bi:8088"
       # Webpack dev server must bind to 0.0.0.0 to be accessible from outside the container
       WEBPACK_DEVSERVER_HOST: "0.0.0.0"
     ports:
@@ -218,9 +218,9 @@ services:
         required: true
       - path: docker/.env-local # optional override
         required: false
-    volumes: *superset-volumes
+    volumes: *ax-bi-volumes
 
-  superset-worker:
+  ax-bi-worker:
     build:
       <<: *common-build
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
@@ -233,19 +233,19 @@ services:
       CELERYD_CONCURRENCY: 2
     restart: unless-stopped
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
-    user: *superset-user
-    volumes: *superset-volumes
+    user: *ax-bi-user
+    volumes: *ax-bi-volumes
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD-SHELL", "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME"]
-    # Bump memory limit if processing selenium / thumbnails on superset-worker
+    # Bump memory limit if processing selenium / thumbnails on ax-bi-worker
     # mem_limit: 2038m
     # mem_reservation: 128M
 
-  superset-worker-beat:
+  ax-bi-worker-beat:
     build:
       <<: *common-build
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
@@ -256,13 +256,13 @@ services:
         required: false
     restart: unless-stopped
     depends_on:
-      - superset-worker
-    user: *superset-user
-    volumes: *superset-volumes
+      - ax-bi-worker
+    user: *ax-bi-user
+    volumes: *ax-bi-volumes
     healthcheck:
       disable: true
 
-  superset-tests-worker:
+  ax-bi-tests-worker:
     build:
       <<: *common-build
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
@@ -282,10 +282,10 @@ services:
       CELERYD_CONCURRENCY: 8
     network_mode: host
     depends_on:
-      superset-init:
+      ax-bi-init:
         condition: service_completed_successfully
-    user: *superset-user
-    volumes: *superset-volumes
+    user: *ax-bi-user
+    volumes: *ax-bi-volumes
     healthcheck:
       test: ["CMD-SHELL", "celery inspect ping -A superset.tasks.celery_app:app -d celery@$$HOSTNAME"]
 

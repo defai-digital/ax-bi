@@ -44,7 +44,7 @@ Make sure you set your own `SECRET_KEY` to something unique and secret. This sec
 securely signing the session cookie and will be used to encrypt sensitive data on Superset's metadata database.
 It should be a long random bytes or str.
 
-On helm this can be set on `extraSecretEnv.SUPERSET_SECRET_KEY` or `configOverrides.secrets`
+On helm this can be set on `extraSecretEnv.AX_BI_SECRET_KEY` or `configOverrides.secrets`
 
 The AX BI values file deploys the web app, Celery worker, Celery beat,
 MCP service, and `ax-services` sidecar. For production, pin image tags,

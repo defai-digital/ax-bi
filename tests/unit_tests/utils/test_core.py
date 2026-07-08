@@ -140,17 +140,30 @@ def test_remove_extra_adhoc_filters(
 
 
 def test_is_test():
-    orig_value = os.getenv("SUPERSET_TESTENV")
+    orig_axbi_value = os.getenv("AX_BI_TESTENV")
+    orig_superset_value = os.getenv("SUPERSET_TESTENV")
 
+    os.environ.pop("SUPERSET_TESTENV", None)
+    os.environ["AX_BI_TESTENV"] = "true"
+    assert is_test()
+    os.environ["AX_BI_TESTENV"] = "false"
+    assert not is_test()
+    os.environ["AX_BI_TESTENV"] = ""
+    assert not is_test()
+
+    os.environ.pop("AX_BI_TESTENV", None)
     os.environ["SUPERSET_TESTENV"] = "true"
     assert is_test()
-    os.environ["SUPERSET_TESTENV"] = "false"
-    assert not is_test()
-    os.environ["SUPERSET_TESTENV"] = ""
-    assert not is_test()
 
-    if orig_value is not None:
-        os.environ["SUPERSET_TESTENV"] = orig_value
+    if orig_axbi_value is not None:
+        os.environ["AX_BI_TESTENV"] = orig_axbi_value
+    else:
+        os.environ.pop("AX_BI_TESTENV", None)
+
+    if orig_superset_value is not None:
+        os.environ["SUPERSET_TESTENV"] = orig_superset_value
+    else:
+        os.environ.pop("SUPERSET_TESTENV", None)
 
 
 @pytest.mark.parametrize(
