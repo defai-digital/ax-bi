@@ -19,14 +19,17 @@ These features live in `ax-bi-frontend/` and work in both the browser and the Ta
 
 These features live in `superset-desktop/` and require the native app:
 
-- **Native window** — Standalone desktop window loading the AX-BI web app
+- **Native window** — Standalone desktop launcher for local or hosted AX-BI
 - **Deep links** — `axbi://dashboard/{id}`, `axbi://chart/{id}` open directly in the app
 - **System tray** — Quick access to dashboards and SQL Lab (infrastructure in place)
 - **Cross-platform builds** — macOS, Windows, and Linux via GitHub Actions
 
 ## Architecture
 
-The desktop client is a **thin shell** that loads the AX-BI web application. It does **not** bundle the Python backend, database drivers, or any server-side components.
+The desktop client is a **thin shell** with a bundled launcher. It does **not**
+bundle the Python backend, database drivers, or any server-side components. The
+launcher can connect to a hosted AX-BI server or manage a local container
+runtime for trials.
 
 ## Recommended User Install
 
@@ -77,16 +80,7 @@ contract, Homebrew cask shape, and security boundary.
 
 ## Development
 
-### 1. Start an AX-BI server
-
-```bash
-superset run -p 8088 --with-threads --reload --debugger
-```
-
-Or use the local runtime commands exposed by the Tauri app to start the Compose
-stack managed under the app data directory.
-
-### 2. Launch the Tauri desktop shell
+### 1. Launch the Tauri desktop shell
 
 ```bash
 cd superset-desktop
@@ -94,8 +88,16 @@ npm install           # First time only
 npm run dev           # Builds Rust + launches native window
 ```
 
-The Tauri window loads from `http://127.0.0.1:8088/ax-bi/welcome/`
-(configured in `src-tauri/tauri.conf.json`).
+The Tauri window opens the bundled launcher. Use it to start a local AX-BI
+runtime or connect to an existing server.
+
+### 2. Optional local backend
+
+```bash
+superset run -p 8088 --with-threads --reload --debugger
+```
+
+The launcher can also start the app-managed Docker/Colima runtime.
 
 ### Build for production
 
@@ -111,18 +113,8 @@ Output locations:
 
 ### Server URL
 
-By default the Tauri shell loads the local AX-BI URL. To point at a hosted
-production instance, edit `src-tauri/tauri.conf.json`:
-
-```json
-{
-  "app": {
-    "windows": [{
-      "url": "https://your-axbi-instance.com"
-    }]
-  }
-}
-```
+By default the Tauri shell loads the bundled launcher from `src/index.html`.
+Use the launcher Connect form for hosted AX-BI instances.
 
 ### Deep Links
 
@@ -184,7 +176,8 @@ The command palette includes navigation commands (Dashboards, Charts, SQL Lab, e
 
 ## Security Considerations
 
-- The WebView only loads content from the configured origin
+- Local runtime commands are available only from the bundled launcher origin
+- Hosted or local AX-BI web content does not receive local runtime privileges
 - No database credentials are stored in the desktop client
 - Authentication uses the same SSO/OIDC flows as the web app
 - Production builds should be signed (macOS notarization, Windows code signing)

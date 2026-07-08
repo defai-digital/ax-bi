@@ -18,7 +18,7 @@
 // Tauri commands exposed to the frontend
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use url::Url;
 
 use crate::local_runtime;
@@ -166,6 +166,25 @@ fn validate_notification_input(title: &str, body: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn ensure_launcher_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), String> {
+    let url = window
+        .url()
+        .map_err(|error| format!("Failed to read current window URL: {error}"))?;
+    if is_launcher_url(&url) {
+        Ok(())
+    } else {
+        Err("Local runtime commands are only available in the AX-BI launcher".to_string())
+    }
+}
+
+fn is_launcher_url(url: &Url) -> bool {
+    if url.scheme() == "tauri" {
+        return true;
+    }
+
+    matches!(url.host_str(), Some("tauri.localhost")) && url.path().ends_with("index.html")
+}
+
 #[tauri::command]
 pub async fn get_app_config<R: Runtime>(_app: AppHandle<R>) -> Result<AppConfig, String> {
     let server_url = std::env::var("AXBI_SERVER_URL")
@@ -215,64 +234,83 @@ pub async fn get_version() -> Result<String, String> {
 #[tauri::command]
 pub async fn get_local_runtime_status<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeStatus, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::status(&app)
 }
 
 #[tauri::command]
 pub async fn prepare_local_runtime<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeStatus, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::prepare(&app)
 }
 
 #[tauri::command]
 pub async fn start_local_runtime<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::start(&app)
 }
 
 #[tauri::command]
 pub async fn stop_local_runtime<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::stop(&app)
 }
 
 #[tauri::command]
 pub async fn restart_local_runtime<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::restart(&app)
 }
 
 #[tauri::command]
 pub async fn update_local_runtime<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::update(&app)
 }
 
 #[tauri::command]
 pub async fn get_local_runtime_logs<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
     service: Option<String>,
     tail: Option<u16>,
 ) -> Result<String, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::logs(&app, service, tail)
 }
 
 #[tauri::command]
 pub async fn get_local_admin_credentials<R: Runtime>(
     app: AppHandle<R>,
+    window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalAdminCredentials, String> {
+    ensure_launcher_window(&window)?;
     local_runtime::credentials(&app)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{normalize_server_url, validate_notification_input, DEFAULT_SERVER_URL};
+    use super::{
+        is_launcher_url, normalize_server_url, validate_notification_input, DEFAULT_SERVER_URL,
+    };
+    use url::Url;
 
     #[test]
     fn normalizes_valid_server_urls() {
@@ -377,5 +415,19 @@ mod tests {
             validate_notification_input("Title", &"b".repeat(1025)).unwrap_err(),
             "Notification body must be at most 1024 characters"
         );
+    }
+
+    #[test]
+    fn launcher_urls_are_local_app_assets() {
+        assert!(is_launcher_url(&Url::parse("tauri://localhost/").unwrap()));
+        assert!(is_launcher_url(
+            &Url::parse("http://tauri.localhost/index.html").unwrap()
+        ));
+        assert!(!is_launcher_url(
+            &Url::parse("http://127.0.0.1:8088/ax-bi/welcome/").unwrap()
+        ));
+        assert!(!is_launcher_url(
+            &Url::parse("https://ax-bi.example.test/index.html").unwrap()
+        ));
     }
 }

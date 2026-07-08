@@ -9,7 +9,8 @@ The target user path is:
 brew install --cask defai-digital/ax-bi/ax-bi
 ```
 
-After installation, the user opens AX-BI Desktop. The app offers two paths:
+After installation, the user opens AX-BI Desktop. The bundled launcher offers
+two paths:
 
 - Connect to an existing AX-BI server.
 - Start AX-BI locally.
@@ -108,8 +109,8 @@ arbitrary shell command bridge to web content.
 
 ## Launcher UI Boundary
 
-The launcher UI and the AX-BI web app should not share the same privileged
-webview.
+The local runtime commands are guarded so they only run from the bundled Tauri
+launcher origin.
 
 Recommended window model:
 

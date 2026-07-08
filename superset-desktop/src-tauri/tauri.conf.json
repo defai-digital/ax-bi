@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "identifier": "com.axbi.desktop",
   "build": {
+    "frontendDist": "../src",
     "beforeBuildCommand": "",
     "beforeDevCommand": ""
   },
@@ -19,11 +20,11 @@
         "fullscreen": false,
         "center": true,
         "decorations": true,
-        "url": "http://127.0.0.1:8088/ax-bi/welcome/"
+        "url": "index.html"
       }
     ],
     "security": {
-      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http://127.0.0.1:* ws://127.0.0.1:*; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* https:; frame-src 'self' data: blob:"
+      "csp": "default-src 'self' data: blob: http://127.0.0.1:* ws://127.0.0.1:*; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* https:; frame-src 'self' data: blob:"
     }
   },
   "bundle": {

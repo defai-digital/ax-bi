@@ -1,0 +1,171 @@
+<!doctype html>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AX-BI</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>AX-BI</h1>
+          <p id="summary">Checking local runtime</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="refresh" class="button button-secondary" type="button">
+            Refresh
+          </button>
+          <button id="openLocal" class="button button-primary" type="button">
+            Open AX-BI
+          </button>
+        </div>
+      </header>
+
+      <section class="status-band" aria-label="Runtime status">
+        <div class="metric">
+          <span class="metric-label">Runtime</span>
+          <strong id="runtimeState">Checking</strong>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Colima</span>
+          <strong id="colimaState">Checking</strong>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Docker</span>
+          <strong id="dockerState">Checking</strong>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Health</span>
+          <strong id="healthState">Checking</strong>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="panel panel-primary">
+          <div class="panel-header">
+            <div>
+              <h2>Local Instance</h2>
+              <p id="runtimeDir">Runtime directory pending</p>
+            </div>
+          </div>
+
+          <div class="command-grid">
+            <button id="prepare" class="button button-secondary" type="button">
+              Prepare
+            </button>
+            <button id="start" class="button button-primary" type="button">
+              Start
+            </button>
+            <button id="stop" class="button button-secondary" type="button">
+              Stop
+            </button>
+            <button id="restart" class="button button-secondary" type="button">
+              Restart
+            </button>
+            <button id="update" class="button button-secondary" type="button">
+              Update
+            </button>
+            <button id="credentials" class="button button-secondary" type="button">
+              Credentials
+            </button>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              <span>Web app</span>
+              <input id="webUrl" readonly value="http://127.0.0.1:8088/ax-bi/welcome/" />
+            </label>
+            <label>
+              <span>MCP</span>
+              <input id="mcpUrl" readonly value="http://127.0.0.1:5008/mcp" />
+            </label>
+          </div>
+
+          <div id="credentialsBox" class="credentials-box hidden"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Connect</h2>
+              <p>Use a hosted or team-managed AX-BI instance.</p>
+            </div>
+          </div>
+          <form id="connectForm" class="connect-form">
+            <label>
+              <span>Server URL</span>
+              <input
+                id="serverUrl"
+                type="url"
+                inputmode="url"
+                placeholder="https://ax-bi.example.com"
+              />
+            </label>
+            <button class="button button-primary" type="submit">Connect</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="workspace-grid lower-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Dependencies</h2>
+              <p>Installed tools available to the launcher.</p>
+            </div>
+          </div>
+          <div id="dependencies" class="dependency-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header panel-header-inline">
+            <div>
+              <h2>Logs</h2>
+              <p>Recent output from the local AX-BI stack.</p>
+            </div>
+            <div class="log-controls">
+              <select id="logService" aria-label="Log service">
+                <option value="">All services</option>
+                <option value="superset">superset</option>
+                <option value="superset-init">superset-init</option>
+                <option value="mcp">mcp</option>
+                <option value="ax-services">ax-services</option>
+                <option value="db">db</option>
+                <option value="redis">redis</option>
+              </select>
+              <button id="loadLogs" class="button button-secondary" type="button">
+                Load
+              </button>
+            </div>
+          </div>
+          <pre id="logs" class="logs" aria-live="polite"></pre>
+        </div>
+      </section>
+
+      <footer class="activity-bar">
+        <div id="activity" class="activity">Ready</div>
+      </footer>
+    </main>
+  </body>
+</html>
