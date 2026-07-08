@@ -131,7 +131,7 @@ export class AxBI {
    */
   async login(): Promise<void> {
     await this.auth.login();
-    await this.ensureMcpInitialized();
+    await this.ensureMcpInitialized({ allowFailure: true });
   }
 
   /** Check server health. */
@@ -151,9 +151,11 @@ export class AxBI {
 
   /**
    * Ensure the MCP session is initialized.
-   * Called lazily on first AI tool usage.
+   * Called in tolerant mode by login and strictly on first AI tool usage.
    */
-  private async ensureMcpInitialized(): Promise<void> {
+  private async ensureMcpInitialized(
+    options: { allowFailure?: boolean } = {},
+  ): Promise<void> {
     if (this.mcpInitialized) {
       return;
     }
@@ -163,14 +165,18 @@ export class AxBI {
         .then(() => {
           this.mcpInitialized = true;
         })
-        .catch(() => {
-          // MCP may not be available in all deployments; don't fail hard
-        })
         .finally(() => {
           this.mcpInitialization = null;
         });
     }
-    await this.mcpInitialization;
+    try {
+      await this.mcpInitialization;
+    } catch (error) {
+      if (options.allowFailure) {
+        return;
+      }
+      throw error;
+    }
   }
 
   /**

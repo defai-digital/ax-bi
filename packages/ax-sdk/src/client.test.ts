@@ -20,6 +20,7 @@
 import { jest } from '@jest/globals';
 
 import { AxBI } from './client.js';
+import { AxBIError } from './shared/errors.js';
 
 const mockFetch = jest.fn<typeof fetch>();
 global.fetch = mockFetch;
@@ -108,6 +109,32 @@ describe('AxBI', () => {
     expect(timeoutSpy).toHaveBeenNthCalledWith(2, 2345);
     expect(timeoutSpy).toHaveBeenNthCalledWith(3, 2345);
     expect(timeoutSpy).toHaveBeenNthCalledWith(4, 5000);
+  });
+
+  test('login tolerates unavailable MCP initialization', async () => {
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+    });
+    mockFetch.mockRejectedValue(new Error('mcp unavailable'));
+
+    await expect(client.login()).resolves.toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('AI calls fail when MCP initialization fails', async () => {
+    const client = new AxBI({
+      baseUrl: 'http://localhost:8088',
+      mcpUrl: 'http://localhost:5008',
+      auth: { type: 'token', accessToken: 'test-token' },
+    });
+    mockFetch.mockRejectedValue(new Error('mcp unavailable'));
+
+    await expect(client.ai.callTool('health_check')).rejects.toThrow(
+      AxBIError,
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   test('treats plain text OK health responses as healthy', async () => {
