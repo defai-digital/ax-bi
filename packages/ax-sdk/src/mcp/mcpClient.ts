@@ -249,24 +249,28 @@ export class MCPClient {
         cause: normalizeError(error),
       });
     }
-    const lines = text.split('\n');
+    const events = text.split(/\r?\n\r?\n/);
 
     // Walk backwards to find the last JSON-RPC response with our ID
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i]!.trim();
-      if (line.startsWith('data:')) {
-        const jsonStr = line.slice(5).trim();
-        if (!jsonStr) continue;
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(jsonStr) as unknown;
-        } catch {
-          // Skip non-JSON lines
-          continue;
-        }
-        if (isRecord(parsed) && parsed['id'] === expectedId) {
-          return this.extractResult<T>(parsed, expectedId);
-        }
+    for (let i = events.length - 1; i >= 0; i--) {
+      const dataLines = events[i]!
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.startsWith('data:'))
+        .map(line => line.slice(5).replace(/^ /, ''));
+      const jsonStr = dataLines.join('\n').trim();
+      if (!jsonStr) {
+        continue;
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(jsonStr) as unknown;
+      } catch {
+        // Skip non-JSON events
+        continue;
+      }
+      if (isRecord(parsed) && parsed['id'] === expectedId) {
+        return this.extractResult<T>(parsed, expectedId);
       }
     }
 

@@ -223,4 +223,28 @@ describe('MCPClient', () => {
       content: [{ type: 'text', text: 'ok' }],
     });
   });
+
+  test('parses multi-line SSE JSON-RPC data events', async () => {
+    const client = makeClient();
+    mockFetch.mockResolvedValue(
+      new Response(
+        [
+          'event: message',
+          'data: {"jsonrpc":"2.0",',
+          'data: "id":"1",',
+          'data: "result":{"content":[{"type":"text","text":"ok"}]}}',
+          '',
+          '',
+        ].join('\n'),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        },
+      ),
+    );
+
+    await expect(client.callTool('health_check')).resolves.toEqual({
+      content: [{ type: 'text', text: 'ok' }],
+    });
+  });
 });
