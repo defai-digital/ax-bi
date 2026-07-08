@@ -32,7 +32,7 @@ export class DashboardsResource extends BaseResource<
   /** Get the dashboard's JSON metadata (position, filters, etc.). */
   async getMetadata(id: number | string): Promise<{ metadata: Record<string, unknown> }> {
     return this.http.get<{ metadata: Record<string, unknown> }>(
-      `${this.basePath}/${id}/metadata`,
+      `${this.buildItemPath(id)}/metadata`,
     );
   }
 
@@ -43,6 +43,6 @@ export class DashboardsResource extends BaseResource<
 
   /** Copy a dashboard by ID. Returns the new dashboard. */
   async copy(id: number | string): Promise<DashboardItem> {
-    return this.http.post<DashboardItem>(`${this.basePath}/${id}/copy`);
+    return this.http.post<DashboardItem>(`${this.buildItemPath(id)}/copy`);
   }
 }

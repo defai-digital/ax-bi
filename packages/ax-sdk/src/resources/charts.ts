@@ -31,7 +31,9 @@ export class ChartsResource extends BaseResource<
 
   /** Get chart data (query result) for a given chart. */
   async getData(id: number | string): Promise<Record<string, unknown>> {
-    return this.http.get<Record<string, unknown>>(`${this.basePath}/${id}/data`);
+    return this.http.get<Record<string, unknown>>(
+      `${this.buildItemPath(id)}/data`,
+    );
   }
 
   /** Export one or more charts as ZIP. */

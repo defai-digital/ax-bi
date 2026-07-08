@@ -42,7 +42,9 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
 
   /** Fetch a single resource by ID or UUID. */
   async getById(id: number | string): Promise<TItem> {
-    const envelope = await this.http.get<SupersetItemEnvelope<TItem>>(`${this.basePath}/${id}`);
+    const envelope = await this.http.get<SupersetItemEnvelope<TItem>>(
+      this.buildItemPath(id),
+    );
     return envelope.result;
   }
 
@@ -55,7 +57,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
   /** Update an existing resource by ID or UUID. */
   async update(id: number | string, data: TUpdateInput): Promise<TItem> {
     const envelope = await this.http.put<SupersetItemEnvelope<TItem>>(
-      `${this.basePath}/${id}`,
+      this.buildItemPath(id),
       data,
     );
     return envelope.result;
@@ -63,7 +65,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
 
   /** Delete a resource by ID or UUID. */
   async delete(id: number | string): Promise<void> {
-    await this.http.delete<SupersetDeleteEnvelope>(`${this.basePath}/${id}`);
+    await this.http.delete<SupersetDeleteEnvelope>(this.buildItemPath(id));
   }
 
   /** Export one or more resources as a ZIP archive. */
@@ -91,6 +93,10 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
       (page, ps) => this.list({ ...params, page, pageSize: ps }),
       pageSize,
     );
+  }
+
+  protected buildItemPath(id: number | string): string {
+    return `${this.basePath}/${encodeURIComponent(String(id))}`;
   }
 
   private buildListQuery(
