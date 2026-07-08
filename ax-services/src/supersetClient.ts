@@ -2367,7 +2367,7 @@ function listResponseMetadata(
     pageSize: request.pageSize,
     totalPages,
     hasNext: request.page < totalPages,
-    hasPrevious: request.page > 1,
+    hasPrevious: totalPages > 0 && request.page > 1,
     columnsRequested,
     columnsLoaded,
     warnings,

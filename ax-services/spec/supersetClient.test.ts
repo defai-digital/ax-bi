@@ -1983,6 +1983,31 @@ test('listDashboards ignores unsafe Superset counts', async () => {
   expect(result.hasNext).toBe(false);
 });
 
+test('listDashboards does not report previous pages for empty result sets', async () => {
+  global.fetch = async () =>
+    Response.json({
+      count: 0,
+      result: [],
+    });
+  const client = new SupersetClient(buildConfig({}));
+
+  const result = await client.listDashboards({
+    contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
+    filters: [],
+    selectColumns: [],
+    orderDirection: 'asc',
+    page: 2,
+    pageSize: 10,
+    createdByMe: false,
+    ownedByMe: false,
+  });
+
+  expect(result.totalCount).toBe(0);
+  expect(result.totalPages).toBe(0);
+  expect(result.hasNext).toBe(false);
+  expect(result.hasPrevious).toBe(false);
+});
+
 test('listDashboards rejects invalid pagination before querying Superset', async () => {
   let fetchCalled = false;
   global.fetch = async () => {
