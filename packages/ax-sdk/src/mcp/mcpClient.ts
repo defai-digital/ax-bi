@@ -204,17 +204,31 @@ export class MCPClient {
   private async sendNotification(method: string): Promise<void> {
     const headers = this.buildHeaders();
 
-    await fetch(`${this.mcpUrl}/mcp`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method,
-      }),
-      signal: AbortSignal.timeout(5000),
-    }).catch(() => {
-      // Notifications are fire-and-forget; swallow errors.
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.mcpUrl}/mcp`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method,
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch (error) {
+      const cause = normalizeError(error);
+      throw new AxBIError(`MCP notification failed: ${cause.message}`, {
+        cause,
+      });
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => null);
+      throw new AxBIError(`MCP notification failed (${response.status})`, {
+        statusCode: response.status,
+        responseBody: text,
+      });
+    }
   }
 
   private buildHeaders(accept?: string): Record<string, string> {

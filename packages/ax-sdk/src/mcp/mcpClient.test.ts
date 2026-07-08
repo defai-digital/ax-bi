@@ -142,6 +142,33 @@ describe('MCPClient', () => {
     expect(headers['Mcp-Session-Id']).toBe('session-from-result');
   });
 
+  test('fails initialization when initialized notification is rejected', async () => {
+    const client = makeClient();
+    mockFetch
+      .mockResolvedValueOnce(jsonRpcResponse('1', {}))
+      .mockResolvedValueOnce(new Response('notification failed', { status: 503 }));
+
+    try {
+      await client.initialize();
+      throw new Error('Expected initialization to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(AxBIError);
+      expect(error).toMatchObject({
+        statusCode: 503,
+        responseBody: 'notification failed',
+      });
+    }
+  });
+
+  test('fails initialization when initialized notification cannot be sent', async () => {
+    const client = makeClient();
+    mockFetch
+      .mockResolvedValueOnce(jsonRpcResponse('1', {}))
+      .mockRejectedValueOnce(new Error('notify connect failed'));
+
+    await expect(client.initialize()).rejects.toThrow(AxBIError);
+  });
+
   test('maps HTTP failures to AxBIError with status and response body', async () => {
     const client = makeClient();
     mockFetch.mockResolvedValue(new Response('unavailable', { status: 503 }));
