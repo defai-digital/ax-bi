@@ -19,6 +19,7 @@
 
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError } from '../shared/errors.js';
+import { normalizeTimeoutMs } from '../shared/numbers.js';
 import { normalizeHttpBaseUrl } from '../shared/url.js';
 
 /** JSON-RPC 2.0 request envelope. */
@@ -84,7 +85,7 @@ export class MCPClient {
   }) {
     this.mcpUrl = normalizeHttpBaseUrl(options.mcpUrl, 'mcpUrl');
     this.auth = options.auth;
-    this.timeout = options.timeout ?? 60_000;
+    this.timeout = normalizeTimeoutMs(options.timeout, 60_000);
   }
 
   /** Initialize the MCP session. Must be called before tool invocations. */

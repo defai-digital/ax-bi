@@ -109,6 +109,22 @@ describe('MCPClient', () => {
     ).toThrow('mcpUrl must not include query or fragment');
   });
 
+  test('rejects invalid MCP timeouts before requests are sent', () => {
+    const auth = new AuthProvider(
+      { type: 'token', accessToken: 'access-jwt' },
+      'http://localhost:8088',
+    );
+
+    expect(
+      () =>
+        new MCPClient({
+          mcpUrl: 'http://localhost:5008',
+          auth,
+          timeout: 0,
+        }),
+    ).toThrow('timeout must be between 1 and 2147483647');
+  });
+
   test('sends captured MCP session ID on later requests', async () => {
     const client = makeClient();
     mockFetch

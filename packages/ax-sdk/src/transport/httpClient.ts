@@ -19,6 +19,7 @@
 
 import { AuthProvider } from '../auth/authProvider.js';
 import { AxBIError, AxBIAuthError, errorFromStatus } from '../shared/errors.js';
+import { normalizeRetryCount, normalizeTimeoutMs } from '../shared/numbers.js';
 import { normalizeHttpBaseUrl } from '../shared/url.js';
 import type { HttpMethod, RequestOptions, ResponseType } from './types.js';
 
@@ -59,8 +60,11 @@ export class HttpClient {
   }) {
     this.baseUrl = normalizeHttpBaseUrl(options.baseUrl, 'baseUrl');
     this.auth = options.auth;
-    this.defaultTimeout = options.timeout ?? DEFAULT_TIMEOUT_MS;
-    this.maxRetries = options.retries ?? 3;
+    this.defaultTimeout = normalizeTimeoutMs(
+      options.timeout,
+      DEFAULT_TIMEOUT_MS,
+    );
+    this.maxRetries = normalizeRetryCount(options.retries, 3);
   }
 
   /**

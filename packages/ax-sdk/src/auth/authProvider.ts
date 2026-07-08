@@ -19,6 +19,7 @@
 
 import type { AuthConfig } from './types.js';
 import { AxBIAuthError } from '../shared/errors.js';
+import { normalizeTimeoutMs } from '../shared/numbers.js';
 import { normalizeHttpBaseUrl } from '../shared/url.js';
 
 /** Default auth request timeout in milliseconds. */
@@ -46,7 +47,7 @@ export class AuthProvider {
   constructor(config: AuthConfig, baseUrl: string, timeout?: number) {
     this.config = validateAuthConfig(config);
     this.baseUrl = normalizeHttpBaseUrl(baseUrl, 'baseUrl');
-    this.timeout = timeout ?? DEFAULT_AUTH_TIMEOUT_MS;
+    this.timeout = normalizeTimeoutMs(timeout, DEFAULT_AUTH_TIMEOUT_MS);
 
     // Seed token for token-based auth
     if (this.config.type === 'token') {

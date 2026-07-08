@@ -202,4 +202,28 @@ describe('AxBI', () => {
         }),
     ).toThrow('baseUrl must not include query or fragment');
   });
+
+  test('rejects invalid timeout configuration before requests are sent', () => {
+    expect(
+      () =>
+        new AxBI({
+          baseUrl: 'http://localhost:8088',
+          mcpUrl: 'http://localhost:5008',
+          timeout: 0,
+          auth: { type: 'token', accessToken: 'test-token' },
+        }),
+    ).toThrow('timeout must be between 1 and 2147483647');
+  });
+
+  test('rejects invalid retry configuration before requests are sent', () => {
+    expect(
+      () =>
+        new AxBI({
+          baseUrl: 'http://localhost:8088',
+          mcpUrl: 'http://localhost:5008',
+          retries: -1,
+          auth: { type: 'token', accessToken: 'test-token' },
+        }),
+    ).toThrow('retries must be a non-negative integer');
+  });
 });
