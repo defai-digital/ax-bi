@@ -134,7 +134,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
     const page = params?.page ?? 1;
     const pageSize = params?.pageSize ?? 20;
     const totalCount = envelope.count ?? envelope.result.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     return {
       results: envelope.result,

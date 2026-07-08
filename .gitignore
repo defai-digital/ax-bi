@@ -159,7 +159,7 @@ GTP.md
 .cursor/
 .devcontainer/
 ASF/
-RESOURCES/
+/RESOURCES/
 .env.local
 oxc-custom-build/
 *.code-workspace
