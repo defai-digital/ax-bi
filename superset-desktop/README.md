@@ -1,10 +1,10 @@
-# AX-BI Desktop Client
+# AX BI Desktop Client
 
-A thin desktop client for the AX-BI data visualization and analytics platform, built with [Tauri v2](https://tauri.app/).
+A thin desktop client for the AX BI data visualization and analytics platform, built with [Tauri v2](https://tauri.app/).
 
 ## Overview
 
-AX-BI Desktop delivers a native desktop experience for the AX-BI web application through two complementary layers:
+AX BI Desktop delivers a native desktop experience for the AX BI web application through two complementary layers:
 
 ### Phase 1 — PWA + Desktop-Grade UX (in the web app)
 
@@ -19,7 +19,7 @@ These features live in `ax-bi-frontend/` and work in both the browser and the Ta
 
 These features live in `superset-desktop/` and require the native app:
 
-- **Native window** — Standalone desktop launcher for local or hosted AX-BI
+- **Native window** — Standalone desktop launcher for local or hosted AX BI
 - **Deep links** — `axbi://dashboard/{id}`, `axbi://chart/{id}` open directly in the app
 - **System tray** — Quick access to dashboards and SQL Lab (infrastructure in place)
 - **Cross-platform builds** — macOS, Windows, and Linux via GitHub Actions
@@ -28,20 +28,20 @@ These features live in `superset-desktop/` and require the native app:
 
 The desktop client is a **thin shell** with a bundled launcher. It does **not**
 bundle the Python backend, database drivers, or any server-side components. The
-launcher can connect to a hosted AX-BI server or manage a local container
+launcher can connect to a hosted AX BI server or manage a local container
 runtime for trials.
 
 ## Recommended User Install
 
-The intended macOS user path is a Homebrew cask that installs AX-BI Desktop and
+The intended macOS user path is a Homebrew cask that installs AX BI Desktop and
 the local runtime prerequisites:
 
 ```bash
 brew install --cask defai-digital/ax-bi/ax-bi
 ```
 
-After installation, AX-BI Desktop should guide the user to either connect to an
-existing AX-BI server or start a local AX-BI runtime. The local runtime manager
+After installation, AX BI Desktop should guide the user to either connect to an
+existing AX BI server or start a local AX BI runtime. The local runtime manager
 uses Colima and Docker Compose behind the Tauri app so users do not need to
 clone this repository, edit `.env` files, or run Docker commands manually.
 
@@ -50,11 +50,11 @@ contract, Homebrew cask shape, and security boundary.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     AX-BI Desktop Client                         │
+│                     AX BI Desktop Client                         │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │                   Tauri WebView                            │  │
 │  │  ┌─────────────────────────────────────────────────────┐  │  │
-│  │  │          AX-BI Web Application                       │  │  │
+│  │  │          AX BI Web Application                       │  │  │
 │  │  │                                                       │  │  │
 │  │  │  ┌─────────────────┐  ┌──────────────────────────┐  │  │  │
 │  │  │  │ ShortcutProvider │  │ CommandPaletteProvider   │  │  │  │
@@ -88,7 +88,7 @@ npm install           # First time only
 npm run dev           # Builds Rust + launches native window
 ```
 
-The Tauri window opens the bundled launcher. Use it to start a local AX-BI
+The Tauri window opens the bundled launcher. Use it to start a local AX BI
 runtime or connect to an existing server.
 
 ### 2. Optional local backend
@@ -114,7 +114,7 @@ Output locations:
 ### Server URL
 
 By default the Tauri shell loads the bundled launcher from `src/index.html`.
-Use the launcher Connect form for hosted AX-BI instances.
+Use the launcher Connect form for hosted AX BI instances.
 
 ### Deep Links
 
@@ -177,7 +177,7 @@ The command palette includes navigation commands (Dashboards, Charts, SQL Lab, e
 ## Security Considerations
 
 - Local runtime commands are available only from the bundled launcher origin
-- Hosted or local AX-BI web content does not receive local runtime privileges
+- Hosted or local AX BI web content does not receive local runtime privileges
 - No database credentials are stored in the desktop client
 - Authentication uses the same SSO/OIDC flows as the web app
 - Production builds should be signed (macOS notarization, Windows code signing)
@@ -186,9 +186,9 @@ The command palette includes navigation commands (Dashboards, Charts, SQL Lab, e
 ## Troubleshooting
 
 ### macOS: App won't open
-If you see "AX-BI is damaged and can't be opened":
+If you see "AX BI is damaged and can't be opened":
 ```bash
-xattr -cr /Applications/AX-BI.app
+xattr -cr "/Applications/AX BI.app"
 ```
 
 ### Rust compilation errors
@@ -197,8 +197,8 @@ Ensure your Rust toolchain is up to date:
 rustup update stable
 ```
 
-### AX-BI not loading in Tauri window
-Verify the configured AX-BI server is running:
+### AX BI not loading in Tauri window
+Verify the configured AX BI server is running:
 ```bash
 curl -f http://127.0.0.1:8088/health
 ```
@@ -214,31 +214,31 @@ sudo apt-get install libwebkit2gtk-4.1-dev libappindicator3-dev
 ## License
 
 Apache License 2.0 — See [LICENSE](../LICENSE) for details.
-# AX-BI Desktop Client
+# AX BI Desktop Client
 
-A thin desktop client for the AX-BI data visualization and analytics platform, built with [Tauri](https://tauri.app/).
+A thin desktop client for the AX BI data visualization and analytics platform, built with [Tauri](https://tauri.app/).
 
 ## Overview
 
-AX-BI Desktop provides native desktop integration for the AX-BI web application, including:
+AX BI Desktop provides native desktop integration for the AX BI web application, including:
 
 - **System tray** - Quick access to dashboards and SQL Lab from your system tray
 - **Deep links** - Open `axbi://dashboard/123` or `axbi://chart/456` directly in the app
 - **Native notifications** - Receive desktop notifications for alerts and updates
-- **File associations** - Open CSV, Excel, and Parquet files directly in AX-BI
+- **File associations** - Open CSV, Excel, and Parquet files directly in AX BI
 - **Auto-update** - Automatic updates for the latest features and security patches
 
 ## Architecture
 
-The desktop client is a thin shell that loads the AX-BI web application. It does **not** bundle the Python backend, database drivers, or any server-side components. The web app remains the source of truth.
+The desktop client is a thin shell that loads the AX BI web application. It does **not** bundle the Python backend, database drivers, or any server-side components. The web app remains the source of truth.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    AX-BI Desktop Client                      │
+│                    AX BI Desktop Client                      │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │                 Tauri WebView                        │   │
 │  │  ┌─────────────────────────────────────────────┐   │   │
-│  │  │          AX-BI Web Application               │   │   │
+│  │  │          AX BI Web Application               │   │   │
 │  │  │  (Loaded from https://your-axbi-instance)   │   │   │
 │  │  └─────────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────────┘   │
@@ -288,7 +288,7 @@ This will create a macOS bundle:
 
 ### Server URL
 
-The desktop client connects to your AX-BI server. Configure the server URL:
+The desktop client connects to your AX BI server. Configure the server URL:
 
 1. **Environment variable** (recommended for development):
    ```bash
@@ -348,9 +348,9 @@ superset-desktop/
 ## Troubleshooting
 
 ### macOS: App won't open
-If you see "AX-BI is damaged and can't be opened":
+If you see "AX BI is damaged and can't be opened":
 ```bash
-xattr -cr /Applications/AX-BI.app
+xattr -cr "/Applications/AX BI.app"
 ```
 
 ### Windows: WebView2 not found

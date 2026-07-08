@@ -18,7 +18,7 @@
  */
 
 /**
- * Base error for all AX-BI SDK errors.
+ * Base error for all AX BI SDK errors.
  * Provides structured context about the failure.
  */
 export class AxBIError extends Error {

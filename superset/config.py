@@ -422,7 +422,7 @@ AUTH_PASSWORD_COMMON_BLOCKLIST: list[str] = []
 # GLOBALS FOR APP Builder
 # ------------------------------
 # Uncomment to setup Your App name
-APP_NAME = "AX-BI"
+APP_NAME = "AX BI"
 
 # Specify the App icon
 # NOTE: This variable is used to populate THEME_DEFAULT. If you override this in
@@ -743,7 +743,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # Serve MCP task listing from the TypeScript sidecar with Python fallback.
     # @lifecycle: development
     "TS_TASK_LIST_SERVING": False,
-    # Enable a TypeScript-derived metadata index for AX-BI search workflows.
+    # Enable a TypeScript-derived metadata index for AX BI search workflows.
     # @lifecycle: development
     "TS_METADATA_INDEX": False,
     # Enable Rust-backed SQL parsing or normalization kernels.
@@ -1128,7 +1128,7 @@ _THEME_DEFAULT_BASE: Theme = {
         # Brand
         # Application name for window titles
         "brandAppName": APP_NAME,
-        "brandLogoAlt": "AX-BI",
+        "brandLogoAlt": "AX BI",
         "brandLogoUrl": APP_ICON,
         "brandLogoMargin": "18px 0",
         "brandLogoHref": LOGO_TARGET_PATH or "/",
@@ -2379,7 +2379,7 @@ IMPALA_CANCEL_QUERY_ALLOW_INTERNAL_HOSTS: bool = False
 EMAIL_REPORTS_SUBJECT_PREFIX = "[Report] "
 
 # The text for call-to-action link in Alerts & Reports emails
-EMAIL_REPORTS_CTA = "Explore in AX-BI"
+EMAIL_REPORTS_CTA = "Explore in AX BI"
 
 # Slack API token for the superset reports, either string or callable
 SLACK_API_TOKEN: Callable[[], str] | str | None = None
@@ -2733,7 +2733,7 @@ GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
 )
 GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
 
-# AX-BI runtime modernization sidecar config.
+# AX BI runtime modernization sidecar config.
 # These settings are inert until runtime modernization feature flags route
 # selected workflows to the TypeScript sidecar.
 AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"

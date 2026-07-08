@@ -69,7 +69,7 @@ from superset.mcp_service.utils.config_utils import (
 
 
 def test_get_superset_app_name_reads_supplied_config() -> None:
-    assert get_superset_app_name({"APP_NAME": "AX-BI"}) == "AX-BI"
+    assert get_superset_app_name({"APP_NAME": "AX BI"}) == "AX BI"
 
 
 def test_get_superset_app_name_uses_default_for_missing_key() -> None:
@@ -317,7 +317,7 @@ def test_get_mcp_debug_enabled_returns_none_when_unset() -> None:
 
 
 def test_get_mcp_hello_page_config_reads_supplied_config() -> None:
-    hello_page = {"title": "AX-BI MCP"}
+    hello_page = {"title": "AX BI MCP"}
 
     assert get_mcp_hello_page_config({"MCP_HELLO_PAGE": hello_page}) is hello_page
 

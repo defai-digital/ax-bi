@@ -229,7 +229,7 @@
         "name": "TS_METADATA_INDEX",
         "default": false,
         "lifecycle": "development",
-        "description": "Enable a TypeScript-derived metadata index for AX-BI search workflows."
+        "description": "Enable a TypeScript-derived metadata index for AX BI search workflows."
       },
       {
         "name": "TS_REPORT_LIST_SERVING",

@@ -1,5 +1,5 @@
 ---
-title: AX-BI Rename Policy
+title: AX BI Rename Policy
 sidebar_position: 4
 ---
 
@@ -22,33 +22,34 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# AX-BI Rename Policy
+# AX BI Rename Policy
 
-AX-BI follows an external rename strategy. Public commands, user-facing
-documentation, local development paths, and AX-BI-owned entry points use the
-AX-BI name. Core Superset Python modules, package namespaces, extension
-contracts, migrations, and upstream compatibility surfaces keep their Superset
-names unless there is a dedicated migration plan.
+AX BI follows an external rename strategy. User-facing app text uses the
+AX BI name. Public commands, local development paths, routes, images, and
+protocol tokens keep their established technical identifiers unless there is a
+dedicated migration plan. Core Superset Python modules, package namespaces,
+extension contracts, migrations, and upstream compatibility surfaces keep their
+Superset names unless there is a dedicated migration plan.
 
-This keeps the product experience branded as AX-BI while preserving upstream
+This keeps the product experience branded as AX BI while preserving upstream
 syncability, import compatibility, extension compatibility, and migration
 history.
 
 ## Renamed Surfaces
 
-Use AX-BI names for surfaces that users, operators, and developers invoke
-directly:
+Use AX BI display names for surfaces users see in the app. Use technical
+identifiers for surfaces that users, operators, and developers invoke directly:
 
-| Surface | AX-BI name |
+| Surface | Name or identifier |
 | --- | --- |
 | Main CLI command | `ax-bi` |
 | MCP wrapper command | `ax-bi-mcp` |
 | Frontend workspace directory | `ax-bi-frontend/` |
 | Route prefix | `/ax-bi` |
 | Docker image | `ghcr.io/defai-digital/ax-bi` |
-| AX-BI repository links | `https://github.com/defai-digital/ax-bi` |
+| Repository links | `https://github.com/defai-digital/ax-bi` |
 | Local development docs | `cd ax-bi-frontend`, `ax-bi run`, `ax-bi mcp run` |
-| App name (UI title, logo alt) | `AX-BI` |
+| App name (UI title, logo alt) | `AX BI` |
 | User-Agent header | `AX-BI` |
 
 Legacy `/superset/*` routes redirect to `/ax-bi/*` for compatibility with

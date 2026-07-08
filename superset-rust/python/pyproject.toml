@@ -22,7 +22,7 @@ build-backend = "maturin"
 [project]
 name = "ax-sql"
 version = "0.1.0"
-description = "AX-BI Rust SQL helper proof of concept"
+description = "AX BI Rust SQL helper proof of concept"
 requires-python = ">=3.12"
 license = "Apache-2.0"
 

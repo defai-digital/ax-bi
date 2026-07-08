@@ -300,7 +300,7 @@ export function Menu({
         <StyledImage
           preview={false}
           src={ensureStaticPrefix(theme.brandLogoUrl)}
-          alt={theme.brandLogoAlt || 'AX-BI'}
+          alt={theme.brandLogoAlt || 'AX BI'}
           height={theme.brandLogoHeight}
         />
       );

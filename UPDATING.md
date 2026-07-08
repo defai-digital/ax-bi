@@ -28,14 +28,14 @@ assists people when migrating to a new version.
 
 The default `UPLOAD_FOLDER` now resolves to `<SUPERSET_HOME>/uploads`, and the
 zero-config local DuckDB database defaults to
-`<SUPERSET_HOME>/uploads/local_files.duckdb`. Packaged AX-BI Docker stacks map
+`<SUPERSET_HOME>/uploads/local_files.duckdb`. Packaged AX BI Docker stacks map
 this to `/app/superset_home/uploads`, which is on the shared `superset_home`
 volume. Override `UPLOAD_FOLDER` or `LOCAL_DB_PATH` if you intentionally store
 uploads elsewhere.
 
 ### Python 3.12 is the minimum supported runtime
 
-AX-BI now requires Python 3.12 or newer for local development, CI, Docker
+AX BI now requires Python 3.12 or newer for local development, CI, Docker
 images, and Python package metadata. Deployments and development environments
 using Python 3.10 or 3.11 must move to Python 3.12 before upgrading.
 
@@ -801,13 +801,13 @@ Note: Pillow is now a required dependency (previously optional) to support image
 - [18976](https://github.com/apache/superset/pull/18976): When running the app in debug mode, the app will default to use `SimpleCache` for `FILTER_STATE_CACHE_CONFIG` and `EXPLORE_FORM_DATA_CACHE_CONFIG`. When running in non-debug mode, a cache backend will need to be defined, otherwise the application will fail to start. For installations using Redis or other caching backends, it is recommended to use the same backend for both cache configs.
 - [17881](https://github.com/apache/superset/pull/17881): Previously simple adhoc filter values on string columns were stripped of enclosing single and double quotes. To fully support literal quotes in filters, both single and double quotes will no longer be removed from filter values.
 - [17556](https://github.com/apache/superset/pull/17556): Bumps `mysqlclient` from v1 to v2.
-- [17539](https://github.com/apache/superset/pull/17539): All AX-BI CLI commands, e.g. `init`, `load_examples`, etc. require setting the `FLASK_APP` environment variable (which is set by default when `.flaskenv` is loaded).
+- [17539](https://github.com/apache/superset/pull/17539): All AX BI CLI commands, e.g. `init`, `load_examples`, etc. require setting the `FLASK_APP` environment variable (which is set by default when `.flaskenv` is loaded).
 - [15254](https://github.com/apache/superset/pull/15254): The `QUERY_COST_FORMATTERS_BY_ENGINE`, `SQL_VALIDATORS_BY_ENGINE` and `SCHEDULED_QUERIES` feature flags are now defined as config keys given that feature flags are reserved for boolean only values.
 
 ### Potential Downtime
 
 - [16756](https://github.com/apache/incubator-superset/pull/16756): a change which renames the `dbs.allow_csv_upload` column to `dbs.allow_file_upload` via a (potentially locking) DDL operation.
-- [17539](https://github.com/apache/superset/pull/17539): all AX-BI CLI commands
+- [17539](https://github.com/apache/superset/pull/17539): all AX BI CLI commands
   (init, load_examples and etc) require setting the FLASK_APP environment variable
   (which is set by default when .flaskenv is loaded)
 - [17360](https://github.com/apache/superset/pull/17360): changes the column type from `VARCHAR(32)` to `TEXT` in table `table_columns`, potentially requiring a table lock on MySQL dbs or taking some time to complete on large deployments.

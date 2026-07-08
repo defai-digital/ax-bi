@@ -16,17 +16,17 @@ License for the specific language governing permissions and limitations
 under the License.
 -->
 
-# AX-BI
+# AX BI
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/apache-2-0)
 [![Built on Apache Superset](https://img.shields.io/badge/built%20on-Apache%20Superset-20A6C9.svg)](https://superset.apache.org)
 [![MCP-native](https://img.shields.io/badge/MCP-native-6E56CF.svg)](#mcp-native-genai-bi)
 [![Maintained by DEFAI](https://img.shields.io/badge/maintained%20by-DEFAI%20Private%20Limited-0A0A0A.svg)](#about-defai)
 
-<!-- TODO: replace with the AX-BI logo once brand assets are finalized. -->
+<!-- TODO: replace with the AX BI logo once brand assets are finalized. -->
 <h3>Open, governed, MCP-native GenAI BI for prompt-to-dashboard and trusted analytics agents.</h3>
 
-**AX-BI** is a GenAI-native business intelligence platform by **DEFAI Private Limited**. It is not a chatbot bolted onto BI — it is a trusted AI analyst that discovers governed data assets, reasons over a semantic layer, generates validated charts, composes dashboards, explains results, and leaves an auditable trail. AX-BI builds on the proven [Apache Superset](https://superset.apache.org) foundation and extends it with a first-class [Model Context Protocol (MCP)](https://modelcontextprotocol.io) service so AI agents can operate on your data within your existing roles and row-level security.
+**AX BI** is a GenAI-native business intelligence platform by **DEFAI Private Limited**. It is not a chatbot bolted onto BI — it is a trusted AI analyst that discovers governed data assets, reasons over a semantic layer, generates validated charts, composes dashboards, explains results, and leaves an auditable trail. AX BI builds on the proven [Apache Superset](https://superset.apache.org) foundation and extends it with a first-class [Model Context Protocol (MCP)](https://modelcontextprotocol.io) service so AI agents can operate on your data within your existing roles and row-level security.
 
 [**Why BI Agents Break Down**](#why-bi-agents-break-down) |
 [**MCP-Native GenAI BI**](#mcp-native-genai-bi) |
@@ -51,13 +51,13 @@ Common failure modes:
 - **No audit trail** - prompts, tool calls, generated assets, and approval steps are not visible to operators.
 - **Disconnected workflows** - data upload, dataset creation, chart authoring, dashboard composition, and explanation happen in separate tools.
 
-AX-BI addresses this with a self-hosted BI workspace where AI agents call governed platform tools instead of scraping around the application.
+AX BI addresses this with a self-hosted BI workspace where AI agents call governed platform tools instead of scraping around the application.
 
-## What AX-BI Is
+## What AX BI Is
 
-AX-BI is a Superset-based analytics platform extended for AI-native business intelligence. It combines the standard BI surface - datasets, SQL Lab, charts, dashboards, reports, alerts, security, and database connectivity - with an MCP service that exposes those same resources as governed tools for AI agents.
+AX BI is a Superset-based analytics platform extended for AI-native business intelligence. It combines the standard BI surface - datasets, SQL Lab, charts, dashboards, reports, alerts, security, and database connectivity - with an MCP service that exposes those same resources as governed tools for AI agents.
 
-Use AX-BI when you need:
+Use AX BI when you need:
 
 - **Prompt-to-dashboard** workflows that create real Superset dashboards from governed data assets.
 - **AI-ready semantic context** for datasets, columns, metrics, certified assets, owners, tags, and dashboard layouts.
@@ -65,9 +65,9 @@ Use AX-BI when you need:
 - **Self-hosted deployment** with control over databases, authentication, model connections, and infrastructure boundaries.
 - **Extensible analytics infrastructure** through REST APIs, MCP tools, chart plugins, Python extensions, and a TypeScript sidecar.
 
-## Why Teams Choose AX-BI
+## Why Teams Choose AX BI
 
-| Requirement | Typical BI assistant | AX-BI |
+| Requirement | Typical BI assistant | AX BI |
 | --- | --- | --- |
 | Discover trusted business data | Often relies on raw schemas or loose search | RBAC-aware search over datasets, charts, dashboards, tags, certification metadata, and owners |
 | Build governed charts | Often returns SQL or narrative only | Generates validated Superset chart artifacts with preview and save paths |
@@ -98,7 +98,7 @@ Use AX-BI when you need:
 5. **Agent-ready analytics infrastructure** - expose Superset resources to tools such as AX Studio, Claude Desktop, or other MCP-compatible clients.
 6. **Embedded AI BI** - scope dashboard Q&A and prompt-to-dashboard behavior to host applications and embedded guest permissions.
 
-## When To Use AX-BI
+## When To Use AX BI
 
 - You need an open BI platform that can be self-hosted and extended.
 - You want AI workflows grounded in a governed semantic layer rather than free-form SQL generation.
@@ -107,7 +107,7 @@ Use AX-BI when you need:
 
 ## Core Features
 
-AX-BI provides the Superset BI foundation plus AX-specific agent and runtime layers:
+AX BI provides the Superset BI foundation plus AX-specific agent and runtime layers:
 
 - A **no-code interface** for building charts quickly
 - A powerful, web-based **SQL Editor** for advanced querying
@@ -121,13 +121,13 @@ AX-BI provides the Superset BI foundation plus AX-specific agent and runtime lay
 - **Dashboard explanation and Q&A** tools for existing BI assets
 - **Spreadsheet and CSV upload** paths exposed through MCP dataset tools
 - **AX Services** TypeScript sidecar for runtime health, readiness, contracts, and Superset connectivity
-- **AX-BI Desktop** thin Tauri shell with deep links and desktop-grade web app integration
+- **AX BI Desktop** thin Tauri shell with deep links and desktop-grade web app integration
 - **Extension tooling** for scaffolding and packaging Superset extensions
 - A **cloud-native architecture** designed from the ground up for scale
 
 ## MCP-Native GenAI BI
 
-What sets AX-BI apart from a traditional BI stack is that it is **agent-ready by design**. The built-in MCP service exposes Superset's core resources — datasets, charts, dashboards, queries, and the semantic layer — as governed tools that any MCP-compatible AI agent can call.
+What sets AX BI apart from a traditional BI stack is that it is **agent-ready by design**. The built-in MCP service exposes Superset's core resources — datasets, charts, dashboards, queries, and the semantic layer — as governed tools that any MCP-compatible AI agent can call.
 
 - **Prompt-to-dashboard** — turn natural-language questions into validated charts and composed dashboards, grounded in governed semantics rather than raw text-to-SQL.
 - **Governed by default** — agent tool visibility and every generated query respect your existing RBAC and row-level security. Agents cannot see or do more than the user they act for.
@@ -157,8 +157,9 @@ The MCP service lives in [`superset/mcp_service/`](https://github.com/defai-digi
 
 ## Naming Policy
 
-AX-BI uses the public product name AX-BI for the app, routes, Docker stack,
-documentation, and CLI commands. The current route prefix is `/ax-bi`.
+The app display name is AX BI. Technical identifiers continue to use `ax-bi`,
+including the CLI command, route prefix, Docker image names, and repository
+paths. The current route prefix is `/ax-bi`.
 
 Core Superset namespaces remain in place for compatibility with upstream
 Superset, existing imports, migrations, extensions, package contracts, Helm
@@ -171,10 +172,10 @@ contracts.
 
 ## Workspace Architecture
 
-AX-BI keeps the browser, API, MCP, and sidecar layers connected to one governed Superset metadata and security model.
+AX BI keeps the browser, API, MCP, and sidecar layers connected to one governed Superset metadata and security model.
 
 ```text
-AX-BI
+AX BI
 ├── Web app and REST API
 │   ├── Flask/AppBuilder backend
 │   ├── React/TypeScript frontend
@@ -200,7 +201,7 @@ AX-BI
 
 ## Quick Start with Docker
 
-The fastest way to try AX-BI is Docker Compose. This pulls the public
+The fastest way to try AX BI is Docker Compose. This pulls the public
 multi-architecture images from GitHub Container Registry:
 
 - `ghcr.io/defai-digital/ax-bi`
@@ -211,7 +212,7 @@ multi-architecture images from GitHub Container Registry:
 - Docker and Docker Compose
 - Git
 
-### 2. Clone AX-BI
+### 2. Clone `ax-bi`
 
 ```shell
 git clone https://github.com/defai-digital/ax-bi.git
@@ -248,7 +249,7 @@ AX_SERVICES_IMAGE=ghcr.io/defai-digital/ax-bi-services:latest
 For production or repeatable demos, replace `latest` with a pinned release tag
 when one is available.
 
-### 4. Start AX-BI
+### 4. Start AX BI
 
 ```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
@@ -268,7 +269,7 @@ Wait until the `superset` service is healthy, then open:
 
 | Service | URL |
 | --- | --- |
-| AX-BI web app | `http://localhost:8088/ax-bi/welcome/` |
+| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
 | MCP service | `http://localhost:5008/mcp` |
 | AX Services sidecar | `http://localhost:5010` |
 
@@ -296,7 +297,7 @@ docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 
 ### Notes for Shared or Public Deployments
 
-This quick start is for local trials. Before exposing AX-BI on a network:
+This quick start is for local trials. Before exposing AX BI on a network:
 
 - Put the web app behind HTTPS.
 - Keep Postgres and Redis private.
@@ -323,7 +324,7 @@ docker compose \
 
 ## Supported File Types
 
-AX-BI supports local data-file upload through the web/API upload paths and the
+AX BI supports local data-file upload through the web/API upload paths and the
 MCP dataset tools when `ENABLE_LOCAL_FILE_UPLOAD` is enabled and the acting user
 has the required database upload permission. Uploaded files are loaded into the
 local analytics database and registered as Superset datasets.
@@ -343,7 +344,7 @@ changed with `UPLOAD_MAX_FILE_SIZE_BYTES`.
 
 ## Supported Databases
 
-AX-BI can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/user-docs/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
+AX BI can query data from any SQL-speaking datastore or data engine (Presto, Trino, Athena, [and more](https://superset.apache.org/user-docs/databases)) that has a Python DB-API driver and a SQLAlchemy dialect.
 
 Here are some of the major database solutions that are supported:
 
@@ -360,15 +361,15 @@ Here are some of the major database solutions that are supported:
 | Additional engines | [Apache Doris](https://superset.apache.org/user-docs/databases/supported/apache-doris), [Ascend](https://superset.apache.org/user-docs/databases/supported/ascend), [ClickHouse](https://superset.apache.org/user-docs/databases/supported/clickhouse), [Databend](https://superset.apache.org/user-docs/databases/supported/databend), [Firebolt](https://superset.apache.org/user-docs/databases/supported/firebolt) |
 <!-- SUPPORTED_DATABASES_END -->
 
-**A more comprehensive list of supported databases** along with configuration instructions can be found in the [Apache Superset database docs](https://superset.apache.org/user-docs/databases), which apply to the AX-BI data layer.
+**A more comprehensive list of supported databases** along with configuration instructions can be found in the [Apache Superset database docs](https://superset.apache.org/user-docs/databases), which apply to the AX BI data layer.
 
 Want to add support for your datastore or data engine? Read about the [technical requirements](https://superset.apache.org/user-docs/faq#does-superset-work-with-insert-database-engine-here).
 
 ## Installation and Configuration
 
-AX-BI runs anywhere the underlying Superset platform runs.
+AX BI runs anywhere the underlying Superset platform runs.
 
-- **Docker deployment** — the recommended path for local AX-BI trials:
+- **Docker deployment** — the recommended path for local AX BI trials:
   ```bash
   cp docker/.env-axbi.example docker/.env-axbi
   # Fill SUPERSET_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
@@ -379,12 +380,12 @@ AX-BI runs anywhere the underlying Superset platform runs.
   `-f docker-compose-axbi-build.yml --build`.
 - **Production deployments** — use managed Postgres/Redis, pinned image tags,
   JWT-backed MCP authentication, and only the externally exposed services your
-  deployment needs. For Kubernetes, use the [AX-BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) with `helm/superset/values-axbi.yaml` and replace all placeholder secrets.
+  deployment needs. For Kubernetes, use the [AX BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) with `helm/superset/values-axbi.yaml` and replace all placeholder secrets.
 - **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md).
 
 ## Development
 
-AX-BI has a Flask/Python backend and a React/TypeScript frontend.
+AX BI has a Flask/Python backend and a React/TypeScript frontend.
 
 ```bash
 # Backend (Flask dev server)
@@ -406,15 +407,15 @@ pre-commit run --all-files
 
 See [`GENAI_BI_ROADMAP.md`](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for product direction, [`SECURITY.md`](https://github.com/defai-digital/ax-bi/blob/main/SECURITY.md) for the security and threat model, and the developer docs for engineering guidance.
 
-AX-BI tracks Apache Superset through a controlled upstream sync process: security
+AX BI tracks Apache Superset through a controlled upstream sync process: security
 fixes and critical bug fixes are prioritized, stable release branches are
-reviewed in dedicated sync branches, and AX-BI-specific MCP/GenAI/governance
+reviewed in dedicated sync branches, and AX BI-specific MCP/GenAI/governance
 behavior must be regression-tested before merge. See the
 [`Upstream Sync Policy`](https://github.com/defai-digital/ax-bi/blob/main/docs/developer_docs/upstream-sync-policy.md).
 
 ## Contributing
 
-At this time, AX-BI is not accepting unsolicited public code contributions or pull requests.
+At this time, AX BI is not accepting unsolicited public code contributions or pull requests.
 
 What we do welcome:
 
@@ -427,17 +428,17 @@ See [`CONTRIBUTING.md`](https://github.com/defai-digital/ax-bi/blob/main/CONTRIB
 
 ## Built on Apache Superset
 
-AX-BI is a derivative work of [Apache Superset](https://superset.apache.org), a project of the Apache Software Foundation, used under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). DEFAI Private Limited is grateful to the Apache Superset community for the foundation this product is built on.
+AX BI is a derivative work of [Apache Superset](https://superset.apache.org), a project of the Apache Software Foundation, used under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). DEFAI Private Limited is grateful to the Apache Superset community for the foundation this product is built on.
 
-*Apache Superset, Apache, and the Apache feather logo are trademarks of the Apache Software Foundation. DEFAI Private Limited and AX-BI are not affiliated with or endorsed by the Apache Software Foundation.* Upstream attribution and license terms are retained in the [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) and [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) files; the documentation links above point to the upstream Apache Superset docs, which apply to the corresponding AX-BI functionality.
+*Apache Superset, Apache, and the Apache feather logo are trademarks of the Apache Software Foundation. DEFAI Private Limited and AX BI are not affiliated with or endorsed by the Apache Software Foundation.* Upstream attribution and license terms are retained in the [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) and [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) files; the documentation links above point to the upstream Apache Superset docs, which apply to the corresponding AX BI functionality.
 
 ## License
 
-AX-BI is distributed under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). See [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) and [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) for details.
+AX BI is distributed under the [Apache License 2.0](https://github.com/defai-digital/ax-bi/blob/main/LICENSE). See [`LICENSE`](https://github.com/defai-digital/ax-bi/blob/main/LICENSE) and [`NOTICE`](https://github.com/defai-digital/ax-bi/blob/main/NOTICE) for details.
 
 ## About DEFAI
 
-**AX-BI** is developed and maintained by **DEFAI Private Limited**.
+**AX BI** is developed and maintained by **DEFAI Private Limited**.
 
 <!-- TODO: add DEFAI website, contact email, and support channel once finalized. -->
 - Website: _coming soon_

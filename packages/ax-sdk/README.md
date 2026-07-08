@@ -17,7 +17,7 @@ limitations under the License.
 
 # @defai/ax-sdk
 
-TypeScript SDK for integrating with the AX-BI analytics platform. Provides typed access to AX-BI via REST API and AI tools via MCP (Model Context Protocol).
+TypeScript SDK for integrating with the AX BI analytics platform. Provides typed access to AX BI via REST API and AI tools via MCP (Model Context Protocol).
 
 ## Installation
 
@@ -118,7 +118,7 @@ const { results } = await axbi.dashboards.list({
 
 ## AI / MCP Tools
 
-The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX-BI MCP service (port 5008):
+The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX BI MCP service (port 5008):
 
 | Method | Description |
 |--------|-------------|

@@ -37,24 +37,24 @@ The fastest way to get everything running with Docker:
 **Prerequisites:** Docker and Docker Compose installed
 
 ```bash
-# 1. Clone the AX-BI repository
+# 1. Clone the ax-bi repository
 git clone <your-ax-bi-repository-url>
 cd ax-bi
 
-# 2. Start AX-BI, including Superset and the MCP service
+# 2. Start AX BI, including Superset and the MCP service
 cp docker/.env-axbi.example docker/.env-axbi
 # Fill required secrets in docker/.env-axbi, then run:
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
 **That's it!** ✨
-- AX-BI is running at http://localhost:8088
+- AX BI is running at http://localhost:8088
 - MCP service is running at http://localhost:5008
 - Now configure Claude Desktop (see Step 2 below)
 
 #### What Docker Compose does:
 - Sets up PostgreSQL database
-- Builds and runs AX-BI containers
+- Builds and runs AX BI containers
 - Starts the MCP service
 - Starts the TypeScript `ax-services` sidecar
 - Handles all networking and dependencies

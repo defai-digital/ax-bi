@@ -430,7 +430,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
         <AXBIPage>
           <AXBIHero>
             <div>
-              <AXBIEyebrow>{t('AX-BI workspace')}</AXBIEyebrow>
+              <AXBIEyebrow>{t('AX BI workspace')}</AXBIEyebrow>
               <AXBIHeroTitle>
                 {t('Build dashboards from files, datasets, and AI prompts')}
               </AXBIHeroTitle>
@@ -466,7 +466,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
               </AXBIActionRow>
             </div>
             <AXBIPanel>
-              <AXBISectionTitle>{t('Ask AX-BI')}</AXBISectionTitle>
+              <AXBISectionTitle>{t('Ask AX BI')}</AXBISectionTitle>
               <AXBISectionDescription>
                 {t(
                   'Use AX-Studio MCP prompts like “create a dashboard from this file” or “show sales by product line”.',

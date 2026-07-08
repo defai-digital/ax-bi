@@ -1,7 +1,7 @@
 {
   "name": "@ax-bi/mcp-server",
   "version": "1.0.0",
-  "description": "AX-BI MCP (Model Context Protocol) Server",
+  "description": "AX BI MCP (Model Context Protocol) Server",
   "main": "index.js",
   "bin": {
     "ax-bi-mcp": "./bin/ax-bi-mcp.js"

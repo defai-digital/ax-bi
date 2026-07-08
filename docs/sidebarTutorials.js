@@ -29,7 +29,7 @@ const sidebars = {
     },
     {
       type: 'doc',
-      label: 'AX-BI Rename Policy',
+      label: 'AX BI Rename Policy',
       id: 'ax-bi-rename-policy',
     },
     {

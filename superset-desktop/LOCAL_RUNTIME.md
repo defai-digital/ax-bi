@@ -1,7 +1,7 @@
-# AX-BI Desktop Local Runtime
+# AX BI Desktop Local Runtime
 
-AX-BI Desktop should make local evaluation feel like a normal desktop
-application while keeping AX-BI's server-backed architecture intact.
+AX BI Desktop should make local evaluation feel like a normal desktop
+application while keeping AX BI's server-backed architecture intact.
 
 The target user path is:
 
@@ -9,14 +9,14 @@ The target user path is:
 brew install --cask defai-digital/ax-bi/ax-bi
 ```
 
-After installation, the user opens AX-BI Desktop. The bundled launcher offers
+After installation, the user opens AX BI Desktop. The bundled launcher offers
 two paths:
 
-- Connect to an existing AX-BI server.
-- Start AX-BI locally.
+- Connect to an existing AX BI server.
+- Start AX BI locally.
 
 The local path is for trials, demos, and technical evaluators. Production users
-should normally connect to a hosted or centrally managed AX-BI instance.
+should normally connect to a hosted or centrally managed AX BI instance.
 
 ## Best-Practice Decision
 
@@ -24,7 +24,7 @@ Use Homebrew for installation, then let the Tauri app manage the local runtime.
 
 Homebrew should install:
 
-- AX-BI Desktop.
+- AX BI Desktop.
 - Colima.
 - Docker CLI.
 - Docker Compose.
@@ -35,7 +35,7 @@ The Tauri app should manage:
 - Generated secrets.
 - Compose file generation.
 - Colima startup.
-- AX-BI container lifecycle.
+- AX BI container lifecycle.
 - Health checks, logs, updates, and reset flows.
 
 Do not require users to clone this repository or edit `.env` files for a local
@@ -64,7 +64,7 @@ The generated Compose stack uses published images:
 - `ghcr.io/defai-digital/ax-bi:latest`
 - `ghcr.io/defai-digital/ax-bi-services:latest`
 
-Release builds should pin these tags to the AX-BI Desktop release train.
+Release builds should pin these tags to the AX BI Desktop release train.
 
 ## Colima And Docker Isolation
 
@@ -80,13 +80,13 @@ Docker commands use the profile socket directly:
 DOCKER_HOST=unix://$HOME/.colima/ax-bi/docker.sock
 ```
 
-This avoids changing the user's global Docker context and keeps AX-BI Desktop
+This avoids changing the user's global Docker context and keeps AX BI Desktop
 from interfering with other Docker Desktop, Colima, or Podman workflows.
 
-Public AX-BI services bind only to loopback:
+Public AX BI services bind only to loopback:
 
 ```text
-127.0.0.1:8088  AX-BI web app
+127.0.0.1:8088  AX BI web app
 127.0.0.1:5008  MCP service
 127.0.0.1:5010  AX Services
 ```
@@ -115,10 +115,10 @@ launcher origin.
 Recommended window model:
 
 - A local launcher window has access to local runtime commands.
-- The AX-BI web app window loads `http://127.0.0.1:8088` or a configured
+- The AX BI web app window loads `http://127.0.0.1:8088` or a configured
   hosted instance and has no local runtime privileges.
 
-This keeps a server-side XSS or an untrusted AX-BI origin from gaining host
+This keeps a server-side XSS or an untrusted AX BI origin from gaining host
 container-control capabilities.
 
 ## Release Plan

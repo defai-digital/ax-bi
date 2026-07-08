@@ -64,7 +64,7 @@ function invoke(command, args = {}) {
   const internals = window.__TAURI_INTERNALS__;
   if (!internals || typeof internals.invoke !== 'function') {
     return Promise.reject(
-      new Error('AX-BI Desktop native bridge is unavailable'),
+      new Error('AX BI Desktop native bridge is unavailable'),
     );
   }
 
@@ -134,10 +134,10 @@ function renderStatus(status) {
 
 function summaryText(status) {
   if (status.axbi_healthy) {
-    return 'Local AX-BI is ready';
+    return 'Local AX BI is ready';
   }
   if (status.axbi_running) {
-    return 'Local AX-BI is starting';
+    return 'Local AX BI is starting';
   }
   if (!status.dependencies.every(dependency => dependency.installed)) {
     return 'Install missing runtime dependencies';
@@ -228,17 +228,17 @@ async function pollUntilHealthy() {
     const status = await invoke('get_local_runtime_status');
     renderStatus(status);
     if (status.axbi_healthy) {
-      setActivity('Local AX-BI is ready', 'ok');
+      setActivity('Local AX BI is ready', 'ok');
       return;
     }
     const message = status.axbi_running
-      ? 'Waiting for AX-BI health checks'
+      ? 'Waiting for AX BI health checks'
       : 'Waiting for containers to start';
     setActivity(message);
     elements.summary.textContent = message;
     await delay(2000);
   }
-  setActivity('AX-BI is still starting; refresh status in a moment', 'warn');
+  setActivity('AX BI is still starting; refresh status in a moment', 'warn');
 }
 
 function nextPaint() {
@@ -303,7 +303,7 @@ async function loadLogs() {
 
 function openLocalAxbi() {
   if (!currentStatus || !currentStatus.web_url) {
-    setActivity('Local AX-BI URL is unavailable', 'bad');
+    setActivity('Local AX BI URL is unavailable', 'bad');
     return;
   }
   window.location.assign(currentStatus.web_url);
@@ -338,16 +338,16 @@ function wireEvents() {
     runAction('Preparing local runtime', 'prepare_local_runtime');
   });
   elements.start.addEventListener('click', () => {
-    runAction('Starting local AX-BI', 'start_local_runtime', pollUntilHealthy);
+    runAction('Starting local AX BI', 'start_local_runtime', pollUntilHealthy);
   });
   elements.stop.addEventListener('click', () => {
-    runAction('Stopping local AX-BI', 'stop_local_runtime');
+    runAction('Stopping local AX BI', 'stop_local_runtime');
   });
   elements.restart.addEventListener('click', () => {
-    runAction('Restarting local AX-BI', 'restart_local_runtime', pollUntilHealthy);
+    runAction('Restarting local AX BI', 'restart_local_runtime', pollUntilHealthy);
   });
   elements.update.addEventListener('click', () => {
-    runAction('Updating local AX-BI images', 'update_local_runtime', pollUntilHealthy);
+    runAction('Updating local AX BI images', 'update_local_runtime', pollUntilHealthy);
   });
   elements.credentials.addEventListener('click', showCredentials);
   elements.openLocal.addEventListener('click', openLocalAxbi);

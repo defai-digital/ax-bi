@@ -18,6 +18,7 @@
 // Tauri commands exposed to the frontend
 
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use url::Url;
 
@@ -173,16 +174,28 @@ fn ensure_launcher_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), S
     if is_launcher_url(&url) {
         Ok(())
     } else {
-        Err("Local runtime commands are only available in the AX-BI launcher".to_string())
+        Err("Local runtime commands are only available in the AX BI launcher".to_string())
     }
 }
 
 fn is_launcher_url(url: &Url) -> bool {
-    if url.scheme() == "tauri" {
+    if matches!(url.scheme(), "tauri" | "asset") {
         return true;
     }
 
-    matches!(url.host_str(), Some("tauri.localhost")) && url.path().ends_with("index.html")
+    if matches!(url.host_str(), Some("tauri.localhost")) {
+        return true;
+    }
+
+    url.scheme() == "file" && file_url_is_launcher_index(url)
+}
+
+fn file_url_is_launcher_index(url: &Url) -> bool {
+    let Ok(path) = url.to_file_path() else {
+        return false;
+    };
+
+    path.ends_with(Path::new("superset-desktop/src/index.html"))
 }
 
 #[tauri::command]
@@ -423,8 +436,26 @@ mod tests {
         assert!(is_launcher_url(
             &Url::parse("http://tauri.localhost/index.html").unwrap()
         ));
+        assert!(is_launcher_url(
+            &Url::parse("http://tauri.localhost/").unwrap()
+        ));
+        assert!(is_launcher_url(
+            &Url::parse("https://tauri.localhost/generated/app/index.html").unwrap()
+        ));
+        assert!(is_launcher_url(
+            &Url::parse("asset://localhost/index.html").unwrap()
+        ));
+        assert!(is_launcher_url(
+            &Url::from_file_path(
+                "/Users/test/repo/superset-desktop/src/index.html"
+            )
+            .unwrap()
+        ));
         assert!(!is_launcher_url(
             &Url::parse("http://127.0.0.1:8088/ax-bi/welcome/").unwrap()
+        ));
+        assert!(!is_launcher_url(
+            &Url::from_file_path("/tmp/index.html").unwrap()
         ));
         assert!(!is_launcher_url(
             &Url::parse("https://ax-bi.example.test/index.html").unwrap()

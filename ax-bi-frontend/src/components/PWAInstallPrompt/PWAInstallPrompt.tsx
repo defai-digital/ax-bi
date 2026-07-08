@@ -115,15 +115,15 @@ export const PWAInstallPrompt: FC = () => {
 
   const getPlatformText = () => {
     if (platform?.includes('windows')) {
-      return t('Install AX-BI on Windows');
+      return t('Install AX BI on Windows');
     }
     if (platform?.includes('mac')) {
-      return t('Install AX-BI on Mac');
+      return t('Install AX BI on Mac');
     }
     if (platform?.includes('linux')) {
-      return t('Install AX-BI on Linux');
+      return t('Install AX BI on Linux');
     }
-    return t('Install AX-BI');
+    return t('Install AX BI');
   };
 
   return (

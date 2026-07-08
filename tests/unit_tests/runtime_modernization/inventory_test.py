@@ -46,7 +46,7 @@ def test_runtime_inventory_keeps_security_and_metadata_in_python() -> None:
 
 
 def test_runtime_inventory_identifies_typescript_candidates() -> None:
-    """AX-BI orchestration areas are TypeScript candidates."""
+    """AX BI orchestration areas are TypeScript candidates."""
 
     candidates = {item.area: item for item in get_candidate_inventory()}
 

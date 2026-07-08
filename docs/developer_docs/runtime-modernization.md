@@ -19,7 +19,7 @@ under the License.
 
 # Runtime Modernization
 
-AX-BI uses an incremental runtime split. Superset Python remains authoritative
+AX BI uses an incremental runtime split. Superset Python remains authoritative
 for core BI behavior, `ax-services` owns selected TypeScript orchestration
 workflows, and Rust is limited to measured pure kernels with Python fallback.
 

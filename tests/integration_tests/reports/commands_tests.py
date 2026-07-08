@@ -701,7 +701,7 @@ def test_email_chart_report_schedule_with_cc_bcc(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_report_email_chart_with_cc_and_bcc.chart.id}"
-            '%7D&force=false">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         if notification_targets:
@@ -758,7 +758,7 @@ def test_email_chart_report_schedule(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_report_email_chart.chart.id}"
-            '%7D&force=false">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         assert email_mock.call_args[0][0] == notification_targets[0]
@@ -815,7 +815,7 @@ def test_email_chart_report_schedule_alpha_owner(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_report_email_chart_alpha_owner.chart.id}"
-            '%7D&force=false">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         assert email_mock.call_args[0][0] == notification_targets[0]
@@ -862,7 +862,7 @@ def test_email_chart_report_schedule_force_screenshot(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_report_email_chart_force_screenshot.chart.id}"
-            '%7D&force=true">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            '%7D&force=true">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         assert email_mock.call_args[0][0] == notification_targets[0]
@@ -899,7 +899,7 @@ def test_email_chart_alert_schedule(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_alert_email_chart.chart.id}"
-            '%7D&force=true">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            '%7D&force=true">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         assert email_mock.call_args[0][0] == notification_targets[0]
@@ -972,7 +972,7 @@ def test_email_chart_report_schedule_with_csv(
         assert (
             '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
             f"{create_report_email_chart_with_csv.chart.id}%7D&"
-            'force=false">Explore in AX-BI</a>' in email_mock.call_args[0][2]
+            'force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
         # Assert the email smtp address
         assert email_mock.call_args[0][0] == notification_targets[0]

@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Runtime ownership inventory for AX-BI modernization planning."""
+"""Runtime ownership inventory for AX BI modernization planning."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ RUNTIME_INVENTORY: tuple[RuntimeInventoryItem, ...] = (
         target_runtime=Runtime.TYPESCRIPT,
         disposition=MigrationDisposition.CANDIDATE,
         rationale=(
-            "MCP and GenAI orchestration are AX-BI-specific, contract-oriented, "
+            "MCP and GenAI orchestration are AX BI-specific, contract-oriented, "
             "and suitable for shadow execution behind feature flags."
         ),
         required_evidence=(

@@ -19,7 +19,7 @@ under the License.
 
 # Superset Rust Proof Of Concept
 
-This workspace contains optional Rust kernels for AX-BI runtime modernization.
+This workspace contains optional Rust kernels for AX BI runtime modernization.
 The `ax_sql` crate exposes a narrow PyO3 helper for SQL whitespace
 normalization. The `ax_genai` crate exposes GenAI helper kernels such as asset
 search ranking. Superset imports these only when built and enabled; Python

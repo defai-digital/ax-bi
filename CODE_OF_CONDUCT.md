@@ -18,12 +18,12 @@ under the License.
 
 # Code of Conduct
 
-AX-BI is developed and maintained by DEFAI Private Limited. This code of
-conduct applies to public project spaces managed for AX-BI, including GitHub
+AX BI is developed and maintained by DEFAI Private Limited. This code of
+conduct applies to public project spaces managed for AX BI, including GitHub
 issues, discussions, pull requests when invited, documentation comments, release
 threads, and any DEFAI-managed community channel for the project.
 
-AX-BI is not accepting unsolicited public code contributions or pull requests.
+AX BI is not accepting unsolicited public code contributions or pull requests.
 The standards below still apply to bug reports, feature requests, product
 feedback, reproducible issue reports, and any agreed contribution path.
 
@@ -58,7 +58,7 @@ Unacceptable behavior includes:
   business information.
 - Repeatedly reopening closed topics, bypassing moderation, or pressuring
   maintainers to accept unsolicited work.
-- Misrepresenting AX-BI, DEFAI Private Limited, Apache Superset, or the Apache
+- Misrepresenting AX BI, DEFAI Private Limited, Apache Superset, or the Apache
   Software Foundation.
 
 ## Reporting Issues
@@ -87,9 +87,9 @@ the project and its participants.
 
 ## Apache Superset
 
-AX-BI is derived from Apache Superset, but AX-BI is independently maintained by
+AX BI is derived from Apache Superset, but AX BI is independently maintained by
 DEFAI Private Limited and is not an Apache Software Foundation project.
 
 Apache Superset, Apache, and the Apache feather logo are trademarks of the
-Apache Software Foundation. AX-BI and DEFAI Private Limited are not affiliated
+Apache Software Foundation. AX BI and DEFAI Private Limited are not affiliated
 with or endorsed by the Apache Software Foundation.

@@ -1,7 +1,7 @@
 {
   "name": "ax-services",
   "version": "0.0.1",
-  "description": "AX-BI TypeScript sidecar services",
+  "description": "AX BI TypeScript sidecar services",
   "main": "dist/index.js",
   "files": [
     "dist",

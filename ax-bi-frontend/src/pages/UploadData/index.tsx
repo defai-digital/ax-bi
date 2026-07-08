@@ -434,7 +434,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
         </StepCard>
         <StepCard>
           <StepBadge>2</StepBadge>
-          <StepTitle>{t('AX-BI prepares the dataset')}</StepTitle>
+          <StepTitle>{t('AX BI prepares the dataset')}</StepTitle>
           <StepText>
             {t('Columns and types are detected so the data is ready to chart.')}
           </StepText>

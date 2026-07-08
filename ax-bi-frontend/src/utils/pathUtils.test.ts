@@ -224,7 +224,7 @@ test('normalizeLegacyRoutePrefix should replace legacy Superset path segment onl
   );
 });
 
-test('normalizeLegacyRoutePrefix should keep current AX-BI path segment', async () => {
+test('normalizeLegacyRoutePrefix should keep current AX BI path segment', async () => {
   const { normalizeLegacyRoutePrefix } = await loadPathUtils('/ax-bi/');
 
   expect(normalizeLegacyRoutePrefix('/ax-bi/dashboard/1/')).toBe(

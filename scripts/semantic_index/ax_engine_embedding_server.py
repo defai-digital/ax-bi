@@ -15,7 +15,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Host-side ax-engine embedding HTTP proxy for AX-BI Docker."""
+"""Host-side ax-engine embedding HTTP proxy for AX BI Docker."""
 
 from __future__ import annotations
 

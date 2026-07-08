@@ -34,6 +34,6 @@ The samples intentionally include a leading-zero `customer_id` so QA can verify
 that metadata suggests preserving identifier-like values as text.
 
 The `customers.xls` fixture uses workbook content that pandas can sniff as an
-Excel file while exercising AX-BI's accepted `.xls` extension path. The local QA
+Excel file while exercising AX BI's accepted `.xls` extension path. The local QA
 environment does not include an `xlwt` writer for generating legacy BIFF `.xls`
 files.

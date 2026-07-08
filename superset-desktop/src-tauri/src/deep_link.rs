@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Deep link handling for AX-BI desktop client
+// Deep link handling for AX BI desktop client
 
 use log::{info, warn};
 use tauri::{AppHandle, Manager, Runtime};

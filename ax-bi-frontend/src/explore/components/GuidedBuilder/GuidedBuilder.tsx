@@ -256,7 +256,7 @@ export default function GuidedBuilder({
   return (
     <Container data-test="guided-builder">
       <Intro>
-        <Eyebrow>{t('AX-BI builder')}</Eyebrow>
+        <Eyebrow>{t('AX BI builder')}</Eyebrow>
         <IntroTitle>{t('Build the chart in a few choices')}</IntroTitle>
         <IntroText>
           {t(
@@ -278,7 +278,7 @@ export default function GuidedBuilder({
 
         {showMeasures && (
           <Section>
-            <SectionLabel>{t('What should AX-BI measure?')}</SectionLabel>
+            <SectionLabel>{t('What should AX BI measure?')}</SectionLabel>
             <Select
               ariaLabel={t('Measures')}
               mode={measuresMulti ? 'multiple' : 'single'}

@@ -16,7 +16,7 @@
 #
 apiVersion: v2
 appVersion: "6.1.0"
-description: AX-BI is a GenAI-native business intelligence platform built on Apache Superset
+description: AX BI is a GenAI-native business intelligence platform built on Apache Superset
 name: ax-bi
 icon: https://raw.githubusercontent.com/defai-digital/ax-bi/main/docs/static/img/logo.svg
 home: https://github.com/defai-digital/ax-bi

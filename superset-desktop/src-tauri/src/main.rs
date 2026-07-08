@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// AX-BI Desktop Client - Main Entry Point
+// AX BI Desktop Client - Main Entry Point
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -29,7 +29,7 @@ use log::info;
 
 fn main() {
     env_logger::init();
-    info!("Starting AX-BI Desktop Client");
+    info!("Starting AX BI Desktop Client");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -58,5 +58,5 @@ fn main() {
             commands::get_local_admin_credentials,
         ])
         .run(tauri::generate_context!())
-        .expect("Error while running AX-BI Desktop");
+        .expect("Error while running AX BI Desktop");
 }

@@ -23,23 +23,23 @@ under the License.
 
 # Upstream Sync Policy
 
-AX-BI is derived from Apache Superset. Staying close to upstream Superset is
+AX BI is derived from Apache Superset. Staying close to upstream Superset is
 important for security, dependency health, database compatibility, dashboard and
 SQL Lab reliability, and long-term maintainability.
 
-AX-BI must not merge upstream changes blindly. Upstream work can touch the same
-surfaces AX-BI extends for MCP, GenAI BI, semantic metadata, local upload,
+AX BI must not merge upstream changes blindly. Upstream work can touch the same
+surfaces AX BI extends for MCP, GenAI BI, semantic metadata, local upload,
 desktop integration, and product-specific UI. Every upstream sync must be
 controlled, reviewed, tested, and documented.
 
 ## Policy
 
-AX-BI regularly merges Superset security fixes, bug fixes, dependency updates,
+AX BI regularly merges Superset security fixes, bug fixes, dependency updates,
 and stable release branches. Large features, architectural rewrites, and
 breaking changes are selective and require explicit review.
 
-The goal is not to merge every upstream pull request. The goal is to keep AX-BI
-close to stable Superset releases while isolating AX-BI-specific work into
+The goal is not to merge every upstream pull request. The goal is to keep AX BI
+close to stable Superset releases while isolating AX BI-specific work into
 extensions, sidecars, MCP modules, and narrow fork patches wherever possible.
 
 ## Priority Matrix
@@ -57,7 +57,7 @@ extensions, sidecars, MCP modules, and narrow fork patches wherever possible.
 | UI redesign | Selective | Medium-low |
 | Experimental feature | Usually skip | Low |
 | Large architecture refactor | Review through a migration plan | Risky |
-| Breaking API change | Only with an AX-BI compatibility plan | Risky |
+| Breaking API change | Only with an AX BI compatibility plan | Risky |
 
 ## Always Prioritize
 
@@ -85,7 +85,7 @@ These areas should normally be merged after test validation:
 
 ## Review Carefully
 
-These areas often overlap with AX-BI product work and require deeper review:
+These areas often overlap with AX BI product work and require deeper review:
 
 - Dashboard layout rewrites
 - Explore control refactors
@@ -103,9 +103,9 @@ Use this branch model for upstream work:
 
 | Branch | Purpose |
 | --- | --- |
-| `main` | AX-BI product development and release-ready integration |
+| `main` | AX BI product development and release-ready integration |
 | `upstream-sync/<superset-version>` | Controlled merge from an Apache Superset release branch or tag |
-| `ax-bi-stable` | Tested AX-BI release candidate branch, when needed |
+| `ax-bi-stable` | Tested AX BI release candidate branch, when needed |
 | `hotfix/<topic>` | Urgent security or production bug fixes |
 
 Prefer upstream release branches and tags over random upstream pull requests.
@@ -114,14 +114,14 @@ sync is higher than the cherry-pick risk.
 
 ## Sync Process
 
-1. Identify the current AX-BI base commit or last upstream sync point.
+1. Identify the current AX BI base commit or last upstream sync point.
 2. Identify the target Superset release tag, release branch, or security fix.
 3. Produce a gap report before merging.
 4. Create an `upstream-sync/<superset-version>` branch.
 5. Merge the target release branch or cherry-pick the selected fixes.
-6. Resolve conflicts without dropping AX-BI-specific behavior.
+6. Resolve conflicts without dropping AX BI-specific behavior.
 7. Run backend, frontend, MCP, and migration checks.
-8. Validate core AX-BI workflows in staging.
+8. Validate core AX BI workflows in staging.
 9. Document conflict decisions and skipped upstream changes.
 10. Merge to `main` only after review.
 
@@ -129,12 +129,12 @@ sync is higher than the cherry-pick risk.
 
 Every upstream sync should answer:
 
-- Which Superset release/tag is AX-BI being compared against?
+- Which Superset release/tag is AX BI being compared against?
 - Which security fixes are missing?
 - Which dependency updates are missing?
 - Which dashboard, Explore, SQL Lab, database, migration, and reporting fixes
   are missing?
-- Which upstream changes touch AX-BI custom areas?
+- Which upstream changes touch AX BI custom areas?
 - Which files conflict?
 - Which migrations are new or changed?
 - Which changes are intentionally skipped, and why?
@@ -154,7 +154,7 @@ git diff --name-status origin/main...apache/<release-branch>
 Replace `<release-branch>` with the target upstream branch or compare directly
 against a release tag such as `6.1.0` when appropriate.
 
-## AX-BI Regression Areas
+## AX BI Regression Areas
 
 After every upstream sync, validate at least:
 
@@ -173,7 +173,7 @@ After every upstream sync, validate at least:
 
 ## Modularity Requirement
 
-When an upstream sync conflicts with AX-BI behavior, first ask whether the AX-BI
+When an upstream sync conflicts with AX BI behavior, first ask whether the AX BI
 behavior can move out of forked Superset core and into:
 
 - MCP service modules

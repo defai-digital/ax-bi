@@ -1,5 +1,5 @@
 {
-  "productName": "AX-BI",
+  "productName": "AX BI",
   "version": "0.1.0",
   "identifier": "com.axbi.desktop",
   "build": {
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "AX-BI",
+        "title": "AX BI",
         "width": 1400,
         "height": 900,
         "minWidth": 800,

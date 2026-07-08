@@ -8,17 +8,17 @@ cask "ax-bi" do
   sha256 arm: "ARM64_SHA256",
          intel: "X64_SHA256"
 
-  url "https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v#{version}/AX-BI_#{version}_#{arch}.zip",
+  url "https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v#{version}/AX%20BI_#{version}_#{arch}.zip",
       verified: "github.com/defai-digital/ax-bi/"
-  name "AX-BI"
-  desc "Desktop client and local runtime launcher for AX-BI"
+  name "AX BI"
+  desc "Desktop client and local runtime launcher for AX BI"
   homepage "https://github.com/defai-digital/ax-bi"
 
   depends_on formula: "colima"
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 
-  app "AX-BI.app"
+  app "AX BI.app"
 
   zap trash: [
     "~/Library/Application Support/com.axbi.desktop",

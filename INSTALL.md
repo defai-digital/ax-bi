@@ -17,9 +17,9 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Installing AX-BI
+# Installing AX BI
 
-AX-BI is a Superset-based BI application with an MCP service for AI-assisted
+AX BI is a Superset-based BI application with an MCP service for AI-assisted
 analytics workflows. The recommended install path is Docker Compose. Local
 source runs are useful for development and Ax Studio MCP testing.
 
@@ -48,7 +48,7 @@ Generate secrets with:
 openssl rand -base64 42
 ```
 
-Start AX-BI:
+Start AX BI:
 
 ```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
@@ -58,8 +58,8 @@ Open:
 
 | Service | URL |
 | --- | --- |
-| AX-BI web app | `http://localhost:8088/ax-bi/welcome/` |
-| AX-BI MCP service | `http://localhost:5008/mcp` |
+| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
+| AX BI MCP service | `http://localhost:5008/mcp` |
 | AX services sidecar | `http://localhost:5010` |
 
 Log in with:
@@ -109,7 +109,7 @@ http://127.0.0.1:5008/mcp
 
 ## Notes
 
-- AX-BI uses `/ax-bi` as the current route prefix.
+- The technical route prefix remains `/ax-bi`.
 - Legacy `/superset` links redirect to `/ax-bi` for compatibility with
   upstream Superset routes.
 - MCP chart and dashboard URLs should use `127.0.0.1` or your real host, not

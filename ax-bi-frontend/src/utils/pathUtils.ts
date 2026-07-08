@@ -26,7 +26,7 @@ import { applicationRoot } from 'src/utils/getBootstrapData';
 const SAFE_ABSOLUTE_URL_RE = /^(https?|ftp|mailto|tel):/i;
 
 /**
- * Normalizes legacy Superset route prefixes to the public AX-BI route prefix.
+ * Normalizes legacy Superset route prefixes to the public AX BI route prefix.
  * Deployment roots are preserved, so
  * `/analytics/superset/foo` becomes `/analytics/ax-bi/foo`.
  *

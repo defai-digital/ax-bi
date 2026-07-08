@@ -318,7 +318,7 @@ export const useExploreAdditionalActionsMenu = (
 
   const shareByEmail = useCallback(async () => {
     try {
-      const subject = t('AX-BI Chart');
+      const subject = t('AX BI Chart');
       if (!latestQueryFormData?.datasource) {
         throw new Error('No datasource available');
       }

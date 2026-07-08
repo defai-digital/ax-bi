@@ -240,7 +240,7 @@ async def test_health_check_serves_ax_services_when_enabled(
     assert response == HealthCheckResponse(
         status="healthy",
         timestamp="2026-06-29T12:00:00.000Z",
-        service="AX-BI MCP Service",
+        service="AX BI MCP Service",
         version="1.2.3",
         python_version="v24.16.0",
         platform="linux",

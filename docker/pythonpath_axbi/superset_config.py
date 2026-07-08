@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Docker deployment configuration for AX-BI."""
+"""Docker deployment configuration for AX BI."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from flask_caching.backends.filesystemcache import FileSystemCache
 def _required_env(name: str) -> str:
     value = os.getenv(name)
     if not value:
-        raise RuntimeError(f"{name} must be set for AX-BI Docker deployment")
+        raise RuntimeError(f"{name} must be set for AX BI Docker deployment")
     return value
 
 
@@ -85,7 +85,7 @@ THUMBNAIL_CACHE_CONFIG = CACHE_CONFIG
 
 
 class CeleryConfig:
-    """Celery settings for the AX-BI Docker stack."""
+    """Celery settings for the AX BI Docker stack."""
 
     broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
     result_backend = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"

@@ -22,7 +22,7 @@ build-backend = "maturin"
 [project]
 name = "ax-genai"
 version = "0.1.0"
-description = "AX-BI Rust GenAI helper kernels"
+description = "AX BI Rust GenAI helper kernels"
 requires-python = ">=3.12"
 license = "Apache-2.0"
 

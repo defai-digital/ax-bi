@@ -1,7 +1,7 @@
 {
   "name": "axbi-desktop",
   "version": "0.1.0",
-  "description": "AX-BI Desktop Client - A thin shell for the AX-BI analytics platform",
+  "description": "AX BI Desktop Client - A thin shell for the AX BI analytics platform",
   "private": true,
   "scripts": {
     "tauri": "npx tauri",

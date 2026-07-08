@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// System tray setup for AX-BI desktop client
+// System tray setup for AX BI desktop client
 
 use log::info;
 use tauri::{AppHandle, Runtime};

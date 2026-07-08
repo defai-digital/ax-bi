@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Python client for the AX-BI TypeScript sidecar."""
+"""Python client for the AX BI TypeScript sidecar."""
 
 from __future__ import annotations
 

@@ -52,7 +52,7 @@ beforeEach(() => {
 test('renders a platform-aware install prompt', () => {
   render(<PWAInstallPrompt />, { useTheme: true });
 
-  expect(screen.getByRole('status')).toHaveTextContent('Install AX-BI on Mac');
+  expect(screen.getByRole('status')).toHaveTextContent('Install AX BI on Mac');
   expect(
     screen.getByText(
       'Get quick access from your desktop with the installable app',

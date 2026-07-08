@@ -796,7 +796,7 @@ supersetWebsockets:
   # -- Set priorityClassName for supersetWebsockets pods
   priorityClassName: ~
 
-# AX-BI MCP service configuration
+# AX BI MCP service configuration
 mcp:
   enabled: true
   replicaCount: 1
@@ -876,7 +876,7 @@ mcp:
     failureThreshold: 3
     periodSeconds: 10
 
-# AX-BI TypeScript sidecar configuration
+# AX BI TypeScript sidecar configuration
 axServices:
   enabled: true
   replicaCount: 1

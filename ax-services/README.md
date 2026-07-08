@@ -19,7 +19,7 @@ under the License.
 
 # AX Services
 
-`ax-services` is the TypeScript sidecar foundation for AX-BI runtime
+`ax-services` is the TypeScript sidecar foundation for AX BI runtime
 modernization. It is intentionally small: health checks, readiness checks,
 configuration, logging, and Superset connectivity.
 

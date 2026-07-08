@@ -26,6 +26,7 @@ const { readdir, stat } = require("node:fs/promises");
 const { existsSync } = require("node:fs");
 const { chdir, cwd } = require("node:process");
 const { createRequire } = require("node:module");
+const { execFileSync } = require("node:child_process");
 
 // Increase memory limit for TypeScript compiler
 if (!process.env.NODE_OPTIONS?.includes("--max-old-space-size")) {
@@ -148,7 +149,11 @@ async function runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationD
     const command = `--noEmit --allowJs --composite false ${IGNORE_DEPRECATIONS_OPTION} --project ${tsConfig} ${argsStr} ${declarationFilesStr}`;
 
     try {
-      await executeTypeCheck(packageRootDirAbsolute, command, new Set(batch.map(normalizeDiagnosticPath)));
+      await executeTypeCheck(
+        packageRootDirAbsolute,
+        command,
+        createDiagnosticFilter(packageRootDirAbsolute, batch)
+      );
     } catch (error) {
       hasErrors = true;
       // Continue processing other batches to show all errors
@@ -166,7 +171,8 @@ function normalizeDiagnosticPath(filePath) {
 }
 
 const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
-const DIAGNOSTIC_START_REGEX = /^(.+?\.(?:tsx?|jsx?)):\d+:\d+ - (?:error|warning) TS\d+/;
+const DIAGNOSTIC_START_REGEX = /^(.+?\.(?:tsx?|jsx?)):(\d+):\d+ - (?:error|warning) TS\d+/;
+const DIFF_HUNK_REGEX = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/;
 
 /**
  * Keep only the diagnostic blocks that belong to the target files.
@@ -175,7 +181,7 @@ const DIAGNOSTIC_START_REGEX = /^(.+?\.(?:tsx?|jsx?)):\d+:\d+ - (?:error|warning
  * so a targeted check would otherwise fail on pre-existing errors in
  * unchanged dependency files.
  */
-function filterDiagnostics(stdout, onlyFiles) {
+function filterDiagnostics(stdout, shouldKeepDiagnostic) {
   const lines = stdout.split("\n");
   const kept = [];
   let keepBlock = false;
@@ -186,7 +192,7 @@ function filterDiagnostics(stdout, onlyFiles) {
     const plain = line.replace(ANSI_REGEX, "");
     const match = plain.match(DIAGNOSTIC_START_REGEX);
     if (match) {
-      keepBlock = onlyFiles.has(normalizeDiagnosticPath(match[1]));
+      keepBlock = shouldKeepDiagnostic(match[1], Number(match[2]));
       if (keepBlock) {
         keptCount += 1;
       } else {
@@ -206,21 +212,103 @@ function filterDiagnostics(stdout, onlyFiles) {
 }
 
 /**
+ * @param {string} packageRootDirAbsolute
+ * @param {string[]} tsFiles
+ * @returns {Map<string, Set<number>>}
+ */
+function getChangedLinesByFile(packageRootDirAbsolute, tsFiles) {
+  const diffArgs = [
+    "diff",
+    "--cached",
+    "--unified=0",
+    "--relative",
+    "--",
+    ...tsFiles,
+  ];
+  let diffOutput = "";
+
+  try {
+    diffOutput = execFileSync("git", diffArgs, {
+      cwd: packageRootDirAbsolute,
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+    });
+  } catch (e) {
+    return new Map();
+  }
+
+  const changedLinesByFile = new Map();
+  let currentFile;
+
+  for (const line of diffOutput.split("\n")) {
+    if (line.startsWith("+++ b/")) {
+      currentFile = normalizeDiagnosticPath(line.slice("+++ b/".length));
+      if (!changedLinesByFile.has(currentFile)) {
+        changedLinesByFile.set(currentFile, new Set());
+      }
+      continue;
+    }
+
+    const match = line.match(DIFF_HUNK_REGEX);
+    if (!match || !currentFile) {
+      continue;
+    }
+
+    const start = Number(match[1]);
+    const count = match[2] === undefined ? 1 : Number(match[2]);
+    const changedLines = changedLinesByFile.get(currentFile);
+
+    for (let offset = 0; offset < count; offset += 1) {
+      changedLines.add(start + offset);
+    }
+  }
+
+  return changedLinesByFile;
+}
+
+/**
+ * @param {string} packageRootDirAbsolute
+ * @param {string[]} tsFiles
+ */
+function createDiagnosticFilter(packageRootDirAbsolute, tsFiles) {
+  const onlyFiles = new Set(tsFiles.map(normalizeDiagnosticPath));
+  const changedLinesByFile = getChangedLinesByFile(
+    packageRootDirAbsolute,
+    tsFiles
+  );
+
+  return (filePath, lineNumber) => {
+    const normalizedPath = normalizeDiagnosticPath(filePath);
+    if (!onlyFiles.has(normalizedPath)) {
+      return false;
+    }
+
+    const changedLines = changedLinesByFile.get(normalizedPath);
+    return changedLines === undefined || changedLines.has(lineNumber);
+  };
+}
+
+/**
  * Execute the TypeScript type check command.
  *
- * When `onlyFiles` is provided, only diagnostics located in those files fail
- * the check; program-wide diagnostics in other files are reported as skipped.
+ * When `shouldKeepDiagnostic` is provided, only diagnostics it accepts fail
+ * the check; program-wide diagnostics outside that scope are reported as
+ * skipped.
  */
-async function executeTypeCheck(packageRootDirAbsolute, command, onlyFiles) {
+async function executeTypeCheck(
+  packageRootDirAbsolute,
+  command,
+  shouldKeepDiagnostic
+) {
   try {
     chdir(packageRootDirAbsolute);
     const tscw = packageRequire("tscw-config");
     const child = await tscw`${command}`;
 
-    if (onlyFiles) {
+    if (shouldKeepDiagnostic) {
       const { output, keptCount, droppedCount } = filterDiagnostics(
         child.stdout || "",
-        onlyFiles
+        shouldKeepDiagnostic
       );
       if (output) {
         console.log(output);

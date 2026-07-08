@@ -1,7 +1,7 @@
 {
   "name": "@defai/ax-sdk",
   "version": "0.1.0",
-  "description": "TypeScript SDK for integrating with AX-BI analytics platform",
+  "description": "TypeScript SDK for integrating with AX BI analytics platform",
   "keywords": [
     "ax-bi",
     "superset",

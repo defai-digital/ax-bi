@@ -45,7 +45,7 @@ It should be a long random bytes or str.
 
 On helm this can be set on `extraSecretEnv.SUPERSET_SECRET_KEY` or `configOverrides.secrets`
 
-The AX-BI values file deploys the web app, Celery worker, Celery beat,
+The AX BI values file deploys the web app, Celery worker, Celery beat,
 MCP service, and `ax-services` sidecar. For production, pin image tags,
 replace all placeholder secrets, use managed Postgres/Redis where possible,
 and enable JWT authentication for MCP.

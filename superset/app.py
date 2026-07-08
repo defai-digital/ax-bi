@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 def _register_legacy_route_redirects(app: Flask) -> None:
-    """Redirect legacy route-prefix URLs to the current AX-BI route prefix."""
+    """Redirect legacy route-prefix URLs to the current AX BI route prefix."""
 
     legacy_prefixes = [
         LEGACY_SUPERSET_ROUTE_PREFIX,

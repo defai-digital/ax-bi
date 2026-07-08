@@ -1,7 +1,7 @@
-# AX-BI opinionated values for Kubernetes deployments.
+# AX BI opinionated values for Kubernetes deployments.
 #
 # This file keeps upstream-compatible Superset internals in place while exposing
-# AX-BI images and services by default. Override all CHANGE_ME values before
+# AX BI images and services by default. Override all CHANGE_ME values before
 # using it outside a local cluster.
 
 nameOverride: ax-bi

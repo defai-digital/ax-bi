@@ -20,10 +20,10 @@
  */
 
 /**
- * AX-BI MCP (Model Context Protocol) Server Runner
+ * AX BI MCP (Model Context Protocol) Server Runner
  *
  * OVERVIEW:
- * This Node.js wrapper script provides an npx-compatible entry point for the AX-BI MCP service.
+ * This Node.js wrapper script provides an npx-compatible entry point for the AX BI MCP service.
  * It acts as a bridge between npm/npx tooling and the Python-based MCP server implementation.
  *
  * FUNCTIONALITY:
@@ -117,7 +117,7 @@ function validateArgs() {
 
 function printHelp() {
     console.log(`
-AX-BI MCP Server
+AX BI MCP Server
 
 Usage:
   Development: node superset/mcp_service/bin/ax-bi-mcp.js [options]
@@ -206,7 +206,7 @@ function findPython() {
     }
 }
 
-// Find AX-BI CLI executable
+// Find AX BI CLI executable
 function findSupersetCli() {
     const supersetRoot = findSupersetRoot();
     const cliPaths = [
@@ -297,7 +297,7 @@ function main() {
 
         console.error(`Starting Superset MCP server in HTTP mode on ${host}:${port}...`);
         if (!supersetCli) {
-            console.error('Error: Could not find AX-BI CLI executable.');
+            console.error('Error: Could not find AX BI CLI executable.');
             process.exit(1);
         }
 

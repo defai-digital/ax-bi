@@ -17,10 +17,10 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Getting Started with AX-BI Using Docker
+# Getting Started with AX BI Using Docker
 
-Docker is the recommended way to deploy AX-BI for users who want a
-self-contained stack. The AX-BI stack includes Superset, the MCP service, the
+Docker is the recommended way to deploy AX BI for users who want a
+self-contained stack. The AX BI stack includes Superset, the MCP service, the
 TypeScript `ax-services` sidecar, Postgres, Redis, Celery worker, and Celery
 beat.
 
@@ -57,7 +57,7 @@ Generate each secret value with:
 openssl rand -base64 42
 ```
 
-Then start AX-BI:
+Then start AX BI:
 
 ```shell
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
@@ -83,7 +83,7 @@ Services are exposed locally on:
 
 | Service | Default URL |
 |---------|-------------|
-| AX-BI web app | `http://localhost:8088/ax-bi/welcome/` |
+| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
 | MCP service | `http://localhost:5008/mcp` |
 | AX services sidecar | `http://localhost:5010` |
 
@@ -143,14 +143,14 @@ For a local single-user trial, you may set `MCP_DEV_USERNAME=admin` in
 - Configure JWT settings for the MCP service: `MCP_AUTH_ENABLED`,
   `MCP_JWT_ISSUER`, `MCP_JWT_AUDIENCE`, `MCP_JWKS_URI`, and optional
   `MCP_REQUIRED_SCOPES`.
-- Put the AX-BI web app behind HTTPS.
+- Put the AX BI web app behind HTTPS.
 - Keep Postgres and Redis private.
 - Pin image tags instead of using `latest`.
 - Back up the Postgres metadata database.
 
 ### Configuration
 
-The AX-BI Docker image includes
+The AX BI Docker image includes
 [`./docker/pythonpath_axbi/superset_config.py`](./pythonpath_axbi/superset_config.py),
 an environment-driven configuration for Docker deployments.
 

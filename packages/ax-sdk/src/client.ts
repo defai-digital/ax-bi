@@ -31,7 +31,7 @@ import { normalizeHttpBaseUrl } from './shared/url.js';
 
 /** Configuration for the AxBI client. */
 export interface AxBIConfig {
-  /** Base URL of the AX-BI web server (e.g., 'https://bi.example.com'). */
+  /** Base URL of the AX BI web server (e.g., 'https://bi.example.com'). */
   baseUrl: string;
   /**
    * URL of the MCP service. Defaults to `${baseUrl}` with port 5008.
@@ -46,14 +46,14 @@ export interface AxBIConfig {
   retries?: number;
 }
 
-/** Health status of the AX-BI server. */
+/** Health status of the AX BI server. */
 export interface HealthStatus {
   status: 'ok' | 'error';
   message?: string;
 }
 
 /**
- * Main entry point for the AX-BI SDK.
+ * Main entry point for the AX BI SDK.
  *
  * Provides access to:
  * - REST CRUD operations for dashboards, charts, datasets, databases, queries

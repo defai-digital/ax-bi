@@ -18,7 +18,7 @@
  */
 
 /**
- * Type definitions for the AX-BI Desktop Client Tauri API
+ * Type definitions for the AX BI Desktop Client Tauri API
  */
 
 import { invoke } from '@tauri-apps/api/core';
@@ -212,7 +212,7 @@ export async function getVersion(): Promise<string> {
 }
 
 /**
- * Get dependency and container status for the local AX-BI runtime.
+ * Get dependency and container status for the local AX BI runtime.
  */
 export async function getLocalRuntimeStatus(): Promise<LocalRuntimeStatus> {
   return assertLocalRuntimeStatus(await invoke<unknown>('get_local_runtime_status'));
@@ -226,7 +226,7 @@ export async function prepareLocalRuntime(): Promise<LocalRuntimeStatus> {
 }
 
 /**
- * Start Colima and the app-owned AX-BI Compose stack.
+ * Start Colima and the app-owned AX BI Compose stack.
  */
 export async function startLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
   return assertLocalRuntimeCommandOutput(
@@ -235,7 +235,7 @@ export async function startLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
 }
 
 /**
- * Stop the app-owned AX-BI Compose stack without deleting volumes.
+ * Stop the app-owned AX BI Compose stack without deleting volumes.
  */
 export async function stopLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
   return assertLocalRuntimeCommandOutput(
@@ -244,7 +244,7 @@ export async function stopLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
 }
 
 /**
- * Restart the app-owned AX-BI Compose stack.
+ * Restart the app-owned AX BI Compose stack.
  */
 export async function restartLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
   return assertLocalRuntimeCommandOutput(
@@ -253,7 +253,7 @@ export async function restartLocalRuntime(): Promise<LocalRuntimeCommandOutput> 
 }
 
 /**
- * Pull newer container images and restart the app-owned AX-BI stack.
+ * Pull newer container images and restart the app-owned AX BI stack.
  */
 export async function updateLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
   return assertLocalRuntimeCommandOutput(
@@ -262,7 +262,7 @@ export async function updateLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
 }
 
 /**
- * Read recent logs from an allowlisted local AX-BI service.
+ * Read recent logs from an allowlisted local AX BI service.
  */
 export async function getLocalRuntimeLogs(
   service?: string,
