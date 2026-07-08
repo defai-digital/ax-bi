@@ -306,6 +306,12 @@ export class AIResource {
     await this.ensureInitialized();
     const result = await this.mcp.callTool<MCPToolResult>(name, args);
 
+    if (result.isError) {
+      throw new AxBIError(`MCP tool "${name}" returned an error`, {
+        responseBody: result,
+      });
+    }
+
     // Prefer structuredContent if available
     if (result.structuredContent) {
       return result.structuredContent as T;

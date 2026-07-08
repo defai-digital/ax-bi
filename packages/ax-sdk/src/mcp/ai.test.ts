@@ -58,4 +58,30 @@ describe('AIResource', () => {
       AxBIError,
     );
   });
+
+  test('throws AxBIError when a typed tool result is marked as error', async () => {
+    const toolResult: MCPToolResult = {
+      isError: true,
+      content: [{ type: 'text', text: 'tool failed' }],
+      structuredContent: { assets: [], warnings: [] },
+    };
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => toolResult);
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.searchAssets({ query: 'sales' })).rejects.toMatchObject({
+      message: 'MCP tool "search_business_assets" returned an error',
+      responseBody: toolResult,
+    });
+  });
+
+  test('returns raw MCP errors from raw tool calls', async () => {
+    const toolResult: MCPToolResult = {
+      isError: true,
+      content: [{ type: 'text', text: 'tool failed' }],
+    };
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => toolResult);
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.callTool('raw_tool')).resolves.toBe(toolResult);
+  });
 });
