@@ -90,6 +90,15 @@ fn validate_server_url_path(path: &str) -> Result<(), String> {
                 "AXBI_SERVER_URL path must not include encoded path separators".to_string(),
             );
         }
+        if decoded
+            .chars()
+            .any(|ch| ch.is_whitespace() || ch.is_control())
+        {
+            return Err(
+                "AXBI_SERVER_URL path must not include whitespace or control characters"
+                    .to_string(),
+            );
+        }
     }
 
     Ok(())
@@ -271,6 +280,14 @@ mod tests {
         assert_eq!(
             normalize_server_url("https://superset.example.test/superset%5cadmin").unwrap_err(),
             "AXBI_SERVER_URL path must not include encoded path separators"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/superset%20admin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include whitespace or control characters"
+        );
+        assert_eq!(
+            normalize_server_url("https://superset.example.test/superset%00admin").unwrap_err(),
+            "AXBI_SERVER_URL path must not include whitespace or control characters"
         );
         assert_eq!(
             normalize_server_url("https://superset.example.test/superset%zz").unwrap_err(),
