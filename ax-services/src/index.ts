@@ -22,12 +22,14 @@ import { buildServer } from './server';
 import { SupersetClient } from './supersetClient';
 
 export async function start(): Promise<void> {
-  const config = buildConfig();
-  const logger = createLogger(config.logLevel);
-  const supersetClient = new SupersetClient(config);
-  const server = buildServer(config, supersetClient);
+  let logger = createLogger('error');
 
   try {
+    const config = buildConfig();
+    logger = createLogger(config.logLevel);
+    const supersetClient = new SupersetClient(config);
+    const server = buildServer(config, supersetClient);
+
     await server.listen({ host: config.host, port: config.port });
     logger.info('ax-services started', {
       host: config.host,
