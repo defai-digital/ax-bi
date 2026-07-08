@@ -57,6 +57,26 @@ describe('AuthProvider', () => {
       );
       await expect(auth.login()).resolves.toBeUndefined();
     });
+
+    test('rejects empty access tokens at construction', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            { type: 'token', accessToken: '   ' },
+            'http://localhost:8088',
+          ),
+      ).toThrow('accessToken must not be empty');
+    });
+
+    test('rejects control characters in access tokens at construction', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            { type: 'token', accessToken: 'token\nX-Other: value' },
+            'http://localhost:8088',
+          ),
+      ).toThrow('accessToken must not contain control characters');
+    });
   });
 
   describe('guest token auth', () => {
@@ -69,6 +89,16 @@ describe('AuthProvider', () => {
       expect(auth.getAuthHeaders()).toEqual({
         Authorization: 'Bearer guest-abc',
       });
+    });
+
+    test('rejects empty guest tokens at construction', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            { type: 'guestToken', guestToken: '   ' },
+            'http://localhost:8088',
+          ),
+      ).toThrow('guestToken must not be empty');
     });
   });
 
@@ -93,6 +123,44 @@ describe('AuthProvider', () => {
         'X-API-Key': 'key-123',
       });
     });
+
+    test('rejects empty API keys at construction', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            { type: 'apiKey', apiKey: '   ' },
+            'http://localhost:8088',
+          ),
+      ).toThrow('apiKey must not be empty');
+    });
+
+    test('rejects invalid custom API key header names', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            {
+              type: 'apiKey',
+              apiKey: 'key-123',
+              headerName: 'Bad Header',
+            },
+            'http://localhost:8088',
+          ),
+      ).toThrow('headerName must be a valid HTTP header name');
+    });
+
+    test('rejects control characters in API key header values', () => {
+      expect(
+        () =>
+          new AuthProvider(
+            {
+              type: 'apiKey',
+              apiKey: 'key-123',
+              headerPrefix: 'Bearer\n',
+            },
+            'http://localhost:8088',
+          ),
+      ).toThrow('headerPrefix must not contain control characters');
+    });
   });
 
   describe('credentials auth', () => {
@@ -116,6 +184,18 @@ describe('AuthProvider', () => {
       expect(auth.getAuthHeaders()).toEqual({
         Authorization: 'Bearer new-token',
       });
+    });
+
+    test('setAccessToken rejects unsafe header values', () => {
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+      );
+
+      expect(() => auth.setAccessToken('token\r\nX-Other: value')).toThrow(
+        'accessToken must not contain control characters',
+      );
+      expect(auth.getAccessToken()).toBeNull();
     });
 
     test('login applies configured timeout to login and CSRF requests', async () => {
@@ -166,6 +246,19 @@ describe('AuthProvider', () => {
       );
 
       await expect(auth.login()).rejects.toThrow(AxBIAuthError);
+    });
+
+    test('rejects unsafe login access tokens', async () => {
+      mockFetch.mockResolvedValue(
+        jsonResponse({ access_token: 'access-jwt\nX-Other: value' }),
+      );
+      const auth = new AuthProvider(
+        { type: 'credentials', username: 'admin', password: 'admin' },
+        'http://localhost:8088',
+      );
+
+      await expect(auth.login()).rejects.toThrow(AxBIAuthError);
+      expect(auth.getAccessToken()).toBeNull();
     });
 
     test('keeps access token when optional CSRF fetch fails', async () => {

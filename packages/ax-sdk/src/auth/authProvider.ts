@@ -24,6 +24,9 @@ import { normalizeHttpBaseUrl } from '../shared/url.js';
 /** Default auth request timeout in milliseconds. */
 const DEFAULT_AUTH_TIMEOUT_MS = 30_000;
 
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
+const HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
 /**
  * Manages authentication state and header injection for the HTTP transport.
  *
@@ -41,15 +44,15 @@ export class AuthProvider {
   private readonly timeout: number;
 
   constructor(config: AuthConfig, baseUrl: string, timeout?: number) {
-    this.config = config;
+    this.config = validateAuthConfig(config);
     this.baseUrl = normalizeHttpBaseUrl(baseUrl, 'baseUrl');
     this.timeout = timeout ?? DEFAULT_AUTH_TIMEOUT_MS;
 
     // Seed token for token-based auth
-    if (config.type === 'token') {
-      this.accessToken = config.accessToken;
-    } else if (config.type === 'guestToken') {
-      this.accessToken = config.guestToken;
+    if (this.config.type === 'token') {
+      this.accessToken = this.config.accessToken;
+    } else if (this.config.type === 'guestToken') {
+      this.accessToken = this.config.guestToken;
     }
   }
 
@@ -98,7 +101,13 @@ export class AuthProvider {
     if (!data.access_token) {
       throw new AxBIAuthError('Login response missing access_token');
     }
-    this.accessToken = data.access_token;
+    try {
+      this.accessToken = validateHeaderValue(data.access_token, 'access_token');
+    } catch (error) {
+      throw new AxBIAuthError('Login response access_token was unsafe', {
+        cause: normalizeError(error),
+      });
+    }
 
     // Attempt CSRF token fetch (non-fatal if unavailable)
     await this.fetchCsrfToken();
@@ -130,7 +139,7 @@ export class AuthProvider {
 
   /** Update the access token (e.g. after a refresh). */
   setAccessToken(token: string): void {
-    this.accessToken = token;
+    this.accessToken = validateHeaderValue(token, 'accessToken');
   }
 
   /** Retrieve the current access token, if any. */
@@ -152,6 +161,7 @@ export class AuthProvider {
       if (response.ok) {
         const data = (await response.json()) as { result?: string };
         if (data.result) {
+          validateHeaderValue(data.result, 'CSRF token');
           this.csrfToken = data.result;
         }
       }
@@ -163,4 +173,52 @@ export class AuthProvider {
 
 function normalizeError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
+}
+
+function validateAuthConfig(config: AuthConfig): AuthConfig {
+  if (config.type === 'token') {
+    return {
+      ...config,
+      accessToken: validateHeaderValue(config.accessToken, 'accessToken'),
+    };
+  }
+  if (config.type === 'guestToken') {
+    return {
+      ...config,
+      guestToken: validateHeaderValue(config.guestToken, 'guestToken'),
+    };
+  }
+  if (config.type === 'apiKey') {
+    return {
+      ...config,
+      apiKey: validateHeaderValue(config.apiKey, 'apiKey'),
+      headerName: validateHeaderName(config.headerName ?? 'Authorization'),
+      headerPrefix: validateHeaderValuePart(
+        config.headerPrefix ?? 'Bearer ',
+        'headerPrefix',
+      ),
+    };
+  }
+  return config;
+}
+
+function validateHeaderName(value: string): string {
+  if (!HTTP_HEADER_NAME_PATTERN.test(value)) {
+    throw new Error('headerName must be a valid HTTP header name');
+  }
+  return value;
+}
+
+function validateHeaderValue(value: string, name: string): string {
+  if (value.trim() === '') {
+    throw new Error(`${name} must not be empty`);
+  }
+  return validateHeaderValuePart(value, name);
+}
+
+function validateHeaderValuePart(value: string, name: string): string {
+  if (CONTROL_CHARACTER_PATTERN.test(value)) {
+    throw new Error(`${name} must not contain control characters`);
+  }
+  return value;
 }
