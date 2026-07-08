@@ -86,6 +86,44 @@ describe('AIResource', () => {
     });
   });
 
+  test('throws AxBIError when a typed tool returns a non-object result', async () => {
+    const callTool = jest.fn(async () => null);
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.searchAssets({ query: 'sales' })).rejects.toMatchObject({
+      message: 'MCP tool "search_business_assets" returned malformed result',
+      responseBody: null,
+    });
+  });
+
+  test('throws AxBIError when structured content is not an object', async () => {
+    const toolResult = {
+      content: [],
+      structuredContent: [],
+    };
+    const callTool = jest.fn(async () => toolResult);
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.searchAssets({ query: 'sales' })).rejects.toMatchObject({
+      message:
+        'MCP tool "search_business_assets" returned malformed structured content',
+      responseBody: toolResult,
+    });
+  });
+
+  test('throws AxBIError when fallback content is not an array', async () => {
+    const toolResult = {
+      content: 'not-an-array',
+    };
+    const callTool = jest.fn(async () => toolResult);
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.searchAssets({ query: 'sales' })).rejects.toMatchObject({
+      message: 'MCP tool "search_business_assets" returned malformed content',
+      responseBody: toolResult,
+    });
+  });
+
   test('returns raw MCP errors from raw tool calls', async () => {
     const toolResult: MCPToolResult = {
       isError: true,

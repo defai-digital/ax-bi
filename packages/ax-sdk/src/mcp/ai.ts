@@ -304,21 +304,55 @@ export class AIResource {
     args: Record<string, unknown>,
   ): Promise<T> {
     await this.ensureInitialized();
-    const result = await this.mcp.callTool<MCPToolResult>(name, args);
+    const result = await this.mcp.callTool<unknown>(name, args);
 
-    if (result.isError) {
-      throw new AxBIError(`MCP tool "${name}" returned an error`, {
+    if (!isRecord(result)) {
+      throw new AxBIError(`MCP tool "${name}" returned malformed result`, {
         responseBody: result,
       });
     }
 
+    if (
+      Object.prototype.hasOwnProperty.call(result, 'isError') &&
+      typeof result['isError'] !== 'boolean'
+    ) {
+      throw new AxBIError(`MCP tool "${name}" returned malformed result`, {
+        responseBody: result,
+      });
+    }
+
+    const toolResult = result as Partial<MCPToolResult>;
+
+    if (toolResult.isError) {
+      throw new AxBIError(`MCP tool "${name}" returned an error`, {
+        responseBody: toolResult,
+      });
+    }
+
     // Prefer structuredContent if available
-    if (result.structuredContent) {
-      return result.structuredContent as T;
+    if (Object.prototype.hasOwnProperty.call(toolResult, 'structuredContent')) {
+      if (!isRecord(toolResult.structuredContent)) {
+        throw new AxBIError(
+          `MCP tool "${name}" returned malformed structured content`,
+          {
+            responseBody: toolResult,
+          },
+        );
+      }
+      return toolResult.structuredContent as T;
+    }
+
+    if (
+      toolResult.content !== undefined &&
+      !Array.isArray(toolResult.content)
+    ) {
+      throw new AxBIError(`MCP tool "${name}" returned malformed content`, {
+        responseBody: toolResult,
+      });
     }
 
     // Fall back to parsing the first text content block
-    const textBlock = result.content?.find((c) => c.type === 'text');
+    const textBlock = toolResult.content?.find((c) => c.type === 'text');
     if (textBlock?.text) {
       try {
         return JSON.parse(textBlock.text) as T;
@@ -332,4 +366,8 @@ export class AIResource {
 
     throw new AxBIError(`MCP tool "${name}" returned no content`);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
