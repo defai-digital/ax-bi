@@ -157,6 +157,7 @@ def _describe_dataset(
 @tool(
     tags=["discovery", "ai"],
     class_permission_name="Dataset",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Describe dataset for AI",
         readOnlyHint=True,

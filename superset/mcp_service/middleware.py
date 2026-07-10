@@ -45,6 +45,7 @@ from superset.mcp_service.auth import (
     is_tool_visible_to_current_user,
     MCPNoAuthSourceError,
     MCPPermissionDeniedError,
+    tool_feature_flags_enabled,
 )
 from superset.mcp_service.composite_token_verifier import (
     API_KEY_VALIDATED_USERNAME_CLAIM,
@@ -567,9 +568,14 @@ class RBACToolVisibilityMiddleware(Middleware):
                     user = get_user_from_request()
                 except ValueError as exc:
                     if isinstance(exc, MCPNoAuthSourceError):
-                        # No auth source configured at all → fail open.
-                        # No log: this is expected in dev/internal deployments.
-                        return tools
+                        # No auth source configured at all → leave RBAC to
+                        # call time, while still respecting deployment-wide
+                        # feature rollout controls.
+                        return [
+                            tool
+                            for tool in tools
+                            if tool_feature_flags_enabled(getattr(tool, "fn", tool))
+                        ]
                     # Auth was attempted (e.g. MCP_DEV_USERNAME set) but the
                     # user was not found in the DB → fail closed
                     logger.warning(
@@ -586,13 +592,22 @@ class RBACToolVisibilityMiddleware(Middleware):
                     return []
 
                 if user is None:
-                    return tools  # no Flask app context → fail open
+                    return [
+                        tool
+                        for tool in tools
+                        if tool_feature_flags_enabled(getattr(tool, "fn", tool))
+                    ]
                 g.user = user
                 return [t for t in tools if is_tool_visible_to_current_user(t)]
         except Exception:  # noqa: BLE001
             # Unexpected setup errors (ImportError, etc.) → fail open.
-            # Call-time RBAC still enforces permissions.
-            return tools
+            # Call-time RBAC still enforces permissions. Feature controls do
+            # not fail open because they are an explicit deployment boundary.
+            return [
+                tool
+                for tool in tools
+                if tool_feature_flags_enabled(getattr(tool, "fn", tool))
+            ]
 
 
 class GlobalErrorHandlerMiddleware(Middleware):

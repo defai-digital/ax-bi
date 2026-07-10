@@ -366,6 +366,18 @@ class CreateChartFromIntentResponse(BaseModel):
             "Created chart metadata (id, name, viz_type, url), or None on failure"
         ),
     )
+    chart_name: str = Field(
+        default="",
+        description="Generated chart name, including for preview-only charts.",
+    )
+    form_data: dict[str, Any] | None = Field(
+        default=None,
+        description="Validated Superset form data for a preview or saved chart.",
+    )
+    success: bool = Field(
+        default=False,
+        description="Whether the chart intent produced a valid chart or preview.",
+    )
     dataset_used: dict[str, Any] | None = Field(
         default=None,
         description="Dataset that was selected (id, name)",
@@ -618,6 +630,13 @@ class PromptToDashboardRequest(BaseModel):
         default=True,
         description="Save individual charts permanently.",
     )
+    dry_run: bool = Field(
+        default=False,
+        description=(
+            "Validate the plan and chart previews without creating charts or a "
+            "dashboard."
+        ),
+    )
 
 
 class PromptToDashboardChartSummary(BaseModel):
@@ -730,17 +749,13 @@ class AIGeneratedArtifactRecord(BaseModel):
     """Audit record for an AI-generated artifact."""
 
     uuid: str = ""
-    artifact_type: str = Field(
-        description="Type: chart, dashboard, dataset, report"
-    )
+    artifact_type: str = Field(description="Type: chart, dashboard, dataset, report")
     artifact_id: int = Field(description="ID of the generated artifact")
     principal_user_id: int | None = Field(
         default=None, description="User who triggered generation"
     )
     source_prompt: str = Field(default="", description="Original user prompt")
-    normalized_intent: str = Field(
-        default="", description="Normalized intent summary"
-    )
+    normalized_intent: str = Field(default="", description="Normalized intent summary")
     llm_provider: str = Field(default="", description="LLM provider used")
     llm_model: str = Field(default="", description="LLM model used")
     tool_chain: list[str] = Field(
@@ -755,7 +770,5 @@ class AIGeneratedArtifactRecord(BaseModel):
     confidence_score: float = Field(
         default=0.0, ge=0.0, le=1.0, description="Overall confidence"
     )
-    plan_id: str | None = Field(
-        default=None, description="Dashboard plan session ID"
-    )
+    plan_id: str | None = Field(default=None, description="Dashboard plan session ID")
     created_on: str | None = None

@@ -56,6 +56,17 @@ logger = logging.getLogger(__name__)
 _CHART_HEIGHT = 50
 
 
+def _chart_access_error(chart_objects: list[Any]) -> str | None:
+    """Return an access error for the first inaccessible chart, if any."""
+    from superset.mcp_service.auth import check_chart_data_access
+
+    for chart in chart_objects:
+        validation = check_chart_data_access(chart)
+        if not validation.is_valid:
+            return f"Chart {chart.id} is not accessible: {validation.error}"
+    return None
+
+
 def _build_native_filters(
     global_filters: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -278,6 +289,7 @@ def _add_markdown_row(
 @tool(
     tags=["mutate", "ai"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
     annotations=ToolAnnotations(
         title="Compose dashboard",
         readOnlyHint=False,
@@ -330,6 +342,13 @@ async def compose_dashboard(  # noqa: C901
                         "Some chart IDs were not found. Only found charts were used."
                     ],
                 ).model_dump()
+
+            # Class-level Dashboard permission is not enough to attach a chart.
+            # Every chart must also be backed by a datasource the current
+            # principal can access, matching the existing generate_dashboard
+            # contract and preventing cross-dataset dashboard composition.
+            if access_error := _chart_access_error(chart_objects):
+                return ComposeDashboardResponse(error=access_error).model_dump()
 
         # Create layout
         with mcp_event_log_context(action="mcp.compose_dashboard.layout"):

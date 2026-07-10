@@ -139,11 +139,12 @@ const results = await axbi.ai.searchAssets({
 });
 
 // Plan and compose a dashboard
-const plan = await axbi.ai.planDashboard({
+const { plan } = await axbi.ai.planDashboard({
   prompt: 'Revenue by region with YoY comparison',
 });
 
-await axbi.ai.composeDashboard({ plan });
+// Create the chart previews from plan.chart_intents first, then compose.
+await axbi.ai.composeDashboard({ plan, chart_ids: [101, 102] });
 ```
 
 The MCP URL is auto-derived from `baseUrl` by replacing the port with `5008`. Override with the `mcpUrl` config option.

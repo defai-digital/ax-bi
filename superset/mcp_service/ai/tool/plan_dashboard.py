@@ -468,6 +468,7 @@ def _plan_with_llm(
 @tool(
     tags=["discovery", "ai"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
     annotations=ToolAnnotations(
         title="Plan dashboard",
         readOnlyHint=True,

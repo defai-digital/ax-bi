@@ -58,6 +58,7 @@ def tool(
     protect: bool = True,
     class_permission_name: str | None = None,
     method_permission_name: str | None = None,
+    feature_flags: list[str] | None = None,
     annotations: ToolAnnotations | None = None,
 ) -> Any:  # Use Any to avoid mypy issues with dependency injection
     """
@@ -86,6 +87,8 @@ def tool(
             permission checking via security_manager.can_access().
         method_permission_name: FAB action name (e.g., "read", "write").
             Defaults to "write" if tags includes "mutate", else "read".
+        feature_flags: Feature flags that must all be enabled before the tool is
+            visible or executable. This is enforced by the host MCP service.
         annotations: MCP tool annotations (title, readOnlyHint, destructiveHint, etc.)
             These hints help MCP clients understand tool behavior and safety.
 

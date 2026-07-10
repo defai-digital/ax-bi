@@ -297,6 +297,7 @@ def _answer_with_llm(  # noqa: C901
 @tool(
     tags=["discovery", "ai"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Ask dashboard question",
         readOnlyHint=False,

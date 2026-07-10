@@ -104,6 +104,7 @@ def _record_artifact(
 @tool(
     tags=["mutate", "ai"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
     annotations=ToolAnnotations(
         title="Prompt to dashboard",
         readOnlyHint=False,
@@ -158,9 +159,18 @@ async def prompt_to_dashboard(  # noqa: C901
             error="You don't have permission to access dataset metadata.",
         ).model_dump()
 
+    if not request.dry_run and not request.save_charts:
+        return PromptToDashboardResponse(
+            error=(
+                "save_charts=False cannot compose a dashboard. Use dry_run=True "
+                "to validate preview-only chart intents."
+            ),
+        ).model_dump()
+
     all_warnings: list[str] = []
     chart_summaries: list[PromptToDashboardChartSummary] = []
     chart_ids: list[int] = []
+    successful_chart_count = 0
     tool_chain = ["prompt_to_dashboard"]
 
     # ------------------------------------------------------------------
@@ -236,10 +246,8 @@ async def prompt_to_dashboard(  # noqa: C901
         intent_prompt = _build_intent_prompt(intent, request.prompt)
         dataset_id = intent.dataset_id or None
 
-        if dataset_id is not None:
-            source_dataset_ids.add(
-                int(dataset_id) if isinstance(dataset_id, int) else 0
-            )
+        if isinstance(dataset_id, int):
+            source_dataset_ids.add(dataset_id)
 
         try:
             from superset.mcp_service.ai.tool.create_chart_from_intent import (
@@ -249,7 +257,7 @@ async def prompt_to_dashboard(  # noqa: C901
             chart_req = CreateChartFromIntentRequest(
                 prompt=intent_prompt,
                 dataset_id=dataset_id,
-                save_chart=request.save_charts,
+                save_chart=request.save_charts and not request.dry_run,
             )
             chart_result = await create_chart_from_intent(chart_req, ctx)
 
@@ -260,11 +268,16 @@ async def prompt_to_dashboard(  # noqa: C901
 
             chart_data = chart_result.get("chart")
             chart_id = chart_data.get("id") if chart_data else None
-            chart_name = chart_data.get("slice_name", "") if chart_data else ""
+            chart_name = (
+                chart_data.get("slice_name", "")
+                if chart_data
+                else chart_result.get("chart_name", "")
+            )
             chart_type = chart_result.get("chart_type_selected", "")
             chart_confidence = chart_result.get("confidence", 0.0)
             chart_preview = chart_result.get("preview_url")
             chart_warnings = chart_result.get("warnings", [])
+            chart_succeeded = bool(chart_result.get("success"))
 
             chart_summaries.append(
                 PromptToDashboardChartSummary(
@@ -278,10 +291,13 @@ async def prompt_to_dashboard(  # noqa: C901
                 )
             )
 
+            if chart_succeeded:
+                successful_chart_count += 1
+
             if chart_id:
                 chart_ids.append(chart_id)
                 tool_chain.append(f"create_chart_from_intent[{chart_id}]")
-            else:
+            elif not chart_succeeded:
                 all_warnings.append(
                     f"Chart '{chart_purpose}' could not be generated: "
                     + "; ".join(chart_warnings[:2])
@@ -304,6 +320,27 @@ async def prompt_to_dashboard(  # noqa: C901
                     warnings=[f"Generation failed: {e}"],
                 )
             )
+
+    if request.dry_run:
+        duration = int((time.time() - start_time) * 1000)
+        if not successful_chart_count:
+            return PromptToDashboardResponse(
+                plan=_safe_plan_for_response(plan_full),
+                charts=chart_summaries,
+                error="No chart previews were successfully generated.",
+                warnings=all_warnings,
+                total_duration_ms=duration,
+            ).model_dump()
+        return PromptToDashboardResponse(
+            plan=_safe_plan_for_response(plan_full),
+            charts=chart_summaries,
+            layout_summary=(
+                f"Dry run validated {successful_chart_count} chart preview(s); "
+                "no charts or dashboard were created."
+            ),
+            warnings=all_warnings,
+            total_duration_ms=duration,
+        ).model_dump()
 
     if not chart_ids:
         duration = int((time.time() - start_time) * 1000)

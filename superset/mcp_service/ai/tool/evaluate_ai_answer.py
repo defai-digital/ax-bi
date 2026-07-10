@@ -306,8 +306,9 @@ def _record_eval_run(
 
 
 @tool(
-    tags=["ai", "eval"],
+    tags=["mutate", "ai", "eval"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
     annotations=ToolAnnotations(
         title="Evaluate AI answer",
         readOnlyHint=False,
@@ -377,7 +378,8 @@ async def evaluate_ai_answer(  # noqa: C901
                 dataset_ids=request.dataset_ids,
                 max_charts=request.max_charts,
                 draft=True,
-                save_charts=False,  # Don't persist test charts
+                save_charts=False,
+                dry_run=True,
             )
             pipeline_result = await prompt_to_dashboard(pipeline_req, ctx)
 

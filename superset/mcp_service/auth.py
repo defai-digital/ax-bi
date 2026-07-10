@@ -88,10 +88,31 @@ logger = logging.getLogger(__name__)
 PERMISSION_PREFIX = "can_"
 CLASS_PERMISSION_ATTR = "_class_permission_name"
 METHOD_PERMISSION_ATTR = "_method_permission_name"
+FEATURE_FLAGS_ATTR = "_required_feature_flags"
 
 # Tools already warned about for declaring no class_permission_name, so the
 # warning surfaces once per tool instead of on every protected-tool call.
 _warned_permissionless_tools: set[str] = set()
+
+
+def tool_feature_flags_enabled(func: Callable[..., Any]) -> bool:
+    """Return whether every feature flag required by an MCP tool is enabled.
+
+    Tool registration is intentionally static so FastMCP can build a stable
+    catalog, but rollout controls must apply both when listing and invoking a
+    tool. Keeping the check here makes those two paths share one invariant.
+    """
+    required_flags = getattr(func, FEATURE_FLAGS_ATTR, ())
+    if not required_flags:
+        return True
+
+    try:
+        from superset import is_feature_enabled
+
+        return all(is_feature_enabled(flag) for flag in required_flags)
+    except Exception:  # noqa: BLE001 - fail closed for rollout controls
+        logger.exception("Could not evaluate feature flags for tool %s", func.__name__)
+        return False
 
 
 class MCPNoAuthSourceError(ValueError):
@@ -102,6 +123,10 @@ class MCPNoAuthSourceError(ValueError):
     "no auth configured at all" (safe to fail open) from other value errors
     (fail closed).
     """
+
+
+class MCPToolFeatureDisabledError(PermissionError):
+    """Raised when a caller invokes a tool disabled by rollout controls."""
 
 
 # Maps a tool's method permission to the OAuth-style token scope it requires.
@@ -239,8 +264,10 @@ def _log_scope_denial(
         )
 
 
-def check_tool_permission(func: Callable[..., Any], *, log_denial: bool = True) -> bool:
-    """Check if the current user has RBAC permission for an MCP tool.
+def _check_tool_rbac_permission(
+    func: Callable[..., Any], *, log_denial: bool = True
+) -> bool:
+    """Check the current user's RBAC permission for an enabled MCP tool.
 
     Reads permission metadata stored on the function by the @tool decorator
     and uses Superset's security_manager to verify access.
@@ -336,6 +363,15 @@ def check_tool_permission(func: Callable[..., Any], *, log_denial: bool = True) 
         return False
 
 
+def check_tool_permission(func: Callable[..., Any], *, log_denial: bool = True) -> bool:
+    """Return whether a tool is enabled and accessible to the current user."""
+    if not tool_feature_flags_enabled(func):
+        if log_denial:
+            logger.info("MCP tool is disabled by feature flag: %s", func.__name__)
+        return False
+    return _check_tool_rbac_permission(func, log_denial=log_denial)
+
+
 def is_tool_visible_to_current_user(tool: Any) -> bool:
     """Return whether the current user can see a tool in tools/list.
 
@@ -353,11 +389,14 @@ def is_tool_visible_to_current_user(tool: Any) -> bool:
         True if the tool is visible to the current user, False otherwise.
     """
     try:
-        if not get_mcp_rbac_enabled():
-            return True
-
         tool_func = getattr(tool, "fn", None)
         if tool_func is None:
+            return True
+
+        if not tool_feature_flags_enabled(tool_func):
+            return False
+
+        if not get_mcp_rbac_enabled():
             return True
 
         from superset.mcp_service.privacy import (
@@ -983,6 +1022,10 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         "MCP internal call without Flask context: tool=%s",
                         tool_func.__name__,
                     )
+                    if not tool_feature_flags_enabled(tool_func):
+                        raise MCPToolFeatureDisabledError(
+                            f"Tool '{tool_func.__name__}' is disabled by feature flag."
+                        )
                     return await tool_func(*args, **_inject_ctx(kwargs))
 
                 # RBAC permission check
@@ -1029,6 +1072,10 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                         "MCP internal call without Flask context: tool=%s",
                         tool_func.__name__,
                     )
+                    if not tool_feature_flags_enabled(tool_func):
+                        raise MCPToolFeatureDisabledError(
+                            f"Tool '{tool_func.__name__}' is disabled by feature flag."
+                        )
                     return tool_func(*args, **_inject_ctx(kwargs))
 
                 # RBAC permission check

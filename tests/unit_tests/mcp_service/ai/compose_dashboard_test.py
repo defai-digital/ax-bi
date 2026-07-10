@@ -65,6 +65,7 @@ _saved = _force_passthrough_decorators()
 try:
     from superset.mcp_service.ai.tool.compose_dashboard import (
         _build_native_filters,
+        _chart_access_error,
         _CHART_HEIGHT,
         _create_smart_layout,
     )
@@ -254,6 +255,19 @@ class TestCreateSmartLayout:
         col_keys = [k for k in layout if k.startswith("COLUMN-")]
         for ck in col_keys:
             assert layout[ck]["meta"]["background"] == "BACKGROUND_TRANSPARENT"
+
+
+def test_chart_access_error_rejects_inaccessible_chart(mocker) -> None:
+    chart = _make_chart(7)
+    mocker.patch(
+        "superset.mcp_service.auth.check_chart_data_access",
+        return_value=MagicMock(is_valid=False, error="Dataset access denied"),
+    )
+
+    assert (
+        _chart_access_error([chart])
+        == "Chart 7 is not accessible: Dataset access denied"
+    )
 
 
 # ---------------------------------------------------------------------------

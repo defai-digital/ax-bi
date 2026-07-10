@@ -105,3 +105,17 @@ def test_llm_analysis_uses_asyncio_to_thread() -> None:
     assert result is not None
     assert result.current_analysis == "Good chart"
     mock_provider.complete_json.assert_called_once()
+
+
+def test_load_accessible_chart_rejects_chart_without_datasource_access() -> None:
+    chart = MagicMock(id=7)
+    denied = MagicMock(is_valid=False)
+
+    with (
+        patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart),
+        patch(
+            "superset.mcp_service.auth.check_chart_data_access",
+            return_value=denied,
+        ),
+    ):
+        assert module._load_accessible_chart(7) is None

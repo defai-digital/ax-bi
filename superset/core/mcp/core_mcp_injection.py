@@ -68,6 +68,7 @@ def create_tool_decorator(
     protect: bool = True,
     class_permission_name: str | None = None,
     method_permission_name: str | None = None,
+    feature_flags: list[str] | None = None,
     annotations: ToolAnnotations | None = None,
 ) -> Callable[[F], F] | F:
     """
@@ -89,6 +90,8 @@ def create_tool_decorator(
             (e.g., "Chart", "Dashboard", "SQLLab"). Enables permission checking.
         method_permission_name: FAB action name (e.g., "read", "write").
             Defaults to "write" if tags has "mutate", else "read".
+        feature_flags: Feature flags that must all be enabled before the tool is
+            visible or executable.
         annotations: MCP tool annotations (title, readOnlyHint, destructiveHint, etc.)
 
     Returns:
@@ -122,6 +125,11 @@ def create_tool_decorator(
                 if actual_method is None:
                     actual_method = "write" if "mutate" in tool_tags else "read"
                 setattr(func, METHOD_PERMISSION_ATTR, actual_method)
+
+            if feature_flags:
+                from superset.mcp_service.auth import FEATURE_FLAGS_ATTR
+
+                setattr(func, FEATURE_FLAGS_ATTR, tuple(feature_flags))
 
             # Conditionally apply authentication wrapper
             if protect:

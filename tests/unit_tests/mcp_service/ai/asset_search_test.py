@@ -26,6 +26,7 @@ from flask import current_app
 from superset.mcp_service.ai.asset_search import (
     _build_reason,
     _dataset_name_candidates,
+    _filter_sidecar_results_by_access,
     _is_certified,
     _rank_asset_results,
     _score_result,
@@ -653,6 +654,10 @@ def test_search_assets_serves_ax_services_when_serving_enabled(
             "warnings": [],
         },
     )
+    mocker.patch(
+        "superset.mcp_service.ai.asset_search._filter_sidecar_results_by_access",
+        side_effect=lambda results: results,
+    )
 
     results = search_assets("sales", asset_types=["dataset"], limit=5)
 
@@ -666,6 +671,40 @@ def test_search_assets_serves_ax_services_when_serving_enabled(
     stats_logger.incr.assert_any_call(
         "runtime_modernization.mcp_orchestration.search_assets.served_candidate"
     )
+
+
+def test_sidecar_results_are_filtered_by_caller_access(mocker) -> None:
+    """The sidecar's service credential must not define MCP visibility."""
+
+    mocker.patch(
+        "superset.daos.dataset.DatasetDAO.find_by_ids",
+        return_value=[MagicMock(id=7)],
+    )
+    mocker.patch("superset.daos.chart.ChartDAO.find_by_ids", return_value=[])
+    mocker.patch("superset.daos.dashboard.DashboardDAO.find_by_ids", return_value=[])
+
+    results = _filter_sidecar_results_by_access(
+        [
+            AssetResult(
+                asset_type="dataset",
+                id=7,
+                uuid="visible",
+                name="visible_dataset",
+                owners=[],
+                tags=[],
+            ),
+            AssetResult(
+                asset_type="chart",
+                id=9,
+                uuid="hidden",
+                name="hidden_chart",
+                owners=[],
+                tags=[],
+            ),
+        ]
+    )
+
+    assert [(result.asset_type, result.id) for result in results] == [("dataset", 7)]
 
 
 def test_search_assets_serving_falls_back_to_python_on_invalid_candidate(

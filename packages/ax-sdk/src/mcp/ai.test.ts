@@ -41,10 +41,12 @@ describe('AIResource', () => {
     });
     expect(ensureInitialized).toHaveBeenCalledTimes(1);
     expect(callTool).toHaveBeenCalledWith('search_business_assets', {
-      query: 'sales',
-      asset_types: ['dashboard', 'chart', 'dataset'],
-      include_certified_only: false,
-      limit: 20,
+      request: {
+        query: 'sales',
+        asset_types: ['dashboard', 'chart', 'dataset'],
+        include_certified_only: false,
+        limit: 20,
+      },
     });
   });
 

@@ -53,6 +53,21 @@ _TIME_SERIES_TYPES = {
 }
 
 
+def _load_accessible_chart(chart_id: int | str) -> Any | None:
+    """Load a chart only when the current principal can access its datasource."""
+    from superset.daos.chart import ChartDAO
+    from superset.mcp_service.auth import check_chart_data_access
+
+    if isinstance(chart_id, str):
+        chart = ChartDAO.find_by_id(chart_id, id_column="uuid")
+    else:
+        chart = ChartDAO.find_by_id(chart_id)
+
+    if chart is None or not check_chart_data_access(chart).is_valid:
+        return None
+    return chart
+
+
 def _get_form_data(chart_config: dict[str, Any]) -> dict[str, Any]:
     form_data = chart_config.get("form_data")
     return form_data if isinstance(form_data, dict) else chart_config
@@ -282,6 +297,7 @@ def json_dumps_compact(obj: Any) -> str:
 @tool(
     tags=["core", "ai"],
     class_permission_name="Chart",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Suggest chart improvements",
         readOnlyHint=True,
@@ -314,15 +330,8 @@ async def suggest_chart_improvements(
 
     with mcp_event_log_context(action="mcp.suggest_chart_improvements.fetch"):
         # Fetch chart info
-        from superset import db
-        from superset.models.slice import Slice
-
-        if isinstance(chart_id, str):
-            chart = db.session.query(Slice).filter(Slice.uuid == chart_id).first()
-        else:
-            chart = db.session.get(Slice, int(chart_id))
-
-        if not chart:
+        chart = _load_accessible_chart(chart_id)
+        if chart is None:
             return SuggestChartImprovementsResponse(
                 current_analysis="",
                 suggestions=[],

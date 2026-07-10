@@ -146,6 +146,9 @@ export interface DashboardPlan {
 
 export interface ChartPreview {
   chart?: Record<string, unknown>;
+  chart_name?: string;
+  form_data?: Record<string, unknown>;
+  success?: boolean;
   dataset_used?: Record<string, unknown>;
   chart_type_selected?: string;
   explanation?: string;
@@ -304,7 +307,10 @@ export class AIResource {
     args: Record<string, unknown>,
   ): Promise<T> {
     await this.ensureInitialized();
-    const result = await this.mcp.callTool<unknown>(name, args);
+    // AX BI MCP tools expose a single Pydantic ``request`` parameter. Keep
+    // the envelope here so every typed wrapper follows the live FastMCP schema
+    // while raw ``callTool`` remains available for non-standard tools.
+    const result = await this.mcp.callTool<unknown>(name, { request: args });
 
     if (!isRecord(result)) {
       throw new AxBIError(`MCP tool "${name}" returned malformed result`, {

@@ -425,6 +425,7 @@ def _tool_allowed_for_current_user(tool: Any) -> bool:
             _get_app_context_manager,
             get_user_from_request,
             is_tool_visible_to_current_user,
+            tool_feature_flags_enabled,
         )
 
         def _check() -> bool:
@@ -439,7 +440,9 @@ def _tool_allowed_for_current_user(tool: Any) -> bool:
                     # No auth source configured → only pass public tools
                     # (those with no class-level permission requirement).
                     func = getattr(tool, "fn", tool)
-                    return not getattr(func, "_class_permission_name", None)
+                    return tool_feature_flags_enabled(func) and not getattr(
+                        func, "_class_permission_name", None
+                    )
             return is_tool_visible_to_current_user(tool)
 
         if has_app_context():

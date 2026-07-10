@@ -145,6 +145,7 @@ def _run_validation(
 @tool(
     tags=["discovery", "ai"],
     class_permission_name="Chart",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Validate chart",
         readOnlyHint=True,

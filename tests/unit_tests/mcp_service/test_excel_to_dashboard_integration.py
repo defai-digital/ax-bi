@@ -281,6 +281,10 @@ class TestPromptToDashboardPipeline:
 
         with (
             patch(
+                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                return_value=True,
+            ),
+            patch(
                 "superset.mcp_service.ai.tool.prompt_to_dashboard."
                 "user_can_view_data_model_metadata",
                 return_value=True,
@@ -314,6 +318,95 @@ class TestPromptToDashboardPipeline:
         assert data.get("dashboard", {}).get("id") == 201
         assert data.get("charts", [])[0].get("chart_id") == 101
 
+    @pytest.mark.asyncio
+    async def test_prompt_to_dashboard_dry_run_returns_previews_without_composing(
+        self,
+    ) -> None:
+        """Dry runs validate chart previews without persisting dashboard artifacts."""
+        from superset.mcp_service.ai.schemas import PromptToDashboardRequest
+
+        async def _mock_plan(*a, **kw):
+            return {
+                "plan": {
+                    "plan_id": "dry-run-plan",
+                    "title": "Preview Dashboard",
+                    "description": "Preview only",
+                    "datasets": [{"id": 99, "name": "revenue_data"}],
+                    "chart_intents": [
+                        {
+                            "purpose": "Revenue by client",
+                            "chart_type": "xy",
+                            "dataset_id": 99,
+                            "metrics": ["Revenue"],
+                            "dimensions": ["Client"],
+                        },
+                    ],
+                    "global_filters": [],
+                    "assumptions": [],
+                    "clarifying_questions": [],
+                    "confidence": 0.7,
+                },
+                "warnings": [],
+            }
+
+        async def _mock_preview(*a, **kw):
+            return {
+                "chart": None,
+                "chart_name": "Revenue by Client",
+                "chart_type_selected": "xy",
+                "preview_url": "/explore/?form_data_key=preview",
+                "confidence": 0.8,
+                "success": True,
+                "warnings": [],
+            }
+
+        compose = MagicMock()
+        request = PromptToDashboardRequest(
+            prompt="Preview a service revenue dashboard",
+            dataset_ids=[99],
+            dry_run=True,
+            save_charts=False,
+        )
+
+        with (
+            patch(
+                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                return_value=True,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.prompt_to_dashboard."
+                "user_can_view_data_model_metadata",
+                return_value=True,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
+                side_effect=_mock_plan,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.create_chart_from_intent."
+                "create_chart_from_intent",
+                side_effect=_mock_preview,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
+                compose,
+            ),
+        ):
+            async with Client(mcp) as client:
+                result = await client.call_tool(
+                    "prompt_to_dashboard",
+                    {"request": request.model_dump()},
+                )
+
+        from superset.utils import json as sj
+
+        data = sj.loads(result.content[0].text)
+        assert data.get("error") is None
+        assert data.get("dashboard") is None
+        assert data.get("charts", [])[0].get("chart_id") is None
+        assert "no charts or dashboard were created" in data.get("layout_summary", "")
+        compose.assert_not_called()
+
 
 # -----------------------------------------------------------------------
 # Test 4: plan_dashboard sparse metadata
@@ -339,10 +432,16 @@ class TestPlanDashboardSparseMetadata:
             constraints={"max_charts": 4},
         )
 
-        with patch(
-            "superset.mcp_service.ai.tool.plan_dashboard."
-            "user_can_view_data_model_metadata",
-            return_value=True,
+        with (
+            patch(
+                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                return_value=True,
+            ),
+            patch(
+                "superset.mcp_service.ai.tool.plan_dashboard."
+                "user_can_view_data_model_metadata",
+                return_value=True,
+            ),
         ):
             async with Client(mcp) as client:
                 result = await client.call_tool(
@@ -552,6 +651,10 @@ class TestUploadAndPlanTool:
         )
 
         with (
+            patch(
+                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                return_value=True,
+            ),
             patch(
                 "superset.mcp_service.ai.tool.upload_and_plan."
                 "user_can_view_data_model_metadata",

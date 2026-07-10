@@ -617,7 +617,11 @@ def _asset_results_from_ax_services_response(
         asset_type = asset.get("assetType")
         asset_id = asset.get("id")
         name = asset.get("name")
-        if not isinstance(asset_type, str) or not isinstance(asset_id, int):
+        if (
+            not isinstance(asset_type, str)
+            or asset_type not in _VALID_ASSET_TYPES
+            or not isinstance(asset_id, int)
+        ):
             return None
         if not isinstance(name, str):
             return None
@@ -651,6 +655,54 @@ def _asset_results_from_ax_services_response(
         )
 
     return results
+
+
+def _filter_sidecar_results_by_access(
+    results: list[AssetResult],
+) -> list[AssetResult]:
+    """Keep only sidecar candidates accessible to the current principal.
+
+    AX Services authenticates to Superset with a deployment-level internal
+    credential, so its list API results cannot be returned directly to an MCP
+    caller. Re-applying the resource DAOs here retains the candidate's ranking
+    while making Superset's caller-scoped base filters authoritative.
+    """
+    if not results:
+        return []
+
+    from superset.daos.chart import ChartDAO
+    from superset.daos.dashboard import DashboardDAO
+    from superset.daos.dataset import DatasetDAO
+
+    dao_by_type: dict[str, Any] = {
+        "chart": ChartDAO,
+        "dashboard": DashboardDAO,
+        "dataset": DatasetDAO,
+    }
+    ids_by_type: dict[str, list[int]] = {}
+    for result in results:
+        if result.asset_type in dao_by_type:
+            ids_by_type.setdefault(result.asset_type, []).append(result.id)
+
+    authorized_keys: set[tuple[str, int]] = set()
+    for asset_type, ids in ids_by_type.items():
+        dao = dao_by_type[asset_type]
+        try:
+            authorized_keys.update(
+                (asset_type, asset.id) for asset in dao.find_by_ids(ids)
+            )
+        except Exception:  # noqa: BLE001 - do not fail open on access checks
+            logger.warning(
+                "Could not authorize sidecar %s asset candidates",
+                asset_type,
+                exc_info=True,
+            )
+
+    return [
+        result
+        for result in results
+        if (result.asset_type, result.id) in authorized_keys
+    ]
 
 
 def _asset_search_shadow_matches(
@@ -780,7 +832,10 @@ def search_assets(
         candidate_assets = _asset_results_from_ax_services_response(candidate_response)
         if candidate_assets is not None:
             _record_asset_search_metric("served_candidate")
-            return candidate_assets
+            authorized_assets = _filter_sidecar_results_by_access(candidate_assets)
+            if len(authorized_assets) != len(candidate_assets):
+                _record_asset_search_metric("unauthorized_candidate")
+            return authorized_assets
 
         _record_asset_search_metric("fallback")
         return _search_assets_python(

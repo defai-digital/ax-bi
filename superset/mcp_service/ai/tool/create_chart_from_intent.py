@@ -272,6 +272,7 @@ def _governance_violations(dataset: Any, config: dict[str, Any] | None) -> list[
 @tool(
     tags=["mutate", "ai"],
     class_permission_name="Chart",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Create chart from intent",
         readOnlyHint=False,
@@ -390,6 +391,7 @@ async def create_chart_from_intent(  # noqa: C901
         return CreateChartFromIntentResponse(
             dataset_used=dataset_info,
             chart_type_selected=chart_type,
+            success=False,
             explanation=(
                 "Blocked by a governance policy. " + (explanation or "")
             ).strip(),
@@ -443,6 +445,7 @@ async def create_chart_from_intent(  # noqa: C901
         return CreateChartFromIntentResponse(
             dataset_used=dataset_info,
             chart_type_selected=chart_type,
+            success=False,
             explanation=explanation,
             confidence=confidence,
             warnings=all_warnings,
@@ -460,6 +463,9 @@ async def create_chart_from_intent(  # noqa: C901
 
     return CreateChartFromIntentResponse(
         chart=chart_data,
+        chart_name=str(response_dict.get("chart_name") or ""),
+        form_data=response_dict.get("form_data"),
+        success=True,
         dataset_used=dataset_info,
         chart_type_selected=chart_type,
         explanation=explanation,

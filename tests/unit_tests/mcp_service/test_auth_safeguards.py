@@ -40,7 +40,12 @@ from superset.core.mcp.core_mcp_injection import (
     create_tool_decorator,
 )
 from superset.mcp_service.app import assert_all_tools_protected
-from superset.mcp_service.auth import mcp_auth_hook
+from superset.mcp_service.auth import (
+    check_tool_permission,
+    FEATURE_FLAGS_ATTR,
+    mcp_auth_hook,
+    tool_feature_flags_enabled,
+)
 
 
 def _fake_mcp_with_tools(tools_by_name: dict[str, Any]) -> SimpleNamespace:
@@ -66,6 +71,36 @@ def test_mcp_auth_hook_stamps_protection_marker() -> None:
 
     wrapped = mcp_auth_hook(sample_tool)
     assert getattr(wrapped, "_mcp_auth_protected", False) is True
+
+
+def test_tool_feature_flags_require_every_declared_flag() -> None:
+    """Rollout controls must deny a tool unless every required flag is on."""
+
+    def sample_tool() -> None:
+        pass
+
+    setattr(sample_tool, FEATURE_FLAGS_ATTR, ("GENAI_BI", "GENAI_BI_MCP_TOOLS"))
+
+    with patch(
+        "superset.is_feature_enabled",
+        side_effect=lambda flag: flag == "GENAI_BI",
+    ):
+        assert tool_feature_flags_enabled(sample_tool) is False
+
+    with patch("superset.is_feature_enabled", return_value=True):
+        assert tool_feature_flags_enabled(sample_tool) is True
+
+
+def test_disabled_feature_flag_denies_execution_before_rbac_lookup() -> None:
+    """Feature-disabled tools must fail closed even without a user context."""
+
+    def sample_tool() -> None:
+        pass
+
+    setattr(sample_tool, FEATURE_FLAGS_ATTR, ("GENAI_BI",))
+
+    with patch("superset.is_feature_enabled", return_value=False):
+        assert check_tool_permission(sample_tool) is False
 
 
 def test_mcp_auth_hook_removes_string_context_annotation_from_schema() -> None:

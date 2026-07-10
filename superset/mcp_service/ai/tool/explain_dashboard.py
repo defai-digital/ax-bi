@@ -166,6 +166,7 @@ def _build_follow_up_suggestions(
 @tool(
     tags=["discovery", "ai"],
     class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS"],
     annotations=ToolAnnotations(
         title="Explain dashboard",
         readOnlyHint=True,
