@@ -176,7 +176,11 @@ export function setupStore({
     },
     middleware: getMiddleware,
     devTools: process.env.WEBPACK_MODE === 'development' && !disableDebugger,
-    enhancers: [persistSqlLabStateEnhancer as StoreEnhancer],
+    // RTK 2 requires a callback form for custom store enhancers.
+    enhancers: getDefaultEnhancers =>
+      getDefaultEnhancers().concat(
+        persistSqlLabStateEnhancer as StoreEnhancer,
+      ),
     ...overrides,
   });
 }

@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import * as reactRedux from 'react-redux';
 import { Filter, NativeFilterType } from '@superset-ui/core';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import { SET_DIRECT_PATH } from 'src/dashboard/actions/dashboardState';
+import * as dashboardStateActions from 'src/dashboard/actions/dashboardState';
 import { FilterCardContent } from './FilterCardContent';
 
 const baseInitialState = {
@@ -285,9 +285,8 @@ test('filter card with dependency', () => {
 });
 
 test('focus filter on filter card dependency click', () => {
-  const useDispatchMock = jest.spyOn(reactRedux, 'useDispatch');
-  const dummyDispatch = jest.fn();
-  useDispatchMock.mockReturnValue(dummyDispatch);
+  // react-redux v9 exports are non-configurable; spy on the action instead of useDispatch.
+  const setPathSpy = jest.spyOn(dashboardStateActions, 'setDirectPathToChild');
 
   const filter = {
     ...baseFilter,
@@ -296,10 +295,12 @@ test('focus filter on filter card dependency click', () => {
   renderContent(filter);
 
   userEvent.click(screen.getByText('Native filter 2'));
-  expect(dummyDispatch).toHaveBeenCalledWith({
+  expect(setPathSpy).toHaveBeenCalledWith(['NATIVE_FILTER-2']);
+  expect(setPathSpy).toHaveReturnedWith({
     type: SET_DIRECT_PATH,
     path: ['NATIVE_FILTER-2'],
   });
+  setPathSpy.mockRestore();
 });
 
 test('edit filter button for dashboard viewer', () => {

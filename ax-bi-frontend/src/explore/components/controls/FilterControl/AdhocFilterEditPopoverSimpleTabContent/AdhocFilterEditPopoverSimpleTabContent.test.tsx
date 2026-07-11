@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import * as redux from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   act,
   render,
@@ -26,6 +26,15 @@ import {
 } from 'spec/helpers/testing-library';
 import { thunk } from 'redux-thunk';
 import configureStore from 'redux-mock-store';
+
+// react-redux v9 exports are non-configurable; mock useSelector via the module.
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useSelector: jest.fn(),
+  };
+});
 
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
 import {
@@ -116,8 +125,7 @@ const getAdvancedDataTypeTestProps = (overrides?: Record<string, unknown>) => {
 function setup(overrides?: Record<string, unknown>) {
   const onChange = jest.fn();
   const validHandler = jest.fn();
-  const spy = jest.spyOn(redux, 'useSelector');
-  spy.mockReturnValue({});
+  (useSelector as jest.Mock).mockReturnValue({});
   const props = {
     adhocFilter: simpleAdhocFilter,
     onChange,
@@ -734,8 +742,7 @@ test('advanced data type operator list should update after API response', async 
 test('dropdown should remain open when clicked after filter is configured', async () => {
   const onChange = jest.fn();
   const validHandler = jest.fn();
-  const spy = jest.spyOn(redux, 'useSelector');
-  spy.mockReturnValue({});
+  (useSelector as jest.Mock).mockReturnValue({});
 
   const filterWithSubjectAndOperator = new AdhocFilter({
     expressionType: ExpressionTypes.Simple,

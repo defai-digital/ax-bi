@@ -24,6 +24,21 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Frontend: react-redux 9 + Redux Toolkit 2
+
+AX-BI frontend now depends on `react-redux@^9.3` and `@reduxjs/toolkit@^2.5`
+(React 18 remains). Types ship with `react-redux` 9 — `@types/react-redux` was
+removed. Operators and extension authors should note:
+
+- Custom `configureStore` **enhancers** must use the RTK 2 callback form
+  (`enhancers: getDefault => getDefault().concat(...)`).
+- `jest.spyOn(react-redux, 'useDispatch'|'useSelector')` fails because those
+  exports are non-configurable; mock the module or seed store state instead.
+- `connect()` still works but is deprecated at the types/docs level in 9.3.
+
+This does **not** upgrade `react-router-dom` (still v5) or React 19. See
+`.internal/docs/frontend-stack-modernization-*`.
+
 ### UI/UX Phase 5 — consumer autonomy (`STARTER_DASHBOARD`)
 
 AX-BI adds reader/analyst UX improvements (see `.internal/docs/ui-ux-phase5-*`):

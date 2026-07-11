@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import * as reactRedux from 'react-redux';
 import fetchMock from 'fetch-mock';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
@@ -194,7 +193,6 @@ const notanonProps = {
   },
 };
 
-const useSelectorMock = jest.spyOn(reactRedux, 'useSelector');
 const staticAssetsPrefixMock = jest.spyOn(
   getBootstrapData,
   'staticAssetsPrefix',
@@ -202,14 +200,22 @@ const staticAssetsPrefixMock = jest.spyOn(
 const applicationRootMock = jest.spyOn(getBootstrapData, 'applicationRoot');
 const useThemeMock = CoreTheme.useTheme as jest.Mock;
 
+// Seed Redux user state instead of spying on react-redux hooks.
+// react-redux v9 exports are non-configurable, so jest.spyOn(useSelector) fails.
+const menuRenderOptions = {
+  useRedux: true as const,
+  useQueryParams: true as const,
+  useRouter: true as const,
+  useTheme: true as const,
+  initialState: { user },
+};
+
 fetchMock.get(
   'glob:*api/v1/database/?q=(filters:!((col:allow_file_upload,opr:upload_is_enabled,value:!t)))',
   {},
 );
 
 beforeEach(() => {
-  // setup a DOM element as a render target
-  useSelectorMock.mockClear();
   // By default use empty static assets prefix and default app root
   staticAssetsPrefixMock.mockReturnValue('');
   applicationRootMock.mockReturnValue('');
@@ -218,25 +224,13 @@ beforeEach(() => {
 });
 
 test('should render', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  const { container } = render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  const { container } = render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(/sources/i)).toBeInTheDocument();
   expect(container).toBeInTheDocument();
 });
 
 test('should render the navigation', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByRole('navigation')).toBeInTheDocument();
 });
 
@@ -244,18 +238,12 @@ test.each(['', '/myapp'])(
   'should render the brand, including app_root "%s"',
   async app_root => {
     staticAssetsPrefixMock.mockReturnValue(app_root);
-    useSelectorMock.mockReturnValue({ roles: user.roles });
     const {
       data: {
         brand: { alt, icon },
       },
     } = mockedProps;
-    render(<Menu {...mockedProps} />, {
-      useRedux: true,
-      useQueryParams: true,
-      useRouter: true,
-      useTheme: true,
-    });
+    render(<Menu {...mockedProps} />, menuRenderOptions);
     expect(await screen.findByAltText(alt)).toBeInTheDocument();
     const image = screen.getByAltText(alt);
     expect(image).toHaveAttribute('src', `${app_root}${icon}`);
@@ -263,32 +251,20 @@ test.each(['', '/myapp'])(
 );
 
 test('should render the environment tag inside Settings dropdown', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: { environment_tag },
   } = mockedProps;
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   // The environment tag is now inside the Settings dropdown
   userEvent.hover(screen.getByText('Settings'));
   expect(await screen.findByText(environment_tag.text)).toBeInTheDocument();
 });
 
 test('should render all the top navbar menu items', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: { menu },
   } = mockedProps;
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(menu[0].label)).toBeInTheDocument();
   menu.forEach(item => {
     expect(screen.getByText(item.label)).toBeInTheDocument();
@@ -296,16 +272,10 @@ test('should render all the top navbar menu items', async () => {
 });
 
 test('should render the top navbar child menu items', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: { menu },
   } = mockedProps;
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   const sources = await screen.findByText('Sources');
   userEvent.hover(sources);
 
@@ -319,72 +289,42 @@ test('should render the top navbar child menu items', async () => {
 });
 
 test('should render the Settings', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   const settings = await screen.findByText('Settings');
   expect(settings).toBeInTheDocument();
 });
 
 test('should render the Settings menu item', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   userEvent.hover(screen.getByText('Settings'));
   const label = await screen.findByText('Security');
   expect(label).toBeInTheDocument();
 });
 
 test('should render the Settings dropdown child menu items', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: { settings },
   } = mockedProps;
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   userEvent.hover(screen.getByText('Settings'));
   const listUsers = await screen.findByText('List Users');
   expect(listUsers).toHaveAttribute('href', settings[0].childs[0].url);
 });
 
 test('should NOT render the plus menu (+) when user is anonymous', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(/sources/i)).toBeInTheDocument();
   expect(screen.queryByTestId('new-dropdown')).not.toBeInTheDocument();
 });
 
 test('should render the user actions when user is not anonymous', async () => {
-  useSelectorMock.mockReturnValue({ roles: mockedProps.user.roles });
   const {
     data: {
       navbar_right: { user_info_url, user_logout_url },
     },
   } = mockedProps;
 
-  render(<Menu {...notanonProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...notanonProps} />, menuRenderOptions);
   userEvent.hover(screen.getByText('Settings'));
   const user = await screen.findByText('User');
   expect(user).toBeInTheDocument();
@@ -397,31 +337,19 @@ test('should render the user actions when user is not anonymous', async () => {
 });
 
 test('should NOT render the user actions when user is anonymous', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(/sources/i)).toBeInTheDocument();
   expect(screen.queryByText('User')).not.toBeInTheDocument();
 });
 
 test('should render the About section and version_string, sha or build_number when available', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: {
       navbar_right: { version_sha, version_string, build_number },
     },
   } = mockedProps;
 
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   userEvent.hover(screen.getByText('Settings'));
   const about = await screen.findByText('About');
 
@@ -447,18 +375,12 @@ test('should render the About section and version_string, sha or build_number wh
 });
 
 test('should render the Documentation link inside Settings when available', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: {
       navbar_right: { documentation_url },
     },
   } = mockedProps;
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   // Documentation link is now inside the Settings dropdown Help group
   userEvent.hover(screen.getByText('Settings'));
   const doc = await screen.findByText('Documentation');
@@ -466,19 +388,13 @@ test('should render the Documentation link inside Settings when available', asyn
 });
 
 test('should render the Bug Report link inside Settings when available', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
   const {
     data: {
       navbar_right: { bug_report_url },
     },
   } = mockedProps;
 
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   // Bug report link is now inside the Settings dropdown Help group
   userEvent.hover(screen.getByText('Settings'));
   const bugReport = await screen.findByText('Report a bug');
@@ -486,36 +402,18 @@ test('should render the Bug Report link inside Settings when available', async (
 });
 
 test('should render the Language Picker', async () => {
-  useSelectorMock.mockReturnValue({ roles: user.roles });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByLabelText('Languages')).toBeInTheDocument();
 });
 
 test('should hide create button without proper roles', async () => {
-  useSelectorMock.mockReturnValue({ roles: [] });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(/sources/i)).toBeInTheDocument();
   expect(screen.queryByTestId('new-dropdown')).not.toBeInTheDocument();
 });
 
 test('should render without QueryParamProvider', async () => {
-  useSelectorMock.mockReturnValue({ roles: [] });
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useRouter: true,
-    useQueryParams: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
   expect(await screen.findByText(/sources/i)).toBeInTheDocument();
   expect(screen.queryByTestId('new-dropdown')).not.toBeInTheDocument();
 });
@@ -529,12 +427,7 @@ test('should render an extension component if one is supplied', async () => {
 
   setupCodeOverrides();
 
-  render(<Menu {...mockedProps} />, {
-    useRouter: true,
-    useQueryParams: true,
-    useRedux: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
 
   const extension = await screen.findAllByText(
     'navbar.right extension component',
@@ -544,8 +437,6 @@ test('should render an extension component if one is supplied', async () => {
 });
 
 test('should render the brand text if available', async () => {
-  useSelectorMock.mockReturnValue({ roles: [] });
-
   const modifiedProps = {
     ...mockedProps,
     data: {
@@ -557,26 +448,15 @@ test('should render the brand text if available', async () => {
     },
   };
 
-  render(<Menu {...modifiedProps} />, {
-    useRouter: true,
-    useQueryParams: true,
-    useRedux: true,
-    useTheme: true,
-  });
+  render(<Menu {...modifiedProps} />, menuRenderOptions);
 
   const brandText = await screen.findByText('Welcome to Superset');
   expect(brandText).toBeInTheDocument();
 });
 
 test('should not render the brand text if not available', async () => {
-  useSelectorMock.mockReturnValue({ roles: [] });
   const text = 'Welcome to Superset';
-  render(<Menu {...mockedProps} />, {
-    useRouter: true,
-    useQueryParams: true,
-    useRedux: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
 
   const brandText = screen.queryByText(text);
   expect(brandText).not.toBeInTheDocument();
@@ -590,14 +470,8 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
     brandLogoHref: 'https://external.example.com',
     brandLogoAlt: 'Brand Home',
   });
-  useSelectorMock.mockReturnValue({ roles: user.roles });
 
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
 
   const brandLink = await screen.findByRole('link', {
     name: /brand home/i,
@@ -613,14 +487,8 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
     brandLogoHref: '//external.example.com',
     brandLogoAlt: 'Brand Home',
   });
-  useSelectorMock.mockReturnValue({ roles: user.roles });
 
-  render(<Menu {...mockedProps} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...mockedProps} />, menuRenderOptions);
 
   const brandLink = await screen.findByRole('link', {
     name: /brand home/i,
@@ -630,7 +498,6 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
 
 test('brand path should be prefixed with app root in subdirectory deployment', async () => {
   applicationRootMock.mockReturnValue('/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
 
   const propsWithSimplePath = {
     ...mockedProps,
@@ -643,12 +510,7 @@ test('brand path should be prefixed with app root in subdirectory deployment', a
     },
   };
 
-  render(<Menu {...propsWithSimplePath} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...propsWithSimplePath} />, menuRenderOptions);
 
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithSimplePath.data.brand.alt, 'i'),
@@ -659,7 +521,6 @@ test('brand path should be prefixed with app root in subdirectory deployment', a
 test('brand link falls back to brand.path when theme brandLogoUrl is absent', async () => {
   // useThemeMock default returns supersetTheme with brandLogoUrl undefined (falsy)
   applicationRootMock.mockReturnValue('/superset');
-  useSelectorMock.mockReturnValue({ roles: user.roles });
 
   const propsWithFallbackPath = {
     ...mockedProps,
@@ -672,12 +533,7 @@ test('brand link falls back to brand.path when theme brandLogoUrl is absent', as
     },
   };
 
-  render(<Menu {...propsWithFallbackPath} />, {
-    useRedux: true,
-    useQueryParams: true,
-    useRouter: true,
-    useTheme: true,
-  });
+  render(<Menu {...propsWithFallbackPath} />, menuRenderOptions);
 
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithFallbackPath.data.brand.alt, 'i'),

@@ -17,8 +17,7 @@
  * under the License.
  */
 
-import * as reduxHooks from 'react-redux';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { createStore } from 'redux';
 import { render, waitFor } from 'spec/helpers/testing-library';
 import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@superset-ui/core';
@@ -54,9 +53,16 @@ jest.mock('src/dashboard/actions/dashboardState', () => ({
   onRefresh: jest.fn(),
 }));
 
-// Mock useDispatch
+// react-redux v9 exports are non-configurable; mock the module instead of spyOn.
 const mockDispatch = jest.fn();
-jest.spyOn(reduxHooks, 'useDispatch').mockReturnValue(mockDispatch);
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useDispatch: jest.fn(),
+  };
+});
+(useDispatch as jest.Mock).mockReturnValue(mockDispatch);
 
 // Capture the channel instance created by the component so tests can drive its
 // onmessage handler and assert it gets closed on unmount.
@@ -68,6 +74,7 @@ const channelCloseMock = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   capturedChannel = { onmessage: null, close: channelCloseMock };
   (global as any).BroadcastChannel = jest
     .fn()
