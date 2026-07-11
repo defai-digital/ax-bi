@@ -94,6 +94,19 @@ AX-BI now defaults the following presentation-only feature flags to `True`:
 settings group). Operators can set any of these flags to `False` in
 `SUPERSET_CONFIG` / `DEFAULT_FEATURE_FLAGS` to restore prior defaults. See
 `.internal/docs/ui-ux-improvement-tech-spec.md`.
+### Pandas upgraded to 3.0.x
+
+AX-BI now depends on `pandas[excel]>=3.0.3,<3.1`. Notable compatibility work:
+
+- `DataFrame.applymap` → `DataFrame.map` (removed in pandas 3).
+- Record serialization and pivot totals handle the default Arrow-backed `str`
+  dtype and Copy-on-Write assignment rules.
+- Far-future timestamps (beyond nanosecond range) fall back to microsecond
+  resolution instead of erroring.
+
+Operators installing from lock files should refresh from
+`requirements/base.txt` / `requirements/development.txt` after upgrade.
+
 
 ### Local upload storage moved under `SUPERSET_HOME`
 

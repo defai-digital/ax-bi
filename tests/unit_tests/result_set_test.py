@@ -174,9 +174,11 @@ def test_timezone_series(mocker: MockerFixture) -> None:
 
 def test_out_of_bounds_datetime_coerced_to_nat(mocker: MockerFixture) -> None:
     """
-    Dates beyond ~2262-04-11 overflow pandas' int64 nanosecond representation.
-    SupersetResultSet must coerce them to NaT rather than raising OutOfBoundsDatetime
-    and logging an ERROR (which would surface as noise in observability tooling).
+    Dates beyond the ns range (~2262-04-11) overflow int64 nanoseconds.
+
+    Under pandas 3.0+, ``to_datetime`` may keep microsecond resolution so the
+    value is representable. SupersetResultSet must not raise or log an ERROR
+    when ns Arrow conversion fails — fall back to us (or NaT) instead.
     """
     logger = mocker.patch("superset.result_set.logger")
 
@@ -188,7 +190,10 @@ def test_out_of_bounds_datetime_coerced_to_nat(mocker: MockerFixture) -> None:
         BaseEngineSpec,
     )
     df = result_set.to_pandas_df()
-    assert pd.isna(df["dt"].iloc[0])
+    value = df["dt"].iloc[0]
+    # Prefer keeping a valid far-future timestamp (us); NaT remains acceptable
+    # if a future path still coerces. Never raise or ERROR-log.
+    assert pd.isna(value) or pd.Timestamp(value).year == 3118
     logger.exception.assert_not_called()
 
 

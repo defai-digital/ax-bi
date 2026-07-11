@@ -233,8 +233,12 @@ class TestConvertTemporalColumns:
 
     def test_out_of_bounds_coerced_to_nat(self) -> None:
         """
-        Dates beyond ~2262-04-11 overflow pandas' int64 nanosecond limit.
-        load_data() must coerce them to NaT and warn, not raise.
+        Dates beyond the ns range (~2262) used to overflow int64 nanoseconds.
+
+        Under pandas 3.0+, ``to_datetime`` may keep microsecond resolution so
+        far-future dates remain valid. The importer must not raise; if pandas
+        still raises OutOfBoundsDatetime, values are coerced to NaT with a
+        warning.
         """
         from sqlalchemy import DateTime
 
@@ -248,10 +252,13 @@ class TestConvertTemporalColumns:
         ) as mock_logger:
             _convert_temporal_columns(df, {"ts": DateTime()})
 
-        assert pd.isna(df["ts"].iloc[0])
-        mock_logger.warning.assert_called_once()
-        warning_msg = mock_logger.warning.call_args[0][0]
-        assert "out-of-bounds" in warning_msg
+        value = df["ts"].iloc[0]
+        if pd.isna(value):
+            mock_logger.warning.assert_called_once()
+            warning_msg = mock_logger.warning.call_args[0][0]
+            assert "out-of-bounds" in warning_msg
+        else:
+            assert pd.Timestamp(value).year == 3118
 
     def test_malformed_dates_still_raise(self) -> None:
         """
@@ -296,8 +303,11 @@ class TestConvertTemporalColumns:
 
     def test_warning_count_excludes_preexisting_nulls(self) -> None:
         """
-        The warning count reflects only net-new NaTs from coercion,
-        not nulls that were already present in the source data.
+        When OutOfBoundsDatetime still fires, the warning count reflects only
+        net-new NaTs from coercion, not nulls already in the source data.
+
+        Under pandas 3.0+ far-future dates may parse successfully (us resolution);
+        then no warning is emitted and values stay valid.
         """
         from sqlalchemy import DateTime
 
@@ -311,5 +321,9 @@ class TestConvertTemporalColumns:
         ) as mock_logger:
             _convert_temporal_columns(df, {"ts": DateTime()})
 
-        call_args = mock_logger.warning.call_args[0]
-        assert call_args[1] == 2  # 2 out-of-bounds, 1 pre-existing null
+        if mock_logger.warning.called:
+            call_args = mock_logger.warning.call_args[0]
+            assert call_args[1] == 2  # 2 out-of-bounds, 1 pre-existing null
+        else:
+            assert pd.Timestamp(df["ts"].iloc[1]).year == 3118
+            assert pd.Timestamp(df["ts"].iloc[2]).year == 3119

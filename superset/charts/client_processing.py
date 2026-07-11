@@ -176,7 +176,11 @@ def pivot_df(  # pylint: disable=too-many-locals, too-many-arguments, too-many-s
             subgroups = {group[:level] for group in groups}
             for subgroup in subgroups:
                 slice_ = df.columns.get_loc(subgroup)
-                subtotal = pivot_v2_aggfunc_map[aggfunc](df.iloc[:, slice_], axis=1)
+                # Coerce to numeric before aggregating so pandas 3.0+ string
+                # dtypes (and "nan" placeholders) do not concatenate into
+                # values like "nannan" for Sum totals.
+                slice_df = df.iloc[:, slice_].apply(pd.to_numeric, errors="coerce")
+                subtotal = pivot_v2_aggfunc_map[aggfunc](slice_df, axis=1)
                 depth = df.columns.nlevels - len(subgroup) - 1
                 total = metric_name if level == 0 else __("Subtotal")
                 subtotal_name = tuple([*subgroup, total, *([""] * depth)])  # noqa: C409
