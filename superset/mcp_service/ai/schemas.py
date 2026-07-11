@@ -174,6 +174,13 @@ class DatasetDescription(BaseModel):
     columns: list[ColumnDescription] = Field(default_factory=list)
     metrics: list[MetricDescription] = Field(default_factory=list)
     privacy: dict[str, Any] = Field(default_factory=dict)
+    grounding: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Governed semantic contract summary: measures, glossary, "
+            "instructions, policies, and time columns when available."
+        ),
+    )
 
     @field_validator("name", "description", "main_time_column")
     @classmethod
@@ -181,10 +188,10 @@ class DatasetDescription(BaseModel):
         """Escape MCP context delimiters in dataset metadata."""
         return _escape_optional_text(v)
 
-    @field_validator("privacy")
+    @field_validator("privacy", "grounding")
     @classmethod
     def escape_privacy_metadata(cls, v: dict[str, Any]) -> dict[str, Any]:
-        """Escape MCP context delimiters in privacy metadata."""
+        """Escape MCP context delimiters in privacy/grounding metadata."""
         return _escape_metadata_dict(v)
 
 
@@ -665,6 +672,23 @@ class PromptToDashboardRequest(BaseModel):
         description=(
             "Validate the plan and chart previews without creating charts or a "
             "dashboard."
+        ),
+    )
+    min_confidence: float = Field(
+        default=0.25,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Minimum plan confidence required before creating charts/dashboard. "
+            "Below this threshold the tool returns the plan and clarifying "
+            "questions without mutations (unless force=true)."
+        ),
+    )
+    force: bool = Field(
+        default=False,
+        description=(
+            "Bypass the low-confidence gate and create artifacts even when "
+            "plan confidence is below min_confidence."
         ),
     )
 

@@ -227,6 +227,36 @@ async def prompt_to_dashboard(  # noqa: C901
         f"charts={len(plan_full.chart_intents)}, confidence={plan_full.confidence:.2f}"
     )
 
+    # Confidence / empty-plan gate: fail loudly instead of composing junk
+    from superset.mcp_service.ai.grounding_utils import plan_should_block_compose
+
+    should_block, block_reason = plan_should_block_compose(
+        plan_full.confidence,
+        len(plan_full.chart_intents),
+        plan_full.clarifying_questions,
+        min_confidence=request.min_confidence,
+        force=request.force,
+    )
+    # dry_run still returns the plan for review even when blocked from compose
+    if should_block and not request.dry_run:
+        duration = int((time.time() - start_time) * 1000)
+        await ctx.warning(f"Prompt-to-dashboard blocked: {block_reason}")
+        return PromptToDashboardResponse(
+            plan=_safe_plan_for_response(plan_full),
+            charts=[],
+            warnings=all_warnings
+            + [
+                block_reason,
+                "No charts or dashboard were created. "
+                "Answer clarifying questions, pin dataset_ids, improve dataset "
+                "metrics/descriptions, or retry with force=true.",
+            ],
+            error=f"Plan confidence gate: {block_reason}",
+            total_duration_ms=duration,
+        ).model_dump()
+    if should_block and request.dry_run:
+        all_warnings.append(f"Would block compose without force: {block_reason}")
+
     # ------------------------------------------------------------------
     # Step 2: Generate each chart from its intent
     # ------------------------------------------------------------------

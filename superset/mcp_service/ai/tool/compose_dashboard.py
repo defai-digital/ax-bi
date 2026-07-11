@@ -69,27 +69,60 @@ def _chart_access_error(chart_objects: list[Any]) -> str | None:
 
 def _build_native_filters(
     global_filters: list[dict[str, Any]],
+    plan_datasets: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Convert plan global_filters into Superset native filter configuration.
 
     Each filter dict in ``global_filters`` may contain:
     - name (str)
     - filter_type (str): e.g. 'filter_select', 'filter_time', 'filter_range'
+    - column (str): column name used when targets are omitted
     - targets (list[dict]): dataset/column scoping
     - default_value (str | list | None)
     - multi_select (bool)
     - search_all_filters (bool)
     """
+    default_dataset_id: int | None = None
+    for ds in plan_datasets or []:
+        if isinstance(ds, dict) and ds.get("id") is not None:
+            default_dataset_id = int(ds["id"])
+            break
+
     filters: list[dict[str, Any]] = []
     for gf in global_filters:
         if not isinstance(gf, dict):
             continue
         filter_id = str(uuid.uuid4())
+        targets = list(gf.get("targets") or [])
+        column = gf.get("column") or gf.get("col")
+        # Fill targets when planner only provided a column name
+        if not targets and column and default_dataset_id is not None:
+            targets = [
+                {
+                    "datasetId": default_dataset_id,
+                    "column": {"name": str(column)},
+                }
+            ]
+        # Normalize targets that only have column as a string
+        normalized_targets: list[dict[str, Any]] = []
+        for target in targets:
+            if not isinstance(target, dict):
+                continue
+            t = dict(target)
+            col = t.get("column")
+            if isinstance(col, str):
+                t["column"] = {"name": col}
+            if t.get("datasetId") is None and default_dataset_id is not None:
+                t["datasetId"] = default_dataset_id
+            normalized_targets.append(t)
+
+        filter_type = gf.get("filter_type") or gf.get("filterType") or "filter_select"
         filter_config: dict[str, Any] = {
             "id": filter_id,
-            "name": gf.get("name", "Filter"),
-            "filterType": gf.get("filter_type", "filter_select"),
-            "targets": gf.get("targets", []),
+            "name": gf.get("name")
+            or (str(column) if column else "Filter"),
+            "filterType": filter_type,
+            "targets": normalized_targets,
             "defaultDataMask": {},
             "cascadeParentIds": [],
             "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
@@ -370,7 +403,10 @@ async def compose_dashboard(  # noqa: C901
         native_filters: list[dict[str, Any]] = []
         if request.plan.global_filters:
             with mcp_event_log_context(action="mcp.compose_dashboard.build_filters"):
-                native_filters = _build_native_filters(request.plan.global_filters)
+                native_filters = _build_native_filters(
+                    request.plan.global_filters,
+                    plan_datasets=list(request.plan.datasets or []),
+                )
 
         # Build AI lineage metadata for audit trail
         ai_lineage: dict[str, Any] = {

@@ -72,6 +72,8 @@ def _discover_datasets(
         List of dicts with 'id', 'name', 'description', 'certified',
         'columns'.
     """
+    from superset.mcp_service.ai.grounding_utils import enrich_dataset_plan_entry
+
     if pinned_ids:
         from superset.daos.dataset import DatasetDAO
 
@@ -79,15 +81,15 @@ def _discover_datasets(
         for ds_id in pinned_ids:
             ds = DatasetDAO.find_by_id(ds_id)
             if ds:
-                results.append(
-                    {
-                        "id": ds.id,
-                        "name": getattr(ds, "table_name", ""),
-                        "description": getattr(ds, "description", None) or "",
-                        "certified": bool(getattr(ds, "certified_by", None)),
-                        "columns": _extract_columns(ds),
-                    }
-                )
+                entry = {
+                    "id": ds.id,
+                    "name": getattr(ds, "table_name", ""),
+                    "description": getattr(ds, "description", None) or "",
+                    "certified": bool(getattr(ds, "certified_by", None)),
+                    "columns": _extract_columns(ds),
+                    "metrics": _extract_saved_metrics(ds),
+                }
+                results.append(enrich_dataset_plan_entry(entry, ds))
         return results
 
     # Auto-discover
@@ -105,12 +107,13 @@ def _discover_datasets(
             "description": a.description or "",
             "certified": a.certified,
         }
-        # Fetch columns for discovered datasets
+        # Fetch columns, metrics, and grounding for discovered datasets
         from superset.daos.dataset import DatasetDAO
 
         ds = DatasetDAO.find_by_id(a.id)
         ds_dict["columns"] = _extract_columns(ds) if ds else []
-        results.append(ds_dict)
+        ds_dict["metrics"] = _extract_saved_metrics(ds) if ds else []
+        results.append(enrich_dataset_plan_entry(ds_dict, ds))
     return results
 
 
@@ -174,6 +177,18 @@ def _extract_columns(ds: Any | None) -> list[dict[str, Any]]:
             }
         )
     return columns
+
+
+def _extract_saved_metrics(ds: Any | None) -> list[str]:
+    """Return saved metric names for planner context."""
+    if ds is None:
+        return []
+    names: list[str] = []
+    for metric in getattr(ds, "metrics", []) or []:
+        name = getattr(metric, "metric_name", None)
+        if name:
+            names.append(str(name))
+    return names
 
 
 def _detect_by_dimension(prompt: str, category_cols: list[str]) -> str:
@@ -250,8 +265,22 @@ def _build_chart_intents_heuristic(
         c["name"] for c in columns if not c.get("is_numeric") and not c.get("is_dttm")
     ]
 
-    # Pick the best metric column (first numeric found)
-    default_metric = numeric_cols[0] if numeric_cols else ""
+    # Prefer governed/saved metrics over raw numeric columns
+    saved_metrics = list(primary_ds.get("metrics") or [])
+    grounding = primary_ds.get("grounding") or {}
+    if not saved_metrics and grounding.get("measures"):
+        saved_metrics = [
+            m["name"] for m in grounding["measures"] if m.get("name")
+        ]
+    if grounding.get("time_columns"):
+        for tc in grounding["time_columns"]:
+            if tc not in dttm_cols:
+                dttm_cols.insert(0, tc)
+
+    # Pick the best metric (saved/grounded first, else first numeric column)
+    default_metric = saved_metrics[0] if saved_metrics else (
+        numeric_cols[0] if numeric_cols else ""
+    )
     # Pick the best dimension (first category column found)
     default_dimension = category_cols[0] if category_cols else ""
     # Pick the best time column
@@ -261,7 +290,10 @@ def _build_chart_intents_heuristic(
     by_dimension = _detect_by_dimension(prompt, category_cols)
 
     if by_dimension:
-        metrics = numeric_cols[:3] if len(numeric_cols) <= 6 else [default_metric]
+        if saved_metrics:
+            metrics = saved_metrics[:3]
+        else:
+            metrics = numeric_cols[:3] if len(numeric_cols) <= 6 else [default_metric]
         intents.append(
             ChartIntentDetail(
                 purpose=f"Show metrics grouped by {by_dimension}",
@@ -358,7 +390,11 @@ def _build_chart_intents_heuristic(
                 purpose="Detailed data table",
                 chart_type="table",
                 dataset_id=primary_ds["id"],
-                metrics=numeric_cols[:3] if numeric_cols else [],
+                metrics=(
+                    saved_metrics[:3]
+                    if saved_metrics
+                    else (numeric_cols[:3] if numeric_cols else [])
+                ),
                 dimensions=category_cols[:3] if category_cols else [],
             )
         )
@@ -384,12 +420,69 @@ def _build_chart_intents_heuristic(
                 purpose="Detailed data",
                 chart_type="table",
                 dataset_id=primary_ds["id"],
-                metrics=numeric_cols[:3] if numeric_cols else [],
+                metrics=(
+                    saved_metrics[:3]
+                    if saved_metrics
+                    else (numeric_cols[:3] if numeric_cols else [])
+                ),
                 dimensions=category_cols[:3] if category_cols else [],
             ),
         ]
 
     return intents[:max_charts]
+
+
+def _build_global_filters_heuristic(
+    datasets: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Suggest native filters from primary dataset time/category columns."""
+    if not datasets:
+        return []
+    primary = datasets[0]
+    ds_id = primary.get("id")
+    columns = primary.get("columns") or []
+    grounding = primary.get("grounding") or {}
+    filters: list[dict[str, Any]] = []
+
+    time_cols = [c["name"] for c in columns if c.get("is_dttm")]
+    for tc in grounding.get("time_columns") or []:
+        if tc not in time_cols:
+            time_cols.insert(0, tc)
+    if time_cols and ds_id is not None:
+        filters.append(
+            {
+                "name": time_cols[0].replace("_", " ").title(),
+                "filter_type": "filter_time",
+                "column": time_cols[0],
+                "targets": [
+                    {
+                        "datasetId": ds_id,
+                        "column": {"name": time_cols[0]},
+                    }
+                ],
+            }
+        )
+
+    category_cols = [
+        c["name"] for c in columns if not c.get("is_numeric") and not c.get("is_dttm")
+    ]
+    if category_cols and ds_id is not None:
+        col = category_cols[0]
+        filters.append(
+            {
+                "name": col.replace("_", " ").title(),
+                "filter_type": "filter_select",
+                "column": col,
+                "multi_select": True,
+                "targets": [
+                    {
+                        "datasetId": ds_id,
+                        "column": {"name": col},
+                    }
+                ],
+            }
+        )
+    return filters[:3]
 
 
 def _plan_with_llm(
@@ -406,7 +499,7 @@ def _plan_with_llm(
         # StubLLMProvider raises NotImplementedError on complete_json
         # so this naturally falls through to heuristic
 
-        # Build dataset context for the LLM (includes column metadata)
+        # Build dataset context for the LLM (columns + governed measures)
         ds_context_parts = []
         for d in datasets:
             cols = d.get("columns", [])
@@ -421,9 +514,28 @@ def _plan_with_llm(
                         type_hint = " [datetime]"
                     col_items.append(f"{c['name']}{type_hint}")
                 col_str = f"\n  Columns: {', '.join(col_items)}"
+            metrics = d.get("metrics") or []
+            metric_str = (
+                f"\n  Saved/certified metrics (prefer these): {', '.join(metrics[:15])}"
+                if metrics
+                else ""
+            )
+            grounding = d.get("grounding") or {}
+            ground_bits: list[str] = []
+            if grounding.get("instructions"):
+                ground_bits.append(
+                    "Instructions: " + "; ".join(grounding["instructions"][:5])
+                )
+            if grounding.get("glossary"):
+                gloss = []
+                for canon, syns in list(grounding["glossary"].items())[:8]:
+                    gloss.append(f"{canon}←{','.join(syns[:3])}")
+                if gloss:
+                    ground_bits.append("Glossary: " + "; ".join(gloss))
+            ground_str = ("\n  Grounding: " + " | ".join(ground_bits)) if ground_bits else ""
             ds_context_parts.append(
                 f"- {d['name']} (id={d['id']}, certified={d['certified']}): "
-                f"{d['description']}{col_str}"
+                f"{d['description']}{col_str}{metric_str}{ground_str}"
             )
         ds_context = "\n".join(ds_context_parts)
 
@@ -433,11 +545,15 @@ def _plan_with_llm(
             "- purpose: what the chart shows\n"
             "- chart_type: one of 'xy', 'big_number', 'table', 'pie', 'pivot_table'\n"
             "- dataset_id: from the available datasets\n"
-            "- metrics: list of metric names or column names with aggregates\n"
-            "- dimensions: list of grouping columns\n"
-            "- time_range: optional time range string\n\n"
+            "- metrics: prefer saved/certified metric names from the dataset list\n"
+            "- dimensions: list of grouping columns that exist on the dataset\n"
+            "- time_range: optional time range string\n"
+            "- global_filters: optional filters with name, filter_type, column, "
+            "and targets [{datasetId, column: {name}}]\n\n"
+            "Obey any Grounding instructions. Map glossary synonyms to real names. "
             "Provide a confidence score (0-1), list assumptions, and ask clarifying "
-            "questions if the request is ambiguous."
+            "questions if the request is ambiguous. Confidence below 0.3 when "
+            "metrics or datasets cannot be resolved."
         )
 
         user_prompt = (
@@ -548,23 +664,45 @@ async def plan_dashboard(request: DashboardPlanRequest, ctx: Context) -> dict[st
         chart_intents = _build_chart_intents_heuristic(
             request.prompt, datasets, max_charts
         )
+        global_filters = _build_global_filters_heuristic(datasets)
         all_warnings.append(
             "No LLM provider configured. Plan uses heuristic keyword matching. "
             "Configure GENAI_LLM_PROVIDER_CONFIG for better results."
         )
+        has_metrics = any(
+            (ci.metrics for ci in chart_intents)
+        ) or any(d.get("metrics") for d in datasets)
+        confidence = 0.55 if has_metrics else 0.35
+        clarifying: list[str] = []
+        if not has_metrics:
+            clarifying.append(
+                "No saved metrics found on the selected dataset. "
+                "Which measure should charts use, or should a virtual metric be defined?"
+            )
+        if not any(d.get("certified") for d in datasets):
+            clarifying.append(
+                "Selected datasets are not certified. Confirm these are the correct sources."
+            )
         plan = DashboardPlanFull(
             plan_id=plan_id,
             title=_derive_title(request.prompt),
             description=request.prompt[:200],
             datasets=datasets,
             chart_intents=chart_intents,
+            global_filters=global_filters,
             assumptions=[
                 "Chart types selected based on keyword matching.",
-                "Metrics and dimensions need to be resolved from dataset metadata.",
+                "Metrics prefer saved/certified dataset metrics when present.",
             ],
-            clarifying_questions=[],
-            confidence=0.4,
+            clarifying_questions=clarifying,
+            confidence=confidence,
         )
+
+    # Ensure plan carries the discovered dataset list (with grounding)
+    if not plan.datasets:
+        plan.datasets = datasets
+    if not plan.global_filters:
+        plan.global_filters = _build_global_filters_heuristic(plan.datasets or datasets)
 
     # Step 3: Build response
     await ctx.report_progress(3, 3, "Building response")

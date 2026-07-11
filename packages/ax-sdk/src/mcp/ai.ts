@@ -63,6 +63,10 @@ export interface PromptToDashboardParams {
   save_charts?: boolean;
   /** Plan/preview only — do not create charts or a dashboard. */
   dry_run?: boolean;
+  /** Minimum plan confidence required before mutations (default 0.25). */
+  min_confidence?: number;
+  /** Bypass the low-confidence gate and create artifacts anyway. */
+  force?: boolean;
 }
 
 export interface ComposeDashboardParams {
@@ -304,6 +308,8 @@ export class AIResource {
       draft: params.draft ?? true,
       save_charts: params.save_charts ?? true,
       dry_run: params.dry_run ?? false,
+      min_confidence: params.min_confidence ?? 0.25,
+      force: params.force ?? false,
     });
   }
 

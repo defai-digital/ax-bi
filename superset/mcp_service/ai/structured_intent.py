@@ -84,6 +84,20 @@ def resolve_metric_ref(name: str, dataset: Any) -> dict[str, Any]:
     if not cleaned:
         return {"name": "count", "aggregate": "COUNT"}
 
+    # Grounding / glossary first (business synonyms → certified measures)
+    try:
+        from superset.mcp_service.ai.grounding_utils import (
+            load_grounding_contract,
+            resolve_name_via_grounding,
+        )
+
+        contract = load_grounding_contract(dataset)
+        grounded = resolve_name_via_grounding(cleaned, contract, prefer="measure")
+        if grounded:
+            cleaned = grounded
+    except Exception:  # pylint: disable=broad-except
+        logger.debug("Grounding metric resolve skipped", exc_info=True)
+
     saved = _saved_metric_names(dataset)
     if cleaned in saved:
         return {"name": cleaned, "saved_metric": True}
@@ -115,6 +129,20 @@ def resolve_dimension_name(name: str, dataset: Any) -> str:
     cleaned = (name or "").strip()
     if not cleaned:
         return cleaned
+
+    try:
+        from superset.mcp_service.ai.grounding_utils import (
+            load_grounding_contract,
+            resolve_name_via_grounding,
+        )
+
+        contract = load_grounding_contract(dataset)
+        grounded = resolve_name_via_grounding(cleaned, contract, prefer="dimension")
+        if grounded:
+            cleaned = grounded
+    except Exception:  # pylint: disable=broad-except
+        logger.debug("Grounding dimension resolve skipped", exc_info=True)
+
     columns = _column_names(dataset)
     if cleaned in columns:
         return cleaned

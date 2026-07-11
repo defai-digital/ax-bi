@@ -142,6 +142,17 @@ def _describe_dataset(
 
     certified_by = getattr(dataset, "certified_by", None)
 
+    grounding: dict[str, Any] = {}
+    try:
+        from superset.mcp_service.ai.grounding_utils import (
+            grounding_summary_dict,
+            load_grounding_contract,
+        )
+
+        grounding = grounding_summary_dict(load_grounding_contract(dataset))
+    except Exception:  # pylint: disable=broad-except
+        logger.debug("Grounding summary unavailable for describe_dataset", exc_info=True)
+
     return DatasetDescription(
         id=dataset.id,
         name=getattr(dataset, "table_name", "") or "",
@@ -151,6 +162,7 @@ def _describe_dataset(
         columns=columns,
         metrics=metrics,
         privacy=privacy,
+        grounding=grounding,
     )
 
 

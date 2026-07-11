@@ -76,6 +76,8 @@ describe('AIResource', () => {
         draft: true,
         save_charts: true,
         dry_run: false,
+        min_confidence: 0.25,
+        force: false,
       },
     });
   });
