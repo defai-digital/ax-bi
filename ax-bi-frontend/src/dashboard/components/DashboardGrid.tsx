@@ -17,14 +17,16 @@
  * under the License.
  */
 import { Fragment, useCallback, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import classNames from 'classnames';
-import { addAlpha } from '@superset-ui/core';
+import { addAlpha, FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
 import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { EmptyState } from '@superset-ui/core/components';
+import { Button, EmptyState } from '@superset-ui/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
-import type { LayoutItem } from 'src/dashboard/types';
+import { findPermission } from 'src/utils/findPermission';
+import type { LayoutItem, RootState } from 'src/dashboard/types';
 import type { DropResult } from 'src/dashboard/components/dnd/dragDroppableConfig';
 import DashboardComponent from '../containers/DashboardComponent';
 import { Droppable } from './dnd/DragDroppable';
@@ -65,6 +67,14 @@ const DashboardEmptyStateContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const EmptyStateSecondary = styled.div`
+  ${({ theme }) => css`
+    margin-top: ${theme.sizeUnit * 3}px;
+    display: flex;
+    justify-content: center;
+  `}
 `;
 
 const GridContent = styled.div<{ editMode?: boolean }>`
@@ -140,8 +150,26 @@ function DashboardGrid({
   dashboardId,
 }: DashboardGridProps) {
   const theme = useTheme();
+  const canUploadData = useSelector((state: RootState) =>
+    findPermission('can_upload', 'Database', state.user?.roles),
+  );
+  const showUploadCta =
+    canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
   const [isResizing, setIsResizing] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
+
+  const uploadEmptyStateAction = (
+    <EmptyStateSecondary>
+      <Button
+        buttonStyle="link"
+        icon={<Icons.UploadOutlined />}
+        onClick={() => navigateTo('/upload/')}
+        data-test="dashboard-empty-upload"
+      >
+        {t('Upload data')}
+      </Button>
+    </EmptyStateSecondary>
+  );
 
   const setGridRef = useCallback((ref: HTMLDivElement | null): void => {
     gridRef.current = ref;
@@ -235,7 +263,9 @@ function DashboardGrid({
         });
       }}
       image="chart.svg"
-    />
+    >
+      {showUploadCta ? uploadEmptyStateAction : null}
+    </EmptyState>
   );
 
   const topLevelTabEmptyState = editMode ? (
@@ -257,7 +287,9 @@ function DashboardGrid({
         });
       }}
       image="chart.svg"
-    />
+    >
+      {showUploadCta ? uploadEmptyStateAction : null}
+    </EmptyState>
   ) : (
     <EmptyState
       title={t('There are no components added to this tab')}

@@ -17,7 +17,12 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { css, styled } from '@apache-superset/core/theme';
+import { css, styled, type SupersetTheme } from '@apache-superset/core/theme';
+
+/** Soft card elevation used across AX page surfaces. */
+export function axbiSoftShadow(theme: SupersetTheme): string {
+  return `0 ${theme.sizeUnit}px ${theme.sizeUnit * 6}px rgba(15, 23, 42, 0.06)`;
+}
 
 export const AXBIPage = styled.div`
   ${({ theme }) => css`
@@ -26,6 +31,21 @@ export const AXBIPage = styled.div`
 
     @media (max-width: 900px) {
       padding: ${theme.sizeUnit * 4}px;
+    }
+  `}
+`;
+
+/** Centered content width for Upload and similar focused flows. */
+export const AXBIPageNarrow = styled.div`
+  ${({ theme }) => css`
+    max-width: ${theme.sizeUnit * 270}px;
+    margin: 0 auto;
+    padding: ${theme.sizeUnit * 10}px ${theme.sizeUnit * 6}px
+      ${theme.sizeUnit * 12}px;
+
+    @media (max-width: 900px) {
+      padding: ${theme.sizeUnit * 6}px ${theme.sizeUnit * 4}px
+        ${theme.sizeUnit * 8}px;
     }
   `}
 `;
@@ -42,8 +62,7 @@ export const AXBIHero = styled.section`
     background:
       linear-gradient(135deg, ${theme.colorPrimaryBg} 0%, transparent 48%),
       ${theme.colorBgContainer};
-    box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 6}px
-      rgba(15, 23, 42, 0.06);
+    box-shadow: ${axbiSoftShadow(theme)};
 
     @media (max-width: 1000px) {
       grid-template-columns: 1fr;
@@ -126,8 +145,7 @@ export const AXBIStatCard = styled.div`
 
     &:hover {
       border-color: ${theme.colorPrimaryBorder};
-      box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 4}px
-        rgba(15, 23, 42, 0.07);
+      box-shadow: ${axbiSoftShadow(theme)};
       transform: translateY(-1px);
     }
   `}
@@ -192,6 +210,88 @@ export const AXBISectionDescription = styled.div`
     color: ${theme.colorTextSecondary};
     line-height: 1.5;
     margin-top: ${theme.sizeUnit}px;
+  `}
+`;
+
+export const AXBIQuickActionGrid = styled.div`
+  ${({ theme }) => css`
+    display: grid;
+    gap: ${theme.sizeUnit * 3}px;
+    margin-top: ${theme.sizeUnit * 4}px;
+  `}
+`;
+
+export const AXBIQuickAction = styled.button`
+  ${({ theme }) => css`
+    display: flex;
+    align-items: center;
+    gap: ${theme.sizeUnit * 3}px;
+    width: 100%;
+    padding: ${theme.sizeUnit * 3}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadius}px;
+    color: ${theme.colorText};
+    background: ${theme.colorBgContainer};
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 0.16s ease,
+      box-shadow 0.16s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: ${theme.colorPrimaryBorder};
+      box-shadow: ${axbiSoftShadow(theme)};
+      outline: none;
+    }
+
+    .quick-action-icon {
+      color: ${theme.colorPrimary};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: ${theme.sizeUnit * 8}px;
+      height: ${theme.sizeUnit * 8}px;
+      border-radius: ${theme.borderRadius}px;
+      background: ${theme.colorPrimaryBg};
+      flex: 0 0 auto;
+    }
+
+    .quick-action-title {
+      font-weight: ${theme.fontWeightStrong};
+      margin-bottom: ${theme.sizeUnit / 2}px;
+    }
+
+    .quick-action-text {
+      color: ${theme.colorTextSecondary};
+      font-size: ${theme.fontSizeSM}px;
+      line-height: 1.4;
+    }
+  `}
+`;
+
+export const AXBIEmptyCallout = styled.div`
+  ${({ theme }) => css`
+    border: 1px dashed ${theme.colorBorder};
+    border-radius: ${theme.borderRadius}px;
+    background: ${theme.colorBgContainer};
+    padding: ${theme.sizeUnit * 6}px;
+    text-align: center;
+    margin: ${theme.sizeUnit * 5}px 0;
+
+    h2 {
+      color: ${theme.colorText};
+      font-size: ${theme.fontSizeXL}px;
+      font-weight: ${theme.fontWeightStrong};
+      margin: 0 0 ${theme.sizeUnit * 2}px;
+    }
+
+    p {
+      color: ${theme.colorTextSecondary};
+      margin: 0 auto ${theme.sizeUnit * 4}px;
+      max-width: 520px;
+      line-height: 1.5;
+    }
   `}
 `;
 

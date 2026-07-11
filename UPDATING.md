@@ -24,6 +24,20 @@ assists people when migrating to a new version.
 
 ## Next
 
+### UI/UX continuity defaults (`GUIDED_CHART_BUILDER`, `CURATED_VIZ_GALLERY`)
+
+AX-BI now defaults the following presentation-only feature flags to `True`:
+
+- `GUIDED_CHART_BUILDER` — Explore opens the stepped chart builder for supported
+  viz types; the full control panel remains available via **Switch to advanced**.
+- `CURATED_VIZ_GALLERY` — the chart-type picker prefers a curated set first;
+  the full plugin catalog remains under **More charts**.
+
+`SIMPLIFIED_NAV` remains default `True` (SQL Lab demoted to an Advanced
+settings group). Operators can set any of these flags to `False` in
+`SUPERSET_CONFIG` / `DEFAULT_FEATURE_FLAGS` to restore prior defaults. See
+`.internal/docs/ui-ux-improvement-tech-spec.md`.
+
 ### Local upload storage moved under `SUPERSET_HOME`
 
 The default `UPLOAD_FOLDER` now resolves to `<SUPERSET_HOME>/uploads`, and the

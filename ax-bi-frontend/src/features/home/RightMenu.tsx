@@ -69,6 +69,53 @@ const StyledMenuItemWithIcon = styled.div`
   align-items: center;
 `;
 
+const CommandPaletteChip = styled.button`
+  ${({ theme }) => css`
+    display: inline-flex;
+    align-items: center;
+    gap: ${theme.sizeUnit * 2}px;
+    height: ${theme.sizeUnit * 8}px;
+    padding: 0 ${theme.sizeUnit * 3}px;
+    margin: 0 ${theme.sizeUnit}px;
+    border: 1px solid ${theme.colorBorderSecondary};
+    border-radius: ${theme.borderRadiusLG}px;
+    background: ${theme.colorBgContainer};
+    color: ${theme.colorTextSecondary};
+    cursor: pointer;
+    font-size: ${theme.fontSizeSM}px;
+    line-height: 1;
+    transition:
+      border-color 0.16s ease,
+      color 0.16s ease,
+      background 0.16s ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: ${theme.colorPrimaryBorder};
+      color: ${theme.colorText};
+      outline: none;
+    }
+
+    .shortcut {
+      display: inline-flex;
+      align-items: center;
+      padding: ${theme.sizeUnit / 2}px ${theme.sizeUnit}px;
+      border-radius: ${theme.borderRadiusSM}px;
+      background: ${theme.colorFillSecondary};
+      color: ${theme.colorTextTertiary};
+      font-size: ${theme.fontSizeSM}px;
+    }
+
+    @media (max-width: 576px) {
+      .chip-label,
+      .shortcut {
+        display: none;
+      }
+      padding: 0 ${theme.sizeUnit * 2}px;
+    }
+  `}
+`;
+
 const RightMenu = ({
   align,
   settings,
@@ -140,13 +187,9 @@ const RightMenu = ({
 
       // Create group (previously in the "+" dropdown)
       const createItems: MenuItem[] = [];
+      const simplifiedNav = isFeatureEnabled(FeatureFlag.SimplifiedNav);
       if (!navbarRight.user_is_anonymous) {
-        createItems.push({
-          key: 'create-sql',
-          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
-          icon: <Icons.SearchOutlined />,
-        });
-        createItems.push({
+        const chartItem: MenuItem = {
           key: 'create-chart',
           label: (
             <Link
@@ -160,8 +203,8 @@ const RightMenu = ({
             </Link>
           ),
           icon: <Icons.BarChartOutlined />,
-        });
-        createItems.push({
+        };
+        const dashboardItem: MenuItem = {
           key: 'create-dashboard',
           label: (
             <Typography.Link href="/dashboard/new/">
@@ -169,13 +212,34 @@ const RightMenu = ({
             </Typography.Link>
           ),
           icon: <Icons.DashboardOutlined />,
-        });
-        if (canUploadData && localFileUploadEnabled) {
-          createItems.push({
-            key: 'create-upload-data',
-            label: <Link to="/upload/">{t('Upload data')}</Link>,
-            icon: <Icons.UploadOutlined />,
-          });
+        };
+        const uploadItem: MenuItem | null =
+          canUploadData && localFileUploadEnabled
+            ? {
+                key: 'create-upload-data',
+                label: <Link to="/upload/">{t('Upload data')}</Link>,
+                icon: <Icons.UploadOutlined />,
+              }
+            : null;
+        const sqlItem: MenuItem = {
+          key: 'create-sql',
+          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
+          icon: <Icons.SearchOutlined />,
+        };
+
+        // Simplified mode: consumer create paths first; SQL demoted under divider.
+        if (simplifiedNav) {
+          createItems.push(chartItem, dashboardItem);
+          if (uploadItem) {
+            createItems.push(uploadItem);
+          }
+          createItems.push({ type: 'divider', key: 'create-advanced-divider' });
+          createItems.push(sqlItem);
+        } else {
+          createItems.push(sqlItem, chartItem, dashboardItem);
+          if (uploadItem) {
+            createItems.push(uploadItem);
+          }
         }
       }
       if (createItems.length > 0) {
@@ -397,14 +461,21 @@ const RightMenu = ({
     const items: MenuItem[] = [];
 
     if (commandPalette) {
+      const shortcutLabel = isMac ? '⌘K' : 'Ctrl+K';
       items.push({
         key: 'command-palette',
         label: (
-          <Tooltip title={t('Search (%s)', isMac ? '⌘K' : 'Ctrl+K')}>
-            <Icons.SearchOutlined
+          <Tooltip title={t('Search commands and pages (%s)', shortcutLabel)}>
+            <CommandPaletteChip
+              type="button"
               data-test="command-palette-trigger"
+              aria-label={t('Search (%s)', shortcutLabel)}
               onClick={() => commandPalette.open()}
-            />
+            >
+              <Icons.SearchOutlined iconSize="m" />
+              <span className="chip-label">{t('Search')}</span>
+              <span className="shortcut">{shortcutLabel}</span>
+            </CommandPaletteChip>
           </Tooltip>
         ),
       });

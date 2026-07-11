@@ -59,12 +59,15 @@ import { Icons } from '@superset-ui/core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
 import {
   AXBIActionRow,
+  AXBIEmptyCallout,
   AXBIEyebrow,
   AXBIHero,
   AXBIHeroText,
   AXBIHeroTitle,
   AXBIPage,
   AXBIPanel,
+  AXBIQuickAction,
+  AXBIQuickActionGrid,
   AXBISection,
   AXBISectionDescription,
   AXBISectionHeader,
@@ -72,6 +75,7 @@ import {
   AXBIStat,
   AXBIStatsGrid,
 } from 'src/components/AXBIWorkspace';
+import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -133,59 +137,6 @@ const WelcomeContainer = styled.div`
   }
 `;
 
-const QuickActionGrid = styled.div`
-  ${({ theme }) => `
-    display: grid;
-    gap: ${theme.sizeUnit * 3}px;
-    margin-top: ${theme.sizeUnit * 4}px;
-  `}
-`;
-
-const QuickAction = styled.button`
-  ${({ theme }) => `
-    display: flex;
-    align-items: center;
-    gap: ${theme.sizeUnit * 3}px;
-    width: 100%;
-    padding: ${theme.sizeUnit * 3}px;
-    border: 1px solid ${theme.colorBorderSecondary};
-    border-radius: ${theme.borderRadius}px;
-    color: ${theme.colorText};
-    background: ${theme.colorBgContainer};
-    cursor: pointer;
-    text-align: left;
-    transition: border-color 0.16s ease, box-shadow 0.16s ease;
-
-    &:hover {
-      border-color: ${theme.colorPrimaryBorder};
-      box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 3}px rgba(15, 23, 42, 0.06);
-    }
-
-    .quick-action-icon {
-      color: ${theme.colorPrimary};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: ${theme.sizeUnit * 8}px;
-      height: ${theme.sizeUnit * 8}px;
-      border-radius: ${theme.borderRadius}px;
-      background: ${theme.colorPrimaryBg};
-      flex: 0 0 auto;
-    }
-
-    .quick-action-title {
-      font-weight: ${theme.fontWeightStrong};
-      margin-bottom: ${theme.sizeUnit / 2}px;
-    }
-
-    .quick-action-text {
-      color: ${theme.colorTextSecondary};
-      font-size: ${theme.fontSizeSM}px;
-      line-height: 1.4;
-    }
-  `}
-`;
-
 const WelcomeNav = styled.div`
   ${({ theme }) => `
     .switch {
@@ -218,6 +169,11 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
 
 function Welcome({ user, addDangerToast }: WelcomeProps) {
   const canReadSavedQueries = userHasPermission(user, 'SavedQuery', 'can_read');
+  const canUploadData =
+    userHasPermission(user, 'Database', 'can_upload') &&
+    isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
+  const genaiEnabled = isFeatureEnabled(FeatureFlag.GenaiBi);
+  const commandPalette = useOptionalCommandPalette();
   const userid = user.userId;
   const id = userid!.toString(); // confident that user is not a guest user
   const params = rison.encode({ page_size: 24, distinct: false });
@@ -394,6 +350,12 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
   const recentCount =
     (activityData?.[TableTab.Viewed]?.length ?? 0) +
     (activityData?.[TableTab.Other]?.length ?? 0);
+  const isWorkspaceLoaded = dashboardData !== null && chartData !== null;
+  const isFirstRun =
+    isWorkspaceLoaded &&
+    !isFetchingActivityData &&
+    dashboardCount === 0 &&
+    chartCount === 0;
 
   const menuData: SubMenuProps = {
     activeChild: 'Home',
@@ -432,23 +394,25 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
             <div>
               <AXBIEyebrow>{t('AX BI workspace')}</AXBIEyebrow>
               <AXBIHeroTitle>
-                {t('Build dashboards from files, datasets, and AI prompts')}
+                {t('Build dashboards from files and datasets')}
               </AXBIHeroTitle>
               <AXBIHeroText>
                 {t(
-                  'Upload Excel or CSV files, explore datasets, generate charts, and turn insights into shareable dashboards.',
+                  'Upload data, explore datasets, create charts, and share dashboards with your team.',
                 )}
               </AXBIHeroText>
               <AXBIActionRow>
+                {canUploadData && (
+                  <Button
+                    buttonStyle="primary"
+                    icon={<Icons.UploadOutlined />}
+                    onClick={() => navigateTo('/upload/')}
+                  >
+                    {t('Upload data')}
+                  </Button>
+                )}
                 <Button
-                  buttonStyle="primary"
-                  icon={<Icons.UploadOutlined />}
-                  onClick={() => navigateTo('/upload/')}
-                >
-                  {t('Upload data')}
-                </Button>
-                <Button
-                  buttonStyle="secondary"
+                  buttonStyle={canUploadData ? 'secondary' : 'primary'}
                   icon={<Icons.BarChartOutlined />}
                   onClick={() => navigateTo('/chart/add')}
                 >
@@ -466,30 +430,71 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
               </AXBIActionRow>
             </div>
             <AXBIPanel>
-              <AXBISectionTitle>{t('Ask AX BI')}</AXBISectionTitle>
+              <AXBISectionTitle>{t('Quick start')}</AXBISectionTitle>
               <AXBISectionDescription>
                 {t(
-                  'Use AX-Studio MCP prompts like “create a dashboard from this file” or “show sales by product line”.',
+                  'Pick a concrete next step. Search jumps anywhere with keyboard shortcuts.',
                 )}
               </AXBISectionDescription>
-              <QuickActionGrid>
-                <QuickAction
-                  type="button"
-                  onClick={() => navigateTo('/upload/')}
-                >
-                  <span className="quick-action-icon">
-                    <Icons.UploadOutlined />
-                  </span>
-                  <span>
-                    <div className="quick-action-title">
-                      {t('Start from a file')}
-                    </div>
-                    <div className="quick-action-text">
-                      {t('Upload data and open the chart builder.')}
-                    </div>
-                  </span>
-                </QuickAction>
-                <QuickAction
+              <AXBIQuickActionGrid>
+                {genaiEnabled && commandPalette && (
+                  <AXBIQuickAction
+                    type="button"
+                    data-test="home-ask-axbi"
+                    onClick={() => commandPalette.open()}
+                  >
+                    <span className="quick-action-icon">
+                      <Icons.ThunderboltOutlined />
+                    </span>
+                    <span>
+                      <div className="quick-action-title">{t('Ask AX BI')}</div>
+                      <div className="quick-action-text">
+                        {t(
+                          'Open search to run create, upload, and navigation actions. Full prompt-to-dashboard is available via AX-Studio MCP.',
+                        )}
+                      </div>
+                    </span>
+                  </AXBIQuickAction>
+                )}
+                {canUploadData && (
+                  <AXBIQuickAction
+                    type="button"
+                    onClick={() => navigateTo('/upload/')}
+                  >
+                    <span className="quick-action-icon">
+                      <Icons.UploadOutlined />
+                    </span>
+                    <span>
+                      <div className="quick-action-title">
+                        {t('Start from a file')}
+                      </div>
+                      <div className="quick-action-text">
+                        {t('Upload data and open the chart builder.')}
+                      </div>
+                    </span>
+                  </AXBIQuickAction>
+                )}
+                {commandPalette && (
+                  <AXBIQuickAction
+                    type="button"
+                    onClick={() => commandPalette.open()}
+                  >
+                    <span className="quick-action-icon">
+                      <Icons.SearchOutlined />
+                    </span>
+                    <span>
+                      <div className="quick-action-title">
+                        {t('Search')}
+                      </div>
+                      <div className="quick-action-text">
+                        {t(
+                          'Find pages and actions. Press ⌘K or Ctrl+K anywhere.',
+                        )}
+                      </div>
+                    </span>
+                  </AXBIQuickAction>
+                )}
+                <AXBIQuickAction
                   type="button"
                   onClick={() => navigateTo('/dashboard/list/')}
                 >
@@ -498,14 +503,14 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                   </span>
                   <span>
                     <div className="quick-action-title">
-                      {t('Review dashboards')}
+                      {t('Browse dashboards')}
                     </div>
                     <div className="quick-action-text">
                       {t('Open saved analytics and reports.')}
                     </div>
                   </span>
-                </QuickAction>
-              </QuickActionGrid>
+                </AXBIQuickAction>
+              </AXBIQuickActionGrid>
             </AXBIPanel>
           </AXBIHero>
 
@@ -526,6 +531,44 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
               hint={t('Viewed and edited analytics')}
             />
           </AXBIStatsGrid>
+
+          {isFirstRun && (
+            <AXBIEmptyCallout data-test="home-first-run">
+              <h2>{t('Your workspace is empty')}</h2>
+              <p>
+                {t(
+                  'Upload a file or create your first chart to start building dashboards.',
+                )}
+              </p>
+              <AXBIActionRow style={{ justifyContent: 'center', marginTop: 0 }}>
+                {canUploadData && (
+                  <Button
+                    buttonStyle="primary"
+                    icon={<Icons.UploadOutlined />}
+                    onClick={() => navigateTo('/upload/')}
+                  >
+                    {t('Upload data')}
+                  </Button>
+                )}
+                <Button
+                  buttonStyle={canUploadData ? 'secondary' : 'primary'}
+                  icon={<Icons.BarChartOutlined />}
+                  onClick={() => navigateTo('/chart/add')}
+                >
+                  {t('Create chart')}
+                </Button>
+                <Button
+                  buttonStyle="secondary"
+                  icon={<Icons.DashboardOutlined />}
+                  onClick={() =>
+                    navigateTo('/dashboard/new/', { assign: true })
+                  }
+                >
+                  {t('New dashboard')}
+                </Button>
+              </AXBIActionRow>
+            </AXBIEmptyCallout>
+          )}
 
           <AXBISection>
             <AXBISectionHeader>

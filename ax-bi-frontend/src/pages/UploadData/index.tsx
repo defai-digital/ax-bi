@@ -19,61 +19,38 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { styled } from '@apache-superset/core/theme';
 import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
 import { Upload, Progress } from '@superset-ui/core/components';
 import { Alert } from '@apache-superset/core/components';
 import { Icons } from '@superset-ui/core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { URL_PARAMS } from 'src/constants';
+import {
+  AXBIEyebrow,
+  AXBIHero,
+  AXBIHeroText,
+  AXBIHeroTitle,
+  AXBIPageNarrow,
+  AXBISectionDescription,
+} from 'src/components/AXBIWorkspace';
 
 const { Dragger } = Upload;
 
 const ACCEPTED_EXTENSIONS =
   '.csv,.tsv,.txt,.csv.gz,.tsv.gz,.txt.gz,.xls,.xlsx,.ods,.parquet,.zip,.orc,.feather,.arrow,.ipc,.json,.jsonl,.ndjson,.jsonl.gz,.ndjson.gz,.xml,.sql,.dump,.sqlite,.sqlite3,.db,.avro,.geojson,.gpkg,.shp.zip,.fwf,.dat,.asc,.dta,.sav,.sas7bdat,.xpt,.html,.htm,.croissant.json,.npy,.npz,.lance,.lance.zip,.faiss,.index,.hnsw,.ann,.tar,.tar.gz,.tgz,.mlflow.zip,.mlruns.zip,.safetensors,.onnx,.gguf,.yaml,.yml,.yolo.zip';
 
-const PageWrapper = styled.div`
-  max-width: 1080px;
-  margin: 40px auto;
-  padding: 0 24px 48px;
-`;
-
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: ${({ theme }) => theme.fontWeightBold};
-  margin-bottom: 8px;
-`;
-
-const Subtitle = styled.p`
-  font-size: 16px;
-  color: ${({ theme }) => theme.colorTextSecondary};
-  margin-bottom: 0;
-  max-width: 620px;
-`;
-
-const SupportNote = styled.p`
-  font-size: ${({ theme }) => theme.fontSizeSM}px;
-  color: ${({ theme }) => theme.colorTextTertiary};
+const SupportNote = styled(AXBISectionDescription)`
   margin-top: ${({ theme }) => theme.sizeUnit * 3}px;
-  margin-bottom: 0;
   max-width: 620px;
-  line-height: 1.5;
 `;
 
-const HeroPanel = styled.div`
-  ${({ theme }) => css`
-    display: grid;
+const UploadHero = styled(AXBIHero)`
+  ${({ theme }) => `
     grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
     gap: ${theme.sizeUnit * 8}px;
     align-items: center;
     padding: ${theme.sizeUnit * 8}px;
-    border: 1px solid ${theme.colorBorderSecondary};
-    border-radius: ${theme.borderRadius}px;
-    background:
-      linear-gradient(135deg, ${theme.colorPrimaryBg} 0%, transparent 40%),
-      ${theme.colorBgContainer};
-    box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 5}px
-      rgba(15, 23, 42, 0.06);
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
@@ -82,19 +59,8 @@ const HeroPanel = styled.div`
   `}
 `;
 
-const Eyebrow = styled.div`
-  ${({ theme }) => css`
-    color: ${theme.colorPrimary};
-    font-weight: ${theme.fontWeightStrong};
-    margin-bottom: ${theme.sizeUnit * 2}px;
-    text-transform: uppercase;
-    letter-spacing: 0;
-    font-size: ${theme.fontSizeSM}px;
-  `}
-`;
-
 const WorkflowGrid = styled.div`
-  ${({ theme }) => css`
+  ${({ theme }) => `
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: ${theme.sizeUnit * 4}px;
@@ -107,7 +73,7 @@ const WorkflowGrid = styled.div`
 `;
 
 const StepCard = styled.div`
-  ${({ theme }) => css`
+  ${({ theme }) => `
     padding: ${theme.sizeUnit * 4}px;
     border: 1px solid ${theme.colorBorderSecondary};
     border-radius: ${theme.borderRadius}px;
@@ -116,7 +82,7 @@ const StepCard = styled.div`
 `;
 
 const StepBadge = styled.div`
-  ${({ theme }) => css`
+  ${({ theme }) => `
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -131,7 +97,7 @@ const StepBadge = styled.div`
 `;
 
 const StepTitle = styled.div`
-  ${({ theme }) => css`
+  ${({ theme }) => `
     font-weight: ${theme.fontWeightStrong};
     color: ${theme.colorText};
     margin-bottom: ${theme.sizeUnit}px;
@@ -139,7 +105,7 @@ const StepTitle = styled.div`
 `;
 
 const StepText = styled.div`
-  ${({ theme }) => css`
+  ${({ theme }) => `
     color: ${theme.colorTextSecondary};
     line-height: 1.5;
   `}
@@ -381,16 +347,18 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
   const isUploading = files.some(f => f.status === 'uploading');
 
   return (
-    <PageWrapper>
-      <HeroPanel>
+    <AXBIPageNarrow>
+      <UploadHero>
         <div>
-          <Eyebrow>{t('Start with a file')}</Eyebrow>
-          <Title>{t('Upload data and build charts faster')}</Title>
-          <Subtitle>
+          <AXBIEyebrow>{t('Start with a file')}</AXBIEyebrow>
+          <AXBIHeroTitle>
+            {t('Upload data and build charts faster')}
+          </AXBIHeroTitle>
+          <AXBIHeroText>
             {t(
               'Supported formats include CSV/TSV, compressed exports, Excel/ODS, Parquet/ORC/Arrow, JSON/XML, SQL text dumps, SQLite, fixed-width, HTML/statistical files, geospatial files, embeddings, and AI artifact metadata. Multiple files supported.',
             )}
-          </Subtitle>
+          </AXBIHeroText>
           <SupportNote>
             {t(
               'PowerPoint files with tables should be sent from AX-Studio so MCP can extract structured data first.',
@@ -420,7 +388,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
             </HelpText>
           </Dragger>
         </DropZoneWrapper>
-      </HeroPanel>
+      </UploadHero>
 
       <WorkflowGrid>
         <StepCard>
@@ -441,10 +409,10 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
         </StepCard>
         <StepCard>
           <StepBadge>3</StepBadge>
-          <StepTitle>{t('Create charts or ask AI')}</StepTitle>
+          <StepTitle>{t('Create charts')}</StepTitle>
           <StepText>
             {t(
-              'Open the builder, generate charts, and save them to dashboards.',
+              'Open the chart builder, visualize the data, and save to dashboards.',
             )}
           </StepText>
         </StepCard>
@@ -530,7 +498,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
           )}
         </StatusWrapper>
       )}
-    </PageWrapper>
+    </AXBIPageNarrow>
   );
 };
 

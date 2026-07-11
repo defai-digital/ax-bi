@@ -350,7 +350,16 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         <SearchInput
           ref={inputRef}
           type="text"
+          role="combobox"
           aria-label={t('Search commands')}
+          aria-expanded={isOpen}
+          aria-controls="axbi-command-palette-list"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            flatCommands[selectedIndex]
+              ? `axbi-command-option-${flatCommands[selectedIndex].id}`
+              : undefined
+          }
           placeholder={placeholder}
           value={searchQuery}
           onChange={e => {
@@ -362,7 +371,12 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         <SearchHint>{t('Esc to close')}</SearchHint>
       </SearchContainer>
 
-      <CommandList ref={listRef} role="listbox" aria-label={t('Commands')}>
+      <CommandList
+        id="axbi-command-palette-list"
+        ref={listRef}
+        role="listbox"
+        aria-label={t('Commands')}
+      >
         {filteredCommands.length === 0 ? (
           <EmptyState>{t('No commands found')}</EmptyState>
         ) : (
@@ -376,6 +390,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
 
                 return (
                   <CommandItem
+                    id={`axbi-command-option-${cmd.id}`}
                     key={cmd.id}
                     $isSelected={isSelected}
                     data-index={currentIndex}

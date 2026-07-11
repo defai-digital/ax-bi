@@ -28,6 +28,12 @@
         "description": "Experimental PyArrow engine for CSV parsing (may have issues with dates/nulls)"
       },
       {
+        "name": "CURATED_VIZ_GALLERY",
+        "default": true,
+        "lifecycle": "development",
+        "description": "Prefer a curated chart-type set in the viz gallery; full catalog remains under \"More charts\". Presentation-only. See .internal/docs/ui-ux-improvement-*."
+      },
+      {
         "name": "DATASET_FOLDERS",
         "default": false,
         "lifecycle": "development",
@@ -101,7 +107,7 @@
       },
       {
         "name": "GUIDED_CHART_BUILDER",
-        "default": false,
+        "default": true,
         "lifecycle": "development",
         "description": "Offer a guided, stepped chart builder in Explore (data -> measures -> group by -> filters -> limit -> visualize) as a simpler alternative to the full control panel. Compiles to the same form_data / query_context; the advanced panel remains one click away. See ax-docs/ux-simplification-*."
       },

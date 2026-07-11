@@ -767,12 +767,16 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # does not change routes or permissions. See ax-docs/ux-simplification-*.
     # @lifecycle: development
     "SIMPLIFIED_NAV": True,
+    # Prefer a curated chart-type set in the viz gallery; full catalog remains
+    # under "More charts". Presentation-only. See .internal/docs/ui-ux-improvement-*.
+    # @lifecycle: development
+    "CURATED_VIZ_GALLERY": True,
     # Offer a guided, stepped chart builder in Explore (data -> measures ->
     # group by -> filters -> limit -> visualize) as a simpler alternative to the
     # full control panel. Compiles to the same form_data / query_context; the
     # advanced panel remains one click away. See ax-docs/ux-simplification-*.
     # @lifecycle: development
-    "GUIDED_CHART_BUILDER": False,
+    "GUIDED_CHART_BUILDER": True,
     # =================================================================
     # IN TESTING
     # =================================================================

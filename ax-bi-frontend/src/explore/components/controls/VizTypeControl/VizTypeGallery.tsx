@@ -34,6 +34,8 @@ import {
   ChartMetadata,
   chartLabelWeight,
   chartLabelExplanations,
+  FeatureFlag,
+  isFeatureEnabled,
 } from '@superset-ui/core';
 import {
   styled,
@@ -47,6 +49,7 @@ import { Icons } from '@superset-ui/core/components/Icons';
 import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
 import { usePluginContext } from 'src/components';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import { orderCuratedVizEntries } from './curatedVizTypes';
 
 interface VizTypeGalleryProps {
   onChange: (vizType: string | null) => void;
@@ -75,10 +78,13 @@ export const MAX_ADVISABLE_VIZ_GALLERY_WIDTH = 1090;
 const OTHER_CATEGORY = t('Other');
 
 const ALL_CHARTS = t('All charts');
-
+const MORE_CHARTS = t('More charts');
 const FEATURED = t('Featured');
 
 const RECOMMENDED_TAGS = [FEATURED, t('ECharts'), t('Advanced-Analytics')];
+
+const isCuratedGallery = () =>
+  isFeatureEnabled(FeatureFlag.CuratedVizGallery);
 
 export const VIZ_TYPE_CONTROL_TEST_ID = 'viz-type-control';
 
@@ -664,15 +670,20 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
     if (isActivelySearching) {
       return searchResults;
     }
-    if (activeSelector === ALL_CHARTS && activeSection === Sections.AllCharts) {
+    if (
+      (activeSelector === ALL_CHARTS || activeSelector === MORE_CHARTS) &&
+      activeSection === Sections.AllCharts
+    ) {
       return sortedMetadata;
     }
     if (
       activeSelector === FEATURED &&
-      activeSection === Sections.Featured &&
-      chartsByTags[FEATURED]
+      activeSection === Sections.Featured
     ) {
-      return chartsByTags[FEATURED];
+      if (isCuratedGallery()) {
+        return orderCuratedVizEntries(chartMetadata, selectedViz);
+      }
+      return chartsByTags[FEATURED] || [];
     }
     if (
       activeSection === Sections.Category &&
@@ -686,48 +697,59 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
     return [];
   };
 
+  const allChartsSelector = isCuratedGallery() ? MORE_CHARTS : ALL_CHARTS;
+  const selectorChromeCss = ({ sizeUnit }: SupersetTheme) => css`
+    margin: ${sizeUnit * 2}px;
+    margin-bottom: 0;
+  `;
+
+  const featuredSelector = (
+    <Selector
+      css={selectorChromeCss}
+      sectionId={Sections.Featured}
+      selector={FEATURED}
+      icon={<Icons.FireOutlined iconSize="m" />}
+      isSelected={
+        !isActivelySearching &&
+        FEATURED === activeSelector &&
+        Sections.Featured === activeSection
+      }
+      onClick={clickSelector}
+    />
+  );
+
+  const allChartsSelectorEl = (
+    <Selector
+      css={selectorChromeCss}
+      sectionId={Sections.AllCharts}
+      selector={allChartsSelector}
+      icon={<Icons.Ballot iconSize="m" />}
+      isSelected={
+        !isActivelySearching &&
+        allChartsSelector === activeSelector &&
+        Sections.AllCharts === activeSection
+      }
+      onClick={clickSelector}
+    />
+  );
+
   return (
     <VizPickerLayout
       className={className}
       isSelectedVizMetadata={Boolean(selectedVizMetadata)}
     >
       <LeftPane aria-label={t('Choose chart type')} role="tablist">
-        <Selector
-          css={({ sizeUnit }) =>
-            // adjust style for not being inside a collapse
-            css`
-              margin: ${sizeUnit * 2}px;
-              margin-bottom: 0;
-            `
-          }
-          sectionId={Sections.AllCharts}
-          selector={ALL_CHARTS}
-          icon={<Icons.Ballot iconSize="m" />}
-          isSelected={
-            !isActivelySearching &&
-            ALL_CHARTS === activeSelector &&
-            Sections.AllCharts === activeSection
-          }
-          onClick={clickSelector}
-        />
-        <Selector
-          css={({ sizeUnit }) =>
-            // adjust style for not being inside a collapse
-            css`
-              margin: ${sizeUnit * 2}px;
-              margin-bottom: 0;
-            `
-          }
-          sectionId={Sections.Featured}
-          selector={FEATURED}
-          icon={<Icons.FireOutlined iconSize="m" />}
-          isSelected={
-            !isActivelySearching &&
-            FEATURED === activeSelector &&
-            Sections.Featured === activeSection
-          }
-          onClick={clickSelector}
-        />
+        {isCuratedGallery() ? (
+          <>
+            {featuredSelector}
+            {allChartsSelectorEl}
+          </>
+        ) : (
+          <>
+            {allChartsSelectorEl}
+            {featuredSelector}
+          </>
+        )}
         <Collapse
           expandIconPosition="end"
           ghost

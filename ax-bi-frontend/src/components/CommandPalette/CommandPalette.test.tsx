@@ -93,7 +93,7 @@ test('filters commands and executes the selected command', async () => {
   renderPalette();
 
   await userEvent.click(screen.getByRole('button', { name: 'Open palette' }));
-  const search = await screen.findByRole('textbox', {
+  const search = await screen.findByRole('combobox', {
     name: 'Search commands',
   });
 
@@ -113,7 +113,7 @@ test('supports keyboard navigation between command rows', async () => {
   renderPalette();
 
   await userEvent.click(screen.getByRole('button', { name: 'Open palette' }));
-  const search = await screen.findByRole('textbox', {
+  const search = await screen.findByRole('combobox', {
     name: 'Search commands',
   });
 
