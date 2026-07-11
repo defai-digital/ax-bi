@@ -28,6 +28,10 @@ export const AXBIPage = styled.div`
   ${({ theme }) => css`
     background: ${theme.colorBgLayout};
     padding: ${theme.sizeUnit * 6}px;
+    max-width: ${theme.sizeUnit * 360}px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%;
 
     @media (max-width: 900px) {
       padding: ${theme.sizeUnit * 4}px;
@@ -84,9 +88,13 @@ export const AXBIEyebrow = styled.div`
 export const AXBIHeroTitle = styled.h1`
   ${({ theme }) => css`
     color: ${theme.colorText};
-    font-size: ${theme.fontSizeXL * 1.9}px;
+    font-size: clamp(
+      ${theme.fontSizeXL * 1.25}px,
+      2.4vw,
+      ${theme.fontSizeXL * 1.75}px
+    );
     font-weight: ${theme.fontWeightStrong};
-    line-height: 1.14;
+    line-height: 1.2;
     margin: 0 0 ${theme.sizeUnit * 3}px;
   `}
 `;
@@ -132,21 +140,41 @@ export const AXBIStatsGrid = styled.div`
   `}
 `;
 
-export const AXBIStatCard = styled.div`
-  ${({ theme }) => css`
-    border: 1px solid ${theme.colorBorderSecondary};
-    border-radius: ${theme.borderRadius}px;
-    background: ${theme.colorBgContainer};
-    padding: ${theme.sizeUnit * 4}px;
-    transition:
-      border-color 0.16s ease,
-      box-shadow 0.16s ease,
-      transform 0.16s ease;
+const axbiStatCardStyles = (theme: SupersetTheme) => css`
+  border: 1px solid ${theme.colorBorderSecondary};
+  border-radius: ${theme.borderRadius}px;
+  background: ${theme.colorBgContainer};
+  padding: ${theme.sizeUnit * 4}px;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+  text-align: left;
+  width: 100%;
 
-    &:hover {
-      border-color: ${theme.colorPrimaryBorder};
-      box-shadow: ${axbiSoftShadow(theme)};
-      transform: translateY(-1px);
+  &:hover {
+    border-color: ${theme.colorPrimaryBorder};
+    box-shadow: ${axbiSoftShadow(theme)};
+    transform: translateY(-1px);
+  }
+`;
+
+export const AXBIStatCard = styled.div`
+  ${({ theme }) => axbiStatCardStyles(theme)}
+`;
+
+export const AXBIStatButton = styled.button`
+  ${({ theme }) => css`
+    ${axbiStatCardStyles(theme)}
+    display: block;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    appearance: none;
+
+    &:focus-visible {
+      outline: 2px solid ${theme.colorPrimary};
+      outline-offset: 2px;
     }
   `}
 `;
@@ -182,6 +210,11 @@ export const AXBISection = styled.section`
     background: ${theme.colorBgContainer};
     padding: ${theme.sizeUnit * 5}px;
     margin-top: ${theme.sizeUnit * 5}px;
+
+    /* Nested list/card chrome inherits page kit rhythm */
+    .loading-cards {
+      margin-top: ${theme.sizeUnit * 2}px;
+    }
   `}
 `;
 
@@ -303,16 +336,30 @@ export function AXBIStat({
   label,
   value,
   hint,
+  onClick,
+  'aria-label': ariaLabel,
 }: {
   label: ReactNode;
   value: ReactNode;
   hint?: ReactNode;
+  onClick?: () => void;
+  'aria-label'?: string;
 }) {
-  return (
-    <AXBIStatCard>
+  const body = (
+    <>
       <AXBIStatLabel>{label}</AXBIStatLabel>
       <AXBIStatValue>{value}</AXBIStatValue>
       {hint && <AXBIStatHint>{hint}</AXBIStatHint>}
-    </AXBIStatCard>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <AXBIStatButton type="button" onClick={onClick} aria-label={ariaLabel}>
+        {body}
+      </AXBIStatButton>
+    );
+  }
+
+  return <AXBIStatCard>{body}</AXBIStatCard>;
 }

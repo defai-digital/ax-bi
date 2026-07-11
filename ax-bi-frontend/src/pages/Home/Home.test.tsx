@@ -156,10 +156,11 @@ const renderWelcome = (props = mockedProps) =>
     });
   });
 
-const getPanelTitles = (pattern: RegExp) =>
+/** Section headings in the AX workspace layout (h2). */
+const getSectionTitles = (pattern: RegExp) =>
   screen
-    .getAllByText(pattern)
-    .filter(element => element.classList.contains('ant-collapse-title'));
+    .getAllByRole('heading', { level: 2 })
+    .filter(element => pattern.test(element.textContent || ''));
 
 afterEach(() => {
   fetchMock.clearHistory();
@@ -174,15 +175,14 @@ test('With sql role - renders all panels on the page on page load', async () => 
   await renderWelcome();
   await waitFor(() => {
     expect(
-      getPanelTitles(/Dashboards|Charts|Recents|Saved queries/),
+      getSectionTitles(/Dashboards|Charts|Recents|Saved queries/),
     ).toHaveLength(4);
   });
 });
 
 test('With sql role - renders distinct recent activities', async () => {
   await renderWelcome();
-  const recentPanel = screen.getByRole('button', { name: 'collapsed Recents' });
-  userEvent.click(recentPanel);
+  // Recents is always expanded in the page-kit layout (no collapse).
   await waitFor(() =>
     expect(
       screen.queryAllByText(mockRecentActivityResult[0].item_title),
@@ -214,7 +214,7 @@ test('Without sql role - renders all panels on the page on page load', async () 
   // @ts-expect-error-next-line
   await renderWelcome(mockedPropsWithoutSqlRole);
   await waitFor(() => {
-    expect(getPanelTitles(/Dashboards|Charts|Recents/)).toHaveLength(3);
+    expect(getSectionTitles(/Dashboards|Charts|Recents/)).toHaveLength(3);
   });
 });
 
