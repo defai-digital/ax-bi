@@ -69,7 +69,9 @@ const StyledMenuItemWithIcon = styled.div`
   align-items: center;
 `;
 
-const CommandPaletteChip = styled.button`
+// Span (not button): Ant Design Menu items already provide the interactive
+// host; nesting a <button> inside a menuitem is invalid HTML and double-fires.
+const CommandPaletteChip = styled.span`
   ${({ theme }) => css`
     display: inline-flex;
     align-items: center;
@@ -89,11 +91,11 @@ const CommandPaletteChip = styled.button`
       color 0.16s ease,
       background 0.16s ease;
 
-    &:hover,
-    &:focus-visible {
+    .ant-menu-item:hover &,
+    .ant-menu-item-selected &,
+    &:hover {
       border-color: ${theme.colorPrimaryBorder};
       color: ${theme.colorText};
-      outline: none;
     }
 
     .shortcut {
@@ -188,6 +190,7 @@ const RightMenu = ({
       // Create group (previously in the "+" dropdown)
       const createItems: MenuItem[] = [];
       const simplifiedNav = isFeatureEnabled(FeatureFlag.SimplifiedNav);
+      let demotedSqlItem: MenuItem | null = null;
       if (!navbarRight.user_is_anonymous) {
         const chartItem: MenuItem = {
           key: 'create-chart',
@@ -227,14 +230,14 @@ const RightMenu = ({
           icon: <Icons.SearchOutlined />,
         };
 
-        // Simplified mode: consumer create paths first; SQL demoted under divider.
+        // Simplified mode: consumer create paths first; SQL in a separate
+        // Advanced group (dividers are not valid children of Menu groups).
         if (simplifiedNav) {
           createItems.push(chartItem, dashboardItem);
           if (uploadItem) {
             createItems.push(uploadItem);
           }
-          createItems.push({ type: 'divider', key: 'create-advanced-divider' });
-          createItems.push(sqlItem);
+          demotedSqlItem = sqlItem;
         } else {
           createItems.push(sqlItem, chartItem, dashboardItem);
           if (uploadItem) {
@@ -249,6 +252,14 @@ const RightMenu = ({
           key: 'create-section',
           children: createItems,
         });
+        if (demotedSqlItem) {
+          items.push({
+            type: 'group',
+            label: t('Advanced'),
+            key: 'create-advanced-section',
+            children: [demotedSqlItem],
+          });
+        }
         items.push({ type: 'divider', key: 'create-divider' });
       }
 
@@ -466,18 +477,14 @@ const RightMenu = ({
         key: 'command-palette',
         label: (
           <Tooltip title={t('Search commands and pages (%s)', shortcutLabel)}>
-            <CommandPaletteChip
-              type="button"
-              data-test="command-palette-trigger"
-              aria-label={t('Search (%s)', shortcutLabel)}
-              onClick={() => commandPalette.open()}
-            >
+            <CommandPaletteChip data-test="command-palette-trigger">
               <Icons.SearchOutlined iconSize="m" />
               <span className="chip-label">{t('Search')}</span>
               <span className="shortcut">{shortcutLabel}</span>
             </CommandPaletteChip>
           </Tooltip>
         ),
+        onClick: () => commandPalette.open(),
       });
     }
 

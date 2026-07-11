@@ -278,20 +278,24 @@ export const AXBIEmptyCallout = styled.div`
     padding: ${theme.sizeUnit * 6}px;
     text-align: center;
     margin: ${theme.sizeUnit * 5}px 0;
+  `}
+`;
 
-    h2 {
-      color: ${theme.colorText};
-      font-size: ${theme.fontSizeXL}px;
-      font-weight: ${theme.fontWeightStrong};
-      margin: 0 0 ${theme.sizeUnit * 2}px;
-    }
+export const AXBIEmptyCalloutTitle = styled.h2`
+  ${({ theme }) => css`
+    color: ${theme.colorText};
+    font-size: ${theme.fontSizeXL}px;
+    font-weight: ${theme.fontWeightStrong};
+    margin: 0 0 ${theme.sizeUnit * 2}px;
+  `}
+`;
 
-    p {
-      color: ${theme.colorTextSecondary};
-      margin: 0 auto ${theme.sizeUnit * 4}px;
-      max-width: 520px;
-      line-height: 1.5;
-    }
+export const AXBIEmptyCalloutText = styled.p`
+  ${({ theme }) => css`
+    color: ${theme.colorTextSecondary};
+    margin: 0 auto ${theme.sizeUnit * 4}px;
+    max-width: 520px;
+    line-height: 1.5;
   `}
 `;
 

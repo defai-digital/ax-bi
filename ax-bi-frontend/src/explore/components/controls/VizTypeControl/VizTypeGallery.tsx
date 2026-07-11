@@ -463,6 +463,10 @@ const Selector: FC<{
 };
 
 const doesVizMatchSelector = (viz: ChartMetadata, selector: string) =>
+  // "All charts" / "More charts" include every plugin — never clear selection
+  // when switching to these catalog views.
+  selector === ALL_CHARTS ||
+  selector === MORE_CHARTS ||
   selector === viz.category ||
   (selector === OTHER_CATEGORY && viz.category == null) ||
   (viz.tags || []).indexOf(selector) > -1;

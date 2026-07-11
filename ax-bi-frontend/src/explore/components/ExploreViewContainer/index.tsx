@@ -435,12 +435,25 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
     (window as { featureFlags?: Record<string, unknown> }).featureFlags
       ?.GUIDED_CHART_BUILDER,
   );
+  const vizTypeSupportedByGuided = isGuidedVizType(props.form_data?.viz_type);
   const [builderMode, setBuilderMode] = useState<'guided' | 'advanced'>(() =>
-    guidedBuilderEnabled && isGuidedVizType(props.form_data?.viz_type)
-      ? 'guided'
-      : 'advanced',
+    guidedBuilderEnabled && vizTypeSupportedByGuided ? 'guided' : 'advanced',
   );
-  const showGuidedBuilder = guidedBuilderEnabled && builderMode === 'guided';
+  // Fall back to advanced when the active viz type is outside the guided set
+  // (e.g. user switched chart type via another path while guided was selected).
+  useEffect(() => {
+    if (
+      guidedBuilderEnabled &&
+      builderMode === 'guided' &&
+      !isGuidedVizType(props.form_data?.viz_type)
+    ) {
+      setBuilderMode('advanced');
+    }
+  }, [guidedBuilderEnabled, builderMode, props.form_data?.viz_type]);
+  const showGuidedBuilder =
+    guidedBuilderEnabled &&
+    builderMode === 'guided' &&
+    isGuidedVizType(props.form_data?.viz_type);
   const guidedBuilderActions = useMemo(
     () => ({
       setControlValue: (controlName: string, value: unknown) =>

@@ -123,3 +123,24 @@ test('supports keyboard navigation between command rows', async () => {
   expect(datasetAction).toHaveBeenCalledTimes(1);
   expect(dashboardAction).not.toHaveBeenCalled();
 });
+
+test('clamps selection when search shrinks the result list', async () => {
+  renderPalette();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Open palette' }));
+  const search = await screen.findByRole('combobox', {
+    name: 'Search commands',
+  });
+
+  // Move selection to the second item, then filter to a single match.
+  fireEvent.keyDown(search, { key: 'ArrowDown' });
+  await userEvent.clear(search);
+  await userEvent.type(search, 'dashboard');
+
+  expect(screen.getByText('Dashboards')).toBeInTheDocument();
+  expect(screen.queryByText('New dataset')).not.toBeInTheDocument();
+
+  fireEvent.keyDown(search, { key: 'Enter' });
+  expect(dashboardAction).toHaveBeenCalledTimes(1);
+  expect(datasetAction).not.toHaveBeenCalled();
+});

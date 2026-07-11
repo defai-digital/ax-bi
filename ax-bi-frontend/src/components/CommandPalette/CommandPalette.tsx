@@ -264,6 +264,27 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     }
   }, [isOpen]);
 
+  // Flatten grouped commands for index-based selection. selectedIndex,
+  // data-index attributes, and keyboard navigation all index into this
+  // (grouped/display) order so they stay in sync.
+  const flatCommands = useMemo(
+    () => Array.from(groupedCommands.values()).flat(),
+    [groupedCommands],
+  );
+
+  // Keep selection in range when the filtered list shrinks (search, unregister).
+  useEffect(() => {
+    if (flatCommands.length === 0) {
+      if (selectedIndex !== 0) {
+        setSelectedIndex(0);
+      }
+      return;
+    }
+    if (selectedIndex > flatCommands.length - 1) {
+      setSelectedIndex(flatCommands.length - 1);
+    }
+  }, [flatCommands.length, selectedIndex]);
+
   useEffect(() => {
     if (!listRef.current) return;
 
@@ -281,14 +302,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
       command.action();
     },
     [close],
-  );
-
-  // Flatten grouped commands for index-based selection. selectedIndex,
-  // data-index attributes, and keyboard navigation all index into this
-  // (grouped/display) order so they stay in sync.
-  const flatCommands = useMemo(
-    () => Array.from(groupedCommands.values()).flat(),
-    [groupedCommands],
   );
 
   const handleKeyDown = useCallback(

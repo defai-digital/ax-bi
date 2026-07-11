@@ -60,6 +60,8 @@ import { navigateTo } from 'src/utils/navigationUtils';
 import {
   AXBIActionRow,
   AXBIEmptyCallout,
+  AXBIEmptyCalloutText,
+  AXBIEmptyCalloutTitle,
   AXBIEyebrow,
   AXBIHero,
   AXBIHeroText,
@@ -534,12 +536,14 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
 
           {isFirstRun && (
             <AXBIEmptyCallout data-test="home-first-run">
-              <h2>{t('Your workspace is empty')}</h2>
-              <p>
+              <AXBIEmptyCalloutTitle>
+                {t('Your workspace is empty')}
+              </AXBIEmptyCalloutTitle>
+              <AXBIEmptyCalloutText>
                 {t(
                   'Upload a file or create your first chart to start building dashboards.',
                 )}
-              </p>
+              </AXBIEmptyCalloutText>
               <AXBIActionRow style={{ justifyContent: 'center', marginTop: 0 }}>
                 {canUploadData && (
                   <Button

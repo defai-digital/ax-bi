@@ -59,3 +59,10 @@ test('orderCuratedVizEntries omits missing curated keys', () => {
     VizType.Pie,
   ]);
 });
+
+test('orderCuratedVizEntries does not duplicate selected curated type', () => {
+  const entries = [{ key: VizType.Table }, { key: VizType.Pie }];
+  expect(
+    orderCuratedVizEntries(entries, VizType.Table).map(e => e.key),
+  ).toEqual([VizType.Table, VizType.Pie]);
+});
