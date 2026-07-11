@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { useHistory } from 'src/hooks/useAppHistory';
 import { t } from '@apache-superset/core/translation';
 import {
   FeatureFlag,
@@ -25,7 +26,7 @@ import {
 } from '@superset-ui/core';
 import { styled } from '@apache-superset/core/theme';
 import { useCallback, useMemo, useState, MouseEvent } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import rison from 'rison';
 import {
   createErrorHandler,

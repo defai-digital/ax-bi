@@ -21,7 +21,7 @@ import { ThemeProvider } from '@apache-superset/core/theme';
 import querystring from 'query-string';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 
 export function ProviderWrapper(props: any) {
   const { children, theme } = props;
@@ -30,7 +30,7 @@ export function ProviderWrapper(props: any) {
     <ThemeProvider theme={theme}>
       <Router>
         <QueryParamProvider
-          adapter={ReactRouter5Adapter}
+          adapter={ReactRouter6Adapter}
           options={{
             searchStringToObject: querystring.parse,
             objectToSearchString: (object: Record<string, any>) =>

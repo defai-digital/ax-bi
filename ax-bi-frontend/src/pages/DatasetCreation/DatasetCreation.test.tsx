@@ -20,11 +20,16 @@ import { render, screen } from 'spec/helpers/testing-library';
 import AddDataset from 'src/pages/DatasetCreation';
 
 const mockHistoryPush = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('src/hooks/useAppHistory', () => ({
   useHistory: () => ({
     push: mockHistoryPush,
   }),
+  useAppHistory: () => ({
+    push: mockHistoryPush,
+  }),
+}));
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: () => ({ datasetId: undefined }),
 }));
 

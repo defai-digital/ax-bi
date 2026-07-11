@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { QueryFormData, JsonObject } from '@superset-ui/core';
 import {

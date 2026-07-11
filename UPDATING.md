@@ -24,6 +24,22 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Frontend: react-router-dom 6
+
+AX-BI frontend now depends on `react-router-dom@^6.30` (with `history@^5.3` for
+the shared browser history + `HistoryRouter`). `@types/react-router-dom` was
+removed (types ship with v6).
+
+- App shell uses `unstable_HistoryRouter` + `Routes` / `Route` / `Navigate`.
+- Prefer `useAppHistory` (`src/hooks/useAppHistory`) for v5-style
+  `push`/`replace`/`block`/`listen` instead of the removed `useHistory`.
+- `withRouter` / `RouteComponentProps` live in `src/components/withRouter`.
+- `use-query-params` must use `ReactRouter6Adapter`.
+- `NavLink`: use `className={({ isActive }) => ...}` and `end` (not
+  `activeClassName` / `exact`).
+
+React 19 is still deferred. See `.internal/docs/frontend-stack-modernization-*`.
+
 ### Frontend: react-redux 9 + Redux Toolkit 2
 
 AX-BI frontend now depends on `react-redux@^9.3` and `@reduxjs/toolkit@^2.5`
@@ -36,8 +52,7 @@ removed. Operators and extension authors should note:
   exports are non-configurable; mock the module or seed store state instead.
 - `connect()` still works but is deprecated at the types/docs level in 9.3.
 
-This does **not** upgrade `react-router-dom` (still v5) or React 19. See
-`.internal/docs/frontend-stack-modernization-*`.
+See `.internal/docs/frontend-stack-modernization-*`.
 
 ### UI/UX Phase 5 — consumer autonomy (`STARTER_DASHBOARD`)
 

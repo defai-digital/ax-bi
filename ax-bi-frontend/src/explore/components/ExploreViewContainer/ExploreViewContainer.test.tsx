@@ -26,7 +26,7 @@ import {
   VizType,
 } from '@superset-ui/core';
 import { QUERY_MODE_REQUISITES } from 'src/explore/constants';
-import { Router, Route } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter, Route } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
   render,
@@ -147,11 +147,11 @@ const renderWithRouter = ({
     existingHistory ??
     createMemoryHistory({ initialEntries: [`${path}${search}`] });
   const result = render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <Route path={path}>
         <ExploreViewContainer />
       </Route>
-    </Router>,
+    </HistoryRouter>,
     { useRedux: true, useDnd: true, initialState, store },
   );
   return { ...result, history };

@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import {
@@ -29,7 +30,6 @@ import {
   setItem,
 } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { useHistory } from 'react-router-dom';
 import { Filter, TableTab } from 'src/views/CRUD/types';
 import PropertiesModal from 'src/explore/components/PropertiesModal';
 import { User } from 'src/types/bootstrapTypes';

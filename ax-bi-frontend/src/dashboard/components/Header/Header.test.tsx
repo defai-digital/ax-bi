@@ -31,11 +31,16 @@ import { UPDATE_COMPONENTS } from '../../actions/dashboardLayout';
 import { AutoRefreshStatus } from '../../types/autoRefresh';
 
 const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('src/hooks/useAppHistory', () => ({
   useHistory: () => ({
     replace: mockHistoryReplace,
   }),
+  useAppHistory: () => ({
+    replace: mockHistoryReplace,
+  }),
+}));
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useLocation: jest.fn(() => ({
     pathname: '/dashboard',
     search: '?standalone=1',

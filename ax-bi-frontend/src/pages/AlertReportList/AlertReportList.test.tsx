@@ -28,7 +28,7 @@ import {
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 import AlertListComponent from 'src/pages/AlertReportList';
 
 jest.setTimeout(30000);
@@ -154,7 +154,7 @@ const renderAlertList = (props: Record<string, any> = {}) => {
   return render(
     <Provider store={store}>
       <MemoryRouter>
-        <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <QueryParamProvider adapter={ReactRouter6Adapter}>
           <AlertList user={mockUser} {...props} />
         </QueryParamProvider>
       </MemoryRouter>
@@ -452,7 +452,7 @@ test('read-only users do not see delete and bulk select controls', async () => {
   render(
     <Provider store={store}>
       <MemoryRouter>
-        <QueryParamProvider adapter={ReactRouter5Adapter}>
+        <QueryParamProvider adapter={ReactRouter6Adapter}>
           <AlertList user={readOnlyUser} />
         </QueryParamProvider>
       </MemoryRouter>

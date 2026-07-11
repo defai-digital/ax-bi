@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { t } from '@apache-superset/core/translation';
 import {
   getExtensionsRegistry,
@@ -33,7 +34,7 @@ import {
   Key,
 } from 'react';
 import type { CellProps } from 'react-table';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import rison from 'rison';
 import {
   createFetchRelated,

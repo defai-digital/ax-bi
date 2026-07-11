@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { t } from '@apache-superset/core/translation';
 import { getExtensionsRegistry } from '@superset-ui/core';
 import { Alert } from '@apache-superset/core/components';
@@ -33,7 +34,6 @@ import {
 } from 'react';
 import { CheckboxChangeEvent } from '@superset-ui/core/components/Checkbox/types';
 
-import { useHistory } from 'react-router-dom';
 import { setItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
 import Tabs from '@superset-ui/core/components/Tabs';
 import {

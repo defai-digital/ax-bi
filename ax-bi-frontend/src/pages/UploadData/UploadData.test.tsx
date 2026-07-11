@@ -18,8 +18,6 @@
  */
 
 import { ComponentType } from 'react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
 import {
   render,
   screen,
@@ -37,6 +35,19 @@ type ToastInjectedProps = {
 
 const mockAddDangerToast = jest.fn();
 const mockAddSuccessToast = jest.fn();
+const mockHistoryPush = jest.fn();
+const mockLocationSearch = { current: '' };
+
+jest.mock('src/hooks/useAppHistory', () => ({
+  useHistory: () => ({
+    push: mockHistoryPush,
+    location: { search: mockLocationSearch.current },
+  }),
+  useAppHistory: () => ({
+    push: mockHistoryPush,
+    location: { search: mockLocationSearch.current },
+  }),
+}));
 
 jest.mock('src/components/MessageToasts/withToasts', () => ({
   __esModule: true,
@@ -67,6 +78,8 @@ const mockedGetClientErrorObject = getClientErrorObject as jest.Mock;
 beforeEach(() => {
   mockAddDangerToast.mockReset();
   mockAddSuccessToast.mockReset();
+  mockHistoryPush.mockReset();
+  mockLocationSearch.current = '';
   mockedPost.mockReset();
   mockedGetClientErrorObject.mockReset();
   mockedPost.mockResolvedValue({
@@ -88,18 +101,11 @@ describe('UploadData', () => {
       useRouter: true,
     });
 
-    // Check that the page title is rendered
     expect(
       screen.getByText('Upload data and build charts faster'),
     ).toBeVisible();
-
-    // Check that the subtitle is rendered (multi-file)
     expect(screen.getByText('Start with a file')).toBeVisible();
-
-    // Check that the drop zone text is rendered (multi-file)
     expect(screen.getByText('Click or drag files here')).toBeVisible();
-
-    // Check that supported formats are listed with multi-file note
     expect(
       screen.getByText(
         'Supported formats include CSV/TSV, compressed exports, Excel/ODS, Parquet/ORC/Arrow, JSON/XML, SQL text dumps, SQLite, fixed-width, HTML/statistical files, geospatial files, embeddings, and AI artifact metadata. Multiple files supported.',
@@ -140,18 +146,11 @@ describe('UploadData', () => {
   });
 
   test('redirects successful uploads to explore with datasource params', async () => {
-    const history = createMemoryHistory();
-    const pushSpy = jest.spyOn(history, 'push');
-
-    render(
-      <Router history={history}>
-        <UploadData />
-      </Router>,
-      {
-        useRedux: true,
-        reducers: {},
-      },
-    );
+    render(<UploadData />, {
+      useRedux: true,
+      reducers: {},
+      useRouter: true,
+    });
 
     fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
       target: {
@@ -163,7 +162,7 @@ describe('UploadData', () => {
 
     await waitFor(
       () =>
-        expect(pushSpy).toHaveBeenCalledWith(
+        expect(mockHistoryPush).toHaveBeenCalledWith(
           `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=1`,
         ),
       { timeout: 3000 },
@@ -171,20 +170,13 @@ describe('UploadData', () => {
   });
 
   test('preserves dashboard context when redirecting to explore', async () => {
-    const history = createMemoryHistory({
-      initialEntries: ['/upload/?dashboard_id=42'],
-    });
-    const pushSpy = jest.spyOn(history, 'push');
+    mockLocationSearch.current = '?dashboard_id=42';
 
-    render(
-      <Router history={history}>
-        <UploadData />
-      </Router>,
-      {
-        useRedux: true,
-        reducers: {},
-      },
-    );
+    render(<UploadData />, {
+      useRedux: true,
+      reducers: {},
+      useRouter: true,
+    });
 
     fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
       target: {
@@ -195,7 +187,7 @@ describe('UploadData', () => {
     await screen.findByText('Uploaded');
     await waitFor(
       () =>
-        expect(pushSpy).toHaveBeenCalledWith(
+        expect(mockHistoryPush).toHaveBeenCalledWith(
           `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=1&${URL_PARAMS.dashboardId.name}=42`,
         ),
       { timeout: 3000 },
@@ -203,8 +195,6 @@ describe('UploadData', () => {
   });
 
   test('uploads multiple selected files as a batch and redirects to the first dataset', async () => {
-    const history = createMemoryHistory();
-    const pushSpy = jest.spyOn(history, 'push');
     mockedPost
       .mockResolvedValueOnce({
         json: {
@@ -221,15 +211,11 @@ describe('UploadData', () => {
         },
       });
 
-    render(
-      <Router history={history}>
-        <UploadData />
-      </Router>,
-      {
-        useRedux: true,
-        reducers: {},
-      },
-    );
+    render(<UploadData />, {
+      useRedux: true,
+      reducers: {},
+      useRouter: true,
+    });
 
     fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
       target: {
@@ -253,7 +239,7 @@ describe('UploadData', () => {
 
     await waitFor(
       () =>
-        expect(pushSpy).toHaveBeenCalledWith(
+        expect(mockHistoryPush).toHaveBeenCalledWith(
           `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=101`,
         ),
       { timeout: 3000 },

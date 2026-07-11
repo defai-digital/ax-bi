@@ -25,7 +25,7 @@ import {
   fireEvent,
 } from 'spec/helpers/testing-library';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 import { TaskStatus, TaskScope } from 'src/features/tasks/types';
 import TaskList from 'src/pages/TaskList';
 
@@ -190,7 +190,7 @@ fetchMock.post(
 const renderTaskList = (props = {}, userProp = mockUser) =>
   render(
     <MemoryRouter>
-      <QueryParamProvider adapter={ReactRouter5Adapter}>
+      <QueryParamProvider adapter={ReactRouter6Adapter}>
         <TaskList {...props} user={userProp} />
       </QueryParamProvider>
     </MemoryRouter>,

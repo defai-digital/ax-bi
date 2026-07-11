@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { SupersetTheme, css, styled } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
 import {
@@ -67,7 +68,7 @@ import {
   type ListViewFilter,
 } from 'src/components';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import PropertiesModal from 'src/explore/components/PropertiesModal';

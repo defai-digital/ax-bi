@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { sanitizeUrl } from '@braintree/sanitize-url';
 import {
   useCallback,
@@ -30,7 +31,6 @@ import {
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { useHistory } from 'react-router-dom';
 import { pick } from 'lodash';
 import {
   Button,

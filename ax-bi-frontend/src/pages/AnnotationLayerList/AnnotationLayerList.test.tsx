@@ -27,7 +27,7 @@ import {
 } from 'spec/helpers/testing-library';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 
 import React from 'react';
 import AnnotationLayersListComponent from 'src/pages/AnnotationLayerList';
@@ -82,7 +82,7 @@ fetchMock.get(layersRelatedEndpoint, {
 const renderAnnotationLayersList = (props = {}) =>
   render(
     <MemoryRouter>
-      <QueryParamProvider adapter={ReactRouter5Adapter}>
+      <QueryParamProvider adapter={ReactRouter6Adapter}>
         <AnnotationLayersList user={mockUser} {...props} />
       </QueryParamProvider>
     </MemoryRouter>,

@@ -25,7 +25,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { CacheProvider } from '@emotion/react';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 import createCache from '@emotion/cache';
 import { ThemeProvider } from '@apache-superset/core/theme';
 import { theme } from '@apache-superset/core/theme';
@@ -50,7 +50,7 @@ const app = (
       <Provider store={store}>
         <BrowserRouter>
           <QueryParamProvider
-            adapter={ReactRouter5Adapter}
+            adapter={ReactRouter6Adapter}
             options={{
               searchStringToObject: querystring.parse,
               objectToSearchString: (object: Record<string, any>) =>

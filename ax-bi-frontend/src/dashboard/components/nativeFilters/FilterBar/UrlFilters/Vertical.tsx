@@ -17,9 +17,10 @@
  * under the License.
  */
 
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { QueryObjectFilterClause } from '@superset-ui/core';
 import { removeDataMask, updateDataMask } from 'src/dataMask/actions';
 import {

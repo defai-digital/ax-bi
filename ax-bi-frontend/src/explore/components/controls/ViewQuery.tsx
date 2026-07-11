@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import {
   FC,
   KeyboardEvent,
@@ -45,7 +46,6 @@ import CodeSyntaxHighlighter, {
   SupportedLanguage,
   preloadLanguages,
 } from '@superset-ui/core/components/CodeSyntaxHighlighter';
-import { useHistory } from 'react-router-dom';
 import { ExplorePageState } from 'src/explore/types';
 
 export interface ViewQueryProps {

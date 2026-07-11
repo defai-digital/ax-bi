@@ -25,7 +25,7 @@
  *    a programmatic history.replace), not snapshot the URL at mount.
  */
 import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { act, render, screen, userEvent } from 'spec/helpers/testing-library';
 import { REMOVE_DATA_MASK, UPDATE_DATA_MASK } from 'src/dataMask/actions';
 import { RISON_UNMATCHED_DATAMASK_ID } from 'src/dashboard/util/risonFilters';
@@ -49,9 +49,9 @@ const renderAt = (search: string) => {
     initialEntries: [`/ax-bi/dashboard/1/${search}`],
   });
   const utils = render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <UrlFiltersVertical />
-    </Router>,
+    </HistoryRouter>,
     { useRedux: true },
   );
   return { ...utils, history };

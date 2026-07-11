@@ -17,8 +17,8 @@
  * under the License.
  */
 
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
 import {
   SupersetClient,

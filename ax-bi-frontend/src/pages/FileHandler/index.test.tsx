@@ -23,7 +23,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import FileHandler from './index';
 
 const mockAddDangerToast = jest.fn();
@@ -83,9 +83,11 @@ jest.mock('src/features/databases/UploadDataModel', () => ({
 }));
 
 // Mock react-router-dom's useHistory
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('src/hooks/useAppHistory', () => ({
   useHistory: () => ({
+    push: mockHistoryPush,
+  }),
+  useAppHistory: () => ({
     push: mockHistoryPush,
   }),
 }));
@@ -190,9 +192,9 @@ afterEach(async () => {
 test('shows error when launchQueue is not supported', async () => {
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -210,9 +212,9 @@ test('redirects when no files are provided', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -231,9 +233,9 @@ test('handles CSV file correctly', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -254,9 +256,9 @@ test('handles Excel (.xls) file correctly', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -273,9 +275,9 @@ test('handles Excel (.xlsx) file correctly', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -294,9 +296,9 @@ test('handles Parquet file correctly', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -312,9 +314,9 @@ test('shows error for unsupported file type', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -337,9 +339,9 @@ test('handles file with uppercase extension', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -354,9 +356,9 @@ test('handles errors during file processing', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -389,9 +391,9 @@ test('modal close redirects to welcome page', async () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );
@@ -412,9 +414,9 @@ test('shows loading state while waiting for file', () => {
 
   render(
     <MemoryRouter initialEntries={['/ax-bi/file-handler']}>
-      <Route path="/ax-bi/file-handler">
-        <FileHandler />
-      </Route>
+      <Routes>
+        <Route path="/ax-bi/file-handler" element={<FileHandler />} />
+      </Routes>
     </MemoryRouter>,
     { useRedux: true },
   );

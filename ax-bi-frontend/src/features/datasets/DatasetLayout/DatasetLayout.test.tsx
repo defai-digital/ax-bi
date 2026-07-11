@@ -26,9 +26,11 @@ import RightPanel from 'src/features/datasets/AddDataset/RightPanel';
 import Footer from 'src/features/datasets/AddDataset/Footer';
 
 const mockHistoryPush = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock('src/hooks/useAppHistory', () => ({
   useHistory: () => ({
+    push: mockHistoryPush,
+  }),
+  useAppHistory: () => ({
     push: mockHistoryPush,
   }),
 }));

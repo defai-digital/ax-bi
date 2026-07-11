@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
+import { useHistory } from 'src/hooks/useAppHistory';
 import {
   MouseEvent,
   Key,
@@ -26,7 +28,6 @@ import {
   RefObject,
 } from 'react';
 
-import { RouteComponentProps, useHistory } from 'react-router-dom';
 import { extendedDayjs } from '@superset-ui/core/utils/dates';
 import { t } from '@apache-superset/core/translation';
 import {

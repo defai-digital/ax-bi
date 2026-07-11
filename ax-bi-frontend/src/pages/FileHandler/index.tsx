@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
 import { Loading } from '@superset-ui/core/components';
 import UploadDataModal from 'src/features/databases/UploadDataModel';

@@ -247,7 +247,7 @@ export function Menu({
       return {
         key: label,
         label: (
-          <NavLink role="button" to={url} activeClassName="is-active">
+          <NavLink role="button" to={url} className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
             {label}
           </NavLink>
         ),
@@ -270,7 +270,7 @@ export function Menu({
         childItems.push({
           key: `${child.label}`,
           label: child.isFrontendRoute ? (
-            <NavLink to={child.url || ''} exact activeClassName="is-active">
+            <NavLink to={child.url || ''} end className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
               {child.label}
             </NavLink>
           ) : (

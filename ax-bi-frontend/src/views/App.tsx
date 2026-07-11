@@ -18,10 +18,10 @@
  */
 import { Suspense, useEffect } from 'react';
 import {
-  BrowserRouter as Router,
-  Switch,
+  unstable_HistoryRouter as HistoryRouter,
+  Routes,
   Route,
-  Redirect,
+  Navigate,
   useLocation,
 } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -31,7 +31,8 @@ import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridRea
 import { ErrorBoundary } from 'src/components';
 import { DesktopIntegration } from 'src/components/DesktopIntegration';
 import Menu from 'src/features/home/Menu';
-import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
+import getBootstrapData from 'src/utils/getBootstrapData';
+import { history } from 'src/utils/history';
 import ToastContainer from 'src/components/MessageToasts/ToastContainer';
 import setupApp from 'src/setup/setupApp';
 import setupPlugins from 'src/setup/setupPlugins';
@@ -81,7 +82,7 @@ const LocationPathnameLogger = () => {
 };
 
 const App = () => (
-  <Router basename={applicationRoot()}>
+  <HistoryRouter history={history}>
     <ScrollToTop />
     <LocationPathnameLogger />
     <RootContextProviders>
@@ -91,38 +92,42 @@ const App = () => (
           isFrontendRoute={isFrontendRoute}
         />
         <ExtensionsStartup>
-          <Switch>
+          <Routes>
             {routes.map(
               ({ path, Component, props = {}, Fallback = Loading }) => (
-                <Route path={path} key={path}>
-                  <Suspense fallback={<Fallback />}>
-                    <Layout>
-                      <Layout.Content
-                        css={css`
-                          display: flex;
-                          flex-direction: column;
-                        `}
-                      >
-                        <ErrorBoundary
+                <Route
+                  path={path}
+                  key={path}
+                  element={
+                    <Suspense fallback={<Fallback />}>
+                      <Layout>
+                        <Layout.Content
                           css={css`
-                            margin: 16px;
+                            display: flex;
+                            flex-direction: column;
                           `}
                         >
-                          <Component user={bootstrapData.user} {...props} />
-                        </ErrorBoundary>
-                      </Layout.Content>
-                    </Layout>
-                  </Suspense>
-                </Route>
+                          <ErrorBoundary
+                            css={css`
+                              margin: 16px;
+                            `}
+                          >
+                            <Component user={bootstrapData.user} {...props} />
+                          </ErrorBoundary>
+                        </Layout.Content>
+                      </Layout>
+                    </Suspense>
+                  }
+                />
               ),
             )}
-            <Redirect from="/" to="/ax-bi/welcome/" exact />
-          </Switch>
+            <Route path="/" element={<Navigate to="/ax-bi/welcome/" replace />} />
+          </Routes>
         </ExtensionsStartup>
         <ToastContainer />
       </DesktopIntegration>
     </RootContextProviders>
-  </Router>
+  </HistoryRouter>
 );
 
 export default App;

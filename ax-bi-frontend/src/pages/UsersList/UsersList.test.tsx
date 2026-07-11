@@ -29,7 +29,7 @@ import {
 } from 'spec/helpers/testing-library';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
-import { ReactRouter5Adapter } from 'use-query-params/adapters/react-router-5';
+import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 import UsersList from './index';
 
 const mockStore = configureStore([thunk]);
@@ -101,7 +101,7 @@ describe('UsersList', () => {
       const mockedProps = {};
       render(
         <MemoryRouter>
-          <QueryParamProvider adapter={ReactRouter5Adapter}>
+          <QueryParamProvider adapter={ReactRouter6Adapter}>
             <UsersList user={mockUser} {...mockedProps} />
           </QueryParamProvider>
         </MemoryRouter>,

@@ -20,7 +20,11 @@ import 'src/public-path';
 
 import { lazy, Suspense, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import {
+  unstable_HistoryRouter as HistoryRouter,
+  Routes,
+  Route,
+} from 'react-router-dom';
 import { Global } from '@emotion/react';
 import { t } from '@apache-superset/core/translation';
 import { makeApi } from '@superset-ui/core';
@@ -31,7 +35,8 @@ import {
   css,
 } from '@apache-superset/core/theme';
 import Switchboard from '@superset-ui/switchboard';
-import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
+import getBootstrapData from 'src/utils/getBootstrapData';
+import { history } from 'src/utils/history';
 import setupClient from 'src/setup/setupClient';
 import setupPlugins from 'src/setup/setupPlugins';
 import { useUiConfig } from 'src/components/UiConfigContext';
@@ -117,11 +122,13 @@ const EmbeddedRoute = () => (
 );
 
 const EmbeddedApp = () => (
-  <Router basename={applicationRoot()}>
-    {/* todo (embedded) remove this line after uuids are deployed */}
-    <Route path="/dashboard/:idOrSlug/embedded/" component={EmbeddedRoute} />
-    <Route path="/embedded/:uuid/" component={EmbeddedRoute} />
-  </Router>
+  <HistoryRouter history={history}>
+    <Routes>
+      {/* todo (embedded) remove this line after uuids are deployed */}
+      <Route path="/dashboard/:idOrSlug/embedded/" element={<EmbeddedRoute />} />
+      <Route path="/embedded/:uuid/" element={<EmbeddedRoute />} />
+    </Routes>
+  </HistoryRouter>
 );
 
 const appMountPoint = document.getElementById('app')!;

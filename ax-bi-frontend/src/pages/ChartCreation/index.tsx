@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
 import { PureComponent, ReactNode } from 'react';
 import rison from 'rison';
 import { t } from '@apache-superset/core/translation';
@@ -24,7 +25,7 @@ import { styled } from '@apache-superset/core/theme';
 import { withTheme, Theme } from '@emotion/react';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { FilterPlugins, URL_PARAMS } from 'src/constants';
-import { Link, withRouter, RouteComponentProps } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   AsyncSelect,
   Button,

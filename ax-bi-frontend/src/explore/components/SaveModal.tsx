@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
 /* eslint camelcase: 0 */
 import { ChangeEvent, FormEvent, Component } from 'react';
 import { Dispatch } from 'redux';
 import { nanoid } from 'nanoid';
 import rison from 'rison';
 import { connect } from 'react-redux';
-import { withRouter, RouteComponentProps } from 'react-router-dom';
 import {
   InfoTooltip,
   Button,

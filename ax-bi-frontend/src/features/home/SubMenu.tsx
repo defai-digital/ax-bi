@@ -16,9 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useInRouterContext } from 'react-router-dom';
 import { ReactNode, useState, useEffect, FunctionComponent } from 'react';
 
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
 import {
   styled,
@@ -173,14 +174,8 @@ const SubMenuComponent: FunctionComponent<SubMenuProps> = props => {
   const [navRightStyle, setNavRightStyle] = useState('nav-right');
   const theme = useTheme();
 
-  let hasHistory = true;
-  // If no parent <Router> component exists, useHistory throws an error
-  try {
-    useHistory();
-  } catch (err) {
-    // If error is thrown, we know not to use <Link> in render
-    hasHistory = false;
-  }
+  // Prefer React Router's Link when a Router ancestor is present.
+  const hasHistory = useInRouterContext();
 
   useEffect(() => {
     let isMounted = true;

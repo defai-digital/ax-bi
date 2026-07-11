@@ -17,7 +17,7 @@
  * under the License.
  */
 import { renderHook, act } from '@testing-library/react';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { useUnsavedChangesPrompt } from '.';
 
@@ -30,7 +30,7 @@ beforeEach(() => {
 });
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <Router history={history}>{children}</Router>
+  <HistoryRouter history={history}>{children}</HistoryRouter>
 );
 
 test('should not show modal initially', () => {
@@ -130,7 +130,7 @@ test('should preserve pathname, search, and state when confirming navigation', (
   const onSave = jest.fn();
   const history = createMemoryHistory();
   const wrapper = ({ children }: any) => (
-    <Router history={history}>{children}</Router>
+    <HistoryRouter history={history}>{children}</HistoryRouter>
   );
 
   const locationState = { fromDashboard: true, dashboardId: 123 };

@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { FC } from 'react';
 import { isObject } from 'lodash';
 import { t } from '@apache-superset/core/translation';
 import { SupersetClient } from '@superset-ui/core';
 import { Button } from '@superset-ui/core/components';
-import { useHistory } from 'react-router-dom';
 
 interface SimpleDataSource {
   id: string;

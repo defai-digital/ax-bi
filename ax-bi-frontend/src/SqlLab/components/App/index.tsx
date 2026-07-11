@@ -18,7 +18,7 @@
  */
 import { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import Mousetrap from 'mousetrap';
 import { t } from '@apache-superset/core/translation';
 import { css, styled } from '@apache-superset/core/theme';
@@ -204,10 +204,11 @@ class App extends PureComponent<AppProps, AppState> {
     const { queries, queriesLastUpdate } = this.props;
     if (this.state.hash && this.state.hash === '#search') {
       return (
-        <Redirect
+        <Navigate
           to={{
             pathname: '/sqllab/history/',
           }}
+          replace
         />
       );
     }

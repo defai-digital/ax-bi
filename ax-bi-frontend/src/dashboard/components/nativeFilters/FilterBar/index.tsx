@@ -18,6 +18,7 @@
  */
 
 /* eslint-disable no-param-reassign */
+import { useHistory } from 'src/hooks/useAppHistory';
 import {
   FC,
   memo,
@@ -43,7 +44,6 @@ import {
 } from '@superset-ui/core';
 import { styled } from '@apache-superset/core/theme';
 import { Constants } from '@superset-ui/core/components';
-import { useHistory } from 'react-router-dom';
 import { updateDataMask, removeDataMask } from 'src/dataMask/actions';
 import {
   saveChartCustomization,

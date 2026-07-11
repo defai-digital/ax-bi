@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { useHistory } from 'src/hooks/useAppHistory';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '@apache-superset/core/translation';
 import {
@@ -30,7 +31,7 @@ import { FilterBarOrientation, RootState } from 'src/dashboard/types';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';
 import { useChartIds } from 'src/dashboard/util/charts/useChartIds';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { removeDataMask, updateDataMask } from 'src/dataMask/actions';
 import {
   getRisonFilterParam,

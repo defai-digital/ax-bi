@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
 import rison from 'rison';
 import { t } from '@apache-superset/core/translation';
 import { SupersetClient } from '@superset-ui/core';

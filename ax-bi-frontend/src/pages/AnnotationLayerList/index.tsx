@@ -17,11 +17,12 @@
  * under the License.
  */
 
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useMemo, useState } from 'react';
 import rison from 'rison';
 import { t } from '@apache-superset/core/translation';
 import { SupersetClient } from '@superset-ui/core';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { createFetchRelated, createErrorHandler } from 'src/views/CRUD/utils';

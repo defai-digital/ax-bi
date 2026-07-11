@@ -24,7 +24,7 @@ import {
 } from 'spec/helpers/testing-library';
 import { SupersetClient } from '@superset-ui/core';
 import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import fetchMock from 'fetch-mock';
 import * as hooks from 'src/views/CRUD/hooks';
@@ -156,9 +156,9 @@ beforeEach(() => {
 
 test('renders loading state initially', () => {
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...defaultProps} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
   expect(screen.getByRole('img', { name: 'empty' })).toBeInTheDocument();
@@ -166,9 +166,9 @@ test('renders loading state initially', () => {
 
 test('renders empty state when no dashboards', async () => {
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...defaultProps} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -194,9 +194,9 @@ test('renders dashboard cards when data is loaded', async () => {
   }));
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...defaultProps} mine={mockDashboards} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -214,9 +214,9 @@ test('switches to Mine tab correctly', async () => {
   };
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...props} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -235,9 +235,9 @@ test('handles create dashboard button click', async () => {
   } as Location);
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...defaultProps} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -255,9 +255,9 @@ test('switches to Other tab when available', async () => {
   };
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...props} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -299,9 +299,9 @@ test('handles bulk dashboard export with correct ID and shows spinner', async ()
   }));
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...props} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -362,9 +362,9 @@ test('handles dashboard deletion confirmation', async () => {
   }));
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...props} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
@@ -434,9 +434,9 @@ test('passes correct parameters to handleDashboardDelete for Other tab', async (
   };
 
   render(
-    <Router history={history}>
+    <HistoryRouter history={history}>
       <DashboardTable {...props} />
-    </Router>,
+    </HistoryRouter>,
     { store },
   );
 
