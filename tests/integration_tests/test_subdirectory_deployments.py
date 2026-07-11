@@ -32,6 +32,12 @@ class TestSubdirectoryDeployments(SupersetTestCase):
     def setUp(self):
         super().setUp()
 
+    def test_legacy_superset_route_is_not_registered(self):
+        """Only AX BI route prefixes are exposed by the application."""
+        response = self.client.get("/superset/welcome/")
+
+        assert response.status_code == 404
+
     # AppRootMiddleware tests (core subdirectory deployment functionality)
 
     def test_app_root_middleware_path_handling(self):
@@ -105,7 +111,7 @@ class TestSubdirectoryDeployments(SupersetTestCase):
     def test_redirect_to_login_with_app_root(self):
         """Test that redirect_to_login includes app root in next parameter."""
         with self.app.test_request_context(
-            "/superset/welcome/",
+            "/ax-bi/welcome/",
             environ_overrides={"SCRIPT_NAME": "/analytics"},
         ):
             response = redirect_to_login()
@@ -114,12 +120,12 @@ class TestSubdirectoryDeployments(SupersetTestCase):
 
             # The next parameter should include the app root prefix
             assert "next" in query_params
-            assert query_params["next"][0] == "/analytics/superset/welcome/"
+            assert query_params["next"][0] == "/analytics/ax-bi/welcome/"
 
     def test_redirect_to_login_with_query_string_and_app_root(self):
         """Test that redirect_to_login preserves query string with app root."""
         with self.app.test_request_context(
-            "/superset/welcome/?foo=bar",
+            "/ax-bi/welcome/?foo=bar",
             environ_overrides={"SCRIPT_NAME": "/analytics"},
         ):
             response = redirect_to_login()
@@ -128,18 +134,18 @@ class TestSubdirectoryDeployments(SupersetTestCase):
 
             # The next parameter should include both app root and query string
             assert "next" in query_params
-            assert query_params["next"][0] == "/analytics/superset/welcome/?foo=bar"
+            assert query_params["next"][0] == "/analytics/ax-bi/welcome/?foo=bar"
 
     def test_redirect_to_login_without_app_root(self):
         """Test that redirect_to_login works without app root (no regression)."""
-        with self.app.test_request_context("/superset/welcome/"):
+        with self.app.test_request_context("/ax-bi/welcome/"):
             response = redirect_to_login()
             parsed_url = urlparse(response.location)
             query_params = parse_qs(parsed_url.query)
 
             # The next parameter should be the path without any prefix
             assert "next" in query_params
-            assert query_params["next"][0] == "/superset/welcome/"
+            assert query_params["next"][0] == "/ax-bi/welcome/"
 
     def test_redirect_to_login_with_custom_target_and_app_root(self):
         """Test that redirect_to_login respects custom target parameter."""

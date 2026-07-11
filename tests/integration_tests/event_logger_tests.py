@@ -95,7 +95,7 @@ class TestEventLogger(unittest.TestCase):
     ):
         logger = DBEventLogger()
 
-        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+        with app.test_request_context("/ax-bi/dashboard/1/?myparam=foo"):
             user = security_manager.find_user("admin")
             mock_get_user_id.side_effect = [None, user.id]
             g.user = LocalProxy(lambda: user)
@@ -115,7 +115,7 @@ class TestEventLogger(unittest.TestCase):
     ):
         logger = DBEventLogger()
 
-        with app.test_request_context("/superset/dashboard/1/?myparam=foo"):
+        with app.test_request_context("/ax-bi/dashboard/1/?myparam=foo"):
             mock_get_user_id.return_value = None
             g.user = AnonymousUserMixin()
             logger.log_with_context(action="test_action")

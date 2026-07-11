@@ -87,7 +87,6 @@ from superset.constants import (
     EXTRA_FORM_DATA_APPEND_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_EXTRA_KEYS,
     EXTRA_FORM_DATA_OVERRIDE_REGULAR_MAPPINGS,
-    LEGACY_SUPERSET_ROUTE_PREFIX,
     NO_TIME_RANGE,
 )
 from superset.errors import ErrorLevel, SupersetErrorType
@@ -2358,11 +2357,7 @@ def to_int(v: Any, value_if_invalid: int = 0) -> int:
 def get_query_source_from_request() -> QuerySource | None:
     if not request or not request.referrer:
         return None
-    dashboard_paths = (
-        f"{AX_BI_ROUTE_PREFIX}/dashboard/",
-        f"{LEGACY_SUPERSET_ROUTE_PREFIX}/dashboard/",
-    )
-    if any(path in request.referrer for path in dashboard_paths):
+    if f"{AX_BI_ROUTE_PREFIX}/dashboard/" in request.referrer:
         return QuerySource.DASHBOARD
     if "/explore/" in request.referrer:
         return QuerySource.CHART

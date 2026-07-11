@@ -122,11 +122,11 @@ The desktop client registers the `axbi://` URL scheme. Supported patterns:
 
 | Deep Link | Maps To |
 |-----------|---------|
-| `axbi://dashboard/{id}` | `/superset/dashboard/{id}/` |
+| `axbi://dashboard/{id}` | `/ax-bi/dashboard/{id}/` |
 | `axbi://chart/{id}` | `/explore/?slice_id={id}` |
 | `axbi://explore` | `/explore/` |
 | `axbi://sqllab` | `/sqllab/` |
-| `axbi://home` | `/superset/welcome/` |
+| `axbi://home` | `/ax-bi/welcome/` |
 
 ### Content Security Policy
 

@@ -100,8 +100,9 @@ def test_get_redirect_url_ignores_malformed_form_data_datasource(
     """Malformed datasource keys should not break the explore redirect."""
     form_data = {"slice_id": 1, "viz_type": "line", "datasource": "bad"}
     with current_app.test_request_context(
-        f"/superset/explore/?form_data={quote(json.dumps(form_data))}"
+        f"/ax-bi/explore/?form_data={quote(json.dumps(form_data))}",
+        base_url=current_app.config["WEBDRIVER_BASEURL"],
     ):
-        assert Superset.get_redirect_url().startswith("/superset/explore/?form_data=")
+        assert Superset.get_redirect_url().startswith("/explore/?form_data=")
 
     create_form_data.assert_not_called()

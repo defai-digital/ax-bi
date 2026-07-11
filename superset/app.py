@@ -21,7 +21,6 @@ import os
 import sys
 from collections.abc import Iterable
 from typing import cast
-from urllib.parse import quote
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -35,56 +34,19 @@ else:
     if TYPE_CHECKING:
         from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
-from flask import Flask, request, Response
+from flask import Flask, Response
 from werkzeug.exceptions import NotFound
 
-from superset.constants import (
-    AX_BI_ROUTE_PREFIX,
-    LEGACY_AX_OFFICE_ROUTE_PREFIX,
-    LEGACY_SUPERSET_ROUTE_PREFIX,
-)
 from superset.extensions.cache_middleware import ExtensionCacheMiddleware
 from superset.extensions.local_extensions_watcher import (
     start_local_extensions_watcher_thread,
 )
 from superset.initialization import SupersetAppInitializer
 from superset.marshmallow_compatibility import patch_marshmallow_for_flask_appbuilder
-from superset.utils.link_redirect import relative_redirect
 
 patch_marshmallow_for_flask_appbuilder()
 
 logger = logging.getLogger(__name__)
-
-
-def _register_legacy_route_redirects(app: Flask) -> None:
-    """Redirect legacy route-prefix URLs to the current AX BI route prefix."""
-
-    legacy_prefixes = [
-        LEGACY_SUPERSET_ROUTE_PREFIX,
-        LEGACY_AX_OFFICE_ROUTE_PREFIX,
-    ]
-
-    for idx, legacy_prefix in enumerate(legacy_prefixes):
-        base_route = f"{legacy_prefix}/"
-
-        @app.route(
-            base_route,
-            defaults={"path": ""},
-            methods=("GET", "POST", "PUT", "PATCH", "DELETE"),
-            endpoint=f"legacy_route_redirect_{idx}_base",
-        )
-        @app.route(
-            f"{base_route}<path:path>",
-            methods=("GET", "POST", "PUT", "PATCH", "DELETE"),
-            endpoint=f"legacy_route_redirect_{idx}",
-        )
-        def _legacy_route_redirect(path: str, _prefix: str = legacy_prefix) -> Response:
-            target = f"{AX_BI_ROUTE_PREFIX}/{quote(path, safe='/')}"
-            if request.query_string:
-                target = f"{target}?{request.query_string.decode()}"
-            return relative_redirect(
-                target, code=308 if request.method != "GET" else 302
-            )
 
 
 def create_app(
@@ -118,7 +80,6 @@ def create_app(
 
         app_initializer = app.config.get("APP_INITIALIZER", SupersetAppInitializer)(app)
         app_initializer.init_app()
-        _register_legacy_route_redirects(app)
 
         # Must be applied before AppRootMiddleware so the path prefix
         # is stripped before the extension asset path regex runs.

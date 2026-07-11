@@ -71,7 +71,7 @@ fn parse_deep_link(url: &str) -> Option<String> {
             if path.is_empty() {
                 "/dashboard/list/".to_string()
             } else if is_dashboard_identifier(path) {
-                format!("/superset/dashboard/{path}/")
+                format!("/ax-bi/dashboard/{path}/")
             } else {
                 warn!("Invalid dashboard deep link identifier: {}", path);
                 return None;
@@ -89,7 +89,7 @@ fn parse_deep_link(url: &str) -> Option<String> {
         }
         "explore" => static_route(path, "/explore/")?,
         "sqllab" | "sql" => static_route(path, "/sqllab/")?,
-        "home" => static_route(path, "/superset/welcome/")?,
+        "home" => static_route(path, "/ax-bi/welcome/")?,
         other => {
             warn!("Unknown deep link host: {}", other);
             return None;
@@ -148,7 +148,7 @@ mod tests {
     fn parses_known_deep_links() {
         assert_eq!(
             parse_deep_link("axbi://dashboard/world-banks-data"),
-            Some("/superset/dashboard/world-banks-data/".to_string())
+            Some("/ax-bi/dashboard/world-banks-data/".to_string())
         );
         assert_eq!(
             parse_deep_link("axbi://chart/42"),

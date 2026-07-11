@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn internal_routes_must_stay_on_current_origin() {
-        assert!(is_internal_route("/superset/welcome/"));
+        assert!(is_internal_route("/ax-bi/welcome/"));
         assert!(is_internal_route("/explore/?slice_id=1"));
         assert!(!is_internal_route("https://example.com"));
         assert!(!is_internal_route("//example.com"));

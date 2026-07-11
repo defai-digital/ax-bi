@@ -327,7 +327,7 @@ class TestSerializeDashboardObject:
             "cross_filters_enabled": True,
         }
         dashboard = _mock_dashboard(id=1, slices=[chart])
-        dashboard.url = "/superset/dashboard/1/"
+        dashboard.url = "/ax-bi/dashboard/1/"
         dashboard.json_metadata = json_dumps(metadata)
 
         result = dashboard_serializer(dashboard)

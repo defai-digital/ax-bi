@@ -1029,7 +1029,7 @@ class TestChartPreviewSanitization:
             explore_url="/explore/?slice_id=6",
             content=InteractivePreview(
                 html_content="<div>Revenue by region</div>",
-                preview_url="/superset/explore/?slice_id=6&standalone=1",
+                preview_url="/ax-bi/explore/?slice_id=6&standalone=1",
                 width=800,
                 height=600,
             ),
@@ -1051,7 +1051,7 @@ class TestChartPreviewSanitization:
             "<div>Revenue by region</div>"
         )
         assert (
-            result.content.preview_url == "/superset/explore/?slice_id=6&standalone=1"
+            result.content.preview_url == "/ax-bi/explore/?slice_id=6&standalone=1"
         )
         assert result.explore_url == "/explore/?slice_id=6"
 

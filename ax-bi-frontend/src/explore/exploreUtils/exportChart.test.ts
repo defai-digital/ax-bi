@@ -26,9 +26,6 @@ jest.mock('src/utils/export', () => ({
 // Mock pathUtils to control app root prefix
 jest.mock('src/utils/pathUtils', () => ({
   ensureAppRoot: jest.fn((path: string) => path),
-  normalizeLegacyRoutePrefix: jest.fn((path: string) =>
-    path.replace(/(^|\/)superset(?=\/|$)/, '$1ax-bi'),
-  ),
 }));
 
 // Mock SupersetClient
@@ -79,7 +76,7 @@ beforeEach(() => {
 // Streaming uses native fetch (not SupersetClient), so exportChart must apply
 // ensureAppRoot before passing the URL to onStartStreamingExport.
 test('exportChart v1 API passes prefixed URL to onStartStreamingExport when app root is configured', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   ensureAppRoot.mockImplementation((path: string) => `${appRoot}${path}`);
 
   const onStartStreamingExport = jest.fn();
@@ -113,7 +110,7 @@ test('exportChart v1 API passes unprefixed URL when no app root is configured', 
 });
 
 test('exportChart v1 API passes nested prefix for deeply nested deployments', async () => {
-  const appRoot = '/my-company/analytics/superset';
+  const appRoot = '/my-company/analytics/ax-bi';
   ensureAppRoot.mockImplementation((path: string) => `${appRoot}${path}`);
 
   const onStartStreamingExport = jest.fn();

@@ -734,7 +734,7 @@ def test_get_datasource_full_name():
     [
         (None, None),
         ("https://mysuperset.com/abc", None),
-        ("https://mysuperset.com/superset/dashboard/", QuerySource.DASHBOARD),
+        ("https://myaxbi.com/ax-bi/dashboard/", QuerySource.DASHBOARD),
         ("https://mysuperset.com/explore/", QuerySource.CHART),
         ("https://mysuperset.com/sqllab/", QuerySource.SQL_LAB),
     ],

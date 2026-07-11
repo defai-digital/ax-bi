@@ -37,7 +37,7 @@ import {
 } from '@superset-ui/core';
 import { safeStringify } from 'src/utils/safeStringify';
 import { optionLabel } from 'src/utils/common';
-import { ensureAppRoot, normalizeLegacyRoutePrefix } from 'src/utils/pathUtils';
+import { ensureAppRoot } from 'src/utils/pathUtils';
 import { downloadBlob, getFilenameFromResponse } from 'src/utils/export';
 import { URL_PARAMS } from 'src/constants';
 import {
@@ -376,7 +376,7 @@ export const exportChart = async ({
     // Streaming uses native fetch — apply appRoot prefix here since useStreamingExport
     // does not go through SupersetClient (which would add it automatically).
     onStartStreamingExport({
-      url: url ? normalizeLegacyRoutePrefix(ensureAppRoot(url)) : url,
+      url: url ? ensureAppRoot(url) : url,
       payload,
       exportType: resultFormat,
       exportSource: 'chart',

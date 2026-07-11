@@ -26,23 +26,6 @@ import { applicationRoot } from 'src/utils/getBootstrapData';
 const SAFE_ABSOLUTE_URL_RE = /^(https?|ftp|mailto|tel):/i;
 
 /**
- * Normalizes legacy Superset route prefixes to the public AX BI route prefix.
- * Deployment roots are preserved, so
- * `/analytics/superset/foo` becomes `/analytics/ax-bi/foo`.
- *
- * The lookahead `(?=[/?#]|$)` ensures the prefix segment is followed by
- * a path separator (`/`), query string (`?`), hash fragment (`#`), or
- * end of string — preventing partial-segment matches while correctly
- * handling URLs with query parameters or fragments.
- */
-export function normalizeLegacyRoutePrefix(path: string): string {
-  if (SAFE_ABSOLUTE_URL_RE.test(path) || path.startsWith('//')) {
-    return path;
-  }
-  return path.replace(/(^|\/)superset(?=[/?#]|$)/, '$1ax-bi');
-}
-
-/**
  * Takes a string path to a resource and prefixes it with the application root
  * defined in the application configuration.
  *

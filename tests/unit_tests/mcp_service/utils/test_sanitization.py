@@ -801,14 +801,14 @@ def test_sanitize_for_llm_context_preserves_nested_operational_fields_in_lists()
         "targets": [
             {
                 "column": {"name": "region"},
-                "url": "/superset/explore/?slice_id=42",
+                "url": "/ax-bi/explore/?slice_id=42",
             }
         ],
     }
 
     result = sanitize_for_llm_context(payload)
 
-    assert result["targets"][0]["url"] == "/superset/explore/?slice_id=42"
+    assert result["targets"][0]["url"] == "/ax-bi/explore/?slice_id=42"
     assert result["targets"][0]["column"]["name"] == (
         f"{LLM_CONTEXT_OPEN_DELIMITER}\nregion\n{LLM_CONTEXT_CLOSE_DELIMITER}"
     )

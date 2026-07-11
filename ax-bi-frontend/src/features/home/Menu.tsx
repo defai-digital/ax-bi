@@ -21,7 +21,7 @@ import { styled, css, useTheme } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
 import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
 import { ensureStaticPrefix } from 'src/utils/assetUrl';
-import { ensureAppRoot, normalizeLegacyRoutePrefix } from 'src/utils/pathUtils';
+import { ensureAppRoot } from 'src/utils/pathUtils';
 import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
 import { MainNav, MenuItem } from '@superset-ui/core/components/Menu';
 import { Tooltip, Grid, Row, Col, Image } from '@superset-ui/core/components';
@@ -293,9 +293,7 @@ export function Menu({
   const renderBrand = () => {
     let link;
     if (theme.brandLogoUrl) {
-      const brandHref = normalizeLegacyRoutePrefix(
-        ensureAppRoot(theme.brandLogoHref),
-      );
+      const brandHref = ensureAppRoot(theme.brandLogoHref);
       const brandImage = (
         <StyledImage
           preview={false}
@@ -332,7 +330,7 @@ export function Menu({
       link = (
         <Typography.Link
           className="navbar-brand"
-          href={normalizeLegacyRoutePrefix(ensureAppRoot(brand.path))}
+          href={ensureAppRoot(brand.path)}
           tabIndex={-1}
         >
           <StyledImage
