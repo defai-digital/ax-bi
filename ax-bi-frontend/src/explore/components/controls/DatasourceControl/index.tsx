@@ -416,10 +416,8 @@ class DatasourceControl extends PureComponent<
         key: VIEW_IN_SQL_LAB,
         label: (
           <Link
-            to={{
-              pathname: '/sqllab',
-              state: { requestedQuery },
-            }}
+            to="/sqllab"
+            state={{ requestedQuery }}
             onClick={preventRouterLinkWhileMetaClicked}
           >
             {t('View in SQL Lab')}
@@ -473,10 +471,8 @@ class DatasourceControl extends PureComponent<
         key: VIEW_IN_SQL_LAB,
         label: (
           <Link
-            to={{
-              pathname: '/sqllab',
-              state: { requestedQuery },
-            }}
+            to="/sqllab"
+            state={{ requestedQuery }}
             onClick={preventRouterLinkWhileMetaClicked}
           >
             {t('View in SQL Lab')}

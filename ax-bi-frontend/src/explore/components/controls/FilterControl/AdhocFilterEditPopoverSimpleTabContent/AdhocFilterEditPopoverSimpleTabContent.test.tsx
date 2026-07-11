@@ -26,16 +26,6 @@ import {
 } from 'spec/helpers/testing-library';
 import { thunk } from 'redux-thunk';
 import configureStore from 'redux-mock-store';
-
-// react-redux v9 exports are non-configurable; mock useSelector via the module.
-jest.mock('react-redux', () => {
-  const actual = jest.requireActual('react-redux');
-  return {
-    ...actual,
-    useSelector: jest.fn(),
-  };
-});
-
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
 import {
   AGGREGATES,
@@ -52,6 +42,15 @@ import AdhocFilterEditPopoverSimpleTabContent, {
   Props,
 } from '.';
 import { Clauses, ExpressionTypes } from '../types';
+
+// react-redux v9 exports are non-configurable; mock useSelector via the module.
+jest.mock('react-redux', () => {
+  const actual = jest.requireActual('react-redux');
+  return {
+    ...actual,
+    useSelector: jest.fn(),
+  };
+});
 
 const simpleAdhocFilter = new AdhocFilter({
   expressionType: ExpressionTypes.Simple,

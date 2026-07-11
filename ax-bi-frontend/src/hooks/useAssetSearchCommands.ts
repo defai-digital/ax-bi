@@ -71,7 +71,8 @@ export function useAssetSearchCommands(): void {
         return;
       }
 
-      const requestId = ++requestIdRef.current;
+      requestIdRef.current += 1;
+      const requestId = requestIdRef.current;
       const appRoot = ensureAppRoot('');
 
       try {

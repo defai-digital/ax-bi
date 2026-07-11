@@ -85,6 +85,7 @@ export function usePersonalViewsMenuItems({
         label: t('Save current filters as view'),
         onClick: () => {
           const name =
+            // eslint-disable-next-line no-alert
             window.prompt(t('Name this view'), t('My view')) ?? '';
           if (!name.trim()) {
             return;

@@ -35,7 +35,7 @@ import {
   css,
 } from '@apache-superset/core/theme';
 import Switchboard from '@superset-ui/switchboard';
-import getBootstrapData from 'src/utils/getBootstrapData';
+import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
 import { history } from 'src/utils/history';
 import setupClient from 'src/setup/setupClient';
 import setupPlugins from 'src/setup/setupPlugins';

@@ -18,7 +18,7 @@
  */
 
 import type React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import { DatasourceType, JsonObject, SupersetClient } from '@superset-ui/core';
 import {
@@ -314,17 +314,21 @@ test('Edit dataset should be disabled when user is not admin', async () => {
 
 test('Click on View in SQL Lab', async () => {
   const props = createProps();
+  const MockSqlLabRoute = () => {
+    const location = useLocation();
+
+    return (
+      <div data-test="mock-sqllab-route">
+        {JSON.stringify(location.state)}
+      </div>
+    );
+  };
 
   const { queryByTestId, getByTestId } = render(
     <>
-      <Route
-        path="/sqllab"
-        render={({ location }) => (
-          <div data-test="mock-sqllab-route">
-            {JSON.stringify(location.state)}
-          </div>
-        )}
-      />
+      <Routes>
+        <Route path="/sqllab" element={<MockSqlLabRoute />} />
+      </Routes>
       <DatasourceControl {...props} />
     </>,
     {
