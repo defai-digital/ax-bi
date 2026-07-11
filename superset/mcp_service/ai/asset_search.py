@@ -55,6 +55,9 @@ logger = logging.getLogger(__name__)
 _NAME_MATCH_SCORE = 1.0
 _DESCRIPTION_MATCH_SCORE = 0.5
 _CERTIFIED_BONUS = 0.2
+_TOKEN_NAME_SCORE = 0.35
+_TOKEN_DESCRIPTION_SCORE = 0.15
+_TOKEN_WORD_BOUNDARY_BONUS = 0.1
 
 _VALID_ASSET_TYPES = frozenset({"dataset", "chart", "dashboard", "metric"})
 _ASSET_SEARCH_CONTRACT_VERSION = "asset-search.v1"
@@ -64,6 +67,44 @@ _DATASET_NAME_PATTERNS: tuple[re.Pattern[str], ...] = (
         re.IGNORECASE,
     ),
     re.compile(r"\b([A-Za-z0-9]+(?:_[A-Za-z0-9]+)+)\b"),
+)
+# Tokens that rarely identify assets in NL prompts
+_QUERY_STOP_TOKENS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "show",
+        "create",
+        "make",
+        "build",
+        "please",
+        "dashboard",
+        "dashboards",
+        "chart",
+        "charts",
+        "report",
+        "reports",
+        "using",
+        "into",
+        "that",
+        "this",
+        "have",
+        "want",
+        "need",
+        "data",
+        "table",
+        "dataset",
+        "datasets",
+        "metric",
+        "metrics",
+        "analysis",
+        "overview",
+        "executive",
+        "summary",
+    }
 )
 
 
@@ -94,15 +135,56 @@ def _dataset_name_candidates(query: str) -> list[str]:
     return candidates
 
 
+def _query_tokens(query: str) -> list[str]:
+    """Extract significant tokens from a natural-language asset query."""
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for token in re.findall(r"[a-zA-Z0-9_]+", query.lower()):
+        if len(token) < 3 or token in _QUERY_STOP_TOKENS or token in seen:
+            continue
+        tokens.append(token)
+        seen.add(token)
+    return tokens[:12]
+
+
 def _score_result(name: str | None, description: str | None, query: str) -> float:
-    """Compute a simple relevance score for a search result."""
+    """Compute a relevance score for a search result.
+
+    Full-string matches score highest. Multi-word prompts also score token
+    overlap so "executive sales dashboard" still ranks a ``sales_orders``
+    dataset even when the full phrase is not present in the name.
+    """
     score = 0.0
-    query_lower = query.lower()
-    if name and query_lower in name.lower():
+    query_lower = (query or "").lower().strip()
+    name_lower = (name or "").lower()
+    description_lower = (description or "").lower()
+
+    if query_lower and name_lower and query_lower in name_lower:
         score += _NAME_MATCH_SCORE
-    if description and query_lower in description.lower():
+    if query_lower and description_lower and query_lower in description_lower:
         score += _DESCRIPTION_MATCH_SCORE
+
+    for token in _query_tokens(query):
+        if name_lower and token in name_lower:
+            score += _TOKEN_NAME_SCORE
+            if re.search(rf"\b{re.escape(token)}\b", name_lower):
+                score += _TOKEN_WORD_BOUNDARY_BONUS
+        if description_lower and token in description_lower:
+            score += _TOKEN_DESCRIPTION_SCORE
+
     return score
+
+
+def _text_search_clauses(column: Any, query: str) -> list[Any]:
+    """Build OR clauses for full query + significant token matches."""
+    clauses: list[Any] = []
+    escaped_query = _escape_like_pattern(query)
+    if escaped_query.strip():
+        clauses.append(column.ilike(f"%{escaped_query}%", escape="\\"))
+    for token in _query_tokens(query):
+        escaped_token = _escape_like_pattern(token)
+        clauses.append(column.ilike(f"%{escaped_token}%", escape="\\"))
+    return clauses
 
 
 def _is_certified(obj: Any) -> bool:
@@ -139,20 +221,20 @@ def _search_datasets(
     from superset.connectors.sqla.models import SqlaTable
     from superset.daos.dataset import DatasetDAO
 
-    escaped_query = _escape_like_pattern(query)
     dataset_candidates = _dataset_name_candidates(query)
-    search_filter = or_(
-        SqlaTable.table_name.ilike(f"%{escaped_query}%", escape="\\"),
-        cast(Any, SqlaTable.description).ilike(
-            f"%{escaped_query}%",
-            escape="\\",
-        ),
+    search_clauses = [
+        *_text_search_clauses(SqlaTable.table_name, query),
+        *_text_search_clauses(cast(Any, SqlaTable.description), query),
         *[SqlaTable.table_name == candidate for candidate in dataset_candidates],
         *[
-            SqlaTable.table_name.ilike(_escape_like_pattern(candidate), escape="\\")
+            SqlaTable.table_name.ilike(
+                f"%{_escape_like_pattern(candidate)}%",
+                escape="\\",
+            )
             for candidate in dataset_candidates
         ],
-    )
+    ]
+    search_filter = or_(*search_clauses) if search_clauses else SqlaTable.id.is_(None)
 
     session = db.session
     model_query = session.query(SqlaTable)
@@ -200,11 +282,11 @@ def _search_charts(
     from superset.daos.chart import ChartDAO
     from superset.models.slice import Slice
 
-    escaped_query = _escape_like_pattern(query)
-    search_filter = or_(
-        Slice.slice_name.ilike(f"%{escaped_query}%", escape="\\"),
-        Slice.description.ilike(f"%{escaped_query}%", escape="\\"),
-    )
+    search_clauses = [
+        *_text_search_clauses(Slice.slice_name, query),
+        *_text_search_clauses(Slice.description, query),
+    ]
+    search_filter = or_(*search_clauses) if search_clauses else Slice.id.is_(None)
 
     session = db.session
     model_query = session.query(Slice)
@@ -250,10 +332,12 @@ def _search_dashboards(
     from superset.daos.dashboard import DashboardDAO
     from superset.models.dashboard import Dashboard
 
-    escaped_query = _escape_like_pattern(query)
-    search_filter = or_(
-        Dashboard.dashboard_title.ilike(f"%{escaped_query}%", escape="\\"),
-        Dashboard.description.ilike(f"%{escaped_query}%", escape="\\"),
+    search_clauses = [
+        *_text_search_clauses(Dashboard.dashboard_title, query),
+        *_text_search_clauses(Dashboard.description, query),
+    ]
+    search_filter = (
+        or_(*search_clauses) if search_clauses else Dashboard.id.is_(None)
     )
 
     session = db.session
@@ -295,10 +379,22 @@ def _build_reason(name: str | None, description: str | None, query: str) -> str:
     """Build a human-readable relevance reason string."""
     parts: list[str] = []
     query_lower = query.lower()
-    if name and query_lower in name.lower():
+    name_lower = (name or "").lower()
+    description_lower = (description or "").lower()
+    if name_lower and query_lower in name_lower:
         parts.append(f"name matches '{query}'")
-    if description and query_lower in description.lower():
+    if description_lower and query_lower in description_lower:
         parts.append(f"description matches '{query}'")
+    token_hits = [
+        token
+        for token in _query_tokens(query)
+        if (name_lower and token in name_lower)
+        or (description_lower and token in description_lower)
+    ]
+    if token_hits and not parts:
+        parts.append(f"token matches: {', '.join(token_hits[:4])}")
+    elif token_hits and len(token_hits) > 1:
+        parts.append(f"tokens: {', '.join(token_hits[:4])}")
     return ", ".join(parts) if parts else "tag/owner match"
 
 

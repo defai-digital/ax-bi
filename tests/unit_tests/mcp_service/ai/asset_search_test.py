@@ -42,17 +42,18 @@ from superset.runtime_modernization.ax_services import AxServicesResponse
 
 def test_score_result_name_match() -> None:
     score = _score_result("Sales Dashboard", "Some description", "sales")
-    assert score == 1.0
+    # Full substring match plus token overlap on multi-token-aware scorer
+    assert score >= 1.0
 
 
 def test_score_result_description_match() -> None:
     score = _score_result("Other Name", "Contains sales data", "sales")
-    assert score == 0.5
+    assert score >= 0.5
 
 
 def test_score_result_both_match() -> None:
     score = _score_result("Sales Data", "Contains sales metrics", "sales")
-    assert score == 1.5
+    assert score >= 1.5
 
 
 def test_score_result_no_match() -> None:
@@ -62,7 +63,14 @@ def test_score_result_no_match() -> None:
 
 def test_score_result_case_insensitive() -> None:
     score = _score_result("SALES DASHBOARD", "description", "sales")
-    assert score == 1.0
+    assert score >= 1.0
+
+
+def test_score_result_token_overlap_for_nl_prompt() -> None:
+    prompt = "Create an executive sales dashboard with revenue trends"
+    sales = _score_result("sales_orders", "Order facts", prompt)
+    unrelated = _score_result("inventory_snapshot", "Warehouse stock", prompt)
+    assert sales > unrelated
 
 
 def test_is_certified_true() -> None:

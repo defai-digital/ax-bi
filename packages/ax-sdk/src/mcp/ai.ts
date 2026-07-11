@@ -198,6 +198,13 @@ export interface PromptToDashboardChartSummary {
   warnings?: string[];
 }
 
+export interface WorkflowStepStatus {
+  name: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped';
+  detail?: string;
+  duration_ms?: number;
+}
+
 export interface PromptToDashboardResult {
   dashboard?: Record<string, unknown> | null;
   dashboard_url?: string | null;
@@ -208,6 +215,10 @@ export interface PromptToDashboardResult {
   warnings?: string[];
   error?: string | null;
   total_duration_ms?: number;
+  status?: 'completed' | 'partial' | 'blocked' | 'failed' | 'dry_run';
+  steps?: WorkflowStepStatus[];
+  charts_succeeded?: number;
+  charts_failed?: number;
 }
 
 export interface DashboardExplanation {

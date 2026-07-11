@@ -703,6 +703,21 @@ class PromptToDashboardChartSummary(BaseModel):
     confidence: float = 0.0
     preview_url: str | None = None
     warnings: list[str] = Field(default_factory=list)
+    status: Literal["succeeded", "failed", "skipped"] = Field(
+        default="succeeded",
+        description="Per-chart generation outcome",
+    )
+
+
+class WorkflowStepStatus(BaseModel):
+    """One step in the prompt-to-dashboard workflow."""
+
+    name: str = Field(description="Step name, e.g. plan, generate_charts, compose")
+    status: Literal["pending", "running", "succeeded", "failed", "skipped"] = (
+        "pending"
+    )
+    detail: str = Field(default="", description="Human-readable step detail")
+    duration_ms: int = Field(default=0)
 
 
 class PromptToDashboardResponse(BaseModel):
@@ -735,6 +750,26 @@ class PromptToDashboardResponse(BaseModel):
         default=0,
         description="Total orchestration time in milliseconds",
     )
+    status: Literal[
+        "completed",
+        "partial",
+        "blocked",
+        "failed",
+        "dry_run",
+    ] = Field(
+        default="failed",
+        description=(
+            "Workflow outcome: completed (all charts + dashboard), "
+            "partial (some charts failed but dashboard composed), "
+            "blocked (confidence gate), failed, or dry_run"
+        ),
+    )
+    steps: list[WorkflowStepStatus] = Field(
+        default_factory=list,
+        description="Ordered workflow step statuses for agent observability",
+    )
+    charts_succeeded: int = Field(default=0)
+    charts_failed: int = Field(default=0)
 
 
 # ---------------------------------------------------------------------------

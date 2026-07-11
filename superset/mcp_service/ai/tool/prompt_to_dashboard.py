@@ -46,6 +46,7 @@ from superset.mcp_service.ai.schemas import (
     PromptToDashboardChartSummary,
     PromptToDashboardRequest,
     PromptToDashboardResponse,
+    WorkflowStepStatus,
 )
 from superset.mcp_service.privacy import (
     requires_data_model_metadata_access,
@@ -171,12 +172,15 @@ async def prompt_to_dashboard(  # noqa: C901
     chart_summaries: list[PromptToDashboardChartSummary] = []
     chart_ids: list[int] = []
     successful_chart_count = 0
+    failed_chart_count = 0
     tool_chain = ["prompt_to_dashboard"]
+    steps: list[WorkflowStepStatus] = []
 
     # ------------------------------------------------------------------
     # Step 1: Plan the dashboard
     # ------------------------------------------------------------------
     await ctx.report_progress(1, 4, "Planning dashboard")
+    plan_started = time.time()
     with mcp_event_log_context(action="mcp.prompt_to_dashboard.plan"):
         from superset.mcp_service.ai.tool.plan_dashboard import plan_dashboard
 
@@ -198,10 +202,20 @@ async def prompt_to_dashboard(  # noqa: C901
 
     if not plan_data:
         duration = int((time.time() - start_time) * 1000)
+        steps.append(
+            WorkflowStepStatus(
+                name="plan",
+                status="failed",
+                detail="No plan produced",
+                duration_ms=int((time.time() - plan_started) * 1000),
+            )
+        )
         return PromptToDashboardResponse(
             error="Dashboard planning failed. No plan produced.",
             warnings=all_warnings,
             total_duration_ms=duration,
+            status="failed",
+            steps=steps,
         ).model_dump()
 
     # Reconstruct plan into DashboardPlanFull for compose_dashboard
@@ -222,6 +236,17 @@ async def prompt_to_dashboard(  # noqa: C901
         )
 
     tool_chain.append("plan_dashboard")
+    steps.append(
+        WorkflowStepStatus(
+            name="plan",
+            status="succeeded",
+            detail=(
+                f"title='{plan_full.title}', charts={len(plan_full.chart_intents)}, "
+                f"confidence={plan_full.confidence:.2f}"
+            ),
+            duration_ms=int((time.time() - plan_started) * 1000),
+        )
+    )
     await ctx.info(
         f"Plan ready: title='{plan_full.title}', "
         f"charts={len(plan_full.chart_intents)}, confidence={plan_full.confidence:.2f}"
@@ -241,6 +266,27 @@ async def prompt_to_dashboard(  # noqa: C901
     if should_block and not request.dry_run:
         duration = int((time.time() - start_time) * 1000)
         await ctx.warning(f"Prompt-to-dashboard blocked: {block_reason}")
+        steps.append(
+            WorkflowStepStatus(
+                name="confidence_gate",
+                status="failed",
+                detail=block_reason,
+            )
+        )
+        steps.append(
+            WorkflowStepStatus(
+                name="generate_charts",
+                status="skipped",
+                detail="Blocked by confidence gate",
+            )
+        )
+        steps.append(
+            WorkflowStepStatus(
+                name="compose",
+                status="skipped",
+                detail="Blocked by confidence gate",
+            )
+        )
         return PromptToDashboardResponse(
             plan=_safe_plan_for_response(plan_full),
             charts=[],
@@ -253,14 +299,32 @@ async def prompt_to_dashboard(  # noqa: C901
             ],
             error=f"Plan confidence gate: {block_reason}",
             total_duration_ms=duration,
+            status="blocked",
+            steps=steps,
         ).model_dump()
     if should_block and request.dry_run:
         all_warnings.append(f"Would block compose without force: {block_reason}")
+        steps.append(
+            WorkflowStepStatus(
+                name="confidence_gate",
+                status="failed",
+                detail=f"Would block: {block_reason}",
+            )
+        )
+    else:
+        steps.append(
+            WorkflowStepStatus(
+                name="confidence_gate",
+                status="succeeded",
+                detail=f"confidence={plan_full.confidence:.2f}",
+            )
+        )
 
     # ------------------------------------------------------------------
     # Step 2: Generate each chart from its intent
     # ------------------------------------------------------------------
     await ctx.report_progress(2, 4, "Generating charts from intents")
+    charts_started = time.time()
     source_dataset_ids: set[int] = set()
 
     for idx, intent in enumerate(plan_full.chart_intents):
@@ -315,6 +379,7 @@ async def prompt_to_dashboard(  # noqa: C901
             chart_warnings = chart_result.get("warnings", [])
             chart_succeeded = bool(chart_result.get("success"))
 
+            chart_status = "succeeded" if chart_succeeded else "failed"
             chart_summaries.append(
                 PromptToDashboardChartSummary(
                     chart_id=chart_id,
@@ -324,11 +389,14 @@ async def prompt_to_dashboard(  # noqa: C901
                     confidence=chart_confidence,
                     preview_url=chart_preview,
                     warnings=chart_warnings,
+                    status=chart_status,
                 )
             )
 
             if chart_succeeded:
                 successful_chart_count += 1
+            else:
+                failed_chart_count += 1
 
             if chart_id:
                 chart_ids.append(chart_id)
@@ -347,6 +415,7 @@ async def prompt_to_dashboard(  # noqa: C901
                 exc_info=True,
             )
             all_warnings.append(f"Chart '{chart_purpose}' failed: {e}")
+            failed_chart_count += 1
             chart_summaries.append(
                 PromptToDashboardChartSummary(
                     chart_name="",
@@ -354,11 +423,40 @@ async def prompt_to_dashboard(  # noqa: C901
                     purpose=chart_purpose,
                     confidence=0.0,
                     warnings=[f"Generation failed: {e}"],
+                    status="failed",
                 )
             )
 
+    if successful_chart_count and failed_chart_count:
+        chart_step_status: str = "succeeded"
+        chart_step_detail = (
+            f"partial: {successful_chart_count} succeeded, "
+            f"{failed_chart_count} failed"
+        )
+    elif successful_chart_count:
+        chart_step_status = "succeeded"
+        chart_step_detail = f"{successful_chart_count} succeeded"
+    else:
+        chart_step_status = "failed"
+        chart_step_detail = f"{failed_chart_count} failed"
+    steps.append(
+        WorkflowStepStatus(
+            name="generate_charts",
+            status=chart_step_status,  # type: ignore[arg-type]
+            detail=chart_step_detail,
+            duration_ms=int((time.time() - charts_started) * 1000),
+        )
+    )
+
     if request.dry_run:
         duration = int((time.time() - start_time) * 1000)
+        steps.append(
+            WorkflowStepStatus(
+                name="compose",
+                status="skipped",
+                detail="dry_run=true",
+            )
+        )
         if not successful_chart_count:
             return PromptToDashboardResponse(
                 plan=_safe_plan_for_response(plan_full),
@@ -366,6 +464,10 @@ async def prompt_to_dashboard(  # noqa: C901
                 error="No chart previews were successfully generated.",
                 warnings=all_warnings,
                 total_duration_ms=duration,
+                status="failed",
+                steps=steps,
+                charts_succeeded=successful_chart_count,
+                charts_failed=failed_chart_count,
             ).model_dump()
         return PromptToDashboardResponse(
             plan=_safe_plan_for_response(plan_full),
@@ -376,10 +478,21 @@ async def prompt_to_dashboard(  # noqa: C901
             ),
             warnings=all_warnings,
             total_duration_ms=duration,
+            status="dry_run",
+            steps=steps,
+            charts_succeeded=successful_chart_count,
+            charts_failed=failed_chart_count,
         ).model_dump()
 
     if not chart_ids:
         duration = int((time.time() - start_time) * 1000)
+        steps.append(
+            WorkflowStepStatus(
+                name="compose",
+                status="skipped",
+                detail="No successful charts to compose",
+            )
+        )
         return PromptToDashboardResponse(
             plan=_safe_plan_for_response(plan_full),
             charts=chart_summaries,
@@ -387,6 +500,10 @@ async def prompt_to_dashboard(  # noqa: C901
             "Try rephrasing the prompt or specifying dataset_ids.",
             warnings=all_warnings,
             total_duration_ms=duration,
+            status="failed",
+            steps=steps,
+            charts_succeeded=successful_chart_count,
+            charts_failed=failed_chart_count,
         ).model_dump()
 
     # ------------------------------------------------------------------
@@ -394,6 +511,7 @@ async def prompt_to_dashboard(  # noqa: C901
     # ------------------------------------------------------------------
     await ctx.report_progress(3, 4, "Composing dashboard")
     tool_chain.append("compose_dashboard")
+    compose_started = time.time()
 
     with mcp_event_log_context(action="mcp.prompt_to_dashboard.compose"):
         from superset.mcp_service.ai.tool.compose_dashboard import compose_dashboard
@@ -418,13 +536,34 @@ async def prompt_to_dashboard(  # noqa: C901
 
     if compose_error:
         duration = int((time.time() - start_time) * 1000)
+        steps.append(
+            WorkflowStepStatus(
+                name="compose",
+                status="failed",
+                detail=str(compose_error),
+                duration_ms=int((time.time() - compose_started) * 1000),
+            )
+        )
         return PromptToDashboardResponse(
             plan=_safe_plan_for_response(plan_full),
             charts=chart_summaries,
             error=f"Dashboard composition failed: {compose_error}",
             warnings=all_warnings,
             total_duration_ms=duration,
+            status="failed",
+            steps=steps,
+            charts_succeeded=successful_chart_count,
+            charts_failed=failed_chart_count,
         ).model_dump()
+
+    steps.append(
+        WorkflowStepStatus(
+            name="compose",
+            status="succeeded",
+            detail=f"dashboard_id={dashboard_data.get('id') if dashboard_data else None}",
+            duration_ms=int((time.time() - compose_started) * 1000),
+        )
+    )
 
     # ------------------------------------------------------------------
     # Step 4: Record audit trail and build response
@@ -440,15 +579,24 @@ async def prompt_to_dashboard(  # noqa: C901
             tool_chain=tool_chain,
             source_dataset_ids=list(source_dataset_ids),
             confidence=plan_full.confidence,
-            validation_summary=f"{len(chart_ids)} charts generated",
+            validation_summary=(
+                f"{successful_chart_count} charts generated, "
+                f"{failed_chart_count} failed"
+            ),
         )
 
     duration = int((time.time() - start_time) * 1000)
+    workflow_status = "partial" if failed_chart_count else "completed"
+    if failed_chart_count:
+        all_warnings.append(
+            f"Partial success: {failed_chart_count} chart(s) failed; "
+            f"dashboard composed with {successful_chart_count} chart(s)."
+        )
 
     await ctx.info(
         f"Prompt-to-dashboard complete: "
         f"dashboard_id={dashboard_data.get('id') if dashboard_data else None}, "
-        f"charts={len(chart_ids)}, duration={duration}ms"
+        f"charts={len(chart_ids)}, status={workflow_status}, duration={duration}ms"
     )
 
     return PromptToDashboardResponse(
@@ -461,6 +609,10 @@ async def prompt_to_dashboard(  # noqa: C901
         warnings=all_warnings,
         error=None,
         total_duration_ms=duration,
+        status=workflow_status,
+        steps=steps,
+        charts_succeeded=successful_chart_count,
+        charts_failed=failed_chart_count,
     ).model_dump()
 
 

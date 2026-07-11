@@ -85,6 +85,7 @@ export {
   type PromptToDashboardParams,
   type PromptToDashboardResult,
   type PromptToDashboardChartSummary,
+  type WorkflowStepStatus,
   type ComposeDashboardParams,
   type ComposeResult,
   type ExplainDashboardParams,
