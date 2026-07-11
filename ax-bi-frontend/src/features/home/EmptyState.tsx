@@ -30,18 +30,22 @@ import { findPermission } from 'src/utils/findPermission';
 import type { RootState } from 'src/views/store';
 import { WelcomeTable } from './types';
 
+/* Ma: open field empty state — no heavy dashed box; rest around the CTA. */
 const EmptyContainer = styled.div`
-  min-height: 260px;
+  min-height: 280px;
   display: flex;
-  color: ${({ theme }) => theme.colorTextDescription};
+  color: ${({ theme }) => theme.colorTextSecondary};
   flex-direction: column;
-  justify-content: space-around;
-  border: 1px dashed ${({ theme }) => theme.colorBorderSecondary};
-  border-radius: ${({ theme }) => theme.borderRadius}px;
-  background: ${({ theme }) => theme.colorBgLayout};
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   margin: ${({ theme }) => theme.sizeUnit * 4}px
     ${({ theme }) => theme.sizeUnit * 5}px;
-  padding: ${({ theme }) => theme.sizeUnit * 5}px;
+  padding: ${({ theme }) => theme.sizeUnit * 8}px
+    ${({ theme }) => theme.sizeUnit * 5}px
+    ${({ theme }) => theme.sizeUnit * 10}px;
 `;
 
 const EmptyActions = styled.div`

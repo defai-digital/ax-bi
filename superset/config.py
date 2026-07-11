@@ -1150,20 +1150,17 @@ _THEME_DEFAULT_BASE: Theme = {
         # "brandSpinnerUrl": "/static/assets/images/loading.gif",
         "brandSpinnerUrl": None,
         "brandSpinnerSvg": None,
-        # Default colors
-        # Teal brand, tuned for WCAG AA text contrast on white (~4.9:1).
-        # Previous values: #20a7c9 (light), #2893B3 (~3.55:1 on white).
-        "colorPrimary": "#1f7a96",
-        "colorLink": "#1f7a96",
-        "colorError": "#e04355",
-        "colorWarning": "#fcc700",
-        "colorSuccess": "#5ac189",
-        # colorInfo intentionally shifted toward indigo/violet (hue ~239deg)
-        # rather than a lighter teal-blue like colorPrimary (hue ~194deg) --
-        # the two were previously close enough in hue/lightness (#66bcfe) to
-        # read as the same color at a glance, making info banners hard to
-        # distinguish from primary actions.
-        "colorInfo": "#6366f1",
+        # Default colors — Japandi calm (paper + ink + stone).
+        # Soft teal brand from AX Office library; tuned for WCAG AA on paper.
+        # Previous cool-BI values: #1f7a96 primary, #20a7c9 / #2893B3 earlier.
+        "colorPrimary": "#0f766e",
+        "colorLink": "#0f766e",
+        # Earthy status hues (clay / wood / moss / muted violet) — distinct
+        # from primary teal and AA for normal text on paper backgrounds.
+        "colorError": "#b54a38",
+        "colorWarning": "#9a6a1c",
+        "colorSuccess": "#2f7a5c",
+        "colorInfo": "#6d5a9a",
         # Fonts
         "fontUrls": [],
         "fontFamily": "Inter, Helvetica, Arial, sans-serif",
@@ -1177,18 +1174,24 @@ _THEME_DEFAULT_BASE: Theme = {
         "fontWeightLight": "300",
         "fontWeightStrong": "500",
         "fontWeightBold": "700",
+        # Quiet radius (library mid range) — soft without consumer-app bubbles
+        "borderRadius": 8,
         # Editor selection color (for SQL Lab text highlighting)
         "colorEditorSelection": "#fff5cf",
-        # Light-mode surface ramp (BI chrome best practice: soft cool canvas,
-        # pure white cards elevated above layout — not a pure-white page).
-        # Aligns with Power BI "Light" / Metabase-style product chrome.
-        "colorBgBase": "#ffffff",
-        "colorBgLayout": "#f3f5f7",
-        "colorBgContainer": "#ffffff",
-        "colorBgElevated": "#ffffff",
-        "colorBgSpotlight": "#e9eef2",
-        "colorBorder": "#d5dde3",
-        "colorBorderSecondary": "#e6ebf0",
+        # Light-mode surface ramp — warm paper / stone (Ma around chrome).
+        # Not cool SaaS gray: layout is stone wash, containers are paper.
+        "colorBgBase": "#fffcf8",
+        "colorBgLayout": "#f4f1ec",
+        "colorBgContainer": "#fffcf8",
+        "colorBgElevated": "#fffcf8",
+        "colorBgSpotlight": "#efeae3",
+        "colorBorder": "#e2ddd4",
+        "colorBorderSecondary": "#ebe6df",
+        # Charcoal ink hierarchy (not pure black)
+        "colorText": "#2c2a26",
+        "colorTextSecondary": "#6b6560",
+        "colorTextTertiary": "#9a948c",
+        "colorTextPlaceholder": "#9a948c",
     },
     "algorithm": "default",
 }
@@ -1205,29 +1208,27 @@ _THEME_DARK_BASE: Theme = {
         "brandLogoUrl": APP_ICON_DARK,
         # Darker selection color for dark mode
         "colorEditorSelection": "#5c4d1a",
-        # Slightly brighter brand on dark chrome so primary actions and links
-        # keep WCAG-friendly contrast against charcoal containers (competitors
-        # and Grafana-style UIs lift accent saturation in dark mode).
-        "colorPrimary": "#3aa8c9",
-        "colorLink": "#3aa8c9",
-        # Explicit dark-mode neutral ramp, pinned rather than left to antd's
-        # `dark` algorithm to derive on its own. Left unpinned, the algorithm
-        # resolves colorBgLayout/colorBgBase to pure black (#000000) with
-        # colorBgContainer at #141414 -- functional, but true black is harsher
-        # than the soft, slightly cool-tinted charcoal most dark dashboard UIs
-        # (e.g. Grafana, Power BI Dark) use. Elevation order:
-        # layout < container < elevated < spotlight.
-        "colorBgBase": "#0f1418",
-        "colorBgLayout": "#0f1418",
-        "colorBgContainer": "#171d22",
-        "colorBgElevated": "#1f272d",
-        "colorBgSpotlight": "#2a333b",
-        "colorBorder": "#313b43",
-        "colorBorderSecondary": "#242c32",
-        # Readable secondary text on charcoal (antd defaults can go too dim).
-        "colorTextSecondary": "#a8b3bc",
-        "colorTextTertiary": "#7f8b95",
-        "colorTextPlaceholder": "#6b7780",
+        # Lifted teal on dark ink-board for WCAG-friendly primary actions.
+        "colorPrimary": "#2dd4bf",
+        "colorLink": "#2dd4bf",
+        "colorError": "#f0a090",
+        "colorWarning": "#e0b35a",
+        "colorSuccess": "#7dcfb0",
+        "colorInfo": "#a78bfa",
+        # Quiet ink-board dark — warm-leaning slate, not pure navy/black.
+        # Elevation: layout < container < elevated < spotlight.
+        "colorBgBase": "#161412",
+        "colorBgLayout": "#100f0d",
+        "colorBgContainer": "#1f1d1a",
+        "colorBgElevated": "#2a2723",
+        "colorBgSpotlight": "#35312c",
+        "colorBorder": "#35312c",
+        "colorBorderSecondary": "#2a2723",
+        # Warm paper-on-ink text hierarchy
+        "colorText": "#f3efe8",
+        "colorTextSecondary": "#a39e96",
+        "colorTextTertiary": "#6f6a63",
+        "colorTextPlaceholder": "#6f6a63",
     },
     "algorithm": "dark",
 }

@@ -23,6 +23,7 @@ import {
   CategoricalPreset,
   CategoricalD3,
   CategoricalGoogle,
+  CategoricalJapandi,
   CategoricalLyft,
   SequentialCommon,
   SequentialD3,
@@ -38,6 +39,7 @@ describe('Color Schemes', () => {
         CategoricalEcharts,
         CategoricalD3,
         CategoricalGoogle,
+        CategoricalJapandi,
         CategoricalLyft,
         CategoricalSuperset,
         CategoricalPreset,
@@ -47,6 +49,12 @@ describe('Color Schemes', () => {
           expect(scheme).toBeInstanceOf(CategoricalScheme),
         );
       });
+    });
+
+    test('japandiColors is the product default categorical scheme', () => {
+      expect(CategoricalJapandi[0].id).toBe('japandiColors');
+      expect(CategoricalJapandi[0].isDefault).toBe(true);
+      expect(CategoricalJapandi[0].colors.length).toBeGreaterThanOrEqual(10);
     });
   });
   describe('sequential', () => {

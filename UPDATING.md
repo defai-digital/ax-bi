@@ -24,6 +24,22 @@ assists people when migrating to a new version.
 
 ## Next
 
+### UI: Japandi (Japanese-inspired) default theme & chart palette
+
+AX-BI default light/dark themes shift from cool BI gray/teal to a **Japandi**
+tone (paper, ink, stone) aligned with the AX Office library design tokens:
+
+- Light: warm paper surfaces (`#fffcf8` / `#f4f1ec`), soft teal primary
+  (`#0f766e`), charcoal ink text, earthy status colors.
+- Dark: warm ink-board (`#161412` / `#1f1d1a`), lifted teal (`#2dd4bf`).
+- New default categorical scheme: **`japandiColors`** (Featured). Existing
+  charts that stored `color_scheme: "supersetColors"` / `"evidence"` are
+  unchanged; only new charts pick the new default.
+- Theme editor examples: `japandi` / `japandiDark`.
+
+Override via `THEME_DEFAULT` / `THEME_DARK` in `superset_config.py`, or set
+system themes in the UI when `ENABLE_UI_THEME_ADMINISTRATION` is enabled.
+
 ### Frontend: React 19
 
 AX-BI frontend now runs on **React 19** (`react` / `react-dom` `^19.2`) with

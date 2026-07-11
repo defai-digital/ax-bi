@@ -29,6 +29,7 @@ import {
   CategoricalEcharts,
   CategoricalEvidence,
   CategoricalGoogle,
+  CategoricalJapandi,
   CategoricalLyft,
   CategoricalPreset,
   CategoricalSuperset,
@@ -72,6 +73,8 @@ export default function setupColors(
   registerColorSchemes(
     getCategoricalSchemeRegistry(),
     [
+      // Japandi first so its isDefault wins if multiple schemes set the flag.
+      ...CategoricalJapandi,
       ...CategoricalAirbnb,
       ...CategoricalD3,
       ...CategoricalEcharts,
@@ -88,7 +91,7 @@ export default function setupColors(
       ...CategoricalWavesOfBlue,
       ...extraCategoricalColorSchemes,
     ],
-    'supersetColors',
+    'japandiColors',
   );
   registerColorSchemes(
     getSequentialSchemeRegistry(),
