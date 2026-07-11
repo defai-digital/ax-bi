@@ -1146,8 +1146,10 @@ _THEME_DEFAULT_BASE: Theme = {
         "brandSpinnerUrl": None,
         "brandSpinnerSvg": None,
         # Default colors
-        "colorPrimary": "#2893B3",  # NOTE: previous lighter primary color was #20a7c9 # noqa: E501
-        "colorLink": "#2893B3",
+        # Teal brand, tuned for WCAG AA text contrast on white (~4.9:1).
+        # Previous values: #20a7c9 (light), #2893B3 (~3.55:1 on white).
+        "colorPrimary": "#1f7a96",
+        "colorLink": "#1f7a96",
         "colorError": "#e04355",
         "colorWarning": "#fcc700",
         "colorSuccess": "#5ac189",
@@ -1172,6 +1174,16 @@ _THEME_DEFAULT_BASE: Theme = {
         "fontWeightBold": "700",
         # Editor selection color (for SQL Lab text highlighting)
         "colorEditorSelection": "#fff5cf",
+        # Light-mode surface ramp (BI chrome best practice: soft cool canvas,
+        # pure white cards elevated above layout — not a pure-white page).
+        # Aligns with Power BI "Light" / Metabase-style product chrome.
+        "colorBgBase": "#ffffff",
+        "colorBgLayout": "#f3f5f7",
+        "colorBgContainer": "#ffffff",
+        "colorBgElevated": "#ffffff",
+        "colorBgSpotlight": "#e9eef2",
+        "colorBorder": "#d5dde3",
+        "colorBorderSecondary": "#e6ebf0",
     },
     "algorithm": "default",
 }
@@ -1188,21 +1200,29 @@ _THEME_DARK_BASE: Theme = {
         "brandLogoUrl": APP_ICON_DARK,
         # Darker selection color for dark mode
         "colorEditorSelection": "#5c4d1a",
+        # Slightly brighter brand on dark chrome so primary actions and links
+        # keep WCAG-friendly contrast against charcoal containers (competitors
+        # and Grafana-style UIs lift accent saturation in dark mode).
+        "colorPrimary": "#3aa8c9",
+        "colorLink": "#3aa8c9",
         # Explicit dark-mode neutral ramp, pinned rather than left to antd's
         # `dark` algorithm to derive on its own. Left unpinned, the algorithm
         # resolves colorBgLayout/colorBgBase to pure black (#000000) with
         # colorBgContainer at #141414 -- functional, but true black is harsher
         # than the soft, slightly cool-tinted charcoal most dark dashboard UIs
-        # (e.g. Grafana) use, and pinning it here means a future antd upgrade
-        # can't silently change it. Each step is a small lightness increase
-        # for a clear elevation order: layout < container < elevated < spotlight.
-        "colorBgBase": "#11161a",
-        "colorBgLayout": "#11161a",
+        # (e.g. Grafana, Power BI Dark) use. Elevation order:
+        # layout < container < elevated < spotlight.
+        "colorBgBase": "#0f1418",
+        "colorBgLayout": "#0f1418",
         "colorBgContainer": "#171d22",
-        "colorBgElevated": "#1f262c",
-        "colorBgSpotlight": "#2a333a",
-        "colorBorder": "#2c363d",
-        "colorBorderSecondary": "#222a30",
+        "colorBgElevated": "#1f272d",
+        "colorBgSpotlight": "#2a333b",
+        "colorBorder": "#313b43",
+        "colorBorderSecondary": "#242c32",
+        # Readable secondary text on charcoal (antd defaults can go too dim).
+        "colorTextSecondary": "#a8b3bc",
+        "colorTextTertiary": "#7f8b95",
+        "colorTextPlaceholder": "#6b7780",
     },
     "algorithm": "dark",
 }

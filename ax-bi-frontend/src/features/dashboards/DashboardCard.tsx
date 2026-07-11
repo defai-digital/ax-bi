@@ -61,8 +61,7 @@ const StyledDashboardCard = styled(CardStyles)`
       border-radius: ${theme.borderRadius}px;
       overflow: hidden;
       background: ${theme.colorBgContainer};
-      box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 3}px
-        rgba(15, 23, 42, 0.04);
+      box-shadow: ${theme.boxShadowTertiary || theme.boxShadowSecondary};
     }
 
     &:hover {
@@ -70,8 +69,7 @@ const StyledDashboardCard = styled(CardStyles)`
 
       .ant-card {
         border-color: ${theme.colorPrimaryBorder};
-        box-shadow: 0 ${theme.sizeUnit * 2}px ${theme.sizeUnit * 7}px
-          rgba(15, 23, 42, 0.08);
+        box-shadow: ${theme.boxShadowSecondary || theme.boxShadow};
       }
     }
 

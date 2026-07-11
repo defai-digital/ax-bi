@@ -156,8 +156,7 @@ const ExplorePanelContainer = styled.div`
         border: 1px solid ${theme.colorBorderSecondary};
         border-radius: ${theme.borderRadius}px;
         background: ${theme.colorBgContainer};
-        box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit * 5}px
-          rgba(15, 23, 42, 0.06);
+        box-shadow: ${theme.boxShadowTertiary || theme.boxShadowSecondary};
       }
       .panel-body {
         padding: ${theme.sizeUnit * 4}px;

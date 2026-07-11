@@ -17,11 +17,31 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { css, styled, type SupersetTheme } from '@apache-superset/core/theme';
+import {
+  css,
+  isThemeDark,
+  styled,
+  type SupersetTheme,
+} from '@apache-superset/core/theme';
 
-/** Soft card elevation used across AX page surfaces. */
-export function axbiSoftShadow(theme: SupersetTheme): string {
-  return `0 ${theme.sizeUnit}px ${theme.sizeUnit * 6}px rgba(15, 23, 42, 0.06)`;
+/**
+ * Soft card elevation for AX surfaces.
+ * Light: cool slate shadow (reads as lift on pale canvas).
+ * Dark: black alpha shadow (slate-tinted shadows look muddy on charcoal).
+ * Matches BI chrome practice (Power BI / Grafana: elevate cards, not pure black).
+ */
+export function axbiSoftShadow(
+  theme: SupersetTheme,
+  strength: 'default' | 'hover' = 'default',
+): string {
+  const y = theme.sizeUnit * (strength === 'hover' ? 2 : 1);
+  const blur = theme.sizeUnit * (strength === 'hover' ? 8 : 6);
+  if (isThemeDark(theme)) {
+    const alpha = strength === 'hover' ? 0.55 : 0.4;
+    return `0 ${y}px ${blur}px rgba(0, 0, 0, ${alpha})`;
+  }
+  const alpha = strength === 'hover' ? 0.1 : 0.06;
+  return `0 ${y}px ${blur}px rgba(15, 23, 42, ${alpha})`;
 }
 
 export const AXBIPage = styled.div`
@@ -63,8 +83,13 @@ export const AXBIHero = styled.section`
     padding: ${theme.sizeUnit * 7}px;
     border: 1px solid ${theme.colorBorderSecondary};
     border-radius: ${theme.borderRadius}px;
+    /* Primary wash is subtler in dark mode so charcoal cards stay dominant */
     background:
-      linear-gradient(135deg, ${theme.colorPrimaryBg} 0%, transparent 48%),
+      linear-gradient(
+        135deg,
+        ${theme.colorPrimaryBg} 0%,
+        transparent ${isThemeDark(theme) ? '36%' : '48%'}
+      ),
       ${theme.colorBgContainer};
     box-shadow: ${axbiSoftShadow(theme)};
 
@@ -154,7 +179,7 @@ const axbiStatCardStyles = (theme: SupersetTheme) => css`
 
   &:hover {
     border-color: ${theme.colorPrimaryBorder};
-    box-shadow: ${axbiSoftShadow(theme)};
+    box-shadow: ${axbiSoftShadow(theme, 'hover')};
     transform: translateY(-1px);
   }
 `;
@@ -274,7 +299,7 @@ export const AXBIQuickAction = styled.button`
     &:hover,
     &:focus-visible {
       border-color: ${theme.colorPrimaryBorder};
-      box-shadow: ${axbiSoftShadow(theme)};
+      box-shadow: ${axbiSoftShadow(theme, 'hover')};
       outline: none;
     }
 
@@ -307,7 +332,9 @@ export const AXBIEmptyCallout = styled.div`
   ${({ theme }) => css`
     border: 1px dashed ${theme.colorBorder};
     border-radius: ${theme.borderRadius}px;
-    background: ${theme.colorBgContainer};
+    background: ${isThemeDark(theme)
+      ? theme.colorBgElevated
+      : theme.colorBgContainer};
     padding: ${theme.sizeUnit * 6}px;
     text-align: center;
     margin: ${theme.sizeUnit * 5}px 0;
