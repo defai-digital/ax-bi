@@ -24,19 +24,18 @@ assists people when migrating to a new version.
 
 ## Next
 
-### Frontend: react-router-dom 6
+### Frontend: react-router-dom 7
 
-AX-BI frontend now depends on `react-router-dom@^6.30` (with `history@^5.3` for
-the shared browser history + `HistoryRouter`). `@types/react-router-dom` was
-removed (types ship with v6).
+AX-BI frontend depends on `react-router-dom@^7.18` (library mode; React 18
+still supported). The app shell continues to use `unstable_HistoryRouter` with
+the shared `history@^5.3` singleton so `history.block` / `listen` remain
+available for unsaved-change flows.
 
-- App shell uses `unstable_HistoryRouter` + `Routes` / `Route` / `Navigate`.
 - Prefer `useAppHistory` (`src/hooks/useAppHistory`) for v5-style
-  `push`/`replace`/`block`/`listen` instead of the removed `useHistory`.
+  `push`/`replace`/`block`/`listen`.
 - `withRouter` / `RouteComponentProps` live in `src/components/withRouter`.
-- `use-query-params` must use `ReactRouter6Adapter`.
-- `NavLink`: use `className={({ isActive }) => ...}` and `end` (not
-  `activeClassName` / `exact`).
+- `use-query-params` uses `ReactRouter6Adapter` (compatible with RR7).
+- `NavLink`: `className={({ isActive }) => ...}` and `end`.
 
 React 19 is still deferred. See `.internal/docs/frontend-stack-modernization-*`.
 
