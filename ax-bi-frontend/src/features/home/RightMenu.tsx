@@ -52,6 +52,7 @@ import { useLanguageMenuItems } from './LanguagePicker';
 import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
 import { orderCreateMenuItems } from './createMenuOrder';
+import { resolveSettingsMenuIconKey } from './settingsMenuIcons';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -227,7 +228,7 @@ const RightMenu = ({
         const sqlItem: MenuItem = {
           key: 'create-sql',
           label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
-          icon: <Icons.SearchOutlined />,
+          icon: <Icons.ConsoleSqlOutlined />,
         };
 
         // Simplified mode: consumer create paths first; SQL last inside the
@@ -269,8 +270,16 @@ const RightMenu = ({
               child.label
             );
 
+            const iconKey = resolveSettingsMenuIconKey({
+              name: child.name,
+              label: child.label,
+              url: child.url,
+            });
+            const IconComp = iconKey ? Icons[iconKey] : undefined;
+
             sectionItems.push({
               key: child.label,
+              icon: IconComp ? <IconComp /> : undefined,
               label: isFrontendRoute(child.url) ? (
                 <Link to={child.url || ''}>{menuItemDisplay}</Link>
               ) : (
@@ -308,6 +317,7 @@ const RightMenu = ({
         if (navbarRight.user_info_url) {
           userItems.push({
             key: 'info',
+            icon: <Icons.InfoCircleOutlined />,
             label: (
               <Typography.Link href={ensureAppRoot(navbarRight.user_info_url)}>
                 {t('Info')}
@@ -321,6 +331,7 @@ const RightMenu = ({
         if (showLogout) {
           userItems.push({
             key: 'logout',
+            icon: <Icons.LogoutOutlined />,
             label: (
               <Typography.Link
                 href={ensureAppRoot(navbarRight.user_logout_url)}

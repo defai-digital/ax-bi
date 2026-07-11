@@ -346,3 +346,39 @@ test('search chip exposes aria-label with keyboard shortcut when palette is avai
   expect(trigger.getAttribute('aria-label')).toMatch(/Search/i);
   expect(trigger.getAttribute('aria-label')).toMatch(/⌘K|Ctrl\+K/);
 });
+
+test('settings menu items render icons for known destinations', async () => {
+  mockIsFeatureEnabled.mockReturnValue(false);
+  const props = createProps();
+  props.settings = [
+    {
+      label: 'Data',
+      name: 'Data',
+      childs: [
+        {
+          label: 'Databases',
+          name: 'Databases',
+          url: '/databaseview/list/',
+        },
+        {
+          label: 'Themes',
+          name: 'Themes',
+          url: '/theme/list/',
+        },
+      ],
+    },
+  ];
+  render(<RightMenu {...props} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+  expect(await screen.findByText('Databases')).toBeInTheDocument();
+  // Icons render as anticon spans with aria-label from ant-design icon name
+  expect(document.querySelector('[aria-label="database"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="bg-colors"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="info-circle"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="logout"]')).toBeTruthy();
+});

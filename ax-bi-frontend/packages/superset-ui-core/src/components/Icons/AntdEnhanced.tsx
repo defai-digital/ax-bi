@@ -104,6 +104,7 @@ import {
   MoonOutlined,
   LoadingOutlined,
   LoginOutlined,
+  LogoutOutlined,
   MonitorOutlined,
   MoreOutlined,
   OrderedListOutlined,
@@ -165,6 +166,7 @@ import {
   HistoryOutlined,
   SlackOutlined,
   ApiOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { ForwardRefExoticComponent, RefAttributes, forwardRef } from 'react';
 import { IconType } from './types';
@@ -255,6 +257,7 @@ const AntdIcons = {
   LinkOutlined,
   LoadingOutlined,
   LoginOutlined,
+  LogoutOutlined,
   MailOutlined,
   MenuOutlined,
   MenuFoldOutlined,
@@ -319,6 +322,8 @@ const AntdIcons = {
   HistoryOutlined,
   SlackOutlined,
   ApiOutlined,
+  LogoutOutlined,
+  SafetyCertificateOutlined,
 } as const;
 
 type AntdIconNames = keyof typeof AntdIcons;
