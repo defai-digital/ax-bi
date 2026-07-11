@@ -101,7 +101,7 @@ COPY superset/translations /app/superset/translations
 RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
         npm run build-translation; \
     fi; \
-    rm -rf /app/superset/translations/*/*/*.[po,mo];
+    rm -rf /app/superset/translations/*/*/*.po /app/superset/translations/*/*/*.mo;
 
 
 ######################################################################
@@ -120,7 +120,7 @@ RUN useradd --user-group -d ${SUPERSET_HOME} -m --no-log-init --shell /bin/bash 
 # Some bash scripts needed throughout the layers
 COPY --chmod=755 docker/*.sh /app/docker/
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.7.13 /uv /usr/local/bin/uv
 
 # Using uv as it's faster/simpler than pip
 RUN uv venv /app/.venv
@@ -143,7 +143,7 @@ COPY superset/translations/ /app/translations_mo/
 RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
         pybabel compile -d /app/translations_mo | true; \
     fi; \
-    rm -f /app/translations_mo/*/*/*.[po,json]
+    rm -f /app/translations_mo/*/*/*.po /app/translations_mo/*/*/*.json
 
 ######################################################################
 # Python APP common layer
@@ -215,9 +215,10 @@ COPY --from=superset-node /app/superset/static/service-worker.j[s] superset/stat
 
 # TODO, when the next version comes out, use --exclude superset/translations
 COPY superset superset
-# TODO in the meantime, remove the .po files
-RUN rm superset/translations/*/*/*.po
-RUN mkdir -p /app/superset_home/uploads superset/static/uploads \
+# Remove .po source files (only compiled .mo are needed at runtime) and
+# create runtime upload directories in a single layer.
+RUN rm -f superset/translations/*/*/*.po \
+    && mkdir -p /app/superset_home/uploads superset/static/uploads \
     && chown -R superset:superset \
         /app/data \
         /app/superset_home/uploads \
@@ -236,6 +237,12 @@ EXPOSE ${SUPERSET_PORT}
 ######################################################################
 FROM python-common AS lean
 
+LABEL maintainer="AX-BI <hello@defai.digital>"
+LABEL org.opencontainers.image.title="AX-BI"
+LABEL org.opencontainers.image.description="AX-BI — AI-powered data visualization platform"
+LABEL org.opencontainers.image.source="https://github.com/defai-digital/ax-bi"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
 # Install Python dependencies using docker/pip-install.sh
 COPY requirements/base.txt requirements/
 
@@ -251,6 +258,9 @@ RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
 RUN python -m compileall /app/superset
 
 USER superset
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /app/docker/docker-healthcheck.sh
 
 ######################################################################
 # Dev image...
@@ -281,6 +291,9 @@ RUN uv pip install .[postgres]
 RUN python -m compileall /app/superset
 
 USER superset
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /app/docker/docker-healthcheck.sh
 
 ######################################################################
 # CI image...

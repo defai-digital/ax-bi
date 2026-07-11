@@ -33,7 +33,7 @@ extraLabels: {}
 
 # -- User ID directive. This user must have enough permissions to run the bootstrap script
 # Running containers as root is not recommended in production. Change this to another UID - e.g. 1000 to be more secure
-runAsUser: 0
+runAsUser: 1000
 
 # -- Specify rather or not helm should create the secret described in `secret-env.yaml` template
 secretEnv:
@@ -468,13 +468,13 @@ supersetWorker:
   # -- Labels to be added to supersetWorker pods
   podLabels: {}
   # -- Resource settings for the supersetWorker pods - these settings overwrite might existing values from the global resources object defined above.
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
   podSecurityContext: {}
   containerSecurityContext: {}
   strategy: {}
@@ -574,13 +574,13 @@ supersetCeleryBeat:
   # -- Labels to be added to supersetCeleryBeat pods
   podLabels: {}
   # -- Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above.
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   podSecurityContext: {}
   containerSecurityContext: {}
   # -- Set priorityClassName for CeleryBeat pods
@@ -689,13 +689,13 @@ supersetCeleryFlower:
   # -- Labels to be added to supersetCeleryFlower pods
   podLabels: {}
   # -- Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above.
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
   podSecurityContext: {}
   containerSecurityContext: {}
   # -- Set priorityClassName for supersetCeleryFlower pods
@@ -753,7 +753,13 @@ supersetWebsockets:
       # -- (int)
       http: nil
   command: []
-  resources: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
   # -- Launch additional containers into supersetWebsockets pods
   extraContainers: []
   deploymentAnnotations: {}

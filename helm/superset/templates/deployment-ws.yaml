@@ -18,6 +18,9 @@
 */}}
 
 {{- if .Values.supersetWebsockets.enabled }}
+{{- if eq .Values.supersetWebsockets.config.jwtSecret "CHANGE-ME" }}
+  {{- fail "supersetWebsockets.config.jwtSecret must be changed from the default 'CHANGE-ME' value to a strong secret" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

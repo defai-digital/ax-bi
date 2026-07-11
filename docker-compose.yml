@@ -38,7 +38,7 @@ x-common-build: &common-build
   context: .
   target: ${SUPERSET_BUILD_TARGET:-dev} # can use `dev` (default) or `lean`
   cache_from:
-    - apache/superset-cache:3.10-slim-trixie
+    - apache/superset-cache:3.12-slim-trixie
   args:
     DEV_MODE: "true"
     INCLUDE_CHROMIUM: ${INCLUDE_CHROMIUM:-false}
@@ -52,7 +52,7 @@ services:
         required: true
       - path: docker/.env-local # optional override
         required: false
-    image: nginx:latest
+    image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
       - "${NGINX_PORT:-80}:80"
@@ -97,6 +97,11 @@ services:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     env_file:
@@ -113,6 +118,11 @@ services:
     volumes:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ax-bi:
     env_file:
@@ -182,9 +192,9 @@ services:
         required: false
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     user: *ax-bi-user
     volumes: *ax-bi-volumes
     healthcheck:

@@ -31,9 +31,9 @@ x-ax-bi-volumes:
 
 x-common-build: &common-build
   context: .
-  target: dev
+  target: lean
   cache_from:
-    - apache/superset-cache:3.10-slim-trixie
+    - apache/superset-cache:3.12-slim-trixie
 
 services:
   redis:
@@ -42,6 +42,11 @@ services:
     restart: unless-stopped
     volumes:
       - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     env_file:
@@ -57,6 +62,11 @@ services:
     volumes:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ax-bi:
     env_file:
@@ -68,7 +78,7 @@ services:
       <<: *common-build
     container_name: ax_bi_app
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
-    user: "root"
+    user: "1000"
     restart: unless-stopped
     ports:
       - 8088:8088
@@ -76,6 +86,12 @@ services:
       ax-bi-init:
         condition: service_completed_successfully
     volumes: *ax-bi-volumes
+    healthcheck:
+      test: ["CMD", "/app/docker/docker-healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   ax-bi-init:
     container_name: ax_bi_init
@@ -89,10 +105,10 @@ services:
         required: false
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
-    user: "root"
+        condition: service_healthy
+    user: "1000"
     volumes: *ax-bi-volumes
     healthcheck:
       disable: true
@@ -111,7 +127,7 @@ services:
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully
-    user: "root"
+    user: "1000"
     volumes: *ax-bi-volumes
     healthcheck:
       test:
@@ -119,6 +135,9 @@ services:
           "CMD-SHELL",
           "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   ax-bi-worker-beat:
     build:
@@ -134,10 +153,17 @@ services:
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully
-    user: "root"
+    user: "1000"
     volumes: *ax-bi-volumes
     healthcheck:
-      disable: true
+      test:
+        [
+          "CMD-SHELL",
+          "test -f /tmp/celerybeat-schedule || test -f /tmp/celerybeat.pid",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   superset_home:

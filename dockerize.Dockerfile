@@ -15,9 +15,13 @@
 # limitations under the License.
 #
 
-FROM alpine:latest
+FROM alpine:3.21
 
 ARG DOCKERIZE_VERSION=v0.7.0
+
+LABEL maintainer="AX-BI <hello@defai.digital>"
+LABEL org.opencontainers.image.title="AX-BI Dockerize"
+LABEL org.opencontainers.image.description="dockerize wait-for utility for AX-BI service readiness"
 
 RUN apk update --no-cache \
     && apk add --no-cache wget openssl \

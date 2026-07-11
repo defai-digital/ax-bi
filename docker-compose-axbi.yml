@@ -57,6 +57,8 @@ services:
     restart: unless-stopped
     volumes:
       - redis:/data
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -74,6 +76,8 @@ services:
     volumes:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test:
         [
@@ -112,11 +116,14 @@ services:
       - superset_home:/app/superset_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "/app/docker/docker-healthcheck.sh"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s
 
   ax-bi-worker:
     image: *axbi-image
@@ -130,6 +137,8 @@ services:
       - superset_home:/app/superset_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test:
         [
@@ -150,8 +159,17 @@ services:
         condition: service_completed_successfully
     volumes:
       - superset_home:/app/superset_home
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      disable: true
+      test:
+        [
+          "CMD-SHELL",
+          "test -f /tmp/celerybeat-schedule || test -f /tmp/celerybeat.pid",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   mcp:
     image: *axbi-image
@@ -169,6 +187,8 @@ services:
       - superset_home:/app/superset_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test:
         [
@@ -194,6 +214,8 @@ services:
     depends_on:
       ax-bi:
         condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   superset_home:

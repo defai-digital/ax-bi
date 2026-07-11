@@ -210,7 +210,7 @@ and enable JWT authentication for MCP.
 | priorityClassName | string | `nil` | Set priorityClassName for superset pods |
 | redis | object | see `values.yaml` | Configuration values for the Redis dependency. ref: https://github.com/bitnami/charts/blob/master/bitnami/redis More documentation can be found here: https://artifacthub.io/packages/helm/bitnami/redis |
 | resources | object | `{}` |  |
-| runAsUser | int | `0` | User ID directive. This user must have enough permissions to run the bootstrap script Running containers as root is not recommended in production. Change this to another UID - e.g. 1000 to be more secure |
+| runAsUser | int | `1000` | User ID directive. This user must have enough permissions to run the bootstrap script Running containers as root is not recommended in production. Change this to another UID - e.g. 1000 to be more secure |
 | secretEnv | object | `{"create":true}` | Specify rather or not helm should create the secret described in `secret-env.yaml` template |
 | secretEnv.create | bool | `true` | Change to false in order to support externally created secret (Binami "Sealed Secrets" for Kubernetes or External Secrets Operator) note: when externally creating the secret, the chart still expects to pull values from a secret with the name of the release defaults to `release-name-superset-env` - full logic located in _helpers.tpl file: `define "superset.fullname"` |
 | service.annotations | object | `{}` |  |
@@ -237,7 +237,7 @@ and enable JWT authentication for MCP.
 | supersetCeleryBeat.podLabels | object | `{}` | Labels to be added to supersetCeleryBeat pods |
 | supersetCeleryBeat.podSecurityContext | object | `{}` |  |
 | supersetCeleryBeat.priorityClassName | string | `nil` | Set priorityClassName for CeleryBeat pods |
-| supersetCeleryBeat.resources | object | `{}` | Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above. |
+| supersetCeleryBeat.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above. |
 | supersetCeleryBeat.topologySpreadConstraints | list | `[]` | TopologySpreadConstrains to be added to supersetCeleryBeat deployments |
 | supersetCeleryFlower.affinity | object | `{}` | Affinity to be added to supersetCeleryFlower deployment |
 | supersetCeleryFlower.command | list | a `celery flower` command | Command |
@@ -269,7 +269,7 @@ and enable JWT authentication for MCP.
 | supersetCeleryFlower.readinessProbe.successThreshold | int | `1` |  |
 | supersetCeleryFlower.readinessProbe.timeoutSeconds | int | `1` |  |
 | supersetCeleryFlower.replicaCount | int | `1` |  |
-| supersetCeleryFlower.resources | object | `{}` | Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above. |
+| supersetCeleryFlower.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resource settings for the CeleryBeat pods - these settings overwrite might existing values from the global resources object defined above. |
 | supersetCeleryFlower.service.annotations | object | `{}` |  |
 | supersetCeleryFlower.service.loadBalancerIP | string | `nil` |  |
 | supersetCeleryFlower.service.nodePort.http | int | `"nil"` |  |
@@ -379,7 +379,10 @@ and enable JWT authentication for MCP.
 | supersetWebsockets.readinessProbe.successThreshold | int | `1` |  |
 | supersetWebsockets.readinessProbe.timeoutSeconds | int | `1` |  |
 | supersetWebsockets.replicaCount | int | `1` |  |
-| supersetWebsockets.resources | object | `{}` |  |
+| supersetWebsockets.resources.limits.cpu | string | `"200m"` |  |
+| supersetWebsockets.resources.limits.memory | string | `"256Mi"` |  |
+| supersetWebsockets.resources.requests.cpu | string | `"100m"` |  |
+| supersetWebsockets.resources.requests.memory | string | `"128Mi"` |  |
 | supersetWebsockets.service.annotations | object | `{}` |  |
 | supersetWebsockets.service.loadBalancerIP | string | `nil` |  |
 | supersetWebsockets.service.nodePort.http | int | `"nil"` |  |
@@ -424,7 +427,7 @@ and enable JWT authentication for MCP.
 | supersetWorker.readinessProbe | object | `{}` | No startup/readiness probes by default since we don't really care about its startup time (it doesn't serve traffic) |
 | supersetWorker.replicas.enabled | bool | `true` |  |
 | supersetWorker.replicas.replicaCount | int | `1` |  |
-| supersetWorker.resources | object | `{}` | Resource settings for the supersetWorker pods - these settings overwrite might existing values from the global resources object defined above. |
+| supersetWorker.resources | object | `{"limits":{"cpu":"1000m","memory":"1Gi"},"requests":{"cpu":"200m","memory":"512Mi"}}` | Resource settings for the supersetWorker pods - these settings overwrite might existing values from the global resources object defined above. |
 | supersetWorker.startupProbe | object | `{}` | No startup/readiness probes by default since we don't really care about its startup time (it doesn't serve traffic) |
 | supersetWorker.strategy | object | `{}` |  |
 | supersetWorker.terminationGracePeriodSeconds | string | `nil` | Pod termination grace period (seconds) for the worker pod so in-flight tasks can drain before SIGKILL |

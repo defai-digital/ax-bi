@@ -71,7 +71,7 @@ x-common-build: &common-build
   context: .
   target: ${SUPERSET_BUILD_TARGET:-dev} # can use `dev` (default) or `lean`
   cache_from:
-    - apache/superset-cache:3.10-slim-trixie
+    - apache/superset-cache:3.12-slim-trixie
   args:
     DEV_MODE: "true"
     INCLUDE_CHROMIUM: ${INCLUDE_CHROMIUM:-false}
@@ -94,6 +94,11 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: superset_light
     command: postgres -c max_connections=200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superset -d superset_light"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ax-bi-light:
     env_file:
@@ -136,7 +141,7 @@ services:
     user: *ax-bi-user
     depends_on:
       db-light:
-        condition: service_started
+        condition: service_healthy
     volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
@@ -195,7 +200,7 @@ services:
       - test  # Only starts when --profile test is used
     depends_on:
       db-light:
-        condition: service_started
+        condition: service_healthy
     user: *ax-bi-user
     volumes: *ax-bi-volumes
     environment:
