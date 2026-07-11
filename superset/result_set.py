@@ -264,10 +264,22 @@ class SupersetResultSet:
                                 series = pd.to_datetime(
                                     series, utc=True, errors="coerce"
                                 )
-                                pa_data[i] = pa.Array.from_pandas(
-                                    series,
-                                    type=pa.timestamp("ns", tz=tz),
-                                )
+                                # Prefer ns for historical FixedOffsetTimezone
+                                # workaround (ARROW-5248). pandas 3.0+ may infer
+                                # us resolution and values outside the ns range
+                                # (e.g. year 3118) — fall back to us rather than
+                                # logging an ERROR and leaving a half-converted
+                                # column.
+                                try:
+                                    pa_data[i] = pa.Array.from_pandas(
+                                        series,
+                                        type=pa.timestamp("ns", tz=tz),
+                                    )
+                                except (pa.ArrowInvalid, ValueError, TypeError):
+                                    pa_data[i] = pa.Array.from_pandas(
+                                        series,
+                                        type=pa.timestamp("us", tz=tz),
+                                    )
                         except Exception as ex:  # pylint: disable=broad-except
                             logger.exception(ex)
 

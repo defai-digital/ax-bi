@@ -57,11 +57,15 @@ def _is_na(val: Any) -> bool:
 def _get_columns_by_dtype(
     dframe: pd.DataFrame,
 ) -> tuple[pd.Index, pd.Index, pd.Index]:
-    """Return columns that need specialized record conversion."""
+    """Return columns that need specialized record conversion.
+
+    Includes pandas 3.0+ dedicated ``str`` dtype alongside classic ``object``
+    columns so NA values still convert to JSON-safe ``None``.
+    """
     return (
         dframe.select_dtypes(include=["floating"]).columns,
         dframe.select_dtypes(include=["integer"]).columns,
-        dframe.select_dtypes(include=["object"]).columns,
+        dframe.select_dtypes(include=["object", "string", "str"]).columns,
     )
 
 
@@ -101,14 +105,19 @@ def _get_object_conversions(
     dframe: pd.DataFrame,
     object_cols: pd.Index,
 ) -> dict[str, Any]:
-    """Build replacements for object columns containing null values."""
+    """Build replacements for object/string columns containing null values.
+
+    Cast to a plain object ndarray before null replacement so pandas 3.0+
+    Arrow-backed ``str`` dtypes do not keep NA as ``nan`` after assignment.
+    """
     converted: dict[str, Any] = {}
     for col in object_cols:
         series = dframe[col]
         null_mask = series.isna()
         if null_mask.any():
-            result = series.values.copy()
-            result[null_mask] = None
+            # object ndarray so we can put Python None (JSON-safe) in place of NA
+            result = series.astype(object).to_numpy(copy=True)
+            result[null_mask.to_numpy()] = None
             converted[col] = result
     return converted
 
@@ -170,8 +179,17 @@ def df_to_records(dframe: pd.DataFrame) -> list[dict[str, Any]]:
         **_get_object_conversions(dframe, object_cols),
     }
 
-    # Apply conversions and build records
-    df_processed = dframe.assign(**converted) if converted else dframe
+    # Apply conversions and build records. Force object dtype for replaced
+    # columns so pandas 3.0+ does not re-infer Arrow ``str`` and turn
+    # Python ``None`` back into NA/nan before ``to_dict``.
+    if converted:
+        df_processed = dframe.copy()
+        for col, values in converted.items():
+            df_processed[col] = pd.Series(
+                values, index=df_processed.index, dtype=object
+            )
+    else:
+        df_processed = dframe
 
     records = df_processed.to_dict(orient="records")
 

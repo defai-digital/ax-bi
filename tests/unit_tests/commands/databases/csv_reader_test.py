@@ -488,9 +488,10 @@ def test_csv_reader_object_type_auto_inferring():
     df = csv_reader.file_to_dataframe(create_csv_file(csv_data))
 
     assert df.shape == (5, 3)
-    # pandas automatically infers the type if column_data_types is not informed
-    # if there's only one string in the column it converts the whole column to object
-    assert df["id"].dtype == "object"
+    # pandas automatically infers the type if column_data_types is not informed.
+    # Mixed numeric/string columns become object (pandas 2) or dedicated str
+    # (pandas 3+); both preserve the non-numeric value as text.
+    assert str(df["id"].dtype) in ("object", "str", "string")
 
 
 def test_csv_reader_float_type_auto_inferring():
@@ -908,7 +909,7 @@ def test_csv_reader_successful_string_conversion_with_floats():
     df = csv_reader.file_to_dataframe(create_csv_file(csv_data))
 
     assert df.shape == (4, 1)
-    assert df["id"].dtype == "object"
+    assert str(df["id"].dtype) in ("object", "str", "string")
     assert df.iloc[0]["id"] == "1439403621518935563"
     assert df.iloc[1]["id"] == "42286989"
     assert df.iloc[2]["id"] == "1413660691875593351"

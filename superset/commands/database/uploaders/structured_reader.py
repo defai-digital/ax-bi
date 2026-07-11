@@ -743,7 +743,8 @@ class StructuredReader(BaseDataReader):
         """Convert nested cell values to compact JSON strings."""
         if df.empty:
             return df
-        return df.applymap(cls._serialize_cell)
+        # pandas 3.0 removed DataFrame.applymap; map is the supported API.
+        return df.map(cls._serialize_cell)
 
     @staticmethod
     def _artifact_category(extension: str) -> str:

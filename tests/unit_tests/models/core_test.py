@@ -585,7 +585,7 @@ def test_get_sqla_engine(mocker: MockerFixture) -> None:
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"source": "Apache Superset"},
+        connect_args={"source": "AX-BI"},
     )
 
 
@@ -609,7 +609,7 @@ def test_get_sqla_engine_ignores_non_object_engine_params(
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"source": "Apache Superset"},
+        connect_args={"source": "AX-BI"},
     )
 
 
@@ -729,7 +729,7 @@ def test_get_sqla_engine_user_impersonation(mocker: MockerFixture) -> None:
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"user": "alice", "source": "Apache Superset"},
+        connect_args={"user": "alice", "source": "AX-BI"},
     )
 
 
@@ -784,7 +784,7 @@ def test_get_sqla_engine_user_impersonation_email(mocker: MockerFixture) -> None
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"user": "alice.doe", "source": "Apache Superset"},
+        connect_args={"user": "alice.doe", "source": "AX-BI"},
     )
 
 
@@ -1746,6 +1746,7 @@ def test_post_process_df_non_zero_based_index() -> None:
     df = pd.DataFrame({"col": [None, [1, 2], [3, 4]]}, dtype=object)
     df = df[df["col"].notna()]  # index is now [1, 2], not [0, 1, 2]
     result = Database.post_process_df(df)
-    assert result["col"].dtype == numpy.object_
+    # Stringified nested values: object under pandas 2, dedicated str under 3+.
+    assert str(result["col"].dtype) in ("object", "str", "string")
     assert result["col"].iloc[0] == "[1, 2]"
     assert result["col"].iloc[1] == "[3, 4]"
