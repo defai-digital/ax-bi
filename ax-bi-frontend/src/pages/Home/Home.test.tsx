@@ -24,7 +24,7 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import { isFeatureEnabled, getExtensionsRegistry } from '@superset-ui/core';
-import Welcome from 'src/pages/Home';
+import Welcome, { resolveHomeUser } from 'src/pages/Home';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
 
 const chartsEndpoint = 'glob:*/api/v1/chart/?*';
@@ -187,6 +187,38 @@ test('without userId does not crash and prompts to sign in', async () => {
     await screen.findByText('Sign in to open your workspace'),
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+});
+
+test('resolveHomeUser prefers prop userId then redux userId', () => {
+  const propWithId = {
+    username: 'alpha',
+    firstName: 'A',
+    lastName: 'B',
+    isActive: true,
+    isAnonymous: false,
+    userId: 5,
+  };
+  const storeWithId = {
+    username: 'beta',
+    firstName: 'C',
+    lastName: 'D',
+    isActive: true,
+    isAnonymous: false,
+    userId: 9,
+    roles: {},
+    permissions: {},
+    groups: [],
+  };
+  expect(resolveHomeUser(propWithId, storeWithId).userId).toBe(5);
+  expect(
+    resolveHomeUser(
+      { username: 'g', firstName: 'g', lastName: 'g', isActive: true, isAnonymous: false },
+      storeWithId,
+    ).userId,
+  ).toBe(9);
+  expect(
+    resolveHomeUser(undefined, undefined).userId,
+  ).toBeUndefined();
 });
 
 test('With sql role - renders all panels on the page on page load', async () => {

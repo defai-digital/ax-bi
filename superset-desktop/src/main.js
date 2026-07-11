@@ -17,6 +17,14 @@
  * under the License.
  */
 
+import {
+  nextPreferHomeView,
+  shellStatusLabel as computeShellStatusLabel,
+  shouldAutoOpenLocalBi,
+  shouldLeaveBiForOfflineLocal,
+  summaryText as computeSummaryText,
+} from "./viewState.js";
+
 const LOCAL_RUNTIME_COMMANDS = [
   "prepare",
   "start",
@@ -146,16 +154,22 @@ function setBusy(value, message) {
 }
 
 function openSettings() {
+  if (!elements.settingsOverlay) {
+    return;
+  }
   elements.settingsOverlay.classList.remove("hidden");
-  elements.closeSettings.focus();
+  elements.closeSettings?.focus();
 }
 
 function closeSettings() {
-  elements.settingsOverlay.classList.add("hidden");
+  elements.settingsOverlay?.classList.add("hidden");
 }
 
 function isSettingsOpen() {
-  return !elements.settingsOverlay.classList.contains("hidden");
+  return Boolean(
+    elements.settingsOverlay &&
+      !elements.settingsOverlay.classList.contains("hidden"),
+  );
 }
 
 function setBiActive(visible) {
@@ -166,20 +180,11 @@ function setBiActive(visible) {
 }
 
 function shellStatusLabel() {
-  if (biSource === "remote" && remoteBiUrl) {
-    try {
-      return new URL(remoteBiUrl).host;
-    } catch (error) {
-      return "Connected";
-    }
-  }
-  if (currentStatus && currentStatus.axbi_healthy) {
-    return "Local · Ready";
-  }
-  if (currentStatus && currentStatus.axbi_running) {
-    return "Local · Starting";
-  }
-  return "Local";
+  return computeShellStatusLabel({
+    biSource,
+    remoteBiUrl,
+    status: currentStatus,
+  });
 }
 
 function showHome(message, options = {}) {
@@ -187,20 +192,20 @@ function showHome(message, options = {}) {
   biVisible = false;
   // sticky=true keeps the user on the launcher after Desktop home / offline.
   // sticky=false is for the initial boot screen so auto-open can still run.
-  preferHomeView = sticky;
+  preferHomeView = nextPreferHomeView("showHome", { sticky });
   elements.homeView.classList.remove("hidden");
   elements.biFrame.classList.add("hidden");
   elements.biFrame.removeAttribute("src");
   elements.biFrame.dataset.url = "";
   setBiActive(false);
-  if (message) {
+  if (message && elements.summary) {
     elements.summary.textContent = message;
   }
 }
 
 function showBiFrame(url) {
   biVisible = true;
-  preferHomeView = false;
+  preferHomeView = nextPreferHomeView("showBiFrame");
   elements.homeView.classList.add("hidden");
   elements.biFrame.classList.remove("hidden");
   setBiActive(true);
@@ -232,6 +237,9 @@ function renderBiView() {
 }
 
 function setState(element, label, variant) {
+  if (!element) {
+    return;
+  }
   element.textContent = label;
   element.className = variant ? `state-${variant}` : "";
 }
@@ -261,13 +269,19 @@ function renderStatus(status) {
   setState(elements.healthState, health[0], health[1]);
 
   if (elements.summary && !biVisible) {
-    elements.summary.textContent = summaryText(status);
+    elements.summary.textContent = computeSummaryText(status);
   }
-  elements.runtimeDir.textContent = status.runtime_dir
-    ? `Runtime: ${status.runtime_dir}`
-    : "Runtime directory pending";
-  elements.webUrl.value = status.web_url;
-  elements.mcpUrl.value = status.mcp_url;
+  if (elements.runtimeDir) {
+    elements.runtimeDir.textContent = status.runtime_dir
+      ? `Runtime: ${status.runtime_dir}`
+      : "Runtime directory pending";
+  }
+  if (elements.webUrl) {
+    elements.webUrl.value = status.web_url;
+  }
+  if (elements.mcpUrl) {
+    elements.mcpUrl.value = status.mcp_url;
+  }
   renderDependencies(status.dependencies);
   updateLocalPathCopy(status);
   updateButtonState();
@@ -277,15 +291,24 @@ function renderStatus(status) {
 
   // Only auto-switch to BI when local is healthy and user is on local source.
   // Do not yank the user out of a remote session or Desktop home on status refresh.
-  if (biSource === "local") {
-    if (status.axbi_healthy && status.web_url && !preferHomeView) {
-      showBiFrame(status.web_url);
-    } else if (biVisible && !status.axbi_healthy) {
-      // Local went offline while viewing it.
-      showHome(summaryText(status));
-    } else if (!biVisible && elements.summary) {
-      elements.summary.textContent = summaryText(status);
-    }
+  if (
+    shouldAutoOpenLocalBi({
+      biSource,
+      preferHomeView,
+      status,
+    })
+  ) {
+    showBiFrame(status.web_url);
+  } else if (
+    shouldLeaveBiForOfflineLocal({
+      biSource,
+      biVisible,
+      status,
+    })
+  ) {
+    showHome(computeSummaryText(status));
+  } else if (!biVisible && elements.summary) {
+    elements.summary.textContent = computeSummaryText(status);
   }
 }
 
@@ -317,25 +340,13 @@ function updateLocalPathCopy(status) {
 }
 
 function summaryText(status) {
-  if (!status) {
-    return "Checking local runtime…";
-  }
-  if (status.axbi_healthy) {
-    return "Local AX BI is ready";
-  }
-  if (status.axbi_running) {
-    return "Local AX BI is starting";
-  }
-  if (!status.dependencies.every((dependency) => dependency.installed)) {
-    return "Install missing runtime dependencies";
-  }
-  if (status.configured) {
-    return "Local runtime is prepared — start when ready";
-  }
-  return "Run locally or connect to a server";
+  return computeSummaryText(status);
 }
 
 function renderDependencies(dependencies) {
+  if (!elements.dependencies) {
+    return;
+  }
   elements.dependencies.replaceChildren();
   if (!dependencies || dependencies.length === 0) {
     elements.dependencies.textContent = "No dependency information available.";
@@ -371,13 +382,25 @@ function updateButtonState() {
     return;
   }
   const status = currentStatus;
-  elements.openLocal.disabled = !status || !status.axbi_healthy;
-  elements.credentials.disabled = !status || !status.admin_password_present;
-  elements.stop.disabled = !status || !status.axbi_running;
-  elements.restart.disabled = !status || !status.configured;
-  elements.update.disabled = !status || !status.configured;
-  elements.loadLogs.disabled =
-    !status || !status.configured || !status.docker_ready;
+  if (elements.openLocal) {
+    elements.openLocal.disabled = !status || !status.axbi_healthy;
+  }
+  if (elements.credentials) {
+    elements.credentials.disabled = !status || !status.admin_password_present;
+  }
+  if (elements.stop) {
+    elements.stop.disabled = !status || !status.axbi_running;
+  }
+  if (elements.restart) {
+    elements.restart.disabled = !status || !status.configured;
+  }
+  if (elements.update) {
+    elements.update.disabled = !status || !status.configured;
+  }
+  if (elements.loadLogs) {
+    elements.loadLogs.disabled =
+      !status || !status.configured || !status.docker_ready;
+  }
   if (elements.pathLocal) {
     elements.pathLocal.disabled = false;
   }

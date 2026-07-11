@@ -171,7 +171,8 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
   </CardContainer>
 );
 
-function resolveHomeUser(
+/** Prefer a user object that carries userId (bootstrap guest payloads omit it). */
+export function resolveHomeUser(
   propUser: User | undefined,
   storeUser: BootstrapUser | Record<string, never> | undefined,
 ): User {
