@@ -515,7 +515,8 @@ test('brand path should be prefixed with app root in subdirectory deployment', a
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithSimplePath.data.brand.alt, 'i'),
   });
-  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
+  // ensureAppRoot prefixes the configured application root.
+  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
 });
 
 test('brand link falls back to brand.path when theme brandLogoUrl is absent', async () => {
@@ -538,6 +539,6 @@ test('brand link falls back to brand.path when theme brandLogoUrl is absent', as
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithFallbackPath.data.brand.alt, 'i'),
   });
-  // ensureAppRoot must have been applied: /welcome/ → /ax-bi/welcome/
-  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
+  // ensureAppRoot prefixes the configured application root: /welcome/ → /superset/welcome/
+  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
 });
