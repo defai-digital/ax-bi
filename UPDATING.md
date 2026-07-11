@@ -24,12 +24,24 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Frontend: React 19
+
+AX-BI frontend now runs on **React 19** (`react` / `react-dom` `^19.2`) with
+`@types/react` / `@types/react-dom` 19 and `@testing-library/react` 16.
+
+- Entry points already use `createRoot` from `react-dom/client`.
+- Extensions and custom plugins must target React 19 peer ranges.
+- Some third-party peers still advertise React 18; they are resolved against
+  React 19 at runtime (monitor react-dnd / deck.gl / Storybook in CI).
+
+See `.internal/docs/frontend-stack-modernization-*`.
+
 ### Frontend: react-router-dom 7
 
-AX-BI frontend depends on `react-router-dom@^7.18` (library mode; React 18
-still supported). The app shell continues to use `unstable_HistoryRouter` with
-the shared `history@^5.3` singleton so `history.block` / `listen` remain
-available for unsaved-change flows.
+AX-BI frontend depends on `react-router-dom@^7.18` (library mode). The app
+shell continues to use `unstable_HistoryRouter` with the shared `history@^5.3`
+singleton so `history.block` / `listen` remain available for unsaved-change
+flows.
 
 - Prefer `useAppHistory` (`src/hooks/useAppHistory`) for v5-style
   `push`/`replace`/`block`/`listen`.
@@ -37,7 +49,7 @@ available for unsaved-change flows.
 - `use-query-params` uses `ReactRouter6Adapter` (compatible with RR7).
 - `NavLink`: `className={({ isActive }) => ...}` and `end`.
 
-React 19 is still deferred. See `.internal/docs/frontend-stack-modernization-*`.
+See `.internal/docs/frontend-stack-modernization-*`.
 
 ### Frontend: react-redux 9 + Redux Toolkit 2
 
