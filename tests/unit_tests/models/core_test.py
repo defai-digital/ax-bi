@@ -585,7 +585,7 @@ def test_get_sqla_engine(mocker: MockerFixture) -> None:
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"source": "Apache Superset"},
+        connect_args={"source": "AX-BI"},
     )
 
 
@@ -609,7 +609,7 @@ def test_get_sqla_engine_ignores_non_object_engine_params(
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"source": "Apache Superset"},
+        connect_args={"source": "AX-BI"},
     )
 
 
@@ -729,7 +729,7 @@ def test_get_sqla_engine_user_impersonation(mocker: MockerFixture) -> None:
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"user": "alice", "source": "Apache Superset"},
+        connect_args={"user": "alice", "source": "AX-BI"},
     )
 
 
@@ -784,7 +784,7 @@ def test_get_sqla_engine_user_impersonation_email(mocker: MockerFixture) -> None
 
     create_engine.assert_called_with(
         make_url("trino:///"),
-        connect_args={"user": "alice.doe", "source": "Apache Superset"},
+        connect_args={"user": "alice.doe", "source": "AX-BI"},
     )
 
 
