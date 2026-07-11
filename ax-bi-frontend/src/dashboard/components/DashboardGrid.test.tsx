@@ -21,9 +21,14 @@ import { supersetTheme } from '@apache-superset/core/theme';
 
 import DashboardGrid from 'src/dashboard/components/DashboardGrid';
 import newComponentFactory from 'src/dashboard/util/newComponentFactory';
+import { navigateTo } from 'src/utils/navigationUtils';
 
 import { DASHBOARD_GRID_TYPE } from 'src/dashboard/util/componentTypes';
 import { GRID_COLUMN_COUNT } from 'src/dashboard/util/constants';
+
+jest.mock('src/utils/navigationUtils', () => ({
+  navigateTo: jest.fn(),
+}));
 
 jest.mock('src/dashboard/containers/DashboardComponent', () => {
   const MockDashboardComponent = ({
@@ -48,6 +53,10 @@ jest.mock('src/dashboard/containers/DashboardComponent', () => {
   return MockDashboardComponent;
 });
 
+const featureFlagWindow = window as Window & {
+  featureFlags?: Record<string, boolean>;
+};
+
 const props = {
   depth: 1,
   editMode: false,
@@ -62,12 +71,21 @@ const props = {
   setDirectPathToChild() {},
 };
 
-function setup(overrideProps: Record<string, unknown> = {}) {
+function setup(
+  overrideProps: Record<string, unknown> = {},
+  initialState?: Record<string, unknown>,
+) {
   return render(<DashboardGrid {...props} {...overrideProps} />, {
     useRedux: true,
     useDnd: true,
+    initialState,
   });
 }
+
+beforeEach(() => {
+  featureFlagWindow.featureFlags = {};
+  jest.mocked(navigateTo).mockClear();
+});
 
 test('should render a div with class "dashboard-grid"', () => {
   const { container } = setup();
@@ -180,6 +198,26 @@ test('should still render empty state while empty grid width is measuring', () =
   expect(
     queryByText('Drag and drop components and charts to the dashboard'),
   ).toBeInTheDocument();
+});
+
+test('opens dashboard upload in a new tab and preserves dashboard context', () => {
+  featureFlagWindow.featureFlags = { ENABLE_LOCAL_FILE_UPLOAD: true };
+  const { getByTestId } = setup(
+    {
+      gridComponent: { ...props.gridComponent, children: [] },
+      editMode: true,
+      dashboardId: 42,
+    },
+    {
+      user: { roles: { Alpha: [['can_upload', 'Database']] } },
+    },
+  );
+
+  fireEvent.click(getByTestId('dashboard-empty-upload'));
+
+  expect(navigateTo).toHaveBeenCalledWith('/upload/?dashboard_id=42', {
+    newWindow: true,
+  });
 });
 
 test('should size the trailing empty-droptarget generously so a chart can be dropped below existing rows', () => {

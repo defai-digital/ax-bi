@@ -170,6 +170,38 @@ describe('UploadData', () => {
     );
   });
 
+  test('preserves dashboard context when redirecting to explore', async () => {
+    const history = createMemoryHistory({
+      initialEntries: ['/upload/?dashboard_id=42'],
+    });
+    const pushSpy = jest.spyOn(history, 'push');
+
+    render(
+      <Router history={history}>
+        <UploadData />
+      </Router>,
+      {
+        useRedux: true,
+        reducers: {},
+      },
+    );
+
+    fireEvent.change(screen.getByTestId('upload-data-dropzone'), {
+      target: {
+        files: [new File(['a,b\n1,2'], 'orders.csv', { type: 'text/csv' })],
+      },
+    });
+
+    await screen.findByText('Uploaded');
+    await waitFor(
+      () =>
+        expect(pushSpy).toHaveBeenCalledWith(
+          `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=1&${URL_PARAMS.dashboardId.name}=42`,
+        ),
+      { timeout: 3000 },
+    );
+  });
+
   test('uploads multiple selected files as a batch and redirects to the first dataset', async () => {
     const history = createMemoryHistory();
     const pushSpy = jest.spyOn(history, 'push');

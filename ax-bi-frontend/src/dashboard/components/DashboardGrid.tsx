@@ -163,7 +163,12 @@ function DashboardGrid({
       <Button
         buttonStyle="link"
         icon={<Icons.UploadOutlined />}
-        onClick={() => navigateTo('/upload/')}
+        onClick={() => {
+          const dashboardQuery = dashboardId
+            ? `?dashboard_id=${dashboardId}`
+            : '';
+          navigateTo(`/upload/${dashboardQuery}`, { newWindow: true });
+        }}
         data-test="dashboard-empty-upload"
       >
         {t('Upload data')}

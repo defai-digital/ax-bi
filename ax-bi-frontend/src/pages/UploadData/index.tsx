@@ -40,6 +40,21 @@ const { Dragger } = Upload;
 const ACCEPTED_EXTENSIONS =
   '.csv,.tsv,.txt,.csv.gz,.tsv.gz,.txt.gz,.xls,.xlsx,.ods,.parquet,.zip,.orc,.feather,.arrow,.ipc,.json,.jsonl,.ndjson,.jsonl.gz,.ndjson.gz,.xml,.sql,.dump,.sqlite,.sqlite3,.db,.avro,.geojson,.gpkg,.shp.zip,.fwf,.dat,.asc,.dta,.sav,.sas7bdat,.xpt,.html,.htm,.croissant.json,.npy,.npz,.lance,.lance.zip,.faiss,.index,.hnsw,.ann,.tar,.tar.gz,.tgz,.mlflow.zip,.mlruns.zip,.safetensors,.onnx,.gguf,.yaml,.yml,.yolo.zip';
 
+/** Build the Explore destination while retaining an originating dashboard. */
+function buildExploreUrl(
+  datasetId: number,
+  dashboardId: string | null,
+): string {
+  const params = new URLSearchParams({
+    [URL_PARAMS.datasourceType.name]: 'table',
+    [URL_PARAMS.datasourceId.name]: String(datasetId),
+  });
+  if (dashboardId) {
+    params.set(URL_PARAMS.dashboardId.name, dashboardId);
+  }
+  return `/explore/?${params.toString()}`;
+}
+
 const SupportNote = styled(AXBISectionDescription)`
   margin-top: ${({ theme }) => theme.sizeUnit * 3}px;
   max-width: 620px;
@@ -221,6 +236,9 @@ interface FileEntry {
 
 const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
   const history = useHistory();
+  const dashboardId = new URLSearchParams(history.location.search).get(
+    URL_PARAMS.dashboardId.name,
+  );
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [batchComplete, setBatchComplete] = useState(false);
   const processingRef = useRef(false);
@@ -307,19 +325,19 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
         setBatchComplete(true);
 
         // Redirect to the first successfully uploaded dataset
-        const firstSuccess = results.find(r => r.status === 'success');
-        if (firstSuccess?.datasetId) {
+        const firstDatasetId = results.find(
+          r => r.status === 'success',
+        )?.datasetId;
+        if (firstDatasetId) {
           setTimeout(() => {
-            history.push(
-              `/explore/?${URL_PARAMS.datasourceType.name}=table&${URL_PARAMS.datasourceId.name}=${firstSuccess.datasetId}`,
-            );
+            history.push(buildExploreUrl(firstDatasetId, dashboardId));
           }, 1500);
         }
       } finally {
         processingRef.current = false;
       }
     },
-    [history, uploadSingleFile, updateFile],
+    [dashboardId, history, uploadSingleFile, updateFile],
   );
 
   const handleBeforeUpload = useCallback(
