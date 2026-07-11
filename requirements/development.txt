@@ -176,7 +176,7 @@ cron-descriptor==1.4.5
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-croniter==6.2.2
+croniter==6.2.4
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -583,7 +583,7 @@ nh3==0.3.6
     #   apache-superset
 nodeenv==1.8.0
     # via pre-commit
-numpy==2.2.6
+numpy==2.5.1
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -675,7 +675,7 @@ pgsanity==0.2.9
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
-pillow==12.2.0
+pillow==12.3.0
     # via
     #   -c requirements/base-constraint.txt
     #   apache-superset
@@ -944,7 +944,7 @@ selenium==4.45.0
     #   apache-superset
 semver==3.0.4
     # via apache-superset-extensions-cli
-setuptools==80.9.0
+setuptools==82.0.1
     # via
     #   -c requirements/base-constraint.txt
     #   nodeenv
@@ -1036,7 +1036,7 @@ tqdm==4.67.1
     # via
     #   cmdstanpy
     #   prophet
-trino==0.337.0
+trino==0.338.0
     # via apache-superset
 trio==0.33.0
     # via
@@ -1047,7 +1047,7 @@ trio-websocket==0.12.2
     # via
     #   -c requirements/base-constraint.txt
     #   selenium
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -c requirements/base-constraint.txt
     #   alembic
