@@ -73,3 +73,29 @@ export function orderCuratedVizEntries<T extends { key: string }>(
 
   return ordered;
 }
+
+/**
+ * Whether switching the gallery sidebar to `selector` should keep the current
+ * chart selection. Catalog views always preserve; curated Featured preserves
+ * so long-tail types remain visible via {@link orderCuratedVizEntries}.
+ */
+export function shouldPreserveVizSelection(
+  selector: string,
+  options: {
+    allChartsLabel: string;
+    moreChartsLabel: string;
+    featuredLabel: string;
+    curatedGalleryEnabled: boolean;
+  },
+): boolean {
+  const {
+    allChartsLabel,
+    moreChartsLabel,
+    featuredLabel,
+    curatedGalleryEnabled,
+  } = options;
+  if (selector === allChartsLabel || selector === moreChartsLabel) {
+    return true;
+  }
+  return curatedGalleryEnabled && selector === featuredLabel;
+}

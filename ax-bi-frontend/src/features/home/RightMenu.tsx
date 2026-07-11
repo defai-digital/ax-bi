@@ -190,7 +190,6 @@ const RightMenu = ({
       // Create group (previously in the "+" dropdown)
       const createItems: MenuItem[] = [];
       const simplifiedNav = isFeatureEnabled(FeatureFlag.SimplifiedNav);
-      let demotedSqlItem: MenuItem | null = null;
       if (!navbarRight.user_is_anonymous) {
         const chartItem: MenuItem = {
           key: 'create-chart',
@@ -230,14 +229,15 @@ const RightMenu = ({
           icon: <Icons.SearchOutlined />,
         };
 
-        // Simplified mode: consumer create paths first; SQL in a separate
-        // Advanced group (dividers are not valid children of Menu groups).
+        // Simplified mode: consumer create paths first; SQL last inside the
+        // same Create group (avoids a second "Advanced" label that collides
+        // with SIMPLIFIED_NAV's demoted SQL Lab settings group).
         if (simplifiedNav) {
           createItems.push(chartItem, dashboardItem);
           if (uploadItem) {
             createItems.push(uploadItem);
           }
-          demotedSqlItem = sqlItem;
+          createItems.push(sqlItem);
         } else {
           createItems.push(sqlItem, chartItem, dashboardItem);
           if (uploadItem) {
@@ -252,14 +252,6 @@ const RightMenu = ({
           key: 'create-section',
           children: createItems,
         });
-        if (demotedSqlItem) {
-          items.push({
-            type: 'group',
-            label: t('Advanced'),
-            key: 'create-advanced-section',
-            children: [demotedSqlItem],
-          });
-        }
         items.push({ type: 'divider', key: 'create-divider' });
       }
 
@@ -477,7 +469,10 @@ const RightMenu = ({
         key: 'command-palette',
         label: (
           <Tooltip title={t('Search commands and pages (%s)', shortcutLabel)}>
-            <CommandPaletteChip data-test="command-palette-trigger">
+            <CommandPaletteChip
+              data-test="command-palette-trigger"
+              aria-label={t('Search (%s)', shortcutLabel)}
+            >
               <Icons.SearchOutlined iconSize="m" />
               <span className="chip-label">{t('Search')}</span>
               <span className="shortcut">{shortcutLabel}</span>

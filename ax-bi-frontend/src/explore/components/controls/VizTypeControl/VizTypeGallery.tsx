@@ -49,7 +49,10 @@ import { Icons } from '@superset-ui/core/components/Icons';
 import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
 import { usePluginContext } from 'src/components';
 import scrollIntoView from 'scroll-into-view-if-needed';
-import { orderCuratedVizEntries } from './curatedVizTypes';
+import {
+  orderCuratedVizEntries,
+  shouldPreserveVizSelection,
+} from './curatedVizTypes';
 
 interface VizTypeGalleryProps {
   onChange: (vizType: string | null) => void;
@@ -637,11 +640,22 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
       }
       setActiveSelector(selector);
       setActiveSection(sectionId);
-      // clear the selected viz if it is not present in the new category or tags
+      // Clear the selected viz when it is not present in the new category/tags,
+      // except catalog views and curated Featured (which still show the pick).
       const isSelectedVizCompatible =
         selectedVizMetadata &&
         doesVizMatchSelector(selectedVizMetadata, selector);
-      if (selector !== activeSelector && !isSelectedVizCompatible) {
+      const preserveSelection = shouldPreserveVizSelection(selector, {
+        allChartsLabel: ALL_CHARTS,
+        moreChartsLabel: MORE_CHARTS,
+        featuredLabel: FEATURED,
+        curatedGalleryEnabled: isCuratedGallery(),
+      });
+      if (
+        selector !== activeSelector &&
+        !isSelectedVizCompatible &&
+        !preserveSelection
+      ) {
         onChange(null);
       }
     },

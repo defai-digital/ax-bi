@@ -136,7 +136,7 @@ test('should apply flexbox centering and absolute positioning to empty state', (
 });
 
 test('should render empty state in both edit and view modes', () => {
-  const { container: editContainer } = setup({
+  const { container: editContainer, getByText: getEditText } = setup({
     gridComponent: { ...props.gridComponent, children: [] },
     editMode: true,
     canEdit: true,
@@ -144,7 +144,7 @@ test('should render empty state in both edit and view modes', () => {
     dashboardId: 1,
   });
 
-  const { container: viewContainer } = setup({
+  const { container: viewContainer, getByText: getViewText } = setup({
     gridComponent: { ...props.gridComponent, children: [] },
     editMode: false,
     canEdit: true,
@@ -160,6 +160,11 @@ test('should render empty state in both edit and view modes', () => {
 
   expect(editEmptyState).toBeInTheDocument();
   expect(viewEmptyState).toBeInTheDocument();
+  expect(
+    getEditText('Drag and drop components and charts to the dashboard'),
+  ).toBeInTheDocument();
+  expect(getViewText('This dashboard is empty')).toBeInTheDocument();
+  expect(getViewText('Edit the dashboard')).toBeInTheDocument();
 });
 
 test('should still render empty state while empty grid width is measuring', () => {

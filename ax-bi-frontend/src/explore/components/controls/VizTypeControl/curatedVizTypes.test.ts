@@ -21,6 +21,7 @@ import {
   CURATED_VIZ_TYPES,
   isCuratedVizType,
   orderCuratedVizEntries,
+  shouldPreserveVizSelection,
 } from './curatedVizTypes';
 
 test('curated list includes core consumer chart types', () => {
@@ -65,4 +66,23 @@ test('orderCuratedVizEntries does not duplicate selected curated type', () => {
   expect(
     orderCuratedVizEntries(entries, VizType.Table).map(e => e.key),
   ).toEqual([VizType.Table, VizType.Pie]);
+});
+
+test('shouldPreserveVizSelection keeps catalog and curated featured picks', () => {
+  const opts = {
+    allChartsLabel: 'All charts',
+    moreChartsLabel: 'More charts',
+    featuredLabel: 'Featured',
+    curatedGalleryEnabled: true,
+  };
+  expect(shouldPreserveVizSelection('All charts', opts)).toBe(true);
+  expect(shouldPreserveVizSelection('More charts', opts)).toBe(true);
+  expect(shouldPreserveVizSelection('Featured', opts)).toBe(true);
+  expect(shouldPreserveVizSelection('KPI', opts)).toBe(false);
+  expect(
+    shouldPreserveVizSelection('Featured', {
+      ...opts,
+      curatedGalleryEnabled: false,
+    }),
+  ).toBe(false);
 });

@@ -244,7 +244,7 @@ function DashboardGrid({
 
   const columnWidth = columnPlusGutterWidth - GRID_GUTTER_SIZE;
 
-  const dashboardEmptyState = editMode && (
+  const dashboardEmptyState = editMode ? (
     <EmptyState
       title={t('Drag and drop components and charts to the dashboard')}
       description={t(
@@ -266,6 +266,25 @@ function DashboardGrid({
     >
       {showUploadCta ? uploadEmptyStateAction : null}
     </EmptyState>
+  ) : (
+    <EmptyState
+      title={t('This dashboard is empty')}
+      size="large"
+      description={
+        canEdit
+          ? t('Edit the dashboard to add charts and components.')
+          : t('There are no charts on this dashboard yet.')
+      }
+      buttonText={canEdit ? t('Edit the dashboard') : undefined}
+      buttonAction={
+        canEdit
+          ? () => {
+              setEditMode?.(true);
+            }
+          : undefined
+      }
+      image="empty-dashboard.svg"
+    />
   );
 
   const topLevelTabEmptyState = editMode ? (

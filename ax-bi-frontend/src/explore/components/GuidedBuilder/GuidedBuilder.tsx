@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { JsonObject } from '@superset-ui/core';
 import { styled, css } from '@apache-superset/core/theme';
 import { t } from '@apache-superset/core/translation';
@@ -28,7 +28,12 @@ import {
   Operators,
 } from 'src/explore/constants';
 import { GuidedFilter, GuidedIntent } from './types';
-import { getVizDescriptor, VIZ_DESCRIPTORS } from './vizDescriptors';
+import {
+  DEFAULT_GUIDED_VIZ_TYPE,
+  getVizDescriptor,
+  isGuidedVizType,
+  VIZ_DESCRIPTORS,
+} from './vizDescriptors';
 import { compileIntent } from './compileIntent';
 import { intentFromFormData } from './intentFromFormData';
 
@@ -174,10 +179,28 @@ export default function GuidedBuilder({
   isLoading,
 }: GuidedBuilderProps) {
   // Initialise from current form_data so an existing chart (or one round-tripped
-  // through the advanced panel) opens with its selections intact.
-  const [intent, setIntent] = useState<GuidedIntent>(() =>
-    intentFromFormData(formData),
-  );
+  // through the advanced panel) opens with its selections intact. Fall back to
+  // the default guided viz when form_data has no (or unsupported) viz_type.
+  const [intent, setIntent] = useState<GuidedIntent>(() => {
+    const fromForm = intentFromFormData(formData);
+    if (isGuidedVizType(fromForm.vizType)) {
+      return fromForm;
+    }
+    return { ...fromForm, vizType: DEFAULT_GUIDED_VIZ_TYPE };
+  });
+
+  // Keep local intent aligned when Redux form_data.viz_type changes externally
+  // (e.g. chart load completing after mount). Only viz_type is watched so
+  // in-progress measure/dimension edits are not clobbered by async form_data.
+  useEffect(() => {
+    const nextType = formData?.viz_type as string | undefined;
+    if (!isGuidedVizType(nextType)) {
+      return;
+    }
+    setIntent(prev =>
+      prev.vizType === nextType ? prev : intentFromFormData(formData),
+    );
+  }, [formData, formData?.viz_type]);
 
   const descriptor = getVizDescriptor(intent.vizType);
 
@@ -271,7 +294,7 @@ export default function GuidedBuilder({
           <Select
             ariaLabel={t('Visualization type')}
             options={vizOptions}
-            value={intent.vizType}
+            value={intent.vizType || DEFAULT_GUIDED_VIZ_TYPE}
             onChange={value => apply({ ...intent, vizType: value as string })}
           />
         </Section>
