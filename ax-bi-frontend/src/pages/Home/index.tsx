@@ -76,6 +76,7 @@ import {
   AXBIStatsGrid,
 } from 'src/components/AXBIWorkspace';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
+import OnboardingChecklist from 'src/features/home/OnboardingChecklist';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -576,6 +577,15 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                 </Button>
               </AXBIActionRow>
             </AXBIEmptyCallout>
+          )}
+
+          {!isFirstRun && (
+            <OnboardingChecklist
+              canUploadData={canUploadData}
+              hasChart={chartCount > 0}
+              hasDashboard={dashboardCount > 0}
+              onOpenSearch={() => commandPalette?.open()}
+            />
           )}
 
           {WelcomeMainExtension && <WelcomeMainExtension />}

@@ -192,6 +192,7 @@ const TYPE_ICONS: Record<string, ReactNode> = {
   action: <Icons.ThunderboltOutlined iconSize="m" />,
   recent: <Icons.HistoryOutlined iconSize="m" />,
   help: <Icons.QuestionCircleOutlined iconSize="m" />,
+  asset: <Icons.SearchOutlined iconSize="m" />,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -199,6 +200,7 @@ const TYPE_LABELS: Record<string, string> = {
   action: t('Actions'),
   recent: t('Recent'),
   help: t('Help'),
+  asset: t('Dashboards & charts'),
 };
 
 interface CommandPaletteProps {
@@ -263,6 +265,16 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
+
+  // Notify asset-search hook of the live query (debounced search elsewhere).
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    window.dispatchEvent(
+      new CustomEvent('axbi-command-palette-query', { detail: searchQuery }),
+    );
+  }, [searchQuery, isOpen]);
 
   // Flatten grouped commands for index-based selection. selectedIndex,
   // data-index attributes, and keyboard navigation all index into this

@@ -24,6 +24,22 @@ assists people when migrating to a new version.
 
 ## Next
 
+### UI/UX Phase 5 — consumer autonomy (`STARTER_DASHBOARD`)
+
+AX-BI adds reader/analyst UX improvements (see `.internal/docs/ui-ux-phase5-*`):
+
+- **My views** on dashboards — save/restore personal filter state in the browser
+  (localStorage; does not change shared dashboard metadata).
+- **Command palette asset search** — type a dashboard or chart name in ⌘K.
+- **Show Me** recommendations in the guided chart builder.
+- **Keyboard shortcuts help** — `?` / `Ctrl+/` / `⌘/`.
+- **Home get-started checklist** (dismissible).
+- **Starter dashboard** from a dataset list action (big number + table + bar/line).
+
+`STARTER_DASHBOARD` defaults to `True`. Set it to `False` in
+`SUPERSET_CONFIG` / `DEFAULT_FEATURE_FLAGS` to hide the dataset action. Other
+Phase 5 surfaces are additive and always available.
+
 ### UI/UX continuity defaults (`GUIDED_CHART_BUILDER`, `CURATED_VIZ_GALLERY`)
 
 AX-BI now defaults the following presentation-only feature flags to `True`:

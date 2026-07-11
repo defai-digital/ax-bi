@@ -777,6 +777,11 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # advanced panel remains one click away. See ax-docs/ux-simplification-*.
     # @lifecycle: development
     "GUIDED_CHART_BUILDER": True,
+    # One-click starter dashboard from a dataset (big number + table +
+    # bar/line when dimensions exist). Presentation/workflow only; uses
+    # existing chart and dashboard create APIs. See .internal/docs/ui-ux-phase5-*.
+    # @lifecycle: development
+    "STARTER_DASHBOARD": True,
     # =================================================================
     # IN TESTING
     # =================================================================

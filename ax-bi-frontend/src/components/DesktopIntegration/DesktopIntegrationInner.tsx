@@ -16,15 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FC, ReactNode, useCallback } from 'react';
+import { FC, ReactNode, useCallback, useEffect } from 'react';
 import { t } from '@apache-superset/core/translation';
 import { useCommandPalette } from 'src/components/CommandPalette';
 import { CommandPalette } from 'src/components/CommandPalette';
 import { PWAInstallPrompt } from 'src/components/PWAInstallPrompt';
 import { useKeyboardShortcut } from 'src/hooks/useKeyboardShortcuts';
-import { ShortcutPriority } from 'src/components/KeyboardShortcuts';
+import {
+  ShortcutPriority,
+  useShortcutContext,
+} from 'src/components/KeyboardShortcuts';
+import { ShortcutHelpModal } from 'src/components/KeyboardShortcuts/ShortcutHelpModal';
 import { useServiceWorker } from 'src/hooks/useServiceWorker';
 import { useDefaultCommands } from 'src/hooks/useDefaultCommands';
+import { useAssetSearchCommands } from 'src/hooks/useAssetSearchCommands';
 
 interface DesktopIntegrationInnerProps {
   children: ReactNode;
@@ -37,15 +42,18 @@ interface DesktopIntegrationInnerProps {
  * - Global keyboard shortcut bindings (Cmd+K opens palette, Cmd+/ shows help)
  * - Service worker lifecycle
  * - Default command registration
- * - Renders the CommandPalette modal and PWA install prompt
+ * - Asset search in the command palette
+ * - Renders the CommandPalette modal, shortcut help, and PWA install prompt
  */
 export const DesktopIntegrationInner: FC<DesktopIntegrationInnerProps> = ({
   children,
 }) => {
-  const { toggle } = useCommandPalette();
+  const { toggle, registerCommand } = useCommandPalette();
+  const { openHelp } = useShortcutContext();
 
   // Register the default navigation and action commands
   useDefaultCommands();
+  useAssetSearchCommands();
 
   // Service worker lifecycle (registration, update detection)
   useServiceWorker();
@@ -60,24 +68,70 @@ export const DesktopIntegrationInner: FC<DesktopIntegrationInnerProps> = ({
       id: 'global-command-palette',
       description: t('Open command palette'),
       namespace: 'global',
+      category: t('Global'),
       priority: ShortcutPriority.HIGHEST,
       ignoreInputElements: false,
     },
   );
 
+  // Global shortcut: Cmd+/ opens keyboard shortcuts help
+  useKeyboardShortcut(
+    'mod+/',
+    useCallback(() => {
+      openHelp();
+    }, [openHelp]),
+    {
+      id: 'global-shortcut-help',
+      description: t('Show keyboard shortcuts'),
+      namespace: 'global',
+      category: t('Global'),
+      priority: ShortcutPriority.HIGH,
+      ignoreInputElements: true,
+    },
+  );
+
+  // Shift+/ produces "?" on most layouts
+  useKeyboardShortcut(
+    'shift+/',
+    useCallback(() => {
+      openHelp();
+    }, [openHelp]),
+    {
+      id: 'global-shortcut-help-question',
+      description: t('Show keyboard shortcuts'),
+      namespace: 'global',
+      category: t('Global'),
+      priority: ShortcutPriority.HIGH,
+      ignoreInputElements: true,
+    },
+  );
+
+  useEffect(() => {
+    const cleanup = registerCommand({
+      id: 'help-keyboard-shortcuts',
+      name: t('Keyboard shortcuts'),
+      description: t('Show all keyboard shortcuts'),
+      type: 'help',
+      keywords: ['shortcut', 'hotkey', 'help', 'keys'],
+      shortcut: '?',
+      action: () => openHelp(),
+    });
+    return cleanup;
+  }, [registerCommand, openHelp]);
+
   // Global shortcut: Escape closes the command palette
   useKeyboardShortcut(
     'escape',
     useCallback(() => {
-      // Only act if palette is open (the CommandPalette modal handles
-      // its own Escape, but this is a safety net for edge cases)
+      // CommandPalette modal handles its own Escape
     }, []),
     {
       id: 'global-escape-palette',
       description: t('Close command palette'),
       namespace: 'global',
+      category: t('Global'),
       priority: ShortcutPriority.LOW,
-      enabled: false, // CommandPalette modal handles its own Escape
+      enabled: false,
     },
   );
 
@@ -85,6 +139,7 @@ export const DesktopIntegrationInner: FC<DesktopIntegrationInnerProps> = ({
     <>
       {children}
       <CommandPalette />
+      <ShortcutHelpModal />
       <PWAInstallPrompt />
     </>
   );

@@ -98,6 +98,8 @@ import {
   databaseLabel,
 } from 'src/features/semanticLayers/label';
 import { useSelector } from 'react-redux';
+import { createStarterDashboard } from 'src/features/datasets/starterDashboard';
+import { ensureAppRoot } from 'src/utils/pathUtils';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 import type { BootstrapData } from 'src/types/bootstrapTypes';
@@ -543,6 +545,19 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   const canCreate = hasPerm('can_write');
   const canDuplicate = hasPerm('can_duplicate');
   const canExport = hasPerm('can_export');
+  const userRoles = useSelector(
+    (state: RootState) => state.user?.roles,
+  );
+  const canCreateChart = findPermission('can_write', 'Chart', userRoles);
+  const canCreateDashboard = findPermission(
+    'can_write',
+    'Dashboard',
+    userRoles,
+  );
+  const canStarterDashboard =
+    isFeatureEnabled(FeatureFlag.StarterDashboard) &&
+    canCreateChart &&
+    canCreateDashboard;
   // Surface the streamlined file-upload page where "I want to add data" users
   // land. Gated by the same predicate the "+" Create menu uses, so it cannot
   // widen access.
@@ -875,7 +890,13 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
               openDatasetDuplicateModal(original as VirtualDataset);
             }
           };
-          if (!canEdit && !canDelete && !canExport && !canDuplicate) {
+          if (
+            !canEdit &&
+            !canDelete &&
+            !canExport &&
+            !canDuplicate &&
+            !canStarterDashboard
+          ) {
             return null;
           }
           return (
@@ -900,6 +921,46 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                     onClick={allowEdit ? handleEdit : undefined}
                   >
                     <Icons.EditOutlined iconSize="l" />
+                  </span>
+                </Tooltip>
+              )}
+              {canStarterDashboard && !isSemanticView && (
+                <Tooltip
+                  id="starter-dashboard-tooltip"
+                  title={t('Generate starter dashboard')}
+                  placement="bottom"
+                >
+                  <span
+                    data-test="dataset-row-starter-dashboard"
+                    role="button"
+                    tabIndex={0}
+                    className="action-button"
+                    onClick={async () => {
+                      try {
+                        addSuccessToast(
+                          t('Generating starter dashboard…'),
+                        );
+                        const { dashboardId, dashboardTitle } =
+                          await createStarterDashboard(original.id);
+                        addSuccessToast(
+                          t('Created “%s”', dashboardTitle),
+                        );
+                        history.push(
+                          ensureAppRoot(
+                            `/superset/dashboard/${dashboardId}/`,
+                          ),
+                        );
+                      } catch (err) {
+                        addDangerToast(
+                          t(
+                            'Could not generate starter dashboard: %s',
+                            err instanceof Error ? err.message : String(err),
+                          ),
+                        );
+                      }
+                    }}
+                  >
+                    <Icons.DashboardOutlined iconSize="l" />
                   </span>
                 </Tooltip>
               )}
@@ -973,12 +1034,16 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       canDelete,
       canExport,
       canDuplicate,
+      canStarterDashboard,
       openDatasetEditModal,
       openDatasetDeleteModal,
       openDatasetDuplicateModal,
       handleBulkDatasetExport,
       PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET,
       user,
+      addSuccessToast,
+      addDangerToast,
+      history,
     ],
   );
 

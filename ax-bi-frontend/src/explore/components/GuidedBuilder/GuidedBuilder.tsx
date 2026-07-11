@@ -38,6 +38,7 @@ import {
   initialGuidedIntent,
   nextGuidedIntentOnFormDataChange,
 } from './intentState';
+import { recommendVizTypes } from './recommendViz';
 
 /** Minimal shape of the columns/metrics the guided builder reads from the
  * explore datasource. Kept local to avoid coupling to the full Dataset type. */
@@ -172,6 +173,47 @@ const Footer = styled.div`
   `}
 `;
 
+const RecommendRow = styled.div`
+  ${({ theme }) => css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${theme.sizeUnit}px;
+    margin-top: ${theme.sizeUnit * 2}px;
+  `}
+`;
+
+const RecommendChip = styled.button`
+  ${({ theme }) => css`
+    appearance: none;
+    border: 1px solid ${theme.colorBorderSecondary};
+    background: ${theme.colorBgLayout};
+    color: ${theme.colorText};
+    border-radius: ${theme.borderRadius}px;
+    padding: ${theme.sizeUnit}px ${theme.sizeUnit * 2}px;
+    cursor: pointer;
+    font-size: ${theme.fontSizeSM}px;
+    text-align: left;
+    max-width: 100%;
+
+    &:hover,
+    &:focus-visible {
+      border-color: ${theme.colorPrimary};
+      color: ${theme.colorPrimary};
+      outline: none;
+    }
+
+    strong {
+      display: block;
+      font-weight: ${theme.fontWeightStrong};
+    }
+
+    span {
+      color: ${theme.colorTextSecondary};
+      font-size: ${theme.fontSizeSM}px;
+    }
+  `}
+`;
+
 export default function GuidedBuilder({
   formData,
   datasource,
@@ -268,6 +310,12 @@ export default function GuidedBuilder({
   const measuresMulti = descriptor?.measures === 'multi';
   const showDimensions = descriptor && descriptor.dimensions !== 'none';
 
+  const recommendations = useMemo(
+    () =>
+      recommendVizTypes(intent.measures.length, intent.dimensions.length, 3),
+    [intent.measures.length, intent.dimensions.length],
+  );
+
   return (
     <Container data-test="guided-builder">
       <Intro>
@@ -289,6 +337,21 @@ export default function GuidedBuilder({
             value={intent.vizType || DEFAULT_GUIDED_VIZ_TYPE}
             onChange={value => apply({ ...intent, vizType: value as string })}
           />
+          {recommendations.length > 0 && (
+            <RecommendRow data-test="guided-show-me">
+              {recommendations.map(rec => (
+                <RecommendChip
+                  key={rec.vizType}
+                  type="button"
+                  onClick={() => apply({ ...intent, vizType: rec.vizType })}
+                  title={rec.reason}
+                >
+                  <strong>{rec.label}</strong>
+                  <span>{rec.reason}</span>
+                </RecommendChip>
+              ))}
+            </RecommendRow>
+          )}
         </Section>
 
         {showMeasures && (

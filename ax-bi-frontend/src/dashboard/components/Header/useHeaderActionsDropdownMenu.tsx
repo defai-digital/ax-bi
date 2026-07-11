@@ -37,6 +37,7 @@ import { getUrlParam } from 'src/utils/urlUtils';
 import { MenuKeys, RootState } from 'src/dashboard/types';
 import { HeaderDropdownProps } from 'src/dashboard/components/Header/types';
 import { usePermissions } from 'src/hooks/usePermissions';
+import { usePersonalViewsMenuItems } from 'src/dashboard/components/PersonalViewsMenu';
 
 export const useHeaderActionsMenu = ({
   customCss,
@@ -79,6 +80,14 @@ export const useHeaderActionsMenu = ({
   const directPathToChild = useSelector(
     (state: RootState) => state.dashboardState.directPathToChild,
   );
+
+  const personalViewsMenuItem = usePersonalViewsMenuItems({
+    dashboardId,
+    userId: dashboardInfo?.userId,
+    editMode,
+    addSuccessToast,
+    addDangerToast,
+  });
 
   useEffect(() => {
     if (customCss) {
@@ -283,6 +292,11 @@ export const useHeaderActionsMenu = ({
       menuItems.push(shareMenuItems);
     }
 
+    // Personal filter views (local to this browser)
+    if (personalViewsMenuItem) {
+      menuItems.push(personalViewsMenuItem);
+    }
+
     // Embed dashboard
     if (!editMode && userCanCurate) {
       menuItems.push({
@@ -342,6 +356,7 @@ export const useHeaderActionsMenu = ({
     lastModifiedTime,
     layout,
     onSave,
+    personalViewsMenuItem,
     refreshFrequency,
     reportMenuItem,
     shareMenuItems,

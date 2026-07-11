@@ -71,6 +71,8 @@ export enum FeatureFlag {
   ScheduledQueries = 'SCHEDULED_QUERIES',
   SemanticLayers = 'SEMANTIC_LAYERS',
   SimplifiedNav = 'SIMPLIFIED_NAV',
+  /** One-click starter dashboard from a dataset (X-ray lite). */
+  StarterDashboard = 'STARTER_DASHBOARD',
   SqllabBackendPersistence = 'SQLLAB_BACKEND_PERSISTENCE',
   SqlValidatorsByEngine = 'SQL_VALIDATORS_BY_ENGINE',
   SshTunneling = 'SSH_TUNNELING',

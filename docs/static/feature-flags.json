@@ -172,6 +172,12 @@
         "description": "Simplify navigation by relocating power-user destinations (e.g. SQL Lab) out of the primary nav bar into an \"Advanced\" group. Presentation-only; does not change routes or permissions. See ax-docs/ux-simplification-*."
       },
       {
+        "name": "STARTER_DASHBOARD",
+        "default": true,
+        "description": "One-click starter dashboard from a dataset (X-ray lite). Uses existing chart/dashboard create APIs.",
+        "lifecycle": "development"
+      },
+      {
         "name": "TABLE_V2_TIME_COMPARISON_ENABLED",
         "default": false,
         "lifecycle": "development",

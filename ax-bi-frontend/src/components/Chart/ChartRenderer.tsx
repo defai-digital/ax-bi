@@ -449,9 +449,11 @@ function ChartRendererComponent({
   const noResultDescription =
     source === ChartSource.Explore
       ? t(
-          'Make sure that the controls are configured properly and the datasource contains data for the selected time range',
+          'Check measures, filters, and the time range — then update the chart. Switch to Advanced if you need more control.',
         )
-      : undefined;
+      : t(
+          'No rows match the current filters or time range. Clear filters, widen the range, or explore the chart to adjust the query.',
+        );
   const noResultImage = 'chart.svg';
   if (
     (width ?? 0) > BIG_NO_RESULT_MIN_WIDTH &&
@@ -467,7 +469,12 @@ function ChartRendererComponent({
     );
   } else {
     noResultsComponent = (
-      <EmptyState title={noResultTitle} image={noResultImage} size="small" />
+      <EmptyState
+        title={noResultTitle}
+        description={noResultDescription}
+        image={noResultImage}
+        size="small"
+      />
     );
   }
 
