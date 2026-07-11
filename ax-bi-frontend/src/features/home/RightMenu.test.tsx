@@ -22,9 +22,11 @@ import {
   screen,
   userEvent,
   waitFor,
+  within,
 } from 'spec/helpers/testing-library';
 import { isFeatureEnabled, FeatureFlag, CACHE_KEY } from '@superset-ui/core';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
+import { CommandPaletteProvider } from 'src/components/CommandPalette';
 import RightMenu from './RightMenu';
 import { RightMenuProps } from './types';
 
@@ -298,4 +300,49 @@ test('updates upload data menu item when upload permission changes', async () =>
   store.dispatch({ type: 'grant-upload' });
 
   expect(await screen.findByText('Upload data')).toBeInTheDocument();
+});
+
+test('simplified nav puts Chart before SQL query and has no Create Advanced group', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) => flag === FeatureFlag.SimplifiedNav,
+  );
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  userEvent.hover(await screen.findByText(/Settings/i));
+
+  const chart = await screen.findByText('Chart');
+  const sqlQuery = await screen.findByText('SQL query');
+  expect(
+    chart.compareDocumentPosition(sqlQuery) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+
+  // SIMPLIFIED_NAV must not invent a second "Advanced" create section;
+  // Advanced is reserved for demoted SQL Lab nav entries in Menu.tsx.
+  const settingsPopup = chart.closest('.ant-menu') ?? document.body;
+  expect(
+    within(settingsPopup as HTMLElement).queryByText('Advanced'),
+  ).not.toBeInTheDocument();
+});
+
+test('search chip exposes aria-label with keyboard shortcut when palette is available', async () => {
+  mockIsFeatureEnabled.mockReturnValue(false);
+  render(
+    <CommandPaletteProvider>
+      <RightMenu {...createProps()} />
+    </CommandPaletteProvider>,
+    {
+      useRedux: true,
+      useRouter: true,
+      useTheme: true,
+    },
+  );
+
+  const trigger = await screen.findByTestId('command-palette-trigger');
+  expect(trigger).toHaveAttribute('aria-label');
+  expect(trigger.getAttribute('aria-label')).toMatch(/Search/i);
+  expect(trigger.getAttribute('aria-label')).toMatch(/⌘K|Ctrl\+K/);
 });

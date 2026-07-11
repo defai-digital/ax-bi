@@ -51,6 +51,7 @@ import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 import { useLanguageMenuItems } from './LanguagePicker';
 import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
+import { orderCreateMenuItems } from './createMenuOrder';
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -232,18 +233,17 @@ const RightMenu = ({
         // Simplified mode: consumer create paths first; SQL last inside the
         // same Create group (avoids a second "Advanced" label that collides
         // with SIMPLIFIED_NAV's demoted SQL Lab settings group).
-        if (simplifiedNav) {
-          createItems.push(chartItem, dashboardItem);
-          if (uploadItem) {
-            createItems.push(uploadItem);
-          }
-          createItems.push(sqlItem);
-        } else {
-          createItems.push(sqlItem, chartItem, dashboardItem);
-          if (uploadItem) {
-            createItems.push(uploadItem);
-          }
-        }
+        createItems.push(
+          ...orderCreateMenuItems(
+            {
+              chart: chartItem,
+              dashboard: dashboardItem,
+              upload: uploadItem,
+              sql: sqlItem,
+            },
+            simplifiedNav,
+          ),
+        );
       }
       if (createItems.length > 0) {
         items.push({

@@ -31,11 +31,13 @@ import { GuidedFilter, GuidedIntent } from './types';
 import {
   DEFAULT_GUIDED_VIZ_TYPE,
   getVizDescriptor,
-  isGuidedVizType,
   VIZ_DESCRIPTORS,
 } from './vizDescriptors';
 import { compileIntent } from './compileIntent';
-import { intentFromFormData } from './intentFromFormData';
+import {
+  initialGuidedIntent,
+  nextGuidedIntentOnFormDataChange,
+} from './intentState';
 
 /** Minimal shape of the columns/metrics the guided builder reads from the
  * explore datasource. Kept local to avoid coupling to the full Dataset type. */
@@ -181,25 +183,15 @@ export default function GuidedBuilder({
   // Initialise from current form_data so an existing chart (or one round-tripped
   // through the advanced panel) opens with its selections intact. Fall back to
   // the default guided viz when form_data has no (or unsupported) viz_type.
-  const [intent, setIntent] = useState<GuidedIntent>(() => {
-    const fromForm = intentFromFormData(formData);
-    if (isGuidedVizType(fromForm.vizType)) {
-      return fromForm;
-    }
-    return { ...fromForm, vizType: DEFAULT_GUIDED_VIZ_TYPE };
-  });
+  const [intent, setIntent] = useState<GuidedIntent>(() =>
+    initialGuidedIntent(formData),
+  );
 
   // Keep local intent aligned when Redux form_data.viz_type changes externally
   // (e.g. chart load completing after mount). Only viz_type is watched so
   // in-progress measure/dimension edits are not clobbered by async form_data.
   useEffect(() => {
-    const nextType = formData?.viz_type as string | undefined;
-    if (!isGuidedVizType(nextType)) {
-      return;
-    }
-    setIntent(prev =>
-      prev.vizType === nextType ? prev : intentFromFormData(formData),
-    );
+    setIntent(prev => nextGuidedIntentOnFormDataChange(prev, formData));
   }, [formData, formData?.viz_type]);
 
   const descriptor = getVizDescriptor(intent.vizType);

@@ -16,18 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-export { default } from './GuidedBuilder';
-export type { GuidedBuilderProps } from './GuidedBuilder';
-export { compileIntent, buildAdhocFilter } from './compileIntent';
-export { intentFromFormData } from './intentFromFormData';
-export {
-  initialGuidedIntent,
-  nextGuidedIntentOnFormDataChange,
-} from './intentState';
-export {
-  VIZ_DESCRIPTORS,
-  getVizDescriptor,
-  isGuidedVizType,
-  DEFAULT_GUIDED_VIZ_TYPE,
-} from './vizDescriptors';
-export type { GuidedIntent, GuidedFilter, VizDescriptor } from './types';
+
+export type CreateMenuParts<T> = {
+  chart: T;
+  dashboard: T;
+  sql: T;
+  upload?: T | null;
+};
+
+/**
+ * Order Create-menu entries for Settings. Simplified nav puts consumer paths
+ * first and SQL last in the same group (no second "Advanced" section).
+ */
+export function orderCreateMenuItems<T>(
+  parts: CreateMenuParts<T>,
+  simplifiedNav: boolean,
+): T[] {
+  const upload = parts.upload ? [parts.upload] : [];
+  if (simplifiedNav) {
+    return [parts.chart, parts.dashboard, ...upload, parts.sql];
+  }
+  return [parts.sql, parts.chart, parts.dashboard, ...upload];
+}
