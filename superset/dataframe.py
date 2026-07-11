@@ -65,7 +65,7 @@ def _get_columns_by_dtype(
     return (
         dframe.select_dtypes(include=["floating"]).columns,
         dframe.select_dtypes(include=["integer"]).columns,
-        dframe.select_dtypes(include=["object", "string", "str"]).columns,
+        dframe.select_dtypes(include=["object", "string"]).columns,
     )
 
 

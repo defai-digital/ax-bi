@@ -430,8 +430,7 @@ async def prompt_to_dashboard(  # noqa: C901
     if successful_chart_count and failed_chart_count:
         chart_step_status: str = "succeeded"
         chart_step_detail = (
-            f"partial: {successful_chart_count} succeeded, "
-            f"{failed_chart_count} failed"
+            f"partial: {successful_chart_count} succeeded, {failed_chart_count} failed"
         )
     elif successful_chart_count:
         chart_step_status = "succeeded"
@@ -442,7 +441,7 @@ async def prompt_to_dashboard(  # noqa: C901
     steps.append(
         WorkflowStepStatus(
             name="generate_charts",
-            status=chart_step_status,  # type: ignore[arg-type]
+            status=chart_step_status,
             detail=chart_step_detail,
             duration_ms=int((time.time() - charts_started) * 1000),
         )
@@ -556,11 +555,12 @@ async def prompt_to_dashboard(  # noqa: C901
             charts_failed=failed_chart_count,
         ).model_dump()
 
+    dashboard_id = dashboard_data.get("id") if dashboard_data else None
     steps.append(
         WorkflowStepStatus(
             name="compose",
             status="succeeded",
-            detail=f"dashboard_id={dashboard_data.get('id') if dashboard_data else None}",
+            detail=f"dashboard_id={dashboard_id}",
             duration_ms=int((time.time() - compose_started) * 1000),
         )
     )

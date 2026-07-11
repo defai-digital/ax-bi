@@ -1021,7 +1021,7 @@ class TestGetDefaultSpinnerSvg:
         result = get_default_spinner_svg()
         assert result is not None
         assert "<svg" in result
-        assert "morphPath" in result
+        assert "axbi-ring-gradient" in result
 
 
 class TestThemeCacheInvalidation:
