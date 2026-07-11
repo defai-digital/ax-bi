@@ -199,17 +199,39 @@ def _discover_best_dataset(
 def _resolve_chart_config_from_intent(
     prompt: str,
     dataset: Any,
+    *,
+    chart_type: str | None = None,
+    metrics: list[str] | None = None,
+    dimensions: list[str] | None = None,
+    filters: list[dict[str, Any]] | None = None,
+    time_range: str | None = None,
+    kind: str | None = None,
 ) -> tuple[dict[str, Any] | None, str, float, str, list[str]]:
     """Map natural language intent to a chart configuration.
 
-    Uses the configured LLM provider to translate the prompt into a
-    structured chart config. Falls back to heuristic mapping when no
-    LLM provider is available.
+    Prefer structured plan fields (metrics/dimensions/chart_type) when present.
+    Otherwise uses the configured LLM provider, then keyword heuristics.
 
     Returns:
         Tuple of (config_dict, chart_type, confidence, explanation, warnings).
     """
     warnings: list[str] = []
+
+    from superset.mcp_service.ai.structured_intent import (
+        chart_config_from_structured_intent,
+        has_structured_chart_fields,
+    )
+
+    if has_structured_chart_fields(metrics, dimensions, chart_type):
+        return chart_config_from_structured_intent(
+            chart_type=chart_type,
+            metrics=metrics,
+            dimensions=dimensions,
+            filters=filters,
+            time_range=time_range,
+            dataset=dataset,
+            kind=kind,
+        )
 
     # Try the LLM provider first
     try:
@@ -361,7 +383,16 @@ async def create_chart_from_intent(  # noqa: C901
     await ctx.report_progress(2, 4, "Mapping intent to chart configuration")
     with mcp_event_log_context(action="mcp.create_chart_from_intent.resolve"):
         config, chart_type, confidence, explanation, resolve_warnings = (
-            _resolve_chart_config_from_intent(request.prompt, dataset)
+            _resolve_chart_config_from_intent(
+                request.prompt,
+                dataset,
+                chart_type=request.chart_type,
+                metrics=request.metrics,
+                dimensions=request.dimensions,
+                filters=request.filters,
+                time_range=request.time_range,
+                kind=request.kind,
+            )
         )
     all_warnings.extend(resolve_warnings)
 

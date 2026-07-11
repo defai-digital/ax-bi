@@ -242,7 +242,8 @@ async def prompt_to_dashboard(  # noqa: C901
             f"{chart_purpose}",
         )
 
-        # Build prompt from the chart intent
+        # Build prompt from the chart intent. Prefer structured fields so
+        # create_chart_from_intent does not re-parse natural language.
         intent_prompt = _build_intent_prompt(intent, request.prompt)
         dataset_id = intent.dataset_id or None
 
@@ -258,6 +259,11 @@ async def prompt_to_dashboard(  # noqa: C901
                 prompt=intent_prompt,
                 dataset_id=dataset_id,
                 save_chart=request.save_charts and not request.dry_run,
+                chart_type=getattr(intent, "chart_type", None) or None,
+                metrics=list(getattr(intent, "metrics", None) or []),
+                dimensions=list(getattr(intent, "dimensions", None) or []),
+                filters=list(getattr(intent, "filters", None) or []),
+                time_range=getattr(intent, "time_range", None),
             )
             chart_result = await create_chart_from_intent(chart_req, ctx)
 

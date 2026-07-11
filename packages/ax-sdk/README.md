@@ -122,30 +122,40 @@ The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX 
 
 | Method | Description |
 |--------|-------------|
+| `promptToDashboard(params)` | **Preferred** — one call from prompt to draft dashboard |
 | `searchAssets(params)` | Semantic search across charts, dashboards, datasets |
 | `describeDataset(params)` | Get schema, metrics, and sample values for a dataset |
 | `planDashboard(params)` | Generate a dashboard plan from a natural language prompt |
-| `createChartFromIntent(params)` | Create a chart from business intent |
+| `createChartFromIntent(params)` | Create a chart from business intent (or structured plan fields) |
 | `composeDashboard(params)` | Compose a full dashboard from a plan |
 | `explainDashboard(params)` | Analyze and explain an existing dashboard |
 | `executeSql(params)` | Execute SQL via SQL Lab |
 | `validateChart(params)` | Validate a chart configuration |
 
 ```typescript
+// Preferred: single-call prompt-to-dashboard (agents / Codex / Claude Code)
+const result = await axbi.ai.promptToDashboard({
+  prompt: 'Create an executive sales dashboard with revenue trends',
+  draft: true,
+});
+console.log(result.dashboard_url);
+
 // Search across all assets
 const results = await axbi.ai.searchAssets({
   query: 'monthly revenue',
   assetTypes: ['chart', 'dashboard'],
 });
 
-// Plan and compose a dashboard
+// Multi-step: plan, create charts with structured intents, then compose
 const { plan } = await axbi.ai.planDashboard({
   prompt: 'Revenue by region with YoY comparison',
 });
-
-// Create the chart previews from plan.chart_intents first, then compose.
+// Pass metrics/dimensions/chart_type from plan.chart_intents into createChartFromIntent
 await axbi.ai.composeDashboard({ plan, chart_ids: [101, 102] });
 ```
+
+Requires Superset feature flags: `GENAI_BI`, `GENAI_BI_MCP_TOOLS`, and
+`GENAI_PROMPT_TO_DASHBOARD` (enabled by default in the AX Docker AI profile).
 
 The MCP URL is auto-derived from `baseUrl` by replacing the port with `5008`. Override with the `mcpUrl` config option.
 

@@ -46,6 +46,23 @@ export interface ChartIntentParams {
   dataset_id?: number | string;
   save_chart?: boolean;
   max_preview_rows?: number;
+  /** Structured fields from plan_dashboard chart_intents (preferred). */
+  chart_type?: string;
+  metrics?: string[];
+  dimensions?: string[];
+  filters?: Array<Record<string, unknown>>;
+  time_range?: string;
+  kind?: 'line' | 'bar' | 'area' | 'scatter';
+}
+
+export interface PromptToDashboardParams {
+  prompt: string;
+  dataset_ids?: number[];
+  max_charts?: number;
+  draft?: boolean;
+  save_charts?: boolean;
+  /** Plan/preview only — do not create charts or a dashboard. */
+  dry_run?: boolean;
 }
 
 export interface ComposeDashboardParams {
@@ -167,6 +184,28 @@ export interface ComposeResult {
   error?: string;
 }
 
+export interface PromptToDashboardChartSummary {
+  chart_id?: number | null;
+  chart_name?: string;
+  chart_type?: string;
+  purpose?: string;
+  confidence?: number;
+  preview_url?: string | null;
+  warnings?: string[];
+}
+
+export interface PromptToDashboardResult {
+  dashboard?: Record<string, unknown> | null;
+  dashboard_url?: string | null;
+  plan?: DashboardPlan | null;
+  charts?: PromptToDashboardChartSummary[];
+  layout_summary?: string;
+  lineage?: Record<string, unknown> | null;
+  warnings?: string[];
+  error?: string | null;
+  total_duration_ms?: number;
+}
+
 export interface DashboardExplanation {
   summary: string;
   source_charts: Array<Record<string, unknown>>;
@@ -240,6 +279,31 @@ export class AIResource {
       dataset_id: params.dataset_id,
       save_chart: params.save_chart ?? true,
       max_preview_rows: params.max_preview_rows ?? 100,
+      chart_type: params.chart_type,
+      metrics: params.metrics ?? [],
+      dimensions: params.dimensions ?? [],
+      filters: params.filters ?? [],
+      time_range: params.time_range,
+      kind: params.kind,
+    });
+  }
+
+  /**
+   * Create a complete dashboard from a natural language prompt in one call.
+   *
+   * This is the preferred entry point for agent clients (Codex, Claude Code).
+   * Chains plan → create charts → compose dashboard on the server.
+   */
+  async promptToDashboard(
+    params: PromptToDashboardParams,
+  ): Promise<PromptToDashboardResult> {
+    return this.callMcpTool<PromptToDashboardResult>('prompt_to_dashboard', {
+      prompt: params.prompt,
+      dataset_ids: params.dataset_ids ?? [],
+      max_charts: params.max_charts ?? 6,
+      draft: params.draft ?? true,
+      save_charts: params.save_charts ?? true,
+      dry_run: params.dry_run ?? false,
     });
   }
 

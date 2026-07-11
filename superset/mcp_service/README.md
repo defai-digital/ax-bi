@@ -28,6 +28,30 @@ under the License.
 
 The Superset Model Context Protocol (MCP) service provides a modular, schema-driven interface for programmatic access to Superset dashboards, charts, datasets, and instance metadata. It is designed for LLM agents and automation tools, and is built on the FastMCP protocol.
 
+## Prompt-to-dashboard (Codex / Claude Code)
+
+For natural-language dashboard creation, agents should use the **GenAI tools**, not low-level `generate_chart` + `generate_dashboard` CRUD:
+
+1. **`prompt_to_dashboard`** (preferred, one call) — plan → charts → draft dashboard
+2. Or **`plan_dashboard` → `create_chart_from_intent` (with structured metrics/dimensions) → `compose_dashboard`**
+
+### Required feature flags
+
+These default **on** in the AX Docker AI profile (`docker/pythonpath_axbi/superset_config.py`):
+
+| Flag | Purpose |
+|------|---------|
+| `GENAI_BI` | Master GenAI switch |
+| `GENAI_BI_MCP_TOOLS` | Expose AI MCP tools |
+| `GENAI_PROMPT_TO_DASHBOARD` | plan / compose / prompt_to_dashboard |
+
+Without all three, agents only see low-level tools and will struggle on real datasets.
+
+Optional but recommended for quality:
+
+- `GENAI_LLM_PROVIDER` / `GENAI_LLM_API_KEY` / `GENAI_LLM_MODEL` (or `ANTHROPIC_API_KEY`) so the server can map intent with an LLM instead of keyword heuristics
+- Dataset saved metrics, descriptions, and certification so grounding can prefer governed measures
+
 ## 🚀 Quickstart
 
 ### Option 1: Docker Setup (Recommended) 🎯

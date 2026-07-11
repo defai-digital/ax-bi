@@ -50,6 +50,68 @@ describe('AIResource', () => {
     });
   });
 
+  test('promptToDashboard calls the orchestrator tool with defaults', async () => {
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
+      content: [],
+      structuredContent: {
+        dashboard_url: 'http://localhost:8088/superset/dashboard/1/',
+        charts: [],
+        warnings: [],
+      },
+    }));
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(
+      ai.promptToDashboard({
+        prompt: 'Create an executive sales dashboard',
+      }),
+    ).resolves.toMatchObject({
+      dashboard_url: 'http://localhost:8088/superset/dashboard/1/',
+    });
+    expect(callTool).toHaveBeenCalledWith('prompt_to_dashboard', {
+      request: {
+        prompt: 'Create an executive sales dashboard',
+        dataset_ids: [],
+        max_charts: 6,
+        draft: true,
+        save_charts: true,
+        dry_run: false,
+      },
+    });
+  });
+
+  test('createChartFromIntent forwards structured plan fields', async () => {
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
+      content: [],
+      structuredContent: { success: true, chart_type_selected: 'xy' },
+    }));
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await ai.createChartFromIntent({
+      prompt: 'Revenue by region',
+      dataset_id: 42,
+      chart_type: 'xy',
+      metrics: ['revenue'],
+      dimensions: ['region'],
+      kind: 'bar',
+    });
+
+    expect(callTool).toHaveBeenCalledWith('create_chart_from_intent', {
+      request: {
+        prompt: 'Revenue by region',
+        dataset_id: 42,
+        save_chart: true,
+        max_preview_rows: 100,
+        chart_type: 'xy',
+        metrics: ['revenue'],
+        dimensions: ['region'],
+        filters: [],
+        time_range: undefined,
+        kind: 'bar',
+      },
+    });
+  });
+
   test('throws AxBIError when a tool returns no content', async () => {
     const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
       content: [],

@@ -115,7 +115,13 @@ FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
     "DATASET_FOLDERS": True,
     "ENABLE_EXTENSIONS": True,
+    # GenAI BI profile: expose MCP intent tools (prompt-to-dashboard, etc.).
+    # GENAI_BI alone is not enough — AI tools also require GENAI_BI_MCP_TOOLS
+    # (and GENAI_PROMPT_TO_DASHBOARD for plan/compose/orchestrator tools).
     "GENAI_BI": _bool_env("GENAI_BI", True),
+    "GENAI_BI_MCP_TOOLS": _bool_env("GENAI_BI_MCP_TOOLS", True),
+    "GENAI_PROMPT_TO_DASHBOARD": _bool_env("GENAI_PROMPT_TO_DASHBOARD", True),
+    "GENAI_EMBEDDED_ASSISTANT": _bool_env("GENAI_EMBEDDED_ASSISTANT", False),
     "GENAI_SEMANTIC_INDEX": _bool_env("GENAI_SEMANTIC_INDEX", False),
     "GENAI_SEMANTIC_INDEX_PGVECTOR": _bool_env(
         "GENAI_SEMANTIC_INDEX_PGVECTOR",
@@ -123,6 +129,23 @@ FEATURE_FLAGS = {
     ),
     "SEMANTIC_LAYERS": True,
 }
+
+# Optional server-side LLM for intent mapping / dashboard planning.
+# When empty, tools fall back to keyword heuristics (weaker quality).
+# Example:
+# GENAI_LLM_PROVIDER_CONFIG = {
+#     "provider": "anthropic",
+#     "api_key": os.getenv("ANTHROPIC_API_KEY", ""),
+#     "model": "claude-sonnet-4-20250514",
+# }
+GENAI_LLM_PROVIDER_CONFIG: dict = {}
+_genai_provider = os.getenv("GENAI_LLM_PROVIDER", "").strip().lower()
+if _genai_provider:
+    GENAI_LLM_PROVIDER_CONFIG = {
+        "provider": _genai_provider,
+        "api_key": os.getenv("GENAI_LLM_API_KEY", os.getenv("ANTHROPIC_API_KEY", "")),
+        "model": os.getenv("GENAI_LLM_MODEL", "claude-sonnet-4-20250514"),
+    }
 
 AI_SEMANTIC_EMBEDDING_PROVIDER = os.getenv(
     "AI_SEMANTIC_EMBEDDING_PROVIDER",

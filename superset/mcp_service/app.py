@@ -211,19 +211,24 @@ System Information:
 - generate_bug_report: Build a PII-sanitized bug report to send to Preset support
   (use when the user says the MCP is broken or asks how to report an issue)
 
-AI-Powered Tools (GenAI):
-- create_chart_from_intent: Create a chart from natural language — automatically discovers
-  the best dataset, maps metrics/dimensions, selects chart type, and saves the chart.
-  Preferred over the multi-step list_datasets -> generate_chart flow.
-- plan_dashboard: Produce a dashboard plan from a prompt without creating anything.
-  Review the plan, then call compose_dashboard to execute.
-- compose_dashboard: Create a dashboard from a plan + chart IDs (from create_chart_from_intent).
-- explain_dashboard: Summarize an existing dashboard or answer questions about it.
-- suggest_chart_improvements: Analyze a chart and suggest better visualizations.
-- validate_chart: Validate a chart configuration against a dataset before creating it.
-  Use to pre-flight chart intents from plan_dashboard.
+AI-Powered Tools (GenAI) — PREFER THESE over low-level CRUD for dashboard creation:
+- prompt_to_dashboard: PRIMARY tool. One call from natural language to a draft dashboard
+  (plan → charts → compose). Use this first whenever the user asks to create a dashboard.
+- plan_dashboard: Plan only (no mutations). Use when the user wants to review the plan first.
+- create_chart_from_intent: Create one chart from natural language OR from structured plan
+  fields (chart_type, metrics, dimensions, filters, time_range). Prefer structured fields
+  when available from plan_dashboard chart_intents.
+- compose_dashboard: Assemble a dashboard from a plan + chart IDs.
 - search_business_assets: Semantic search across datasets, charts, dashboards, and metrics.
-- describe_dataset_for_ai: Get AI-ready dataset metadata (columns, metrics, types).
+- describe_dataset_for_ai: AI-ready dataset metadata (columns, metrics, aliases).
+- validate_chart: Pre-flight a chart config against a dataset.
+- explain_dashboard: Summarize or Q&A an existing dashboard.
+- suggest_chart_improvements: Visualization improvement suggestions.
+- upload_and_plan: Upload a file then plan a dashboard from it.
+
+Do NOT invent generate_chart form_data when prompt_to_dashboard or create_chart_from_intent
+are available. Only fall back to list_datasets → get_dataset_info → generate_chart when
+those GenAI tools are missing from the tool list.
 
 Available Resources:
 - instance://metadata: Instance configuration, stats, and available dataset IDs
@@ -291,23 +296,36 @@ To create a chart:
      "config": {{...}}, "save_chart": true
    }}) -> save permanently
 
-To create a chart from natural language (PREFERRED):
+To create a chart from natural language (PREFERRED over generate_chart):
 1. create_chart_from_intent(request={{
      "prompt": "Show me monthly revenue trend for the last year"
-   }}) -> automatically discovers dataset, selects chart type, saves chart
-   Use dataset_id to pin to a specific dataset.
+   }}) -> discovers dataset, selects chart type, saves chart
+   Pin with dataset_id when known. When following a plan, pass structured fields:
+   chart_type, metrics, dimensions, filters, time_range from chart_intents.
 
-To create a dashboard from a prompt:
+To create a dashboard from a prompt (PREFERRED — use this first):
+Option A — single call (best for Codex / Claude Code / agent clients):
+1. prompt_to_dashboard(request={{
+     "prompt": "Create an executive sales dashboard with revenue trends and top products",
+     "draft": true
+   }}) -> plans, creates charts, composes draft dashboard, returns URL + lineage
+   Pin datasets with dataset_ids when known. Use dry_run=true to plan/preview only.
+
+Option B — multi-step with human review of the plan:
 1. plan_dashboard(request={{
      "prompt": "Create an executive sales dashboard with revenue trends and top products"
    }}) -> returns a plan (no artifacts created)
 2. Review the plan's chart_intents and clarifying_questions
-3. (Optional) validate_chart for each chart_intent to pre-flight before creating
-4. For each chart_intent, call create_chart_from_intent to create the charts
-5. compose_dashboard(request={{
+3. For each chart_intent, call create_chart_from_intent with structured fields:
+   request={{"prompt": <purpose>, "dataset_id": <id>, "chart_type": <type>,
+     "metrics": [...], "dimensions": [...], "save_chart": true}}
+4. compose_dashboard(request={{
      "plan": <plan from step 1>,
-     "chart_ids": [<ids from step 3>]
+     "chart_ids": [<ids from step 3>],
+     "draft": true
    }}) -> creates the dashboard
+
+Only use generate_dashboard + generate_chart when GenAI tools are unavailable.
 
 To update an existing dashboard:
 - update_dashboard(dashboard_id, title, description, published) -> rename, describe, publish

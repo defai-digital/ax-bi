@@ -355,6 +355,36 @@ class CreateChartFromIntentRequest(BaseModel):
         le=1000,
         description="Maximum rows for preview data",
     )
+    # Structured fields from plan_dashboard chart intents. When present, the
+    # tool builds chart config deterministically instead of re-parsing NL.
+    chart_type: str | None = Field(
+        default=None,
+        description=(
+            "Optional structured chart type from a plan intent "
+            "(xy, big_number, table, pie, pivot_table). Prefer this over "
+            "embedding chart type only in the prompt."
+        ),
+    )
+    metrics: list[str] = Field(
+        default_factory=list,
+        description="Optional metric names from a plan intent",
+    )
+    dimensions: list[str] = Field(
+        default_factory=list,
+        description="Optional dimension column names from a plan intent",
+    )
+    filters: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Optional structured filters from a plan intent",
+    )
+    time_range: str | None = Field(
+        default=None,
+        description="Optional time range (e.g. 'Last 90 days')",
+    )
+    kind: str | None = Field(
+        default=None,
+        description="Optional xy kind: line, bar, area, scatter",
+    )
 
 
 class CreateChartFromIntentResponse(BaseModel):
