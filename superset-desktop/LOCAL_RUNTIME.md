@@ -10,13 +10,14 @@ brew install --cask defai-digital/ax-bi/ax-bi
 ```
 
 After installation, the user opens AX BI Desktop. The bundled launcher offers
-two paths:
+two first-class paths:
 
-- Connect to an existing AX BI server.
-- Start AX BI locally.
+- Run AX BI locally (app-managed Colima + Docker Compose).
+- Connect to an existing hosted or team-managed AX BI server.
 
-The local path is for trials, demos, and technical evaluators. Production users
-should normally connect to a hosted or centrally managed AX BI instance.
+Local is a supported day-to-day option for individuals and small teams, not only
+a short-lived trial. Hosted/centralized deployments remain the better fit for
+shared multi-user production environments.
 
 ## Best-Practice Decision
 
@@ -39,7 +40,7 @@ The Tauri app should manage:
 - Health checks, logs, updates, and reset flows.
 
 Do not require users to clone this repository or edit `.env` files for a local
-trial. Do not bundle Python, Superset, database drivers, Postgres, Redis, and
+instance. Do not bundle Python, Superset, database drivers, Postgres, Redis, and
 their migrations directly inside the desktop app unless offline local BI becomes
 a separate product requirement.
 
@@ -55,9 +56,9 @@ The native runtime manager writes files under the Tauri app data directory:
 
 The generated `.env` contains local-only secrets:
 
-- `AX_BI_SECRET_KEY`
-- `DATABASE_PASSWORD`
-- `ADMIN_PASSWORD`
+- `AX_BI_SECRET_KEY` (random)
+- `DATABASE_PASSWORD` (random)
+- `ADMIN_PASSWORD` (default `admin` — local desktop default login is `admin` / `admin`)
 
 The generated Compose stack uses published images:
 

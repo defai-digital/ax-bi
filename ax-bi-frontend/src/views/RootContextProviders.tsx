@@ -29,6 +29,7 @@ import { EmbeddedUiConfigProvider } from 'src/components/UiConfigContext';
 import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
 import { ThemeController } from 'src/theme/ThemeController';
 import { installDesktopThemeBridge } from 'src/theme/desktopThemeBridge';
+import { installDesktopShellBridge } from 'src/theme/desktopShell';
 import { store } from './store';
 import '../preamble';
 import querystring from 'query-string';
@@ -39,7 +40,14 @@ const extensionsRegistry = getExtensionsRegistry();
 export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
   children,
 }) => {
-  useEffect(() => installDesktopThemeBridge(themeController), []);
+  useEffect(() => {
+    const uninstallTheme = installDesktopThemeBridge(themeController);
+    const uninstallShell = installDesktopShellBridge();
+    return () => {
+      uninstallTheme();
+      uninstallShell();
+    };
+  }, []);
 
   const RootContextProviderExtension = extensionsRegistry.get(
     'root.context.provider',

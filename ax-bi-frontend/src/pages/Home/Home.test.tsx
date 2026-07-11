@@ -171,6 +171,24 @@ test('With sql role - renders', async () => {
   expect(await screen.findAllByText('Dashboards')).not.toHaveLength(0);
 });
 
+test('without userId does not crash and prompts to sign in', async () => {
+  await renderWelcome({
+    user: {
+      username: 'guest',
+      firstName: 'Guest',
+      lastName: 'User',
+      isActive: true,
+      isAnonymous: false,
+      roles: {},
+      permissions: {},
+    },
+  });
+  expect(
+    await screen.findByText('Sign in to open your workspace'),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+});
+
 test('With sql role - renders all panels on the page on page load', async () => {
   await renderWelcome();
   await waitFor(() => {

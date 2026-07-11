@@ -17,6 +17,7 @@
  * under the License.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { t } from '@apache-superset/core/translation';
 import {
   isFeatureEnabled,
@@ -27,7 +28,11 @@ import {
 import { styled } from '@apache-superset/core/theme';
 import rison from 'rison';
 import { Button, ListViewCard } from '@superset-ui/core/components';
-import { User } from 'src/types/bootstrapTypes';
+import {
+  BootstrapUser,
+  User,
+  UserWithPermissionsAndRoles,
+} from 'src/types/bootstrapTypes';
 import { reject } from 'lodash';
 import {
   dangerouslyGetItemDoNotUse,
@@ -166,19 +171,44 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
   </CardContainer>
 );
 
-function Welcome({ user, addDangerToast }: WelcomeProps) {
+function resolveHomeUser(
+  propUser: User | undefined,
+  storeUser: BootstrapUser | Record<string, never> | undefined,
+): User {
+  const propId = propUser?.userId;
+  if (propId != null) {
+    return propUser as User;
+  }
+  const storeId =
+    storeUser && 'userId' in storeUser
+      ? (storeUser as UserWithPermissionsAndRoles).userId
+      : undefined;
+  if (storeId != null) {
+    return storeUser as User;
+  }
+  return (propUser ?? {}) as User;
+}
+
+function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
+  const storeUser = useSelector(
+    (state: { user?: BootstrapUser | Record<string, never> }) => state.user,
+  );
+  // Prefer a user with userId — bootstrap guest/anonymous payloads omit it,
+  // and some SPA navigations only keep a full user in Redux.
+  const user = resolveHomeUser(userProp, storeUser);
   const canReadSavedQueries = userHasPermission(user, 'SavedQuery', 'can_read');
   const canUploadData =
     userHasPermission(user, 'Database', 'can_upload') &&
     isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
   const genaiEnabled = isFeatureEnabled(FeatureFlag.GenaiBi);
   const commandPalette = useOptionalCommandPalette();
-  const userid = user.userId;
-  const id = userid!.toString(); // confident that user is not a guest user
+  // Guest / anonymous bootstrap payloads omit userId (see bootstrap_user_data).
+  const userid = user?.userId;
+  const id = userid != null ? String(userid) : null;
   const params = rison.encode({ page_size: 24, distinct: false });
   const recent = `/api/v1/log/recent_activity/?q=${params}`;
   const [activeChild, setActiveChild] = useState('Loading');
-  const userKey = dangerouslyGetItemDoNotUse(id, null);
+  const userKey = id != null ? dangerouslyGetItemDoNotUse(id, null) : null;
   let defaultChecked = false;
   const isThumbnailsEnabled = isFeatureEnabled(FeatureFlag.Thumbnails);
   if (isThumbnailsEnabled) {
@@ -226,12 +256,25 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
   }, []);
 
   useEffect(() => {
+    if (id == null) {
+      setIsFetchingActivityData(false);
+      setDashboardData([]);
+      setChartData([]);
+      setQueryData([]);
+      setActivityData({
+        [TableTab.Viewed]: [],
+        [TableTab.Other]: [],
+        [TableTab.Created]: [],
+      });
+      setActiveChild(TableTab.Other);
+      return;
+    }
     if (!otherTabFilters || WelcomeMainExtension) {
       return;
     }
     const activeTab = getItem(LocalStorageKeys.HomepageActivityFilter, null);
-    getRecentActivityObjs(user.userId!, recent, addDangerToast, otherTabFilters)
-      .then(res => {
+    getRecentActivityObjs(Number(id), recent, addDangerToast, otherTabFilters)
+      .then((res: { other: JsonObject[]; viewed?: JsonObject[] }) => {
         const data: ActivityData | null = {};
         data[TableTab.Other] = res.other;
         if (res.viewed) {
@@ -263,7 +306,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
       {
         col: 'created_by',
         opr: 'rel_o_m',
-        value: `${id}`,
+        value: id,
       },
     ];
     Promise.all([
@@ -306,9 +349,19 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
     ]).then(() => {
       setIsFetchingActivityData(false);
     });
-  }, [otherTabFilters]);
+  }, [
+    id,
+    otherTabFilters,
+    WelcomeMainExtension,
+    canReadSavedQueries,
+    recent,
+    addDangerToast,
+  ]);
 
   const handleToggle = () => {
+    if (id == null) {
+      return;
+    }
     setChecked(!checked);
     dangerouslySetItemDoNotUse(id, { thumbnails: !checked });
   };
@@ -366,6 +419,49 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
       .getElementById('home-recents')
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  if (id == null) {
+    return (
+      <>
+        {SubmenuExtension ? (
+          <SubmenuExtension {...menuData} />
+        ) : (
+          <SubMenu {...menuData} />
+        )}
+        <WelcomeContainer>
+          <AXBIPage>
+            <AXBIHero>
+              <div>
+                <AXBIEyebrow>{t('AX BI workspace')}</AXBIEyebrow>
+                <AXBIHeroTitle>
+                  {t('Sign in to open your workspace')}
+                </AXBIHeroTitle>
+                <AXBIHeroText>
+                  {t(
+                    'The home page needs a signed-in user account. Sign in to see recents, dashboards, and charts.',
+                  )}
+                </AXBIHeroText>
+                <AXBIActionRow>
+                  <Button
+                    buttonStyle="primary"
+                    onClick={() => navigateTo('/login/')}
+                  >
+                    {t('Sign in')}
+                  </Button>
+                  <Button
+                    buttonStyle="secondary"
+                    onClick={() => navigateTo('/dashboard/list/')}
+                  >
+                    {t('Browse dashboards')}
+                  </Button>
+                </AXBIActionRow>
+              </div>
+            </AXBIHero>
+          </AXBIPage>
+        </WelcomeContainer>
+      </>
+    );
+  }
 
   return (
     <>
@@ -439,7 +535,9 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
               )}
             </div>
             <AXBIPanel>
-              <AXBISectionTitle>{t('What do you want to do?')}</AXBISectionTitle>
+              <AXBISectionTitle>
+                {t('What do you want to do?')}
+              </AXBISectionTitle>
               <AXBISectionDescription>
                 {t('Jump in with search or open your library.')}
               </AXBISectionDescription>
@@ -606,7 +704,7 @@ function Welcome({ user, addDangerToast }: WelcomeProps) {
                   activityData[TableTab.Created]) &&
                 activeChild !== 'Loading' ? (
                   <ActivityTable
-                    user={{ userId: user.userId! }}
+                    user={{ userId: userid as number }}
                     activeChild={activeChild}
                     setActiveChild={setActiveChild}
                     activityData={activityData}

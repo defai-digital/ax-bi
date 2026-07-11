@@ -19,17 +19,23 @@ These features live in `ax-bi-frontend/` and work in both the browser and the Ta
 
 These features live in `superset-desktop/` and require the native app:
 
-- **Native window** — Standalone desktop launcher for local or hosted AX BI
+- **Native window** — Standalone desktop shell for local or hosted AX BI
+- **First-run home** — Run a local Docker instance or connect to a remote server (ops controls stay under Advanced)
+- **Full-bleed BI** — Once open, the web app fills the window (no extra desktop top bar)
+- **Desktop actions in web Settings** — Desktop home / Desktop settings (also ⌘, / ⌘⇧H)
+- **Settings drawer** — Local instance, remote connection, theme; runtime logs/deps behind Advanced
 - **Deep links** — `axbi://dashboard/{id}`, `axbi://chart/{id}` open directly in the app
 - **System tray** — Quick access to dashboards and SQL Lab (infrastructure in place)
 - **Cross-platform builds** — macOS, Windows, and Linux via GitHub Actions
 
 ## Architecture
 
-The desktop client is a **thin shell** with a bundled launcher. It does **not**
-bundle the Python backend, database drivers, or any server-side components. The
-launcher can connect to a hosted AX BI server or manage a local container
-runtime for trials.
+The desktop client is a **thin shell** with a bundled product launcher. It does
+**not** bundle the Python backend, database drivers, or any server-side
+components. The home screen offers two primary paths: run a local Docker-based
+instance (app-managed Colima/Compose), or connect to a hosted AX BI server.
+Colima/Docker status, logs, and prepare/stop/update controls live under
+**Settings → Advanced runtime**.
 
 ## Recommended User Install
 
@@ -82,14 +88,27 @@ contract, Homebrew cask shape, and security boundary.
 
 ### 1. Launch the Tauri desktop shell
 
+Run from the **desktop package directory** (not the monorepo root — there is no
+root `npm run dev` for this app):
+
 ```bash
 cd superset-desktop
 npm install           # First time only
 npm run dev           # Builds Rust + launches native window
 ```
 
-The Tauri window opens the bundled launcher. Use it to start a local AX BI
-runtime or connect to an existing server.
+The first `cargo` build can take several minutes. When the window opens:
+
+1. **Run locally** — prepares/starts the app-managed Colima + Docker stack, or
+2. **Connect to server** — paste a hosted AX BI URL
+
+When local AX BI is healthy, the shell opens the web app full-bleed and shows a
+**Local admin login** toast (also under Settings → Advanced → Credentials).
+
+Default local login:
+
+- username: `admin`
+- password: `admin`
 
 ### 2. Optional local backend
 

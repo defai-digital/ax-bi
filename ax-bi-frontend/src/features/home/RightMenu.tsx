@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FC, PureComponent, useMemo } from 'react';
+import { FC, PureComponent, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { t } from '@apache-superset/core/translation';
@@ -52,6 +52,14 @@ import { useLanguageMenuItems } from './LanguagePicker';
 import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
 import { orderCreateMenuItems } from './createMenuOrder';
+import {
+  DESKTOP_SHELL_CHANGE_EVENT,
+  getDesktopShellStatus,
+  isDesktopShellActive,
+  postDesktopShellAction,
+  SHELL_OPEN_HOME_MESSAGE_TYPE,
+  SHELL_OPEN_SETTINGS_MESSAGE_TYPE,
+} from 'src/theme/desktopShell';
 import { resolveSettingsMenuIconKey } from './settingsMenuIcons';
 
 const extensionsRegistry = getExtensionsRegistry();
@@ -130,6 +138,28 @@ const RightMenu = ({
   const theme = useTheme();
   const commandPalette = useOptionalCommandPalette();
   const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
+  const [desktopShellActive, setDesktopShellActive] = useState(() =>
+    isDesktopShellActive(),
+  );
+  const [desktopShellStatus, setDesktopShellStatus] = useState(() =>
+    getDesktopShellStatus(),
+  );
+
+  useEffect(() => {
+    const onShellChange = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        { active?: boolean; status?: string | null } | undefined;
+      setDesktopShellActive(Boolean(detail?.active ?? isDesktopShellActive()));
+      setDesktopShellStatus(detail?.status ?? getDesktopShellStatus());
+    };
+    window.addEventListener(DESKTOP_SHELL_CHANGE_EVENT, onShellChange);
+    // Parent may have already sent shell:hello before this mounted.
+    setDesktopShellActive(isDesktopShellActive());
+    setDesktopShellStatus(getDesktopShellStatus());
+    return () => {
+      window.removeEventListener(DESKTOP_SHELL_CHANGE_EVENT, onShellChange);
+    };
+  }, []);
   const dashboardId = useSelector<RootState, number | undefined>(
     state => state.dashboardInfo?.id,
   );
@@ -309,6 +339,39 @@ const RightMenu = ({
           items.push({ type: 'divider', key: `divider_${index}` });
         }
       });
+
+      if (desktopShellActive) {
+        items.push({ type: 'divider', key: 'desktop-divider' });
+        const desktopChildren: MenuItem[] = [];
+        if (desktopShellStatus) {
+          desktopChildren.push({
+            key: 'desktop-status',
+            disabled: true,
+            label: desktopShellStatus,
+          });
+        }
+        desktopChildren.push(
+          {
+            key: 'desktop-home',
+            icon: <Icons.HomeOutlined />,
+            label: t('Desktop home'),
+            onClick: () => postDesktopShellAction(SHELL_OPEN_HOME_MESSAGE_TYPE),
+          },
+          {
+            key: 'desktop-settings',
+            icon: <Icons.SettingOutlined />,
+            label: t('Desktop settings'),
+            onClick: () =>
+              postDesktopShellAction(SHELL_OPEN_SETTINGS_MESSAGE_TYPE),
+          },
+        );
+        items.push({
+          type: 'group',
+          label: t('Desktop'),
+          key: 'desktop-section',
+          children: desktopChildren,
+        });
+      }
 
       if (!navbarRight.user_is_anonymous) {
         items.push({ type: 'divider', key: 'user-divider' });
@@ -545,6 +608,8 @@ const RightMenu = ({
     theme,
     environmentTag,
     handleLogout,
+    desktopShellActive,
+    desktopShellStatus,
   ]);
 
   return (

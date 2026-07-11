@@ -28,6 +28,9 @@ use tauri::{AppHandle, Manager, Runtime};
 const AXBI_COLIMA_PROFILE: &str = "ax-bi";
 const AXBI_COMPOSE_PROJECT: &str = "axbi";
 const AXBI_ADMIN_USERNAME: &str = "admin";
+/// Default local admin password for desktop-managed instances.
+/// Matches docker/docker-init.sh default (`admin` / `admin`).
+const AXBI_ADMIN_PASSWORD: &str = "admin";
 const AXBI_WEB_URL: &str = "http://127.0.0.1:8088/ax-bi/welcome/";
 const AXBI_HEALTH_HOST: &str = "127.0.0.1";
 const AXBI_HEALTH_PORT: u16 = 8088;
@@ -420,7 +423,8 @@ pub fn logs<R: Runtime>(
 pub fn credentials<R: Runtime>(app: &AppHandle<R>) -> Result<LocalAdminCredentials, String> {
     let env_file = env_file(&runtime_dir(app)?);
     let password = read_env_value(&env_file, "ADMIN_PASSWORD")?
-        .ok_or_else(|| "Local AX BI admin password has not been generated".to_string())?;
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| AXBI_ADMIN_PASSWORD.to_string());
 
     Ok(LocalAdminCredentials {
         username: AXBI_ADMIN_USERNAME.to_string(),
@@ -475,7 +479,7 @@ fn build_env_file() -> Result<String, String> {
 
 AX_BI_SECRET_KEY={}
 DATABASE_PASSWORD={}
-ADMIN_PASSWORD={}
+ADMIN_PASSWORD={AXBI_ADMIN_PASSWORD}
 
 AXBI_IMAGE=ghcr.io/defai-digital/ax-bi:latest
 AX_SERVICES_IMAGE=ghcr.io/defai-digital/ax-bi-services:latest
@@ -510,7 +514,7 @@ AI_SEMANTIC_EMBEDDING_MODEL=Qwen/Qwen3-Embedding-0.6B
 AI_SEMANTIC_EMBEDDING_DIMENSIONS=1024
 AI_SEMANTIC_EMBEDDING_TIMEOUT=120
 
-MCP_DEV_USERNAME=admin
+MCP_DEV_USERNAME={AXBI_ADMIN_USERNAME}
 MCP_AUTH_ENABLED=false
 MCP_JWT_ISSUER=
 MCP_JWT_AUDIENCE=
@@ -519,7 +523,6 @@ MCP_REQUIRED_SCOPES=
 "#,
         random_hex(48)?,
         random_hex(32)?,
-        random_hex(18)?
     ))
 }
 
@@ -842,7 +845,8 @@ fn path_to_string(path: &Path) -> String {
 mod tests {
     use super::{
         build_env_file, migrate_env_content, read_env_value_from_str, tail_lines,
-        validate_log_service, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        validate_log_service, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME, LOCAL_COMPOSE_YAML,
+        MAX_LOG_TAIL_LINES,
     };
 
     #[test]
@@ -859,14 +863,17 @@ mod tests {
 
         assert!(read_env_value_from_str(&env_file, "AX_BI_SECRET_KEY").is_some());
         assert!(read_env_value_from_str(&env_file, "DATABASE_PASSWORD").is_some());
-        assert!(read_env_value_from_str(&env_file, "ADMIN_PASSWORD").is_some());
+        assert_eq!(
+            read_env_value_from_str(&env_file, "ADMIN_PASSWORD").unwrap(),
+            AXBI_ADMIN_PASSWORD
+        );
         assert_eq!(
             read_env_value_from_str(&env_file, "TALISMAN_ENABLED").unwrap(),
             "false"
         );
         assert_eq!(
             read_env_value_from_str(&env_file, "MCP_DEV_USERNAME").unwrap(),
-            "admin"
+            AXBI_ADMIN_USERNAME
         );
     }
 

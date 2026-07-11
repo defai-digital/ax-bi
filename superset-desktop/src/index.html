@@ -26,170 +26,271 @@ under the License.
     <script type="module" src="./main.js"></script>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div>
-          <h1>AX BI</h1>
-          <p id="summary">Checking local runtime</p>
-        </div>
-        <nav class="tabs" aria-label="AX BI sections">
-          <button
-            id="biTab"
-            class="tab-button active"
-            type="button"
-            aria-controls="biPanel"
-            aria-selected="true"
-          >
-            BI
-          </button>
-          <button
-            id="settingsTab"
-            class="tab-button"
-            type="button"
-            aria-controls="settingsPanel"
-            aria-selected="false"
-          >
-            Settings
-          </button>
-        </nav>
-      </header>
+    <div class="app-shell" id="appShell">
+      <!-- BI stage: full-bleed iframe when connected (desktop chrome lives in web nav) -->
+      <section class="bi-stage" id="biStage" aria-label="AX BI">
+        <iframe
+          id="biFrame"
+          class="bi-frame hidden"
+          title="AX BI web app"
+          sandbox="allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+          allow="clipboard-read; clipboard-write"
+          referrerpolicy="no-referrer"
+        ></iframe>
 
-      <section id="biPanel" class="tab-panel active" aria-labelledby="biTab">
-        <div class="bi-stage">
-          <iframe
-            id="biFrame"
-            class="bi-frame hidden"
-            title="AX BI web app"
-            sandbox="allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-            allow="clipboard-read; clipboard-write"
-            referrerpolicy="no-referrer"
-          ></iframe>
-          <div id="biPlaceholder" class="bi-placeholder" aria-live="polite">
-            <p id="biPlaceholderText">Use Settings to start AX BI.</p>
+        <!-- Compact controls for pre-login / when web nav is unavailable -->
+        <div id="frameControls" class="frame-controls hidden" aria-label="Desktop controls">
+          <button
+            id="openHome"
+            class="icon-button"
+            type="button"
+            title="Desktop home (⌘⇧H)"
+            aria-label="Desktop home"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M2.5 7.2 8 2.5l5.5 4.7V13a.8.8 0 0 1-.8.8H9.2V10H6.8v3.8H3.3a.8.8 0 0 1-.8-.8V7.2Z"
+                stroke="currentColor"
+                stroke-width="1.25"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            id="openSettings"
+            class="icon-button"
+            type="button"
+            title="Desktop settings (⌘,)"
+            aria-label="Desktop settings"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M6.7 2.2h2.6l.3 1.4c.4.1.8.3 1.1.5l1.3-.6 1.3 1.3-.6 1.3c.2.3.4.7.5 1.1l1.4.3v2.6l-1.4.3c-.1.4-.3.8-.5 1.1l.6 1.3-1.3 1.3-1.3-.6c-.3.2-.7.4-1.1.5l-.3 1.4H6.7l-.3-1.4a4.5 4.5 0 0 1-1.1-.5l-1.3.6-1.3-1.3.6-1.3a4.5 4.5 0 0 1-.5-1.1L1.4 8.7V6.1l1.4-.3c.1-.4.3-.8.5-1.1l-.6-1.3L4 2.1l1.3.6c.3-.2.7-.4 1.1-.5l.3-1.4Z"
+                stroke="currentColor"
+                stroke-width="1.15"
+                stroke-linejoin="round"
+              />
+              <circle cx="8" cy="8" r="1.8" stroke="currentColor" stroke-width="1.15" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Home / first-run -->
+        <div id="homeView" class="home-view">
+          <div class="home-card">
+            <div class="home-brand">
+              <div class="home-logo" aria-hidden="true">AX</div>
+              <div>
+                <h1>AX BI</h1>
+                <p id="summary">Checking local runtime…</p>
+              </div>
+            </div>
+
+            <div class="home-paths">
+              <button id="pathLocal" class="path-card path-card-primary" type="button">
+                <span class="path-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <rect
+                      x="3.5"
+                      y="4.5"
+                      width="13"
+                      height="9"
+                      rx="1.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M7 16.5h6M10 13.5v3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
+                <span class="path-body">
+                  <strong id="localPathTitle">Run locally</strong>
+                  <span id="localPathDesc"
+                    >Start AX BI on this Mac with the app-managed Docker
+                    runtime.</span
+                  >
+                </span>
+              </button>
+
+              <button id="pathConnect" class="path-card" type="button">
+                <span class="path-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M4 10h12M11 5l5 5-5 5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span class="path-body">
+                  <strong>Connect to server</strong>
+                  <span>Use a hosted or team-managed AX BI instance.</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="home-footer">
+              <button id="homeOpenSettings" class="text-button" type="button">
+                Settings &amp; advanced runtime
+              </button>
+              <div id="activity" class="activity" aria-live="polite">Ready</div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section
-        id="settingsPanel"
-        class="tab-panel settings-panel"
-        aria-labelledby="settingsTab"
+      <!-- Busy toast -->
+      <div id="busyBanner" class="busy-banner hidden" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="busyMessage">Working</span>
+      </div>
+
+      <!-- Local login credentials toast -->
+      <div
+        id="credentialsToast"
+        class="credentials-toast hidden"
+        role="status"
+        aria-live="polite"
       >
-        <section id="busyBanner" class="busy-banner hidden" aria-live="polite">
-          <span class="spinner" aria-hidden="true"></span>
-          <span id="busyMessage">Working</span>
-        </section>
+        <div class="credentials-toast-body">
+          <strong>Local admin login</strong>
+          <pre id="credentialsToastText" class="credentials-toast-text"></pre>
+        </div>
+        <div class="credentials-toast-actions">
+          <button id="copyCredentials" class="button button-secondary" type="button">
+            Copy
+          </button>
+          <button id="dismissCredentials" class="icon-button" type="button" aria-label="Dismiss">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M4 4l8 8M12 4l-8 8"
+                stroke="currentColor"
+                stroke-width="1.4"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-        <section class="status-band" aria-label="Runtime status">
-          <div class="metric">
-            <span class="metric-label">Runtime</span>
-            <strong id="runtimeState">Checking</strong>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Colima</span>
-            <strong id="colimaState">Checking</strong>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Docker</span>
-            <strong id="dockerState">Checking</strong>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Health</span>
-            <strong id="healthState">Checking</strong>
-          </div>
-        </section>
-
-        <section class="workspace-grid">
-          <div class="panel panel-primary">
-            <div class="panel-header">
-              <div>
-                <h2>Local Instance</h2>
-                <p id="runtimeDir">Runtime directory pending</p>
-              </div>
+      <!-- Settings overlay -->
+      <div
+        id="settingsOverlay"
+        class="overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsTitle"
+      >
+        <button
+          id="settingsBackdrop"
+          class="overlay-backdrop"
+          type="button"
+          aria-label="Close settings"
+        ></button>
+        <aside class="settings-drawer" id="settingsDrawer">
+          <div class="drawer-header">
+            <div>
+              <h2 id="settingsTitle">Settings</h2>
+              <p class="drawer-sub">Local instance, remote server, and theme</p>
             </div>
-
-            <div class="command-grid">
-              <button
-                id="prepare"
-                class="button button-secondary"
-                type="button"
-              >
-                Prepare
-              </button>
-              <button id="start" class="button button-primary" type="button">
-                Start
-              </button>
-              <button id="stop" class="button button-secondary" type="button">
-                Stop
-              </button>
-              <button
-                id="restart"
-                class="button button-secondary"
-                type="button"
-              >
-                Restart
-              </button>
-              <button id="update" class="button button-secondary" type="button">
-                Update
-              </button>
-              <button
-                id="credentials"
-                class="button button-secondary"
-                type="button"
-              >
-                Credentials
-              </button>
-            </div>
-
-            <div class="field-grid">
-              <label>
-                <span>Web app</span>
-                <input
-                  id="webUrl"
-                  readonly
-                  value="http://127.0.0.1:8088/ax-bi/welcome/"
+            <button
+              id="closeSettings"
+              class="icon-button"
+              type="button"
+              aria-label="Close settings"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M4 4l8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
                 />
-              </label>
-              <label>
-                <span>MCP</span>
-                <input id="mcpUrl" readonly value="http://127.0.0.1:5008/mcp" />
-              </label>
-            </div>
-
-            <div id="credentialsBox" class="credentials-box hidden"></div>
+              </svg>
+            </button>
           </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <div>
-                <h2>Connect</h2>
-                <p>Use a hosted or team-managed AX BI instance.</p>
+          <div class="drawer-body">
+            <section class="settings-section">
+              <h3>Local instance</h3>
+              <p class="section-hint" id="runtimeDir">Runtime directory pending</p>
+              <div class="status-row" aria-label="Runtime status">
+                <div class="status-chip">
+                  <span class="status-label">Runtime</span>
+                  <strong id="runtimeState">Checking</strong>
+                </div>
+                <div class="status-chip">
+                  <span class="status-label">Health</span>
+                  <strong id="healthState">Checking</strong>
+                </div>
+                <div class="status-chip">
+                  <span class="status-label">Colima</span>
+                  <strong id="colimaState">Checking</strong>
+                </div>
+                <div class="status-chip">
+                  <span class="status-label">Docker</span>
+                  <strong id="dockerState">Checking</strong>
+                </div>
               </div>
-            </div>
-            <form id="connectForm" class="connect-form">
-              <label>
-                <span>Server URL</span>
-                <input
-                  id="serverUrl"
-                  type="url"
-                  inputmode="url"
-                  placeholder="https://ax-bi.example.com"
-                />
-              </label>
-              <button class="button button-primary" type="submit">
-                Connect
-              </button>
-            </form>
-            <div class="settings-control">
-              <span>Theme</span>
+              <div class="button-row">
+                <button id="start" class="button button-primary" type="button">
+                  Start
+                </button>
+                <button id="openLocal" class="button button-secondary" type="button">
+                  Open BI
+                </button>
+              </div>
+              <div class="field-grid compact">
+                <label class="field">
+                  <span>Web app</span>
+                  <input
+                    id="webUrl"
+                    readonly
+                    value="http://127.0.0.1:8088/ax-bi/welcome/"
+                  />
+                </label>
+                <label class="field">
+                  <span>MCP</span>
+                  <input id="mcpUrl" readonly value="http://127.0.0.1:5008/mcp" />
+                </label>
+              </div>
+              <div id="credentialsBox" class="credentials-box hidden"></div>
+            </section>
+
+            <section class="settings-section">
+              <h3>Connect to server</h3>
+              <p class="section-hint">Open a hosted or team-managed AX BI instance.</p>
+              <form id="connectForm" class="connect-form">
+                <label class="field">
+                  <span>Server URL</span>
+                  <input
+                    id="serverUrl"
+                    type="url"
+                    inputmode="url"
+                    autocomplete="url"
+                    placeholder="https://ax-bi.example.com"
+                  />
+                </label>
+                <button class="button button-primary" type="submit">Connect</button>
+              </form>
+            </section>
+
+            <section class="settings-section">
+              <h3>Theme</h3>
               <div
                 id="themeControl"
-                class="theme-control"
+                class="segmented"
                 role="group"
                 aria-label="Theme"
               >
                 <button
-                  class="theme-option"
+                  class="segment"
                   type="button"
                   data-theme-mode="default"
                   aria-pressed="false"
@@ -197,7 +298,7 @@ under the License.
                   Light
                 </button>
                 <button
-                  class="theme-option"
+                  class="segment"
                   type="button"
                   data-theme-mode="dark"
                   aria-pressed="false"
@@ -205,7 +306,7 @@ under the License.
                   Dark
                 </button>
                 <button
-                  class="theme-option"
+                  class="segment"
                   type="button"
                   data-theme-mode="system"
                   aria-pressed="false"
@@ -213,70 +314,62 @@ under the License.
                   System
                 </button>
               </div>
-            </div>
-            <div class="settings-actions">
-              <button
-                id="refresh"
-                class="button button-secondary"
-                type="button"
-              >
-                Refresh
-              </button>
-              <button
-                id="openLocal"
-                class="button button-primary"
-                type="button"
-              >
-                Show BI
-              </button>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        <section class="workspace-grid lower-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <div>
-                <h2>Dependencies</h2>
-                <p>Installed tools available to the launcher.</p>
-              </div>
-            </div>
-            <div id="dependencies" class="dependency-list"></div>
-          </div>
+            <details class="advanced" id="advancedPanel">
+              <summary>Advanced runtime</summary>
+              <div class="advanced-body">
+                <div class="button-row wrap">
+                  <button id="prepare" class="button button-secondary" type="button">
+                    Prepare
+                  </button>
+                  <button id="stop" class="button button-secondary" type="button">
+                    Stop
+                  </button>
+                  <button id="restart" class="button button-secondary" type="button">
+                    Restart
+                  </button>
+                  <button id="update" class="button button-secondary" type="button">
+                    Update
+                  </button>
+                  <button id="credentials" class="button button-secondary" type="button">
+                    Credentials
+                  </button>
+                  <button id="refresh" class="button button-secondary" type="button">
+                    Refresh status
+                  </button>
+                </div>
 
-          <div class="panel">
-            <div class="panel-header panel-header-inline">
-              <div>
-                <h2>Logs</h2>
-                <p>Recent output from the local AX BI stack.</p>
-              </div>
-              <div class="log-controls">
-                <select id="logService" aria-label="Log service">
-                  <option value="">All services</option>
-                  <option value="ax-bi">ax-bi</option>
-                  <option value="ax-bi-init">ax-bi-init</option>
-                  <option value="mcp">mcp</option>
-                  <option value="ax-services">ax-services</option>
-                  <option value="db">db</option>
-                  <option value="redis">redis</option>
-                </select>
-                <button
-                  id="loadLogs"
-                  class="button button-secondary"
-                  type="button"
-                >
-                  Load
-                </button>
-              </div>
-            </div>
-            <pre id="logs" class="logs" aria-live="polite"></pre>
-          </div>
-        </section>
+                <div class="advanced-block">
+                  <h4>Dependencies</h4>
+                  <div id="dependencies" class="dependency-list"></div>
+                </div>
 
-        <footer class="activity-bar">
-          <div id="activity" class="activity">Ready</div>
-        </footer>
-      </section>
-    </main>
+                <div class="advanced-block">
+                  <div class="log-header">
+                    <h4>Logs</h4>
+                    <div class="log-controls">
+                      <select id="logService" aria-label="Log service">
+                        <option value="">All services</option>
+                        <option value="ax-bi">ax-bi</option>
+                        <option value="ax-bi-init">ax-bi-init</option>
+                        <option value="mcp">mcp</option>
+                        <option value="ax-services">ax-services</option>
+                        <option value="db">db</option>
+                        <option value="redis">redis</option>
+                      </select>
+                      <button id="loadLogs" class="button button-secondary" type="button">
+                        Load
+                      </button>
+                    </div>
+                  </div>
+                  <pre id="logs" class="logs" aria-live="polite"></pre>
+                </div>
+              </div>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </div>
   </body>
 </html>
