@@ -55,7 +55,7 @@ openapi-schema-validator>=0.6.3
 # Pin setuptools until remaining pkg_resources users migrate to importlib.metadata
 # Known affected packages: Preset's 'clients' package
 # See docs/docs/contributing/pkg-resources-migration.md for details
-setuptools>=82.0.1,<83
+setuptools>=83.0.0,<84
 
 # google-auth 2.53+ dropped its transitive dependency on cachetools, which is
 # imported directly by axbi.db_engine_specs.aws_iam. We declare cachetools
