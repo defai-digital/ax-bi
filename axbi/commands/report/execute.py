@@ -15,8 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from datetime import datetime, timedelta
+from time import monotonic
 from typing import Any, cast
 from uuid import UUID
 
@@ -49,6 +51,7 @@ from axbi.commands.report.exceptions import (
 from axbi.common.chart_data import ChartDataResultFormat, ChartDataResultType
 from axbi.daos.report import (
     REPORT_SCHEDULE_ERROR_NOTIFICATION_MARKER,
+    ReportExecutionLogDAO,
     ReportScheduleDAO,
 )
 from axbi.dashboards.permalink.types import DashboardPermalinkState
@@ -57,7 +60,6 @@ from axbi.exceptions import AxBIErrorsException, AxBIException
 from axbi.extensions import feature_flag_manager, machine_auth_provider_factory
 from axbi.reports.models import (
     ReportDataFormat,
-    ReportExecutionLog,
     ReportRecipients,
     ReportRecipientType,
     ReportSchedule,
@@ -99,6 +101,37 @@ def _get_slack_channel_name_and_id(channel: object) -> tuple[str, str] | None:
     return name, channel_id
 
 
+@contextmanager
+def _log_timed_operation(operation: str, execution_id: UUID) -> Iterator[None]:
+    """Log a report operation's monotonic duration on completion or failure."""
+    started_at = monotonic()
+    try:
+        yield
+    except SoftTimeLimitExceeded:
+        logger.warning(
+            "%s timed out after %.2fs - execution_id: %s",
+            operation,
+            monotonic() - started_at,
+            execution_id,
+        )
+        raise
+    except Exception:
+        logger.exception(
+            "%s failed after %.2fs - execution_id: %s",
+            operation,
+            monotonic() - started_at,
+            execution_id,
+        )
+        raise
+    else:
+        logger.info(
+            "%s completed in %.2fs - execution_id: %s",
+            operation,
+            monotonic() - started_at,
+            execution_id,
+        )
+
+
 class BaseReportState:
     current_states: list[ReportState] = []
     initial: bool = False
@@ -137,12 +170,11 @@ class BaseReportState:
         execution log.
         """
 
-        if state == ReportState.WORKING:
-            self._report_schedule.last_value = None
-            self._report_schedule.last_value_row_json = None
-
-        self._report_schedule.last_state = state
-        self._report_schedule.last_eval_dttm = naive_utcnow()
+        ReportScheduleDAO.set_execution_state(
+            self._report_schedule,
+            state,
+            evaluated_at=naive_utcnow(),
+        )
 
     def update_report_schedule_slack_v2(self) -> None:
         """
@@ -213,18 +245,14 @@ class BaseReportState:
         from sqlalchemy.orm.exc import StaleDataError
 
         try:
-            log = ReportExecutionLog(
+            ReportExecutionLogDAO.create_for_schedule(
+                report_schedule=self._report_schedule,
                 scheduled_dttm=self._scheduled_dttm,
                 start_dttm=self._start_dttm,
                 end_dttm=naive_utcnow(),
-                value=self._report_schedule.last_value,
-                value_row_json=self._report_schedule.last_value_row_json,
-                state=self._report_schedule.last_state,
                 error_message=error_message,
-                report_schedule=self._report_schedule,
-                uuid=self._execution_id,
+                execution_id=self._execution_id,
             )
-            db.session.add(log)
             db.session.commit()  # pylint: disable=consider-using-transaction
         except StaleDataError as ex:
             # Report schedule was modified or deleted by another process
@@ -478,8 +506,6 @@ class BaseReportState:
         Get chart or dashboard screenshots
         :raises: ReportScheduleScreenshotFailedError
         """
-        start_time = naive_utcnow()
-
         _, username = get_executor(
             executors=app.config["ALERT_REPORTS_EXECUTORS"],
             model=self._report_schedule,
@@ -520,36 +546,20 @@ class BaseReportState:
                 )
                 for url in urls
             ]
+        imges: list[bytes] = []
         try:
-            imges = []
-            for screenshot in screenshots:
-                imge = screenshot.get_screenshot(user=user)
-                if imge is None:
-                    raise ReportScheduleScreenshotFailedError(
-                        "Screenshot failed; aborting to avoid sending a partial report"
-                    )
-                imges.append(imge)
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.info(
-                "Screenshot capture took %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
+            with _log_timed_operation("Screenshot capture", self._execution_id):
+                for screenshot in screenshots:
+                    imge = screenshot.get_screenshot(user=user)
+                    if imge is None:
+                        raise ReportScheduleScreenshotFailedError(
+                            "Screenshot failed; aborting to avoid sending a partial "
+                            "report"
+                        )
+                    imges.append(imge)
         except SoftTimeLimitExceeded as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.warning(
-                "Screenshot timeout after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleScreenshotTimeout() from ex
         except Exception as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.error(
-                "Screenshot failed after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleScreenshotFailedError(
                 f"Failed taking a screenshot {str(ex)}"
             ) from ex
@@ -566,7 +576,6 @@ class BaseReportState:
         return build_pdf_from_screenshots(screenshots)
 
     def _get_csv_data(self) -> bytes:
-        start_time = naive_utcnow()
         url = self._get_url(result_format=ChartDataResultFormat.CSV)
         _, username = get_executor(
             executors=app.config["ALERT_REPORTS_EXECUTORS"],
@@ -579,35 +588,18 @@ class BaseReportState:
             logger.warning("No query context found, taking a screenshot to generate it")
             self._update_query_context()
 
+        csv_data: bytes | None = None
         try:
-            csv_data = get_chart_csv_data(
-                chart_url=url,
-                auth_cookies=auth_cookies,
-                timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
-            )
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.info(
-                "CSV data generation from %s as user %s took %.2fs - execution_id: %s",
-                url,
-                username,
-                elapsed_seconds,
-                self._execution_id,
-            )
+            operation = f"CSV data generation from {url} as user {username}"
+            with _log_timed_operation(operation, self._execution_id):
+                csv_data = get_chart_csv_data(
+                    chart_url=url,
+                    auth_cookies=auth_cookies,
+                    timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
+                )
         except SoftTimeLimitExceeded as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.warning(
-                "CSV generation timeout after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleCsvTimeout() from ex
         except Exception as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.exception(
-                "CSV generation failed after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleCsvFailedError(
                 f"Failed generating csv {str(ex)}"
             ) from ex
@@ -619,8 +611,6 @@ class BaseReportState:
         """
         Return data as a Pandas dataframe, to embed in notifications as a table.
         """
-        start_time = naive_utcnow()
-
         url = self._get_url(result_format=ChartDataResultFormat.JSON)
         _, username = get_executor(
             executors=app.config["ALERT_REPORTS_EXECUTORS"],
@@ -633,35 +623,18 @@ class BaseReportState:
             logger.warning("No query context found, taking a screenshot to generate it")
             self._update_query_context()
 
+        dataframe: pd.DataFrame | None = None
         try:
-            dataframe = get_chart_dataframe(
-                url,
-                auth_cookies,
-                timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
-            )
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.info(
-                "DataFrame generation from %s as user %s took %.2fs - execution_id: %s",
-                url,
-                username,
-                elapsed_seconds,
-                self._execution_id,
-            )
+            operation = f"DataFrame generation from {url} as user {username}"
+            with _log_timed_operation(operation, self._execution_id):
+                dataframe = get_chart_dataframe(
+                    url,
+                    auth_cookies,
+                    timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
+                )
         except SoftTimeLimitExceeded as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.warning(
-                "DataFrame generation timeout after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleDataFrameTimeout() from ex
         except Exception as ex:
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.error(
-                "DataFrame generation failed after %.2fs - execution_id: %s",
-                elapsed_seconds,
-                self._execution_id,
-            )
             raise ReportScheduleDataFrameFailedError(
                 f"Failed generating dataframe {str(ex)}"
             ) from ex
@@ -1235,19 +1208,12 @@ class AsyncExecuteReportScheduleCommand(BaseCommand):
             )
             user = security_manager.find_user(username)
 
-            start_time = naive_utcnow()
-            with override_user(user):
-                ReportScheduleStateMachine(
-                    self._execution_id, self._model, self._scheduled_dttm
-                ).run()
-
-            elapsed_seconds = (naive_utcnow() - start_time).total_seconds()
-            logger.info(
-                "Report execution as user %s completed in %.2fs - execution_id: %s",
-                username,
-                elapsed_seconds,
-                self._execution_id,
-            )
+            operation = f"Report execution as user {username}"
+            with _log_timed_operation(operation, self._execution_id):
+                with override_user(user):
+                    ReportScheduleStateMachine(
+                        self._execution_id, self._model, self._scheduled_dttm
+                    ).run()
         except CommandException:
             raise
         except Exception as ex:
@@ -1260,8 +1226,9 @@ class AsyncExecuteReportScheduleCommand(BaseCommand):
             self._model_id,
             self._execution_id,
         )
-        self._model = (
-            db.session.query(ReportSchedule).filter_by(id=self._model_id).one_or_none()
+        self._model = ReportScheduleDAO.find_one_or_none(
+            skip_base_filter=True,
+            id=self._model_id,
         )
         if not self._model:
             raise ReportScheduleNotFoundError()

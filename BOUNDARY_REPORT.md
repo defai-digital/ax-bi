@@ -24,6 +24,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Replacing the legacy Python license scanner's removed `pkg_resources`
   dependency and excluding generated AX Office compatibility artifacts from
   source control.
+- Moving report execution state and log construction behind report DAOs, and
+  consolidating duration logging on a monotonic command helper while retaining
+  command-owned transaction and exception boundaries.
 
 ## Deferred Boundary Areas
 
@@ -34,7 +37,6 @@ They need explicit design, ownership, and wider test coverage before refactor.
 | --- | --- | --- |
 | MCP tool modules and AxBI globals | Tool transport, auth, configuration, logging, persistence, and Flask context are still coupled in parts of `axbi/mcp_service/`. Broad extraction would affect execution and auth paths. | Pick one boundary at a time, starting with a narrow adapter that has existing tests or can receive focused tests. |
 | Frontend list pages | CRUD list pages still repeat orchestration around `useListViewResource`, permissions, filters, bulk actions, and sorting. A shared abstraction could easily become too broad. | Extract only one repeated behavior after tests document it across at least two list pages. |
-| Report command workflow | Timestamp consistency has been fixed, but report execution still mixes state persistence and elapsed-time branches. | Treat as a command workflow refactor, not a cleanup patch. |
 | Pandas postprocessing compatibility | Version-compatibility branches live near transformation logic. They are small and covered by focused tests. | Leave local unless more pandas-version branches appear. |
 
 ## Refactor Guidance
