@@ -137,7 +137,7 @@ class TestOpenSqlLabWithContext:
             params = parse_qs(parsed.query)
 
             assert parsed.scheme == "https"
-            assert parsed.netloc == "axbi.example.com"
+            assert parsed.netloc == "ax-bi.example.com"
             assert parsed.path == "/sqllab"
             assert params["dbid"] == ["7"]
             assert params["schema"] == ["analytics"]
