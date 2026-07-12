@@ -18,7 +18,9 @@
  * under the License.
  */
 /* eslint-disable no-param-reassign, react/sort-prop-types */
-import d3 from 'd3';
+import { select, descending } from 'd3-selection';
+import { chord as d3Chord, ribbon } from 'd3-chord';
+import { arc as d3Arc } from 'd3-shape';
 import { getNumberFormatter, CategoricalColorNamespace } from '@ax-bi/ui-core';
 
 interface ChordData {
@@ -40,7 +42,7 @@ function Chord(element: HTMLElement, props: ChordProps) {
 
   element.innerHTML = '';
 
-  const div = d3.select(element);
+  const div = select(element);
   div.classed('axbi-legacy-chart-chord', true);
   const { nodes, matrix } = data;
   const f = getNumberFormatter(numberFormat);
@@ -49,89 +51,89 @@ function Chord(element: HTMLElement, props: ChordProps) {
   const outerRadius = Math.min(width, height) / 2 - 10;
   const innerRadius = outerRadius - 24;
 
-  // d3 v3 data-bound selections use any for the datum generic parameter
-  // because the d3 v3 typings cannot represent the actual chord layout data types
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let chord: d3.Selection<any>;
+  let chordSel: any;
 
-  const arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+  const arc = d3Arc().innerRadius(innerRadius).outerRadius(outerRadius);
 
-  const layout = d3.layout
-    .chord()
-    .padding(0.04)
-    .sortSubgroups(d3.descending)
-    .sortChords(d3.descending);
+  const layout = d3Chord()
+    .padAngle(0.04)
+    .sortSubgroups(descending)
+    .sortChords(descending);
 
-  const path = d3.svg.chord().radius(innerRadius);
+  const ribbonPath = ribbon().radius(innerRadius);
 
   const svg = div
     .append('svg')
     .attr('width', width)
     .attr('height', height)
-    .on('mouseout', () => chord.classed('fade', false))
+    .on('mouseout', () => chordSel.classed('fade', false))
     .append('g')
     .attr('id', 'circle')
     .attr('transform', `translate(${width / 2}, ${height / 2})`);
 
   svg.append('circle').attr('r', outerRadius);
 
-  // Compute the chord layout.
-  layout.matrix(matrix);
+  // Compute the chord layout (d3-chord returns chords array with .groups).
+  const chords = layout(matrix);
 
   const group = svg
     .selectAll('.group')
-    .data(layout.groups)
+    .data(chords.groups)
     .enter()
     .append('g')
     .attr('class', 'group')
-    .on('mouseover', (d, i) => {
-      chord.classed('fade', p => p.source.index !== i && p.target.index !== i);
+    .on('mouseover', (_event, d) => {
+      chordSel.classed(
+        'fade',
+        p => p.source.index !== d.index && p.target.index !== d.index,
+      );
     });
 
   // Add a mouseover title.
-  group.append('title').text((d, i) => `${nodes[i]}: ${f(d.value)}`);
+  group.append('title').text(d => `${nodes[d.index]}: ${f(d.value)}`);
 
   // Add the group arc.
   const groupPath = group
     .append('path')
-    .attr('id', (d, i) => `group${i}`)
-    // @ts-expect-error -- d3 v3 arc layout is callable at runtime but not typed as Primitive
+    .attr('id', d => `group${d.index}`)
     .attr('d', arc)
-    .style('fill', (d, i) => colorFn(nodes[i], sliceId));
+    .style('fill', d => colorFn(nodes[d.index], sliceId));
 
   // Add a text label.
   const groupText = group.append('text').attr('x', 6).attr('dy', 15);
 
   groupText
     .append('textPath')
-    .attr('xlink:href', (d, i) => `#group${i}`)
-    .text((d, i) => nodes[i]);
+    .attr('xlink:href', d => `#group${d.index}`)
+    .text(d => nodes[d.index]);
   // Remove the labels that don't fit. :(
   groupText
-    .filter(function filter(this: SVGTextElement, d, i) {
-      return (
-        (groupPath[0][i] as SVGPathElement).getTotalLength() / 2 - 16 <
-        this.getComputedTextLength()
-      );
+    .filter(function filter(d, i) {
+      const pathNode = groupPath.nodes()[i] as SVGPathElement;
+      // jsdom does not implement SVGGeometryElement.getTotalLength
+      if (typeof pathNode?.getTotalLength !== 'function') {
+        return false;
+      }
+      return pathNode.getTotalLength() / 2 - 16 < this.getComputedTextLength();
     })
     .remove();
 
   // Add the chords.
-  chord = svg
+  chordSel = svg
     .selectAll('.chord')
-    .data(layout.chords)
+    .data(chords)
     .enter()
     .append('path')
     .attr('class', 'chord')
-    .on('mouseover', d => {
-      chord.classed('fade', p => p !== d);
+    .on('mouseover', (_event, d) => {
+      chordSel.classed('fade', p => p !== d);
     })
     .style('fill', d => colorFn(nodes[d.source.index], sliceId))
-    // @ts-expect-error -- d3 v3 chord layout is callable at runtime but not typed as Primitive
-    .attr('d', path);
+    .attr('d', ribbonPath);
 
   // Add an elaborate mouseover title for each chord.
-  chord
+  chordSel
     .append('title')
     .text(
       d =>

@@ -18,7 +18,11 @@
  * under the License.
  */
 /* eslint-disable react/sort-prop-types */
-import d3 from 'd3';
+import { select, pointer } from 'd3-selection';
+import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
+import { geoPath, geoMercator, geoCentroid } from 'd3-geo';
+import { rgb } from 'd3-color';
+import { json as d3Json } from 'd3-fetch';
 import { extent as d3Extent } from 'd3-array';
 import {
   BinaryQueryObjectFilterClause,
@@ -135,14 +139,14 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   // Check if dashboard is in edit mode
   const isEditMode = container.closest('.dashboard--editing') !== null;
 
-  const path = d3.geo.path();
-  const div = d3.select(container);
+  const path = geoPath();
+  const div = select(container);
   div.classed('axbi-legacy-chart-country-map', true);
   div.selectAll('*').remove();
   container.style.height = `${height}px`;
   container.style.width = `${width}px`;
   const svg = div
-    .append('svg:svg')
+    .append('svg')
     .attr('width', width)
     .attr('height', height)
     .attr('preserveAspectRatio', 'xMidYMid meet');
@@ -151,7 +155,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   if (!isEditMode) {
     svg.style('cursor', 'grab');
   }
-  const backgroundRect = svg
+  svg
     .append('rect')
     .attr('class', 'background')
     .attr('width', width)
@@ -160,8 +164,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   const mapLayer = g.append('g').classed('map-layer', true);
   // Add hover popup for tooltip
   const hoverPopup = div.append('div').attr('class', 'hover-popup');
-  const minMetric = extents[0];
-  const maxMetric = extents[1];
+  const [minMetric, maxMetric] = extents;
   const lowColor = linearColorScale(minMetric) ?? '#99f6e4';
   const highColor = linearColorScale(maxMetric) ?? '#0f766e';
   const noDataColor = '#d9d9d9';
@@ -217,11 +220,9 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   };
 
   // Handle right-click context menu
-  const handleContextMenu = (feature: GeoFeature): void => {
-    const pointerEvent = d3.event;
-
+  const handleContextMenu = (event: MouseEvent, feature: GeoFeature): void => {
     if (typeof onContextMenu === 'function') {
-      pointerEvent?.preventDefault();
+      event?.preventDefault();
     }
 
     const iso = feature?.properties?.ISO;
@@ -233,7 +234,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
     ];
     const drillByFilters = [{ col: entity, op: '==', val: drillVal }];
 
-    onContextMenu(pointerEvent.clientX, pointerEvent.clientY, {
+    onContextMenu(event.clientX, event.clientY, {
       drillToDetail: drillToDetailFilters,
       crossFilter: getCrossFilterDataMask(feature),
       drillBy: { filters: drillByFilters, groupbyFieldName: 'entity' },
@@ -252,9 +253,9 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
     return '';
   };
 
-  const updatePopupPosition = (): void => {
+  const updatePopupPosition = (event: MouseEvent): void => {
     const svgHeight = svg.node().getBoundingClientRect().height;
-    const [x, y] = d3.mouse(svg.node());
+    const [x, y] = pointer(event, svg.node());
     hoverPopup
       .style('display', 'block')
       .style('top', `${y + 30}px`)
@@ -264,14 +265,15 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
 
   const mouseenter = function mouseenter(
     this: SVGPathElement,
+    event: MouseEvent,
     d: GeoFeature,
   ): void {
     // Darken color
     let c: string = colorFn(d);
     if (c) {
-      c = d3.rgb(c).darker().toString();
+      c = rgb(c).darker().toString();
     }
-    d3.select(this).style('fill', c);
+    select(this).style('fill', c);
 
     // Display information popup
     const result = data.filter(r => r.country_id === d?.properties?.ISO);
@@ -281,32 +283,29 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
     hoverPopup
       .style('display', 'block')
       .html(`<div><strong>${regionName}</strong><br>${metricValue}</div>`);
-    updatePopupPosition();
+    updatePopupPosition(event);
   };
 
   // Mouse move handler to update tooltip position
-  const mousemove = function mousemove(): void {
-    updatePopupPosition();
+  const mousemove = function mousemove(event: MouseEvent): void {
+    updatePopupPosition(event);
   };
 
   const mouseout = function mouseout(this: SVGPathElement): void {
-    d3.select(this).style('fill', (d: GeoFeature) => colorFn(d));
+    select(this).style('fill', (d: GeoFeature) => colorFn(d));
     hoverPopup.style('display', 'none');
   };
 
   // Only enable zoom if not in edit mode
   if (!isEditMode) {
-    // Zoom with panning bounds
-    const zoom = d3.behavior
-      .zoom()
+    const zoomBehavior = d3Zoom()
       .scaleExtent([1, 4])
-      .on('zoomstart', () => {
+      .on('start', () => {
         svg.style('cursor', 'grabbing');
       })
-      .on('zoom', () => {
-        const { translate, scale } = d3.event;
-        let [tx, ty] = translate;
-
+      .on('zoom', event => {
+        const { transform } = event;
+        const scale = transform.k;
         const scaledW = width * scale;
         const scaledH = height * scale;
         const minX = Math.min(0, width - scaledW);
@@ -314,15 +313,21 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
         const minY = Math.min(0, height - scaledH);
         const maxY = 0;
 
-        tx = Math.max(Math.min(tx, maxX), minX);
-        ty = Math.max(Math.min(ty, maxY), minY);
+        // Clamp pan so the map cannot be dragged off-canvas. Re-sync d3-zoom
+        // when clamping so the next wheel/drag event does not jump.
+        const tx = Math.max(Math.min(transform.x, maxX), minX);
+        const ty = Math.max(Math.min(transform.y, maxY), minY);
+        if (tx !== transform.x || ty !== transform.y) {
+          // Re-entrancy: next zoom event has the clamped transform and falls
+          // through to the visual update below.
+          svg.call(
+            zoomBehavior.transform,
+            zoomIdentity.translate(tx, ty).scale(scale),
+          );
+          return;
+        }
 
-        // Sync D3's internal translate state with the clamped values so the
-        // next wheel/zoom event starts from the constrained position rather
-        // than the unclamped one (otherwise the view jumps).
-        zoom.translate([tx, ty]);
-
-        g.attr('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+        g.attr('transform', transform.toString());
         const prev = zoomStates.get(element);
         const changed =
           !prev ||
@@ -333,21 +338,21 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
           zoomStates.set(element, { scale, translate: [tx, ty] });
         }
       })
-      .on('zoomend', () => {
+      .on('end', () => {
         svg.style('cursor', 'grab');
       });
 
-    d3.select(svg.node()).call(zoom);
+    svg.call(zoomBehavior);
 
     // Restore previous zoom state if it exists
     const savedZoom = zoomStates.get(element);
     if (savedZoom) {
       const { scale, translate } = savedZoom;
-      zoom.scale(scale).translate(translate);
-      g.attr(
-        'transform',
-        `translate(${translate[0]}, ${translate[1]}) scale(${scale})`,
-      );
+      const restored = zoomIdentity
+        .translate(translate[0], translate[1])
+        .scale(scale);
+      svg.call(zoomBehavior.transform, restored);
+      g.attr('transform', restored.toString());
     }
   }
 
@@ -392,22 +397,21 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
 
   function drawMap(mapData: GeoData): void {
     const { features } = mapData;
-    const center = d3.geo.centroid(mapData);
+    const center = geoCentroid(mapData as any);
     const scale = 100;
-    const projection = d3.geo
-      .mercator()
+    const projection = geoMercator()
       .scale(scale)
       .center(center)
       .translate([width / 2, height / 2]);
     path.projection(projection);
 
-    const bounds = path.bounds(mapData);
+    const bounds = path.bounds(mapData as any);
     const hscale = (scale * width) / (bounds[1][0] - bounds[0][0]);
     const vscale = (scale * height) / (bounds[1][1] - bounds[0][1]);
     const newScale = Math.min(hscale, vscale);
 
     projection.scale(newScale);
-    const newBounds = path.bounds(mapData);
+    const newBounds = path.bounds(mapData as any);
     projection.translate([
       width - (newBounds[0][0] + newBounds[1][0]) / 2,
       height - (newBounds[0][1] + newBounds[1][1]) / 2,
@@ -430,13 +434,13 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
       .on('mousemove', mousemove)
       .on('mouseout', mouseout)
       .on('contextmenu', handleContextMenu)
-      .on('mousedown', function mousedown() {
-        const pos = d3.mouse(svg.node());
+      .on('mousedown', function mousedown(event: MouseEvent) {
+        const pos = pointer(event, svg.node());
         mousedownPos = { x: pos[0], y: pos[1] };
       })
-      .on('click', function click(feature: GeoFeature) {
+      .on('click', function click(event: MouseEvent, feature: GeoFeature) {
         if (mousedownPos) {
-          const pos = d3.mouse(svg.node());
+          const pos = pointer(event, svg.node());
           const dx = Math.abs(pos[0] - mousedownPos.x);
           const dy = Math.abs(pos[1] - mousedownPos.y);
           const dragThreshold = 5;
@@ -462,23 +466,23 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
     if (!url) {
       const countryName =
         countryOptions.find(x => x[0] === country)?.[1] || country;
-      d3.select(element).html(
+      select(element).html(
         `<div class="alert alert-danger">No map data available for ${escapeHtml(countryName)}</div>`,
       );
       return;
     }
-    d3.json(url, (error: unknown, mapData: GeoData) => {
-      if (error) {
-        const countryName =
-          countryOptions.find(x => x[0] === country)?.[1] || country;
-        d3.select(element).html(
-          `<div class="alert alert-danger">Could not load map data for ${escapeHtml(countryName)}</div>`,
-        );
-      } else {
+    d3Json(url)
+      .then((mapData: GeoData) => {
         maps[country] = mapData;
         drawMap(mapData);
-      }
-    });
+      })
+      .catch(() => {
+        const countryName =
+          countryOptions.find(x => x[0] === country)?.[1] || country;
+        select(element).html(
+          `<div class="alert alert-danger">Could not load map data for ${escapeHtml(countryName)}</div>`,
+        );
+      });
   }
 }
 

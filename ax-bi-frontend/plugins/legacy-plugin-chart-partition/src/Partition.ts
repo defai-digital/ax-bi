@@ -20,8 +20,10 @@
 // @ts-nocheck -- Legacy D3 visualization using d3-hierarchy v1 APIs without proper type definitions.
 // Uses the same approach as NVD3Vis.ts and other heavily D3-dependent files.
 /* eslint no-param-reassign: [2, {"props": false}] */
-import d3 from 'd3';
 import PropTypes from 'prop-types';
+import { select, pointer } from 'd3-selection';
+import 'd3-transition';
+import { scaleLinear } from 'd3-scale';
 import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import {
   getNumberFormatter,
@@ -165,7 +167,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
     sliceId,
   } = props;
 
-  const div = d3.select(element);
+  const div = select(element);
   div.classed('axbi-legacy-chart-partition', true);
 
   // Chart options
@@ -197,8 +199,8 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
     const datum = dat[i];
     const w = width;
     const h = height / data.length;
-    const x = d3.scale.linear().range([0, w]);
-    const y = d3.scale.linear().range([0, h]);
+    const x = scaleLinear().range([0, w]);
+    const y = scaleLinear().range([0, h]);
 
     const viz = div
       .append('div')
@@ -307,6 +309,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
     });
 
     function positionAndPopulate(
+      event: MouseEvent,
       tip: ReturnType<typeof div.append>,
       d: PartitionNode,
     ): void {
@@ -344,7 +347,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
           '</tr>';
       }
       t += '</tbody></table>';
-      const [tipX, tipY] = d3.mouse(element);
+      const [tipX, tipY] = pointer(event, element);
       tip
         .html(sanitizeHtml(t))
         .style('left', `${tipX + 15}px`)
@@ -367,23 +370,23 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
       .enter()
       .append('svg:g')
       .attr('transform', d => `translate(${x(d.y)},${y(d.x)})`)
-      .on('mouseover', d => {
+      .on('mouseover', (event, d) => {
         tooltip.interrupt().transition().duration(100).style('opacity', 0.9);
-        positionAndPopulate(tooltip, d);
+        positionAndPopulate(event, tooltip, d);
       })
-      .on('mousemove', d => {
-        positionAndPopulate(tooltip, d);
+      .on('mousemove', (event, d) => {
+        positionAndPopulate(event, tooltip, d);
       })
       .on('mouseout', () => {
         tooltip.interrupt().transition().duration(250).style('opacity', 0);
       });
 
     // When clicking a subdivision, the vis will zoom into it
-    function click(d: PartitionNode): boolean {
+    function click(event: MouseEvent, d: PartitionNode): boolean {
       if (!d.children) {
         if (d.parent) {
           // Clicking on the rightmost level should zoom in
-          return click(d.parent);
+          return click(event, d.parent);
         }
 
         return false;
@@ -395,7 +398,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
 
       const t = g
         .transition()
-        .duration(d3.event.altKey ? 7500 : 750)
+        .duration(event.altKey ? 7500 : 750)
         .attr('transform', nd => `translate(${x(nd.y)},${y(nd.x)})`);
 
       t.select('rect')
@@ -406,7 +409,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
         .attr('transform', transform)
         .style('opacity', nd => (nd.dx * zoomY > 12 ? 1 : 0));
 
-      d3.event.stopPropagation();
+      event.stopPropagation();
 
       return true;
     }

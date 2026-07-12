@@ -18,48 +18,8 @@
  */
 
 import '@testing-library/jest-dom';
-import { render, fireEvent } from '@testing-library/react';
-import d3 from 'd3';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import ReactCountryMap from '../src/ReactCountryMap';
-
-// d3 v3 APIs have loose types; cast to allow jest mock operations
-const d3Any = d3 as any;
-
-jest.spyOn(d3Any, 'json');
-
-type Projection = ((...args: unknown[]) => void) & {
-  scale: () => Projection;
-  center: () => Projection;
-  translate: () => Projection;
-};
-
-type PathFn = (() => string) & {
-  projection: jest.Mock;
-  bounds: jest.Mock<[[number, number], [number, number]]>;
-  centroid: jest.Mock<[number, number]>;
-};
-
-const mockPath: PathFn = jest.fn(() => 'M10 10 L20 20') as unknown as PathFn;
-mockPath.projection = jest.fn();
-mockPath.bounds = jest.fn(() => [
-  [0, 0],
-  [100, 100],
-]);
-mockPath.centroid = jest.fn(() => [50, 50]);
-
-jest.spyOn(d3Any.geo, 'path').mockImplementation(() => mockPath);
-
-// Mock d3.geo.mercator
-jest.spyOn(d3Any.geo, 'mercator').mockImplementation(() => {
-  const proj = (() => {}) as Projection;
-  proj.scale = () => proj;
-  proj.center = () => proj;
-  proj.translate = () => proj;
-  return proj;
-});
-
-// Mock d3.mouse
-jest.spyOn(d3Any, 'mouse').mockReturnValue([100, 50]);
 
 const mockMapData = {
   type: 'FeatureCollection',
@@ -72,18 +32,96 @@ const mockMapData = {
   ],
 };
 
-type D3JsonCallback = (error: Error | null, data: unknown) => void;
+type Projection = ((...args: unknown[]) => void) & {
+  scale: () => Projection;
+  center: () => Projection;
+  translate: () => Projection;
+};
 
-describe('CountryMap (legacy d3)', () => {
+const mockJson = jest.fn(() => Promise.resolve(mockMapData));
+
+jest.mock('d3-fetch', () => ({
+  json: (...args: unknown[]) => mockJson(...args),
+}));
+
+jest.mock('d3-selection', () => {
+  const actual = jest.requireActual('d3-selection');
+  return {
+    ...actual,
+    pointer: jest.fn(() => [100, 50]),
+  };
+});
+
+jest.mock('d3-geo', () => {
+  const proj = (() => {}) as Projection;
+  proj.scale = () => proj;
+  proj.center = () => proj;
+  proj.translate = () => proj;
+
+  const pathFn = Object.assign(
+    jest.fn(() => 'M10 10 L20 20'),
+    {
+      projection: jest.fn(),
+      bounds: jest.fn(() => [
+        [0, 0],
+        [100, 100],
+      ]),
+      centroid: jest.fn(() => [50, 50]),
+    },
+  );
+
+  return {
+    geoPath: jest.fn(() => pathFn),
+    geoMercator: jest.fn(() => proj),
+    geoCentroid: jest.fn(() => [0, 0]),
+  };
+});
+
+jest.mock('d3-zoom', () => {
+  // d3.selection.call(zoomBehavior) requires zoom() to return a function
+  const zoomFn = jest.fn();
+  zoomFn.scaleExtent = jest.fn().mockReturnValue(zoomFn);
+  zoomFn.on = jest.fn().mockReturnValue(zoomFn);
+  zoomFn.transform = jest.fn();
+  return {
+    zoom: jest.fn(() => zoomFn),
+    zoomIdentity: {
+      translate: (x = 0, y = 0) => ({
+        scale: (k = 1) => ({
+          toString: () => `translate(${x},${y}) scale(${k})`,
+          x,
+          y,
+          k,
+        }),
+      }),
+    },
+  };
+});
+
+jest.mock('d3-color', () => {
+  const actual = jest.requireActual('d3-color');
+  return {
+    ...actual,
+    rgb: jest.fn((c: string) => {
+      try {
+        return actual.rgb(c);
+      } catch {
+        return {
+          darker: () => ({ toString: () => c }),
+          toString: () => c,
+        };
+      }
+    }),
+  };
+});
+
+describe('CountryMap (d3 v7)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockJson.mockImplementation(() => Promise.resolve(mockMapData));
   });
 
   test('renders a map after d3.json loads data', async () => {
-    d3Any.json.mockImplementation((_url: string, cb: D3JsonCallback) =>
-      cb(null, mockMapData),
-    );
-
     render(
       <ReactCountryMap
         width={500}
@@ -97,17 +135,13 @@ describe('CountryMap (legacy d3)', () => {
       />,
     );
 
-    expect(d3Any.json).toHaveBeenCalledTimes(1);
-
-    const region = document.querySelector('path.region');
-    expect(region).not.toBeNull();
+    await waitFor(() => {
+      expect(mockJson).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
   });
 
   test('shows tooltip on mouseenter/mousemove/mouseout', async () => {
-    d3Any.json.mockImplementation((_url: string, cb: D3JsonCallback) =>
-      cb(null, mockMapData),
-    );
-
     render(
       <ReactCountryMap
         width={500}
@@ -120,9 +154,11 @@ describe('CountryMap (legacy d3)', () => {
       />,
     );
 
-    const region = document.querySelector('path.region');
-    expect(region).not.toBeNull();
+    await waitFor(() => {
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
 
+    const region = document.querySelector('path.region');
     const popup = document.querySelector('.hover-popup');
     expect(popup).not.toBeNull();
 
@@ -133,10 +169,7 @@ describe('CountryMap (legacy d3)', () => {
     expect(popup!).toHaveStyle({ display: 'none' });
   });
 
-  test('emits a cross-filter data mask when a region is clicked', () => {
-    d3Any.json.mockImplementation((_url: string, cb: D3JsonCallback) =>
-      cb(null, mockMapData),
-    );
+  test('emits a cross-filter data mask when a region is clicked', async () => {
     const setDataMask = jest.fn();
 
     render(
@@ -155,12 +188,11 @@ describe('CountryMap (legacy d3)', () => {
       />,
     );
 
-    const region = document.querySelector('path.region');
-    expect(region).not.toBeNull();
+    await waitFor(() => {
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
 
-    // A click is only treated as a selection when it follows a mousedown
-    // without dragging beyond the threshold (d3.mouse is mocked to a fixed
-    // position, so the down/up positions match).
+    const region = document.querySelector('path.region');
     fireEvent.mouseDown(region!);
     fireEvent.click(region!);
 
@@ -175,10 +207,7 @@ describe('CountryMap (legacy d3)', () => {
     );
   });
 
-  test('does not emit a cross-filter when emitCrossFilters is disabled', () => {
-    d3Any.json.mockImplementation((_url: string, cb: D3JsonCallback) =>
-      cb(null, mockMapData),
-    );
+  test('does not emit a cross-filter when emitCrossFilters is disabled', async () => {
     const setDataMask = jest.fn();
 
     render(
@@ -197,6 +226,10 @@ describe('CountryMap (legacy d3)', () => {
       />,
     );
 
+    await waitFor(() => {
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
+
     const region = document.querySelector('path.region');
     fireEvent.mouseDown(region!);
     fireEvent.click(region!);
@@ -204,10 +237,7 @@ describe('CountryMap (legacy d3)', () => {
     expect(setDataMask).not.toHaveBeenCalled();
   });
 
-  test('opens the context menu with drill-by keyed on the entity control', () => {
-    d3Any.json.mockImplementation((_url: string, cb: D3JsonCallback) =>
-      cb(null, mockMapData),
-    );
+  test('opens the context menu with drill-by keyed on the entity control', async () => {
     const onContextMenu = jest.fn();
 
     render(
@@ -225,9 +255,11 @@ describe('CountryMap (legacy d3)', () => {
       />,
     );
 
-    const region = document.querySelector('path.region');
-    expect(region).not.toBeNull();
+    await waitFor(() => {
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
 
+    const region = document.querySelector('path.region');
     fireEvent.contextMenu(region!, { clientX: 123, clientY: 45 });
 
     expect(onContextMenu).toHaveBeenCalledTimes(1);
@@ -237,9 +269,6 @@ describe('CountryMap (legacy d3)', () => {
     expect(payload.drillToDetail).toEqual([
       { col: 'country_code', op: '==', val: 'CAN', formattedVal: 'CAN' },
     ]);
-    // groupbyFieldName must be the form-data control key ('entity'), not the
-    // selected column value ('country_code'), so DrillByModal can map the
-    // selection back to the chart control.
     expect(payload.drillBy).toEqual({
       filters: [{ col: 'country_code', op: '==', val: 'CAN' }],
       groupbyFieldName: 'entity',
