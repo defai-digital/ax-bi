@@ -18,7 +18,7 @@
 set -e
 
 GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-.}
-ASSETS_MANIFEST="$GITHUB_WORKSPACE/ax-bi/static/assets/manifest.json"
+ASSETS_MANIFEST="$GITHUB_WORKSPACE/axbi/static/assets/manifest.json"
 
 # Echo only when not in parallel mode
 say() {

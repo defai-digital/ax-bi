@@ -22,7 +22,7 @@ const workspaceDirectory = process.env.GITHUB_WORKSPACE;
 const homeDirectory = process.env.HOME;
 
 const assetsConfig = {
-  path: [`${workspaceDirectory}/ax-bi/static/assets`],
+  path: [`${workspaceDirectory}/axbi/static/assets`],
   hashFiles: [
     `${workspaceDirectory}/ax-bi-frontend/src/**/*`,
     `${workspaceDirectory}/ax-bi-frontend/packages/**/*`,
