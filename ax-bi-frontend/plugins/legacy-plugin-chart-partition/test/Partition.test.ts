@@ -41,30 +41,68 @@ const sampleTree = [
   },
 ];
 
+const baseProps = {
+  width: 200,
+  height: 150,
+  colorScheme: 'bnbColors',
+  dateTimeFormat: '%Y-%m-%d',
+  equalDateSize: false,
+  levels: [] as string[],
+  metrics: [] as string[],
+  numberFormat: '.2f',
+  partitionLimit: 0,
+  partitionThreshold: 0,
+  timeSeriesOption: 'not_time',
+  useLogScale: false,
+  useRichTooltip: false,
+  sliceId: 1,
+};
+
 test('Partition does not throw when query data is empty', () => {
   const el = document.createElement('div');
   document.body.appendChild(el);
 
   expect(() =>
     Partition(el, {
+      ...baseProps,
       data: [],
-      width: 200,
-      height: 150,
-      colorScheme: 'bnbColors',
-      dateTimeFormat: '%Y-%m-%d',
-      equalDateSize: false,
-      levels: [],
-      metrics: [],
-      numberFormat: '.2f',
-      partitionLimit: 0,
-      partitionThreshold: 0,
-      timeSeriesOption: 'not_time',
-      useLogScale: false,
-      useRichTooltip: false,
-      sliceId: 1,
     }),
   ).not.toThrow();
   expect(el.querySelector('svg[data-test="partition-empty"]')).not.toBeNull();
+
+  el.remove();
+});
+
+test('Partition re-render to empty data clears stale hierarchy DOM', () => {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+
+  Partition(el, {
+    ...baseProps,
+    width: 400,
+    height: 300,
+    levels: ['group'],
+    metrics: ['metric_a'],
+    useRichTooltip: true,
+    data: sampleTree,
+  });
+
+  expect(el.querySelectorAll('rect').length).toBeGreaterThan(1);
+  expect(el.querySelectorAll('text').length).toBeGreaterThan(0);
+  expect(el.querySelector('.partition-tooltip')).not.toBeNull();
+
+  // reactify re-invokes the same host element when props become empty.
+  Partition(el, {
+    ...baseProps,
+    data: [],
+  });
+
+  expect(el.querySelector('svg[data-test="partition-empty"]')).not.toBeNull();
+  expect(el.querySelectorAll('rect').length).toBe(0);
+  expect(el.querySelectorAll('text').length).toBe(0);
+  expect(el.querySelector('.partition-tooltip')).toBeNull();
+  // Only the empty shell svg remains (no leftover chart groups).
+  expect(el.querySelectorAll('svg').length).toBe(1);
 
   el.remove();
 });

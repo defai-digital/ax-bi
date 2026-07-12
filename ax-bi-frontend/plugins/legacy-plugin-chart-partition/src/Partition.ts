@@ -169,6 +169,9 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
 
   const div = select(element);
   div.classed('axbi-legacy-chart-partition', true);
+  // Always clear host first: reactify re-invokes this render on prop changes
+  // without unmounting the container, so stale rects/text must not linger.
+  div.selectAll('*').remove();
 
   // Empty query results should not throw inside d3-hierarchy.
   if (!Array.isArray(data) || data.length === 0) {
@@ -187,7 +190,6 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
   const timeFormat = getTimeFormatter(dateTimeFormat);
   const colorFn = CategoricalColorNamespace.getScale(colorScheme);
 
-  div.selectAll('*').remove();
   const tooltip = div.append('div').classed('partition-tooltip', true);
 
   function hasDateNode(n: PartitionNode): boolean {
