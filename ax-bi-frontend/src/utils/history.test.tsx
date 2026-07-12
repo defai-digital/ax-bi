@@ -22,7 +22,22 @@ import {
   Routes,
 } from 'react-router-dom';
 import { render, screen } from 'spec/helpers/testing-library';
-import { history, routerHistory } from './history';
+import { history, prefixHistoryTo, routerHistory } from './history';
+
+test('legacy history paths receive an idempotent application root', () => {
+  const prefixPath = (path: string) =>
+    path.startsWith('/app/prefix') ? path : `/app/prefix${path}`;
+
+  expect(prefixHistoryTo('/chart/add/?dataset=orders', prefixPath)).toBe(
+    '/app/prefix/chart/add/?dataset=orders',
+  );
+  expect(prefixHistoryTo('/app/prefix/chart/add', prefixPath)).toBe(
+    '/app/prefix/chart/add',
+  );
+  expect(prefixHistoryTo({ search: '?tab=results' }, prefixPath)).toEqual({
+    search: '?tab=results',
+  });
+});
 
 test('shared history renders routes beneath an application basename', () => {
   const originalLocation = `${history.location.pathname}${history.location.search}${history.location.hash}`;

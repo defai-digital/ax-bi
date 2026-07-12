@@ -18,10 +18,30 @@
  */
 import { createBrowserHistory, parsePath, type To } from 'history';
 import type { HistoryRouterProps } from 'react-router-dom';
+import { ensureAppRoot } from './pathUtils';
 
 type RouterHistory = HistoryRouterProps['history'];
 type RouterListener = Parameters<RouterHistory['listen']>[0];
 type RouterUpdate = Parameters<RouterListener>[0];
+type PathPrefixer = (path: string) => string;
+
+/**
+ * Prefix absolute application paths while preserving query-only and relative
+ * history updates. React Router already supplies basename-prefixed paths, so
+ * the prefixer must be idempotent.
+ */
+export function prefixHistoryTo(
+  to: To,
+  prefixPath: PathPrefixer = ensureAppRoot,
+): To {
+  if (typeof to === 'string') {
+    return to.startsWith('/') ? prefixPath(to) : to;
+  }
+  if (!to.pathname?.startsWith('/')) {
+    return to;
+  }
+  return { ...to, pathname: prefixPath(to.pathname) };
+}
 
 /**
  * Shared browser history used with react-router's HistoryRouter. The adapter
@@ -30,10 +50,14 @@ type RouterUpdate = Parameters<RouterListener>[0];
  */
 const browserHistory = createBrowserHistory();
 const browserListen = browserHistory.listen.bind(browserHistory);
+const browserCreateHref = browserHistory.createHref.bind(browserHistory);
+const browserPush = browserHistory.push.bind(browserHistory);
+const browserReplace = browserHistory.replace.bind(browserHistory);
 
 export const history = Object.assign(browserHistory, {
+  createHref: (to: To) => browserCreateHref(prefixHistoryTo(to)),
   createURL: (to: To) =>
-    new URL(browserHistory.createHref(to), window.location.origin),
+    new URL(browserCreateHref(prefixHistoryTo(to)), window.location.origin),
   encodeLocation: (to: To) => {
     const path = typeof to === 'string' ? parsePath(to) : to;
     return {
@@ -46,6 +70,9 @@ export const history = Object.assign(browserHistory, {
     browserListen(update =>
       listener({ ...update, delta: null } as RouterUpdate),
     ),
+  push: (to: To, state?: unknown) => browserPush(prefixHistoryTo(to), state),
+  replace: (to: To, state?: unknown) =>
+    browserReplace(prefixHistoryTo(to), state),
 });
 
 export const routerHistory = history as unknown as RouterHistory;

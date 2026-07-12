@@ -28,7 +28,8 @@ export class ExplorePage {
 
   private static readonly SELECTORS = {
     DATASOURCE_CONTROL: '[data-test="datasource-control"]',
-    VIZ_SWITCHER: '[data-test="fast-viz-switcher"]',
+    VIZ_SWITCHER:
+      '[data-test="fast-viz-switcher"], [data-test="Visualization type"]',
     CHART_CONTAINER: '[data-test="chart-container"]',
   } as const;
 
