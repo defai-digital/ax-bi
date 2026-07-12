@@ -45,7 +45,25 @@ function Chord(element: HTMLElement, props: ChordProps) {
 
   const div = select(element);
   div.classed('axbi-legacy-chart-chord', true);
-  const { nodes, matrix } = data;
+
+  // Empty/malformed payloads arrive when queries return no rows (transformProps
+  // falls back to []). Guard so d3-chord never receives undefined matrix.
+  const nodes = data?.nodes;
+  const matrix = data?.matrix;
+  if (
+    !Array.isArray(nodes) ||
+    !Array.isArray(matrix) ||
+    nodes.length === 0 ||
+    matrix.length === 0
+  ) {
+    div
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('data-test', 'chord-empty');
+    return;
+  }
+
   const f = getNumberFormatter(numberFormat);
   const colorFn = CategoricalColorNamespace.getScale(colorScheme);
 

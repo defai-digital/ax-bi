@@ -41,6 +41,34 @@ const sampleTree = [
   },
 ];
 
+test('Partition does not throw when query data is empty', () => {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+
+  expect(() =>
+    Partition(el, {
+      data: [],
+      width: 200,
+      height: 150,
+      colorScheme: 'bnbColors',
+      dateTimeFormat: '%Y-%m-%d',
+      equalDateSize: false,
+      levels: [],
+      metrics: [],
+      numberFormat: '.2f',
+      partitionLimit: 0,
+      partitionThreshold: 0,
+      timeSeriesOption: 'not_time',
+      useLogScale: false,
+      useRichTooltip: false,
+      sliceId: 1,
+    }),
+  ).not.toThrow();
+  expect(el.querySelector('svg[data-test="partition-empty"]')).not.toBeNull();
+
+  el.remove();
+});
+
 test('Partition renders hierarchical svg rects with d3 v7 scale/selection APIs', () => {
   const el = document.createElement('div');
   document.body.appendChild(el);

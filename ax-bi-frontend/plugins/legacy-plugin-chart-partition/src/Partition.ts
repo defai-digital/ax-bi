@@ -170,6 +170,16 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
   const div = select(element);
   div.classed('axbi-legacy-chart-partition', true);
 
+  // Empty query results should not throw inside d3-hierarchy.
+  if (!Array.isArray(data) || data.length === 0) {
+    div
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('data-test', 'partition-empty');
+    return;
+  }
+
   // Chart options
   const chartType = timeSeriesOption;
   const hasTime = ['adv_anal', 'time_series'].includes(chartType);

@@ -45,7 +45,11 @@ export default function transformProps(chartProps: ChartProps) {
     columnFormats = {},
     currencyCodeColumn,
   } = datasource;
-  const { data, detected_currency: detectedCurrency } = queriesData[0];
+  // Guard empty/missing query results so Explore/dashboard refresh does not
+  // throw before the map renderer runs.
+  const queryResult = queriesData?.[0] ?? {};
+  const data = Array.isArray(queryResult.data) ? queryResult.data : [];
+  const detectedCurrency = queryResult.detected_currency;
 
   const formatter = getValueFormatter(
     metric,
@@ -64,7 +68,7 @@ export default function transformProps(chartProps: ChartProps) {
   return {
     width,
     height,
-    data: queriesData[0]?.data || [],
+    data,
     country: selectCountry ? String(selectCountry).toLowerCase() : null,
     linearColorScheme,
     numberFormat, // left for backward compatibility
