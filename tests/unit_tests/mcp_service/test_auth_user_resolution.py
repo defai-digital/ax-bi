@@ -476,7 +476,9 @@ def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
                 result = wrapped()
 
     assert result == "fresh"
-    assert mock_db.session.invalidate.called, "invalidate() must be called on SSL error"
+    assert mock_db.session.return_value.invalidate.called, (
+        "the concrete session must be invalidated on SSL error"
+    )
     assert mock_db.session.remove.call_count == 2, (
         "remove() must be retried after SSL error"
     )
@@ -506,7 +508,7 @@ def test_auth_error_cleanup_uses_connection_aware_session_removal() -> None:
         _cleanup_session_on_error()
 
     mock_db.session.rollback.assert_called_once_with()
-    mock_db.session.invalidate.assert_called_once_with()
+    mock_db.session.return_value.invalidate.assert_called_once_with()
     assert mock_db.session.remove.call_count == 2
 
 

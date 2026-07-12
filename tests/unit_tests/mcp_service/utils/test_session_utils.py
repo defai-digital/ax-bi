@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -30,6 +31,37 @@ from axbi.mcp_service.utils.session_utils import (
     reset_session_safely,
     rollback_session_safely,
 )
+
+
+class _RecoveryRequiredSession:
+    """Session whose close succeeds only after connection invalidation."""
+
+    def __init__(self) -> None:
+        self.invalidated = False
+
+    def invalidate(self) -> None:
+        """Mark the underlying connection as invalidated."""
+        self.invalidated = True
+
+
+class _ScopedSessionStub:
+    """Model the callable/remove API exposed by SQLAlchemy scoped_session."""
+
+    def __init__(self) -> None:
+        self.current = _RecoveryRequiredSession()
+        self.remove_calls = 0
+        self.removed = False
+
+    def __call__(self) -> _RecoveryRequiredSession:
+        """Return the concrete Session held by the scoped registry."""
+        return self.current
+
+    def remove(self) -> None:
+        """Fail until the concrete Session invalidates its connection."""
+        self.remove_calls += 1
+        if not self.current.invalidated:
+            raise OperationalError("SSL connection closed", None, None)
+        self.removed = True
 
 
 def test_rollback_session_safely_reports_success() -> None:
@@ -57,8 +89,23 @@ def test_remove_session_recovers_from_dbapi_failure() -> None:
 
         remove_session_with_connection_recovery()
 
-    mock_db.session.invalidate.assert_called_once_with()
+    mock_db.session.return_value.invalidate.assert_called_once_with()
     assert mock_db.session.remove.call_count == 2
+
+
+def test_remove_session_invalidates_concrete_scoped_session() -> None:
+    """Recovery targets Session.invalidate(), not the scoped-session proxy."""
+    scoped_session = _ScopedSessionStub()
+
+    with patch(
+        "axbi.extensions.db",
+        SimpleNamespace(session=scoped_session),
+    ):
+        remove_session_with_connection_recovery()
+
+    assert scoped_session.current.invalidated is True
+    assert scoped_session.removed is True
+    assert scoped_session.remove_calls == 2
 
 
 def test_remove_session_propagates_unrecoverable_failure() -> None:
@@ -78,7 +125,7 @@ def test_remove_session_safely_swallows_retry_failure() -> None:
 
         assert remove_session_safely(context="test cleanup") is False
 
-    mock_db.session.invalidate.assert_called_once_with()
+    mock_db.session.return_value.invalidate.assert_called_once_with()
     assert mock_db.session.remove.call_count == 2
 
 

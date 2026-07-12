@@ -56,7 +56,10 @@ def remove_session_with_connection_recovery() -> None:
             exc,
         )
         try:
-            db.session.invalidate()
+            # ``db.session`` is a SQLAlchemy ``scoped_session``. Invalidation
+            # belongs to the concrete Session stored in its registry, not to
+            # the scoped proxy itself.
+            db.session().invalidate()
         except Exception as invalidate_exc:  # noqa: BLE001
             logger.debug(
                 "Could not invalidate the MCP session after a connection error: %s",

@@ -597,14 +597,17 @@ class BaseReportState:
                     auth_cookies=auth_cookies,
                     timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
                 )
+                if not csv_data:
+                    raise ReportScheduleCsvFailedError()
         except SoftTimeLimitExceeded as ex:
             raise ReportScheduleCsvTimeout() from ex
+        except ReportScheduleCsvFailedError:
+            raise
         except Exception as ex:
             raise ReportScheduleCsvFailedError(
                 f"Failed generating csv {str(ex)}"
             ) from ex
-        if not csv_data:
-            raise ReportScheduleCsvFailedError()
+        assert csv_data is not None
         return csv_data
 
     def _get_embedded_data(self) -> pd.DataFrame:
@@ -632,14 +635,17 @@ class BaseReportState:
                     auth_cookies,
                     timeout=app.config["ALERT_REPORTS_CSV_REQUEST_TIMEOUT"],
                 )
+                if dataframe is None:
+                    raise ReportScheduleDataFrameFailedError()
         except SoftTimeLimitExceeded as ex:
             raise ReportScheduleDataFrameTimeout() from ex
+        except ReportScheduleDataFrameFailedError:
+            raise
         except Exception as ex:
             raise ReportScheduleDataFrameFailedError(
                 f"Failed generating dataframe {str(ex)}"
             ) from ex
-        if dataframe is None:
-            raise ReportScheduleCsvFailedError()
+        assert dataframe is not None
         return dataframe
 
     def _update_query_context(self) -> None:

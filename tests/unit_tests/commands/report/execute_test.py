@@ -30,6 +30,7 @@ from axbi.commands.exceptions import UpdateFailedError
 from axbi.commands.report.exceptions import (
     ReportScheduleAlertGracePeriodError,
     ReportScheduleCsvFailedError,
+    ReportScheduleDataFrameFailedError,
     ReportScheduleNotFoundError,
     ReportSchedulePreviousWorkingError,
     ReportScheduleScreenshotFailedError,
@@ -159,6 +160,74 @@ def test_timed_operation_logs_soft_timeout_separately(
         execution_id,
     )
     mock_logger.exception.assert_not_called()
+
+
+def test_embedded_data_none_raises_dataframe_failure(
+    mocker: MockerFixture,
+) -> None:
+    """A missing dataframe is reported as a dataframe-generation failure."""
+    report_schedule = mocker.Mock(spec=ReportSchedule)
+    report_schedule.chart.query_context = {}
+    state = BaseReportState(
+        report_schedule,
+        datetime(2026, 7, 12, 12, 0, 0),
+        uuid4(),
+    )
+    mocker.patch.object(state, "_get_url", return_value="/api/v1/chart/data")
+    mocker.patch(
+        "axbi.commands.report.execute.get_executor",
+        return_value=(None, "report-user"),
+    )
+    mocker.patch("axbi.commands.report.execute.security_manager.find_user")
+    auth_factory = mocker.patch(
+        "axbi.commands.report.execute.machine_auth_provider_factory"
+    )
+    auth_factory.instance.get_auth_cookies.return_value = {}
+    report_logger = mocker.patch("axbi.commands.report.execute.logger")
+    mocker.patch(
+        "axbi.commands.report.execute.get_chart_dataframe",
+        return_value=None,
+    )
+
+    with pytest.raises(ReportScheduleDataFrameFailedError):
+        state._get_embedded_data()
+
+    report_logger.exception.assert_called_once()
+    report_logger.info.assert_not_called()
+
+
+def test_csv_data_empty_result_is_logged_as_failure(
+    mocker: MockerFixture,
+) -> None:
+    """An empty CSV response fails inside the timed operation boundary."""
+    report_schedule = mocker.Mock(spec=ReportSchedule)
+    report_schedule.chart.query_context = {}
+    state = BaseReportState(
+        report_schedule,
+        datetime(2026, 7, 12, 12, 0, 0),
+        uuid4(),
+    )
+    mocker.patch.object(state, "_get_url", return_value="/api/v1/chart/data")
+    mocker.patch(
+        "axbi.commands.report.execute.get_executor",
+        return_value=(None, "report-user"),
+    )
+    mocker.patch("axbi.commands.report.execute.security_manager.find_user")
+    auth_factory = mocker.patch(
+        "axbi.commands.report.execute.machine_auth_provider_factory"
+    )
+    auth_factory.instance.get_auth_cookies.return_value = {}
+    report_logger = mocker.patch("axbi.commands.report.execute.logger")
+    mocker.patch(
+        "axbi.commands.report.execute.get_chart_csv_data",
+        return_value=b"",
+    )
+
+    with pytest.raises(ReportScheduleCsvFailedError):
+        state._get_csv_data()
+
+    report_logger.exception.assert_called_once()
+    report_logger.info.assert_not_called()
 
 
 def test_log_data_with_dashboard(mocker: MockerFixture) -> None:
