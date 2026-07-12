@@ -30,6 +30,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Converging MCP dashboard generation and GenAI composition on a shared
   command-owned persistence boundary that re-resolves charts and owners in the
   active session before attaching relationships atomically.
+- Routing failed generated-chart cleanup through the transactional delete
+  command so compile-check failures cannot leave a chart visible after the tool
+  reports that it was discarded.
 
 ## Deferred Boundary Areas
 

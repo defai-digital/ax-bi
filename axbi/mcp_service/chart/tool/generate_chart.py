@@ -419,9 +419,9 @@ async def generate_chart(  # noqa: C901
                     await ctx.warning(
                         f"Chart compile check failed: error={compile_result.error}"
                     )
-                    from axbi.daos.chart import ChartDAO
+                    from axbi.commands.chart.delete import DeleteChartCommand
 
-                    ChartDAO.delete([chart])
+                    DeleteChartCommand([chart.id]).run()
                     from axbi.mcp_service.common.error_schemas import (
                         ChartGenerationError,
                     )

@@ -19,6 +19,7 @@
 Unit tests for MCP generate_chart tool
 """
 
+from contextlib import nullcontext
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -275,6 +276,93 @@ class TestGenerateChart:
                 save_chart=False,
                 generate_preview=False,
             )
+
+    @pytest.mark.asyncio
+    async def test_compile_failure_discards_created_chart_transactionally(
+        self,
+    ) -> None:
+        """A failed compile check invokes the command-owned delete transaction."""
+        request = GenerateChartRequest(
+            dataset_id=9,
+            config=TableChartConfig(
+                chart_type="table",
+                columns=[ColumnRef(name="region")],
+            ),
+            save_chart=True,
+        )
+        validation_result = Mock(
+            is_valid=True,
+            request=request,
+            warnings={},
+            error=None,
+        )
+        dataset = Mock(id=9, datasource_name="Sales", table_name="sales")
+        chart = Mock(
+            id=42,
+            slice_name="Sales by region",
+            viz_type="table",
+        )
+        context = MagicMock()
+        context.info = AsyncMock()
+        context.debug = AsyncMock()
+        context.warning = AsyncMock()
+        context.error = AsyncMock()
+        context.report_progress = AsyncMock()
+
+        with (
+            patch(
+                "axbi.mcp_service.chart.validation.ValidationPipeline."
+                "validate_request_with_warnings",
+                return_value=validation_result,
+            ),
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart.map_config_to_form_data",
+                return_value={"viz_type": "table"},
+            ),
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart.generate_chart_name",
+                return_value="Sales by region",
+            ),
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=dataset),
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart.has_dataset_access",
+                return_value=True,
+            ),
+            patch("axbi.commands.chart.create.CreateChartCommand") as create_command,
+            patch("axbi.db.session.refresh"),
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart.validate_chart_dataset",
+                return_value=Mock(is_valid=True, warnings=[], error=None),
+            ),
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart._compile_chart",
+                return_value=CompileResult(success=False, error="invalid query"),
+            ),
+            patch("axbi.commands.chart.delete.DeleteChartCommand") as delete_command,
+            patch(
+                "axbi.mcp_service.chart.tool.generate_chart.mcp_event_log_context",
+                return_value=nullcontext(),
+            ),
+            patch(
+                "axbi.mcp_service.auth.get_user_from_request",
+                return_value=Mock(
+                    id=1,
+                    username="admin",
+                    roles=[],
+                    groups=[],
+                ),
+            ),
+            patch("axbi.mcp_service.auth.check_tool_permission", return_value=True),
+        ):
+            create_command.return_value.run.return_value = chart
+
+            result = await generate_chart(request, ctx=context)
+
+        assert result.success is False
+        assert result.error is not None
+        assert result.error.error_code == "CHART_COMPILE_FAILED"
+        delete_command.assert_called_once_with([42])
+        delete_command.return_value.run.assert_called_once_with()
 
     @pytest.mark.asyncio
     async def test_preview_formats(self):
