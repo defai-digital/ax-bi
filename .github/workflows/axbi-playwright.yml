@@ -62,7 +62,7 @@ jobs:
     env:
       AXBI_ENV: development
       AXBI_CONFIG: tests.integration_tests.axbi_test_config
-      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://ax-bi:axbi@127.0.0.1:15432/ax-bi
+      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://axbi:axbi@127.0.0.1:15432/axbi
       PYTHONPATH: ${{ github.workspace }}
       REDIS_PORT: 16379
       GITHUB_TOKEN: ${{ github.token }}

@@ -40,6 +40,9 @@ qa/sample_files/*
 .*j2
 # Generated doc files
 env/*
+.venv/*
+venv/*
+.temp_cache/*
 docs/.htaccess*
 .nojekyll
 _build/*

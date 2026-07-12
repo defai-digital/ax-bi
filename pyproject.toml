@@ -449,43 +449,28 @@ docstring-code-format = false
 # enabled.
 docstring-code-line-length = "dynamic"
 
-[tool.liccheck]
-requirement_txt_file = "requirements/base.txt"
-authorized_licenses = [
-    "academic free license (afl)",
-    "any-osi",
-    "apache-2.0",
-    "apache license 2.0",
-    "apache software",
-    "apache software, bsd",
-    "bsd",
-    "bsd-2-clause",
-    "bsd-3-clause",
-    "isc license (iscl)",
-    "isc license",
-    "mit",
-    "mit and psf-2.0",
-    "mit-cmu",
-    "mozilla public license 2.0 (mpl 2.0)",
-    "osi approved",
-    "osi approved",
-    "psf-2.0",
-    "python software foundation",
-    "simplified bsd",
-    "the unlicense (unlicense)",
-    "the unlicense",
-]
-[tool.liccheck.authorized_packages]
-# --------------------------------------------------------------
-# These are ok, checked manually
-# Seems ok, might need legal review
-# https://github.com/urschrei/pypolyline/blob/master/LICENSE.md
-polyline = "2"
-# --------------------------------------------------------------
-
-# TODO REMOVE THESE DEPS FROM CODEBASE
-paramiko = "5"  # GPL
-pyxlsb = "1"  # GPL
+[tool.pip-licenses]
+from = "mixed"
+format = "plain-vertical"
+partial-match = true
+allow-only = """
+Academic Free License (AFL);
+any-OSI;
+Apache;
+BSD;
+ISC;
+MIT;
+Mozilla Public License 2.0;
+MPL 2.0;
+PSF;
+Python Software Foundation;
+The Unlicense;
+Unlicense
+"""
+# These packages have been reviewed separately from their metadata classifiers.
+# Polyline is MIT-licensed: https://github.com/urschrei/pypolyline/blob/master/LICENSE.md
+# Paramiko and pyxlsb remain explicit exceptions pending dependency removal.
+ignore-packages = ["paramiko", "polyline", "pyxlsb"]
 
 [tool.uv.sources]
 ax-bi-core = { path = "./ax-bi-core", editable = true }

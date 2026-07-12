@@ -207,7 +207,7 @@ services:
       DATABASE_HOST: db-light
       DATABASE_DB: test
       POSTGRES_DB: test
-      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://ax-bi:axbi@db-light:5432/test
+      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://axbi:axbi@db-light:5432/test
       AXBI_CONFIG: axbi_test_config_light
       PYTHONPATH: /app/pythonpath:/app/docker/pythonpath_dev:/app
 

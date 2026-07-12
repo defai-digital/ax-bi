@@ -49,8 +49,7 @@ jobs:
           allow-dependencies-licenses: pkg:npm/rgbcolor, pkg:npm/jszip@3.10.1
 
   python-dependency-liccheck:
-    # NOTE: Configuration for liccheck lives in our pyproject.yml.
-    # You cannot use a liccheck.ini file in this workflow.
+    # Configuration for pip-licenses lives in pyproject.toml.
     runs-on: ubuntu-22.04
     steps:
       - name: "Checkout Repository"
@@ -63,12 +62,9 @@ jobs:
         with:
           requirements-type: base
 
-      - name: "Set up liccheck"
+      - name: "Set up pip-licenses"
         run: |
-          uv pip install --system liccheck
-      - name: "Run liccheck"
+          uv pip install --system "pip-licenses==5.5.5"
+      - name: "Run pip-licenses"
         run: |
-          # run the checks
-          liccheck -R output.txt
-          # Print the report
-          cat output.txt
+          pip-licenses

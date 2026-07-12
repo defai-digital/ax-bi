@@ -138,6 +138,10 @@ axbi/static/stats/statistics.html
 
 # Playwright browser auth state
 ax-office-frontend/playwright/.auth/
+# AX Office is a generated local compatibility workspace, not a source package.
+ax-office-frontend/.swc/
+ax-office-frontend/playwright-report/
+ax-office-frontend/test-results/
 # Local AX Office test workspaces mirror frontend packages and are generated.
 ax-office-frontend/packages/
 

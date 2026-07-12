@@ -24,7 +24,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
       AXBI_CONFIG: tests.integration_tests.axbi_test_config
       REDIS_PORT: 16379
-      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://ax-bi:axbi@127.0.0.1:15432/ax-bi
+      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://axbi:axbi@127.0.0.1:15432/axbi
     services:
       postgres:
         image: postgres:17-alpine
