@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import or_, select
 
@@ -273,6 +274,21 @@ class ReportScheduleDAO(BaseDAO[ReportSchedule]):
         )
 
     @staticmethod
+    def set_execution_state(
+        report_schedule: ReportSchedule,
+        state: ReportState,
+        evaluated_at: datetime,
+    ) -> ReportSchedule:
+        """Apply an execution state transition without committing the session."""
+        if state == ReportState.WORKING:
+            report_schedule.last_value = None
+            report_schedule.last_value_row_json = None
+
+        report_schedule.last_state = state
+        report_schedule.last_eval_dttm = evaluated_at
+        return report_schedule
+
+    @staticmethod
     def find_last_success_log(
         report_schedule: ReportSchedule,
     ) -> ReportExecutionLog | None:
@@ -350,4 +366,34 @@ class ReportScheduleDAO(BaseDAO[ReportSchedule]):
                 ReportExecutionLog.end_dttm < from_date,
             )
             .delete(synchronize_session="fetch")
+        )
+
+
+class ReportExecutionLogDAO(BaseDAO[ReportExecutionLog]):
+    """Data access boundary for report execution log records."""
+
+    @classmethod
+    def create_for_schedule(
+        cls,
+        *,
+        report_schedule: ReportSchedule,
+        scheduled_dttm: datetime,
+        start_dttm: datetime,
+        end_dttm: datetime,
+        execution_id: UUID,
+        error_message: str | None,
+    ) -> ReportExecutionLog:
+        """Create an execution log from the schedule's persisted result state."""
+        return cls.create(
+            attributes={
+                "scheduled_dttm": scheduled_dttm,
+                "start_dttm": start_dttm,
+                "end_dttm": end_dttm,
+                "value": report_schedule.last_value,
+                "value_row_json": report_schedule.last_value_row_json,
+                "state": report_schedule.last_state,
+                "error_message": error_message,
+                "report_schedule": report_schedule,
+                "uuid": execution_id,
+            }
         )

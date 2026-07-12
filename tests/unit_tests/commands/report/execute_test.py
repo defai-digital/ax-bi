@@ -18,10 +18,11 @@
 import json  # noqa: TID251
 from datetime import datetime, timedelta
 from typing import Any, cast
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 from uuid import UUID, uuid4
 
 import pytest
+from celery.exceptions import SoftTimeLimitExceeded
 from pytest_mock import MockerFixture
 
 from axbi.app import AxBIApp
@@ -29,6 +30,7 @@ from axbi.commands.exceptions import UpdateFailedError
 from axbi.commands.report.exceptions import (
     ReportScheduleAlertGracePeriodError,
     ReportScheduleCsvFailedError,
+    ReportScheduleNotFoundError,
     ReportSchedulePreviousWorkingError,
     ReportScheduleScreenshotFailedError,
     ReportScheduleScreenshotTimeout,
@@ -37,6 +39,8 @@ from axbi.commands.report.exceptions import (
     ReportScheduleWorkingTimeoutError,
 )
 from axbi.commands.report.execute import (
+    _log_timed_operation,
+    AsyncExecuteReportScheduleCommand,
     BaseReportState,
     ReportNotTriggeredErrorState,
     ReportScheduleStateMachine,
@@ -88,6 +92,73 @@ def test_log_data_with_chart(mocker: MockerFixture) -> None:
     }
 
     assert result == expected_result
+
+
+def test_timed_operation_logs_monotonic_success(mocker: MockerFixture) -> None:
+    """Successful operations log duration from a monotonic clock."""
+    execution_id = uuid4()
+    mocker.patch(
+        "axbi.commands.report.execute.monotonic",
+        side_effect=[10.0, 12.5],
+    )
+    mock_logger = mocker.patch("axbi.commands.report.execute.logger")
+
+    with _log_timed_operation("test operation", execution_id):
+        pass
+
+    mock_logger.info.assert_called_once_with(
+        "%s completed in %.2fs - execution_id: %s",
+        "test operation",
+        2.5,
+        execution_id,
+    )
+
+
+def test_timed_operation_logs_failure_and_preserves_exception(
+    mocker: MockerFixture,
+) -> None:
+    """Failed operations retain the original exception after duration logging."""
+    execution_id = uuid4()
+    mocker.patch(
+        "axbi.commands.report.execute.monotonic",
+        side_effect=[20.0, 21.25],
+    )
+    mock_logger = mocker.patch("axbi.commands.report.execute.logger")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        with _log_timed_operation("test operation", execution_id):
+            raise RuntimeError("boom")
+
+    mock_logger.exception.assert_called_once_with(
+        "%s failed after %.2fs - execution_id: %s",
+        "test operation",
+        1.25,
+        execution_id,
+    )
+
+
+def test_timed_operation_logs_soft_timeout_separately(
+    mocker: MockerFixture,
+) -> None:
+    """Celery soft timeouts use the timeout log path and remain recognizable."""
+    execution_id = uuid4()
+    mocker.patch(
+        "axbi.commands.report.execute.monotonic",
+        side_effect=[30.0, 34.0],
+    )
+    mock_logger = mocker.patch("axbi.commands.report.execute.logger")
+
+    with pytest.raises(SoftTimeLimitExceeded):
+        with _log_timed_operation("test operation", execution_id):
+            raise SoftTimeLimitExceeded()
+
+    mock_logger.warning.assert_called_once_with(
+        "%s timed out after %.2fs - execution_id: %s",
+        "test operation",
+        4.0,
+        execution_id,
+    )
+    mock_logger.exception.assert_not_called()
 
 
 def test_log_data_with_dashboard(mocker: MockerFixture) -> None:
@@ -1417,9 +1488,8 @@ def test_create_log_stale_data_raises_unexpected_error(mocker: MockerFixture) ->
 
     mock_db = mocker.patch("axbi.commands.report.execute.db")
     mock_db.session.commit.side_effect = StaleDataError("stale")
-    # Prevent SQLAlchemy from inspecting the mock schedule during log creation
     mocker.patch(
-        "axbi.commands.report.execute.ReportExecutionLog",
+        "axbi.commands.report.execute.ReportExecutionLogDAO.create_for_schedule",
         return_value=mocker.Mock(),
     )
 
@@ -1818,17 +1888,54 @@ def test_create_log_success_commits(mocker: MockerFixture) -> None:
     state._report_schedule = schedule
 
     mock_db = mocker.patch("axbi.commands.report.execute.db")
-    mock_log_cls = mocker.patch(
-        "axbi.commands.report.execute.ReportExecutionLog",
+    mock_log_create = mocker.patch(
+        "axbi.commands.report.execute.ReportExecutionLogDAO.create_for_schedule",
         return_value=mocker.Mock(),
     )
 
     state.create_log(error_message=None)
 
-    mock_log_cls.assert_called_once()
-    mock_db.session.add.assert_called_once()
+    mock_log_create.assert_called_once_with(
+        report_schedule=schedule,
+        scheduled_dttm=state._scheduled_dttm,
+        start_dttm=state._start_dttm,
+        end_dttm=ANY,
+        error_message=None,
+        execution_id=state._execution_id,
+    )
     mock_db.session.commit.assert_called_once()
     mock_db.session.rollback.assert_not_called()
+
+
+def test_async_execute_validate_uses_unfiltered_schedule_dao(
+    mocker: MockerFixture,
+) -> None:
+    """Background execution resolves schedules through the explicit DAO boundary."""
+    schedule = mocker.Mock(spec=ReportSchedule)
+    find_schedule = mocker.patch(
+        "axbi.commands.report.execute.ReportScheduleDAO.find_one_or_none",
+        return_value=schedule,
+    )
+    command = AsyncExecuteReportScheduleCommand(str(uuid4()), 42, datetime.utcnow())
+
+    command.validate()
+
+    find_schedule.assert_called_once_with(skip_base_filter=True, id=42)
+    assert command._model is schedule
+
+
+def test_async_execute_validate_raises_when_schedule_is_missing(
+    mocker: MockerFixture,
+) -> None:
+    """A missing DAO result retains the command's not-found contract."""
+    mocker.patch(
+        "axbi.commands.report.execute.ReportScheduleDAO.find_one_or_none",
+        return_value=None,
+    )
+    command = AsyncExecuteReportScheduleCommand(str(uuid4()), 42, datetime.utcnow())
+
+    with pytest.raises(ReportScheduleNotFoundError):
+        command.validate()
 
 
 def test_success_state_report_sends_and_logs_success(
