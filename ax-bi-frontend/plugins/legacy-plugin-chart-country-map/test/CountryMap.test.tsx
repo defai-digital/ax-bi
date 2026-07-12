@@ -77,26 +77,33 @@ jest.mock('d3-geo', () => {
   };
 });
 
-jest.mock('d3-zoom', () => {
+const mockZoomBehavior = jest.fn();
+(mockZoomBehavior as jest.Mock & {
+  scaleExtent: jest.Mock;
+  on: jest.Mock;
+  transform: jest.Mock;
+}).scaleExtent = jest.fn().mockReturnValue(mockZoomBehavior);
+(mockZoomBehavior as jest.Mock & { on: jest.Mock }).on = jest
+  .fn()
+  .mockReturnValue(mockZoomBehavior);
+(mockZoomBehavior as jest.Mock & { transform: jest.Mock }).transform =
+  jest.fn();
+const mockZoomFactory = jest.fn(() => mockZoomBehavior);
+
+jest.mock('d3-zoom', () => ({
   // d3.selection.call(zoomBehavior) requires zoom() to return a function
-  const zoomFn = jest.fn();
-  zoomFn.scaleExtent = jest.fn().mockReturnValue(zoomFn);
-  zoomFn.on = jest.fn().mockReturnValue(zoomFn);
-  zoomFn.transform = jest.fn();
-  return {
-    zoom: jest.fn(() => zoomFn),
-    zoomIdentity: {
-      translate: (x = 0, y = 0) => ({
-        scale: (k = 1) => ({
-          toString: () => `translate(${x},${y}) scale(${k})`,
-          x,
-          y,
-          k,
-        }),
+  zoom: (...args: unknown[]) => mockZoomFactory(...args),
+  zoomIdentity: {
+    translate: (x = 0, y = 0) => ({
+      scale: (k = 1) => ({
+        toString: () => `translate(${x},${y}) scale(${k})`,
+        x,
+        y,
+        k,
       }),
-    },
-  };
-});
+    }),
+  },
+}));
 
 jest.mock('d3-color', () => {
   const actual = jest.requireActual('d3-color');
@@ -235,6 +242,34 @@ describe('CountryMap (d3 v7)', () => {
     fireEvent.click(region!);
 
     expect(setDataMask).not.toHaveBeenCalled();
+  });
+
+  test('wires d3-zoom without d3 v3 event/mouse helpers', async () => {
+    render(
+      <ReactCountryMap
+        width={500}
+        height={300}
+        data={[{ country_id: 'CAN', metric: 100 }]}
+        country="canada"
+        linearColorScheme="bnbColors"
+        colorScheme=""
+        formatter={jest.fn().mockReturnValue('100')}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('path.region')).not.toBeNull();
+    });
+
+    expect(mockZoomFactory).toHaveBeenCalled();
+    expect(mockZoomBehavior.scaleExtent).toHaveBeenCalledWith([1, 4]);
+    // Zoom listeners are registered for start/zoom/end (no d3.event).
+    const zoomEvents = (mockZoomBehavior.on as jest.Mock).mock.calls.map(
+      ([name]) => name,
+    );
+    expect(zoomEvents).toEqual(
+      expect.arrayContaining(['start', 'zoom', 'end']),
+    );
   });
 
   test('opens the context menu with drill-by keyed on the entity control', async () => {
