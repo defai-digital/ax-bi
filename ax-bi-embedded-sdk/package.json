@@ -15,14 +15,12 @@
   ],
   "files": [
     "bundle",
-    "lib",
     "dist"
   ],
   "main": "bundle/index.js",
-  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf bundle dist lib && tsc && babel src --out-dir lib --extensions '.ts,.tsx' --ignore '**/*.test.ts' && webpack --mode production",
+    "build": "rm -rf bundle dist lib && tsc && cp dist/ax-bi-embedded-sdk/src/index.d.ts dist/index.d.ts && webpack --mode production",
     "ci:release": "node ./release-if-necessary.js",
     "test": "jest"
   },
@@ -33,7 +31,6 @@
     "last 3 edge versions"
   ],
   "dependencies": {
-    "@ax-bi/switchboard": "^0.20.3",
     "jwt-decode": "^4.0.0"
   },
   "devDependencies": {
