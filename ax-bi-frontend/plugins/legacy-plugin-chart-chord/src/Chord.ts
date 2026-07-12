@@ -18,7 +18,8 @@
  * under the License.
  */
 /* eslint-disable no-param-reassign, react/sort-prop-types */
-import { select, descending } from 'd3-selection';
+import { select } from 'd3-selection';
+import { descending } from 'd3-array';
 import { chord as d3Chord, ribbon } from 'd3-chord';
 import { arc as d3Arc } from 'd3-shape';
 import { getNumberFormatter, CategoricalColorNamespace } from '@ax-bi/ui-core';

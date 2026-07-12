@@ -207,7 +207,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
       .attr('class', 'chart')
       .style('width', `${w}px`)
       .style('height', `${h}px`)
-      .append('svg:svg')
+      .append('svg')
       .attr('width', w)
       .attr('height', h);
 
@@ -368,7 +368,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
       .selectAll('g')
       .data(nodes)
       .enter()
-      .append('svg:g')
+      .append('g')
       .attr('transform', d => `translate(${x(d.y)},${y(d.x)})`)
       .on('mouseover', (event, d) => {
         tooltip.interrupt().transition().duration(100).style('opacity', 0.9);
@@ -416,11 +416,11 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
 
     g.on('click', click);
 
-    g.append('svg:rect')
+    g.append('rect')
       .attr('width', root.dy * zoomX)
       .attr('height', d => d.dx * zoomY);
 
-    g.append('svg:text')
+    g.append('text')
       .attr('transform', transform)
       .attr('dy', '0.35em')
       .style('opacity', d => (d.dx * zoomY > 12 ? 1 : 0))
