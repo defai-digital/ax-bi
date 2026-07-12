@@ -21,7 +21,7 @@
 // Uses the same approach as NVD3Vis.ts and other heavily D3-dependent files.
 /* eslint no-param-reassign: [2, {"props": false}] */
 import PropTypes from 'prop-types';
-import { select, pointer } from 'd3';
+import { select, pointer } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import {
@@ -382,14 +382,14 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
       .append('g')
       .attr('transform', d => `translate(${x(d.y)},${y(d.x)})`)
       .on('mouseover', (event, d) => {
-        tooltip.interrupt().transition().duration(100).style('opacity', 0.9);
+        tooltip.style('transition', 'opacity 100ms').style('opacity', 0.9);
         positionAndPopulate(event, tooltip, d);
       })
       .on('mousemove', (event, d) => {
         positionAndPopulate(event, tooltip, d);
       })
       .on('mouseout', () => {
-        tooltip.interrupt().transition().duration(250).style('opacity', 0);
+        tooltip.style('transition', 'opacity 250ms').style('opacity', 0);
       });
 
     // When clicking a subdivision, the vis will zoom into it
@@ -407,16 +407,13 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
       x.domain([d.y, 1]).range([d.y ? 40 : 0, w]);
       y.domain([d.x, d.x + d.dx]);
 
-      const t = g
-        .transition()
-        .duration(event.altKey ? 7500 : 750)
-        .attr('transform', nd => `translate(${x(nd.y)},${y(nd.x)})`);
+      g.attr('transform', nd => `translate(${x(nd.y)},${y(nd.x)})`);
 
-      t.select('rect')
+      g.select('rect')
         .attr('width', d.dy * zoomX)
         .attr('height', nd => nd.dx * zoomY);
 
-      t.select('text')
+      g.select('text')
         .attr('transform', transform)
         .style('opacity', nd => (nd.dx * zoomY > 12 ? 1 : 0));
 
