@@ -50,6 +50,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Moving dashboard-filter, preview-dataset, post-upload dataset, and semantic
   alias reads behind resource DAOs; semantic aliases are scoped by both object
   name and dataset so unrelated columns cannot inherit each other's aliases.
+- Hardening MCP authentication retry cleanup so scoped-session removal still
+  runs when rollback fails, using the connection-invalidation-aware removal
+  path before retrying user resolution.
 
 ## Deferred Boundary Areas
 

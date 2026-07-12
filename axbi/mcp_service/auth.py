@@ -872,15 +872,30 @@ def _setup_user_context() -> User | None:
 
 
 def _cleanup_session_on_error() -> None:
-    """Clean up database session after an exception."""
+    """Rollback and always deregister the scoped session after an error.
+
+    Rollback itself can fail when a pooled connection has gone stale. Session
+    removal must still run so an immediate authentication retry cannot reuse
+    the same broken thread-local session.
+    """
     from axbi.extensions import db
 
     # pylint: disable=consider-using-transaction
     try:
         db.session.rollback()
-        db.session.remove()
-    except Exception as e:
-        logger.warning("Error cleaning up session after exception: %s", e)
+    except Exception:
+        logger.warning(
+            "Session rollback failed during MCP auth error cleanup",
+            exc_info=True,
+        )
+
+    try:
+        _remove_session_safe()
+    except Exception:
+        logger.warning(
+            "Session removal failed during MCP auth error cleanup",
+            exc_info=True,
+        )
 
 
 def _remove_session_safe() -> None:

@@ -23,6 +23,7 @@ import pytest
 from flask import g
 
 from axbi.mcp_service.auth import (
+    _cleanup_session_on_error,
     _resolve_user_from_jwt_context,
     get_user_from_request,
     mcp_auth_hook,
@@ -479,6 +480,34 @@ def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
     assert mock_db.session.remove.call_count == 2, (
         "remove() must be retried after SSL error"
     )
+
+
+def test_auth_error_cleanup_removes_session_when_rollback_fails() -> None:
+    """A broken rollback cannot leave the failed scoped session registered."""
+    with patch("axbi.extensions.db") as mock_db:
+        mock_db.session.rollback.side_effect = RuntimeError("connection is closed")
+
+        _cleanup_session_on_error()
+
+    mock_db.session.rollback.assert_called_once_with()
+    mock_db.session.remove.assert_called_once_with()
+
+
+def test_auth_error_cleanup_uses_connection_aware_session_removal() -> None:
+    """DBAPI failures during remove invalidate the connection and retry removal."""
+    from sqlalchemy.exc import OperationalError as SAOperationalError
+
+    with patch("axbi.extensions.db") as mock_db:
+        mock_db.session.remove.side_effect = [
+            SAOperationalError("SSL connection closed", None, None),
+            None,
+        ]
+
+        _cleanup_session_on_error()
+
+    mock_db.session.rollback.assert_called_once_with()
+    mock_db.session.invalidate.assert_called_once_with()
+    assert mock_db.session.remove.call_count == 2
 
 
 # -- default_user_resolver --
