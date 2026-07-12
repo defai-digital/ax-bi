@@ -15,70 +15,50 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Tests for MCP field-level permission helpers."""
+"""Tests for active MCP permission adapters."""
 
 from unittest.mock import Mock, patch
 
-from flask import current_app
-
+from axbi.mcp_service.utils import permissions_utils
 from axbi.mcp_service.utils.permissions_utils import (
-    apply_field_permissions_to_columns,
     current_user_can_access,
     current_user_can_access_database,
-    filter_sensitive_data,
-    get_allowed_fields,
+    get_current_user,
     user_can_access_dataset_permission,
-    user_has_permission,
 )
 
 
-def test_user_has_permission_admin_uses_configured_role_name():
-    """The admin bypass honors AUTH_ROLE_ADMIN, not a hardcoded 'Admin'."""
-
-    def _role(name: str) -> Mock:
-        role = Mock()
-        role.name = name  # set after construction (Mock intercepts name=)
-        return role
-
-    original = current_app.config["AUTH_ROLE_ADMIN"]
-    current_app.config["AUTH_ROLE_ADMIN"] = "Superuser"
-    try:
-        admin = Mock()
-        admin.roles = [_role("Superuser")]
-        admin.groups = []
-        assert user_has_permission(admin, "can_read", "Chart") is True
-
-        # The previously-hardcoded "Admin" name no longer grants the bypass;
-        # it falls through to the real permission check. Mock that check to
-        # deny explicitly (rather than relying on incidental Mock behavior) and
-        # assert the helper actually consulted security_manager.has_access.
-        not_admin = Mock()
-        not_admin.roles = [_role("Admin")]
-        not_admin.groups = []
-        with patch(
-            "axbi.security_manager.has_access", return_value=False
-        ) as has_access:
-            assert user_has_permission(not_admin, "can_read", "Chart") is False
-        has_access.assert_called_once_with("can_read", "Chart", not_admin)
-    finally:
-        current_app.config["AUTH_ROLE_ADMIN"] = original
+def test_get_current_user_returns_none_without_app_context() -> None:
+    with patch.object(permissions_utils, "has_app_context", return_value=False):
+        assert get_current_user() is None
 
 
-def test_user_can_access_dataset_permission_uses_dataset_resource():
+def test_get_current_user_reads_flask_context_user() -> None:
+    user = Mock()
+    with (
+        patch.object(permissions_utils, "has_app_context", return_value=True),
+        patch.object(permissions_utils, "g") as flask_global,
+    ):
+        flask_global.user = user
+
+        assert get_current_user() is user
+
+
+def test_user_can_access_dataset_permission_uses_dataset_resource() -> None:
     with patch("axbi.security_manager.can_access", return_value=True) as can_access:
         assert user_can_access_dataset_permission("can_write") is True
 
     can_access.assert_called_once_with("can_write", "Dataset")
 
 
-def test_current_user_can_access_delegates_to_security_manager():
+def test_current_user_can_access_delegates_to_security_manager() -> None:
     with patch("axbi.security_manager.can_access", return_value=False) as can_access:
         assert current_user_can_access("can_read", "Dashboard") is False
 
     can_access.assert_called_once_with("can_read", "Dashboard")
 
 
-def test_current_user_can_access_database_delegates_to_security_manager():
+def test_current_user_can_access_database_delegates_to_security_manager() -> None:
     database = Mock()
     with patch(
         "axbi.security_manager.can_access_database", return_value=True
@@ -86,50 +66,3 @@ def test_current_user_can_access_database_delegates_to_security_manager():
         assert current_user_can_access_database(database) is True
 
     can_access_database.assert_called_once_with(database)
-
-
-def test_get_allowed_fields_always_denies_user_directory_fields():
-    user = Mock()
-    user.roles = []
-
-    allowed_fields = get_allowed_fields(
-        "dashboard",
-        user=user,
-        requested_fields=["id", "dashboard_title", "owners", "roles", "created_by"],
-    )
-
-    assert allowed_fields == {"id", "dashboard_title"}
-
-
-def test_filter_sensitive_data_strips_user_directory_fields_even_if_allowed():
-    data = {
-        "id": 1,
-        "dashboard_title": "Executive Dashboard",
-        "owners": [{"username": "admin"}],
-        "roles": [{"name": "Admin"}],
-        "created_by": "admin",
-    }
-
-    filtered = filter_sensitive_data(
-        data,
-        "dashboard",
-        allowed_fields=set(data),
-    )
-
-    assert filtered == {
-        "id": 1,
-        "dashboard_title": "Executive Dashboard",
-    }
-
-
-def test_apply_field_permissions_to_columns_omits_user_directory_fields():
-    user = Mock()
-    user.roles = []
-
-    columns = apply_field_permissions_to_columns(
-        ["id", "slice_name", "owners", "changed_by_fk"],
-        "chart",
-        user=user,
-    )
-
-    assert columns == ["id", "slice_name"]

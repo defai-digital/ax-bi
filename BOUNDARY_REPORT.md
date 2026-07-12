@@ -14,7 +14,10 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Centralizing MCP list/get-info response finalization and event logging through
   narrow utility boundaries.
 - Moving repeated MCP configuration reads into `config_utils.py`.
-- Moving selected MCP permission checks into `permissions_utils.py`.
+- Keeping active MCP permission checks behind a narrow `permissions_utils.py`
+  adapter and removing the unregistered field-permissions middleware plus its
+  unused filtering framework. Field privacy remains enforced in MCP core and
+  resource serializers instead of a dormant second boundary.
 - Centralizing naive-UTC database timestamp helpers and prune batch deletion
   mechanics.
 - Replacing repeated frontend CRUD list page-size constants with a shared
