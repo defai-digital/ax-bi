@@ -47,7 +47,7 @@ const parsedArgs = yargs(hideBin(process.argv)).parse();
 // input dir
 const APP_DIR = path.resolve(__dirname, './');
 // output dir
-const BUILD_DIR = path.resolve(__dirname, '../ax-bi/static/assets');
+const BUILD_DIR = path.resolve(__dirname, '../axbi/static/assets');
 const ROOT_DIR = path.resolve(__dirname, '..');
 // Public path for extracted css src:urls. All assets are compiled into the same
 // folder. This forces the src:url in the extracted css to only contain the filename
