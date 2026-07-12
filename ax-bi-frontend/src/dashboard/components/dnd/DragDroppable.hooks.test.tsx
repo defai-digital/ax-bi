@@ -18,10 +18,7 @@
  */
 import { render, screen } from 'spec/helpers/testing-library';
 import newComponentFactory from 'src/dashboard/util/newComponentFactory';
-import {
-  CHART_TYPE,
-  ROW_TYPE,
-} from 'src/dashboard/util/componentTypes';
+import { CHART_TYPE, ROW_TYPE } from 'src/dashboard/util/componentTypes';
 import {
   DragDroppable,
   Draggable,
@@ -48,10 +45,9 @@ test('DragDroppable mounts under DndProvider and exposes dragSourceRef in edit m
     </div>
   ));
 
-  render(
-    <DragDroppable {...baseProps}>{child}</DragDroppable>,
-    { useDnd: true },
-  );
+  render(<DragDroppable {...baseProps}>{child}</DragDroppable>, {
+    useDnd: true,
+  });
 
   expect(screen.getByTestId('dragdroppable-object')).toBeInTheDocument();
   expect(child).toHaveBeenCalledWith(
