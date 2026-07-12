@@ -27,6 +27,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Moving best-effort GenAI artifact and evaluation audit writes behind
   transaction-owning commands and DAOs so persistence failures roll back before
   the workflow degrades silently.
+- Converging MCP dashboard generation and GenAI composition on a shared
+  command-owned persistence boundary that re-resolves charts and owners in the
+  active session before attaching relationships atomically.
 
 ## Deferred Boundary Areas
 

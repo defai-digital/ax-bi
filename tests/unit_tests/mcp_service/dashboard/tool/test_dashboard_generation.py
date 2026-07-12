@@ -20,6 +20,7 @@ Unit tests for dashboard generation MCP tools
 """
 
 import logging
+from collections.abc import Iterator
 from datetime import datetime
 from importlib import import_module
 from unittest.mock import Mock, patch
@@ -84,6 +85,16 @@ def mock_chart_access():
         yield
 
 
+@pytest.fixture(autouse=True)
+def mock_dashboard_command_chart_access() -> Iterator[None]:
+    """Allow command-level chart access unless a focused test overrides it."""
+    with patch(
+        "axbi.commands.dashboard.create_from_charts.security_manager.can_access_chart",
+        return_value=True,
+    ):
+        yield
+
+
 def _mock_chart(id: int = 1, slice_name: str = "Test Chart") -> Mock:
     """Create a mock chart object."""
     chart = Mock()
@@ -142,9 +153,9 @@ def _setup_generate_dashboard_mocks(
 ):
     """Set up common mocks for generate_dashboard tests.
 
-    The tool creates dashboards directly via db.session (bypassing
-    CreateDashboardCommand) and re-queries user/charts in the tool's
-    own session.  This helper wires up the mock chain for that path.
+    The tool delegates persistence to CreateDashboardFromChartsCommand;
+    this helper keeps the DAO-backed command and re-fetch path in one
+    mocked scoped session.
     """
     mock_user = Mock()
     mock_user.id = 1
@@ -156,21 +167,31 @@ def _setup_generate_dashboard_mocks(
 
     mock_query = Mock()
     mock_filter = Mock()
+    mock_query.execution_options.return_value = mock_query
     mock_query.filter.return_value = mock_filter
     mock_query.filter_by.return_value = mock_filter
     mock_filter.order_by.return_value = mock_filter
     mock_filter.all.return_value = charts
     mock_filter.first.return_value = mock_user
+    mock_filter.one_or_none.return_value = mock_user
     mock_db_session.query.return_value = mock_query
 
     mock_dashboard_cls.return_value = dashboard
+
+    def _create_dashboard(*, attributes: dict[str, object]) -> Mock:
+        """Apply DAO attributes to the shared dashboard mock."""
+        for key, value in attributes.items():
+            setattr(dashboard, key, value)
+        return dashboard
+
+    mock_dashboard_cls.side_effect = _create_dashboard
     mock_find_by_id.return_value = dashboard
 
 
 class TestGenerateDashboard:
     """Tests for generate_dashboard MCP tool."""
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -207,7 +228,7 @@ class TestGenerateDashboard:
             assert result.structured_content["dashboard"]["chart_count"] == 2
             assert "/ax-bi/dashboard/10/" in result.structured_content["dashboard_url"]
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -246,6 +267,7 @@ class TestGenerateDashboard:
         """Test error handling when some charts don't exist."""
         mock_query = Mock()
         mock_filter = Mock()
+        mock_query.execution_options.return_value = mock_query
         mock_query.filter.return_value = mock_filter
         mock_filter.order_by.return_value = mock_filter
         mock_filter.all.return_value = [_mock_chart(id=1)]
@@ -275,6 +297,7 @@ class TestGenerateDashboard:
 
         mock_query = Mock()
         mock_filter = Mock()
+        mock_query.execution_options.return_value = mock_query
         mock_query.filter.return_value = mock_filter
         mock_filter.order_by.return_value = mock_filter
         mock_filter.all.return_value = charts
@@ -322,7 +345,45 @@ class TestGenerateDashboard:
                 assert result.structured_content["dashboard"] is None
                 assert result.structured_content["dashboard_url"] is None
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
+    @pytest.mark.asyncio
+    async def test_generate_dashboard_rechecks_access_before_persistence(
+        self, mock_db_session, mock_find_by_id, mock_dashboard_create, mcp_server
+    ):
+        """A permission change after adapter validation fails before creation."""
+        charts = [_mock_chart(id=1, slice_name="Restricted")]
+        dashboard = _mock_dashboard(id=10, title="Restricted Dashboard")
+        _setup_generate_dashboard_mocks(
+            mock_db_session,
+            mock_find_by_id,
+            mock_dashboard_create,
+            charts,
+            dashboard,
+        )
+
+        with patch(
+            "axbi.commands.dashboard.create_from_charts."
+            "security_manager.can_access_chart",
+            return_value=False,
+        ):
+            async with Client(mcp_server) as client:
+                result = await client.call_tool(
+                    "generate_dashboard",
+                    {
+                        "request": {
+                            "chart_ids": [1],
+                            "dashboard_title": "Restricted Dashboard",
+                        }
+                    },
+                )
+
+        assert result.structured_content["error"] == "Access denied to charts: [1]"
+        assert result.structured_content["dashboard"] is None
+        mock_dashboard_create.assert_not_called()
+
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -349,7 +410,7 @@ class TestGenerateDashboard:
             assert result.structured_content["dashboard"]["chart_count"] == 1
             assert result.structured_content["dashboard"]["published"] is False
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -372,9 +433,8 @@ class TestGenerateDashboard:
             assert result.structured_content["error"] is None
             assert result.structured_content["dashboard"]["chart_count"] == 6
 
-            # Verify db.session.add and commit were called
-            # (commit is called multiple times: once by tool + event_logger contexts)
-            mock_db_session.add.assert_called_once()
+            # Verify the DAO boundary and command transaction were used.
+            mock_dashboard_cls.assert_called_once()
             assert mock_db_session.commit.call_count >= 1
 
             # Verify layout was set on the dashboard object
@@ -419,7 +479,7 @@ class TestGenerateDashboard:
                 assert row_data["type"] == "ROW"
                 assert column_key in row_data["children"]
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_creation_failure(
@@ -430,11 +490,12 @@ class TestGenerateDashboard:
 
         mock_query = Mock()
         mock_filter = Mock()
+        mock_query.execution_options.return_value = mock_query
         mock_query.filter.return_value = mock_filter
         mock_query.filter_by.return_value = mock_filter
         mock_filter.order_by.return_value = mock_filter
         mock_filter.all.return_value = [_mock_chart(id=1)]
-        mock_filter.first.return_value = Mock(
+        mock_filter.one_or_none.return_value = Mock(
             id=1,
             username="admin",
             first_name="Admin",
@@ -458,7 +519,7 @@ class TestGenerateDashboard:
             # rollback called by tool + event_logger error handling
             assert mock_db_session.rollback.call_count >= 1
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -490,7 +551,7 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.published is False
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -517,7 +578,7 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.published is True
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -546,7 +607,7 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.dashboard_title == "Sales Revenue & Customer Count"
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio
@@ -1668,7 +1729,7 @@ class TestGenerateTitleFromCharts:
 class TestDashboardSerializationEagerLoading:
     """Tests for eager loading fix in dashboard serialization paths."""
 
-    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.create")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @patch("axbi.db.session")
     @pytest.mark.asyncio

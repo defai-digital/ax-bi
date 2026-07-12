@@ -57,6 +57,19 @@ def test_get_by_id_not_found():
         UserDAO.get_by_id(123456)
 
 
+def test_get_by_id_or_none_found(
+    admin_user: User,  # noqa: F811
+    after_each: None,  # noqa: F811
+) -> None:
+    """Optional user lookup returns the runtime-configured user model."""
+    assert UserDAO.get_by_id_or_none(admin_user.id) is admin_user
+
+
+def test_get_by_id_or_none_missing() -> None:
+    """Optional user lookup returns None instead of raising for a missing ID."""
+    assert UserDAO.get_by_id_or_none(123456) is None
+
+
 def test_set_avatar_url_with_existing_attributes(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811

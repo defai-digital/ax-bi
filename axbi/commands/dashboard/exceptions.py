@@ -42,6 +42,32 @@ class DashboardInvalidError(CommandInvalidError):
     message = _("Dashboard parameters are invalid.")
 
 
+class DashboardChartsNotFoundError(CommandInvalidError):
+    """Raised when dashboard creation references missing chart IDs."""
+
+    def __init__(self, missing_ids: set[int]) -> None:
+        self.missing_ids = set(missing_ids)
+        super().__init__(
+            _(
+                "Charts not found: %(chart_ids)s",
+                chart_ids=sorted(self.missing_ids),
+            )
+        )
+
+
+class DashboardChartsAccessDeniedError(ForbiddenError):
+    """Raised when dashboard creation references inaccessible charts."""
+
+    def __init__(self, chart_ids: set[int]) -> None:
+        self.chart_ids = set(chart_ids)
+        super().__init__(
+            _(
+                "Access denied to charts: %(chart_ids)s",
+                chart_ids=sorted(self.chart_ids),
+            )
+        )
+
+
 class DashboardNotFoundError(ObjectNotFoundError):
     def __init__(
         self, dashboard_id: str | None = None, exception: Exception | None = None

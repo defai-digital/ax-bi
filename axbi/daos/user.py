@@ -30,6 +30,15 @@ logger = logging.getLogger(__name__)
 
 class UserDAO(BaseDAO[User]):
     @staticmethod
+    def get_by_id_or_none(user_id: int) -> User | None:
+        """Return a runtime-configured user model from the active session."""
+        return (
+            db.session.query(security_manager.user_model)
+            .filter_by(id=user_id)
+            .one_or_none()
+        )
+
+    @staticmethod
     def find_for_filter_resolution(search_term: str, limit: int) -> list[User]:
         """Find a bounded user set for resolving MCP ownership filters.
 
