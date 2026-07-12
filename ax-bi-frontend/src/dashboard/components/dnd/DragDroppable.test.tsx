@@ -111,26 +111,18 @@ describe('DragDroppable', () => {
       </div>
     ));
 
-    // Create a mock component with the dropIndicator state already set
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_TOP' as any };
-      }
-    }
-
     render(
-      <MockDragDroppable
+      <DragDroppable
         {...(props as any)}
         editMode
         isDraggingOver
+        dropIndicator="DROP_TOP"
         component={newComponentFactory(TAB_TYPE)}
       >
         {renderChild}
-      </MockDragDroppable>,
+      </DragDroppable>,
     );
 
-    // Verify the last render included dropIndicatorProps
     expect(
       renderChild.mock.calls[renderChild.mock.calls.length - 1][0],
     ).toMatchObject({
@@ -155,22 +147,16 @@ describe('DragDroppable', () => {
       </div>
     ));
 
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_FORBIDDEN' };
-      }
-    }
-
     render(
-      <MockDragDroppable
+      <DragDroppable
         {...(props as any)}
         editMode
         isDraggingOver
+        dropIndicator="DROP_FORBIDDEN"
         component={newComponentFactory(TAB_TYPE)}
       >
         {renderChild}
-      </MockDragDroppable>,
+      </DragDroppable>,
     );
 
     expect(
@@ -197,23 +183,17 @@ describe('DragDroppable', () => {
       </div>
     ));
 
-    class MockDragDroppable extends DragDroppable {
-      constructor(mockProps: ConstructorParameters<typeof DragDroppable>[0]) {
-        super(mockProps);
-        this.state = { dropIndicator: 'DROP_TOP' as any };
-      }
-    }
-
     render(
-      <MockDragDroppable
+      <DragDroppable
         {...(props as any)}
         editMode
         isDraggingOver
         disableDragDrop
+        dropIndicator="DROP_TOP"
         component={newComponentFactory(TAB_TYPE)}
       >
         {renderChild}
-      </MockDragDroppable>,
+      </DragDroppable>,
     );
 
     expect(
@@ -224,7 +204,6 @@ describe('DragDroppable', () => {
     });
   });
 
-  // Later in the file, remove the require and use the imported getEmptyImage
   test('should handle empty drag preview correctly', () => {
     const dragPreviewRef = jest.fn();
 

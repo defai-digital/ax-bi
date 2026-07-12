@@ -76,7 +76,7 @@ const defaultProps: Omit<SliceAdderProps, 'theme'> = {
 };
 
 const renderSliceAdder = (props = defaultProps) =>
-  render(<SliceAdder {...props} />, { store: mockStore });
+  render(<SliceAdder {...props} />, { store: mockStore, useDnd: true });
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('SliceAdder', () => {
