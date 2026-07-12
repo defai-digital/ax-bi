@@ -18,7 +18,7 @@
 """Tests for find_users MCP tool and its filter contract."""
 
 import importlib
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from fastmcp import Client
@@ -68,18 +68,6 @@ def _make_user(id_, username, first=None, last=None, email=None, active=True):
     return user
 
 
-def _patch_user_query(rows):
-    """Patch the SQLAlchemy chain used by find_users to return a fixed result set."""
-    chain = MagicMock()
-    chain.filter.return_value = chain
-    chain.order_by.return_value = chain
-    chain.limit.return_value = chain
-    chain.all.return_value = rows
-    session = MagicMock()
-    session.query.return_value = chain
-    return session, chain
-
-
 # ---------------------------------------------------------------------------
 # Schema tests
 # ---------------------------------------------------------------------------
@@ -112,22 +100,18 @@ async def test_find_users_returns_matches(mcp_server):
             7, "maxime", first="Maxime", last="Beauchemin", email="m@example.com"
         )
     ]
-    session, _ = _patch_user_query(rows)
-
-    with (
-        patch.object(find_users_module, "db") as mock_db,
-        patch.object(find_users_module, "security_manager") as mock_sm,
-        patch.object(find_users_module, "or_") as mock_or,
-    ):
-        mock_db.session = session
-        mock_sm.user_model = MagicMock()
-        mock_or.return_value = MagicMock()
-
+    with patch.object(
+        find_users_module.UserDAO,
+        "find_for_filter_resolution",
+        return_value=rows,
+    ) as find_users:
         async with Client(mcp_server) as client:
             result = await client.call_tool(
-                "find_users", {"request": {"query": "maxime"}}
+                "find_users",
+                {"request": {"query": "maxime", "page_size": 10}},
             )
 
+    find_users.assert_called_once_with("maxime", limit=11)
     data = json.loads(result.content[0].text)
     assert data["count"] == 1
     assert data["truncated"] is False
@@ -139,9 +123,6 @@ async def test_find_users_returns_matches(mcp_server):
     # required for filter resolution. Catch regressions on the response shape.
     for forbidden in ("email", "active", "roles"):
         assert forbidden not in data["users"][0]
-    # or_ should have been built across the four matched columns
-    assert mock_or.called
-    assert len(mock_or.call_args.args) == 4
 
 
 @pytest.mark.asyncio
@@ -152,24 +133,17 @@ async def test_find_users_truncates_when_more_rows_than_page_size(mcp_server):
         _make_user(2, "b"),
         _make_user(3, "c"),
     ]
-    session, chain = _patch_user_query(rows)
-
-    with (
-        patch.object(find_users_module, "db") as mock_db,
-        patch.object(find_users_module, "security_manager") as mock_sm,
-        patch.object(find_users_module, "or_") as mock_or,
-    ):
-        mock_db.session = session
-        mock_sm.user_model = MagicMock()
-        mock_or.return_value = MagicMock()
-
+    with patch.object(
+        find_users_module.UserDAO,
+        "find_for_filter_resolution",
+        return_value=rows,
+    ) as find_users:
         async with Client(mcp_server) as client:
             result = await client.call_tool(
                 "find_users", {"request": {"query": "a", "page_size": 2}}
             )
 
-    # Tool requested page_size+1 rows for truncation detection
-    chain.limit.assert_called_with(3)
+    find_users.assert_called_once_with("a", limit=3)
 
     data = json.loads(result.content[0].text)
     assert data["count"] == 2

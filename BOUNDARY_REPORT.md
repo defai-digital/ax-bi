@@ -19,6 +19,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   mechanics.
 - Replacing repeated frontend CRUD list page-size constants with a shared
   constant.
+- Moving the privacy-scoped MCP user-filter resolver query into `UserDAO`, with
+  bounded results, literal wildcard matching, and DAO-level nonblank
+  enforcement.
 
 ## Deferred Boundary Areas
 

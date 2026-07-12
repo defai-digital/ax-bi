@@ -21,9 +21,8 @@ import logging
 
 from axbi_core.mcp.decorators import tool, ToolAnnotations
 from fastmcp import Context
-from sqlalchemy import or_
 
-from axbi.extensions import db, security_manager
+from axbi.daos.user import UserDAO
 from axbi.mcp_service.system.schemas import (
     FindUsersRequest,
     FindUsersResponse,
@@ -63,32 +62,11 @@ async def find_users(request: FindUsersRequest, ctx: Context) -> FindUsersRespon
         f"Resolving user query: query={request.query}, page_size={request.page_size}"
     )
 
-    user_model = security_manager.user_model
-    # Escape LIKE wildcards so literal '%' and '_' in the query are
-    # matched as-is rather than being interpreted as wildcards.
-    escaped = (
-        request.query.strip()
-        .replace("\\", "\\\\")
-        .replace("%", "\\%")
-        .replace("_", "\\_")
-    )
-    needle = f"%{escaped}%"
-
     with mcp_event_log_context(action="mcp.find_users.query"):
-        query = (
-            db.session.query(user_model)
-            .filter(
-                or_(
-                    user_model.username.ilike(needle),
-                    user_model.first_name.ilike(needle),
-                    user_model.last_name.ilike(needle),
-                    user_model.email.ilike(needle),
-                )
-            )
-            .order_by(user_model.username.asc())
+        rows = UserDAO.find_for_filter_resolution(
+            request.query,
+            limit=request.page_size + 1,
         )
-        # Fetch one extra row to detect truncation without a separate count query.
-        rows = query.limit(request.page_size + 1).all()
 
     truncated = len(rows) > request.page_size
     rows = rows[: request.page_size]
