@@ -104,8 +104,8 @@
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.1.8",
     "@types/seedrandom": "^3.0.8",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
-    "@typescript-eslint/parser": "^8.62.1",
+    "@typescript-eslint/eslint-plugin": "^8.63.0",
+    "@typescript-eslint/parser": "^8.63.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
@@ -114,8 +114,8 @@
     "patch-package": "^8.0.1",
     "prettier": "^3.9.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.62.1",
-    "webpack": "^5.108.3"
+    "typescript-eslint": "^8.63.0",
+    "webpack": "^5.108.4"
   },
   "browserslist": {
     "production": [
