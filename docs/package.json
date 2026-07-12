@@ -76,6 +76,7 @@
     "caniuse-lite": "^1.0.30001800",
     "docusaurus-plugin-openapi-docs": "^5.1.0",
     "docusaurus-theme-openapi-docs": "^5.1.0",
+    "jed": "^1.1.1",
     "js-yaml": "^5.2.0",
     "json-bigint": "^1.0.0",
     "prism-react-renderer": "^2.4.1",
@@ -85,13 +86,16 @@
     "react-resize-detector": "^12.3.0",
     "react-svg-pan-zoom": "^3.13.1",
     "react-table": "^7.8.0",
+    "rehype-sanitize": "^6.0.0",
     "remark-import-partial": "^0.0.2",
     "reselect": "^5.2.0",
+    "seedrandom": "^3.0.5",
     "storybook": "^8.6.18",
     "swagger-ui-react": "^5.32.8",
     "swc-loader": "^0.2.7",
     "tinycolor2": "^1.4.2",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.10.1",
@@ -99,6 +103,7 @@
     "@eslint/js": "^10.0.1",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.1.8",
+    "@types/seedrandom": "^3.0.8",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
     "@typescript-eslint/parser": "^8.62.1",
     "eslint": "^9.39.2",
